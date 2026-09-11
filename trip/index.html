@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<script>
+(function(){
+  try{
+    var t = localStorage.getItem("trips-theme");
+    if(t !== "dark" && t !== "light"){
+      t = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+    }
+    document.documentElement.setAttribute("data-theme", t);
+  }catch(e){}
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>行程總覽｜Travel Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#232323;
+    --ink-soft:#726E70;
+    --paper:#FFFFFB;
+    --card:#FFFFFF;
+    --line:#E7E5E9;
+    --gold:#B3A6D6;
+    --fukuoka:#E87A90;
+    --fukuoka-text:#C2445F;
+    --niigata:#6E86B8;
+    --niigata-text:#33518A;
+  }
+  :root[data-theme="dark"]{
+    --ink:#ECEAE7;
+    --ink-soft:#A29D9E;
+    --paper:#1C1C1C;
+    --card:#2A2A2A;
+    --line:#454545;
+    --gold:#B3A6D6;
+    --fukuoka:#FEDFE1;
+    --fukuoka-text:#FEDFE1;
+    --niigata:#B9C7E8;
+    --niigata-text:#B9C7E8;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"Noto Sans TC","Hiragino Sans",sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .theme-toggle{
+    position:fixed; top:14px; right:14px; z-index:50;
+    width:36px; height:36px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:50%;
+    background:rgba(0,0,0,0.05);
+    border:1px solid rgba(0,0,0,0.12);
+    color:var(--ink);
+    font-size:16px;
+    cursor:pointer;
+    backdrop-filter:blur(4px);
+  }
+  :root[data-theme="dark"] .theme-toggle{
+    background:rgba(255,255,255,0.1);
+    border-color:rgba(255,255,255,0.22);
+  }
+
+  header.hero{
+    padding:56px 20px 36px;
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+  }
+  #heroBg{
+    position:absolute; inset:0;
+    background:
+      radial-gradient(900px 300px at 20% -10%, rgba(232,122,144,0.14), transparent 55%),
+      radial-gradient(900px 300px at 80% -10%, rgba(110,134,184,0.14), transparent 55%),
+      linear-gradient(180deg, #FFFFFB 0%, #FAF7F6 100%);
+    z-index:0;
+  }
+  :root[data-theme="dark"] #heroBg{
+    background:
+      radial-gradient(900px 300px at 20% -10%, rgba(254,223,225,0.08), transparent 55%),
+      radial-gradient(900px 300px at 80% -10%, rgba(185,199,232,0.08), transparent 55%),
+      linear-gradient(180deg,#1C1C1C 0%, #202020 100%);
+  }
+  header.hero > *{ position:relative; z-index:1; }
+  .eyebrow{
+    letter-spacing:.3em;
+    font-size:10.5px;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-bottom:14px;
+    font-family:"JetBrains Mono",monospace;
+  }
+  h1.title{
+    font-family:"Shippori Mincho",serif;
+    font-weight:700;
+    font-size:clamp(28px,7vw,42px);
+    margin:0 0 10px;
+    letter-spacing:.05em;
+  }
+  .subtitle{
+    color:var(--ink-soft);
+    font-size:13px;
+    margin:0;
+  }
+
+  main{max-width:720px; margin:0 auto; padding:8px 20px 60px;}
+
+  .trip-card{
+    display:block;
+    text-decoration:none;
+    color:inherit;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:26px 26px 22px;
+    margin-bottom:20px;
+    box-shadow:0 4px 18px rgba(35,35,35,.08);
+    position:relative;
+    overflow:hidden;
+    transition:transform .18s ease, box-shadow .18s ease;
+  }
+  .trip-card:hover{
+    transform:translateY(-3px);
+    box-shadow:0 10px 28px rgba(35,35,35,.14);
+  }
+  .trip-card::before{
+    content:"";
+    position:absolute; left:0; top:0; bottom:0; width:6px;
+    background:var(--accent);
+  }
+  .trip-card.fukuoka{ --accent:var(--fukuoka); }
+  .trip-card.niigata{ --accent:var(--niigata); }
+
+  .trip-eyebrow{
+    font-family:"JetBrains Mono",monospace;
+    font-size:11px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--accent-text, var(--ink-soft));
+  }
+  .trip-card.fukuoka .trip-eyebrow{ color:var(--fukuoka-text); }
+  .trip-card.niigata .trip-eyebrow{ color:var(--niigata-text); }
+
+  .trip-title{
+    font-family:"Shippori Mincho",serif;
+    font-weight:700;
+    font-size:24px;
+    margin:6px 0 8px;
+  }
+  .trip-dates{
+    font-family:"JetBrains Mono",monospace;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin-bottom:10px;
+  }
+  .trip-route{
+    font-size:13px;
+    color:var(--ink-soft);
+    line-height:1.6;
+    margin-bottom:16px;
+  }
+  .trip-cta{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-size:13.5px;
+    font-weight:700;
+    color:var(--ink);
+  }
+  .trip-cta .arrow{ transition:transform .18s ease; }
+  .trip-card:hover .trip-cta .arrow{ transform:translateX(4px); }
+
+  footer{
+    text-align:center;
+    padding:20px 20px 40px;
+    font-size:11px;
+    color:var(--ink-soft);
+    font-family:"JetBrains Mono",monospace;
+  }
+</style>
+</head>
+<body>
+
+<button type="button" class="theme-toggle" id="themeToggle" aria-label="切換深色／淺色模式">🌙</button>
+
+<header class="hero">
+  <div id="heroBg"></div>
+  <div class="eyebrow">Travel Log</div>
+  <h1 class="title">行程總覽</h1>
+  <p class="subtitle">點一個行程進去看每日安排</p>
+</header>
+
+<main>
+  <a class="trip-card fukuoka" href="fukuoka/schedule.html">
+    <div class="trip-eyebrow">Kyushu · 8 Days</div>
+    <div class="trip-title">九州行程表</div>
+    <div class="trip-dates">2026年08月18日 – 08月25日</div>
+    <div class="trip-route">福岡・北九州・相島・太宰府・唐津・佐賀</div>
+    <div class="trip-cta">查看行程 <span class="arrow">→</span></div>
+  </a>
+
+  <a class="trip-card niigata" href="niigata/schedule.html">
+    <div class="trip-eyebrow">Joetsu · 11 Days</div>
+    <div class="trip-title">上越行程表</div>
+    <div class="trip-dates">2027年07月30日 – 08月09日</div>
+    <div class="trip-route">新潟・長岡花火・越後湯澤・秩父・川越・東京</div>
+    <div class="trip-cta">查看行程 <span class="arrow">→</span></div>
+  </a>
+</main>
+
+<footer>jschang0512 · Travel Log</footer>
+
+<script>
+(function themeToggle(){
+  const KEY = "trips-theme";
+  function getPreferred(){
+    const applied = document.documentElement.getAttribute("data-theme");
+    if(applied === "dark" || applied === "light") return applied;
+    try{
+      const saved = localStorage.getItem(KEY);
+      if(saved === "dark" || saved === "light") return saved;
+    }catch(e){}
+    return (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+  }
+  let current = getPreferred();
+  document.documentElement.setAttribute("data-theme", current);
+  const btn = document.getElementById("themeToggle");
+  btn.textContent = current === "dark" ? "☀️" : "🌙";
+  btn.addEventListener("click", ()=>{
+    current = current === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", current);
+    btn.textContent = current === "dark" ? "☀️" : "🌙";
+    try{ localStorage.setItem(KEY, current); }catch(e){}
+  });
+})();
+</script>
+</body>
+</html>
