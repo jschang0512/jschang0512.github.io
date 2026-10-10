@@ -1,0 +1,43 @@
+title: Chia-Sung (Bruce) Chang
+description: Pharmacoepidemiology & Real-World Evidence
+author: Chia-Sung (Bruce) Chang
+url: https://jschang0512.github.io
+# The site root hosts several apps (splitbill, Pharmacy, trip, ...) as static files;
+# only personalcv/ uses Jekyll templates, so its paths are written with /personalcv/ explicitly.
+baseurl: ""
+timezone: Asia/Taipei
+lang: zh-Hant
+
+permalink: /personalcv/blog/:year/:month/:day/:title/
+# Posts dated in the future stay hidden until that time (see .github/workflows/scheduled-publish.yml)
+future: false
+
+include:
+  - .well-known
+
+exclude:
+  - README.md
+  - Research-toolkit/README.md
+  - .pages.yml
+  - .github
+
+markdown: kramdown
+kramdown:
+  input: GFM
+  hard_wrap: false
+  math_engine: mathjax
+  syntax_highlighter_opts:
+    disable: true
+
+plugins:
+  - jekyll-feed
+
+feed:
+  path: personalcv/blog/feed.xml
+
+defaults:
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: post
