@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<script>
+(function(){
+  try{
+    var t = localStorage.getItem("splitbill-theme");
+    if(t !== "dark" && t !== "light"){
+      t = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+    }
+    document.documentElement.setAttribute("data-theme", t);
+  }catch(e){}
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Splitbill｜分帳記帳</title>
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#7A6B9E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Splitbill">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;700&family=Noto+Sans+TC:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css?v=855">
+<link rel="stylesheet" href="shared.css?v=855">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="i18n.js?v=855"></script>
+<script src="currencies.js?v=855"></script>
+<script src="version.js?v=855"></script>
+<script src="shared-ui.js?v=855"></script>
+<script src="theme.js?v=855" defer></script>
+<script src="app-banner.js" defer></script>
+<script>
+if("serviceWorker" in navigator){
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  });
+}
+</script>
+</head>
+<body>
+<div id="pwaSplash" class="pwa-splash">
+  <div class="pwa-splash-content">
+    <svg class="pwa-splash-logo" viewBox="0 0 512 512" aria-hidden="true">
+      <path class="s1" d="M256,238 L118.5,138.1 A170,170 0 0,1 393.5,138.1 Z"/>
+      <path class="s2" d="M271.6,265 L426.9,195.9 A170,170 0 0,1 289.4,434.1 Z"/>
+      <path class="s3" d="M240.4,265 L222.6,434.1 A170,170 0 0,1 85.1,195.9 Z"/>
+    </svg>
+  </div>
+</div>
+<script>
+(function(){
+  const splashEl = document.getElementById("pwaSplash");
+  if(!splashEl) return;
+  const splashStartTime = performance.now();
+  const hasSplashed = sessionStorage.getItem("sb_splashed_in_session") === "1";
+  let splashTimer = null;
+
+  if(!hasSplashed){
+    splashEl.classList.add("pwa-splash-visible");
+    sessionStorage.setItem("sb_splashed_in_session", "1");
+  } else {
+    splashTimer = setTimeout(()=>{
+      if(splashEl) splashEl.classList.add("pwa-splash-visible");
+    }, 300);
+  }
+
+  window.hidePwaSplash = function(){
+    if(splashTimer) clearTimeout(splashTimer);
+    const elapsed = performance.now() - splashStartTime;
+    const minDisplay = (!hasSplashed) ? 380 : 0;
+    const remaining = Math.max(0, minDisplay - elapsed);
+    setTimeout(()=>{
+      splashEl.classList.add("pwa-splash-out");
+      setTimeout(()=>{ if(splashEl.parentNode) splashEl.remove(); }, 350);
+    }, remaining);
+  };
+  setTimeout(window.hidePwaSplash, 2000);
+})();
+</script>
+<svg class="svg-defs-hidden" aria-hidden="true">
+  <defs>
+    <linearGradient id="logoGrad" x1="90" y1="90" x2="430" y2="430" gradientUnits="userSpaceOnUse">
+      <stop class="logo-stop-a" offset="0%"/>
+      <stop class="logo-stop-b" offset="100%"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<div class="wrap">
+
+  <div class="app-header">
+    <div class="location-weather-row">
+      <div class="location-weather-badge hidden" id="locationCard">
+        <span id="locationText"></span>
+      </div>
+      <div class="location-weather-badge hidden" id="weatherCard">
+        <span id="weatherText"></span>
+      </div>
+    </div>
+    <div class="title-row">
+      <svg class="app-logo" viewBox="0 0 512 512" aria-hidden="true">
+        <path class="s1" d="M256,238 L118.5,138.1 A170,170 0 0,1 393.5,138.1 Z"/>
+        <path class="s2" d="M271.6,265 L426.9,195.9 A170,170 0 0,1 289.4,434.1 Z"/>
+        <path class="s3" d="M240.4,265 L222.6,434.1 A170,170 0 0,1 85.1,195.9 Z"/>
+      </svg>
+      <h1 id="pageH1" class="page-title-clickable" data-i18n-title="currency.countryInfoHint"></h1>
+    </div>
+    <div class="nav-links" id="navLinks"></div>
+    <button type="button" class="exchange-rate-hint hidden" id="exchangeRateHint"></button>
+  </div>
+
+  <div id="configWarning" class="card hidden">
+    <h2 data-i18n="configWarning.title">⚠️ 尚未設定 Supabase</h2>
+    <p class="config-warning-text">
+      打開這個檔案，把最下面 <code>&lt;script&gt;</code> 區塊裡的
+      <code>SUPABASE_URL</code> 跟 <code>SUPABASE_ANON_KEY</code>
+      換成你自己 Supabase 專案的值，存檔後重新整理即可。
+    </p>
+  </div>
+
+  <div id="appScreen">
+    <div class="topbar">
+      <div class="whoami whoami-wrap" id="whoamiWrap">
+        <span id="whoamiAvatar"></span>
+        <span id="whoamiText"><b id="whoamiName"></b></span>
+      </div>
+      <div class="topbar-actions">
+        <div id="notificationBellContainer"></div>
+        <button type="button" class="icon-btn" id="openAchievementsModalBtn" data-i18n-title="common.achievements" title="成就榜" aria-label="成就榜">🎖️</button>
+        <a class="icon-btn" id="settingsBtn" href="settings.html" data-i18n-title="common.settings" title="設定" aria-label="設定">⚙️</a>
+        <button class="btn secondary small" id="logoutBtn" data-i18n="common.logout">登出</button>
+      </div>
+    </div>
+
+    <div class="offline-banner hidden" id="offlineBanner">
+      <span class="offline-banner-text" data-i18n="shared.offlineBannerText">📴 目前離線，部分功能可能無法使用</span>
+    </div>
+
+    <div class="card email-reminder hidden" id="emailReminderCard">
+      <span class="email-reminder-text" data-i18n="currency.emailReminder">⚠️ 你還沒設定電子信箱，忘記密碼會沒辦法用</span>
+      <button type="button" class="link-btn" id="emailReminderBtn" data-i18n="currency.goToSettings">去設定</button>
+    </div>
+
+    <div class="recurring-auto-banner" id="recurringAutoBanner"></div>
+    <div class="recurring-auto-banner" id="settleReminderBanner"></div>
+
+    <div class="my-balance" id="myBalance">
+          <div class="my-balance-label" id="myBalanceLabel"></div>
+          <div class="my-balance-amt" id="myBalanceAmt"><span class="skeleton skeleton-light skeleton-mybalance"></span></div>
+        </div>
+
+        <!-- 1. 總表在導覽列最左邊，且一進來先看到總表 (手機端顯示) -->
+        <div class="app-tabs main-app-tabs" id="mainAppTabs">
+          <div class="tab-indicator"></div>
+          <button type="button" class="app-tab active" data-tab="summary" data-i18n="currency.tab.summary">📊 總表</button>
+          <button type="button" class="app-tab" data-tab="expense" data-i18n="currency.tab.expense">🧾 支出</button>
+          <button type="button" class="app-tab" data-tab="repay" data-i18n="currency.tab.repay">💸 還款</button>
+          <button type="button" class="app-tab" data-tab="history" data-i18n="currency.tab.history">📋 紀錄</button>
+        </div>
+
+    <div class="app-panel active" id="panelSummary">
+              <div class="card">
+                <div class="donut-scope-tabs chart-toggle-tabs" id="summaryChartToggleTabs">
+                  <button type="button" class="donut-scope-tab chart-toggle-tab active" data-view="trend" data-i18n="currency.chart.trend">📈 債務趨勢</button>
+                  <button type="button" class="donut-scope-tab chart-toggle-tab" data-view="donut" data-i18n="currency.chart.donut">🍩 花費類別分佈</button>
+                </div>
+
+                <div class="chart-toggle-view active" id="chartToggleViewTrend">
+                  <div class="chart-title-row chart-title-row-end">
+                    <div class="chart-gran-select" id="chartGranSelect">
+                      <button type="button" class="chart-gran-btn" id="chartGranBtn">
+                        <span id="chartGranText" data-i18n="currency.gran.week">週</span>
+                        <span class="chart-gran-caret">▾</span>
+                      </button>
+                      <div class="chart-gran-menu hidden" id="chartGranMenu">
+                        <button type="button" class="chart-gran-option" data-value="day" data-i18n="currency.gran.day">日</button>
+                        <button type="button" class="chart-gran-option active" data-value="week" data-i18n="currency.gran.week">週</button>
+                        <button type="button" class="chart-gran-option" data-value="month" data-i18n="currency.gran.month">月</button>
+                        <button type="button" class="chart-gran-option" data-value="year" data-i18n="currency.gran.year">年</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="chart-range-nav">
+                    <button type="button" class="chart-nav-btn" id="chartPrevBtn" data-i18n-title="currency.prevGroup" aria-label="上一組">‹</button>
+                    <span id="chartRangeLabel"></span>
+                    <button type="button" class="chart-nav-btn" id="chartNextBtn" data-i18n-title="currency.nextGroup" aria-label="下一組">›</button>
+                  </div>
+                  <div id="spendChartWrap">
+                    <p class="filter-hint" data-i18n="common.loading">載入中…</p>
+                  </div>
+                </div>
+
+                <div class="chart-toggle-view" id="chartToggleViewDonut">
+                  <div class="chart-title-row chart-title-row-end">
+                    <div class="donut-controls-row">
+                      <div class="chart-gran-select" id="donutTimeRangeSelect">
+                        <button type="button" class="chart-gran-btn" id="donutTimeRangeBtn">
+                          <span id="donutTimeRangeText" data-i18n="currency.donutRange.all">全部</span>
+                          <span class="chart-gran-caret">▾</span>
+                        </button>
+                        <div class="chart-gran-menu hidden" id="donutTimeRangeMenu">
+                          <button type="button" class="chart-gran-option active" data-value="all" data-i18n="currency.donutRange.all">全部</button>
+                          <button type="button" class="chart-gran-option" data-value="week" data-i18n="currency.donutRange.week">近一週</button>
+                          <button type="button" class="chart-gran-option" data-value="month" data-i18n="currency.donutRange.month">近一月</button>
+                          <button type="button" class="chart-gran-option" data-value="year" data-i18n="currency.donutRange.year">近一年</button>
+                          <button type="button" class="chart-gran-option" data-value="custom" data-i18n="currency.donutRange.custom">自訂區間</button>
+                        </div>
+                      </div>
+                      <div class="donut-scope-tabs" id="donutScopeTabs">
+                        <button type="button" class="donut-scope-tab active" data-scope="all" data-i18n="currency.donutScope.all">全團支出</button>
+                        <button type="button" class="donut-scope-tab" data-scope="my" data-i18n="currency.donutScope.my">我的支出</button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="filter-date-row donut-custom-range hidden" id="donutCustomRangeRow">
+                    <input type="date" id="donutCustomFrom" lang="en-CA">
+                    <span class="filter-date-sep">～</span>
+                    <input type="date" id="donutCustomTo" lang="en-CA">
+                  </div>
+                  <div id="categoryDonutWrap" class="category-donut-wrap">
+                    <p class="filter-hint" data-i18n="common.loading">載入中…</p>
+                  </div>
+                  <div id="spendingInsights" class="spending-insights"></div>
+                </div>
+              </div>
+
+      <div class="card card-wide">
+        <div class="debt-card-header">
+          <h2 data-i18n="currency.debtMatrixTitle">🧮 債務關係表</h2>
+        </div>
+
+        <div class="debt-matrix-toolbar" id="debtMatrixToolbar">
+          <button type="button" class="btn-tool-pill" id="matrixFilterMeBtn" data-i18n-title="currency.matrixFilterMeTitle" title="切換只顯示跟我相關的欠款">
+            <span id="matrixFilterMeBtnText" data-i18n="currency.matrixFilterMe">👤 與我相關</span>
+          </button>
+          <button type="button" class="btn-tool-pill" id="copySettlementBtn" data-i18n-title="currency.copySettlementTitle" title="複製逐筆債務清單至剪貼簿">
+            <span data-i18n="currency.copySettlement">📋 複製清單</span>
+          </button>
+          <button type="button" class="btn-tool-pill" id="exportSettlementImgBtn" data-i18n-title="currency.exportSettlementTitle" title="匯出矩陣圖">
+            <span data-i18n="currency.exportSettlement">🖼️ 匯出圖片</span>
+          </button>
+        </div>
+        <p class="filter-hint summary-hint" data-i18n="currency.matrixHint">💡 點擊儲存格可查看詳細借貸紀錄，餘數由系統自動分攤分配</p>
+        <div class="matrix-scroll">
+          <table class="debt-matrix" id="debtMatrix"></table>
+        </div>
+        <div id="matrixDetail"></div>
+      </div>
+    </div>
+
+    <div class="app-panel" id="panelExpense">
+      <div class="card">
+        <div class="exp-header-row">
+          <h2 id="expFormTitle" class="exp-form-title" data-i18n="currency.expFormTitleDefault">🧾 新增支出</h2>
+        </div>
+        <div class="edit-banner hidden" id="editBanner">
+          <span data-i18n="currency.editMode">✎ 編輯模式</span> <button type="button" class="link-btn" id="cancelEditBtn" data-i18n="currency.cancelEdit">取消編輯</button>
+        </div>
+        <div class="exp-edit-currency-row hidden" id="editCurrencyRow">
+          <label for="expEditCurrencySelect" data-i18n="currency.editCurrencyLabel">記錯幣別了？在這裡直接改成正確的</label>
+          <div class="select-wrap">
+            <select id="expEditCurrencySelect"></select>
+          </div>
+        </div>
+
+        <div class="form-wizard-progress" id="expWizardProgress">
+          <div class="form-wizard-dots" id="expWizardDots">
+            <span class="form-wizard-dot active" data-step="0"></span>
+            <span class="form-wizard-dot" data-step="1"></span>
+            <span class="form-wizard-dot" data-step="2"></span>
+            <span class="form-wizard-dot" data-step="3"></span>
+          </div>
+          <div class="form-wizard-step-title" id="expWizardStepTitle">步驟 1 / 4・支出內容</div>
+        </div>
+
+        <div class="exp-form-section sec-content">
+          <div class="exp-form-section-head">
+            <span class="exp-form-section-icon">🍽️</span>
+            <span class="exp-form-section-title" data-i18n="currency.contentSectionTitle">支出內容</span>
+            <button type="button" class="btn-ai-receipt exp-form-section-action" id="aiReceiptBtn" data-i18n-title="currency.aiReceiptBtnTitle" title="拍照或上傳發票/收據自動辨識品項與拆單" data-i18n="currency.aiReceiptBtn">📷 AI 拆單</button>
+          </div>
+
+          <label for="expDesc" data-i18n="currency.itemNameLabel">項目 / 店名</label>
+          <input type="text" id="expDesc" data-i18n-placeholder="currency.itemNamePlaceholder" placeholder="例如 晚餐、淺草雷門 星巴克">
+
+          <!-- 支出類別下拉式選單 -->
+          <label for="expCategorySelect" data-i18n="currency.categoryLabel">類別 (自動辨識 / 可手動選擇)<span class="category-learned-hint hidden" id="expCategoryLearnedHint" data-i18n="currency.categoryLearnedHint">🧠 已套用學習</span></label>
+          <div class="select-wrap exp-category-select-wrap">
+            <select id="expCategorySelect" class="exp-category-select">
+              <option value="general" data-i18n="cat.general">🧾 一般支出</option>
+              <option value="food" data-i18n="cat.food">🍜 美食餐飲</option>
+              <option value="drink" data-i18n="cat.drink">☕ 飲料甜點</option>
+              <option value="transit" data-i18n="cat.transit">🚄 大眾交通</option>
+              <option value="car" data-i18n="cat.car">🚗 租車用油</option>
+              <option value="flight" data-i18n="cat.flight">✈️ 機票航班</option>
+              <option value="hotel" data-i18n="cat.hotel">🏨 住宿溫泉</option>
+              <option value="ticket" data-i18n="cat.ticket">🎟️ 門票娛樂</option>
+              <option value="shopping" data-i18n="cat.shopping">🛍️ 購物藥妝</option>
+              <option value="medical" data-i18n="cat.medical">💊 醫療藥品</option>
+              <option value="network" data-i18n="cat.network">📶 網卡通訊</option>
+            </select>
+          </div>
+
+          <label id="expAmountLabel">支出總金額 (已含稅/免稅)</label>
+          <div class="input-calc-wrap">
+            <input type="number" id="expAmount" data-i18n-placeholder="currency.amountPlaceholder" placeholder="例如 850" min="0" step="1">
+            <button type="button" class="amt-row-calc-btn input-calc-btn" id="expAmountCalcBtn" data-i18n-title="common.calculator" title="小計算機">🧮</button>
+          </div>
+
+          <!-- 服務費 / 稅：預設「沒有」，大部分時候金額已含稅、不用理它。摘要卡片
+               故意放在收合區塊外面，即使收合起來、只要有填資料就看得到組成 -->
+          <div class="exp-lightweight-container" id="expTaxContainer">
+            <label class="exp-addon-label" data-i18n="currency.hasTaxLabel">這筆有另外加服務費或稅嗎？</label>
+            <div class="filter-type-toggle">
+              <button type="button" class="split-mode-btn active" id="expTaxHasNoBtn" data-tax-has="no" data-i18n="currency.taxNo">沒有</button>
+              <button type="button" class="split-mode-btn" id="expTaxHasYesBtn" data-tax-has="yes" data-i18n="currency.taxYes">有，要另外加</button>
+            </div>
+            <div class="exp-addons-body hidden" id="expTaxBody">
+              <div class="exp-addons-hint" data-i18n="currency.taxHint">💡 若有餐廳服務費、消費稅或附加稅額，在此填入金額並選擇分配方式。系統會自動計算各成員最終應付金額。</div>
+
+              <label class="exp-addon-label" data-i18n="currency.taxAmountLabel">服務費 / 稅額金額</label>
+              <div class="input-calc-wrap exp-addon-calc-wrap">
+                <input type="number" id="expTaxAmount" data-i18n-placeholder="currency.taxAmountPlaceholder" placeholder="例如 85" min="0" step="1">
+                <button type="button" class="amt-row-calc-btn input-calc-btn" id="expTaxCalcBtn" data-i18n-title="common.calculator" title="小計算機">🧮</button>
+              </div>
+
+              <label class="exp-tax-label" data-i18n="currency.taxSplitModeLabel">分配方式</label>
+              <div class="ai-tax-split-toggle exp-tax-split-wrap">
+                <button type="button" class="ai-tax-btn active" data-manual-tax-mode="ratio" id="expManualTaxRatioBtn" data-i18n-title="currency.taxRatioTitle" title="依個人消費金額比例分攤服務費與稅額" data-i18n="currency.taxRatio">依消費比例</button>
+                <button type="button" class="ai-tax-btn" data-manual-tax-mode="equal" id="expManualTaxEqualBtn" data-i18n-title="currency.taxEqualTitle" title="所有參與者平均分攤服務費與稅額" data-i18n="currency.taxEqual">全員平分</button>
+              </div>
+            </div>
+            <div class="exp-tax-preview hidden exp-tax-preview-box" id="expTaxPreview"></div>
+          </div>
+        </div>
+
+        <div class="exp-form-section sec-payer hidden">
+          <div class="exp-form-section-head">
+            <span class="exp-form-section-icon">💰</span>
+            <span class="exp-form-section-title" data-i18n="currency.payerSectionTitle">誰付的錢</span>
+          </div>
+
+          <label>
+            <span data-i18n="currency.payerModeLabel">付款方式</span>
+            <span class="split-toggle">
+              <button type="button" class="split-mode-btn active" data-payer-mode="single" data-i18n="currency.payerSingle">單人全付</button>
+              <button type="button" class="split-mode-btn" data-payer-mode="multi" data-i18n="currency.payerMulti">多人付款</button>
+            </span>
+          </label>
+          <select id="expPaidBySingle"></select>
+          <div class="amt-grid hidden" id="expPayers"></div>
+          <div class="sum-check" id="payerSumCheck"></div>
+        </div>
+
+        <div class="exp-form-section sec-split hidden">
+          <div class="exp-form-section-head">
+            <span class="exp-form-section-icon">🤝</span>
+            <span class="exp-form-section-title" data-i18n="currency.splitSectionTitle">怎麼分攤</span>
+          </div>
+
+          <label>
+            <span data-i18n="currency.splitModeLabel">分攤方式</span>
+            <span class="split-toggle">
+              <button type="button" class="split-mode-btn active" data-mode="equal" data-i18n="common.equalSplit">平均分攤</button>
+              <button type="button" class="split-mode-btn" data-mode="custom" data-i18n="common.customAmount">自訂金額</button>
+              <button type="button" class="split-mode-btn" data-mode="ratio" data-i18n="common.ratioSplit">依比例分攤</button>
+            </span>
+          </label>
+          <div class="checks" id="expParticipants"></div>
+          <button type="button" class="link-btn" id="toggleAllParticipants" data-i18n="currency.deselectAll">取消全選</button>
+
+          <div class="exp-ratio-hint hidden" id="expRatioHint" data-i18n="currency.ratioHint">💡 填每個人的「份數」就好，不用加總到 100（例如房間比例 2:1:1、食量默契 3:2:1），沒填或填 0 代表這個人不參與分攤。</div>
+          <div class="amt-grid hidden" id="expSharesRatio"></div>
+
+          <!-- 個人自付/額外消費：跟上面「怎麼分攤」的勾選名單是分開的，
+               不會因為那邊勾選誰而跟著變動或消失 -->
+          <div class="exp-lightweight-container" id="expAddonsContainer">
+            <button type="button" class="exp-lightweight-toggle" id="expAddonsToggle">
+              <span class="exp-lightweight-toggle-icon" id="expAddonsCaret">+</span>
+              <span data-i18n="currency.addonsToggle">有人另外加點或自己買了什麼嗎？</span>
+            </button>
+            <div class="exp-addons-body hidden" id="expAddonsBody">
+              <div class="exp-addons-hint" data-i18n="currency.addonsHint">💡 先設定誰有個人專屬消費（如個人加點、自購用品、私人支出等），系統會自動先扣除這些金額，剩下的部分才由其餘人平分。</div>
+              <div class="exp-addons-tax-warn hidden" id="expAddonsTaxWarn" data-i18n="currency.addonsTaxWarn">⚠️ 下面請填「未稅」金額——服務費/稅會由系統依你選的方式自動計算。</div>
+              <div class="filter-type-toggle" id="expAddonModeToggle">
+                <button type="button" class="split-mode-btn exp-addon-mode-btn active" data-addon-mode="custom" data-i18n="currency.addonModeCustom">每人自訂金額</button>
+                <button type="button" class="split-mode-btn exp-addon-mode-btn" data-addon-mode="shared" data-i18n="currency.addonModeShared">新增共同品項</button>
+              </div>
+              <div class="amt-grid" id="expAddonsList"></div>
+              <div class="exp-shared-addons hidden" id="expSharedAddonsWrap">
+                <div class="exp-shared-addon-hint" data-i18n="currency.sharedAddonHint">💡 適合「大家一起買、但不是每個人都有份」的情況（例如點了一輪酒，有一兩位不喝）：填入品項總價，再勾選要分攤的人，系統會平分給勾到的人。</div>
+                <div id="expSharedAddonsList"></div>
+                <button type="button" class="link-btn exp-shared-addon-add" id="expSharedAddonAddBtn" data-i18n="currency.addSharedAddon">+ 新增共同品項</button>
+              </div>
+              <button type="button" class="link-btn exp-lightweight-clear" id="expAddonsClearBtn" data-i18n="currency.clearAddons">清除個人自付資料</button>
+            </div>
+            <div class="exp-addons-preview hidden" id="expAddonsPreview"></div>
+          </div>
+
+          <div class="exp-addons-tax-warn hidden" id="expSharesTaxWarn" data-i18n="currency.addonsTaxWarn">⚠️ 下面請填「未稅」金額——服務費/稅會由系統依你選的方式自動計算。</div>
+          <div class="amt-grid hidden" id="expSharesCustom"></div>
+          <div class="sum-check" id="shareSumCheck"></div>
+        </div>
+
+        <div class="exp-form-section sec-note hidden">
+          <div class="exp-form-section-head">
+            <span class="exp-form-section-icon">🗒️</span>
+            <span class="exp-form-section-title" data-i18n="currency.noteDateSectionTitle">備註與日期</span>
+          </div>
+
+          <label data-i18n="common.note">備註（選填）</label>
+          <textarea id="expNote" data-i18n-placeholder="currency.notePlaceholder" placeholder="例如 金額+匯率、備註說明" rows="2" style="resize:vertical;"></textarea>
+
+          <label data-i18n="common.date">日期</label>
+          <input type="date" id="expDate" lang="en-CA">
+        </div>
+
+        <div class="form-wizard-nav" id="expWizardNav">
+          <button type="button" class="btn secondary form-wizard-back hidden" id="expWizardBackBtn" data-i18n="common.wizardBack">← 上一步</button>
+          <button class="btn" id="addExpenseBtn" data-i18n="common.wizardNext">下一步</button>
+        </div>
+        <div class="msg" id="expMsg"></div>
+      </div>
+    </div>
+
+    <div class="app-panel" id="panelRepay">
+      <div class="card">
+        <h2 data-i18n="currency.settleTitle">🤝 建議還款方式</h2>
+        <select id="settleList"></select>
+        <p class="repay-hint" data-i18n="currency.settleHint">選擇其中一筆會自動幫你填好下面的還款表單</p>
+      </div>
+      <div class="card">
+        <h2 id="repayFormTitle" data-i18n="currency.repayFormTitleDefault">💸 記錄還款</h2>
+        <div class="edit-banner hidden" id="repayEditBanner">
+          <span data-i18n="currency.editMode">✎ 編輯模式</span> <button type="button" class="link-btn" id="cancelRepayEditBtn" data-i18n="currency.cancelEdit">取消編輯</button>
+        </div>
+        <div class="exp-edit-currency-row hidden" id="repayEditCurrencyRow">
+          <label for="repayEditCurrencySelect" data-i18n="currency.editCurrencyLabel">記錯幣別了？在這裡直接改成正確的</label>
+          <div class="select-wrap">
+            <select id="repayEditCurrencySelect"></select>
+          </div>
+        </div>
+        <label data-i18n="currency.repayFromLabel">誰還錢</label>
+        <select id="repayFrom"></select>
+        <label data-i18n="currency.repayToLabel">誰收錢</label>
+        <select id="repayTo"></select>
+        <label id="repayAmountLabel"></label>
+        <input type="number" id="repayAmount" data-i18n-placeholder="currency.repayAmountPlaceholder" placeholder="例如 500" min="1" step="1">
+        <label data-i18n="common.note">備註（選填）</label>
+        <input type="text" id="repayNote" data-i18n-placeholder="currency.repayNotePlaceholder" placeholder="例如 現金當面給、轉帳">
+        <label data-i18n="common.date">日期</label>
+        <input type="date" id="repayDate" lang="en-CA">
+        <button class="btn" id="addRepaymentBtn" data-i18n="currency.recordRepayment">記錄這筆還款</button>
+        <div class="msg" id="repayMsg"></div>
+      </div>
+    </div>
+
+    <div class="app-panel" id="panelHistory">
+      <div class="card">
+        <div class="history-header-bar">
+          <div class="history-type-toggle">
+            <button type="button" class="history-type-btn active" data-history-type="expense" data-i18n="currency.historyTypeExpense">🧾 支出紀錄</button>
+            <button type="button" class="history-type-btn" data-history-type="repay" data-i18n="currency.historyTypeRepay">💸 還款紀錄</button>
+          </div>
+        </div>
+
+        <!-- 🔍 歷史紀錄即時搜尋與多維度快捷 Chips -->
+        <div class="history-quick-filter-bar" id="historyQuickFilterBar">
+          <div class="history-search-row">
+            <div class="history-live-search-wrap">
+              <span class="search-icon">🔍</span>
+              <input type="text" class="search-inp" id="historyLiveSearch" data-i18n-placeholder="currency.searchPlaceholder" placeholder="搜尋項目、店家、備註、金額或成員...">
+              <button type="button" class="search-clear-btn hidden" id="historyLiveSearchClear" data-i18n-title="currency.clearSearch" aria-label="清除搜尋">✕</button>
+            </div>
+            <button type="button" class="multi-chip history-filter-btn" id="historyFilterOpenBtn"><span data-i18n="currency.filterBtn">🔍 篩選</span> <span class="filter-count-badge hidden" id="filterCountBadge">0</span></button>
+          </div>
+
+          <div class="history-chips-row">
+            <!-- 🎛️ 常駐快捷 Chip：真正的篩選開關才放這裡，其餘篩選已收進「進階篩選」。
+                 「收據牆」是動作按鈕（點了開新視窗），不是篩選開關，跟右邊「每頁幾筆」
+                 這類顯示/動作控制放一起，不跟真正的篩選 chip 混在同一排。 -->
+            <div class="history-multi-chips" id="historyMultiChips">
+              <button type="button" class="multi-chip" data-quick="involved" data-i18n="currency.matrixFilterMe">👤 與我相關</button>
+            </div>
+
+            <div class="history-pagesize-wrap">
+              <button type="button" class="multi-chip" id="receiptGalleryOpenBtn" data-i18n="currency.receiptGalleryBtn">📷 收據牆</button>
+              <span class="history-pagesize-label" data-i18n="currency.perPageLabel">每頁</span>
+              <select class="history-pagesize-select" id="historyPageSizeSelect">
+                <option value="5" data-i18n="currency.perPage5">5 筆</option>
+                <option value="10" data-i18n="currency.perPage10">10 筆</option>
+                <option value="20" data-i18n="currency.perPage20">20 筆</option>
+                <option value="50" data-i18n="currency.perPage50">50 筆</option>
+                <option value="100" data-i18n="currency.perPage100">100 筆</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- 📊 篩選即時統計資訊列 -->
+          <div class="history-result-stats hidden" id="historyResultStats">
+            <span class="stats-text" id="historyResultStatsText"></span>
+            <button type="button" class="stats-reset-btn" id="historyStatsResetBtn" data-i18n="currency.resetFilter">重設篩選</button>
+          </div>
+        </div>
+
+        <div id="expenseHistory"></div>
+        <div id="repaymentHistory" class="hidden"></div>
+      </div>
+      <div class="card">
+        <button type="button" class="btn secondary" id="exportCsvBtn" data-i18n="currency.exportCsv">📤 匯出目前篩選結果（CSV）</button>
+        <p class="filter-hint export-hint" data-i18n="currency.exportCsvHint">會匯出符合上面篩選條件的支出跟還款紀錄</p>
+      </div>
+    </div><!-- /app-panel panelHistory -->
+
+    <div class="app-footer" id="appFooter"></div>
+  </div><!-- /appScreen -->
+</div><!-- /wrap -->
+
+<script>document.getElementById("appFooter").textContent = "菘. v" + APP_VERSION;</script>
+
+<div class="calc-modal" id="calcModal">
+  <div class="calc-card card">
+    <div class="calc-header">
+      <span class="calc-header-name" id="calcTargetName"></span>
+      <button type="button" class="calc-close" id="calcCloseBtn">✕</button>
+    </div>
+    <div class="calc-display" id="calcDisplay">0</div>
+    <div class="calc-keys">
+      <button type="button" class="calc-key calc-key-op" data-key="C">C</button>
+      <button type="button" class="calc-key calc-key-op" data-key="back">⌫</button>
+      <button type="button" class="calc-key calc-key-paren" data-key="(">(</button>
+      <button type="button" class="calc-key calc-key-paren" data-key=")">)</button>
+      <button type="button" class="calc-key" data-key="7">7</button>
+      <button type="button" class="calc-key" data-key="8">8</button>
+      <button type="button" class="calc-key" data-key="9">9</button>
+      <button type="button" class="calc-key calc-key-op" data-key="/">÷</button>
+      <button type="button" class="calc-key" data-key="4">4</button>
+      <button type="button" class="calc-key" data-key="5">5</button>
+      <button type="button" class="calc-key" data-key="6">6</button>
+      <button type="button" class="calc-key calc-key-op" data-key="*">×</button>
+      <button type="button" class="calc-key" data-key="1">1</button>
+      <button type="button" class="calc-key" data-key="2">2</button>
+      <button type="button" class="calc-key" data-key="3">3</button>
+      <button type="button" class="calc-key calc-key-op" data-key="-">−</button>
+      <button type="button" class="calc-key calc-key-zero" data-key="0">0</button>
+      <button type="button" class="calc-key" data-key=".">.</button>
+      <button type="button" class="calc-key calc-key-op" data-key="+">+</button>
+      <button type="button" class="calc-key calc-key-eq" data-key="=">=</button>
+    </div>
+  </div>
+</div>
+
+<div class="calc-modal" id="twdSettleModal">
+  <div class="calc-card card twd-settle-card">
+    <div class="calc-header">
+      <span class="calc-header-name" data-i18n="currency.twdSettleTitle">💱 以新臺幣（TWD）結算</span>
+      <button type="button" class="calc-close" id="twdSettleCloseBtn">✕</button>
+    </div>
+
+    <div class="twd-settle-summary">
+      <div class="twd-settle-route" id="twdSettleRoute"></div>
+      <div class="twd-settle-orig-amt" id="twdSettleOrigAmt"></div>
+    </div>
+
+    <div class="twd-settle-rate-box">
+      <label class="twd-settle-rate-label" data-i18n="currency.setRateLabel">設定換算匯率：</label>
+      <div class="twd-settle-rate-row">
+        <span class="twd-settle-rate-prefix" id="twdSettleRatePrefix">1 單位 = NT$</span>
+        <input type="number" id="twdSettleRateInput" step="any" min="0" data-i18n-placeholder="currency.ratePlaceholder" placeholder="例如 0.2145" class="twd-settle-rate-input">
+        <button type="button" class="btn secondary small twd-settle-rate-fetch-btn" id="twdSettleFetchRateBtn" data-i18n-title="currency.fetchRateTitle" title="帶入系統即時匯率" data-i18n="currency.fetchRate">⚡ 即時匯率</button>
+      </div>
+
+      <div class="twd-settle-result-card">
+        <div class="twd-settle-result-label" data-i18n="currency.resultAmountLabel">換算應付臺幣金額</div>
+        <div class="twd-settle-result-amt" id="twdSettleResultAmt">NT$ 0</div>
+        <div class="twd-settle-result-formula" id="twdSettleResultFormula"></div>
+      </div>
+    </div>
+
+    <div class="twd-settle-actions twd-settle-actions-wrap">
+      <button type="button" class="btn twd-settle-direct-clear-btn" id="twdSettleGoTwdBtn" data-i18n="currency.convertToTwdDebt">
+        轉為臺幣欠款
+      </button>
+      <button type="button" class="btn secondary small" id="twdSettleDirectClearBtn" data-i18n="currency.settleAndClear">
+        在此一鍵結清 (欠款歸零)
+      </button>
+    </div>
+
+    <div class="twd-settle-footnote">
+      <div class="footnote-title" data-i18n="currency.rateSourceTitle">ℹ️ 匯率來源與準確度說明</div>
+      <div class="footnote-desc" data-i18n-html="currency.rateSourceDesc">
+        1. <b>匯率來源</b>：系統即時匯率取自國際金融市場中價（ExchangeRate-API），每小時同步最新牌價。<br>
+        2. <b>手續費與價差</b>：此牌價為國際中間公允匯率（即期中價），不含商業銀行換匯價差或信用卡海外交易手續費（通常約 1.5%）。建議雙方協商確認，亦可直接於上方欄位手動修改自訂匯率。
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="calc-modal" id="xcurRateEditModal">
+  <div class="calc-card card twd-settle-card">
+    <div class="calc-header">
+      <span class="calc-header-name" data-i18n="currency.xcurEditTitle">🔧 編輯債務轉入匯率</span>
+      <button type="button" class="calc-close" id="xcurRateEditCloseBtn">✕</button>
+    </div>
+
+    <div class="twd-settle-summary">
+      <div class="twd-settle-route" id="xcurRateEditRoute"></div>
+      <div class="twd-settle-orig-amt" id="xcurRateEditOrigAmt"></div>
+    </div>
+
+    <div class="twd-settle-rate-box">
+      <label class="twd-settle-rate-label" data-i18n="currency.newRateLabel">新的換算匯率：</label>
+      <div class="twd-settle-rate-row">
+        <span class="twd-settle-rate-prefix" id="xcurRateEditPrefix">1 單位 = NT$</span>
+        <input type="number" id="xcurRateEditInput" step="any" min="0" data-i18n-placeholder="currency.ratePlaceholder" placeholder="例如 0.2145" class="twd-settle-rate-input">
+        <button type="button" class="btn secondary small twd-settle-rate-fetch-btn" id="xcurRateEditFetchRateBtn" data-i18n-title="currency.fetchRateTitle" title="帶入系統即時匯率" data-i18n="currency.fetchRate">⚡ 即時匯率</button>
+      </div>
+
+      <div class="twd-settle-result-card">
+        <div class="twd-settle-result-label" data-i18n="currency.updatedResultLabel">更新後應付臺幣金額</div>
+        <div class="twd-settle-result-amt" id="xcurRateEditResultAmt">NT$ 0</div>
+      </div>
+    </div>
+
+    <button type="button" class="btn" id="xcurRateEditSaveBtn" data-i18n="currency.saveNewRate">儲存新匯率</button>
+  </div>
+</div>
+
+<div class="calc-modal" id="historyFilterModal">
+  <div class="calc-card card">
+    <div class="calc-header">
+      <span class="calc-header-name" data-i18n="currency.advancedFilterTitle">🔍 進階篩選</span>
+      <button type="button" class="calc-close" id="historyFilterCloseBtn">✕</button>
+    </div>
+    <div class="filter-body-modal" id="filterBody">
+      <span class="filter-type-toggle">
+        <button type="button" class="split-mode-btn active" data-filter-type="expense" data-i18n="common.expense">支出</button>
+        <button type="button" class="split-mode-btn" data-filter-type="repay" data-i18n="common.repayment">還款</button>
+      </span>
+      <label data-i18n="currency.dateRangeLabel">日期區間</label>
+      <div class="filter-date-row">
+        <input type="date" id="filterFrom" lang="en-CA">
+        <span class="filter-date-sep">～</span>
+        <input type="date" id="filterTo" lang="en-CA">
+      </div>
+      <p class="filter-hint" data-i18n="currency.dateRangeHint">預設只顯示近 14 天的紀錄，設定起始日期可以查更久以前的</p>
+      <label data-i18n="currency.keywordLabel">關鍵字</label>
+      <input type="text" id="filterKeyword" data-i18n-placeholder="currency.keywordPlaceholder" placeholder="支出說明或還款備註">
+
+      <label data-i18n="currency.quickFilterLabel">快速篩選</label>
+      <div class="history-multi-chips" id="filterQuickChips">
+        <button type="button" class="multi-chip" data-quick="payer_me" data-i18n="currency.quickPayerMe">💳 我代墊的</button>
+        <button type="button" class="multi-chip" data-quick="addons" data-i18n="currency.quickAddons">🍽️ 有個人自付</button>
+        <button type="button" class="multi-chip" data-quick="recurring" data-i18n="currency.recurringBadge">🔁 週期性支出</button>
+      </div>
+
+      <div id="filterExpenseFields">
+        <label data-i18n="currency.amountRangeLabel">金額區間</label>
+        <div class="filter-amt-range-row">
+          <input type="number" id="filterMinAmount" data-i18n-placeholder="currency.minAmountPlaceholder" placeholder="最低金額" min="0" step="any" class="filter-amt-inp">
+          <span class="filter-amt-sep">～</span>
+          <input type="number" id="filterMaxAmount" data-i18n-placeholder="currency.maxAmountPlaceholder" placeholder="最高金額" min="0" step="any" class="filter-amt-inp">
+        </div>
+        <div class="filter-amt-presets" id="filterAmtPresets">
+          <button type="button" class="amt-preset-btn active" data-range="all" data-i18n="currency.presetAll">全部金額</button>
+          <button type="button" class="amt-preset-btn" data-range="small" data-i18n-html="currency.presetSmall">&le; $500</button>
+          <button type="button" class="amt-preset-btn" data-range="medium" data-i18n="currency.presetMedium">$500 ~ $2,000</button>
+          <button type="button" class="amt-preset-btn" data-range="large" data-i18n-html="currency.presetLarge">&gt; $2,000</button>
+        </div>
+
+        <label data-i18n="currency.categoryMultiLabel">支出類別（可多選）</label>
+        <div class="sb-multi-select" id="filterCategoryDropdown"></div>
+
+        <label data-i18n="currency.payerMultiLabel">誰付的（可多選）</label>
+        <div class="sb-multi-select" id="filterPayerDropdown"></div>
+
+        <label data-i18n="currency.involvedMultiLabel">應付人（可多選）</label>
+        <div class="sb-multi-select" id="filterInvolvedDropdown"></div>
+      </div>
+      <div id="filterRepayFields" class="hidden">
+        <label data-i18n="currency.repayFromMultiLabel">誰還錢（可多選）</label>
+        <div class="sb-multi-select" id="filterRepayFromDropdown"></div>
+
+        <label data-i18n="currency.repayToMultiLabel">誰收錢（可多選）</label>
+        <div class="sb-multi-select" id="filterRepayToDropdown"></div>
+      </div>
+
+      <button type="button" class="link-btn" id="filterClearBtn" data-i18n="currency.clearAllFilters">清除全部篩選</button>
+    </div>
+  </div>
+</div>
+
+<div class="calc-modal" id="settlementImgModal">
+  <div class="calc-card card settlement-img-modal-card">
+    <div class="avatar-modal-header">
+      <div class="avatar-modal-title" data-i18n="currency.settlementImgTitle">🖼️ 結算圖片</div>
+      <button type="button" class="calc-close" id="settlementImgCloseBtn">✕</button>
+    </div>
+    <div class="settlement-img-preview-wrap">
+      <img id="settlementImgPreview" data-i18n-placeholder="currency.settlementImgAlt" alt="結算圖片" class="settlement-img-preview">
+    </div>
+    <div class="settlement-img-tip-box">
+      <span class="settlement-img-tip-icon">💡</span>
+      <span data-i18n-html="currency.settlementImgTip">手機可直接<b>「長按圖片」</b>選擇<b>「儲存影像」</b>存入相簿</span>
+    </div>
+    <div class="settlement-img-actions">
+      <button type="button" class="btn secondary small" id="settlementImgCopyBtn" data-i18n="currency.copyImage">📋 複製圖片</button>
+      <button type="button" class="btn secondary small" id="settlementImgShareBtn" data-i18n="currency.shareOrSave">📤 分享 / 儲存</button>
+      <button type="button" class="btn small" id="settlementImgDownloadBtn" data-i18n="currency.downloadImage">⬇️ 下載圖片</button>
+    </div>
+  </div>
+</div>
+
+<div class="calc-modal" id="receiptGalleryModal">
+  <div class="calc-card card receipt-gallery-modal-card">
+    <div class="calc-header">
+      <div class="avatar-modal-title" data-i18n="currency.receiptGalleryTitle">📷 收據牆</div>
+      <button type="button" class="calc-close" id="receiptGalleryCloseBtn">✕</button>
+    </div>
+    <div class="receipt-gallery-grid" id="receiptGalleryGrid"></div>
+    <button type="button" class="btn secondary small hidden" id="receiptGalleryLoadMoreBtn" data-i18n="currency.loadMore">載入更多</button>
+  </div>
+</div>
+
+<div class="calc-modal" id="receiptLightboxModal">
+  <div class="calc-card card receipt-lightbox-card">
+    <button type="button" class="calc-close receipt-lightbox-close" id="receiptLightboxCloseBtn">✕</button>
+    <img id="receiptLightboxImg" class="receipt-lightbox-img" alt="">
+    <div class="receipt-lightbox-info">
+      <div class="receipt-lightbox-desc" id="receiptLightboxDesc"></div>
+      <div class="receipt-lightbox-meta" id="receiptLightboxMeta"></div>
+    </div>
+    <button type="button" class="btn small" id="receiptLightboxViewBtn" data-i18n="currency.viewFullDetail">查看支出明細</button>
+  </div>
+</div>
+
+<!-- 📈 即時匯率走勢：點頁面最上面那行「即時匯率」文字跳出來，用既有的免費
+     fawazahmed0/currency-api（本來就已經是匯率來源的備援之一）查近 30 天歷史匯率 -->
+<div class="calc-modal" id="exchangeRateTrendModal">
+  <div class="calc-card card exchange-rate-trend-card">
+    <div class="calc-header">
+      <span class="calc-header-name" id="exchangeRateTrendTitle" data-i18n="currency.rateTrendTitle">📈 匯率走勢</span>
+      <button type="button" class="calc-close" id="exchangeRateTrendCloseBtn">✕</button>
+    </div>
+    <div class="donut-scope-tabs rate-trend-range-tabs" id="rateTrendRangeTabs">
+      <button type="button" class="donut-scope-tab" data-range="week" data-i18n="currency.rateTrendRangeWeek">週</button>
+      <button type="button" class="donut-scope-tab active" data-range="month" data-i18n="currency.rateTrendRangeMonth">月</button>
+      <button type="button" class="donut-scope-tab" data-range="year" data-i18n="currency.rateTrendRangeYear">年</button>
+    </div>
+    <div id="exchangeRateTrendBody">
+      <p class="filter-hint" data-i18n="common.loading">載入中…</p>
+    </div>
+  </div>
+</div>
+
+<!-- 🔁 週期性支出：編輯自動產生的那一筆時，先問「只改這一筆」還是「這筆以後都改」 -->
+<div class="calc-modal" id="recurringEditScopeModal">
+  <div class="calc-card card recurring-edit-scope-card">
+    <div class="calc-header">
+      <div class="avatar-modal-title" data-i18n="currency.recurringEditScopeTitle">這是週期性支出的其中一筆</div>
+      <button type="button" class="calc-close" id="recurringEditScopeCloseBtn">✕</button>
+    </div>
+    <p class="recurring-edit-scope-body" id="recurringEditScopeBody"></p>
+    <div class="recurring-edit-scope-actions">
+      <button type="button" class="btn secondary" id="recurringEditScopeOnlyThisBtn" data-i18n="currency.recurringEditScopeOnlyThis">只改這一筆</button>
+      <button type="button" class="btn" id="recurringEditScopeTemplateBtn" data-i18n="currency.recurringEditScopeTemplate">這筆以後都改（前往設定）</button>
+    </div>
+  </div>
+</div>
+
+<div class="calc-modal" id="expenseDebtModal">
+  <div class="calc-card card exp-debt-modal-card">
+    <div class="calc-header">
+      <div class="exp-debt-modal-title" id="expDebtModalTitle">
+        <span class="exp-debt-modal-icon" id="expDebtModalIcon">📋</span>
+        <span id="expDebtModalName" data-i18n="currency.expDebtDefaultTitle">項目債務明細</span>
+      </div>
+      <div class="settings-item-label-wrap">
+        <button type="button" class="exp-debt-edit-btn" id="expDebtModalRestoreBtn" data-i18n-title="currency.restoreXcurTitle" title="還原這筆跨幣別轉移" data-i18n="currency.restoreXcur">↺ 還原</button>
+        <button type="button" class="exp-debt-edit-btn hidden" id="expDebtModalViewReceiptBtn" data-i18n-title="currency.viewReceiptImg" title="查看收據原圖" data-i18n="currency.viewReceiptImgShort">📷 收據原圖</button>
+        <button type="button" class="exp-debt-edit-btn" id="expDebtModalEditBtn" data-i18n-title="currency.editThisExpenseTitle" title="編輯此筆支出" data-i18n="currency.editShort">✎ 編輯</button>
+        <button type="button" class="calc-close" id="expDebtModalCloseBtn">✕</button>
+      </div>
+    </div>
+    <div class="exp-debt-modal-body" id="expDebtModalBody"></div>
+  </div>
+</div>
+
+<!-- 類別支出明細彈窗 (點擊總表甜甜圈或類別項目時彈出) -->
+<div class="calc-modal" id="categoryExpensesModal">
+  <div class="calc-card card category-modal-card">
+    <div class="calc-header">
+      <div class="category-detail-modal-title" id="catModalTitleWrap">
+        <span class="cat-modal-icon" id="catModalIcon">🍜</span>
+        <div class="cat-modal-title-col">
+          <span class="cat-modal-name" id="catModalName">美食餐飲</span>
+          <span class="cat-modal-sub" id="catModalSub">共 0 筆 · $0</span>
+        </div>
+      </div>
+      <button type="button" class="calc-close" id="catModalCloseBtn" title="關閉">✕</button>
+    </div>
+    <div class="category-modal-list-scroll" id="catModalList">
+      <!-- 該類別支出清單由 JS 動態生成 -->
+    </div>
+  </div>
+</div>
+
+<div class="calc-modal" id="aiReceiptModal">
+  <div class="calc-card card ai-receipt-modal-card">
+    <div class="calc-header">
+      <div class="ai-receipt-modal-title">
+        <span class="ai-receipt-modal-icon">📷</span>
+        <span data-i18n="currency.aiModalTitle">AI 收據照片自動拆單</span>
+      </div>
+      <button type="button" class="calc-close" id="aiReceiptModalCloseBtn">✕</button>
+    </div>
+
+    <!-- 步驟 1：上傳 / 拍照（選擇相機或相簿） -->
+    <div class="ai-receipt-screen" id="aiReceiptUploadScreen">
+      <div class="ai-receipt-dropzone" id="aiReceiptDropzone">
+        <div class="ai-receipt-drop-icon">🧾</div>
+        <div class="ai-receipt-drop-text" data-i18n="currency.aiSelectSource">選擇發票/收據照片來源</div>
+        <div class="ai-receipt-drop-subtext" data-i18n="currency.aiSourceHint">支援相機即時拍攝、手機相簿、或直接貼上截圖 (Ctrl+V)</div>
+
+        <!-- 檔案選擇器（相機 vs 相簿） -->
+        <input type="file" id="aiReceiptCameraInput" accept="image/*" capture="environment" class="ai-file-input-hidden">
+        <input type="file" id="aiReceiptGalleryInput" accept="image/*" class="ai-file-input-hidden">
+        <input type="file" id="aiReceiptFileInput" accept="image/*" class="ai-file-input-hidden">
+
+        <!-- 雙按鈕：拍照 vs 相簿（完美置中，採用原生 label 觸發 + JS 雙重保障） -->
+        <div class="ai-source-buttons-row">
+          <label for="aiReceiptCameraInput" class="btn ai-source-btn" id="aiReceiptCameraBtn">
+            <span>📸</span> <span data-i18n="currency.aiOpenCamera">開啟相機</span>
+          </label>
+          <label for="aiReceiptGalleryInput" class="btn secondary ai-source-btn" id="aiReceiptGalleryBtn">
+            <span>🖼️</span> <span data-i18n="currency.aiChooseGallery">選擇相簿</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 步驟 1.5：手動旋轉與裁切發票 -->
+    <div class="ai-receipt-screen hidden" id="aiReceiptCropScreen">
+      <div class="ai-crop-instructions">
+        <span data-i18n="currency.aiCropInstructions">✂️ 拖曳調整裁切框，框選發票明細：</span>
+      </div>
+      <div class="ai-crop-viewport" id="aiCropViewport">
+        <canvas id="aiCropCanvas"></canvas>
+      </div>
+      <div class="ai-crop-toolbar">
+        <button type="button" class="btn secondary small" id="aiCropRotateBtn" data-i18n="currency.aiRotate">🔄 旋轉 90°</button>
+        <button type="button" class="btn secondary small" id="aiCropResetBtn" data-i18n="currency.aiFullSelect">📐 全圖選取</button>
+        <button type="button" class="btn secondary small" id="aiCropRetakeBtn" data-i18n="currency.aiRetake">📷 重新選圖</button>
+      </div>
+      <div class="ai-crop-confirm-wrap">
+        <button type="button" class="btn ai-crop-confirm-btn" id="aiCropConfirmBtn" data-i18n="currency.aiCropConfirm">✨ 裁切完成，開始 AI 辨識</button>
+      </div>
+    </div>
+
+    <!-- 步驟 2：AI 辨識中（經典 Logo 三瓣呼吸旋轉動畫與百分比進度顯示） -->
+    <div class="ai-receipt-screen hidden" id="aiReceiptLoadingScreen">
+      <div class="ai-receipt-loading-box">
+        <div class="ai-receipt-loading-logo-wrap">
+          <svg class="pwa-splash-logo ai-loading-splash-logo" viewBox="0 0 512 512" aria-hidden="true">
+            <path class="s1" d="M256,238 L118.5,138.1 A170,170 0 0,1 393.5,138.1 Z"/>
+            <path class="s2" d="M271.6,265 L426.9,195.9 A170,170 0 0,1 289.4,434.1 Z"/>
+            <path class="s3" d="M240.4,265 L222.6,434.1 A170,170 0 0,1 85.1,195.9 Z"/>
+          </svg>
+        </div>
+        <div class="ai-receipt-loading-title" data-i18n="currency.aiLoadingTitle">🧠 AI 智慧解析中…</div>
+        <div class="ai-receipt-loading-desc" data-i18n="currency.aiLoadingDesc">正在掃描品項名稱、數量、單價與稅費…</div>
+
+        <!-- 🌟 百分比進度條與階段說明 -->
+        <div class="ai-progress-container">
+          <div class="ai-progress-bar-wrap">
+            <div class="ai-progress-bar-fill" id="aiProgressBarFill"></div>
+          </div>
+          <div class="ai-progress-label-row">
+            <span class="ai-progress-phase" id="aiProgressPhase" data-i18n="currency.aiPhasePreprocessing">照片影像前處理中…</span>
+            <span class="ai-progress-percent" id="aiProgressPercent">0%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 步驟 3：點菜認領與直接記帳看板（拆成 品項認領 → 付款人/日期 → 分攤預覽送出 3 個子步驟） -->
+    <div class="ai-receipt-screen hidden" id="aiReceiptClaimScreen">
+      <div class="form-wizard-progress" id="aiClaimWizardProgress">
+        <div class="form-wizard-dots" id="aiClaimWizardDots">
+          <span class="form-wizard-dot active" data-step="0"></span>
+          <span class="form-wizard-dot" data-step="1"></span>
+          <span class="form-wizard-dot" data-step="2"></span>
+        </div>
+        <div class="form-wizard-step-title" id="aiClaimWizardStepTitle">步驟 1 / 3・品項認領</div>
+      </div>
+
+      <div class="ai-claim-substep" id="aiClaimSubStep1">
+      <!-- 頂部：店家名稱、總計列、服務費與稅金 (完整融入總額設定) -->
+      <div class="ai-receipt-store-bar">
+        <div class="ai-section-title">
+          <span class="ai-section-title-text" data-i18n="currency.aiStoreSectionTitle">🏪 店家與總額設定</span>
+          <button type="button" class="ai-btn-copy-compact hidden" id="aiViewReceiptImgBtn" data-i18n="currency.viewReceiptImgShort">📷 查看收據原圖</button>
+        </div>
+        <div class="ai-receipt-store-wrap">
+          <input type="text" class="ai-receipt-store-input" id="aiReceiptStoreInput" value="聚餐收據" data-i18n-placeholder="currency.aiStorePlaceholder" placeholder="店家或分店名稱 (可點擊修改)">
+        </div>
+
+        <!-- AI 支出類別下拉式選單 -->
+        <div class="ai-category-select-row">
+          <label for="aiCategorySelect" class="ai-tax-label" style="font-size:12.5px;color:var(--ink);font-weight:600;" data-i18n="currency.aiCategoryLabel">類別:</label>
+          <div class="select-wrap ai-category-select-wrap">
+            <select id="aiCategorySelect" class="ai-category-select">
+              <option value="general" data-i18n="cat.general">🧾 一般支出</option>
+              <option value="food" selected data-i18n="cat.food">🍜 美食餐飲</option>
+              <option value="drink" data-i18n="cat.drink">☕ 飲料甜點</option>
+              <option value="transit" data-i18n="cat.transit">🚄 大眾交通</option>
+              <option value="car" data-i18n="cat.car">🚗 租車用油</option>
+              <option value="flight" data-i18n="cat.flight">✈️ 機票航班</option>
+              <option value="hotel" data-i18n="cat.hotel">🏨 住宿溫泉</option>
+              <option value="ticket" data-i18n="cat.ticket">🎟️ 門票娛樂</option>
+              <option value="shopping" data-i18n="cat.shopping">🛍️ 購物藥妝</option>
+              <option value="medical" data-i18n="cat.medical">💊 醫療藥品</option>
+              <option value="network" data-i18n="cat.network">📶 網卡通訊</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 1. 稅費計算模式：外加 vs 內含 -->
+        <div class="ai-tax-type-toggle">
+          <button type="button" class="ai-tax-type-btn active" id="aiTaxTypeExclusive" data-i18n-title="currency.aiTaxExclusiveTitle" title="外加稅費：服務費或消費稅需外加至總額" data-i18n="currency.aiTaxExclusive">外加稅費 (+)</button>
+          <button type="button" class="ai-tax-type-btn" id="aiTaxTypeInclusive" data-i18n-title="currency.aiTaxInclusiveTitle" title="內含稅：各品項金額已含稅，不額外累加" data-i18n="currency.aiTaxInclusive">內含稅 (免外加)</button>
+        </div>
+
+        <!-- 小計與服務費/稅金 -->
+        <div class="ai-receipt-tax-summary" id="aiReceiptTaxSummary">
+          <div class="ai-tax-edit-item">
+            <label class="ai-tax-label" data-i18n="currency.aiSubtotalLabel">小計:</label>
+            <div class="ai-receipt-price-wrap ai-tax-price-wrap">
+              <span class="ai-receipt-cur-prefix" id="aiReceiptSubtotalCurSym">$</span>
+              <input type="number" id="aiReceiptSubtotalInput" class="ai-receipt-item-price" placeholder="0" min="0" step="any" data-i18n-title="currency.aiSubtotalTitle" title="小計金額 (自動累加或可手動微調)">
+            </div>
+          </div>
+          <div class="ai-tax-edit-item" id="aiReceiptServiceCol">
+            <label class="ai-tax-label" data-i18n="currency.aiServiceLabel">服務費/稅:</label>
+            <div class="ai-receipt-price-wrap ai-tax-price-wrap">
+              <span class="ai-receipt-cur-prefix" id="aiReceiptServiceCurSym">$</span>
+              <input type="number" id="aiReceiptServiceInput" class="ai-receipt-item-price" placeholder="0" min="0" step="any" data-i18n-title="currency.aiServiceTitle" title="服務費與稅金 (可手動修改)">
+            </div>
+          </div>
+          <div class="ai-tax-edit-item hidden" id="aiReceiptDiscountRow">
+            <label class="ai-tax-label" data-i18n="currency.aiDiscountLabel">折扣:</label>
+            <div class="ai-receipt-price-wrap ai-tax-price-wrap">
+              <span class="ai-receipt-cur-prefix" id="aiReceiptDiscountCurSym">-$</span>
+              <input type="number" id="aiReceiptDiscountInput" class="ai-receipt-item-price" placeholder="0" min="0" step="any" data-i18n-title="currency.aiDiscountTitle" title="折扣金額">
+            </div>
+          </div>
+        </div>
+        <div class="ai-tax-split-toggle" id="aiTaxSplitToggle">
+          <button type="button" class="ai-tax-btn active" data-tax-mode="ratio" id="aiTaxRatioBtn" data-i18n-title="currency.taxRatioTitle" title="依個人消費金額比例分攤服務費與稅額" data-i18n="currency.taxRatio">依消費比例</button>
+          <button type="button" class="ai-tax-btn" data-tax-mode="equal" id="aiTaxEqualBtn" data-i18n-title="currency.taxEqualTitle" title="所有參與者平均分攤服務費與稅額" data-i18n="currency.taxEqual">全員平分</button>
+        </div>
+
+        <!-- 2. 分隔線 -->
+        <div class="ai-receipt-bar-divider"></div>
+
+        <!-- 3. 總計列 (總計 + 緊湊幣別選擇 + AI總金額可編輯) -->
+        <div class="ai-receipt-header-total-row">
+          <div class="ai-header-total-left">
+            <span class="ai-header-total-label" data-i18n="currency.aiTotalLabel">總計</span>
+            <div class="ai-receipt-cur-select-wrap">
+              <select id="aiReceiptCurrencySelect" class="ai-select-custom ai-receipt-currency-select-compact" data-i18n-title="currency.aiCurrencySelectTitle" title="記帳幣別"></select>
+            </div>
+          </div>
+          <div class="ai-header-total-right">
+            <div class="ai-receipt-price-wrap ai-total-price-wrap">
+              <span class="ai-receipt-cur-prefix" id="aiReceiptTotalCurSym">$</span>
+              <input type="number" class="ai-receipt-item-price ai-total-price-input" id="aiReceiptTotalInput" placeholder="0" min="0" step="any" data-i18n-title="currency.aiTotalInputTitle" title="可手動修改總金額">
+            </div>
+          </div>
+        </div>
+
+        <!-- ⚠️ 小計+服務費/稅 ≠ 總額 紅字警示 -->
+        <div class="ai-total-check-warning hidden" id="aiTotalMismatchWarning"></div>
+      </div>
+
+      <!-- 📋 品項清單（收據清單 + 防漏單進度條 + 氣泡流認領） -->
+      <div class="ai-receipt-items-container">
+        <div class="ai-section-title">
+          <span class="ai-section-title-text" data-i18n="currency.aiItemsTitle">📋 品項明細與認領</span>
+          <button type="button" class="link-btn ai-section-action-btn" id="aiReceiptAddItemBtn" data-i18n="currency.aiAddItem">+ 新增品項</button>
+        </div>
+
+        <!-- 防漏單即時進度儀表板 (方案 C) -->
+        <div class="ai-claim-progress-box" id="aiClaimProgressBox">
+          <div class="ai-claim-progress-info">
+            <span class="ai-claim-progress-title" data-i18n="currency.aiClaimProgressTitle">⚡ 認領進度</span>
+            <span class="ai-claim-progress-stats" id="aiClaimProgressStats">0 / 0 品項已認領 (0%)</span>
+          </div>
+          <div class="ai-claim-progress-bar-bg">
+            <div class="ai-claim-progress-bar-fill" id="aiClaimProgressFill"></div>
+          </div>
+          <div class="ai-claim-progress-status" id="aiClaimProgressStatus" data-i18n="currency.aiClaimUnclaimedStatus">⚠️ 尚有品項尚未認領</div>
+        </div>
+
+        <div class="ai-receipt-items-list" id="aiReceiptItemsList"></div>
+      </div>
+      </div>
+
+      <div class="ai-claim-substep hidden" id="aiClaimSubStep2">
+      <!-- 💳 付款人與時間設定 -->
+      <div class="ai-receipt-record-panel">
+        <div class="ai-section-title">
+          <span class="ai-section-title-text" data-i18n="currency.aiPayerTimeTitle">💳 付款人與消費時間</span>
+        </div>
+
+        <!-- 付款模式切換 -->
+        <div class="ai-payer-mode-toggle">
+          <button type="button" class="ai-payer-mode-btn active" id="aiPayerModeSingle" data-i18n="currency.aiPayerModeSingle">單人付款</button>
+          <button type="button" class="ai-payer-mode-btn" id="aiPayerModeMulti" data-i18n="currency.aiPayerModeMulti">多人付款</button>
+        </div>
+
+        <!-- 單人付款選擇 -->
+        <div class="ai-payer-single-row" id="aiPayerSingleRow">
+          <label class="ai-payer-label" data-i18n="currency.aiWhoPaidLabel">誰付的錢：</label>
+          <select id="aiPaidBySingle" class="ai-select-custom"></select>
+        </div>
+
+        <!-- 多人付款列表 -->
+        <div class="ai-payer-multi-panel hidden" id="aiPayerMultiPanel">
+          <div class="ai-payer-multi-list" id="aiPayerMultiList"></div>
+          <div class="ai-payer-sum-check" id="aiPayerSumCheck"></div>
+        </div>
+
+        <!-- 時間（自動解析收據明細上的日期時間，亦可手動調整） -->
+        <div class="ai-record-meta-row">
+          <div class="ai-meta-col">
+            <label class="ai-meta-label" data-i18n="currency.aiExpenseDateLabel">消費日期：</label>
+            <input type="date" id="aiExpenseDate" class="ai-input-custom ai-meta-input">
+          </div>
+          <div class="ai-meta-col">
+            <label class="ai-meta-label" data-i18n="currency.aiExpenseTimeLabel">消費時間：</label>
+            <input type="time" id="aiExpenseTime" class="ai-input-custom ai-meta-input">
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <div class="ai-claim-substep hidden" id="aiClaimSubStep3">
+      <!-- 👥 每人應付試算預覽 -->
+      <div class="ai-receipt-claim-summary">
+        <div class="ai-section-title">
+          <span class="ai-section-title-text" data-i18n="currency.aiMembersPreviewTitle">👥 每人應付試算預覽</span>
+        </div>
+        <div class="ai-receipt-members-grid" id="aiReceiptMembersGrid"></div>
+      </div>
+
+      <!-- 📊 金額組成明細預覽 -->
+      <div class="ai-breakdown-preview-card" id="aiBreakdownPreviewCard">
+        <div class="ai-section-title ai-breakdown-title-row">
+          <span class="ai-section-title-text" data-i18n="currency.aiBreakdownTitle">📊 金額組成明細（記入備註）</span>
+          <div class="ai-copy-btn-group">
+            <button type="button" class="ai-btn-copy-compact" id="aiCopyCompactBtn" data-i18n-title="currency.aiCopyCompactTitle" title="複製精簡版（僅各人應付總額，適合傳送 LINE / IG）" data-i18n="currency.aiCopyCompact">⚡ 複製精簡版</button>
+            <button type="button" class="ai-btn-copy-full" id="aiCopyFullBtn" data-i18n-title="currency.aiCopyFullTitle" title="複製完整品項明細與算式" data-i18n="currency.aiCopyFull">📋 複製完整版</button>
+          </div>
+        </div>
+        <div class="ai-breakdown-content" id="aiBreakdownContent"></div>
+      </div>
+
+      <label class="ai-receipt-keep-image-row" for="aiReceiptKeepImageChk">
+        <input type="checkbox" id="aiReceiptKeepImageChk">
+        <span data-i18n="currency.aiKeepImageLabel">保留這張收據原圖（僅同群組成員看得到，180 天後自動清除）</span>
+      </label>
+
+      <div class="ai-receipt-actions">
+        <button type="button" class="btn secondary ai-receipt-retake-btn" id="aiReceiptRetakeBtn" data-i18n="currency.aiRetakePhoto">📷 重選照片</button>
+        <button type="button" class="btn ai-receipt-save-btn" id="aiReceiptDirectSaveBtn" data-i18n="currency.aiDirectSave">💾 確認無誤，立即記帳</button>
+      </div>
+      </div>
+
+      <div class="msg" id="aiClaimWizardMsg"></div>
+
+      <div class="form-wizard-nav" id="aiClaimWizardNav">
+        <button type="button" class="btn secondary form-wizard-back hidden" id="aiClaimWizardBackBtn" data-i18n="common.wizardBack">← 上一步</button>
+        <button type="button" class="btn" id="aiClaimWizardNextBtn" data-i18n="common.wizardNext">下一步</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 🎖️ 成就榜彈窗 (iOS 原生 Bottom Sheet) -->
+<div id="achievementsModal" class="calc-modal sb-bottom-sheet hidden">
+  <div class="calc-card achievements-modal-card">
+    <div class="sb-drag-handle"></div>
+    <div class="calc-header">
+      <h3 data-i18n="currency.achievementsTitle">🎖️ 成就榜</h3>
+      <button type="button" class="calc-close" id="achievementsCloseBtn" data-i18n-title="common.close" aria-label="關閉">✕</button>
+    </div>
+    <div class="achievements-list-scroll" id="achievementsListScroll">
+      <!-- 動態載入成就清單 -->
+    </div>
+  </div>
+</div>
+
+<div id="memberProfileModal" class="calc-modal sb-bottom-sheet hidden">
+  <div class="calc-card member-profile-modal-card">
+    <div class="sb-drag-handle"></div>
+    <div class="calc-header">
+      <h3 data-i18n="currency.memberProfileTitle">👤 成員資料</h3>
+      <button type="button" class="calc-close" id="memberProfileCloseBtn" data-i18n-title="common.close" aria-label="關閉">✕</button>
+    </div>
+    <div class="member-profile-body">
+      <div class="member-profile-avatar-wrap" id="memberProfileAvatarWrap"></div>
+      <div class="member-profile-name" id="memberProfileName"></div>
+      <div class="member-profile-relation hidden" id="memberProfileRelation"></div>
+      <div class="member-profile-payment-info hidden" id="memberProfilePaymentInfo"></div>
+      <div class="member-profile-badges" id="memberProfileBadges"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://ofevarwtqzvzrvhbanmf.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_pWT6foelsonrb1sLMXhnCw_oA3ytvaX";
+
+// ---------- 依網址參數 ?c=XXX 決定這頁是哪個幣別 ----------
+const urlParams = new URLSearchParams(location.search);
+const requestedCode = (urlParams.get("c") || "TWD").toUpperCase();
+const activeCurrency = CURRENCIES.find(c => c.code === requestedCode) || CURRENCIES[0];
+
+const CURRENCY = activeCurrency.code;
+const CURRENCY_SYMBOL = activeCurrency.symbol;
+// 不能用 const 存 activeCurrency.label 的當下值——那樣切換語言只是把
+// activeCurrency.label 這個 getter 讀出新字串，已經存進 CURRENCY_LABEL
+// 的舊字串不會自己跟著變。改成用 Object.defineProperty 定義一個全域
+// 存取器，讓所有地方（這個檔案自己 + app.js）讀到的 CURRENCY_LABEL
+// 永遠是即時呼叫 activeCurrency.label 的當下結果。
+Object.defineProperty(window, "CURRENCY_LABEL", { get(){ return activeCurrency.label; }, configurable: true });
+const SHOW_CONVERSION = !!activeCurrency.convert;
+
+function applyCurrencyPageLabels(){
+  const heading = t("currency.pageHeading", {currency: CURRENCY_LABEL});
+  document.title = "Splitbill｜" + heading;
+  const h1El = document.getElementById("pageH1");
+  h1El.textContent = heading;
+  document.getElementById("myBalanceLabel").textContent = t("currency.myBalanceLabel", {currency: CURRENCY_LABEL});
+  document.getElementById("expAmountLabel").textContent = t("currency.totalAmountLabel", {currency: CURRENCY_LABEL});
+  document.getElementById("repayAmountLabel").textContent = t("currency.repayAmountLabel", {currency: CURRENCY_LABEL});
+  // 標題跟「我的款項」標籤都是幣別名稱組出來的動態文字，長度會隨語言、
+  // 幣別差很多，套用 fitTextToOneLine() 自動縮字級塞進一行，不用再為了
+  // 個別語言手動調整字級或改短翻譯文字。
+  if(typeof window.fitTextToOneLine === "function"){
+    requestAnimationFrame(()=>{
+      window.fitTextToOneLine(h1El, 12);
+      const balanceLabelEl = document.getElementById("myBalanceLabel");
+      if(balanceLabelEl) window.fitTextToOneLine(balanceLabelEl, 11);
+    });
+  }
+}
+applyCurrencyPageLabels();
+document.getElementById("pageH1").addEventListener("click", ()=>{
+  if(typeof showCountryInfoDialog === "function") showCountryInfoDialog(CURRENCY);
+});
+window.addEventListener("resize", ()=>{
+  if(typeof window.fitTextToOneLine === "function"){
+    const h1El = document.getElementById("pageH1");
+    window.fitTextToOneLine(h1El, 12);
+    const balanceLabelEl = document.getElementById("myBalanceLabel");
+    if(balanceLabelEl) window.fitTextToOneLine(balanceLabelEl, 11);
+  }
+});
+document.addEventListener("splitbill-lang-changed", applyCurrencyPageLabels);
+
+// shownCurrencies 由 app.js 在登入後從 members.shown_currencies 填入，
+// 先用上次登入抓到的結果（快取在 localStorage）畫一次，避免每次換頁都先跳回預設值。
+// 目前這個幣別本身一定要顯示連結（不管有沒有勾選，畢竟使用者就在這一頁）。
+window.shownCurrencies = JSON.parse(localStorage.getItem("splitbill-shown-currencies") || "null") || ["TWD"];
+window.renderNavLinks = function(){
+  renderSplitbillNav("navLinks", CURRENCY, window.shownCurrencies);
+};
+window.renderNavLinks();
+</script>
+<script src="app.js?v=855"></script>
+</body>
+</html>

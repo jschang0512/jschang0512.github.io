@@ -1,0 +1,1754 @@
+// ============================================================
+// Split Bill — 支援的幣別清單。
+// 以後要加新幣別（例如去下一個國家旅行），只要在這裡加一筆，
+// 不用再建立新的 HTML 檔案、也不用改 currency.html 或 app.js。
+// convert:true 表示要在金額旁邊顯示「≈NT$xxx」的臺幣換算提示。
+// 排列順序依照台灣人常用/常去的程度，越常用排越前面——設定頁的
+// 「顯示幣別」是勾選式的 toggle 按鈕（可以複選），清單順序就是
+// 照這裡的陣列順序排。
+// ============================================================
+// label 用 getter 讀 t("currencyName.XXX")，理由跟 CATEGORY_MAP.name 一樣：
+// 每次讀取都即時反映當下語言，不用整頁重畫就能拿到正確翻譯。
+function currencyDisplayName(code, fallback){
+  return (typeof t === "function") ? t("currencyName." + code) : fallback;
+}
+const CURRENCIES = [
+  { code: "TWD", symbol: "NT$",  get label(){ return currencyDisplayName("TWD", "臺幣"); },       flag: "🇹🇼", country: "tw", convert: false, decimals: 0 },
+  { code: "JPY", symbol: "¥",    get label(){ return currencyDisplayName("JPY", "日幣"); },       flag: "🇯🇵", country: "jp", convert: true,  decimals: 0 },
+  { code: "KRW", symbol: "₩",    get label(){ return currencyDisplayName("KRW", "韓幣"); },       flag: "🇰🇷", country: "kr", convert: true,  decimals: 0 },
+  { code: "CNY", symbol: "CN¥",  get label(){ return currencyDisplayName("CNY", "人民幣"); },     flag: "🇨🇳", country: "cn", convert: true,  decimals: 2 },
+  { code: "HKD", symbol: "HK$",  get label(){ return currencyDisplayName("HKD", "港幣"); },       flag: "🇭🇰", country: "hk", convert: true,  decimals: 2 },
+  { code: "MOP", symbol: "MOP$", get label(){ return currencyDisplayName("MOP", "澳門幣"); },     flag: "🇲🇴", country: "mo", convert: true,  decimals: 2 },
+  { code: "USD", symbol: "$",    get label(){ return currencyDisplayName("USD", "美金"); },       flag: "🇺🇸", country: "us", convert: true,  decimals: 2 },
+  { code: "VND", symbol: "₫",    get label(){ return currencyDisplayName("VND", "越南盾"); },     flag: "🇻🇳", country: "vn", convert: true,  decimals: 0 },
+  { code: "THB", symbol: "฿",    get label(){ return currencyDisplayName("THB", "泰銖"); },       flag: "🇹🇭", country: "th", convert: true,  decimals: 2 },
+  { code: "PHP", symbol: "₱",    get label(){ return currencyDisplayName("PHP", "菲律賓披索"); }, flag: "🇵🇭", country: "ph", convert: true,  decimals: 2 },
+  { code: "SGD", symbol: "S$",   get label(){ return currencyDisplayName("SGD", "新加坡幣"); },   flag: "🇸🇬", country: "sg", convert: true,  decimals: 2 },
+  { code: "MYR", symbol: "RM",   get label(){ return currencyDisplayName("MYR", "馬來幣"); },     flag: "🇲🇾", country: "my", convert: true,  decimals: 2 },
+  { code: "IDR", symbol: "Rp",   get label(){ return currencyDisplayName("IDR", "印尼盾"); },     flag: "🇮🇩", country: "id", convert: true,  decimals: 0 },
+  { code: "KHR", symbol: "៛",    get label(){ return currencyDisplayName("KHR", "柬埔寨瑞爾"); }, flag: "🇰🇭", country: "kh", convert: true,  decimals: 0 },
+  { code: "EUR", symbol: "€",    get label(){ return currencyDisplayName("EUR", "歐元"); },       flag: "🇪🇺", country: "eu", convert: true,  decimals: 2 },
+  { code: "GBP", symbol: "£",    get label(){ return currencyDisplayName("GBP", "英鎊"); },       flag: "🇬🇧", country: "gb", convert: true,  decimals: 2 },
+  { code: "CHF", symbol: "Fr",   get label(){ return currencyDisplayName("CHF", "瑞士法郎"); },   flag: "🇨🇭", country: "ch", convert: true,  decimals: 2 },
+  { code: "AUD", symbol: "A$",   get label(){ return currencyDisplayName("AUD", "澳幣"); },       flag: "🇦🇺", country: "au", convert: true,  decimals: 2 },
+  { code: "NZD", symbol: "NZ$",  get label(){ return currencyDisplayName("NZD", "紐幣"); },       flag: "🇳🇿", country: "nz", convert: true,  decimals: 2 },
+  { code: "TRY", symbol: "₺",    get label(){ return currencyDisplayName("TRY", "土耳其里拉"); }, flag: "🇹🇷", country: "tr", convert: true,  decimals: 2 },
+  { code: "CZK", symbol: "Kč",   get label(){ return currencyDisplayName("CZK", "捷克克朗"); },   flag: "🇨🇿", country: "cz", convert: true,  decimals: 2 },
+  { code: "HUF", symbol: "Ft",   get label(){ return currencyDisplayName("HUF", "匈牙利福林"); }, flag: "🇭🇺", country: "hu", convert: true,  decimals: 0 },
+  { code: "SEK", symbol: "kr",   get label(){ return currencyDisplayName("SEK", "瑞典克朗"); },   flag: "🇸🇪", country: "se", convert: true,  decimals: 2 },
+  { code: "NOK", symbol: "kr",   get label(){ return currencyDisplayName("NOK", "挪威克朗"); },   flag: "🇳🇴", country: "no", convert: true,  decimals: 2 },
+  { code: "DKK", symbol: "kr",   get label(){ return currencyDisplayName("DKK", "丹麥克朗"); },   flag: "🇩🇰", country: "dk", convert: true,  decimals: 2 },
+  { code: "ISK", symbol: "kr",   get label(){ return currencyDisplayName("ISK", "冰島克朗"); },   flag: "🇮🇸", country: "is", convert: true,  decimals: 0 }
+];
+
+// 📷 真國旗圖片（flagcdn.com，免費、不用金鑰）取代 emoji 國旗——emoji 國旗在
+// Windows 部分瀏覽器/字型組合下顯示不出來，會直接秀成兩個字母代碼（例如
+// 「TW」），這裡改成真的圖片，跨平台外觀一致。萬一圖沒載到（離線、CDN
+// 抽風），onerror 退回原本的 emoji，不會整塊空白。只能用在「一般 HTML」
+// 的地方——瀏覽器原生 <option> 不支援嵌圖，那些地方還是只能用文字。
+// 🌍 目的地小知識卡：行車方向／國際電話區碼／官方語言／首都／小費文化／
+// 現金卡片普及度／插座電壓／緊急電話，這些幾乎不會變動的地理/文化事實
+// 直接寫死在這裡，不打外部 API——原本評估用 REST Countries API，實測
+// 瀏覽器直接 fetch 會被 CORS 擋掉（跟之前 freeipapi.com 同一種問題，只有
+// 真的在瀏覽器裡測才測得出來），而且這種資料本來就幾乎不會變，沒必要為了
+// 它冒一次外部服務不穩定的風險。language/capital 直接存三語字串（不透過
+// i18n.js 的全站字典 key），因為這是「資料」不是「介面文字」，跟
+// TAIWAN_BANKS 銀行清單是同樣的處理方式；plugVoltage/emergency 是數字/
+// 型號組成的資料，三語都長一樣，也不用另外存三份。小費文化(tipping)跟
+// 現金卡片普及度(payment)改用「等級代碼＋i18n.js 共用短句」而不是每個
+// 國家各寫一句三語長文——25 個國家 × 3 語言 × 完整句子的維護成本太高，
+// 用等級（none/optional/expected/included、cash/mixed/card/cashless）
+// 對應到少數幾句共用翻譯，各國只要選等級就好；US/GB 這種有具體慣例百分比
+// 的另外加 tippingNote 小字補充，其他國家不用。欄位標籤（「官方語言」等）
+// 才走 i18n.js。key 對應 CURRENCIES 裡的 country 欄位；country:"eu" 是
+// 多國共用的歐元，另外用 country.euNote 顯示提示文字，不放進這張表。
+const COUNTRY_INFO = {
+  tw: { dialCode: "+886", drivingSide: "right", language: { "zh-Hant": "中文（國語）", ja: "中国語（北京語）", en: "Mandarin Chinese" }, capital: { "zh-Hant": "臺北", ja: "台北", en: "Taipei" }, tipping: "none", payment: "mixed", plugVoltage: "Type A/B, 110V", emergency: "110 (Police) / 119 (Fire, Ambulance)" },
+  jp: { dialCode: "+81", drivingSide: "left", language: { "zh-Hant": "日文", ja: "日本語", en: "Japanese" }, capital: { "zh-Hant": "東京", ja: "東京", en: "Tokyo" }, tipping: "none", payment: "cash", plugVoltage: "Type A, 100V", emergency: "110 (Police) / 119 (Fire, Ambulance)" },
+  kr: { dialCode: "+82", drivingSide: "right", language: { "zh-Hant": "韓文", ja: "韓国語", en: "Korean" }, capital: { "zh-Hant": "首爾", ja: "ソウル", en: "Seoul" }, tipping: "none", payment: "card", plugVoltage: "Type C/F, 220V", emergency: "112 (Police) / 119 (Fire, Ambulance)" },
+  cn: { dialCode: "+86", drivingSide: "right", language: { "zh-Hant": "中文（普通話）", ja: "中国語（普通話）", en: "Mandarin Chinese" }, capital: { "zh-Hant": "北京", ja: "北京", en: "Beijing" }, tipping: "none", payment: "cashless", plugVoltage: "Type A/C/I, 220V", emergency: "110 (Police) / 120 (Ambulance) / 119 (Fire)" },
+  hk: { dialCode: "+852", drivingSide: "left", language: { "zh-Hant": "廣東話、英文", ja: "広東語・英語", en: "Cantonese, English" }, capital: { "zh-Hant": "—（特別行政區）", ja: "―（特別行政区）", en: "— (Special Administrative Region)" }, tipping: "optional", payment: "card", plugVoltage: "Type G, 220V", emergency: "999 (All)" },
+  mo: { dialCode: "+853", drivingSide: "left", language: { "zh-Hant": "廣東話、葡萄牙文", ja: "広東語・ポルトガル語", en: "Cantonese, Portuguese" }, capital: { "zh-Hant": "—（特別行政區）", ja: "―（特別行政区）", en: "— (Special Administrative Region)" }, tipping: "optional", payment: "card", plugVoltage: "Type G, 220V", emergency: "999 (All)" },
+  us: { dialCode: "+1", drivingSide: "right", language: { "zh-Hant": "英文", ja: "英語", en: "English" }, capital: { "zh-Hant": "華盛頓特區", ja: "ワシントンD.C.", en: "Washington, D.C." }, tipping: "expected", tippingNote: "15–20%", payment: "card", plugVoltage: "Type A/B, 120V", emergency: "911 (All)" },
+  vn: { dialCode: "+84", drivingSide: "right", language: { "zh-Hant": "越南文", ja: "ベトナム語", en: "Vietnamese" }, capital: { "zh-Hant": "河內", ja: "ハノイ", en: "Hanoi" }, tipping: "optional", payment: "cash", plugVoltage: "Type A/C, 220V", emergency: "113 (Police) / 115 (Ambulance)" },
+  th: { dialCode: "+66", drivingSide: "left", language: { "zh-Hant": "泰文", ja: "タイ語", en: "Thai" }, capital: { "zh-Hant": "曼谷", ja: "バンコク", en: "Bangkok" }, tipping: "optional", payment: "mixed", plugVoltage: "Type A/C, 220V", emergency: "191 (Police) / 1669 (Ambulance)" },
+  ph: { dialCode: "+63", drivingSide: "right", language: { "zh-Hant": "菲律賓文、英文", ja: "フィリピノ語・英語", en: "Filipino, English" }, capital: { "zh-Hant": "馬尼拉", ja: "マニラ", en: "Manila" }, tipping: "optional", payment: "cash", plugVoltage: "Type A/B/C, 220V", emergency: "911 (All)" },
+  sg: { dialCode: "+65", drivingSide: "left", language: { "zh-Hant": "英文、馬來文、華語、坦米爾文", ja: "英語・マレー語・中国語・タミル語", en: "English, Malay, Mandarin, Tamil" }, capital: { "zh-Hant": "—（城市國家）", ja: "―（都市国家）", en: "— (City-state)" }, tipping: "included", payment: "card", plugVoltage: "Type G, 230V", emergency: "999 (Police) / 995 (Fire, Ambulance)" },
+  my: { dialCode: "+60", drivingSide: "left", language: { "zh-Hant": "馬來文", ja: "マレー語", en: "Malay" }, capital: { "zh-Hant": "吉隆坡", ja: "クアラルンプール", en: "Kuala Lumpur" }, tipping: "optional", payment: "mixed", plugVoltage: "Type G, 230V", emergency: "999 (All)" },
+  id: { dialCode: "+62", drivingSide: "left", language: { "zh-Hant": "印尼文", ja: "インドネシア語", en: "Indonesian" }, capital: { "zh-Hant": "雅加達", ja: "ジャカルタ", en: "Jakarta" }, tipping: "optional", payment: "cash", plugVoltage: "Type C/F, 230V", emergency: "110 (Police) / 118 (Ambulance)" },
+  kh: { dialCode: "+855", drivingSide: "right", language: { "zh-Hant": "高棉文", ja: "クメール語", en: "Khmer" }, capital: { "zh-Hant": "金邊", ja: "プノンペン", en: "Phnom Penh" }, tipping: "optional", payment: "cash", plugVoltage: "Type A/C/G, 230V", emergency: "117 (Police) / 119 (Ambulance)" },
+  gb: { dialCode: "+44", drivingSide: "left", language: { "zh-Hant": "英文", ja: "英語", en: "English" }, capital: { "zh-Hant": "倫敦", ja: "ロンドン", en: "London" }, tipping: "expected", tippingNote: "10–12.5%", payment: "card", plugVoltage: "Type G, 230V", emergency: "999 / 112 (All)" },
+  ch: { dialCode: "+41", drivingSide: "right", language: { "zh-Hant": "德文、法文、義大利文、羅曼什文", ja: "ドイツ語・フランス語・イタリア語・ロマンシュ語", en: "German, French, Italian, Romansh" }, capital: { "zh-Hant": "伯恩", ja: "ベルン", en: "Bern" }, tipping: "included", payment: "mixed", plugVoltage: "Type C/J, 230V", emergency: "112 (All) / 117 (Police) / 144 (Ambulance)" },
+  au: { dialCode: "+61", drivingSide: "left", language: { "zh-Hant": "英文", ja: "英語", en: "English" }, capital: { "zh-Hant": "坎培拉", ja: "キャンベラ", en: "Canberra" }, tipping: "none", payment: "card", plugVoltage: "Type I, 230V", emergency: "000 (All)" },
+  nz: { dialCode: "+64", drivingSide: "left", language: { "zh-Hant": "英文、毛利文", ja: "英語・マオリ語", en: "English, Māori" }, capital: { "zh-Hant": "威靈頓", ja: "ウェリントン", en: "Wellington" }, tipping: "none", payment: "card", plugVoltage: "Type I, 230V", emergency: "111 (All)" },
+  tr: { dialCode: "+90", drivingSide: "right", language: { "zh-Hant": "土耳其文", ja: "トルコ語", en: "Turkish" }, capital: { "zh-Hant": "安卡拉", ja: "アンカラ", en: "Ankara" }, tipping: "optional", tippingNote: "5–10%", payment: "mixed", plugVoltage: "Type C/F, 230V", emergency: "112 (All)" },
+  cz: { dialCode: "+420", drivingSide: "right", language: { "zh-Hant": "捷克文", ja: "チェコ語", en: "Czech" }, capital: { "zh-Hant": "布拉格", ja: "プラハ", en: "Prague" }, tipping: "optional", tippingNote: "~10%", payment: "mixed", plugVoltage: "Type C/E, 230V", emergency: "112 (All)" },
+  hu: { dialCode: "+36", drivingSide: "right", language: { "zh-Hant": "匈牙利文", ja: "ハンガリー語", en: "Hungarian" }, capital: { "zh-Hant": "布達佩斯", ja: "ブダペスト", en: "Budapest" }, tipping: "optional", tippingNote: "~10%", payment: "mixed", plugVoltage: "Type C/F, 230V", emergency: "112 (All)" },
+  se: { dialCode: "+46", drivingSide: "right", language: { "zh-Hant": "瑞典文", ja: "スウェーデン語", en: "Swedish" }, capital: { "zh-Hant": "斯德哥爾摩", ja: "ストックホルム", en: "Stockholm" }, tipping: "included", payment: "cashless", plugVoltage: "Type C/F, 230V", emergency: "112 (All)" },
+  no: { dialCode: "+47", drivingSide: "right", language: { "zh-Hant": "挪威文", ja: "ノルウェー語", en: "Norwegian" }, capital: { "zh-Hant": "奧斯陸", ja: "オスロ", en: "Oslo" }, tipping: "included", payment: "cashless", plugVoltage: "Type C/F, 230V", emergency: "112 (Police) / 113 (Ambulance)" },
+  dk: { dialCode: "+45", drivingSide: "right", language: { "zh-Hant": "丹麥文", ja: "デンマーク語", en: "Danish" }, capital: { "zh-Hant": "哥本哈根", ja: "コペンハーゲン", en: "Copenhagen" }, tipping: "included", payment: "cashless", plugVoltage: "Type C/K, 230V", emergency: "112 (All)" },
+  is: { dialCode: "+354", drivingSide: "right", language: { "zh-Hant": "冰島文", ja: "アイスランド語", en: "Icelandic" }, capital: { "zh-Hant": "雷克雅維克", ja: "レイキャビク", en: "Reykjavík" }, tipping: "included", payment: "cashless", plugVoltage: "Type C/F, 230V", emergency: "112 (All)" }
+};
+
+// 點幣別頁標題（例如「日幣區」）彈出的小知識卡：語言／首都／國際電話區碼／
+// 行車方向／小費文化／現金卡片普及度／插座電壓／緊急電話。EUR 沒有單一
+// 國家，另外顯示提示文字；查不到資料的幣別（理論上不會發生，上面
+// COUNTRY_INFO 涵蓋了 CURRENCIES 全部 26 種幣別，這裡防禦一下避免漏填時
+// 整頁報錯）就靜默不彈窗。
+function countryInfoCellHTML(icon, label, value){
+  const esc = (typeof escapeHtml === "function") ? escapeHtml : (s => s);
+  return `
+    <div class="country-info-cell">
+      <div class="country-info-cell-head">
+        <span class="country-info-icon">${icon}</span>
+        <span class="country-info-label">${esc(label)}</span>
+      </div>
+      <div class="country-info-value">${esc(value)}</div>
+    </div>
+  `;
+}
+
+function showCountryInfoDialog(currencyCode){
+  const c = CURRENCIES.find(item => item.code === currencyCode);
+  if(!c || !c.country || typeof showSbDialog !== "function" || typeof t !== "function") return;
+  const lang = (typeof getLang === "function") ? getLang() : "zh-Hant";
+  if(c.country === "eu"){
+    const esc = (typeof escapeHtml === "function") ? escapeHtml : (s => s);
+    showSbDialog({ title: c.label, html: `<p class="country-info-eu-note">${esc(t("country.euNote"))}</p>`, confirmText: null });
+    return;
+  }
+  const info = COUNTRY_INFO[c.country];
+  if(!info) return;
+  const sideLabel = info.drivingSide === "left" ? t("country.drivingLeft") : t("country.drivingRight");
+  const tippingLabel = t("country.tipping." + info.tipping) + (info.tippingNote ? `（${info.tippingNote}）` : "");
+  const paymentLabel = t("country.payment." + info.payment);
+  const cellsHtml = [
+    countryInfoCellHTML("🗣️", t("country.language"), info.language[lang] || info.language["zh-Hant"]),
+    countryInfoCellHTML("🏛️", t("country.capital"), info.capital[lang] || info.capital["zh-Hant"]),
+    countryInfoCellHTML("☎️", t("country.dialCode"), info.dialCode),
+    countryInfoCellHTML("🚗", t("country.drivingSide"), sideLabel),
+    countryInfoCellHTML("💰", t("country.tippingLabel"), tippingLabel),
+    countryInfoCellHTML("💳", t("country.paymentLabel"), paymentLabel),
+    countryInfoCellHTML("🔌", t("country.plugVoltage"), info.plugVoltage),
+    countryInfoCellHTML("🆘", t("country.emergency"), info.emergency)
+  ].join("");
+  showSbDialog({ title: c.label, html: `<div class="country-info-grid">${cellsHtml}</div>`, confirmText: null });
+}
+window.showCountryInfoDialog = showCountryInfoDialog;
+
+function currencyFlagImgHTML(code, sizeClass){
+  const c = CURRENCIES.find(item => item.code === code);
+  if(!c || !c.country) return (c && c.flag) || "";
+  const cls = "currency-flag-img" + (sizeClass ? " " + sizeClass : "");
+  const emoji = c.flag || "";
+  return `<img src="https://flagcdn.com/24x18/${c.country}.png" srcset="https://flagcdn.com/48x36/${c.country}.png 2x" width="18" height="14" alt="" class="${cls}" onerror="this.replaceWith(document.createTextNode('${emoji}'))">`;
+}
+window.currencyFlagImgHTML = currencyFlagImgHTML;
+
+// 依照幣別的「最小法定面額」四捨五入（例如美金到分＝2位小數，臺幣/日幣沒有角分＝整數），
+// 不能一律無條件四捨五入到整數，否則像 1.99 美元這種金額拆分下去會失真。
+function getCurrencyDecimals(code){
+  const c = CURRENCIES.find(item => item.code === code);
+  return c ? c.decimals : 0;
+}
+function roundToCurrency(v, code){
+  const decimals = getCurrencyDecimals(code);
+  const factor = Math.pow(10, decimals);
+  return Math.round((Number(v) || 0) * factor) / factor;
+}
+window.getCurrencyDecimals = getCurrencyDecimals;
+window.roundToCurrency = roundToCurrency;
+
+/**
+ * 產生全站統一的頂部導覽列（最多 4 顆，超過 4 顆時第 4 顆為「更多 ▾」下拉選單）
+ * @param {string|HTMLElement} container - 導覽列容器 ID 或 DOM 元素（通常為 "navLinks"）
+ * @param {string} currentCode - 當前頁面代碼："SUMMARY", 幣別代碼如 "TWD", "JPY", 或 "SETTINGS"
+ * @param {Array<string>} [shownCodes] - 使用者設定顯示的幣別代碼清單
+ */
+function renderSplitbillNav(container, currentCode, shownCodes){
+  const el = typeof container === "string" ? document.getElementById(container) : container;
+  if(!el) return;
+
+  shownCodes = shownCodes || JSON.parse(localStorage.getItem("splitbill-shown-currencies") || "null") || ["TWD"];
+
+  // 篩選出勾選顯示的幣別；如果當前在特定幣別頁，確保該幣別出現在清單中
+  const activeCurrencies = CURRENCIES.filter(c => shownCodes.includes(c.code) || c.code === currentCode);
+  const isSummary = !currentCode || currentCode === "SUMMARY";
+  const overviewTabHtml = `<a href="summary.html"${isSummary ? ' class="current"' : ''}>${isSummary ? t("common.overview") : t("common.backToOverview")}</a>`;
+
+  function currencyTabHtml(c){
+    const isCur = c.code === currentCode;
+    return `<a href="currency.html?c=${c.code}"${isCur ? ' class="current"' : ''}>${c.label}</a>`;
+  }
+
+  function dropdownHtml(overflowList){
+    const currentInOverflow = overflowList.find(c => c.code === currentCode);
+    const dropdownLabel = currentInOverflow ? `${currentInOverflow.label} ▾` : t("common.more");
+    const isDropdownCurrent = !!currentInOverflow;
+    return `
+      <div class="nav-dropdown" id="navDropdownWrap">
+        <button type="button" class="nav-dropdown-btn${isDropdownCurrent ? ' current' : ''}" id="navDropdownBtn">
+          <span>${dropdownLabel}</span>
+        </button>
+        <div class="nav-dropdown-menu hidden" id="navDropdownMenu">
+          ${overflowList.map(c => `
+            <a href="currency.html?c=${c.code}" class="nav-dropdown-item${c.code === currentCode ? ' active' : ''}">
+              <span>${currencyFlagImgHTML(c.code)} ${c.label}</span>
+              <span class="nav-dropdown-code">${c.code}</span>
+            </a>
+          `).join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  // 組出「前 n 個幣別直接排開＋剩下的收進更多」這個版本的 HTML。
+  // n === activeCurrencies.length 時沒有 overflow，不會出現「更多」。
+  function buildHtml(n){
+    const direct = activeCurrencies.slice(0, n);
+    const overflowList = activeCurrencies.slice(n);
+    let html = overviewTabHtml + direct.map(currencyTabHtml).join("");
+    if(overflowList.length) html += dropdownHtml(overflowList);
+    return html;
+  }
+
+  // 以前是寫死「幣別 > 3 個才收進更多」，但日文這種幣別名稱組出來的
+  // 分頁字數常常比中文長很多，就算只有 3 個幣別、一樣可能整排放不下。
+  // 改成先假設全部都放得下畫出來，量一次實際寬度有沒有超過容器，超過
+  // 就少放一個直接顯示的幣別、改收進「更多」，重畫再量一次，重複到
+  // 放得下為止（最壞情況：只剩「← 總覽」+「更多」兩顆）。
+  let n = activeCurrencies.length;
+  el.innerHTML = buildHtml(n);
+  while(n > 0 && el.scrollWidth > el.clientWidth + 1){
+    n--;
+    el.innerHTML = buildHtml(n);
+  }
+
+  // 綁定下拉選單開關與點擊外部關閉
+  const dropdownBtn = el.querySelector("#navDropdownBtn");
+  const dropdownMenu = el.querySelector("#navDropdownMenu");
+  if(dropdownBtn && dropdownMenu){
+    dropdownBtn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const isHidden = dropdownMenu.classList.contains("hidden");
+      dropdownMenu.classList.toggle("hidden", !isHidden);
+      dropdownBtn.classList.toggle("open", isHidden);
+    });
+  }
+
+  // 切換語言、或視窗寬度改變（例如手機轉橫向、電腦視窗縮放）都要重新
+  // 量一次寬度、重新決定收幾個進更多——每個呼叫端只會呼叫一次
+  // renderSplitbillNav，用 dataset 記一下避免同一個 container 重複掛
+  // 好幾個監聽器。
+  if(!el.dataset.navLangBound){
+    el.dataset.navLangBound = "1";
+    document.addEventListener("splitbill-lang-changed", ()=>{
+      renderSplitbillNav(container, currentCode, shownCodes);
+    });
+    window.addEventListener("resize", ()=>{
+      renderSplitbillNav(container, currentCode, shownCodes);
+    });
+  }
+}
+
+// 監聽全域點擊以關閉導覽列下拉選單
+document.addEventListener("click", (e)=>{
+  const wrap = document.getElementById("navDropdownWrap");
+  if(wrap && !wrap.contains(e.target)){
+    const menu = document.getElementById("navDropdownMenu");
+    const btn = document.getElementById("navDropdownBtn");
+    if(menu) menu.classList.add("hidden");
+    if(btn) btn.classList.remove("open");
+  }
+});
+
+// ============================================================
+// 全站統一優雅自訂彈窗 (取代瀏覽器原生 alert / confirm)
+// ============================================================
+// html：信任呼叫端已經自己組好安全的 HTML（例如目的地小知識卡那種帶
+// icon 的列表），跳過 message 預設的跳脫＋純文字換行處理直接塞進去；
+// 一般呼叫端（sbAlert/sbConfirm 或直接傳 message 字串）不受影響，還是
+// 走原本的跳脫邏輯，避免意外把使用者輸入內容當 HTML 解析。
+function showSbDialog({ title = t("common.notifyDialogTitle"), message = "", html = null, confirmText = t("common.confirm"), cancelText = null }){
+  return new Promise(resolve => {
+    let modal = document.getElementById("sbDialogModal");
+    if(!modal){
+      modal = document.createElement("div");
+      modal.id = "sbDialogModal";
+      modal.className = "calc-modal sb-dialog-modal";
+      modal.innerHTML = `
+        <div class="calc-card card sb-dialog-card">
+          <div class="sb-dialog-header">
+            <div class="sb-dialog-title" id="sbDialogTitle">${t("common.notifyDialogTitle")}</div>
+            <button type="button" class="calc-close" id="sbDialogCloseBtn">✕</button>
+          </div>
+          <div class="sb-dialog-body" id="sbDialogBody"></div>
+          <div class="sb-dialog-actions" id="sbDialogActions"></div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+    }
+
+    const titleEl = document.getElementById("sbDialogTitle");
+    const bodyEl = document.getElementById("sbDialogBody");
+    const actionsEl = document.getElementById("sbDialogActions");
+    const closeBtn = document.getElementById("sbDialogCloseBtn");
+
+    if(titleEl) titleEl.textContent = title;
+    if(bodyEl){
+      if(html !== null){
+        bodyEl.innerHTML = html;
+      } else {
+        const safeText = String(message ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+        bodyEl.innerHTML = safeText.replace(/\n/g, "<br>");
+      }
+    }
+
+    actionsEl.innerHTML = "";
+    if(cancelText){
+      const cancelBtn = document.createElement("button");
+      cancelBtn.type = "button";
+      cancelBtn.className = "btn secondary small sb-dialog-cancel";
+      cancelBtn.textContent = cancelText;
+      cancelBtn.onclick = () => {
+        modal.classList.remove("show");
+        resolve(false);
+      };
+      actionsEl.appendChild(cancelBtn);
+    }
+
+    if(confirmText){
+      const confirmBtn = document.createElement("button");
+      confirmBtn.type = "button";
+      confirmBtn.className = "btn small sb-dialog-confirm";
+      confirmBtn.textContent = confirmText;
+      confirmBtn.onclick = () => {
+        modal.classList.remove("show");
+        resolve(true);
+      };
+      actionsEl.appendChild(confirmBtn);
+    }
+
+    closeBtn.onclick = () => {
+      modal.classList.remove("show");
+      resolve(false);
+    };
+
+    modal.classList.add("show");
+  });
+}
+
+function sbAlert(message, title = t("common.notifyDialogTitle")){
+  return showSbDialog({ title, message, confirmText: t("common.confirm") });
+}
+
+function sbConfirm(message, title = t("common.confirmDialogTitle")){
+  return showSbDialog({ title, message, confirmText: t("common.confirm"), cancelText: t("common.cancel") });
+}
+
+window.showSbDialog = showSbDialog;
+window.sbAlert = sbAlert;
+window.sbConfirm = sbConfirm;
+
+// ============================================================
+// 支出類別自動分析與元資料引擎 (International Category Classification Engine)
+// 支援中、英、日、韓、東南亞常用日常、餐飲、交通、景點、購物等關鍵字
+// ============================================================
+// name 用 getter 而不是固定字串，這樣每次讀取 CATEGORY_MAP[x].name 都會
+// 即時呼叫 t() 拿當下語言的翻譯，不用等頁面重新整理，也不用到處另外呼叫
+// t("cat.xxx")——所有既有直接讀 .name 的地方（篩選器、圖表圖例、CSV 匯出
+// 等）都自動吃到正確語言。
+function categoryDisplayName(key, fallback){
+  return (typeof t === "function") ? t("catName." + key) : fallback;
+}
+const CATEGORY_MAP = {
+  general: { icon: "🧾", get name(){ return categoryDisplayName("general", "一般支出"); }, type: "general", color: "#868E96" },
+  food: { icon: "🍜", get name(){ return categoryDisplayName("food", "美食餐飲"); }, type: "food", color: "#F76707" },
+  drink: { icon: "☕", get name(){ return categoryDisplayName("drink", "飲料甜點"); }, type: "drink", color: "#F59F00" },
+  transit: { icon: "🚄", get name(){ return categoryDisplayName("transit", "大眾交通"); }, type: "transit", color: "#1C7ED6" },
+  car: { icon: "🚗", get name(){ return categoryDisplayName("car", "租車用油"); }, type: "car", color: "#0CA678" },
+  flight: { icon: "✈️", get name(){ return categoryDisplayName("flight", "機票航班"); }, type: "flight", color: "#1098AD" },
+  hotel: { icon: "🏨", get name(){ return categoryDisplayName("hotel", "住宿溫泉"); }, type: "hotel", color: "#7048E8" },
+  ticket: { icon: "🎟️", get name(){ return categoryDisplayName("ticket", "門票娛樂"); }, type: "ticket", color: "#F59F00" },
+  shopping: { icon: "🛍️", get name(){ return categoryDisplayName("shopping", "購物藥妝"); }, type: "shopping", color: "#E64980" },
+  medical: { icon: "💊", get name(){ return categoryDisplayName("medical", "醫療藥品"); }, type: "medical", color: "#FA5252" },
+  network: { icon: "📶", get name(){ return categoryDisplayName("network", "網卡通訊"); }, type: "network", color: "#40C057" },
+  xcur: { icon: "💱", get name(){ return categoryDisplayName("xcur", "跨幣轉移"); }, type: "xcur", color: "#5C7CFA" }
+};
+window.CATEGORY_MAP = CATEGORY_MAP;
+
+// ============================================================
+// 收款帳戶選單——分兩組：常見不需要銀行帳號的行動支付（LINE Pay 等，
+// code 用內部代號、不是真的銀行代碼，畫面上不會顯示成「(代號)」），
+// 跟完整的台灣金融機構代號清單。使用者的銀行還是不在清單裡的話，
+// 銀行組最後留一個「其他銀行」選項，代碼留空、名稱自己再對照存摺
+// 確認即可，不會卡住無法儲存。
+// ============================================================
+const TAIWAN_BANKS = [
+  { code: "linepay", name: "LINE Pay", category: "wallet" },
+  { code: "jkopay", name: "街口支付", category: "wallet" },
+  { code: "taiwanpay", name: "台灣Pay", category: "wallet" },
+  { code: "easywallet", name: "悠遊付", category: "wallet" },
+  { code: "pxpay", name: "全支付", category: "wallet" },
+
+  { code: "004", name: "臺灣銀行" },
+  { code: "005", name: "土地銀行" },
+  { code: "006", name: "合作金庫" },
+  { code: "007", name: "第一銀行" },
+  { code: "008", name: "華南銀行" },
+  { code: "009", name: "彰化銀行" },
+  { code: "011", name: "上海商銀" },
+  { code: "012", name: "富邦銀行" },
+  { code: "013", name: "國泰世華" },
+  { code: "015", name: "輸出入銀行" },
+  { code: "016", name: "高雄銀行" },
+  { code: "017", name: "兆豐銀行" },
+  { code: "018", name: "農業金庫" },
+  { code: "021", name: "花旗台灣" },
+  { code: "039", name: "澳盛台灣" },
+  { code: "048", name: "王道銀行" },
+  { code: "050", name: "臺企銀行" },
+  { code: "052", name: "渣打銀行" },
+  { code: "053", name: "台中商銀" },
+  { code: "054", name: "京城銀行" },
+  { code: "081", name: "滙豐台灣" },
+  { code: "101", name: "瑞興銀行" },
+  { code: "102", name: "華泰銀行" },
+  { code: "103", name: "新光銀行" },
+  { code: "108", name: "陽信銀行" },
+  { code: "118", name: "板信銀行" },
+  { code: "147", name: "三信銀行" },
+  { code: "700", name: "中華郵政" },
+  { code: "803", name: "聯邦銀行" },
+  { code: "805", name: "遠東銀行" },
+  { code: "806", name: "元大銀行" },
+  { code: "807", name: "永豐銀行" },
+  { code: "808", name: "玉山銀行" },
+  { code: "809", name: "凱基銀行" },
+  { code: "810", name: "星展台灣" },
+  { code: "812", name: "台新銀行" },
+  { code: "814", name: "大眾銀行" },
+  { code: "815", name: "日盛銀行" },
+  { code: "816", name: "安泰銀行" },
+  { code: "822", name: "中國信託" },
+  { code: "823", name: "將來銀行" },
+  { code: "824", name: "連線銀行" },
+  { code: "826", name: "樂天銀行" },
+  { code: "", name: "其他銀行" }
+];
+window.TAIWAN_BANKS = TAIWAN_BANKS;
+
+// 銀行顯示格式統一成「國泰世華 (013)」；行動支付跟「其他銀行」沒有
+// 真正的三碼代號，就不畫蛇添足加一個假代號在後面，只顯示名稱。
+function formatBankLabel(code, name){
+  if(!name) return "";
+  return (code && /^\d{3}$/.test(code)) ? `${name} (${code})` : name;
+}
+window.formatBankLabel = formatBankLabel;
+
+// 收款帳戶「藥丸按鈕」收合狀態用的精簡標籤：銀行就顯示三碼代號本身
+// （例如「013」），行動支付/其他銀行沒有真正代號，就取名稱前兩個字
+// （例如「LINE Pay」取「LI」、「街口支付」取「街口」）。
+function formatBankShortLabel(code, name){
+  if(code && /^\d{3}$/.test(code)) return code;
+  return (name || "選擇").slice(0, 2);
+}
+window.formatBankShortLabel = formatBankShortLabel;
+
+// ============================================================
+// 多國同義詞與模糊關鍵字辭庫 (Synonym & Fuzzy Keyword Dictionary)
+// ============================================================
+const CATEGORY_KEYWORDS = {
+  // 1. 美食餐飲
+  food: [
+    // 常見基本食材與主食（越通俗越好抓，寧可寬鬆一點也不要漏掉）
+    "飯", "麵", "米粉", "冬粉", "餅", "魷魚", "花枝", "章魚", "肉", "雞肉", "豬肉", "牛肉", "羊肉", "鴨肉", "魚", "魚肉", "蝦", "蝦子", "螃蟹", "蛤蜊", "蛋", "滷蛋", "茶葉蛋", "豆腐", "臭豆腐乾", "青菜", "蔬菜", "水果", "湯", "羹", "粥", "沙拉", "生菜",
+    // 核心動作與餐別
+    "吃", "吃飯", "吃肉", "用餐", "料理", "食堂", "餐廳", "小吃", "便當", "早午餐", "早餐", "午餐", "晚餐", "宵夜", "晚飯", "早點", "外送", "外帶", "熱炒", "快炒", "合菜", "桌菜", "辦桌", "美食", "宴席", "合菜", "聚餐", "大餐", "吃到飽", "buffet", "自助餐", "無菜單", "私廚", "omakase", "主廚", "套餐",
+    // 料理品類 (台港中日韓東南亞西式)
+    "拉麵", "沾麵", "蕎麥麵", "烏龍麵", "意麵", "米粉", "冬粉", "粄條", "刀削麵", "涼麵", "牛肉麵", "湯麵", "乾麵", "炒麵", "炒飯", "燴飯", "油飯", "米糕", "滷肉飯", "魯肉飯", "肉燥飯", "雞肉飯", "火雞肉飯", "爌肉飯", "排骨飯", "排骨酥", "鹹酥雞", "鹽酥雞", "雞排", "碳烤", "炸雞", "韓式炸雞", "水餃", "煎餃", "鍋貼", "蒸餃", "小籠包", "湯包", "生煎包", "包子", "饅頭", "燒餅", "油條", "蛋餅", "飯糰", "割包", "刈包", "臭豆腐", "蚵仔煎", "蚵仔麵線", "麵線", "大腸麵線", "肉圓", "碗粿", "甜不辣", "關東煮", "滷味", "麻辣燙", "東山鴨頭", "燒臘", "叉燒", "油雞", "燒鴨", "燒鵝", "烤鴨", "一鴨三吃", "飲茶", "港點", "茶餐廳", "雲吞", "餛飩", "抄手", "紅油抄手", "腸粉", "蘿蔔糕", "鳳爪", "流沙包", "叉燒包",
+    // 鍋物與燒烤排餐
+    "火鍋", "麻辣鍋", "涮涮鍋", "石頭火鍋", "鴛鴦鍋", "壽喜燒", "羊肉爐", "薑母鴨", "酸菜白肉鍋", "酸菜魚", "牛排", "豬排", "雞排", "排餐", "鐵板燒", "燒肉", "烤肉", "韓式烤肉", "銅盤烤肉", "炭火燒肉", "和牛", "牛舌", "五花肉", "松阪豬", "串燒", "串炸", "炸豬排", "丼", "丼飯", "牛丼", "豬排丼", "親子丼", "鰻魚飯", "天婦羅", "壽司", "生魚片", "刺身", "握壽司", "軍艦", "手卷", "花壽司", "炙燒", "海鮮丼", "釜飯", "懷石料理",
+    // 異國料理 (義美法泰越印墨)
+    "披薩", "比薩", "披薩屋", "義大利麵", "燉飯", "千層麵", "焗烤", "漢堡", "潛艇堡", "熱狗堡", "塔可", "墨西哥捲餅", "法式料理", "地中海料理", "西班牙燉飯", "tapas", "印度咖哩", "日式咖哩", "泰式咖哩", "咖哩", "咖喱", "南洋料理", "泰式", "越式", "韓式", "日式", "義式", "法式", "美式", "印度", "部隊鍋", "辣炒年糕", "石鍋拌飯", "蔘雞湯", "炸醬麵", "雪濃湯", "海鮮煎餅", "海南雞", "海南雞飯", "肉骨茶", "叻沙", "冬蔭功", "泰式酸辣湯", "月亮蝦餅", "綠咖哩", "打拋豬", "椒麻雞", "河粉", "越南河粉", "生春捲", "越式麵包", "沙嗲",
+    // 連鎖品牌與知名店家 (台灣/日本/全球)
+    "鼎泰豐", "添好運", "點水樓", "欣葉", "瓦城", "饗食天堂", "饗饗", "旭集", "饗賓", "探索廚房", "十二廚", "漢來海港", "王品", "西堤", "陶板屋", "夏慕尼", "原燒", "肉次方", "初瓦", "聚", "青花驕", "和牛涮", "嚮辣", "築間", "馬辣", "新馬辣", "老四川", "海底撈", "鼎王", "無老鍋", "這一鍋", "屋馬", "茶六", "碳佐麻里", "乾杯", "胡同", "八方雲集", "四海遊龍", "三商巧福", "鬍鬚張", "大上海", "麥當勞", "肯德基", "摩斯", "漢堡王", "頂呱呱", "拿坡里", "達美樂", "必勝客", "胖老爹", "21世紀", "德州美墨", "一蘭", "一風堂", "天下一品", "麵屋武藏", "花月嵐", "鷹流", "豚骨拉麵", "すき家", "sukiya", "松屋", "matsuya", "吉野家", "yoshinoya", "くら寿司", "藏壽司", "kura", "スシロー", "壽司郎", "sushiro", "はま寿司", "爭鮮", "點爭鮮", "叙々苑", "敘敘苑", "鳥貴族", "磯丸水産", "餃子の王将", "大戸屋", "大戶屋", "やよい軒", "彌生軒", "かつや", "勝博殿", "靜岡勝政", "邁泉", "bb.q", "橋村炸雞", "kyochon", "bhc", "popeyes", "five guys", "shake shack", "in-n-out", "chipotle", "subway", "nandos",
+    // 日文關鍵字
+    "ラーメン", "らーめん", "つけ麺", "うどん", "そば", "蕎麦", "焼肉", "やきにく", "居酒屋", "いざかや", "定食", "ていしょく", "とんかつ", "豚カツ", "天ぷら", "天麩羅", "寿司", "すし", "鮨", "刺身", "さしみ", "しゃぶしゃぶ", "すき焼き", "おでん", "餃子", "お好み焼き", "たこ焼き", "弁当", "おにぎり", "丼", "牛丼", "カツ丼", "親子丼", "海鮮丼", "焼き鳥", "串カツ", "レストラン", "食堂", "屋台",
+    // 英文與國際關鍵字
+    "restaurant", "dining", "lunch", "dinner", "breakfast", "brunch", "supper", "meal", "food", "eatery", "bistro", "trattoria", "steakhouse", "diner", "buffet", "takeout", "delivery", "ubereats", "foodpanda", "doordash", "grubhub", "pizza", "pasta", "spaghetti", "lasagna", "risotto", "burger", "steak", "bbq", "barbecue", "grill", "taco", "burrito", "sushi", "sashimi", "poke", "ramen", "noodle", "noodles", "pho", "banh mi", "pad thai", "tom yum", "curry", "satay", "laksa", "dim sum", "dumpling", "gyoza", "paella", "sandwich", "bagel", "salad", "soup", "tapas", "omakase", "mcdonald", "mcdonalds", "kfc", "burger king", "subway", "chipotle", "shake shack", "five guys", "dominos", "pizza hut", "nandos",
+    // 台灣在地小吃、夜市與早餐店補充
+    "大腸包小腸", "蔥抓餅", "藥燉排骨", "胡椒餅", "棺材板", "鹽水雞", "鹹水雞", "黑輪", "米血", "米血糕", "豬血糕", "美而美", "弘爺漢堡", "拉亞漢堡", "麥味登", "早安美芝城", "呷尚寶", "度小月", "阿宗麵線", "金峰魯肉飯", "紅心地瓜", "御飯糰", "三明治", "蛋餅套餐", "自助餐店", "便當店", "悟饕",
+    // 韓文關鍵字
+    "먹다", "식당", "맛집", "한식", "분식", "김밥", "떡볶이", "순대", "튀김", "라면", "냉면", "비빔밥", "삼겹살", "갈비", "불고기", "치킨", "족발", "보쌈", "찜닭", "닭갈비", "감자탕", "순두부찌개", "김치찌개", "된장찌개", "부대찌개", "갈비탕", "설렁탕", "곰탕", "삼계탕", "국밥", "해장국", "잡채", "파전", "만두", "초밥", "회", "짬뽕", "짜장면", "탕수육", "마라탕", "훠궈", "브런치", "뷔페", "야식", "배달", "배달의민족", "배민", "요기요", "도시락", "국수", "칼국수", "수제비", "고기집", "육회"
+  ],
+
+  // 2. 飲料甜點
+  drink: [
+    // 常見基本飲品（越通俗越好抓）
+    "水", "喝水", "礦泉水", "白開水", "氣泡水", "牛奶", "鮮奶", "優格", "優酪乳", "養樂多", "豆奶",
+    // 茶與咖啡
+    "咖啡", "拿鐵", "美式", "美式咖啡", "卡布奇諾", "卡布", "義式濃縮", "摩卡", "焦糖瑪奇朵", "瑪奇朵", "馥列白", "生椰拿鐵", "燕麥拿鐵", "冷萃", "手沖", "冰滴", "單品咖啡", "咖啡豆", "奶茶", "鮮奶茶", "紅茶", "綠茶", "青茶", "烏龍茶", "四季春", "金萱", "普洱茶", "鐵觀音", "抹茶", "焙茶", "玄米茶", "冬瓜茶", "花茶", "花草茶", "果茶", "水果茶", "洛神花茶", "仙草茶", "冰沙", "思樂冰", "果汁", "現打果汁", "柳橙汁", "西瓜汁", "木瓜牛奶", "楊枝甘露", "手搖", "手搖飲", "手搖杯", "飲料", "珍奶", "珍珠奶茶", "波霸", "椰果", "仙草", "愛玉", "粉條", "芋圓", "地瓜圓", "粉粿", "芝芝", "奶蓋", "豆花", "豆漿", "米漿", "燕麥奶",
+    // 甜品與冰品烘焙
+    "剉冰", "刨冰", "雪花冰", "冰淇淋", "霜淇淋", "冰棒", "冰品", "聖代", "甜點", "甜品", "蛋糕", "起司蛋糕", "乳酪蛋糕", "戚風蛋糕", "千層蛋糕", "巴斯克", "生乳捲", "鬆餅", "舒芙蕾", "可麗餅", "泡芙", "閃電泡芙", "水果塔", "派", "檸檬塔", "甜甜圈", "馬卡龍", "司康", "肉桂捲", "提拉米蘇", "奶酪", "布丁", "烤布蕾", "焦糖布丁", "蛋塔", "葡式蛋塔", "可頌", "烘焙", "麵包", "吐司", "生吐司", "貝果", "和菓子", "大福", "草莓大福", "糰子", "蕨餅", "鯛魚燒", "車輪餅", "紅豆餅", "雞蛋糕", "吉拿棒",
+    // 酒類與酒吧
+    "酒", "啤酒", "生啤", "生啤酒", "精釀啤酒", "黑啤", "白啤", "調酒", "雞尾酒", "威士忌", "白蘭地", "琴酒", "伏特加", "蘭姆酒", "龍舌蘭", "清酒", "純米大吟釀", "大吟釀", "吟釀", "燒酎", "梅酒", "柚子酒", "葡萄酒", "紅酒", "白酒", "香檳", "氣泡酒", "沙瓦", "角嗨", "highball", "酒吧", "餐酒館", "夜店", "lounge", "pub", "bar", "居酒屋", "club",
+    // 品牌與連鎖
+    "星巴克", "starbucks", "路易莎", "louisa", "cama", "伯朗", "blue bottle", "藍瓶咖啡", "komeda", "客美多", "dottor", "羅多倫", "tullys", "麻古", "麻古茶坊", "迷客夏", "50嵐", "五十嵐", "可不可", "清心", "清心福全", "茶湯會", "歇腳亭", "一芳", "珍煮丹", "龜記", "萬波", "得正", "先喝道", "五桐號", "再睡5分鐘", "春水堂", "翰林茶館", "十盛", "八曜和茶", "約翰紅茶", "天仁茗茶",
+    // 日文關鍵字
+    "カフェ", "コーヒー", "珈琲", "ラテ", "お茶", "まっちゃ", "スイーツ", "デザート", "ケーキ", "パフェ", "プリン", "クレープ", "パンケーキ", "ドーナツ", "ソフトクリーム", "アイス", "かき氷", "和菓子", "大福", "団子", "ビール", "生ビール", "ハイボール", "サワー", "チューハイ", "日本酒", "焼酎", "ワイン", "シャンパン", "カクテル", "ウィスキー", "バー", "喫茶店", "ベーカリー", "パン屋",
+    // 英文關鍵字
+    "cafe", "coffee", "espresso", "latte", "cappuccino", "macchiato", "mocha", "americano", "cold brew", "pour over", "tea", "chai", "matcha", "boba", "bubble tea", "milk tea", "juice", "smoothie", "beverage", "ice cream", "gelato", "sorbet", "pastry", "cake", "cupcake", "scone", "croissant", "donut", "doughnut", "waffle", "pancake", "pudding", "tiramisu", "macaron", "chocolate", "bakery", "brewery", "taproom", "beer", "ale", "lager", "ipa", "stout", "wine", "champagne", "cocktail", "liquor", "spirits", "whiskey", "whisky", "gin", "vodka", "rum", "tequila", "sake", "soju", "lounge", "dunkin", "tim hortons", "gong cha",
+    // 台灣手搖飲與咖啡連鎖補充
+    "大苑子", "日出茶太", "chatime", "喜茶", "老虎堂", "鮮茶道", "水巷茶弄", "comebuy", "康青龍", "樺達奶茶", "御茶園", "costa", "丹堤咖啡", "怡客咖啡", "壹咖啡", "city cafe", "city café", "cama café",
+    // 韓文關鍵字
+    "커피", "아메리카노", "라떼", "카페라떼", "카푸치노", "에스프레소", "콜드브루", "밀크티", "버블티", "스무디", "주스", "맥주", "소주", "막걸리", "소맥", "하이볼", "와인", "위스키", "칵테일", "스타벅스", "이디야", "투썸플레이스", "메가커피", "빽다방", "컴포즈커피", "커피빈", "폴바셋", "할리스", "디저트", "빙수", "팥빙수", "케이크", "마카롱", "크로플", "붕어빵", "호떡", "떡", "약과", "한과"
+  ],
+
+  // 3. 大眾交通
+  transit: [
+    // 捷運與鐵路
+    "捷運", "地鐵", "地鐵站", "地下鐵", "火車", "鐵路", "台鐵", "臺鐵", "高鐵", "新幹線", "特急", "急行", "快速", "普通車", "電車", "區間車", "自強號", "太魯閣", "普悠瑪", "emu3000", "車票", "車資", "票價", "乘車券", "交通卡", "悠遊卡", "一卡通", "icash", "ic卡", "儲值", "八達通", "港鐵", "mtr", "地鐵一日券", "周遊券", "周遊卡", "jr pass", "jr", "suica", "西瓜卡", "pasmo", "icoca", "pitapa", "kitaca", "toica", "manaca", "sugoca", "nimoca", "t-money", "cashbee", "ez-link", "haruka", "skyliner", "n'ex", "成田特快", "京成電鐵", "南海電鐵", "近鐵", "阪急", "阪神", "西武", "東武", "小田急", "京王", "京阪", "名鐵", "西鐵",
+    // 公車巴士與渡輪纜車
+    "公車", "巴士", "市區公車", "客運", "統聯", "國光", "和欣", "阿羅哈", "觀光巴士", "hop on hop off", "夜行巴士", "高速巴士", "機場巴士", "利木津巴士", "接駁車", "渡輪", "輪渡", "船票", "遊船", "快艇", "水上巴士", "水上計程車", "纜車", "貓纜", "日月潭纜車", "箱根纜車", "昂坪360", "索道", "輕軌", "路面電車", "單軌", "單軌電車", "monorail", "funicular", "gondola", "ropeway", "cable car",
+    // 日文關鍵字
+    "新幹線", "しんかんせん", "地下鉄", "メトロ", "切符", "きっぷ", "運賃", "定期券", "バス", "都バス", "高速バス", "夜行バス", "フェリー", "ロープウェイ", "ケーブルカー", "モノレール", "駅", "電車代", "交通費", "チャージ",
+    // 英文與國際關鍵字
+    "transit", "transportation", "metro", "subway", "underground", "tube", "train", "railway", "railroad", "amtrak", "eurostar", "tgv", "ice", "thalys", "renfe", "frecciarossa", "sbb", "obb", "sncf", "db", "ticket", "fare", "pass", "travelcard", "oyster", "smartrip", "clipper", "octopus", "ez-link", "t-money", "bus", "coach", "shuttle", "tram", "streetcar", "trolley", "ferry", "boat", "cable car", "ropeway", "gondola", "funicular", "monorail",
+    // 台灣交通補充
+    "台北捷運", "北捷", "高雄捷運", "高捷", "桃園捷運", "桃捷", "機場捷運", "機捷", "台灣好行", "微笑單車",
+    // 韓文關鍵字
+    "지하철", "버스", "택시", "기차", "ktx", "srt", "무궁화호", "새마을호", "시외버스", "고속버스", "공항버스", "리무진버스", "티머니", "캐시비", "교통카드", "환승", "지하철역", "공항철도", "카카오택시", "우버"
+  ],
+
+  // 4. 租車用油 / 計程車
+  car: [
+    // 租車與共享
+    "租車", "租賃車", "借車", "租車費", "甲租乙還", "irent", "goshare", "wemo", "格上", "和運", "中租", "times", "orix", "nippon rent a car", "toyota rent a car", "nissan rent a car", "budget", "avis", "hertz", "enterprise", "sixt", "europcar", "共享汽車", "共享機車", "租機車", "租重機", "租單車", "youbike", "ubike",
+    // 計程車與叫車
+    "計程車", "小黃", "的士", "打車", "叫車", "拼車", "專車", "包車", "包車一日遊", "代駕", "司機", "uber", "lyft", "grab", "bolt", "didi", "滴滴", "kakaotaxi", "gojek", "line taxi", "呼叫小黃", "台灣大車隊", "大都會",
+    // 加油用油與停車過路費
+    "油錢", "加油", "加油站", "汽油", "柴油", "92", "95", "98", "中油", "台塑", "全國加油站", "shell", "esso", "bp", "eneos", "idemitsu", "停車", "停車場", "停車費", "路邊停車", "嘟嘟房", "times停車場", "車庫", "代客泊車", "valet", "過路費", "國道通行費", "高速公路", "收費站", "通行費", "etc", "e-tag", "罰單", "拖吊", "拖吊費", "洗車", "打蠟", "汽車保養",
+    // 台灣機車與電動車補充
+    "機車", "摩托車", "檔車", "機車行", "機車保養", "gogoro", "換電站", "光陽", "kymco", "三陽", "sym", "山葉", "yamaha", "光陽機車",
+    // 日文關鍵字
+    "レンタカー", "カーシェア", "タイムズ", "タクシー", "ガソリン", "給油", "レギュラー", "ハイオク", "軽油", "駐車場", "パーキング", "コインパーキング", "駐車代", "高速代", "有料道路", "洗車", "車検",
+    // 英文關鍵字
+    "rental car", "car rental", "rent a car", "car hire", "car sharing", "scooter rental", "bike rental", "taxi", "cab", "rideshare", "uber", "lyft", "grab", "bolt", "didi", "ola", "gojek", "driver", "gas", "gasoline", "petrol", "diesel", "fuel", "gas station", "parking", "parking lot", "garage", "valet", "toll", "highway", "expressway", "ezpass", "hertz", "avis", "enterprise", "budget", "sixt", "europcar", "toyota rent", "nissan rent",
+    // 韓文關鍵字
+    "렌터카", "렌트카", "주유소", "기름값", "주유비", "주차", "주차장", "주차비", "통행료", "하이패스", "세차", "카카오t"
+  ],
+
+  // 5. 機票航班
+  flight: [
+    // 機票與航空公司
+    "機票", "飛機", "航班", "航空", "機位", "選位", "行李托運", "托運", "行李超重", "改票", "退票", "燃油附加費", "機場稅", "貴賓室", "長榮", "長榮航空", "華航", "中華航空", "星宇", "星宇航空", "虎航", "台灣虎航", "國泰", "國泰航空", "香港航空", "華信", "立榮", "酷航", "樂桃", "捷星", "亞洲航空", "越捷", "全日空", "日航", "日本航空", "大韓航空", "韓亞航空", "德威航空", "真航空", "濟州航空", "新加坡航空", "阿聯酋", "卡達航空", "土耳其航空", "達美航空", "聯合航空", "美國航空", "加拿大航空", "漢莎航空", "法航", "荷航", "英航", "芬航",
+    // 機場與航廈
+    "機場", "航廈", "登機", "登機證", "登機門", "出境", "入境", "海關", "候機室", "機場接送", "行李寄存", "飛行機", "航空券", "フライト", "空港", "成田", "羽田", "關空", "関空", "jal", "ana", "peach", "ピーチ", "ジェットスター", "スカイマーク",
+    // 英文關鍵字
+    "flight", "fly", "air", "airplane", "plane", "airline", "airlines", "airport", "airfare", "air ticket", "boarding", "terminal", "baggage", "luggage", "lounge", "eva air", "china airlines", "starlux", "tigerair", "cathay pacific", "singapore airlines", "emirates", "qatar", "delta", "united", "american airlines", "lufthansa", "air france", "klm", "british airways", "airasia", "scoot", "vietjet", "korean air", "asiana",
+    // 韓文關鍵字
+    "비행기", "항공권", "항공사", "대한항공", "아시아나항공", "진에어", "제주항공", "티웨이항공", "에어부산", "에어서울", "인천공항", "김포공항", "김해공항", "탑승", "수하물", "수화물", "라운지"
+  ],
+
+  // 6. 住宿溫泉
+  hotel: [
+    // 住宿品類
+    "飯店", "旅館", "酒店", "商旅", "商務旅館", "精品旅館", "渡假村", "渡假酒店", "resort", "民宿", "b&b", "guesthouse", "青年旅館", "青旅", "hostel", "膠囊旅館", "背包客棧", "帳篷", "露營", "露營車", "豪華露營", "glamping", "湯屋", "溫泉", "溫泉旅館", "湯宿", "風呂", "露天風呂", "日歸溫泉", "錢湯", "汽車旅館", "摩鐵", "客棧", "villa", "包棟",
+    // 訂房與費用
+    "住宿", "訂房", "房費", "房租", "押金", "清潔費", "加床", "加人", "延遲退房", "airbnb", "booking", "agoda", "hotels.com", "expedia", "trip.com", "klook住宿", "kkday住宿",
+    // 集團與品牌
+    "萬豪", "marriott", "希爾頓", "hilton", "洲際", "ihg", "凱悅", "hyatt", "喜來登", "sheraton", "威斯汀", "westin", "麗思卡爾頓", "ritz carlton", "四季", "four seasons", "諾富特", "novotel", "宜必思", "ibis", "apa hotel", "apa", "東橫inn", "toyoko", "dormy inn", "dormy", "super hotel", "route inn", "daiwa roynet", "richmond hotel", "三井花園", "prince hotel", "星野集團", "星野", "hoshino", "虹夕諾雅", "界", "risonare", "omo", "beb",
+    // 台灣飯店集團補充
+    "老爺酒店", "老爺會館", "晶華酒店", "福華飯店", "兆品酒店", "雲品酒店", "天成飯店", "承億文旅", "涵碧樓", "礁溪老爺", "太魯閣晶英", "晶英酒店", "康華", "神旺", "喜來登台北",
+    // 日文關鍵字
+    "ホテル", "旅館", "りょかん", "宿", "やど", "温泉", "おんせん", "露天風呂", "銭湯", "民宿", "ペンション", "カプセルホテル", "ゲストハウス", "民泊", "宿泊", "チェックイン", "チェックアウト",
+    // 英文關鍵字
+    "hotel", "hostel", "resort", "inn", "motel", "lodge", "lodging", "stay", "accommodation", "booking", "reservation", "room", "suite", "villa", "chalet", "cabin", "airbnb", "vrbo", "agoda", "expedia", "hotels.com", "trip.com", "hilton", "marriott", "hyatt", "ihg", "sheraton", "westin", "ritz carlton", "four seasons", "intercontinental", "novotel", "ibis", "best western", "holiday inn", "radisson", "b&b", "guesthouse", "capsule", "camping", "campsite", "glamping", "ryokan", "onsen",
+    // 韓文關鍵字
+    "호텔", "모텔", "게스트하우스", "펜션", "리조트", "숙박", "체크인", "체크아웃", "찜질방", "사우나"
+  ],
+
+  // 7. 門票娛樂景點
+  ticket: [
+    // 樂園與熱門景點
+    "門票", "入場券", "參觀券", "票券", "預約券", "快速通關", "express pass", "fastpass", "環球", "環球影城", "usj", "迪士尼", "迪士尼樂園", "迪士尼海洋", "disneyland", "disneysea", "哈利波特影城", "吉卜力公園", "吉卜力美術館", "樂高樂園", "legoland", "六福村", "九族文化村", "麗寶樂園", "劍湖山", "遠雄海洋公園", "義大世界", "水族館", "海遊館", "美麗海水族館", "xpark", "動物園", "木柵動物園", "植物園", "博物館", "美術館", "故宮", "奇美博物館", "羅浮宮", "大英博物館", "科學館", "天文館", "展覽", "特展", "樂園", "遊樂園", "主題樂園", "摩天輪", "觀景台", "展望台", "101觀景台", "晴空塔", "skytree", "東京鐵塔", "shibuya sky", "阿倍野", "梅田藍天大廈", "巴黎鐵塔", "eiffel", "teamlab",
+    // 體驗活動與戶外
+    "體驗", "和服", "和服體驗", "浴衣", "韓服", "泰服", "茶道", "料理教室", "手作", "陶藝", "diy", "採果", "採草莓", "賞鯨", "夜釣", "滑雪", "滑雪場", "雪票", "纜車票", "租雪具", "教練費", "潛水", "水肺潛水", "浮潛", "衝浪", "sup", "立槳", "獨木舟", "溯溪", "泛舟", "跳傘", "高空彈跳", "飛行傘", "熱氣球", "賽車", "卡丁車", "密室逃脫", "桌遊", "vr體驗", "保齡球", "ktv", "唱歌", "錢櫃", "好樂迪", "溫泉券", "泡湯券", "按摩", "spa", "泰式按摩", "指壓", "油壓", "足湯", "岩盤浴", "神社", "寺廟", "御守", "拝觀", "參拜", "御朱印", "劇院", "劇場", "百老匯", "歌劇", "音樂劇", "電影", "影城", "戲院", "威秀", "秀泰", "國賓", "演唱會", "音樂會", "live", "祭典", "花火大會", "煙火", "klook", "kkday", "tripadvisor", "getyourguide",
+    // 運動票券與場地費用
+    "球賽", "球票", "棒球", "看球", "職棒", "中華職棒", "中職", "兄弟象", "統一獅", "樂天桃猿", "富邦悍將", "味全龍", "中信兄弟", "棒球場", "籃球", "籃球賽", "p.league", "sbl", "足球", "足球賽", "世足", "網球", "網球賽", "高爾夫", "高爾夫球場", "揮桿", "健身房", "健身房會員", "健身", "gym", "游泳池", "游泳", "羽球", "羽球場", "羽毛球", "桌球", "撞球", "攀岩", "攀岩館", "壁球", "瑜珈", "瑜伽", "皮拉提斯", "教練課", "運動中心", "體育館", "球場", "場地費", "場租", "路跑", "馬拉松", "運動賽事",
+    // 台灣景點補充
+    "貓空纜車", "貓纜", "美麗華摩天輪", "兒童新樂園", "佛光山", "中台禪寺", "阿里山", "太魯閣", "日月潭", "高美濕地", "劍湖山世界",
+    // 日文關鍵字
+    "チケット", "入場券", "拝観料", "ディズニー", "ユニバ", "ジブリ", "ハリーポッター", "チームラボ", "展望台", "スカイツリー", "東京タワー", "通天閣", "観覧車", "映画", "シネマ", "劇場", "舞台", "ライブ", "コンサート", "祭り", "花火大会", "スキー", "スノーボード", "リフト券", "着物", "浴衣", "神社", "お寺", "御朱印", "マッサージ", "エステ", "カラオケ",
+    // 英文關鍵字
+    "ticket", "tickets", "admission", "entry", "entrance", "pass", "tour", "guided tour", "excursion", "sightseeing", "attraction", "universal studios", "universal", "disney", "disneyland", "disneyworld", "disneysea", "ghibli", "museum", "gallery", "louvre", "aquarium", "zoo", "safari", "theme park", "amusement park", "observation deck", "observatory", "tower", "eiffel", "skytree", "show", "broadway", "musical", "opera", "theatre", "theater", "concert", "gig", "festival", "cinema", "movie", "exhibition", "expo", "ski", "skiing", "snowboard", "snowboarding", "lift ticket", "ski pass", "scuba", "dive", "diving", "snorkeling", "surf", "skydiving", "bungee", "kart", "escape room", "bowling", "karaoke", "spa", "massage",
+    // 韓文關鍵字
+    "티켓", "입장권", "놀이공원", "에버랜드", "롯데월드", "롯데월드타워", "남산타워", "코엑스", "아쿠아리움", "박물관", "미술관", "전시", "콘서트", "공연", "뮤지컬", "영화", "노래방", "스파", "마사지", "한복", "스키장", "케이블카"
+  ],
+
+  // 8. 購物藥妝超商伴手禮
+  shopping: [
+    // 超市與大賣場超商
+    "超市", "大賣場", "量販店", "超商", "便利商店", "雜貨", "全聯", "家樂福", "大潤發", "愛買", "好市多", "costco", "美廉社", "7-11", "711", "小七", "全家", "familymart", "萊爾富", "ok超商", "lawson", "羅森", "唐吉", "唐吉訶德", "驚安", "驚安殿堂", "donki", "loft", "東急hands", "hands", "無印良品", "muji", "大創", "daiso", "seria", "cando", "宜得利", "nitori", "ikea", "aeon", "永旺", "ito yokado", "life超市", "西友", "成城石井", "big c", "lotte mart", "emart",
+    // 藥妝與美妝保養
+    "藥妝", "藥局", "藥品", "美妝", "保養品", "化妝品", "化妝水", "乳液", "面膜", "防曬", "精華液", "口紅", "香水", "屈臣氏", "watsons", "康是美", "cosmed", "寶雅", "poya", "日藥本舖", "松本清", "matsukiyo", "sundrug", "札幌藥妝", "大國藥妝", "鶴羽藥妝", "tsuruha", "杉藥局", "sugi", "cocokara fine", "tomod's", "sephora",
+    // 百貨商場與家電服飾
+    "百貨", "百貨公司", "新光三越", "sogo", "遠東百貨", "微風", "台北101", "時代百貨", "三井outlet", "mitsui", "華泰名品城", "lalaport", "parco", "lumine", "丸井", "大丸", "高島屋", "伊勢丹", "阪急", "商場", "購物中心", "outlet", "逛街", "市集", "夜市", "跳蚤市場", "電器", "家電", "3c", "bic camera", "yodobashi", "山田電機", "edion", "sofmap", "燦坤", "全國電子", "apple store", "sony store", "相機", "鏡頭", "手機", "平板", "筆電", "吹風機", "保溫杯", "玩具", "模型", "公仔", "動漫", "animate", "扭蛋", "盲盒", "漫畫", "書", "書店", "誠品", "紀伊國屋", "蔦屋", "文具", "服飾", "服裝", "衣服", "外套", "毛衣", "襯衫", "t恤", "褲子", "牛仔褲", "裙子", "洋裝", "內衣", "發熱衣", "涼感衣", "鞋子", "球鞋", "靴子", "拖鞋", "包包", "背包", "皮夾", "配件", "飾品", "手錶", "眼鏡", "墨鏡", "jins", "owndays", "zoff", "uniqlo", "gu", "zara", "h&m", "gap", "mango", "nike", "adidas", "puma", "new balance", "lululemon", "decathlon",
+    // 伴手禮與免稅
+    "伴手禮", "土產", "紀念品", "禮物", "手信", "特產", "名產", "鳳梨酥", "太陽餅", "蛋黃酥", "芋頭酥", "牛軋糖", "茶葉", "東京芭娜娜", "白色戀人", "royce", "薯條三兄弟", "kitkat", "免稅", "退稅", "duty free", "tax free", "昇恆昌", "采盟",
+    // 台灣超市藥妝與書店補充
+    "大樹藥局", "躍獅藥局", "生活藥局", "佳瑪", "松青超市", "楓康超市", "全聯福利中心", "美廉社", "city super", "誠品生活", "金石堂", "三民書局",
+    // 日文關鍵字
+    "ショッピング", "買い物", "お土産", "おみやげ", "土產", "名物", "銘菓", "薬局", "ドラッグストア", "マツモトキヨシ", "マツキヨ", "サンドラッグ", "スギ薬局", "ツルハ", "ココカラファイン", "ドンキ", "ドンキホーテ", "ビックカメラ", "ヨドバシカメラ", "ヤマダ電機", "エディオン", "ソフマップ", "アニメイト", "まんだらけ", "ユニクロ", "ジーユー", "無印良品", "ロフト", "東急ハンズ", "ハンズ", "ダイソー", "セリア", "キャンドゥ", "イオン", "イトーヨーカドー", "ライフ", "西友", "成城石井", "デパ地下", "百貨店", "高島屋", "三越", "伊勢丹", "松坂屋", "大丸", "そごう", "西武", "阪急", "阪神", "近鉄", "マルイ", "パルコ", "ルミネ", "アトレ", "ららぽーと", "アウトレット", "免税",
+    "コンビニ", "セブンイレブン", "セブン-イレブン", "ファミリーマート", "ファミマ", "ローソン", "スーパー", "スーパーマーケット",
+    // 英文關鍵字
+    "shop", "shopping", "store", "boutique", "mall", "outlet", "market", "bazaar", "supermarket", "grocery", "groceries", "bodega", "convenience store", "souvenir", "souvenirs", "gift", "gifts", "duty free", "target", "walmart", "costco", "carrefour", "whole foods", "trader joe", "trader joes", "woolworths", "coles", "sainsbury", "tesco", "aldi", "lidl", "coop", "boots", "watsons", "sephora", "apple store", "best buy", "zara", "h&m", "uniqlo", "gu", "gap", "mango", "asos", "nike", "adidas", "puma", "lululemon", "decathlon", "ikea", "nitori", "daiso", "muji", "big c", "emart", "lotte mart",
+    // 韓文關鍵字
+    "쇼핑", "백화점", "롯데백화점", "신세계백화점", "현대백화점", "면세점", "올리브영", "다이소", "이마트", "코스트코", "편의점", "세븐일레븐", "화장품", "기념품", "선물", "특산품", "인삼", "홍삼"
+  ],
+
+  // 9. 醫療藥品
+  medical: [
+    "藥", "西藥", "中藥", "成藥", "醫", "診所", "醫院", "急診", "看診", "門診", "醫生", "牙醫", "拔牙", "洗牙", "眼科", "皮膚科", "骨科", "復健", "掛號費", "健保", "醫療", "醫療費", "醫藥費", "藥品", "處方箋", "感冒藥", "退燒藥", "胃藥", "止痛藥", "普拿疼", "eve", "大正微粒", "太田胃散", "正露丸", "腸胃藥", "止瀉藥", "便秘藥", "過敏藥", "頭痛藥", "暈車藥", "眼藥水", "fx眼藥水", "樂敦", "小花眼藥水", "貼布", "痠痛貼布", "撒隆巴斯", "roihi", "液體ok繃", "ok繃", "繃帶", "紗布", "棉花棒", "消毒水", "優碘", "酒精", "體溫計", "口罩", "維他命", "保健食品", "b群", "益生菌", "魚油", "葉黃素", "膠原蛋白", "健檢", "疫苗", "pcr", "快篩", "保險", "旅遊平安險", "旅平險", "旅遊不便險", "海外突發", "意外險", "醫療險", "病院", "クリニック", "医院", "診療所", "救急", "歯医者", "薬", "くすり", "処方箋", "風邪薬", "胃腸薬", "痛み止め", "頭痛薬", "酔い止め", "目薬", "湿布", "バンドエイド", "保険", "海外旅行保険", "hospital", "clinic", "urgent care", "emergency", "er", "doctor", "physician", "dentist", "pharmacy", "drugstore", "chemist", "medicine", "medication", "pill", "pills", "prescription", "rx", "painkiller", "aspirin", "ibuprofen", "tylenol", "bandaid", "bandage", "insurance", "travel insurance", "medical expense",
+    // 台灣醫院補充
+    "健保卡", "榮總", "台大醫院", "長庚醫院", "馬偕醫院", "亞東醫院", "新光醫院", "國泰醫院", "三軍總醫院", "萬芳醫院", "振興醫院",
+    // 韓文關鍵字
+    "약국", "병원", "응급실", "의원", "치과", "피부과", "감기약", "소화제", "진통제", "밴드", "파스", "여행자보험"
+  ],
+
+  // 10. 網卡通訊
+  network: [
+    "網卡", "上網卡", "網路", "通訊", "漫遊", "國際漫遊", "數據漫遊", "原號漫遊", "電信", "esim", "sim", "sim卡", "實體卡", "虛擬卡", "流量", "流量包", "吃到飽", "上網", "wifi", "wi-fi", "wifi機", "隨身wifi", "wifi分享器", "路由器", "租wifi", "中華電信", "遠傳", "台灣大哥大", "台哥大", "airalo", "holafly", "nomad", "djb", "joytel", "飛買家", "wi-ho", "simカード", "ネット", "通信", "ローミング", "ポケットwifi", "wi-fiレンタル", "docomo", "ドコモ", "softbank", "ソフトバンク", "au", "楽天モバイル", "rakuten", "uqモバイル", "ymobile", "ahamo", "povo", "linemo", "sim", "esim", "sim card", "wifi", "wi-fi", "mobile wifi", "pocket wifi", "data", "mobile data", "roaming", "data roaming", "gigabyte", "gb", "unlimited data", "telecom", "network", "broadband", "ais", "true", "dtac", "singtel", "starhub", "m1", "kt", "skt", "lgu+", "docomo", "softbank", "vodafone", "o2", "ee", "three", "orange", "t-mobile", "verizon", "at&t", "mint",
+    // 台灣電信補充
+    "台灣之星", "亞太電信", "亞太", "台星",
+    // 韓文關鍵字
+    "유심", "이심", "로밍", "와이파이", "포켓와이파이", "데이터"
+  ],
+
+  // 11. 跨幣轉移與手續費
+  xcur: [
+    "換匯", "結匯", "買匯", "賣匯", "外幣兌換", "換外幣", "外幣提款", "海外提款", "跨國提款", "海外刷卡手續費", "國外交易手續費", "跨國交易手續費", "手續費", "匯差", "換錢", "盤谷銀行", "兆豐", "玉山", "台銀", "superrich", "money exchange", "currency exchange", "fx fee", "foreign exchange", "atm withdrawal", "atm fee", "exchange fee",
+    // 韓文關鍵字
+    "환전", "환전소", "환율", "수수료"
+  ]
+};
+
+// ============================================================
+// 智慧模糊正規化與多層權重分析引擎 (Smart Fuzzy & Score Engine)
+// ============================================================
+function normalizeFuzzyText(text){
+  if(!text) return "";
+  return String(text)
+    .normalize("NFKC") // 全形轉半形、字元正規化
+    .toLowerCase()
+    .replace(/[\s\-_,.:;!?'"()（）「」『』【】\[\]\/\\#+*~`@$%^&=<>|]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function editDistance(s1, s2) {
+  if (Math.abs(s1.length - s2.length) > 2) return 99;
+  const m = s1.length, n = s2.length;
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (s1[i - 1] === s2[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1];
+      } else {
+        dp[i][j] = 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+      }
+    }
+  }
+  return dp[m][n];
+}
+
+// ============================================================
+// 💱 跨幣別統一折算臺幣 (TWD) 匯率表與轉換工具
+// ============================================================
+const DEFAULT_RATES_TO_TWD = {
+  TWD: 1,
+  JPY: 0.21,
+  KRW: 0.024,
+  CNY: 4.45,
+  HKD: 4.12,
+  MOP: 3.98,
+  USD: 32.2,
+  VND: 0.0013,
+  THB: 0.94,
+  PHP: 0.57,
+  SGD: 24.6,
+  MYR: 7.3,
+  IDR: 0.0020,
+  KHR: 0.0078,
+  EUR: 35.1,
+  GBP: 41.5,
+  CHF: 36.8,
+  AUD: 21.2,
+  NZD: 19.5,
+  TRY: 0.94,
+  CZK: 1.40,
+  HUF: 0.088,
+  SEK: 3.12,
+  NOK: 3.02,
+  DKK: 4.70,
+  ISK: 0.24
+};
+
+function convertToTWD(amount, currencyCode){
+  const amt = Number(amount) || 0;
+  if(!currencyCode || currencyCode === "TWD") return amt;
+  const rate = (window.cachedExchangeRates && window.cachedExchangeRates[currencyCode]) || 
+               DEFAULT_RATES_TO_TWD[currencyCode] || 1;
+  return amt * rate;
+}
+
+window.DEFAULT_RATES_TO_TWD = DEFAULT_RATES_TO_TWD;
+window.convertToTWD = convertToTWD;
+
+// ============================================================
+// 即時匯率背景更新：原本 convertToTWD() 讀的 window.cachedExchangeRates
+// 從來沒有人賦值過，永遠都是走上面那張寫死的 DEFAULT_RATES_TO_TWD，
+// 跟 currency.html 結清換算彈窗裡「⚡ 即時匯率」按鈕抓到的即時牌價是
+// 兩套互不相通的資料。這裡補上背景刷新，讓兩邊用同一份即時匯率——
+// 用 localStorage 快取 1 小時（跟按鈕文案講的「每小時同步最新牌價」
+// 一致，也避免每次開頁都打 API），開頁先套用快取（就算過期也比完全
+// 沒有好），過期才觸發背景重抓；全部來源都失敗就自然 fallback 回
+// 上面的固定表，不影響既有行為。
+// ============================================================
+(function initLiveExchangeRates(){
+  const CACHE_KEY = "splitbill_live_rates_to_twd";
+  const CACHE_TTL_MS = 60 * 60 * 1000; // 1 小時，跟結清彈窗文案講的頻率一致
+
+  let cached = null;
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if(raw) cached = JSON.parse(raw);
+  } catch(e){}
+
+  if(cached && cached.rates) window.cachedExchangeRates = cached.rates;
+  if(cached && cached.fetchedAt && (Date.now() - cached.fetchedAt) < CACHE_TTL_MS) return;
+
+  async function fetchLiveRatesToTwd(){
+    // 跟 app.js 裡「⚡ 即時匯率」按鈕同一組來源，只是這裡改成一次抓
+    // base=TWD 的完整清單（1 TWD = 多少外幣），一次 API 呼叫換算出
+    // 所有幣別，不用像按鈕那樣一個一個幣別分開打。
+    const sources = [
+      { url: "https://open.er-api.com/v6/latest/TWD", parse: d => d && d.rates },
+      { url: "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/twd.json",
+        parse: d => d && d.twd && Object.fromEntries(Object.entries(d.twd).map(([k, v]) => [k.toUpperCase(), v])) },
+      { url: "https://latest.currency-api.pages.dev/v1/currencies/twd.json",
+        parse: d => d && d.twd && Object.fromEntries(Object.entries(d.twd).map(([k, v]) => [k.toUpperCase(), v])) }
+    ];
+    for(const src of sources){
+      try {
+        const res = await fetch(src.url);
+        if(!res.ok) continue;
+        const twdToForeign = src.parse(await res.json()); // 1 TWD = X 外幣
+        if(!twdToForeign) continue;
+        const ratesToTwd = {};
+        CURRENCIES.forEach(c => {
+          if(c.code === "TWD") return;
+          const perTwd = Number(twdToForeign[c.code]);
+          if(perTwd > 0) ratesToTwd[c.code] = 1 / perTwd; // 換成「1 外幣 = X 台幣」，跟 DEFAULT_RATES_TO_TWD 同單位
+        });
+        if(Object.keys(ratesToTwd).length) return ratesToTwd;
+      } catch(e){}
+    }
+    return null;
+  }
+
+  fetchLiveRatesToTwd().then(rates => {
+    if(!rates) return;
+    window.cachedExchangeRates = rates;
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify({ rates, fetchedAt: Date.now() })); } catch(e){}
+  });
+})();
+
+function getCategoryMeta(desc, note, categoryCol){
+  // 0. 有真正的 category 欄位資料就直接採用，不用再靠文字猜測
+  if(categoryCol && CATEGORY_MAP[categoryCol]) return CATEGORY_MAP[categoryCol];
+
+  const fullRaw = String(desc || "") + " " + String(note || "");
+
+  // 1. 優先檢查顯式自訂類別標籤（舊資料相容用，例如 <!--CAT:food--> 或 [cat:food]）
+  const explicitMatch = fullRaw.match(/<!--?\s*CAT:([a-z0-9_-]+)\s*-->?/i) || fullRaw.match(/\[cat:([a-z0-9_-]+)\]/i);
+  if(explicitMatch && explicitMatch[1]){
+    const catKey = explicitMatch[1].toLowerCase();
+    if(CATEGORY_MAP[catKey]) return CATEGORY_MAP[catKey];
+  }
+
+  const rawClean = fullRaw.toLowerCase().trim();
+  if(!rawClean) return CATEGORY_MAP.general;
+
+  // 跨幣轉移
+  if(rawClean.includes("xcur") || rawClean.includes("跨幣")) {
+    return CATEGORY_MAP.xcur;
+  }
+
+  const norm = normalizeFuzzyText(fullRaw);
+  if(!norm) return CATEGORY_MAP.general;
+
+  const tokens = norm.split(" ").filter(t => t.length > 0);
+
+  // 2. 智慧權重計分系統 (Scoring Engine with Fuzzy Matching)
+  const scores = {};
+  let highestScore = 0;
+  let bestCategory = "general";
+  let bestMatchLen = 0;
+
+  Object.keys(CATEGORY_KEYWORDS).forEach(cat => {
+    scores[cat] = 0;
+    const keywords = CATEGORY_KEYWORDS[cat];
+
+    for(let i = 0; i < keywords.length; i++){
+      const kw = keywords[i].toLowerCase().trim();
+      if(!kw) continue;
+
+      let matched = false;
+      let weight = 0;
+
+      // 1. 完全或子字串包含
+      if(rawClean.includes(kw) || norm.includes(kw)){
+        matched = true;
+        weight = kw.length >= 4 ? 5 : (kw.length >= 2 ? 3 : 1.5);
+      } else {
+        // 2. 單詞 Token 模糊比對（容許拼字前綴、縮寫、小錯字）
+        for(let t = 0; t < tokens.length; t++){
+          const tok = tokens[t];
+          if(tok.length < 3) continue;
+
+          // 前綴比對 (e.g. starbuck vs starbucks, disney vs disneyland)
+          if(tok.length >= 4 && (kw.startsWith(tok) || tok.startsWith(kw))){
+            matched = true;
+            weight = Math.max(weight, 3.5);
+            break;
+          }
+
+          // 編輯距離比對 (容許 1 個錯字，e.g. starbuks vs starbucks, restarant vs restaurant)
+          if(tok.length >= 5 && kw.length >= 5 && editDistance(tok, kw) <= 1){
+            matched = true;
+            weight = Math.max(weight, 3);
+            break;
+          }
+        }
+      }
+
+      if(matched){
+        scores[cat] += weight;
+        if(scores[cat] > highestScore || (scores[cat] === highestScore && kw.length > bestMatchLen)){
+          highestScore = scores[cat];
+          bestCategory = cat;
+          bestMatchLen = kw.length;
+        }
+      }
+    }
+  });
+
+  if(highestScore > 0 && CATEGORY_MAP[bestCategory]){
+    return CATEGORY_MAP[bestCategory];
+  }
+
+  return CATEGORY_MAP.general;
+}
+
+function getCategoryIcon(desc, categoryCol){
+  return getCategoryMeta(desc, undefined, categoryCol).icon;
+}
+
+// ============================================================
+// 頭像色彩與渲染系統 (Avatar System)
+// ============================================================
+const AVATAR_GRADIENTS = [
+  "linear-gradient(135deg, #7A6B9E, #A093C2)",
+  "linear-gradient(135deg, #5C7CFA, #748FFC)",
+  "linear-gradient(135deg, #20C997, #38D9A9)",
+  "linear-gradient(135deg, #F76707, #FFA94D)",
+  "linear-gradient(135deg, #E64980, #F06595)",
+  "linear-gradient(135deg, #BE4BDB, #DA77F2)",
+  "linear-gradient(135deg, #1098AD, #22B8CF)",
+  "linear-gradient(135deg, #40C057, #69DB7C)"
+];
+
+function getAvatarColor(name){
+  if(!name) return AVATAR_GRADIENTS[0];
+  let hash = 0;
+  for(let i = 0; i < name.length; i++){
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const idx = Math.abs(hash) % AVATAR_GRADIENTS.length;
+  return AVATAR_GRADIENTS[idx];
+}
+
+function renderAvatarHTML(memberOrName, sizeClass = "avatar-sm"){
+  let name = "";
+  let avatarUrl = "";
+  let id = "";
+  let userId = "";
+
+  if(typeof memberOrName === "object" && memberOrName !== null){
+    name = memberOrName.name || memberOrName.nickname || memberOrName.accountName || "?";
+    avatarUrl = memberOrName.avatar_url || "";
+    id = memberOrName.id || "";
+    userId = memberOrName.user_id || "";
+  } else {
+    name = String(memberOrName || "?");
+  }
+
+  // 1. 精準從全域 MEMBERS 尋找對應成員的 avatar_url（以 ID 或 user_id 優先）
+  if(typeof MEMBERS !== "undefined" && Array.isArray(MEMBERS)){
+    let matched = null;
+    if(id) matched = MEMBERS.find(m => m.id === id);
+    if(!matched && userId) matched = MEMBERS.find(m => m.user_id === userId);
+    if(!matched && name && name !== "?") matched = MEMBERS.find(m => m.name === name || m.accountName === name);
+
+    if(matched){
+      if(!id && matched.id) id = matched.id;
+      if(!userId && matched.user_id) userId = matched.user_id;
+      if(!name && (matched.name || matched.accountName)) name = matched.name || matched.accountName;
+      if(matched.avatar_url) avatarUrl = matched.avatar_url;
+    }
+  }
+
+  // 2. 判斷是否為目前登入者（以 Supabase 資料庫中的 myMember.avatar_url 為第一優先）
+  const isMe = (window.currentUser && userId && userId === window.currentUser.id) ||
+               (window.myMember && id && id === window.myMember.id) ||
+               (window.currentUser && id && id === window.currentUser.id);
+
+  if(isMe){
+    const myDbAvatar = (window.myMember && window.myMember.avatar_url) ||
+                       (window.currentUser && window.currentUser.user_metadata && window.currentUser.user_metadata.avatar_url) || "";
+    if(myDbAvatar) avatarUrl = myDbAvatar;
+  }
+
+  // 3. 從本地快取抓取（嚴格限制只用 userId 或 id，絕不用 name 避免同名誤抓）
+  if(!avatarUrl){
+    try{
+      if(userId) avatarUrl = localStorage.getItem("sb_avatar_" + userId) || "";
+      if(!avatarUrl && id) avatarUrl = localStorage.getItem("sb_avatar_" + id) || "";
+    }catch(e){}
+  }
+
+  const initial = (name || "?").trim().charAt(0).toUpperCase();
+  const safeName = String(name).replace(/"/g, "&quot;");
+
+  const idAttr = id ? ` data-member-id="${id}"` : "";
+
+  if(avatarUrl){
+    return `<span class="sb-avatar ${sizeClass}" title="${safeName}" data-name="${safeName}"${idAttr}><img src="${avatarUrl}" class="sb-avatar-img" alt="${safeName}" onerror="this.style.display='none';if(this.nextElementSibling)this.nextElementSibling.style.display='flex';"><span class="sb-avatar-initial" style="display:none;background:${getAvatarColor(name)};">${initial}</span></span>`;
+  }
+  return `<span class="sb-avatar ${sizeClass}" title="${safeName}" data-name="${safeName}"${idAttr}><span class="sb-avatar-initial" style="background:${getAvatarColor(name)};">${initial}</span></span>`;
+}
+
+function triggerReceiptFlyAnimation(opts = {}){
+  const {
+    buttonEl,
+    desc = t("receipt.itemFallback"),
+    amount = 0,
+    symbol = "$",
+    categoryIcon = "🧾",
+    payerName = t("common.memberFallback"),
+    splitCount = 1,
+    targetListEl = null,
+    onComplete = null
+  } = opts;
+
+  const overlay = document.createElement("div");
+  overlay.className = "sb-receipt-spool-overlay";
+
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+  const paper = document.createElement("div");
+  paper.className = "sb-receipt-paper";
+  paper.innerHTML = `
+    <div class="sb-receipt-head">
+      <div class="sb-receipt-store">${categoryIcon} <span>${typeof escapeHtml === "function" ? escapeHtml(desc || t("receipt.storeFallback")) : (desc || t("receipt.storeFallback"))}</span></div>
+      <div class="sb-receipt-date">${dateStr}</div>
+    </div>
+    <div class="sb-receipt-body">
+      <div class="sb-receipt-row">
+        <span class="sb-receipt-desc">${typeof escapeHtml === "function" ? escapeHtml(desc || t("receipt.descFallback")) : (desc || t("receipt.descFallback"))}</span>
+        <span class="sb-receipt-amt">${symbol}${typeof formatAmt === "function" ? formatAmt(amount) : amount}</span>
+      </div>
+      <div class="sb-receipt-row sb-receipt-meta">
+        <span>${t("receipt.paidLabel")} ${typeof escapeHtml === "function" ? escapeHtml(payerName) : payerName}</span>
+        <span>${splitCount > 1 ? t("receipt.splitAmong", {count: splitCount}) : t("receipt.personalOnly")}</span>
+      </div>
+    </div>
+    <div class="sb-receipt-foot">
+      <div class="sb-receipt-barcode"></div>
+      <div class="sb-receipt-stamp">✓ PAID & LOGGED</div>
+    </div>
+  `;
+
+  overlay.appendChild(paper);
+  document.body.appendChild(overlay);
+
+  if(buttonEl && typeof buttonEl.getBoundingClientRect === "function"){
+    const btnRect = buttonEl.getBoundingClientRect();
+    const paperTop = Math.max(20, Math.min(window.innerHeight - 240, btnRect.top - 120));
+    const paperLeft = Math.max(16, Math.min(window.innerWidth - 244, btnRect.left + (btnRect.width / 2) - 114));
+    paper.style.top = `${paperTop}px`;
+    paper.style.left = `${paperLeft}px`;
+  }
+
+  // 第一階段：滑出並停留展示
+  setTimeout(() => {
+    let endX = window.innerWidth / 2;
+    let endY = window.innerHeight - 100;
+
+    const target = targetListEl || document.getElementById("expenseList") || document.getElementById("quickExpenseModal") || document.querySelector(".exp-item");
+    if(target && typeof target.getBoundingClientRect === "function"){
+      const targetRect = target.getBoundingClientRect();
+      if(targetRect.height > 0 && targetRect.width > 0){
+        endX = targetRect.left + targetRect.width / 2;
+        endY = Math.min(window.innerHeight - 80, Math.max(60, targetRect.top + 60));
+      }
+    }
+
+    const currentRect = paper.getBoundingClientRect();
+    const currentCenterX = currentRect.left + currentRect.width / 2;
+    const currentCenterY = currentRect.top + currentRect.height / 2;
+    const deltaX = endX - currentCenterX;
+    const deltaY = endY - currentCenterY;
+
+    // 第二階段：實體收據直接優雅滑翔飛入目標帳本中（無光球）
+    paper.style.transition = "transform 0.46s cubic-bezier(0.2, 0.8, 0.25, 1), opacity 0.42s ease";
+    paper.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.18) rotate(4deg)`;
+    paper.style.opacity = "0";
+
+    setTimeout(() => {
+      if(target){
+        target.classList.remove("sb-ledger-ripple");
+        void target.offsetWidth;
+        target.classList.add("sb-ledger-ripple");
+      }
+      setTimeout(() => {
+        overlay.remove();
+        if(typeof onComplete === "function") onComplete();
+      }, 150);
+    }, 460);
+
+  }, 850);
+}
+
+function openFinancialKeypad(targetInput, onConfirm){
+  if(!targetInput) return;
+  const old = document.getElementById("sbFinancialKeypadDrawer");
+  if(old) old.remove();
+
+  const drawer = document.createElement("div");
+  drawer.id = "sbFinancialKeypadDrawer";
+  drawer.className = "sb-numpad-drawer";
+
+  let curVal = String(targetInput.value || "");
+  let expression = curVal === "0" ? "" : curVal;
+
+  const updateDisplay = () => {
+    const disp = document.getElementById("sbNumpadDisplayAmt");
+    if(disp){
+      disp.textContent = expression || "0";
+    }
+  };
+
+  drawer.innerHTML = `
+    <div class="sb-numpad-header">
+      <div class="sb-numpad-display-amt" id="sbNumpadDisplayAmt">${expression || "0"}</div>
+      <button type="button" class="sb-numpad-close-btn" id="sbNumpadCloseBtn">✕ 關閉</button>
+    </div>
+    <div class="sb-numpad-grid">
+      <button type="button" class="sb-numpad-key" data-key="7">7</button>
+      <button type="button" class="sb-numpad-key" data-key="8">8</button>
+      <button type="button" class="sb-numpad-key" data-key="9">9</button>
+      <button type="button" class="sb-numpad-key key-op" data-key="/">÷</button>
+
+      <button type="button" class="sb-numpad-key" data-key="4">4</button>
+      <button type="button" class="sb-numpad-key" data-key="5">5</button>
+      <button type="button" class="sb-numpad-key" data-key="6">6</button>
+      <button type="button" class="sb-numpad-key key-op" data-key="*">×</button>
+
+      <button type="button" class="sb-numpad-key" data-key="1">1</button>
+      <button type="button" class="sb-numpad-key" data-key="2">2</button>
+      <button type="button" class="sb-numpad-key" data-key="3">3</button>
+      <button type="button" class="sb-numpad-key key-op" data-key="-">-</button>
+
+      <button type="button" class="sb-numpad-key" data-key=".">.</button>
+      <button type="button" class="sb-numpad-key" data-key="0">0</button>
+      <button type="button" class="sb-numpad-key key-op" data-key="backspace">⌫</button>
+      <button type="button" class="sb-numpad-key key-op" data-key="+">+</button>
+
+      <button type="button" class="sb-numpad-key key-op" data-key="clear" style="grid-column: span 2; font-size:15px;">清空 C</button>
+      <button type="button" class="sb-numpad-key key-confirm" data-key="confirm" style="grid-column: span 2;">✓ 完成</button>
+    </div>
+  `;
+
+  document.body.appendChild(drawer);
+
+  const calculate = (str) => {
+    try {
+      const sanitized = str.replace(/[^0-9+\-*/.]/g, '');
+      if(!sanitized) return 0;
+      const fn = new Function(`return (${sanitized})`);
+      const res = fn();
+      return isFinite(res) ? Math.round(res * 100) / 100 : 0;
+    } catch(e) {
+      return null;
+    }
+  };
+
+  drawer.querySelectorAll(".sb-numpad-key").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = btn.dataset.key;
+      if(key === "confirm"){
+        const finalVal = calculate(expression);
+        if(finalVal !== null){
+          targetInput.value = finalVal;
+          targetInput.dispatchEvent(new Event("input", { bubbles: true }));
+          targetInput.dispatchEvent(new Event("change", { bubbles: true }));
+          if(onConfirm) onConfirm(finalVal);
+        }
+        drawer.remove();
+        return;
+      }
+      if(key === "clear"){
+        expression = "";
+        updateDisplay();
+        return;
+      }
+      if(key === "backspace"){
+        expression = expression.slice(0, -1);
+        updateDisplay();
+        return;
+      }
+      if(["+", "-", "*", "/"].includes(key)){
+        if(expression && !["+", "-", "*", "/"].includes(expression.slice(-1))){
+          expression += key;
+        }
+        updateDisplay();
+        return;
+      }
+      if(key === "."){
+        if(!expression.endsWith(".")){
+          expression += ".";
+        }
+        updateDisplay();
+        return;
+      }
+      expression += key;
+      updateDisplay();
+    });
+  });
+
+  const closeBtn = document.getElementById("sbNumpadCloseBtn");
+  if(closeBtn){
+    closeBtn.addEventListener("click", () => drawer.remove());
+  }
+}
+
+window.getCategoryIcon = getCategoryIcon;
+window.getCategoryMeta = getCategoryMeta;
+window.getAvatarColor = getAvatarColor;
+window.renderAvatarHTML = renderAvatarHTML;
+window.triggerReceiptFlyAnimation = triggerReceiptFlyAnimation;
+window.openFinancialKeypad = openFinancialKeypad;
+
+// 單一成員的跨幣別淨結餘（換算成 TWD）。正數代表該收（債權人），負數代表
+// 該付（債務人）。原本是寫死在「欠款大魔王」徽章裡面找全團最大值用的內層
+// 迴圈，成員頭像個人資料卡也需要同一個算法，抽出來共用、不要維持兩份。
+function computeMemberNetBalanceTWD(memberId, expenses, repayments){
+  let paidTWD = 0, shareTWD = 0, repaidTWD = 0, receivedTWD = 0;
+
+  (expenses || []).forEach(e => {
+    const cur = e.currency || "TWD";
+    const p = (e.payers || []).find(x => x.member_id === memberId);
+    if(p) paidTWD += convertToTWD(p.amount, cur);
+    const s = (e.shares || []).find(x => x.member_id === memberId);
+    if(s) shareTWD += convertToTWD(s.amount, cur);
+  });
+
+  (repayments || []).forEach(r => {
+    const cur = r.currency || "TWD";
+    if(r.from_member === memberId) repaidTWD += convertToTWD(r.amount, cur);
+    if(r.to_member === memberId) receivedTWD += convertToTWD(r.amount, cur);
+  });
+
+  return (paidTWD + repaidTWD) - (shareTWD + receivedTWD);
+}
+window.computeMemberNetBalanceTWD = computeMemberNetBalanceTWD;
+
+// ============================================================
+// 單筆支出的淨額拆算 + 事件時間軸債務矩陣
+// ============================================================
+// 這三個函式原本只存在 app.js（currency.html 專用），summary.html 沒載入
+// app.js 用不到，導致個人資料卡「跟你的關係」當初只能自己另外寫一套簡化
+// 版演算法，結果跟「逐筆債務表」的權威數字對不起來（同一對成員，資料卡
+// 顯示還有欠款、債務表卻顯示已結清）。搬來這裡（currencies.js 兩邊都會
+// 載入）之後，app.js 跟個人資料卡就能呼叫同一套算法，數字保證一致。
+//
+// 先把每個人「付的錢」跟「該負擔的錢」相抵，抵完還有剩的：
+// 剩多的人 = 這筆支出的債權人，剩少（欠）的人 = 債務人。
+// 再依債權人各自佔全部債權的比例，把每個債務人的欠款按比例分攤過去。
+function computeExpenseNets(e){
+  const paid = {};
+  const share = {};
+
+  (e.payers || []).forEach(p=>{
+    const amount = Number(p.amount) || 0;
+    if(amount <= 0) return;
+    paid[p.member_id] = (paid[p.member_id] || 0) + amount;
+  });
+
+  (e.shares || []).forEach(s=>{
+    const amount = Number(s.amount) || 0;
+    if(amount <= 0) return;
+    share[s.member_id] = (share[s.member_id] || 0) + amount;
+  });
+
+  const ids = new Set([...Object.keys(paid), ...Object.keys(share)]);
+  const creditors = [];
+  const debtors = [];
+
+  ids.forEach(id=>{
+    const net = (paid[id] || 0) - (share[id] || 0);
+    if(net > 0.01) creditors.push({ id, amt: net });
+    else if(net < -0.01) debtors.push({ id, amt: -net });
+  });
+
+  const totalCredit = creditors.reduce((sum, c) => sum + c.amt, 0);
+
+  return { creditors, debtors, totalCredit };
+}
+window.computeExpenseNets = computeExpenseNets;
+
+// 同一筆支出內，債務人盡量只還給少數幾個債權人 —
+// 依「金額由大到小」配對（欠最多的人優先還給收最多的人），
+// 而不是每個債權人都分一點小額。
+// 債務關係表（buildDebtMatrix）跟債務明細（showPairDetail）
+// 都只呼叫這個函式，兩邊數字保證一致。
+function computeExpenseDebts(e){
+  const { creditors, debtors } = computeExpenseNets(e);
+
+  const cs = creditors.map(c => ({ ...c }))
+    .sort((a,b) => b.amt - a.amt || (a.id > b.id ? 1 : -1));
+  const ds = debtors.map(d => ({ ...d }))
+    .sort((a,b) => b.amt - a.amt || (a.id > b.id ? 1 : -1));
+
+  const result = {};
+  let i = 0, j = 0;
+  while(i < cs.length && j < ds.length){
+    const creditor = cs[i];
+    const debtor = ds[j];
+    const amount = Math.min(creditor.amt, debtor.amt);
+    if(amount > 0.01){
+      if(!result[creditor.id]) result[creditor.id] = {};
+      result[creditor.id][debtor.id] = (result[creditor.id][debtor.id] || 0) + amount;
+      creditor.amt -= amount;
+      debtor.amt -= amount;
+    }
+    if(creditor.amt <= 0.01) i++;
+    if(debtor.amt <= 0.01) j++;
+  }
+  return result;
+}
+window.computeExpenseDebts = computeExpenseDebts;
+
+// 支出跟還款依實際發生時間排成同一條時間軸，一筆一筆重演：一筆支出發生的
+// 當下才會被之後的還款拿去沖銷，不能反過來讓「之後才發生」的支出去彌補
+// 「之前就已經多還」的錢。這樣算出來的結果才會跟「債務明細」的往來紀錄
+// 時間軸完全一致——同一對人之間如果同時出現雙方互欠（例如提早多還、後來
+// 又欠了新的），不會自動幫你合併成一個淨數字，而是誠實地各自列出來，交給
+// 「一鍵抵銷」處理。傳入的 expenses/repayments 必須已經是同一個幣別的。
+function buildDebtMatrix(expenses, repayments){
+  const owed = {};
+
+  function addDebt(creditorId, debtorId, amount){
+    if(!creditorId) return;
+    if(!debtorId) return;
+    // 不允許自己欠自己
+    if(creditorId === debtorId) return;
+    if(!Number.isFinite(amount)) return;
+    if(amount <= 0.01) return;
+
+    if(!owed[creditorId]){
+      owed[creditorId] = {};
+    }
+    owed[creditorId][debtorId] = (owed[creditorId][debtorId] || 0) + amount;
+  }
+
+  const events = [];
+
+  expenses.forEach(e=>{
+    const debts = computeExpenseDebts(e);
+    Object.keys(debts).forEach(creditorId=>{
+      Object.keys(debts[creditorId]).forEach(debtorId=>{
+        events.push({
+          type: "expense",
+          creditorId,
+          debtorId,
+          amount: debts[creditorId][debtorId],
+          date: e.expense_date || "",
+          createdAt: e.created_at || ""
+        });
+      });
+    });
+  });
+
+  (repayments || []).forEach(r=>{
+    const payerId = r.from_member;
+    const receiverId = r.to_member;
+    const amount = Number(r.amount) || 0;
+    if(!payerId || !receiverId || payerId === receiverId || amount <= 0.01) return;
+    events.push({
+      type: "repayment",
+      payerId,
+      receiverId,
+      amount,
+      date: r.payment_date || "",
+      createdAt: r.created_at || ""
+    });
+  });
+
+  // 依實際發生時間正序排列（舊到新；同一天同時刻時，支出先於還款發生）
+  events.sort((a, b) => {
+    const timeA = a.createdAt || (a.date ? a.date + "T00:00:00.000Z" : "");
+    const timeB = b.createdAt || (b.date ? b.date + "T00:00:00.000Z" : "");
+    if(timeA && timeB && timeA !== timeB) return timeA.localeCompare(timeB);
+    const dA = a.date || "", dB = b.date || "";
+    if(dA !== dB) return dA.localeCompare(dB);
+    const aIsExp = a.type === "expense" ? 0 : 1;
+    const bIsExp = b.type === "expense" ? 0 : 1;
+    return aIsExp - bIsExp;
+  });
+
+  events.forEach(ev=>{
+    if(ev.type === "expense"){
+      addDebt(ev.creditorId, ev.debtorId, ev.amount);
+      return;
+    }
+
+    const payerId = ev.payerId;
+    const receiverId = ev.receiverId;
+    let remaining = ev.amount;
+
+    const receiverDebts = owed[receiverId] || (owed[receiverId] = {});
+    const current = receiverDebts[payerId] || 0;
+    const paid = Math.min(current, remaining);
+    if(paid > 0){
+      receiverDebts[payerId] = current - paid;
+      if(receiverDebts[payerId] <= 0.01) delete receiverDebts[payerId];
+      remaining -= paid;
+    }
+    // 這筆還款發生的當下，能沖銷的欠款就這麼多，沖不完、多還的部分反過來
+    // 記一筆「receiver 欠 payer」——這代表事後編輯把支出改小、或本來就
+    // 多還了，都是真實的溢繳，不是錯誤，維持這個行為。
+    if(remaining > 0.01){
+      addDebt(payerId, receiverId, remaining);
+    }
+  });
+
+  return owed;
+}
+window.buildDebtMatrix = buildDebtMatrix;
+
+// 「你」跟某個特定對象之間的淨結餘，逐幣別分開列出（不像成就徽章/整體
+// 淨結餘那樣換算成 TWD 合併成一個數字）——使用者反映這裡如果直接跨幣別
+// 合併，看不出來是哪個幣別區欠的。回傳 { 幣別代碼: { owesYou, youOwe } }。
+// 內部呼叫的是跟「逐筆債務表」完全同一套 buildDebtMatrix() 演算法（按幣別
+// 分組後各自跑一次事件時間軸），數字保證跟債務表一致，不會再出現「資料卡
+// 顯示還欠錢、債務表卻顯示已結清」的矛盾。
+function computePairNetBalanceByCurrency(viewerId, otherId, expenses, repayments){
+  const expByCur = {};
+  (expenses || []).forEach(e => {
+    const cur = e.currency || "TWD";
+    (expByCur[cur] || (expByCur[cur] = [])).push(e);
+  });
+  const repByCur = {};
+  (repayments || []).forEach(r => {
+    const cur = r.currency || "TWD";
+    (repByCur[cur] || (repByCur[cur] = [])).push(r);
+  });
+
+  const allCurrencies = new Set([...Object.keys(expByCur), ...Object.keys(repByCur)]);
+  const byCurrency = {};
+  allCurrencies.forEach(cur => {
+    const owed = buildDebtMatrix(expByCur[cur] || [], repByCur[cur] || []);
+    const owesYou = (owed[viewerId] && owed[viewerId][otherId]) || 0;
+    const youOwe = (owed[otherId] && owed[otherId][viewerId]) || 0;
+    if(owesYou > 0.01 || youOwe > 0.01){
+      byCurrency[cur] = { owesYou, youOwe };
+    }
+  });
+
+  return byCurrency;
+}
+window.computePairNetBalanceByCurrency = computePairNetBalanceByCurrency;
+
+// ============================================================
+// 🎖️ 成員成就與趣味勳章系統 (Member Achievements & Badges - 跨幣別大一統)
+// ============================================================
+const BADGES_CATALOG = [
+  {
+    id: "big_spender",
+    icon: "👑",
+    get name(){ return t("badge.bigSpenderName"); },
+    get desc(){ return t("badge.bigSpenderDesc"); },
+    check: (m, expList, repList, membersList) => {
+      const exps = window.allGroupExpenses || expList || window.cachedExpenses || [];
+      let allMembers = (membersList && membersList.length) ? membersList : (window.memberRows || window.MEMBERS || []);
+      if(!allMembers || !allMembers.length){
+        const idMap = new Map();
+        exps.forEach(e => {
+          (e.payers || []).forEach(p => p.member_id && idMap.set(p.member_id, { id: p.member_id, name: p.member_id }));
+          (e.shares || []).forEach(s => s.member_id && idMap.set(s.member_id, { id: s.member_id, name: s.member_id }));
+        });
+        allMembers = Array.from(idMap.values());
+      }
+      if(!allMembers.length) return false;
+
+      let maxPaidTWD = 0;
+      let topPayerId = null;
+
+      allMembers.forEach(mem => {
+        const memId = mem.id || mem;
+        const totalPaidTWD = exps.reduce((sum, e) => {
+          const p = (e.payers || []).find(x => x.member_id === memId);
+          return sum + (p ? convertToTWD(p.amount, e.currency) : 0);
+        }, 0);
+        if(totalPaidTWD > 1 && totalPaidTWD > maxPaidTWD){
+          maxPaidTWD = totalPaidTWD;
+          topPayerId = memId;
+        }
+      });
+
+      const currentMId = m.id || m;
+      return !!(topPayerId && topPayerId === currentMId);
+    }
+  },
+  {
+    id: "debt_demon",
+    icon: "😈",
+    get name(){ return t("badge.debtDemonName"); },
+    get desc(){ return t("badge.debtDemonDesc"); },
+    check: (m, expList, repList, membersList) => {
+      const exps = window.allGroupExpenses || expList || window.cachedExpenses || [];
+      const reps = window.allGroupRepayments || repList || window.cachedRepayments || [];
+      
+      let allMembers = (membersList && membersList.length) ? membersList : (window.memberRows || window.MEMBERS || []);
+      if(!allMembers || !allMembers.length){
+        const idMap = new Map();
+        exps.forEach(e => {
+          (e.payers || []).forEach(p => p.member_id && idMap.set(p.member_id, { id: p.member_id, name: p.member_id }));
+          (e.shares || []).forEach(s => s.member_id && idMap.set(s.member_id, { id: s.member_id, name: s.member_id }));
+        });
+        reps.forEach(r => {
+          if(r.from_member) idMap.set(r.from_member, { id: r.from_member, name: r.from_member });
+          if(r.to_member) idMap.set(r.to_member, { id: r.to_member, name: r.to_member });
+        });
+        allMembers = Array.from(idMap.values());
+      }
+
+      if(!allMembers.length) return false;
+
+      let maxDebtTWD = 0;
+      let worstMemberId = null;
+
+      allMembers.forEach(mem => {
+        const memId = mem.id || mem;
+        const netTWD = computeMemberNetBalanceTWD(memId, exps, reps);
+        const debtTWD = -netTWD; // 正數代表淨欠款
+        if(debtTWD > 1 && debtTWD > maxDebtTWD){
+          maxDebtTWD = debtTWD;
+          worstMemberId = memId;
+        }
+      });
+
+      const currentMId = m.id || m;
+      return !!(worstMemberId && (worstMemberId === currentMId));
+    }
+  },
+  {
+    id: "foodie",
+    icon: "🍜",
+    get name(){ return t("badge.foodieName"); },
+    get desc(){ return t("badge.foodieDesc"); },
+    check: (m, expList) => {
+      const exps = window.allGroupExpenses || expList || window.cachedExpenses || [];
+      const memId = m.id || m;
+      let foodAmt = 0, totalShare = 0;
+      exps.forEach(e => {
+        const s = (e.shares || []).find(x => x.member_id === memId);
+        if(s){
+          const amt = convertToTWD(Number(s.amount) || 0, e.currency || "TWD");
+          totalShare += amt;
+          const meta = window.getCategoryMeta ? window.getCategoryMeta(e.description, e.note, e.category) : { type: "general" };
+          if(meta.type === "food" || meta.type === "drink") foodAmt += amt;
+        }
+      });
+      return totalShare > 0 && foodAmt > 0 && (foodAmt / totalShare >= 0.25);
+    }
+  },
+  {
+    id: "shopaholic",
+    icon: "🛍️",
+    get name(){ return t("badge.shopaholicName"); },
+    get desc(){ return t("badge.shopaholicDesc"); },
+    check: (m, expList) => {
+      const exps = window.allGroupExpenses || expList || window.cachedExpenses || [];
+      const memId = m.id || m;
+      let shopAmt = 0, totalShare = 0;
+      exps.forEach(e => {
+        const s = (e.shares || []).find(x => x.member_id === memId);
+        if(s){
+          const amt = convertToTWD(Number(s.amount) || 0, e.currency || "TWD");
+          totalShare += amt;
+          const meta = window.getCategoryMeta ? window.getCategoryMeta(e.description, e.note, e.category) : { type: "general" };
+          if(meta.type === "shopping") shopAmt += amt;
+        }
+      });
+      return totalShare > 0 && shopAmt > 0 && (shopAmt / totalShare >= 0.25);
+    }
+  },
+  {
+    id: "speedy_settler",
+    icon: "⚡",
+    get name(){ return t("badge.speedySettlerName"); },
+    get desc(){ return t("badge.speedySettlerDesc"); },
+    check: (m, expList, repList) => {
+      const reps = window.allGroupRepayments || repList || window.cachedRepayments || [];
+      if(!reps || !reps.length) return false;
+      const sorted = [...reps].sort((a, b) => {
+        const tA = new Date(a.payment_date || a.created_at || 0).getTime();
+        const tB = new Date(b.payment_date || b.created_at || 0).getTime();
+        return tB - tA;
+      });
+      const latest = sorted[0];
+      if(!latest) return false;
+      const currentMId = m.id || m;
+      return latest.from_member === currentMId;
+    }
+  },
+  {
+    id: "ai_master",
+    icon: "🤖",
+    get name(){ return t("badge.aiMasterName"); },
+    get desc(){ return t("badge.aiMasterDesc"); },
+    check: (m, expList, repList, membersList) => {
+      const exps = window.allGroupExpenses || expList || window.cachedExpenses || [];
+      let allMembers = (membersList && membersList.length) ? membersList : (window.memberRows || window.MEMBERS || []);
+      if(!allMembers.length){
+        const idMap = new Map();
+        exps.forEach(e => {
+          (e.payers || []).forEach(p => p.member_id && idMap.set(p.member_id, { id: p.member_id, name: p.member_id }));
+          (e.shares || []).forEach(s => s.member_id && idMap.set(s.member_id, { id: s.member_id, name: s.member_id }));
+          if(e.created_by) idMap.set(e.created_by, { id: e.created_by, name: e.created_by });
+        });
+        allMembers = Array.from(idMap.values());
+      }
+      if(!allMembers.length) return false;
+
+      let maxCount = 0;
+      let topMemberId = null;
+
+      allMembers.forEach(mem => {
+        const memId = mem.id || mem;
+        const count = exps.filter(e => {
+          const isCreator = e.created_by === memId;
+          const isAi = (e.description && (e.description.includes("AI_RECEIPT_DATA") || e.description.includes("AI自動拆單"))) ||
+                       (e.note && (e.note.includes("AI_RECEIPT_DATA") || e.note.includes("AI自動拆單")));
+          return isCreator && isAi;
+        }).length;
+
+        if(count > 0 && count > maxCount){
+          maxCount = count;
+          topMemberId = memId;
+        }
+      });
+
+      const currentMId = m.id || m;
+      return !!(topMemberId && topMemberId === currentMId);
+    }
+  },
+  {
+    id: "math_wizard",
+    icon: "🎯",
+    get name(){ return t("badge.mathWizardName"); },
+    get desc(){ return t("badge.mathWizardDesc"); },
+    check: (m, expList) => {
+      const exps = window.allGroupExpenses || expList || window.cachedExpenses || [];
+      const memId = m.id || m;
+      const twoWeeksAgo = Date.now() - 14 * 24 * 60 * 60 * 1000;
+      const count = exps.filter(e => {
+        const d = new Date(e.expense_date || e.created_at || 0).getTime();
+        if(d < twoWeeksAgo) return false;
+        return (e.shares || []).some(s => s.member_id === memId);
+      }).length;
+      return count >= 10;
+    }
+  }
+];
+
+function getMemberBadges(memberIdOrName, expenses, repayments, membersList){
+  if(!memberIdOrName) return [];
+  const expList = window.allGroupExpenses || expenses || window.cachedExpenses || window.chartExpensesCache || [];
+  const repList = window.allGroupRepayments || repayments || window.cachedRepayments || [];
+  const members = (membersList && membersList.length) ? membersList : (window.memberRows || window.MEMBERS || []);
+  
+  let targetStr = (typeof memberIdOrName === "object" && memberIdOrName !== null)
+    ? (memberIdOrName.id || memberIdOrName.name || "")
+    : String(memberIdOrName).replace(/^付款人[:：]\s*/, "").replace(/^應付人[:：]\s*/, "").replace(/\s*\([^)]*\)/g, "").trim();
+
+  let matchedMember = members.find(x => 
+    x.id === targetStr || 
+    x.name === targetStr || 
+    x.accountName === targetStr ||
+    (targetStr && x.name && (x.name.includes(targetStr) || targetStr.includes(x.name)))
+  );
+
+  const m = matchedMember || (typeof memberIdOrName === "object" && memberIdOrName !== null ? memberIdOrName : { id: targetStr, name: targetStr });
+
+  return BADGES_CATALOG.filter(b => {
+    try {
+      return b.check(m, expList, repList, members);
+    } catch(e){
+      return false;
+    }
+  });
+}
+
+window.BADGES_CATALOG = BADGES_CATALOG;
+window.getMemberBadges = getMemberBadges;
+
+// app.js 裡也有一份一樣的 formatAmt()，但那份是包在它自己的 IIFE 裡、
+// 外部檔案看不到——這裡單獨留一份給這個檔案自己的函式用，邏輯要跟
+// app.js 那份保持一致（不四捨五入成整數，最多顯示到小數點後兩位）。
+function formatAmt(v){
+  if(v === undefined || v === null || isNaN(v) || Math.abs(v) < 0.001) return "0";
+  const num = Number(v);
+  return num.toLocaleString("zh-TW", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+}
+
+// ============================================================
+// ⌨️ 電腦版專屬：鍵盤快捷鍵體系 (Desktop Keyboard Shortcuts)
+// ============================================================
+function initDesktopShortcuts(){
+  if(window.sbShortcutsBound) return;
+  window.sbShortcutsBound = true;
+
+  window.addEventListener("keydown", (e) => {
+    const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
+    const isInput = tag === "input" || tag === "textarea" || tag === "select" || (e.target && e.target.isContentEditable);
+
+    if(e.key === "Escape"){
+      document.querySelectorAll(".calc-modal.show, .modal.show").forEach(m => {
+        m.classList.remove("show");
+        m.classList.add("hidden");
+      });
+      const numpad = document.getElementById("sbFinancialKeypadDrawer");
+      if(numpad) numpad.remove();
+      return;
+    }
+
+    if(isInput) return;
+
+    // N or Ctrl+K / Cmd+K: Open Quick Expense
+    if((e.key === "n" || e.key === "N") || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k")){
+      e.preventDefault();
+      const openQuick = document.getElementById("openQuickExpenseBtn") || document.getElementById("openExpenseModalBtn");
+      if(openQuick) openQuick.click();
+      return;
+    }
+
+    // / or Ctrl+F / Cmd+F: Focus search
+    if(e.key === "/" || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f")){
+      const searchInp = document.getElementById("historySearchInput");
+      if(searchInp){
+        e.preventDefault();
+        searchInp.focus();
+        searchInp.select();
+      }
+      return;
+    }
+
+    // 1: Jump to summary
+    if(e.key === "1"){
+      if(!location.pathname.includes("summary.html")){
+        location.href = "summary.html";
+      }
+    }
+  });
+}
+window.initDesktopShortcuts = initDesktopShortcuts;
+
+// ============================================================
+// 📏 自適應字級：長標題自動縮小到剛好塞進一行 (Shrink-to-Fit Heading)
+// ============================================================
+// 有些語言的幣別名稱組出來的標題會比中文長很多（例如日文「マレーシア
+// リンギットエリア」），與其死板寫死一個小字級犧牲短標題的視覺效果，
+// 或是放任它換行撞到旁邊角落的語言切換/深淺色按鈕，這裡改成量測「這
+// 段文字如果不換行、目前字級真正需要多寬」跟「容器實際能給多寬」兩個
+// 數字，超過的話按比例縮小字級，直到剛好塞進一行；就算縮到最小字級
+// 還是塞不下（理論上不會發生，防呆用），才退回允許正常換行，不會被
+// 硬裁掉看不到字。
+function fitTextToOneLine(el, minFontSize, overrideAvailable){
+  if(!el) return;
+  minFontSize = minFontSize || 15;
+  const parent = el.parentElement;
+  if(!parent) return;
+
+  el.style.whiteSpace = "nowrap";
+  el.style.fontSize = "";
+  const baseFontSize = parseFloat(getComputedStyle(el).fontSize) || 16;
+
+  // overrideAvailable 給那種「可用寬度不是單純扣掉同排手足元素就好」的
+  // 情況用——例如頁面標題左右兩側卡著的是 position:absolute、脫離文件
+  // 流的語言切換/深淺色按鈕，不是 parent 裡真正的手足節點，這裡沒辦法
+  // 從 parent.children 量出來，呼叫端量好實際淨空寬度直接傳進來即可。
+  let available;
+  if(typeof overrideAvailable === "number"){
+    available = overrideAvailable;
+  } else {
+    // 用 el 本身之外、扣掉同一行其他手足元素（例如標題旁邊的 logo）的
+    // 寬度，才是這段文字真正能用的空間；抓 parent 的寬度、扣掉手足元素
+    // 寬度＋間距，比只看 el 目前的寬度準（el 這時候可能已經被壓縮過）。
+    const siblingsWidth = Array.from(parent.children).reduce((sum, child) => {
+      return child === el ? sum : sum + child.getBoundingClientRect().width;
+    }, 0);
+    const gap = parseFloat(getComputedStyle(parent).gap) || 0;
+    const gapCount = parent.children.length > 1 ? parent.children.length - 1 : 0;
+    // clientWidth 含 parent 自己的 padding，但子元素只能用扣掉 padding
+    // 之後的內容區——沒扣掉的話算出來的「可用空間」會比實際能用的還寬，
+    // 導致明明會超出寬度卻誤判成「還放得下」。
+    const parentStyle = getComputedStyle(parent);
+    const parentPaddingX = (parseFloat(parentStyle.paddingLeft) || 0) + (parseFloat(parentStyle.paddingRight) || 0);
+    available = parent.clientWidth - parentPaddingX - siblingsWidth - (gap * gapCount) - 4;
+  }
+
+  const natural = el.scrollWidth;
+  if(available > 0 && natural > available){
+    let scaled = Math.max(minFontSize, Math.floor(baseFontSize * available / natural));
+    // 用 setProperty(..., "important") 而不是直接指定 el.style.fontSize——
+    // 手機版斷點對 .app-header h1 這類標題本來就下了 !important 縮小字級
+    // （見 shared.css 的 @media max-width:600px），一般行內樣式蓋不過
+    // 樣式表裡的 !important，只有行內也標成 !important 才蓋得過去。
+    el.style.setProperty("font-size", scaled + "px", "important");
+    // 字級跟文字寬度不是完美線性關係（尤其中日文字型的字距/子像素捨入），
+    // 照比例算出來的字級縮完一次不一定剛好卡在可用寬度內，這裡再逐 1px
+    // 微調幾次收斂，比只縮一次準，也比每次都整段跑二分搜尋便宜。
+    let guard = 0;
+    while(el.scrollWidth > available && scaled > minFontSize && guard < 8){
+      scaled -= 1;
+      el.style.setProperty("font-size", scaled + "px", "important");
+      guard++;
+    }
+    if(el.scrollWidth > available){
+      el.style.whiteSpace = "normal";
+    }
+  } else {
+    el.style.whiteSpace = "normal";
+  }
+}
+window.fitTextToOneLine = fitTextToOneLine;
+

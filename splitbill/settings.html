@@ -1,0 +1,2510 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<script>
+(function(){
+  try{
+    var t = localStorage.getItem("splitbill-theme");
+    if(t !== "dark" && t !== "light"){
+      t = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+    }
+    document.documentElement.setAttribute("data-theme", t);
+  }catch(e){}
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Splitbill｜設定</title>
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#7A6B9E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Splitbill">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;700&family=Noto+Sans+TC:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css?v=855">
+<link rel="stylesheet" href="shared.css?v=855">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
+<script src="i18n.js?v=855"></script>
+<script src="currencies.js?v=855"></script>
+<script src="version.js?v=855"></script>
+<script src="shared-ui.js?v=855"></script>
+<script src="theme.js?v=855" defer></script>
+<script src="app-banner.js?v=855" defer></script>
+<script>
+if("serviceWorker" in navigator){
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  });
+}
+</script>
+</head>
+<body>
+<div id="pwaSplash" class="pwa-splash">
+  <div class="pwa-splash-content">
+    <svg class="pwa-splash-logo" viewBox="0 0 512 512" aria-hidden="true">
+      <path class="s1" d="M256,238 L118.5,138.1 A170,170 0 0,1 393.5,138.1 Z"/>
+      <path class="s2" d="M271.6,265 L426.9,195.9 A170,170 0 0,1 289.4,434.1 Z"/>
+      <path class="s3" d="M240.4,265 L222.6,434.1 A170,170 0 0,1 85.1,195.9 Z"/>
+    </svg>
+  </div>
+</div>
+<script>
+(function(){
+  const splashEl = document.getElementById("pwaSplash");
+  if(!splashEl) return;
+  const splashStartTime = performance.now();
+  const hasSplashed = sessionStorage.getItem("sb_splashed_in_session") === "1";
+  let splashTimer = null;
+
+  if(!hasSplashed){
+    splashEl.classList.add("pwa-splash-visible");
+    sessionStorage.setItem("sb_splashed_in_session", "1");
+  } else {
+    splashTimer = setTimeout(()=>{
+      if(splashEl) splashEl.classList.add("pwa-splash-visible");
+    }, 300);
+  }
+
+  window.hidePwaSplash = function(){
+    if(splashTimer) clearTimeout(splashTimer);
+    const elapsed = performance.now() - splashStartTime;
+    const minDisplay = (!hasSplashed) ? 380 : 0;
+    const remaining = Math.max(0, minDisplay - elapsed);
+    setTimeout(()=>{
+      splashEl.classList.add("pwa-splash-out");
+      setTimeout(()=>{ if(splashEl.parentNode) splashEl.remove(); }, 350);
+    }, remaining);
+  };
+  setTimeout(window.hidePwaSplash, 2000);
+})();
+</script>
+<svg class="svg-defs-hidden" aria-hidden="true">
+  <defs>
+    <linearGradient id="logoGrad" x1="90" y1="90" x2="430" y2="430" gradientUnits="userSpaceOnUse">
+      <stop class="logo-stop-a" offset="0%"/>
+      <stop class="logo-stop-b" offset="100%"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<div class="wrap">
+
+  <div class="app-header">
+    <div class="location-weather-row">
+      <div class="location-weather-badge hidden" id="locationCard">
+        <span id="locationText"></span>
+      </div>
+      <div class="location-weather-badge hidden" id="weatherCard">
+        <span id="weatherText"></span>
+      </div>
+    </div>
+    <div class="title-row">
+      <svg class="app-logo" viewBox="0 0 512 512" aria-hidden="true">
+        <path class="s1" d="M256,238 L118.5,138.1 A170,170 0 0,1 393.5,138.1 Z"/>
+        <path class="s2" d="M271.6,265 L426.9,195.9 A170,170 0 0,1 289.4,434.1 Z"/>
+        <path class="s3" d="M240.4,265 L222.6,434.1 A170,170 0 0,1 85.1,195.9 Z"/>
+      </svg>
+      <h1 data-i18n="settings.title">設定</h1>
+    </div>
+    <div class="nav-links" id="navLinks"></div>
+  </div>
+
+  <div id="configWarning" class="card hidden">
+    <h2 data-i18n="configWarning.title">⚠️ 尚未設定 Supabase</h2>
+    <p class="config-warning-text">
+      打開這個檔案，把最下面 <code>&lt;script&gt;</code> 區塊裡的
+      <code>SUPABASE_URL</code> 跟 <code>SUPABASE_ANON_KEY</code>
+      換成你自己 Supabase 專案的值，存檔後重新整理即可。
+    </p>
+  </div>
+
+  <div id="appScreen">
+    <div class="topbar">
+      <div class="whoami whoami-wrap" id="whoamiWrap">
+        <span id="whoamiAvatar"></span>
+        <span id="whoamiText"><b id="whoamiName"></b></span>
+      </div>
+      <div class="topbar-actions">
+        <div id="notificationBellContainer"></div>
+        <button type="button" class="btn secondary small" id="backBtn" data-i18n="settings.back">‹ 返回</button>
+      </div>
+    </div>
+
+    <div class="offline-banner hidden" id="offlineBanner">
+      <span class="offline-banner-text" data-i18n="shared.offlineBannerText">📴 目前離線，部分功能可能無法使用</span>
+    </div>
+
+    <div class="card">
+      <div class="app-tabs" id="settingsTabs">
+        <div class="tab-indicator" id="settingsTabIndicator"></div>
+        <button type="button" class="app-tab active" data-settings-tab="account" data-i18n="settings.tab.account">👤 帳號</button>
+        <button type="button" class="app-tab" data-settings-tab="group" data-i18n="settings.tab.group">👥 群組</button>
+        <button type="button" class="app-tab" data-settings-tab="prefs" data-i18n="settings.tab.prefs">⚙️ 偏好設定</button>
+      </div>
+
+      <div id="settingsTabAccount" class="settings-tab-panel">
+
+        <div class="settings-group">
+          <div class="settings-section-title" data-i18n="settings.basicInfoTitle">基本資料</div>
+
+          <label data-i18n="settings.avatarLabel">個人大頭貼</label>
+          <div class="settings-avatar-card">
+            <div class="settings-avatar-badge-wrap">
+              <div class="settings-avatar-preview" id="settingsAvatarPreview" data-i18n-title="settings.avatarPreviewTitle" title="點擊查看大圖"></div>
+              <button type="button" class="avatar-zoom-badge hidden" id="avatarZoomBtn" data-i18n-title="settings.avatarViewPhoto" title="查看大頭貼相片" aria-label="查看相片">
+                🔍
+              </button>
+            </div>
+            <div class="settings-avatar-info">
+              <div class="settings-avatar-row">
+                <label class="btn secondary small avatar-btn-upload" for="avatarFileInput">
+                  <span data-i18n="settings.avatarChangePhoto">📷 更換相片</span>
+                  <input type="file" id="avatarFileInput" accept="image/*" class="hidden">
+                </label>
+                <button type="button" class="btn secondary small avatar-btn-remove hidden" id="removeAvatarBtn" data-i18n="settings.avatarRemove">
+                  ✕ 移除
+                </button>
+              </div>
+              <p class="settings-avatar-hint" data-i18n="settings.avatarHint">點擊頭像或 🔍 放大鏡查看照片，支援相機與相簿裁切</p>
+            </div>
+          </div>
+          <div class="msg" id="avatarMsg"></div>
+
+          <label data-i18n="login.usernameLabel">登入帳號<button type="button" class="info-btn" data-info-for="infoAccountName" aria-label="說明"><span class="info-btn-i">i</span></button></label>
+          <p class="settings-hint hidden" id="infoAccountName" data-i18n="settings.usernameInfo">全站唯一，不能跟別人重複；登入頁可以直接打這個名稱登入，不用記信箱。改了會同步套用到你所有群組的預設顯示名稱——除非某個群組另外設定了暱稱，那個群組會繼續顯示暱稱，不受這裡影響。可以是中文、英文、數字、底線，2~20 個字。</p>
+          <div class="settings-field-row">
+            <input type="text" id="settingsName" data-i18n-placeholder="settings.usernamePlaceholder" placeholder="例如 小菘、chiasung" maxlength="20">
+            <button class="btn secondary small" id="saveNameBtn" data-i18n="common.save">儲存</button>
+          </div>
+          <div class="msg" id="nameMsg"></div>
+
+          <label data-i18n="login.emailLabel">電子信箱<button type="button" class="info-btn" data-info-for="infoEmail" aria-label="說明"><span class="info-btn-i">i</span></button></label>
+          <p class="settings-hint hidden" id="infoEmail" data-i18n="settings.emailInfo">填了才能用忘記密碼救回帳號。</p>
+          <div class="settings-field-row">
+            <input type="email" id="settingsEmail" data-i18n-placeholder="login.emailPlaceholder" placeholder="例如 you@gmail.com">
+            <button class="btn secondary small" id="saveEmailBtn" data-i18n="common.save">儲存</button>
+          </div>
+          <p class="settings-hint" id="emailStatusHint"></p>
+          <div class="msg" id="emailMsg"></div>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-section-title" data-i18n="settings.paymentAccountsTitle">收款帳戶</div>
+
+          <p class="settings-hint" id="infoPaymentInfo" data-i18n="settings.paymentAccountsInfo">填寫後，其他成員點開你的頭像查看個人資料時就會看到，方便他們知道該轉帳到哪裡還你錢。可以依偏好順序，由上而下新增多筆帳戶。</p>
+          <div class="payment-accounts-list" id="paymentAccountsList"></div>
+          <div class="payment-account-add-row">
+            <button type="button" class="link-btn" id="addPaymentAccountBtn" data-i18n="settings.addPaymentAccount">+ 新增帳戶</button>
+          </div>
+          <button class="btn secondary small payment-account-save-btn" id="savePaymentInfoBtn" data-i18n="common.save">儲存</button>
+          <div class="msg" id="paymentInfoMsg"></div>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-section-title" data-i18n="settings.paymentVisibilityTitle">收款帳戶顯示範圍</div>
+          <p class="settings-hint" data-i18n="settings.paymentVisibilityHint">收款帳戶會同步顯示在你所在的每個群組，可以個別選擇要在哪些群組讓其他成員看到。</p>
+          <div id="paymentVisibilityList"></div>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-section-title" data-i18n="settings.loginMethodTitle">登入方式</div>
+
+          <div id="pwChangeSection">
+            <button type="button" class="btn-wide" id="pwChangeModalOpenBtn" data-i18n="settings.resetPassword">🔑 重設密碼</button>
+          </div>
+          <p class="settings-hint hidden" id="pwChangeLockedHint" data-i18n="settings.pwChangeLockedHint">🔒 請先在上面設定並確認信箱，才能在這裡修改密碼——不然以後忘記密碼會沒辦法用忘記密碼功能救回帳號。</p>
+
+          <label data-i18n="settings.linkIdentityLabel">連結其他登入方式<button type="button" class="info-btn" data-info-for="infoLinkIdentity" aria-label="說明"><span class="info-btn-i">i</span></button></label>
+          <p class="settings-hint hidden" id="infoLinkIdentity" data-i18n="settings.linkIdentityInfo">把不同信箱的 Google/Discord 帳號連結到這個帳號，以後不管用哪一種方式登入，都是同一個帳號、同一批群組資料。建議現在就先連結起來，之後才不會因為信箱不一樣，不小心用 Google/Discord 登入又建立出一個新帳號。</p>
+          <div class="settings-row">
+            <span>Google</span>
+            <button class="btn secondary small" id="linkGoogleBtn" data-i18n="settings.link">連結</button>
+          </div>
+          <div class="settings-row">
+            <span>Discord</span>
+            <button class="btn secondary small" id="linkDiscordBtn" data-i18n="settings.link">連結</button>
+          </div>
+          <div class="msg" id="linkIdentityMsg"></div>
+        </div>
+
+        <div class="settings-group settings-group-danger">
+          <div class="settings-section-title" data-i18n="settings.dangerZoneTitle">危險區域</div>
+
+          <label data-i18n="settings.deleteAccountLabel">銷毀帳號</label>
+          <p class="settings-hint" id="infoDeleteAccount" data-i18n="settings.deleteAccountInfo">會讓這個帳號沒辦法再登入，並讓你離開所有群組（歷史支出/還款紀錄會保留，其他人還是看得到）。如果你在任何群組裡還有沒結清的款項，沒辦法銷毀。</p>
+          <button class="btn-wide" id="deleteAccountBtn" data-i18n="settings.deleteAccountBtn">銷毀帳號</button>
+          <div class="msg" id="deleteAccountMsg"></div>
+        </div>
+
+      </div>
+
+      <div id="settingsTabGroup" class="settings-tab-panel hidden">
+
+        <div class="settings-group">
+          <div class="settings-section-title" data-i18n="settings.thisGroupTitle">這個群組</div>
+
+          <label data-i18n="settings.currentGroupLabel">目前所在的群組<button type="button" class="info-btn" data-info-for="infoGroupSelect" aria-label="說明"><span class="info-btn-i">i</span></button></label>
+          <p class="settings-hint hidden" id="infoGroupSelect" data-i18n="settings.currentGroupInfo">切換群組後頁面會重新整理，只會看到那個群組的資料。</p>
+          <div class="settings-field-row">
+            <select id="settingsGroupSelect"></select>
+          </div>
+          <div class="msg" id="settingsGroupMsg"></div>
+
+          <label data-i18n="settings.nicknameLabel">在這個群組顯示的暱稱<button type="button" class="info-btn" data-info-for="infoNickname" aria-label="說明"><span class="info-btn-i">i</span></button></label>
+          <p class="settings-hint hidden" id="infoNickname" data-i18n="settings.nicknameInfo">只影響這個群組看到的名字，不影響「帳號」分頁的登入帳號、也不影響你在其他群組的名字。留空表示不特別設定，跟著登入帳號走。</p>
+          <div class="settings-field-row">
+            <input type="text" id="settingsNickname" data-i18n-placeholder="settings.nicknamePlaceholder" placeholder="這個群組看到的名字">
+            <button class="btn secondary small" id="saveNicknameBtn" data-i18n="common.save">儲存</button>
+          </div>
+          <div class="msg" id="nicknameMsg"></div>
+
+          <label data-i18n="settings.groupNameLabel">目前的群組名稱<button type="button" class="info-btn" data-info-for="infoGroupName" aria-label="說明"><span class="info-btn-i">i</span></button></label>
+          <p class="settings-hint hidden" id="infoGroupName" data-i18n="settings.groupNameInfo">任何成員都可以改，不限建立者。</p>
+          <div class="settings-field-row">
+            <input type="text" id="settingsGroupName" data-i18n-placeholder="groupChoice.groupNameLabel" placeholder="群組名稱">
+            <button class="btn secondary small" id="saveGroupNameBtn" data-i18n="common.save">儲存</button>
+          </div>
+          <div class="msg" id="groupNameMsg"></div>
+        </div>
+
+        <div class="settings-group" id="recurringTemplatesGroup">
+          <div class="settings-section-title" data-i18n="settings.recurringSectionTitle">🔁 週期性支出</div>
+          <button type="button" class="btn-wide" id="recurringTemplateAddBtn" data-i18n="settings.recurringAddBtn">➕ 新增週期性支出</button>
+          <div id="recurringTemplatesList"></div>
+          <p class="settings-hint" id="recurringTemplatesEmpty" data-i18n="settings.recurringEmpty">目前沒有設定週期性支出，點上面的「➕ 新增週期性支出」就可以建立</p>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-section-title" data-i18n="settings.inviteJoinTitle">邀請與加入</div>
+
+          <label data-i18n="settings.inviteCodeLabel">邀請碼（給朋友，讓他們加入這個群組）</label>
+          <div class="settings-field-row">
+            <input type="text" id="settingsInviteCode" readonly data-i18n-title="settings.inviteCodeTitle" title="點擊一鍵複製邀請碼">
+            <button class="btn secondary small" id="copyInviteCodeBtn" data-i18n="common.copy">複製</button>
+          </div>
+          <div class="msg" id="copyInviteCodeMsg"></div>
+          <button type="button" class="btn-wide" id="qrModalOpenBtn" data-i18n="settings.showQrCode">📱 顯示 QR Code</button>
+
+          <label data-i18n="settings.joinByCodeLabel">用邀請碼加入<button type="button" class="info-btn" data-info-for="infoJoinGroup" aria-label="說明"><span class="info-btn-i">i</span></button></label>
+          <p class="settings-hint hidden" id="infoJoinGroup" data-i18n="settings.joinByCodeInfo">會用「帳號」分頁設定的姓名加入，加入後自動切換過去，之後可以隨時用上面的下拉選單換回來，或是在這個群組另外設定暱稱。</p>
+          <div class="settings-field-row">
+            <input type="text" id="settingsJoinCode" data-i18n-placeholder="settings.inviteCodePlaceholder" placeholder="邀請碼">
+            <button class="btn secondary small" id="settingsJoinGroupBtn" data-i18n="common.join">加入</button>
+          </div>
+          <div class="msg" id="settingsJoinGroupMsg"></div>
+
+          <label data-i18n="settings.createNewGroupLabel">建立新群組</label>
+          <button type="button" class="btn-wide" id="createGroupModalOpenBtn" data-i18n="settings.createNewGroupBtn">➕ 建立新群組</button>
+        </div>
+
+        <div class="settings-group settings-group-danger">
+          <div class="settings-section-title" data-i18n="settings.dangerZoneTitle">危險區域</div>
+
+          <label data-i18n="settings.leaveGroupLabel">退出目前這個群組</label>
+          <p class="settings-hint" id="infoLeaveGroup" data-i18n="settings.leaveGroupInfo">退出後這個群組的資料就看不到了，歷史紀錄會保留（別人還是看得到你之前的支出/還款），之後可以再用邀請碼加回來。</p>
+          <button class="btn-wide" id="leaveGroupBtn" data-i18n="settings.leaveGroupBtn">退出目前群組</button>
+          <div class="msg" id="leaveGroupMsg"></div>
+
+          <div id="groupManageSection" class="hidden">
+            <div class="settings-divider"></div>
+
+            <label data-i18n="settings.manageMembers">建立者專屬：管理成員</label>
+            <div class="checks" id="groupMemberManageList"></div>
+            <div class="msg" id="groupMemberManageMsg"></div>
+
+            <label data-i18n="settings.deleteGroupLabel">刪除整個群組</label>
+            <p class="settings-hint" id="infoDeleteGroup" data-i18n="settings.deleteGroupInfo">會把這個群組所有支出、還款、留言、成員都一起清掉，沒辦法復原。</p>
+            <button class="btn secondary small" id="deleteGroupBtn" data-i18n="settings.deleteGroupBtn">刪除整個群組</button>
+            <div class="msg" id="deleteGroupMsg"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <div id="settingsTabPrefs" class="settings-tab-panel hidden">
+
+        <div class="settings-group">
+          <div class="settings-section-title" data-i18n="settings.displayContentTitle">顯示內容</div>
+
+          <label data-i18n="settings.currencyLabel">顯示幣別<button type="button" class="info-btn" data-info-for="infoCurrency" aria-label="說明"><span class="info-btn-i">i</span></button></label>
+          <p class="settings-hint hidden" id="infoCurrency" data-i18n="settings.currencyInfo">勾選的幣別才會出現在總覽的導覽列、總表、我的款項；取消勾選不會刪除紀錄。</p>
+          <button type="button" class="btn-wide" id="currencyModalOpenBtn">
+            <span id="currencyToggleSummary" data-i18n="settings.selectDisplayCurrencies">選擇要顯示的幣別</span>
+          </button>
+
+          <div class="settings-row settings-row-mt">
+            <span class="settings-item-label-wrap">
+              <span data-i18n="settings.showLeftMembersLabel">顯示已退出／已銷毀成員</span>
+              <button type="button" class="info-btn" data-info-for="infoShowLeft" aria-label="說明"><span class="info-btn-i">i</span></button>
+            </span>
+            <label class="switch-toggle" for="showLeftMembersToggle">
+              <input type="checkbox" id="showLeftMembersToggle">
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+          <p class="settings-hint hidden" id="infoShowLeft" data-i18n="settings.showLeftMembersInfo">關閉後，總表、成員清單等畫面就不會再出現已經退出群組或帳號已銷毀的人（歷史支出/還款紀錄上的名字不受影響）。</p>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-section-title" data-i18n="settings.notifAppearanceTitle">通知與外觀</div>
+
+          <div class="settings-row settings-row-clickable" id="notifyRow">
+            <div class="settings-row-lead">
+              <span class="settings-row-icon">🔔</span>
+              <div>
+                <div class="settings-row-title" data-i18n="settings.changeNotifyTitle">異動通知</div>
+                <div class="settings-hint settings-row-hint" id="notifyHint" data-i18n="settings.changeNotifyHint">有相關支出或還款異動就通知你</div>
+              </div>
+            </div>
+            <button class="icon-btn" id="notifyBtn" data-i18n-title="settings.notifyTitleOn" title="開啟通知" aria-label="通知">🔔</button>
+          </div>
+
+          <div class="settings-divider settings-divider-compact"></div>
+
+          <div class="settings-row settings-row-clickable" id="themeRow">
+            <div class="settings-row-lead">
+              <span class="settings-row-icon" id="themeRowIcon">🌙</span>
+              <div>
+                <div class="settings-row-title" data-i18n="settings.darkModeTitle">深色模式</div>
+                <div class="settings-hint settings-row-hint" data-i18n="settings.darkModeHint">切換深色與淺色視覺主題</div>
+              </div>
+            </div>
+            <button class="icon-btn" id="settingsThemeBtn" data-i18n-title="settings.toggleThemeAria" aria-label="切換深色淺色模式">🌙</button>
+          </div>
+
+          <div class="settings-divider settings-divider-compact"></div>
+
+          <div class="settings-row-lang">
+            <div class="settings-row-lead">
+              <span class="settings-row-icon">🌐</span>
+              <div>
+                <div class="settings-row-title" data-i18n="settings.languageTitle">顯示語言</div>
+                <div class="settings-hint settings-row-hint" data-i18n="settings.languageHint">切換整個 App 的顯示語言</div>
+              </div>
+            </div>
+            <select id="settingsLangSelect" class="settings-lang-select"></select>
+          </div>
+        </div>
+
+
+
+        <div class="settings-group">
+          <div class="settings-section-title" data-i18n="settings.downloadAppTitle">下載 App</div>
+
+          <label data-i18n="settings.apkLabel">Android APK</label>
+          <p class="settings-hint" id="infoApk" data-i18n-html="settings.apkInfo">這不是 Google Play 上架版，安裝時手機會提示「不明來源」，需要手動允許才能安裝——這是側載 APK 本來就會有的正常警告，跟 App 本身無關。<br>如果是 iOS 使用者請點擊分享後新增至主螢幕，以擁有似應用程式的使用體驗。</p>
+          <a class="btn-wide" href="https://github.com/jschang0512/splitbill/releases/latest/download/splitbill.apk" data-i18n="settings.downloadApk">下載 APK</a>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-section-title" data-i18n="settings.versionInfoTitle">版本資訊</div>
+
+          <div class="settings-row">
+            <span data-i18n="settings.currentVersionLabel">目前版本</span>
+            <span class="version-badge" id="settingsVerNum"></span>
+          </div>
+          <div class="settings-changelog-wrap settings-changelog-wrap-mt">
+            <div class="settings-changelog-header" id="settingsChangelogHeader">✨ v642 最新更新項目：</div>
+            <ul class="settings-changelog settings-changelog-list">
+              <li data-i18n="settings.changelog1">「支出」「記一筆」「AI 拆單」三個記帳表單改成一步一步填寫，一次只需要處理一個區塊</li>
+              <li data-i18n="settings.changelog2">「有另外加服務費或稅嗎」改成清楚的「有／沒有」按鈕，不用再猜要不要點開</li>
+              <li data-i18n="settings.changelog3">修正歷史紀錄「✎ 編輯匯率」按鈕點了沒反應的問題</li>
+              <li data-i18n="settings.changelog4">簡化進階篩選，整合重複的篩選項目</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="app-footer" id="appFooter"></div>
+  </div><!-- /appScreen -->
+</div>
+
+<div class="calc-modal" id="currencyModal">
+  <div class="calc-card card">
+    <div class="calc-header">
+      <span class="calc-header-name" data-i18n="settings.selectCurrenciesModalTitle">選擇要顯示的幣別</span>
+      <button type="button" class="calc-close" id="currencyModalCloseBtn">✕</button>
+    </div>
+    <div class="checks checks-wide" id="settingsCurrencyList"></div>
+  </div>
+</div>
+
+<!-- 🔁 週期性支出：獨立的建立/編輯範本表單，跟一般記帳表單完全分開（見使用者需求）。
+     用同一個 modal 同時處理新增跟編輯——編輯模式由 editingRecurringTemplateId 決定，
+     差別只在標題文字、按鈕文字、以及送出時是 insert 還是 update。 -->
+<div class="calc-modal" id="recurringTemplateFormModal">
+  <div class="calc-card card">
+    <div class="calc-header">
+      <span class="calc-header-name" id="recurringTemplateFormTitle" data-i18n="settings.recurringFormTitleNew">➕ 新增週期性支出</span>
+      <button type="button" class="calc-close" id="recurringTemplateFormCloseBtn">✕</button>
+    </div>
+
+    <label data-i18n="settings.recurringFormDescLabel">品項名稱</label>
+    <input type="text" id="recurTmplDesc" data-i18n-placeholder="settings.recurringFormDescPlaceholder" placeholder="例如 房租、Netflix 訂閱">
+
+    <label data-i18n="currency.categoryLabel">類別 (自動辨識 / 可手動選擇)</label>
+    <div class="select-wrap">
+      <select id="recurTmplCategory">
+        <option value="general" data-i18n="cat.general">🧾 一般支出</option>
+        <option value="food" data-i18n="cat.food">🍜 美食餐飲</option>
+        <option value="drink" data-i18n="cat.drink">☕ 飲料甜點</option>
+        <option value="transit" data-i18n="cat.transit">🚄 大眾交通</option>
+        <option value="car" data-i18n="cat.car">🚗 租車用油</option>
+        <option value="flight" data-i18n="cat.flight">✈️ 機票航班</option>
+        <option value="hotel" data-i18n="cat.hotel">🏨 住宿溫泉</option>
+        <option value="ticket" data-i18n="cat.ticket">🎟️ 門票娛樂</option>
+        <option value="shopping" data-i18n="cat.shopping">🛍️ 購物藥妝</option>
+        <option value="medical" data-i18n="cat.medical">💊 醫療藥品</option>
+        <option value="network" data-i18n="cat.network">📶 網卡通訊</option>
+      </select>
+    </div>
+
+    <label data-i18n="settings.recurringFormCurrencyLabel">幣別</label>
+    <div class="select-wrap">
+      <select id="recurTmplCurrency"></select>
+    </div>
+
+    <label data-i18n="settings.recurringFormAmountLabel">總金額</label>
+    <input type="number" id="recurTmplAmount" min="1" step="1" data-i18n-placeholder="currency.repayAmountPlaceholder" placeholder="例如 500">
+
+    <label data-i18n="settings.recurringFormPayerLabel">誰付的錢</label>
+    <div class="select-wrap">
+      <select id="recurTmplPayer"></select>
+    </div>
+
+    <label data-i18n="settings.recurringFormParticipantsLabel">誰要分攤（平分）</label>
+    <div class="checks" id="recurTmplParticipants"></div>
+
+    <label data-i18n="currency.recurringIntervalLabel">週期</label>
+    <div class="select-wrap">
+      <select id="recurTmplUnit">
+        <option value="monthly" data-i18n="currency.recurringUnitMonthly">每月</option>
+        <option value="weekly" data-i18n="currency.recurringUnitWeekly">每週</option>
+      </select>
+    </div>
+    <div class="select-wrap" id="recurTmplMonthlyWrap">
+      <select id="recurTmplMonthlyDay"></select>
+    </div>
+    <div class="select-wrap hidden" id="recurTmplWeeklyWrap">
+      <select id="recurTmplWeeklyDay"></select>
+    </div>
+
+    <button type="button" class="btn-wide" id="recurTmplSubmitBtn" data-i18n="settings.recurringFormSubmitNew">建立週期性支出</button>
+    <div class="msg" id="recurTmplMsg"></div>
+  </div>
+</div>
+
+<div class="calc-modal" id="pwChangeModal">
+  <div class="calc-card card">
+    <div class="calc-header">
+      <span class="calc-header-name" data-i18n="settings.resetPasswordModalTitle">重設密碼</span>
+      <button type="button" class="calc-close" id="pwChangeModalCloseBtn">✕</button>
+    </div>
+    <label data-i18n="settings.newPasswordLabel">新密碼（至少 6 碼）</label>
+    <div class="pw-input-wrap">
+      <input type="password" id="newPassword" data-i18n-placeholder="settings.newPasswordPlaceholder" placeholder="留空表示不變更">
+      <button type="button" class="pw-toggle-btn" data-i18n-title="login.showPassword" aria-label="顯示密碼">👁️</button>
+    </div>
+    <div class="pw-input-wrap">
+      <input type="password" id="newPasswordConfirm" data-i18n-placeholder="recovery.confirmPlaceholder" placeholder="再輸入一次新密碼">
+      <button type="button" class="pw-toggle-btn" data-i18n-title="login.showPassword" aria-label="顯示密碼">👁️</button>
+    </div>
+    <button class="btn-wide" id="savePwBtn" data-i18n="common.save">儲存</button>
+    <div class="msg" id="pwMsg"></div>
+  </div>
+</div>
+
+<div class="calc-modal" id="qrModal">
+  <div class="calc-card card">
+    <div class="calc-header">
+      <span class="calc-header-name" data-i18n="settings.inviteQrTitle">邀請 QR Code</span>
+      <button type="button" class="calc-close" id="qrModalCloseBtn">✕</button>
+    </div>
+    <div class="invite-qr-wrap">
+      <div id="inviteQrCanvas"></div>
+      <p class="invite-qr-hint" data-i18n="settings.inviteQrHint">用手機掃描，對方登入或註冊後會自動幫他填好這組邀請碼</p>
+    </div>
+  </div>
+</div>
+
+<div class="calc-modal" id="createGroupModal">
+  <div class="calc-card card">
+    <div class="calc-header">
+      <span class="calc-header-name" data-i18n="settings.createGroupModalTitle">建立新群組</span>
+      <button type="button" class="calc-close" id="createGroupModalCloseBtn">✕</button>
+    </div>
+    <label data-i18n="groupChoice.groupNameLabel">群組名稱</label>
+    <input type="text" id="settingsCreateGroupName" data-i18n-placeholder="groupChoice.groupNamePlaceholder" placeholder="例如：日本旅遊團">
+    <label data-i18n="settings.creationCodeLabel">建團授權碼<button type="button" class="info-btn" data-info-for="infoCreateGroup" aria-label="說明"><span class="info-btn-i">i</span></button></label>
+    <p class="settings-hint hidden" id="infoCreateGroup" data-i18n="settings.creationCodeInfo">避免帳號被拿去亂開群組，需要跟開發者索取授權碼才能建立新群組。建立後會自動切換過去，之後可以隨時用上面的下拉選單換回來。</p>
+    <input type="text" id="settingsCreateGroupCode" data-i18n-placeholder="groupChoice.creationCodePlaceholder" placeholder="跟開發者索取">
+    <button class="btn-wide" id="settingsCreateGroupBtn" data-i18n="common.create">建立</button>
+    <div class="msg" id="settingsCreateGroupMsg"></div>
+  </div>
+</div>
+
+<div class="calc-modal" id="avatarModal">
+  <div class="calc-card card avatar-modal-card">
+    <div class="avatar-modal-header">
+      <div class="avatar-modal-title" data-i18n="settings.avatarModalTitle">👤 個人大頭貼</div>
+      <button type="button" class="calc-close" id="avatarModalCloseBtn">✕</button>
+    </div>
+    <div class="avatar-modal-body">
+      <img id="avatarModalImg" src="" data-i18n-placeholder="settings.avatarAlt" alt="大頭貼相片" class="avatar-modal-img">
+    </div>
+  </div>
+</div>
+
+<div class="calc-modal" id="avatarCropModal">
+  <div class="calc-card card avatar-crop-modal-card">
+    <div class="avatar-modal-header">
+      <div class="avatar-modal-title" data-i18n="settings.avatarCropModalTitle">✂️ 裁切大頭貼</div>
+      <button type="button" class="calc-close" id="avatarCropCloseBtn">✕</button>
+    </div>
+    <div class="avatar-crop-stage" id="avatarCropStage">
+      <img id="avatarCropImg" class="avatar-crop-img" draggable="false" alt="">
+      <div class="avatar-crop-frame"></div>
+    </div>
+    <p class="avatar-crop-hint" data-i18n="settings.avatarCropHint">拖曳移動位置，滑動下方調整縮放</p>
+    <input type="range" id="avatarCropZoom" min="100" max="300" value="100" class="avatar-crop-zoom-slider">
+    <div class="avatar-crop-actions">
+      <button type="button" class="btn secondary small" id="avatarCropRetakeBtn" data-i18n="settings.retake">重新選擇</button>
+      <button type="button" class="btn small" id="avatarCropConfirmBtn" data-i18n="common.confirmCropping">✓ 確認裁切</button>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById("appFooter").textContent = "菘. v" + APP_VERSION;
+document.getElementById("settingsVerNum").textContent = "ver. " + APP_VERSION;
+document.getElementById("settingsChangelogHeader").textContent = t("settings.changelogHeader", { ver: APP_VERSION });
+document.addEventListener("splitbill-lang-changed", ()=>{
+  document.getElementById("settingsChangelogHeader").textContent = t("settings.changelogHeader", { ver: APP_VERSION });
+});
+</script>
+
+<script>
+const SUPABASE_URL = "https://ofevarwtqzvzrvhbanmf.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_pWT6foelsonrb1sLMXhnCw_oA3ytvaX";
+
+let shownCurrencies = JSON.parse(localStorage.getItem("splitbill-shown-currencies") || "null") || ["TWD"];
+let showLeftMembers = localStorage.getItem("splitbill-show-left-members") !== "0";
+
+function renderNavLinks(){
+  renderSplitbillNav("navLinks", "SETTINGS", shownCurrencies);
+}
+renderNavLinks();
+
+const backBtn = document.getElementById("backBtn");
+if(backBtn){
+  backBtn.addEventListener("click", ()=>{
+    if(history.length > 1) history.back();
+    else location.href = "summary.html";
+  });
+}
+
+(function(){
+  if(SUPABASE_URL.startsWith("YOUR_") || SUPABASE_ANON_KEY.startsWith("YOUR_")){
+    hidePwaSplash();
+    document.getElementById("configWarning").classList.remove("hidden");
+    return;
+  }
+
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  function friendlyAuthErr(error){
+    const msg = (error && error.message) || "";
+    if(/captcha/i.test(msg)) return t("settings.msg.captchaFailed");
+    if(/already linked|already exists/i.test(msg)) return t("msg.accountAlreadyLinked");
+    return null;
+  }
+
+  // ---------- 所有 .msg 狀態訊息（成功/失敗提示）5 秒後自動消失 ----------
+  (function(){
+    const timers = new WeakMap();
+    function scheduleClear(el){
+      if(!el.textContent) return;
+      if(timers.has(el)) clearTimeout(timers.get(el));
+      timers.set(el, setTimeout(()=>{ el.textContent = ""; timers.delete(el); }, 5000));
+    }
+    new MutationObserver(muts=>{
+      const seen = new Set();
+      muts.forEach(m=>{
+        let el = m.target.nodeType === 1 ? m.target : m.target.parentElement;
+        while(el && el !== document.body){
+          if(el.classList && el.classList.contains("msg")){
+            if(!seen.has(el)){ seen.add(el); scheduleClear(el); }
+            break;
+          }
+          el = el.parentElement;
+        }
+      });
+    }).observe(document.body, { childList: true, characterData: true, subtree: true });
+  })();
+
+  // ---------- 說明按鈕、密碼小眼睛 ----------
+  document.addEventListener("click", (e)=>{
+    const btn = e.target.closest(".info-btn");
+    if(!btn) return;
+    const target = document.getElementById(btn.dataset.infoFor);
+    if(target) target.classList.toggle("hidden");
+  });
+  document.querySelectorAll(".pw-toggle-btn").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const input = btn.closest(".pw-input-wrap").querySelector("input");
+      const show = input.type === "password";
+      input.type = show ? "text" : "password";
+      btn.textContent = show ? "🙈" : "👁️";
+      btn.setAttribute("aria-label", show ? t("login.hidePassword") : t("login.showPassword"));
+    });
+  });
+
+  let currentUser = null;
+  let myMember = null;
+  let memberRows = [];
+  let memberById = {};
+  let MEMBERS = [];
+
+  function isRealEmail(email){
+    return !!email && !email.endsWith("@splitbill.local");
+  }
+  // escapeHtml() / showToast() / enhanceSelect() 移到全站共用的 shared-ui.js 了。
+
+  // 實際抓資料的邏輯統一放在 shared-ui.js 的 loadGroupMembers()，
+  // summary.html/currency.html/settings.html 三邊共用同一份（這裡原本
+  // 少了 my_group_id 抓不到時的復原機制，統一之後一起補上了），這裡
+  // 只負責把結果存進這個檔案自己的變數。
+  async function loadMembers(){
+    const result = await loadGroupMembers(sb, currentUser, showLeftMembers);
+    MEMBERS = result.MEMBERS;
+    memberById = result.memberById;
+    myMember = result.myMember;
+    memberRows = result.memberRows;
+  }
+
+  // LOGIN_TIME_KEY/SESSION_DURATION_MS/isSessionExpired()/refreshLoginTime()
+  // 移到全站共用的 shared-ui.js 了，這裡只留這頁自己導向邏輯不一樣的 forceLogout()。
+  async function forceLogout(){
+    try{ await sb.auth.signOut(); }catch(e){}
+    localStorage.removeItem(LOGIN_TIME_KEY);
+    location.href = "index.html?redirect=settings.html";
+  }
+  setInterval(()=>{ if(isSessionExpired()) forceLogout(); else refreshLoginTime(); }, 5 * 60 * 1000);
+
+  // ---------- 分頁切換 ----------
+  const SETTINGS_TAB_IDS = { account: "settingsTabAccount", group: "settingsTabGroup", prefs: "settingsTabPrefs" };
+  function updateSettingsTabIndicator(){
+    const tabsContainer = document.getElementById("settingsTabs");
+    const indicator = document.getElementById("settingsTabIndicator");
+    const activeBtn = tabsContainer ? tabsContainer.querySelector(".app-tab.active") : null;
+    if(tabsContainer && indicator && activeBtn){
+      const left = activeBtn.offsetLeft;
+      const width = activeBtn.offsetWidth;
+      indicator.style.transform = `translateX(${left}px)`;
+      indicator.style.width = `${width}px`;
+    }
+  }
+  function switchSettingsTab(tabKey){
+    document.querySelectorAll('[data-settings-tab]').forEach(b=>b.classList.toggle("active", b.dataset.settingsTab === tabKey));
+    Object.entries(SETTINGS_TAB_IDS).forEach(([key, id])=>{
+      const panel = document.getElementById(id);
+      if(panel) panel.classList.toggle("hidden", key !== tabKey);
+    });
+    updateSettingsTabIndicator();
+  }
+  document.querySelectorAll('[data-settings-tab]').forEach(btn=>{
+    btn.addEventListener("click", ()=> switchSettingsTab(btn.dataset.settingsTab));
+  });
+  window.addEventListener("resize", updateSettingsTabIndicator);
+  setTimeout(updateSettingsTabIndicator, 60);
+
+  // 支援 settings.html?tab=group 這種深連結，讓其他頁面的「切換群組」
+  // 按鈕可以直接跳到這裡並打開群組分頁，不用使用者自己再點一次分頁。
+  const requestedTab = new URLSearchParams(location.search).get("tab");
+  if(requestedTab && SETTINGS_TAB_IDS[requestedTab]){
+    switchSettingsTab(requestedTab);
+  }
+
+  // ---------- 幣別偏好 ----------
+  function updateCurrencyToggleSummary(){
+    const summary = document.getElementById("currencyToggleSummary");
+    if(summary) summary.textContent = shownCurrencies.length ? t("settings.currenciesSelected", { n: shownCurrencies.length }) : t("settings.selectDisplayCurrencies");
+  }
+  const currencyModal = document.getElementById("currencyModal");
+  const currencyModalOpenBtn = document.getElementById("currencyModalOpenBtn");
+  const currencyModalCloseBtn = document.getElementById("currencyModalCloseBtn");
+  if(currencyModalOpenBtn && currencyModal){
+    currencyModalOpenBtn.addEventListener("click", ()=> currencyModal.classList.add("show"));
+  }
+  if(currencyModalCloseBtn && currencyModal){
+    currencyModalCloseBtn.addEventListener("click", ()=> currencyModal.classList.remove("show"));
+  }
+  function renderSettingsCurrencyList(){
+    const list = document.getElementById("settingsCurrencyList");
+    if(!list) return;
+    list.innerHTML = CURRENCIES.map(c=>{
+      const checked = shownCurrencies.includes(c.code);
+      return `<label class="check-pill${checked ? " checked" : ""}">
+        <input type="checkbox" value="${c.code}"${checked ? " checked" : ""}>
+        <span class="check-pill-name">${currencyFlagImgHTML(c.code)} ${c.label}</span>
+      </label>`;
+    }).join("");
+    updateCurrencyToggleSummary();
+    list.querySelectorAll("input[type=checkbox]").forEach(inp=>{
+      inp.addEventListener("change", async ()=>{
+        const prevShown = shownCurrencies;
+        inp.closest(".check-pill").classList.toggle("checked", inp.checked);
+        const nextShown = CURRENCIES
+          .map(c => c.code)
+          .filter(code => list.querySelector(`input[value="${code}"]`).checked);
+        shownCurrencies = nextShown;
+        localStorage.setItem("splitbill-shown-currencies", JSON.stringify(nextShown));
+        updateCurrencyToggleSummary();
+        renderNavLinks();
+        const { error } = await sb.from("members").update({ shown_currencies: nextShown }).eq("id", myMember.id);
+        if(error){
+          // 存到伺服器失敗就把畫面跟本機快取都退回去，不然下次載入時會被
+          // 伺服器端的舊值悄悄蓋回來，使用者卻完全不知道發生什麼事。
+          console.error("儲存顯示幣別失敗：", error);
+          shownCurrencies = prevShown;
+          localStorage.setItem("splitbill-shown-currencies", JSON.stringify(prevShown));
+          renderSettingsCurrencyList();
+          renderNavLinks();
+          await sbAlert(t("settings.msg.saveFailedRetry"), t("settings.errorTitle"));
+        }
+      });
+    });
+  }
+
+  // ---------- 週期性支出範本管理（暫停／繼續／刪除，實際的自動記錄邏輯在 app.js 的 generateDueRecurringExpenses） ----------
+  // 誰能編輯／刪除／暫停：只有這筆範本的付款人、分攤人、或建立者——比照一般
+  // 支出/還款的規則，跟後端 RLS policy（scripts/recurring_expenses_restrict_edit.sql）
+  // 是同一套邏輯。renderRecurringTemplates()（列表按鈕要不要顯示）跟
+  // openRecurringTemplateForm()（直接用網址開編輯表單時要不要擋）都會用到，
+  // 拉到外層共用，不要各自維護一份。
+  function isRecurringTemplateParty(tmpl, userId){
+    return tmpl.created_by === userId
+      || (tmpl.payers || []).some(p => p.member_id === userId)
+      || (tmpl.shares || []).some(s => s.member_id === userId);
+  }
+
+  let recurringTemplatesCache = [];
+  async function renderRecurringTemplates(){
+    const listEl = document.getElementById("recurringTemplatesList");
+    const emptyEl = document.getElementById("recurringTemplatesEmpty");
+    if(!listEl || !myMember || !myMember.group_id) return;
+
+    const { data, error } = await sb
+      .from("recurring_expenses")
+      .select("*")
+      .eq("group_id", myMember.group_id)
+      .order("created_at", { ascending: false });
+    if(error){
+      // 資料表可能還沒建立（尚未執行 scripts/recurring_expenses.sql），整塊
+      // 區塊直接藏起來就好，不影響設定頁其他功能。
+      console.warn("讀取週期性支出範本失敗（可能尚未建立 recurring_expenses 資料表）：", error);
+      const group = document.getElementById("recurringTemplatesGroup");
+      if(group) group.classList.add("hidden");
+      return;
+    }
+
+    const templates = data || [];
+    if(!templates.length){
+      listEl.innerHTML = "";
+      if(emptyEl) emptyEl.classList.remove("hidden");
+      return;
+    }
+    if(emptyEl) emptyEl.classList.add("hidden");
+
+    const myId = myMember && myMember.id;
+    const weekdayNames = t("currency.weekdays").split(",");
+    listEl.innerHTML = templates.map(tmpl => {
+      const curObj = CURRENCIES.find(c => c.code === tmpl.currency);
+      const sym = curObj ? curObj.symbol : tmpl.currency;
+      const intervalLabel = tmpl.interval_unit === "weekly"
+        ? t("settings.recurringIntervalWeekly", { weekday: weekdayNames[tmpl.interval_day] || "" })
+        : t("settings.recurringIntervalMonthly", { day: tmpl.interval_day });
+      const canEdit = isRecurringTemplateParty(tmpl, myId);
+      return `<div class="settings-row recurring-tmpl-row${tmpl.active ? "" : " inactive"}" data-id="${tmpl.id}">
+        <div class="settings-row-lead">
+          <span class="settings-row-icon">🔁</span>
+          <div>
+            <div class="settings-row-title">${escapeHtml(tmpl.description || "")}・${sym}${Number(tmpl.amount).toLocaleString()}</div>
+            <div class="settings-hint settings-row-hint">${intervalLabel} · ${t("settings.recurringNextDue", { date: tmpl.next_due_date })}</div>
+          </div>
+        </div>
+        ${canEdit ? `<div class="recurring-tmpl-actions">
+          <label class="switch-toggle">
+            <input type="checkbox" class="recurring-tmpl-active-toggle" data-id="${tmpl.id}"${tmpl.active ? " checked" : ""}>
+            <span class="switch-slider"></span>
+          </label>
+          <button type="button" class="member-remove-btn recurring-tmpl-edit" data-id="${tmpl.id}" title="${t("common.edit")}">✎</button>
+          <button type="button" class="member-remove-btn recurring-tmpl-delete" data-id="${tmpl.id}" data-name="${escapeHtml(tmpl.description || "")}" title="${t("settings.delete")}">✕</button>
+        </div>` : `<span class="recurring-tmpl-readonly-badge">${t("settings.recurringReadOnly")}</span>`}
+      </div>`;
+    }).join("");
+
+    recurringTemplatesCache = templates;
+
+    listEl.querySelectorAll(".recurring-tmpl-edit").forEach(btn => {
+      btn.addEventListener("click", () => openRecurringTemplateForm(btn.dataset.id));
+    });
+    listEl.querySelectorAll(".recurring-tmpl-active-toggle").forEach(inp => {
+      inp.addEventListener("change", async () => {
+        const row = inp.closest(".recurring-tmpl-row");
+        row.classList.toggle("inactive", !inp.checked);
+        const { error: updErr } = await sb.from("recurring_expenses").update({ active: inp.checked }).eq("id", inp.dataset.id);
+        if(updErr){
+          console.error("更新週期性支出狀態失敗：", updErr);
+          inp.checked = !inp.checked;
+          row.classList.toggle("inactive", !inp.checked);
+          await sbAlert(t("settings.msg.saveFailedRetry"), t("settings.errorTitle"));
+        }
+      });
+    });
+    listEl.querySelectorAll(".recurring-tmpl-delete").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const ok = await sbConfirm(t("settings.recurringDeleteConfirm", { name: btn.dataset.name }));
+        if(!ok) return;
+        const { error: delErr } = await sb.from("recurring_expenses").delete().eq("id", btn.dataset.id);
+        if(delErr){
+          console.error("刪除週期性支出範本失敗：", delErr);
+          await sbAlert(t("settings.msg.saveFailedRetry"), t("settings.errorTitle"));
+          return;
+        }
+        renderRecurringTemplates();
+      });
+    });
+  }
+
+  // ---------- 🔁 週期性支出：獨立的建立/編輯範本表單 ----------
+  // 跟一般記帳表單完全分開（不重用 currency.html 那個多步驟精靈），只支援
+  // 「單一付款人 + 平分」，複雜的多付款人/自訂分攤/稅金/加點暫不支援——週期性
+  // 支出（房租、訂閱）絕大多數就是這種最單純的形式，先求好用、再看要不要擴充。
+  let editingRecurringTemplateId = null;
+
+  // 跟 app.js 的 computeNextDueDate() 同一份邏輯（月週期固定在 interval_day 號、
+  // 週週期加 7 天），這裡是設定頁自己獨立的一份，因為兩個檔案是各自獨立載入的
+  // 頁面，沒有共用模組可以 import。
+  // 只有「建立新範本」會呼叫這個函式算第一次的 next_due_date（編輯既有範本不會
+  // 重算，避免改個金額就把排程打亂）。週期是「每週」時，第一次到期日一定要對齊
+  // 使用者選的那個星期幾——原本這裡偷懶直接「今天+7天」，等於使用者選星期三
+  // 也沒用，永遠都是照建立當下那天的星期幾在跑，選單形同虛設。
+  function computeRecurTmplNextDueDate(intervalUnit, intervalDay, fromDateStr){
+    const [y, m, d] = fromDateStr.split("-").map(Number);
+    let dt;
+    if(intervalUnit === "weekly"){
+      const base = new Date(y, m - 1, d);
+      let diff = (intervalDay - base.getDay() + 7) % 7;
+      if(diff === 0) diff = 7; // 剛好今天就是選的那天，也要跳到下一次，不是今天
+      dt = new Date(y, m - 1, d + diff);
+    } else {
+      dt = new Date(y, m, intervalDay);
+    }
+    return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0");
+  }
+
+  function initRecurringTemplateForm(){
+    const addBtn = document.getElementById("recurringTemplateAddBtn");
+    const modal = document.getElementById("recurringTemplateFormModal");
+    const closeBtn = document.getElementById("recurringTemplateFormCloseBtn");
+    const titleEl = document.getElementById("recurringTemplateFormTitle");
+    const submitBtn = document.getElementById("recurTmplSubmitBtn");
+    const msgEl = document.getElementById("recurTmplMsg");
+    const descInp = document.getElementById("recurTmplDesc");
+    const catSel = document.getElementById("recurTmplCategory");
+    const curSel = document.getElementById("recurTmplCurrency");
+    const amtInp = document.getElementById("recurTmplAmount");
+    const payerSel = document.getElementById("recurTmplPayer");
+    const participantsWrap = document.getElementById("recurTmplParticipants");
+    const unitSel = document.getElementById("recurTmplUnit");
+    const monthlyWrap = document.getElementById("recurTmplMonthlyWrap");
+    const monthlyDaySel = document.getElementById("recurTmplMonthlyDay");
+    const weeklyWrap = document.getElementById("recurTmplWeeklyWrap");
+    const weeklyDaySel = document.getElementById("recurTmplWeeklyDay");
+    if(!modal || !addBtn) return;
+
+    if(curSel){
+      curSel.innerHTML = CURRENCIES.map(c => `<option value="${c.code}">${c.label} (${c.code})</option>`).join("");
+    }
+    if(monthlyDaySel){
+      monthlyDaySel.innerHTML = Array.from({length:28}, (_,i)=>i+1)
+        .map(d => `<option value="${d}">${t("currency.recurringMonthlyDayOption", {day:d})}</option>`).join("");
+    }
+    if(weeklyDaySel){
+      const weekdayNames = t("currency.weekdays").split(",");
+      weeklyDaySel.innerHTML = weekdayNames.map((name,i) => `<option value="${i}">${name}</option>`).join("");
+    }
+    if(unitSel && monthlyWrap && weeklyWrap){
+      unitSel.addEventListener("change", ()=>{
+        const isWeekly = unitSel.value === "weekly";
+        monthlyWrap.classList.toggle("hidden", isWeekly);
+        weeklyWrap.classList.toggle("hidden", !isWeekly);
+      });
+    }
+
+    function populateMemberFields(){
+      const activeMembers = (memberRows || []).filter(m => !m.left_at);
+      if(payerSel){
+        payerSel.innerHTML = activeMembers.map(m => `<option value="${m.id}">${escapeHtml(memberById[m.id] || m.name)}</option>`).join("");
+      }
+      if(participantsWrap){
+        participantsWrap.innerHTML = activeMembers.map(m => `<label class="check-pill checked">
+          <input type="checkbox" value="${m.id}" checked>
+          ${renderAvatarHTML(m, "avatar-xs")}
+          <span class="check-pill-name">${escapeHtml(memberById[m.id] || m.name)}</span>
+        </label>`).join("");
+        participantsWrap.querySelectorAll("input[type=checkbox]").forEach(inp => {
+          inp.addEventListener("change", () => inp.closest(".check-pill").classList.toggle("checked", inp.checked));
+        });
+      }
+    }
+
+    function resetForm(){
+      editingRecurringTemplateId = null;
+      if(titleEl) titleEl.textContent = t("settings.recurringFormTitleNew");
+      if(submitBtn) submitBtn.textContent = t("settings.recurringFormSubmitNew");
+      if(msgEl){ msgEl.textContent = ""; msgEl.className = "msg"; }
+      if(descInp) descInp.value = "";
+      if(catSel){ catSel.value = "general"; enhanceSelect(catSel); }
+      if(curSel){ curSel.value = (shownCurrencies && shownCurrencies[0]) || "TWD"; enhanceSelect(curSel); }
+      if(amtInp) amtInp.value = "";
+      populateMemberFields();
+      if(payerSel){ payerSel.value = myMember ? myMember.id : payerSel.value; enhanceSelect(payerSel); }
+      if(unitSel){ unitSel.value = "monthly"; enhanceSelect(unitSel); }
+      if(monthlyWrap) monthlyWrap.classList.remove("hidden");
+      if(weeklyWrap) weeklyWrap.classList.add("hidden");
+    }
+
+    function openModal(){
+      resetForm();
+      modal.classList.remove("hidden");
+      modal.classList.add("show");
+    }
+    function closeModal(){
+      modal.classList.remove("show");
+      setTimeout(()=> modal.classList.add("hidden"), 200);
+    }
+
+    addBtn.addEventListener("click", openModal);
+    if(closeBtn) closeBtn.addEventListener("click", closeModal);
+
+    // 供外部呼叫：從範本清單點✎、或從「這筆以後都改」導過來（?editRecurring=id）都走這裡。
+    window.openRecurringTemplateForm = function(templateId){
+      const tmpl = recurringTemplatesCache.find(x => x.id === templateId);
+      if(!tmpl){
+        // 這筆帳的來源範本可能已經被刪掉了（歷史紀錄上舊的 [recurring:id] 標記還在，
+        // 但範本本身不在了）——用專門的訊息說清楚，不要顯示成一般的「請再試一次」，
+        // 不然使用者會一直重試一個註定失敗的操作。
+        sbAlert(t("settings.recurringTemplateGone"), t("settings.errorTitle"));
+        return;
+      }
+      // 直接帶網址進來（例如從幣別頁「這筆以後都改」導過來的）也要擋一次權限——
+      // 光是清單裡藏按鈕不夠，這裡是另一個能開到編輯表單的入口，一樣要檢查。
+      // 真的送出去的話後端 RLS 也會擋，但先在畫面上講清楚體驗比較好。
+      if(!isRecurringTemplateParty(tmpl, myMember && myMember.id)){
+        sbAlert(t("settings.recurringNoPermission"), t("settings.errorTitle"));
+        return;
+      }
+      resetForm();
+      editingRecurringTemplateId = templateId;
+      if(titleEl) titleEl.textContent = t("settings.recurringFormTitleEdit");
+      if(submitBtn) submitBtn.textContent = t("settings.recurringFormSubmitEdit");
+      if(descInp) descInp.value = tmpl.description || "";
+      if(catSel){ catSel.value = tmpl.category || "general"; enhanceSelect(catSel); }
+      if(curSel){ curSel.value = tmpl.currency || "TWD"; enhanceSelect(curSel); }
+      if(amtInp) amtInp.value = tmpl.amount;
+      const payerId = tmpl.payers && tmpl.payers[0] && tmpl.payers[0].member_id;
+      if(payerSel && payerId){ payerSel.value = payerId; enhanceSelect(payerSel); }
+      // 分攤名單依範本 shares 記錄勾回去；如果這個範本當初是用完整記帳表單建立、
+      // 帶了自訂分攤或多付款人，這裡只能還原成「這些人平分」的簡化版本——
+      // 儲存時會照這個簡化版本重新計算，等於把舊範本降版成平分制。
+      if(participantsWrap && tmpl.shares){
+        const shareIds = new Set(tmpl.shares.map(s => s.member_id));
+        participantsWrap.querySelectorAll("input[type=checkbox]").forEach(inp => {
+          const checked = shareIds.has(inp.value);
+          inp.checked = checked;
+          inp.closest(".check-pill").classList.toggle("checked", checked);
+        });
+      }
+      if(unitSel){ unitSel.value = tmpl.interval_unit || "monthly"; enhanceSelect(unitSel); }
+      const isWeekly = tmpl.interval_unit === "weekly";
+      if(monthlyWrap) monthlyWrap.classList.toggle("hidden", isWeekly);
+      if(weeklyWrap) weeklyWrap.classList.toggle("hidden", !isWeekly);
+      if(isWeekly && weeklyDaySel){ weeklyDaySel.value = tmpl.interval_day; enhanceSelect(weeklyDaySel); }
+      else if(monthlyDaySel){ monthlyDaySel.value = tmpl.interval_day; enhanceSelect(monthlyDaySel); }
+      modal.classList.remove("hidden");
+      modal.classList.add("show");
+    };
+
+    if(submitBtn){
+      submitBtn.addEventListener("click", async () => {
+        const desc = (descInp.value || "").trim();
+        const amount = Number(amtInp.value);
+        const checkedIds = Array.from(participantsWrap.querySelectorAll("input:checked")).map(i => i.value);
+
+        if(!desc){ msgEl.textContent = t("settings.recurringFormNeedDesc"); msgEl.className = "msg error"; return; }
+        if(!amount || amount <= 0){ msgEl.textContent = t("settings.recurringFormNeedAmount"); msgEl.className = "msg error"; return; }
+        if(!checkedIds.length){ msgEl.textContent = t("settings.recurringFormNeedParticipants"); msgEl.className = "msg error"; return; }
+
+        submitBtn.disabled = true;
+        try {
+          const formShared = await import("./expense-form-shared.js?v=" + APP_VERSION);
+          const shares = formShared.computeEqualSplitShares({
+            subtotal: amount, taxAmount: 0, taxSplitMode: "ratio",
+            participantIds: checkedIds, payerIds: [payerSel.value], addonAmounts: {}
+          });
+          const intervalUnit = unitSel.value;
+          const intervalDay = Number(intervalUnit === "weekly" ? weeklyDaySel.value : monthlyDaySel.value);
+          const payload = {
+            group_id: myMember.group_id,
+            description: desc,
+            category: catSel.value || "general",
+            amount,
+            currency: curSel.value,
+            payers: [{ member_id: payerSel.value, amount }],
+            shares,
+            interval_unit: intervalUnit,
+            interval_day: intervalDay
+          };
+
+          if(editingRecurringTemplateId){
+            const { error } = await sb.from("recurring_expenses").update(payload).eq("id", editingRecurringTemplateId);
+            if(error) throw error;
+            msgEl.textContent = t("settings.recurringUpdateSuccess");
+          } else {
+            payload.next_due_date = computeRecurTmplNextDueDate(intervalUnit, intervalDay, new Date().toISOString().slice(0,10));
+            payload.created_by = myMember.id;
+            const { error } = await sb.from("recurring_expenses").insert(payload);
+            if(error) throw error;
+            msgEl.textContent = t("settings.recurringCreateSuccess");
+          }
+          msgEl.className = "msg ok";
+          renderRecurringTemplates();
+          setTimeout(closeModal, 900);
+        } catch(err){
+          console.error("儲存週期性支出範本失敗：", err);
+          msgEl.textContent = t("settings.msg.saveFailedRetry");
+          msgEl.className = "msg error";
+        } finally {
+          submitBtn.disabled = false;
+        }
+      });
+    }
+  }
+
+  // ---------- 群組切換／邀請碼／退出／管理成員／刪除群組 ----------
+  function friendlyGroupErr(msg){
+    if(!msg) return t("groupErr.generic");
+    if(msg.includes("unsettled balance")) return t("groupErr.unsettledBalance");
+    if(msg.includes("invalid creation code")) return t("groupErr.invalidCreationCode");
+    if(msg.includes("invalid invite code")) return t("groupErr.invalidInviteCode");
+    if(msg.includes("already in this group")) return t("groupErr.alreadyInGroup");
+    if(msg.includes("only the group creator")) return t("groupErr.onlyCreator");
+    if(msg.includes("duplicate name in group")) return t("groupErr.duplicateNameInGroup");
+    if(msg.includes("group name already taken")) return t("groupErr.groupNameTaken");
+    if(msg.includes("group name required")) return t("groupErr.groupNameRequired");
+    return msg;
+  }
+  let myGroups = [];
+  async function renderSettingsGroupSection(){
+    const sel = document.getElementById("settingsGroupSelect");
+    const inviteInp = document.getElementById("settingsInviteCode");
+    if(!sel || !myMember) return;
+    const { data } = await sb.from("members").select("group_id, groups(name, invite_code, created_by)").eq("user_id", currentUser.id).is("left_at", null);
+    myGroups = data || [];
+    sel.innerHTML = myGroups.map(r =>
+      `<option value="${r.group_id}"${r.group_id === myMember.group_id ? " selected" : ""}>${escapeHtml((r.groups && r.groups.name) || "?")}</option>`
+    ).join("");
+    enhanceSelect(sel);
+    const activeRow = myGroups.find(r => r.group_id === myMember.group_id);
+    if(inviteInp) inviteInp.value = (activeRow && activeRow.groups && activeRow.groups.invite_code) || "";
+    const nameInp = document.getElementById("settingsGroupName");
+    if(nameInp) nameInp.value = (activeRow && activeRow.groups && activeRow.groups.name) || "";
+
+    const isCreator = !!(activeRow && activeRow.groups && activeRow.groups.created_by === currentUser.id);
+    const manageSection = document.getElementById("groupManageSection");
+    if(manageSection) manageSection.classList.toggle("hidden", !isCreator);
+    if(isCreator) await renderGroupMemberManageList();
+  }
+
+  async function renderGroupMemberManageList(){
+    const list = document.getElementById("groupMemberManageList");
+    if(!list || !myMember) return;
+    const { data } = await sb.from("members").select("id,name,avatar_url").eq("group_id", myMember.group_id).is("left_at", null).order("name");
+    const others = (data || []).filter(m => m.id !== myMember.id);
+    if(!others.length){
+      list.innerHTML = `<p class="filter-hint">${t("settings.noOtherMembers")}</p>`;
+      return;
+    }
+    list.innerHTML = others.map(m => `
+      <div class="check-pill member-manage-pill">
+        ${renderAvatarHTML(m, "avatar-xs")}
+        <span class="check-pill-name" title="${escapeHtml(memberById[m.id] || m.name)}">${escapeHtml(memberById[m.id] || m.name)}</span>
+        <button type="button" class="member-remove-btn" data-id="${m.id}" data-name="${escapeHtml(memberById[m.id] || m.name)}" title="${t("settings.delete")}">✕</button>
+      </div>
+    `).join("");
+    list.querySelectorAll(".member-remove-btn").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const msg = document.getElementById("groupMemberManageMsg");
+        const ok = await sbConfirm(t("settings.removeMemberConfirm", { name: btn.dataset.name }));
+        if(!ok) return;
+        const { error } = await sb.rpc("remove_member", { p_member_id: btn.dataset.id });
+        if(error){ msg.textContent = t("settings.msg.removeMemberFailed", { msg: friendlyGroupErr(error.message) }); msg.className = "msg error"; return; }
+        msg.textContent = t("settings.msg.memberRemoved"); msg.className = "msg ok";
+        await renderGroupMemberManageList();
+      });
+    });
+  }
+
+  const settingsGroupSelect = document.getElementById("settingsGroupSelect");
+  if(settingsGroupSelect){
+    settingsGroupSelect.addEventListener("change", async ()=>{
+      const msg = document.getElementById("settingsGroupMsg");
+      const targetGroupId = settingsGroupSelect.value;
+      const targetGroupName = settingsGroupSelect.selectedOptions[0] ? settingsGroupSelect.selectedOptions[0].textContent : "";
+      msg.textContent = t("settings.msg.switching"); msg.className = "msg";
+      const { error } = await sb.rpc("switch_active_group", { p_group_id: targetGroupId });
+      if(error){ msg.textContent = t("settings.msg.switchFailed", { msg: error.message }); msg.className = "msg error"; return; }
+      msg.textContent = t("settings.msg.switched"); msg.className = "msg ok";
+      showToast(t("settings.toast.groupSwitched"), targetGroupName);
+      setTimeout(()=> location.href = "summary.html", 900);
+    });
+  }
+
+  const saveGroupNameBtn = document.getElementById("saveGroupNameBtn");
+  if(saveGroupNameBtn){
+    saveGroupNameBtn.addEventListener("click", async ()=>{
+      const msg = document.getElementById("groupNameMsg");
+      const newName = document.getElementById("settingsGroupName").value.trim();
+      if(!newName){ msg.textContent = t("settings.msg.groupNameRequired"); msg.className = "msg error"; return; }
+      msg.textContent = t("common.saving"); msg.className = "msg";
+      const { error } = await sb.rpc("rename_group", { p_group_id: myMember.group_id, p_new_name: newName });
+      if(error){ msg.textContent = t("common.updateFailed", { msg: friendlyGroupErr(error.message) }); msg.className = "msg error"; return; }
+      msg.textContent = t("common.updated"); msg.className = "msg ok";
+      await renderSettingsGroupSection();
+    });
+  }
+
+  const copyInviteCodeBtn = document.getElementById("copyInviteCodeBtn");
+  const inviteInp = document.getElementById("settingsInviteCode");
+  async function doCopyInviteCode(){
+    const msg = document.getElementById("copyInviteCodeMsg");
+    if(!inviteInp || !inviteInp.value) return;
+    try{
+      await navigator.clipboard.writeText(inviteInp.value);
+      msg.textContent = t("settings.msg.copiedInviteCode"); msg.className = "msg ok";
+    }catch(e){
+      inviteInp.select();
+      msg.textContent = t("settings.msg.copyFailedSelected"); msg.className = "msg error";
+    }
+  }
+  if(copyInviteCodeBtn) copyInviteCodeBtn.addEventListener("click", doCopyInviteCode);
+  if(inviteInp) inviteInp.addEventListener("click", doCopyInviteCode);
+
+  // ---------- 邀請碼 QR code：掃了直接開登入頁，帶著 ?join= 邀請碼，
+  // 對方登入/註冊完、發現自己沒有群組時會自動幫他把邀請碼填好。----------
+  const qrModal = document.getElementById("qrModal");
+  const qrModalOpenBtn = document.getElementById("qrModalOpenBtn");
+  const qrModalCloseBtn = document.getElementById("qrModalCloseBtn");
+  let qrRendered = false;
+  if(qrModalOpenBtn && qrModal){
+    qrModalOpenBtn.addEventListener("click", ()=>{
+      qrModal.classList.add("show");
+      if(!qrRendered){
+        const code = document.getElementById("settingsInviteCode").value;
+        const container = document.getElementById("inviteQrCanvas");
+        if(code && container && typeof QRCode !== "undefined"){
+          const joinUrl = new URL("index.html", location.href).href + "?join=" + encodeURIComponent(code);
+          new QRCode(container, { text: joinUrl, width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M });
+          qrRendered = true;
+        }
+      }
+    });
+  }
+  if(qrModalCloseBtn && qrModal){
+    qrModalCloseBtn.addEventListener("click", ()=> qrModal.classList.remove("show"));
+  }
+
+  const createGroupModal = document.getElementById("createGroupModal");
+  const createGroupModalOpenBtn = document.getElementById("createGroupModalOpenBtn");
+  const createGroupModalCloseBtn = document.getElementById("createGroupModalCloseBtn");
+  if(createGroupModalOpenBtn && createGroupModal){
+    createGroupModalOpenBtn.addEventListener("click", ()=> createGroupModal.classList.add("show"));
+  }
+  if(createGroupModalCloseBtn && createGroupModal){
+    createGroupModalCloseBtn.addEventListener("click", ()=> createGroupModal.classList.remove("show"));
+  }
+
+  const settingsJoinGroupBtn = document.getElementById("settingsJoinGroupBtn");
+  if(settingsJoinGroupBtn){
+    settingsJoinGroupBtn.addEventListener("click", async ()=>{
+      const codeInp = document.getElementById("settingsJoinCode");
+      const msg = document.getElementById("settingsJoinGroupMsg");
+      const code = codeInp.value.trim();
+      if(!code){ msg.textContent = t("settings.msg.enterInviteCode"); msg.className = "msg error"; return; }
+      settingsJoinGroupBtn.disabled = true;
+      msg.textContent = t("settings.msg.joining"); msg.className = "msg";
+      const { error } = await sb.rpc("join_group", { p_invite_code: code, p_member_name: myMember.accountName });
+      if(error){
+        settingsJoinGroupBtn.disabled = false;
+        msg.textContent = t("settings.msg.joinFailed", { msg: friendlyGroupErr(error.message) }); msg.className = "msg error";
+        return;
+      }
+      msg.textContent = t("settings.msg.joinedSwitching"); msg.className = "msg ok";
+      showToast(t("settings.toast.groupJoined"), t("settings.toast.switchingOver"));
+      setTimeout(()=> location.href = "summary.html", 900);
+    });
+  }
+
+  const settingsCreateGroupBtn = document.getElementById("settingsCreateGroupBtn");
+  if(settingsCreateGroupBtn){
+    settingsCreateGroupBtn.addEventListener("click", async ()=>{
+      const groupName = document.getElementById("settingsCreateGroupName").value.trim();
+      const code = document.getElementById("settingsCreateGroupCode").value.trim();
+      const msg = document.getElementById("settingsCreateGroupMsg");
+      if(!groupName || !code){ msg.textContent = t("settings.msg.fillAllFields"); msg.className = "msg error"; return; }
+      settingsCreateGroupBtn.disabled = true;
+      msg.textContent = t("settings.msg.creating"); msg.className = "msg";
+      const { error } = await sb.rpc("create_group", { p_group_name: groupName, p_member_name: myMember.accountName, p_creation_code: code });
+      if(error){
+        settingsCreateGroupBtn.disabled = false;
+        msg.textContent = t("settings.msg.createFailed", { msg: friendlyGroupErr(error.message) }); msg.className = "msg error";
+        return;
+      }
+      msg.textContent = t("settings.msg.createdSwitching"); msg.className = "msg ok";
+      showToast(t("settings.toast.groupCreated"), groupName);
+      setTimeout(()=> location.href = "summary.html", 900);
+    });
+  }
+
+  const leaveGroupBtn = document.getElementById("leaveGroupBtn");
+  if(leaveGroupBtn){
+    leaveGroupBtn.addEventListener("click", async ()=>{
+      const msg = document.getElementById("leaveGroupMsg");
+      const groupName = (myGroups.find(r => r.group_id === myMember.group_id) || {}).groups;
+      const typed = prompt(t("settings.leaveGroupPrompt", { group: (groupName && groupName.name) || t("settings.leaveGroupDefaultName"), word: t("settings.leaveGroupConfirmWord") }));
+      if(typed === null) return;
+      if(typed !== t("settings.leaveGroupConfirmWord")){ msg.textContent = t("settings.msg.inputMismatchCancelled"); msg.className = "msg error"; return; }
+      msg.textContent = t("settings.msg.leaving"); msg.className = "msg";
+      const { error } = await sb.rpc("leave_group", { p_group_id: myMember.group_id });
+      if(error){ msg.textContent = t("settings.msg.leaveFailed", { msg: friendlyGroupErr(error.message) }); msg.className = "msg error"; return; }
+      msg.textContent = t("settings.msg.left"); msg.className = "msg ok";
+      location.reload();
+    });
+  }
+
+  const deleteGroupBtn = document.getElementById("deleteGroupBtn");
+  if(deleteGroupBtn){
+    deleteGroupBtn.addEventListener("click", async ()=>{
+      const msg = document.getElementById("deleteGroupMsg");
+      const groupName = ((myGroups.find(r => r.group_id === myMember.group_id) || {}).groups || {}).name || t("settings.deleteGroupDefaultName");
+      const typed = prompt(t("settings.deleteGroupPrompt", { group: groupName }));
+      if(typed === null) return;
+      if(typed !== groupName){ msg.textContent = t("settings.msg.nameMismatchCancelled"); msg.className = "msg error"; return; }
+      msg.textContent = t("settings.msg.deleting"); msg.className = "msg";
+      const { error } = await sb.rpc("delete_group", { p_group_id: myMember.group_id });
+      if(error){ msg.textContent = t("settings.msg.deleteFailed", { msg: friendlyGroupErr(error.message) }); msg.className = "msg error"; return; }
+      msg.textContent = t("settings.msg.deleted"); msg.className = "msg ok";
+      location.reload();
+    });
+  }
+
+  // ---------- 連結其他登入方式（Google／Discord）----------
+  let linkedIdentities = [];
+  async function renderLinkedIdentities(){
+    const { data } = await sb.auth.getUserIdentities();
+    linkedIdentities = (data && data.identities) || [];
+    [["google", "linkGoogleBtn"], ["discord", "linkDiscordBtn"]].forEach(([provider, btnId])=>{
+      const btn = document.getElementById(btnId);
+      if(!btn) return;
+      const linked = linkedIdentities.find(i => i.provider === provider);
+      btn.textContent = linked ? t("settings.unlink") : t("settings.link");
+    });
+  }
+  function wireLinkIdentityBtn(provider, btnId){
+    const btn = document.getElementById(btnId);
+    if(!btn) return;
+    btn.addEventListener("click", async ()=>{
+      const msg = document.getElementById("linkIdentityMsg");
+      const linked = linkedIdentities.find(i => i.provider === provider);
+      if(linked){
+        if(linkedIdentities.length <= 1){ msg.textContent = t("settings.msg.onlyLoginMethod"); msg.className = "msg error"; return; }
+        const ok = await sbConfirm(t("settings.unlinkConfirm", { provider: provider === "google" ? "Google" : "Discord" }));
+        if(!ok) return;
+        msg.textContent = t("common.processing"); msg.className = "msg";
+        const { error } = await sb.auth.unlinkIdentity(linked);
+        if(error){ msg.textContent = friendlyAuthErr(error) || t("settings.msg.unlinkFailed", { msg: error.message }); msg.className = "msg error"; return; }
+        msg.textContent = t("settings.msg.unlinked"); msg.className = "msg ok";
+        await renderLinkedIdentities();
+      } else {
+        const isCapacitor = typeof window.Capacitor !== "undefined" && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform();
+        if(isCapacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser){
+          const { data, error } = await sb.auth.linkIdentity({
+            provider,
+            options: {
+              redirectTo: "com.splitbill.app://auth",
+              skipBrowserRedirect: true
+            }
+          });
+          if(error){ msg.textContent = friendlyAuthErr(error) || t("settings.msg.linkFailed", { msg: error.message }); msg.className = "msg error"; return; }
+          if(data && data.url){
+            await window.Capacitor.Plugins.Browser.open({ url: data.url });
+          }
+        } else {
+          const { error } = await sb.auth.linkIdentity({
+            provider,
+            options: { redirectTo: location.origin + location.pathname }
+          });
+          if(error){ msg.textContent = friendlyAuthErr(error) || t("settings.msg.linkFailed", { msg: error.message }); msg.className = "msg error"; }
+        }
+      }
+    });
+  }
+  wireLinkIdentityBtn("google", "linkGoogleBtn");
+  wireLinkIdentityBtn("discord", "linkDiscordBtn");
+
+  if(typeof window.Capacitor !== "undefined" && window.Capacitor.Plugins && window.Capacitor.Plugins.App){
+    window.Capacitor.Plugins.App.addListener("appUrlOpen", async ()=>{
+      if(window.Capacitor.Plugins.Browser){
+        try{ await window.Capacitor.Plugins.Browser.close(); }catch(e){}
+      }
+      await renderLinkedIdentities();
+    });
+  }
+
+  // ---------- 網頁端備援：若在外部瀏覽器完成 OAuth 連結，且為 Android 行動裝置，自動觸發跳回 App ----------
+  (function(){
+    const isCapacitor = typeof window.Capacitor !== "undefined" && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform();
+    if(!isCapacitor && /Android/i.test(navigator.userAgent)){
+      const hasHash = location.hash && (location.hash.includes("access_token=") || location.hash.includes("error="));
+      const hasSearch = location.search && (location.search.includes("code=") || location.search.includes("error="));
+      if(hasHash || hasSearch){
+        const appUrl = "com.splitbill.app://auth" + location.search + location.hash;
+        setTimeout(()=>{
+          window.location.href = appUrl;
+        }, 400);
+      }
+    }
+  })();
+
+  // linkIdentity() 是導去 Google/Discord 再導回來這頁，導回來當下失敗
+  // （例如那個帳號已經連結別的 Splitbill 帳號了）沒辦法用一般的 try/catch
+  // 接到——Supabase 是把錯誤塞在導回來的網址參數裡，這裡要自己撈出來顯示，
+  // 不然使用者只會看到「什麼都沒發生」，完全不知道連結失敗了。
+  function checkLinkIdentityRedirectError(){
+    const hashParams = new URLSearchParams(location.hash.replace(/^#/, ""));
+    const searchParams = new URLSearchParams(location.search);
+    const errorDesc = hashParams.get("error_description") || searchParams.get("error_description")
+      || hashParams.get("error") || searchParams.get("error");
+    if(!errorDesc) return;
+    const msg = document.getElementById("linkIdentityMsg");
+    if(msg){
+      msg.textContent = friendlyAuthErr({ message: errorDesc }) || t("settings.msg.linkFailed", { msg: errorDesc });
+      msg.className = "msg error";
+    }
+    history.replaceState(null, "", location.pathname);
+  }
+
+  const deleteAccountBtn = document.getElementById("deleteAccountBtn");
+  if(deleteAccountBtn){
+    deleteAccountBtn.addEventListener("click", async ()=>{
+      const msg = document.getElementById("deleteAccountMsg");
+      const typed = prompt(t("settings.deleteAccountPrompt", { word: t("settings.deleteAccountConfirmWord") }));
+      if(typed === null) return;
+      if(typed !== t("settings.deleteAccountConfirmWord")){ msg.textContent = t("settings.msg.inputMismatchCancelled"); msg.className = "msg error"; return; }
+      msg.textContent = t("common.processing"); msg.className = "msg";
+      const { error } = await sb.rpc("delete_account");
+      if(error){ msg.textContent = t("settings.msg.deleteAccountFailed", { msg: friendlyGroupErr(error.message) }); msg.className = "msg error"; return; }
+      await sb.auth.signOut();
+      location.href = "index.html";
+    });
+  }
+
+  function getEffectiveAvatarUrl(){
+    // 1. 若 DOM 中的大頭貼預覽有 img 元素且 src 有值，直接取該圖片的 src（保證與畫面上看到的 100% 絕對一致）
+    const previewImg = document.querySelector("#settingsAvatarPreview img");
+    if(previewImg && previewImg.src && !previewImg.src.includes("undefined") && !previewImg.src.includes("null")){
+      return previewImg.src;
+    }
+    // 2. 優先從 Supabase members 資料庫的 avatar_url
+    if(myMember && myMember.avatar_url) return myMember.avatar_url;
+    if(window.myMember && window.myMember.avatar_url) return window.myMember.avatar_url;
+    // 3. 從本地快取
+    if(myMember && myMember.id){
+      const cached = localStorage.getItem("sb_avatar_" + myMember.id);
+      if(cached) return cached;
+    }
+    if(currentUser && currentUser.id){
+      const cached = localStorage.getItem("sb_avatar_" + currentUser.id);
+      if(cached) return cached;
+    }
+    const myAvatar = localStorage.getItem("sb_my_avatar");
+    if(myAvatar) return myAvatar;
+    // 4. 最後才是 user_metadata
+    if(currentUser && currentUser.user_metadata && currentUser.user_metadata.avatar_url){
+      return currentUser.user_metadata.avatar_url;
+    }
+    return "";
+  }
+
+  function renderSettingsAvatarPreview(){
+    const previewEl = document.getElementById("settingsAvatarPreview");
+    const removeBtn = document.getElementById("removeAvatarBtn");
+    const zoomBtn = document.getElementById("avatarZoomBtn");
+    if(!previewEl) return;
+    const currentAvatar = (myMember && myMember.avatar_url) ||
+                          (window.myMember && window.myMember.avatar_url) ||
+                          (currentUser && currentUser.user_metadata && currentUser.user_metadata.avatar_url) ||
+                          localStorage.getItem("sb_my_avatar") || "";
+    const memberObj = myMember ? { ...myMember, avatar_url: currentAvatar } : { name: currentUser ? currentUser.email : "?", avatar_url: currentAvatar };
+    previewEl.innerHTML = renderAvatarHTML(memberObj, "avatar-xl");
+    const hasPhoto = Boolean(currentAvatar || previewEl.querySelector("img"));
+    if(removeBtn) removeBtn.classList.toggle("hidden", !hasPhoto);
+    if(zoomBtn) zoomBtn.classList.toggle("hidden", !hasPhoto);
+  }
+
+  function openAvatarModal(){
+    const currentAvatar = getEffectiveAvatarUrl();
+    if(!currentAvatar){
+      sbAlert(t("settings.avatarPlaceholderMsg"), t("settings.avatarPlaceholderTitle"));
+      return;
+    }
+    const modal = document.getElementById("avatarModal");
+    const img = document.getElementById("avatarModalImg");
+    if(modal && img){
+      img.src = currentAvatar;
+      modal.classList.add("show");
+    }
+  }
+
+  const avatarZoomBtn = document.getElementById("avatarZoomBtn");
+  if(avatarZoomBtn){
+    avatarZoomBtn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      openAvatarModal();
+    });
+  }
+  const settingsAvatarPreviewEl = document.getElementById("settingsAvatarPreview");
+  if(settingsAvatarPreviewEl){
+    settingsAvatarPreviewEl.addEventListener("click", openAvatarModal);
+  }
+
+  const avatarModal = document.getElementById("avatarModal");
+  const avatarModalCloseBtn = document.getElementById("avatarModalCloseBtn");
+  if(avatarModalCloseBtn && avatarModal){
+    avatarModalCloseBtn.addEventListener("click", ()=> avatarModal.classList.remove("show"));
+  }
+
+  // 把裁切完的正方形 base64 圖片轉成檔案，上傳到 Supabase Storage（不再
+  // 把整張圖片的 Base64 文字塞進資料庫欄位）——欄位裡只存一個網址字串，
+  // 好處：(1) members 查詢一次抓全部人的頭像時，不用把每個人的完整圖片
+  // 資料都傳一次，抓群組成員清單會快很多；(2) 網址是可以被瀏覽器正常
+  // 快取的圖片資源，換頁不會重複下載同一張圖。上傳路徑用「自己的
+  // user id」當資料夾名稱，Storage 那邊的權限規則只允許本人寫入自己
+  // 的資料夾，同一個路徑用 upsert 覆蓋，網址後面加時間戳記讓瀏覽器在
+  // 換頭貼之後不會繼續顯示快取住的舊圖。
+  async function uploadAvatarBase64(base64, msg){
+    if(!currentUser || !currentUser.id){
+      if(msg){ msg.textContent = t("settings.msg.notLoggedInUpload"); msg.className = "msg error"; }
+      return false;
+    }
+
+    let avatarUrl;
+    try {
+      const blob = await (await fetch(base64)).blob();
+      const path = `${currentUser.id}/avatar.jpg`;
+      const { error: uploadErr } = await sb.storage.from("avatars").upload(path, blob, {
+        contentType: "image/jpeg",
+        upsert: true
+      });
+      if(uploadErr) throw uploadErr;
+      const { data: pub } = sb.storage.from("avatars").getPublicUrl(path);
+      avatarUrl = pub.publicUrl + "?t=" + Date.now();
+    } catch(uploadErr){
+      console.error("avatar storage upload error:", uploadErr);
+      if(msg){ msg.textContent = t("settings.msg.uploadFailed", { msg: uploadErr.message || t("common.tryAgainLater") }); msg.className = "msg error"; }
+      return false;
+    }
+
+    const { data: updateRes, error: updateErr } = await sb.auth.updateUser({ data: { avatar_url: avatarUrl } });
+    if(updateErr){
+      console.error("auth updateUser error:", updateErr);
+      if(msg){ msg.textContent = t("settings.msg.cloudSyncFailed", { msg: updateErr.message }); msg.className = "msg error"; }
+      return false;
+    }
+    if(updateRes && updateRes.user){
+      currentUser = updateRes.user;
+      window.currentUser = updateRes.user;
+    }
+
+    // 同步寫入 members 資料庫表（跨群組觸發器會自動同步所有群組）。
+    // Supabase 查詢失敗是回傳 {error}、不是丟例外，只包 try/catch
+    // 接不到，要自己檢查 error 才會發現這裡其實沒寫進去。
+    try {
+      if(currentUser && currentUser.id){
+        const { error: memberAvatarErr } = await sb.from("members").update({ avatar_url: avatarUrl }).eq("user_id", currentUser.id);
+        if(memberAvatarErr) console.warn("members avatar_url database update error:", memberAvatarErr);
+      }
+    } catch(dbErr){
+      console.warn("members avatar_url database update error:", dbErr);
+    }
+
+    if(myMember){
+      myMember.avatar_url = avatarUrl;
+      localStorage.setItem("sb_avatar_" + myMember.id, avatarUrl);
+      if(myMember.user_id) localStorage.setItem("sb_avatar_" + myMember.user_id, avatarUrl);
+    }
+    if(currentUser){
+      localStorage.setItem("sb_avatar_" + currentUser.id, avatarUrl);
+      if(currentUser.user_metadata) currentUser.user_metadata.avatar_url = avatarUrl;
+    }
+    localStorage.setItem("sb_my_avatar", avatarUrl);
+    if(window.myMember) window.myMember.avatar_url = avatarUrl;
+    if(window.currentUser && window.currentUser.user_metadata) window.currentUser.user_metadata.avatar_url = avatarUrl;
+
+    renderSettingsAvatarPreview();
+    const whoamiAvatarEl = document.getElementById("whoamiAvatar");
+    if(whoamiAvatarEl && myMember) whoamiAvatarEl.innerHTML = renderAvatarHTML(myMember, "avatar-md whoami-avatar");
+
+    if(msg){ msg.textContent = t("settings.msg.avatarUpdated"); msg.className = "msg ok"; }
+    return true;
+  }
+
+  // ---------- 大頭貼裁切彈窗：選好照片後先讓使用者拖曳、縮放挑選要保留的
+  // 範圍，確認後才裁成正方形上傳——不再是選到照片就直接用置中裁切。----------
+  const avatarCropModal = document.getElementById("avatarCropModal");
+  const avatarCropStage = document.getElementById("avatarCropStage");
+  const avatarCropImg = document.getElementById("avatarCropImg");
+  const avatarCropZoom = document.getElementById("avatarCropZoom");
+  const avatarCropCloseBtn = document.getElementById("avatarCropCloseBtn");
+  const avatarCropRetakeBtn = document.getElementById("avatarCropRetakeBtn");
+  const avatarCropConfirmBtn = document.getElementById("avatarCropConfirmBtn");
+
+  let cropImgEl = null; // 目前載入、待裁切的原始圖片 Image 物件
+  let cropBaseScale = 1; // 讓圖片短邊剛好等於裁切框邊長的基礎縮放
+  let cropZoom = 1; // 使用者額外調整的縮放倍率（1 ~ 3）
+  let cropOffsetX = 0, cropOffsetY = 0; // 額外的拖曳位移（裁切框像素）
+  let cropDragging = false, cropDragStartX = 0, cropDragStartY = 0, cropDragStartOffX = 0, cropDragStartOffY = 0;
+  const CROP_STAGE_SIZE = 240;
+  const CROP_OUTPUT_SIZE = 320;
+
+  function clampCropOffset(){
+    const dispW = cropImgEl.naturalWidth * cropBaseScale * cropZoom;
+    const dispH = cropImgEl.naturalHeight * cropBaseScale * cropZoom;
+    const maxX = Math.max(0, (dispW - CROP_STAGE_SIZE) / 2);
+    const maxY = Math.max(0, (dispH - CROP_STAGE_SIZE) / 2);
+    cropOffsetX = Math.min(maxX, Math.max(-maxX, cropOffsetX));
+    cropOffsetY = Math.min(maxY, Math.max(-maxY, cropOffsetY));
+  }
+
+  function applyCropTransform(){
+    if(!cropImgEl) return;
+    clampCropOffset();
+    const totalScale = cropBaseScale * cropZoom;
+    avatarCropImg.style.width = (cropImgEl.naturalWidth * totalScale) + "px";
+    avatarCropImg.style.height = (cropImgEl.naturalHeight * totalScale) + "px";
+    avatarCropImg.style.transform = `translate(-50%, -50%) translate(${cropOffsetX}px, ${cropOffsetY}px)`;
+  }
+
+  function openAvatarCropModal(img){
+    cropImgEl = img;
+    cropBaseScale = CROP_STAGE_SIZE / Math.min(img.naturalWidth, img.naturalHeight);
+    cropZoom = 1;
+    cropOffsetX = 0;
+    cropOffsetY = 0;
+    if(avatarCropZoom) avatarCropZoom.value = 100;
+    avatarCropImg.src = img.src;
+    applyCropTransform();
+    if(avatarCropModal) avatarCropModal.classList.add("show");
+  }
+
+  function closeAvatarCropModal(){
+    if(avatarCropModal) avatarCropModal.classList.remove("show");
+    cropImgEl = null;
+  }
+
+  if(avatarCropStage){
+    avatarCropStage.addEventListener("pointerdown", (e)=>{
+      if(!cropImgEl) return;
+      cropDragging = true;
+      avatarCropStage.classList.add("dragging");
+      avatarCropStage.setPointerCapture(e.pointerId);
+      cropDragStartX = e.clientX;
+      cropDragStartY = e.clientY;
+      cropDragStartOffX = cropOffsetX;
+      cropDragStartOffY = cropOffsetY;
+    });
+    avatarCropStage.addEventListener("pointermove", (e)=>{
+      if(!cropDragging) return;
+      cropOffsetX = cropDragStartOffX + (e.clientX - cropDragStartX);
+      cropOffsetY = cropDragStartOffY + (e.clientY - cropDragStartY);
+      applyCropTransform();
+    });
+    const endDrag = ()=>{
+      cropDragging = false;
+      avatarCropStage.classList.remove("dragging");
+    };
+    avatarCropStage.addEventListener("pointerup", endDrag);
+    avatarCropStage.addEventListener("pointercancel", endDrag);
+    avatarCropStage.addEventListener("wheel", (e)=>{
+      if(!cropImgEl || !avatarCropZoom) return;
+      e.preventDefault();
+      const next = Math.min(300, Math.max(100, Number(avatarCropZoom.value) - Math.sign(e.deltaY) * 10));
+      avatarCropZoom.value = next;
+      cropZoom = next / 100;
+      applyCropTransform();
+    }, { passive:false });
+  }
+
+  if(avatarCropZoom){
+    avatarCropZoom.addEventListener("input", ()=>{
+      cropZoom = Number(avatarCropZoom.value) / 100;
+      applyCropTransform();
+    });
+  }
+
+  if(avatarCropCloseBtn) avatarCropCloseBtn.addEventListener("click", closeAvatarCropModal);
+  if(avatarCropRetakeBtn){
+    avatarCropRetakeBtn.addEventListener("click", ()=>{
+      closeAvatarCropModal();
+      const avatarFileInputEl = document.getElementById("avatarFileInput");
+      if(avatarFileInputEl){ avatarFileInputEl.value = ""; avatarFileInputEl.click(); }
+    });
+  }
+  if(avatarCropConfirmBtn){
+    avatarCropConfirmBtn.addEventListener("click", async ()=>{
+      if(!cropImgEl) return;
+      const msg = document.getElementById("avatarMsg");
+      avatarCropConfirmBtn.disabled = true;
+      avatarCropConfirmBtn.textContent = t("common.processing");
+      try {
+        const totalScale = cropBaseScale * cropZoom;
+        const dispW = cropImgEl.naturalWidth * totalScale;
+        const dispH = cropImgEl.naturalHeight * totalScale;
+        // 裁切框在「圖片顯示座標」裡的左上角位置，再換算回原圖的實際像素座標
+        const srcX = (dispW / 2 - CROP_STAGE_SIZE / 2 - cropOffsetX) / totalScale;
+        const srcY = (dispH / 2 - CROP_STAGE_SIZE / 2 - cropOffsetY) / totalScale;
+        const srcSize = CROP_STAGE_SIZE / totalScale;
+
+        const canvas = document.createElement("canvas");
+        canvas.width = CROP_OUTPUT_SIZE;
+        canvas.height = CROP_OUTPUT_SIZE;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(cropImgEl, srcX, srcY, srcSize, srcSize, 0, 0, CROP_OUTPUT_SIZE, CROP_OUTPUT_SIZE);
+        const base64 = canvas.toDataURL("image/jpeg", 0.85);
+
+        if(msg){ msg.textContent = t("settings.processingImage"); msg.className = "msg"; }
+        closeAvatarCropModal();
+        await uploadAvatarBase64(base64, msg);
+      } finally {
+        avatarCropConfirmBtn.disabled = false;
+        avatarCropConfirmBtn.textContent = t("common.confirmCropping");
+      }
+    });
+  }
+
+  const avatarFileInput = document.getElementById("avatarFileInput");
+  if(avatarFileInput){
+    avatarFileInput.addEventListener("change", (e)=>{
+      const file = e.target.files && e.target.files[0];
+      if(!file) return;
+      const msg = document.getElementById("avatarMsg");
+      if(!file.type.startsWith("image/")){
+        if(msg){ msg.textContent = t("settings.msg.selectImageFile"); msg.className = "msg error"; }
+        return;
+      }
+      if(msg){ msg.textContent = ""; msg.className = "msg"; }
+      const reader = new FileReader();
+      reader.onload = (re) => {
+        const img = new Image();
+        img.onload = () => openAvatarCropModal(img);
+        img.onerror = () => {
+          if(msg){ msg.textContent = t("settings.msg.imageReadFailed"); msg.className = "msg error"; }
+        };
+        img.src = re.target.result;
+      };
+      reader.onerror = () => {
+        if(msg){ msg.textContent = t("settings.msg.fileReadFailed"); msg.className = "msg error"; }
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  const removeAvatarBtn = document.getElementById("removeAvatarBtn");
+  if(removeAvatarBtn){
+    removeAvatarBtn.addEventListener("click", async ()=>{
+      const ok = await sbConfirm(t("settings.removeAvatarConfirm"));
+      if(!ok) return;
+      const msg = document.getElementById("avatarMsg");
+
+      // 1. 清除所有本地快取與全域快取
+      if(myMember){
+        localStorage.removeItem("sb_avatar_" + myMember.id);
+        if(myMember.user_id) localStorage.removeItem("sb_avatar_" + myMember.user_id);
+      }
+      if(currentUser){
+        localStorage.removeItem("sb_avatar_" + currentUser.id);
+      }
+      localStorage.removeItem("sb_my_avatar");
+      if(window.memberAvatars){
+        if(myMember && myMember.id) delete window.memberAvatars[myMember.id];
+        if(currentUser && currentUser.id) delete window.memberAvatars[currentUser.id];
+      }
+
+      // 2. 清除記憶體中對應的 avatar_url
+      if(myMember) myMember.avatar_url = "";
+      if(window.myMember) window.myMember.avatar_url = "";
+      if(currentUser && currentUser.user_metadata) currentUser.user_metadata.avatar_url = "";
+      if(window.currentUser && window.currentUser.user_metadata) window.currentUser.user_metadata.avatar_url = "";
+
+      // 3. 立即重新渲染預覽與頂部登入頭像
+      renderSettingsAvatarPreview();
+      const whoamiAvatarEl = document.getElementById("whoamiAvatar");
+      if(whoamiAvatarEl && myMember) whoamiAvatarEl.innerHTML = renderAvatarHTML(myMember, "avatar-md whoami-avatar");
+
+      // 4. 同步更新至遠端 Supabase Auth 與 Members
+      try {
+        const { error: authAvatarErr } = await sb.auth.updateUser({ data: { avatar_url: "" } });
+        if(authAvatarErr) console.warn("auth updateUser avatar_url error:", authAvatarErr);
+      } catch(err){
+        console.warn("auth updateUser avatar_url error:", err);
+      }
+      try {
+        const { error: clearAvatarErr } = await sb.from("members").update({ avatar_url: null }).eq("user_id", currentUser.id);
+        if(clearAvatarErr) console.warn("members avatar_url 清除失敗：", clearAvatarErr);
+      } catch(e){
+        console.warn("members avatar_url 清除異常：", e);
+      }
+      // 順手把 Storage 裡的檔案也刪掉，純粹清理，失敗也不影響移除頭像
+      // 這個操作本身（畫面跟資料庫都已經清乾淨了）。
+      try {
+        await sb.storage.from("avatars").remove([`${currentUser.id}/avatar.jpg`]);
+      } catch(e){
+        console.warn("avatar storage 清除異常：", e);
+      }
+
+      if(msg){ msg.textContent = t("settings.msg.avatarRemoved"); msg.className = "msg ok"; }
+    });
+  }
+
+  // 帳戶姓名已經跟全域使用者名稱合併成同一個欄位：全站唯一，登入頁「帳戶
+  // 名稱或電子信箱」那個欄位可以直接打這個名字登入。members.name（每個
+  // 群組各一筆、當作沒設定暱稱時的預設顯示名稱）不用在這裡另外手動更新
+  // ——資料庫那邊有 trigger 會在 usernames 存檔後自動同步過去，也會在
+  // members 被寫入時強制對齊 usernames，兩邊保證不會兜不起來，不用靠
+  // 前端連續呼叫兩次 API 自己維護一致性。格式要求（中文/英文/數字/底線，
+  // 2~20 字）要跟資料庫 usernames 表那條 check constraint 保持一致，
+  // 不然使用者在這裡看不出哪裡錯、直接被資料庫擋下來才看到生硬的錯誤。
+  const USERNAME_FORMAT_RE = /^[A-Za-z0-9_一-龥]{2,20}$/;
+  const saveNameBtn = document.getElementById("saveNameBtn");
+  if(saveNameBtn){
+    saveNameBtn.addEventListener("click", async ()=>{
+      const newName = document.getElementById("settingsName").value.trim();
+      const msg = document.getElementById("nameMsg");
+      if(!USERNAME_FORMAT_RE.test(newName)){
+        msg.textContent = t("settings.msg.usernameFormatInvalid");
+        msg.className = "msg error";
+        return;
+      }
+      const { error } = await sb.from("usernames").upsert({ user_id: currentUser.id, username: newName });
+      if(error){
+        if(error.code === "23505"){ msg.textContent = t("settings.msg.usernameTakenRetry"); msg.className = "msg error"; return; }
+        msg.textContent = t("common.updateFailed", { msg: error.message }); msg.className = "msg error"; return;
+      }
+      await loadMembers();
+      msg.textContent = t("settings.msg.usernameUpdated"); msg.className = "msg ok";
+    });
+  }
+
+  const saveNicknameBtn = document.getElementById("saveNicknameBtn");
+  if(saveNicknameBtn){
+    saveNicknameBtn.addEventListener("click", async ()=>{
+      const newNickname = document.getElementById("settingsNickname").value.trim();
+      const msg = document.getElementById("nicknameMsg");
+      // 留空表示清掉這個群組的暱稱，改回顯示全域使用者名稱。這個群組裡
+      // 「暱稱優先、沒設就用全域使用者名稱」這個有效顯示名稱不能跟同群組
+      // 其他還在群組中的人重複，是資料庫那條 unique index 擋的
+      // （members_group_active_display_name_unique），撞到會是 23505。
+      const { error } = await sb.from("members").update({ nickname: newNickname || null }).eq("id", myMember.id);
+      if(error){
+        if(error.code === "23505"){ msg.textContent = t("settings.msg.nicknameTakenRetry"); msg.className = "msg error"; return; }
+        msg.textContent = t("common.updateFailed", { msg: friendlyGroupErr(error.message) }); msg.className = "msg error"; return;
+      }
+      await loadMembers();
+      msg.textContent = newNickname ? t("settings.msg.nicknameUpdated") : t("settings.msg.nicknameCleared"); msg.className = "msg ok";
+    });
+  }
+
+  // ---------- 收款帳戶：可新增多筆，每筆是「銀行/行動支付 + 帳號」 ----------
+  // 銀行選單原本用原生 <select>，但 select 的內容寬度沒辦法縮小，手機
+  // 版一行塞不下文字會被裁切。改成藥丸按鈕（收合時只顯示代碼，例如
+  // 「013」；行動支付/其他銀行沒有真代碼就顯示名稱前兩字）+ 點下去才
+  // 彈出的完整清單，觸發按鈕本身可以做得很窄，帳號欄位就有足夠空間，
+  // 不用再靠斷點拆行。
+  function bankNameForCode(code){
+    const b = (window.TAIWAN_BANKS || []).find(x => x.code === code);
+    return b ? b.name : "";
+  }
+  function isWalletCode(code){
+    const b = (window.TAIWAN_BANKS || []).find(x => x.code === code);
+    return !!(b && b.category === "wallet");
+  }
+  function bankPopoverHtml(selectedCode){
+    const all = window.TAIWAN_BANKS || [];
+    const opt = b => `<button type="button" class="payment-bank-option${b.code === selectedCode ? " active" : ""}" data-code="${b.code}">${window.formatBankLabel ? window.formatBankLabel(b.code, b.name) : b.name}</button>`;
+    const wallets = all.filter(b => b.category === "wallet");
+    const banks = all.filter(b => b.category !== "wallet");
+    return `
+      <div class="payment-bank-popover hidden">
+        <div class="payment-bank-group-label">${t("settings.bankGroupWallet")}</div>
+        ${wallets.map(opt).join("")}
+        <div class="payment-bank-group-label">${t("settings.bankGroupBank")}</div>
+        ${banks.map(opt).join("")}
+      </div>
+    `;
+  }
+  function closeAllBankPopovers(){
+    document.querySelectorAll(".payment-bank-popover").forEach(p => p.classList.add("hidden"));
+  }
+  document.addEventListener("click", (e)=>{
+    if(!e.target.closest(".payment-bank-picker")) closeAllBankPopovers();
+  });
+  function wirePaymentAccountRow(rowEl){
+    const pickerEl = rowEl.querySelector(".payment-bank-picker");
+    const triggerEl = rowEl.querySelector(".payment-bank-trigger");
+    const popoverEl = rowEl.querySelector(".payment-bank-popover");
+    const numInp = rowEl.querySelector(".payment-account-num");
+    if(triggerEl && popoverEl){
+      triggerEl.addEventListener("click", (e)=>{
+        e.stopPropagation();
+        const willOpen = popoverEl.classList.contains("hidden");
+        closeAllBankPopovers();
+        popoverEl.classList.toggle("hidden", !willOpen);
+      });
+      popoverEl.querySelectorAll(".payment-bank-option").forEach(optBtn => {
+        optBtn.addEventListener("click", ()=>{
+          const code = optBtn.dataset.code;
+          pickerEl.dataset.code = code;
+          triggerEl.textContent = window.formatBankShortLabel ? window.formatBankShortLabel(code, bankNameForCode(code)) : code;
+          popoverEl.querySelectorAll(".payment-bank-option").forEach(o => o.classList.toggle("active", o === optBtn));
+          popoverEl.classList.add("hidden");
+          if(numInp) numInp.placeholder = isWalletCode(code) ? t("settings.accountPlaceholderOptional") : t("settings.accountPlaceholder");
+        });
+      });
+    }
+    const copyBtn = rowEl.querySelector(".payment-account-copy");
+    if(copyBtn){
+      copyBtn.addEventListener("click", async ()=>{
+        const num = rowEl.querySelector(".payment-account-num").value.trim();
+        if(!num) return;
+        try {
+          await navigator.clipboard.writeText(num);
+          copyBtn.textContent = "✓";
+          setTimeout(()=>{ copyBtn.textContent = "📋"; }, 1200);
+        } catch(e){}
+      });
+    }
+    const delBtn = rowEl.querySelector(".payment-account-del");
+    if(delBtn) delBtn.addEventListener("click", ()=> rowEl.remove());
+  }
+  function addPaymentAccountRow(acc){
+    const wrap = document.getElementById("paymentAccountsList");
+    if(!wrap) return;
+    const row = document.createElement("div");
+    row.className = "payment-account-row";
+    // 新增空白列時預設選第一個行動支付選項（跟原本 <select> 的預設行為一致）
+    const firstOption = (window.TAIWAN_BANKS || [])[0];
+    const initialCode = (acc && acc.bankCode) || (firstOption ? firstOption.code : "");
+    const initialShortLabel = window.formatBankShortLabel ? window.formatBankShortLabel(initialCode, bankNameForCode(initialCode)) : initialCode;
+    row.innerHTML = `
+      <button type="button" class="payment-account-drag-handle" title="${t("settings.dragToReorder")}" aria-label="${t("settings.dragToReorder")}">⠿</button>
+      <div class="payment-bank-picker" data-code="${initialCode}">
+        <button type="button" class="payment-bank-trigger">${escapeHtml(initialShortLabel)}</button>
+        ${bankPopoverHtml(initialCode)}
+      </div>
+      <input type="text" class="payment-account-num" placeholder="${isWalletCode(initialCode) ? t("settings.accountPlaceholderOptional") : t("settings.accountPlaceholder")}" value="${escapeHtml((acc && acc.account) || "")}">
+      <button type="button" class="payment-account-copy" title="${t("settings.copyAccount")}" aria-label="${t("settings.copyAccount")}">📋</button>
+      <button type="button" class="payment-account-del" title="${t("settings.deleteThisAccount")}" aria-label="${t("settings.delete")}">✕</button>
+    `;
+    wrap.appendChild(row);
+    wirePaymentAccountRow(row);
+  }
+  function renderPaymentAccountRows(accounts){
+    const wrap = document.getElementById("paymentAccountsList");
+    if(!wrap) return;
+    wrap.innerHTML = "";
+    (accounts || []).forEach(acc => addPaymentAccountRow(acc));
+  }
+
+  // 拖曳調整帳戶順序：拖曳中用 transform 讓其他列即時讓位（只是視覺上
+  // 位移，DOM 順序不變），放開的那一刻才真的用 insertBefore 搬動 DOM
+  // 節點一次——比「拖曳過程中不斷即時搬動 DOM」簡單很多，不用處理
+  // 搬動後座標系整個變動、transform 要重新校正的問題。儲存時就是照
+  // 目前 DOM 順序讀出每一列，所以排序完不用額外再存一個順序欄位。
+  (function initPaymentAccountDragReorder(){
+    const wrap = document.getElementById("paymentAccountsList");
+    if(!wrap) return;
+    wrap.addEventListener("pointerdown", (e)=>{
+      const handle = e.target.closest(".payment-account-drag-handle");
+      if(!handle) return;
+      const row = handle.closest(".payment-account-row");
+      if(!row) return;
+      e.preventDefault();
+
+      const rows = [...wrap.querySelectorAll(".payment-account-row")];
+      const startIndex = rows.indexOf(row);
+      const startY = e.clientY;
+      const rowHeight = row.getBoundingClientRect().height + 3;
+      let targetIndex = startIndex;
+
+      row.classList.add("dragging");
+      try { handle.setPointerCapture(e.pointerId); } catch(err){}
+
+      function onMove(ev){
+        const dy = ev.clientY - startY;
+        row.style.transform = `translateY(${dy}px)`;
+        const shift = Math.round(dy / rowHeight);
+        targetIndex = Math.max(0, Math.min(rows.length - 1, startIndex + shift));
+        rows.forEach((r, i) => {
+          if(r === row) return;
+          let visualIndex = i;
+          if(i > startIndex && i <= targetIndex) visualIndex = i - 1;
+          else if(i < startIndex && i >= targetIndex) visualIndex = i + 1;
+          const offset = (visualIndex - i) * rowHeight;
+          r.style.transform = offset ? `translateY(${offset}px)` : "";
+        });
+      }
+      function onUp(ev){
+        row.classList.remove("dragging");
+        try { handle.releasePointerCapture(ev.pointerId); } catch(err){}
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+        rows.forEach(r => { r.style.transform = ""; });
+        if(targetIndex !== startIndex){
+          const others = rows.filter(r => r !== row);
+          const ref = others[targetIndex] || null;
+          if(ref) wrap.insertBefore(row, ref);
+          else wrap.appendChild(row);
+        }
+      }
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    });
+  })();
+
+  const addPaymentAccountBtn = document.getElementById("addPaymentAccountBtn");
+  if(addPaymentAccountBtn){
+    addPaymentAccountBtn.addEventListener("click", ()=> addPaymentAccountRow(null));
+  }
+
+  const savePaymentInfoBtn = document.getElementById("savePaymentInfoBtn");
+  if(savePaymentInfoBtn){
+    savePaymentInfoBtn.addEventListener("click", async ()=>{
+      const msg = document.getElementById("paymentInfoMsg");
+      const rows = [...document.querySelectorAll("#paymentAccountsList .payment-account-row")];
+      const accounts = rows.map(row => {
+        const bankCode = row.querySelector(".payment-bank-picker").dataset.code || "";
+        const account = row.querySelector(".payment-account-num").value.trim();
+        const bankObj = (window.TAIWAN_BANKS || []).find(b => b.code === bankCode);
+        return { bankCode, bankName: bankObj ? bankObj.name : "", account, isWallet: !!(bankObj && bankObj.category === "wallet") };
+      // 行動支付不用填帳號也能存，銀行轉帳沒填帳號的列才略過不存。
+      }).filter(a => a.account || a.isWallet)
+        .map(({ isWallet, ...rest }) => rest);
+      // 收款帳戶是「帳號」層級的設定、不分群組共用同一份，且內容已改成
+      // 用 Supabase Vault 加密存放（見 set_payment_accounts RPC），不再
+      // 是 members 表裡的明碼欄位，所以這裡改成呼叫 RPC 寫入，資料庫
+      // 那邊自己決定要新建 secret 還是更新既有 secret。
+      const { error } = await sb.rpc("set_payment_accounts", { p_accounts: accounts });
+      if(error){ msg.textContent = t("common.updateFailed", { msg: error.message }); msg.className = "msg error"; return; }
+      await loadMembers();
+      renderPaymentAccountRows(accounts);
+      msg.textContent = accounts.length ? t("settings.msg.paymentAccountsUpdated") : t("settings.msg.paymentAccountsCleared"); msg.className = "msg ok";
+    });
+  }
+
+  // 收款帳戶本身是「帳號」層級、跨群組共用同一份資料（見上面 save 的
+  // 註解），但「要不要在這個群組顯示」是每個群組各自獨立的選擇，所以
+  // 這個開關存在每一列 members 各自的 payment_accounts_visible 欄位，
+  // 不是跟 payment_accounts 一樣用 user_id 一次改全部。
+  async function renderPaymentVisibilityList(){
+    const list = document.getElementById("paymentVisibilityList");
+    if(!list || !currentUser) return;
+    const { data, error } = await sb.from("members")
+      .select("id, group_id, payment_accounts_visible, groups(name)")
+      .eq("user_id", currentUser.id).is("left_at", null);
+    if(error || !data || !data.length){
+      list.innerHTML = `<p class="filter-hint">${t("settings.noGroupsYet")}</p>`;
+      return;
+    }
+    list.innerHTML = data.map(r => `
+      <div class="settings-row">
+        <span>${escapeHtml((r.groups && r.groups.name) || "?")}</span>
+        <label class="switch-toggle">
+          <input type="checkbox" class="payment-visibility-toggle" data-member-id="${r.id}"${r.payment_accounts_visible !== false ? " checked" : ""}>
+          <span class="switch-slider"></span>
+        </label>
+      </div>
+    `).join("");
+    list.querySelectorAll(".payment-visibility-toggle").forEach(inp => {
+      inp.addEventListener("change", async ()=>{
+        const memberId = inp.dataset.memberId;
+        const wantVisible = inp.checked;
+        inp.disabled = true;
+        const { error: updErr } = await sb.from("members").update({ payment_accounts_visible: wantVisible }).eq("id", memberId);
+        inp.disabled = false;
+        if(updErr){ inp.checked = !wantVisible; }
+        else if(memberId === myMember.id){ myMember.payment_accounts_visible = wantVisible; }
+      });
+    });
+  }
+
+  const saveEmailBtn = document.getElementById("saveEmailBtn");
+  if(saveEmailBtn){
+    saveEmailBtn.addEventListener("click", async ()=>{
+      const newEmail = document.getElementById("settingsEmail").value.trim();
+      const msg = document.getElementById("emailMsg");
+      if(!newEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)){
+        msg.textContent = t("settings.msg.invalidEmailFormat"); msg.className = "msg error"; return;
+      }
+      const { error } = await sb.auth.updateUser({ email: newEmail });
+      if(error){ msg.textContent = t("common.updateFailed", { msg: error.message }); msg.className = "msg error"; return; }
+      msg.textContent = t("settings.msg.emailConfirmSent"); msg.className = "msg ok";
+    });
+  }
+
+  const settingsThemeBtn = document.getElementById("settingsThemeBtn");
+  const themeRowIcon = document.getElementById("themeRowIcon");
+  const themeRow = document.getElementById("themeRow");
+  const notifyRow = document.getElementById("notifyRow");
+  const notifyBtn = document.getElementById("notifyBtn");
+
+  function syncSettingsThemeIcon(){
+    const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+    if(settingsThemeBtn) settingsThemeBtn.textContent = isDark ? "☀️" : "🌙";
+    if(themeRowIcon) themeRowIcon.textContent = isDark ? "☀️" : "🌙";
+  }
+  if(settingsThemeBtn){
+    syncSettingsThemeIcon();
+    settingsThemeBtn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      // 深淺色現在只在設定頁管理，沒有浮動按鈕可以代打了，直接呼叫
+      // theme.js 開放出來的切換函式。
+      if(typeof window.splitbillToggleTheme === "function") window.splitbillToggleTheme();
+      syncSettingsThemeIcon();
+    });
+  }
+  window.addEventListener("splitbill-theme-change", syncSettingsThemeIcon);
+
+  // 語言設定改到這裡管理，原本每一頁角落浮動的語言切換鈕拿掉了。
+  // SUPPORTED_LANGS／LANG_LABELS 是 i18n.js 開放出來的全域清單，直接
+  // 拿來組一個下拉選單，不用自己重複寫一份語言清單。用全站共用的
+  // enhanceSelect() 包裝，跟其他設定項目的下拉選單樣式一致。
+  const langSelectEl = document.getElementById("settingsLangSelect");
+  if(langSelectEl && typeof window.SUPPORTED_LANGS !== "undefined"){
+    const current = window.getLang ? window.getLang() : "zh-Hant";
+    langSelectEl.innerHTML = window.SUPPORTED_LANGS.map(code => `
+      <option value="${code}"${code === current ? " selected" : ""}>${window.LANG_LABELS[code] || code}</option>
+    `).join("");
+    if(typeof enhanceSelect === "function") enhanceSelect(langSelectEl);
+    langSelectEl.addEventListener("change", () => {
+      if(typeof window.setLang === "function") window.setLang(langSelectEl.value);
+    });
+  }
+  if(themeRow){
+    themeRow.addEventListener("click", ()=>{
+      if(settingsThemeBtn) settingsThemeBtn.click();
+    });
+  }
+  if(notifyRow && notifyBtn){
+    notifyRow.addEventListener("click", (e)=>{
+      if(e.target !== notifyBtn) notifyBtn.click();
+    });
+  }
+
+  const showLeftMembersToggle = document.getElementById("showLeftMembersToggle");
+  if(showLeftMembersToggle){
+    showLeftMembersToggle.addEventListener("change", ()=>{
+      showLeftMembers = showLeftMembersToggle.checked;
+      localStorage.setItem("splitbill-show-left-members", showLeftMembers ? "1" : "0");
+    });
+  }
+
+  const savePwBtn = document.getElementById("savePwBtn");
+  if(savePwBtn){
+    savePwBtn.addEventListener("click", async ()=>{
+      const pw = document.getElementById("newPassword").value;
+      const pwConfirm = document.getElementById("newPasswordConfirm").value;
+      const msg = document.getElementById("pwMsg");
+      if(!pw || pw.length < 6){ msg.textContent = t("recovery.passwordTooShort"); msg.className="msg error"; return; }
+      if(pw !== pwConfirm){ msg.textContent = t("recovery.passwordMismatch"); msg.className = "msg error"; return; }
+      const { error } = await sb.auth.updateUser({ password: pw });
+      if(error){ msg.textContent = t("common.updateFailed", { msg: error.message }); msg.className = "msg error"; return; }
+      msg.textContent = t("settings.msg.passwordUpdated"); msg.className = "msg ok";
+      document.getElementById("newPassword").value = "";
+      document.getElementById("newPasswordConfirm").value = "";
+    });
+  }
+
+  const pwChangeModal = document.getElementById("pwChangeModal");
+  const pwChangeModalOpenBtn = document.getElementById("pwChangeModalOpenBtn");
+  const pwChangeModalCloseBtn = document.getElementById("pwChangeModalCloseBtn");
+  if(pwChangeModalOpenBtn && pwChangeModal){
+    pwChangeModalOpenBtn.addEventListener("click", ()=> pwChangeModal.classList.add("show"));
+  }
+  if(pwChangeModalCloseBtn && pwChangeModal){
+    pwChangeModalCloseBtn.addEventListener("click", ()=> pwChangeModal.classList.remove("show"));
+  }
+
+  // ---------- 通知開關（完整訂閱/取消訂閱邏輯，跟總覽頁登入時自動訂閱
+  // 是同一套機制，這裡是使用者自己手動開關用的）----------
+  const VAPID_PUBLIC_KEY = "BNR-GFJ6UxpQWVk6ghTFNUl9RYncDp_WX9W6XNA1vqsyWk9zQ4WC5ghAGiuBqqXQhluRiVB7KsAPGxTWNl27JW4";
+  function urlBase64ToUint8Array(base64String){
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const rawData = atob(base64);
+    return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+  }
+  const isCapacitor = typeof window.Capacitor !== "undefined" && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform();
+  const pushSupported = isCapacitor || ("serviceWorker" in navigator && "PushManager" in window && typeof Notification !== "undefined");
+  const notifyHint = document.getElementById("notifyHint");
+  // 是不是「已安裝」的狀態（PWA 加到主畫面、或 Android APK）——這種情況下
+  // 沒有瀏覽器選單可以按，關閉通知的入口在手機系統設定的 App 權限裡，
+  // 跟一般瀏覽器分頁的關閉方式不一樣，提示文字要分開寫。
+  const isStandaloneApp = isCapacitor || !!(window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+  function getNotifyHintDefault(){ return t("settings.notifyHintDefault"); }
+  function getNotifyHintBlocked(){ return isStandaloneApp ? t("settings.notifyHintBlockedStandalone") : t("settings.notifyHintBlockedBrowser"); }
+
+  async function updateNotifyBtnState(){
+    if(!notifyBtn) return;
+    if(!pushSupported){ notifyBtn.classList.add("hidden"); return; }
+    notifyBtn.classList.remove("hidden");
+    notifyBtn.disabled = false;
+
+    // Capacitor Native Android Push
+    if(isCapacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.PushNotifications){
+      try{
+        const perm = await window.Capacitor.Plugins.PushNotifications.checkPermissions();
+        if(perm.receive === "denied"){
+          notifyBtn.textContent = "🔕";
+          notifyBtn.title = t("settings.notifyTitleSystemBlocked");
+          notifyBtn.classList.remove("active");
+          if(notifyHint) notifyHint.textContent = getNotifyHintBlocked();
+          return;
+        }
+        if(notifyHint) notifyHint.textContent = getNotifyHintDefault();
+        if(perm.receive === "granted"){
+          notifyBtn.textContent = "🔔";
+          notifyBtn.title = t("settings.notifyTitleOn");
+          notifyBtn.classList.add("active");
+          return;
+        }
+        notifyBtn.textContent = "🔔";
+        notifyBtn.title = t("settings.notifyTitleClickToEnable");
+        notifyBtn.classList.remove("active");
+        return;
+      }catch(err){
+        console.warn("Capacitor push check error:", err);
+      }
+    }
+
+    // Web Fallback
+    if(typeof Notification !== "undefined" && Notification.permission === "denied"){
+      notifyBtn.textContent = "🔕";
+      notifyBtn.title = t("settings.notifyTitleBrowserBlocked");
+      notifyBtn.classList.remove("active");
+      if(notifyHint) notifyHint.textContent = getNotifyHintBlocked();
+      return;
+    }
+    if(notifyHint) notifyHint.textContent = getNotifyHintDefault();
+    if(typeof Notification !== "undefined" && Notification.permission === "granted"){
+      const reg = "serviceWorker" in navigator ? await navigator.serviceWorker.getRegistration() : null;
+      const sub = reg ? await reg.pushManager.getSubscription() : null;
+      if(sub){
+        notifyBtn.textContent = "🔔";
+        notifyBtn.title = t("settings.notifyTitleOnClickOff");
+        notifyBtn.classList.add("active");
+        return;
+      }
+    }
+    notifyBtn.textContent = "🔔";
+    notifyBtn.title = t("settings.notifyTitleClickToEnable");
+    notifyBtn.classList.remove("active");
+  }
+
+  async function ensurePushSubscribed(){
+    if(!pushSupported || !currentUser) return;
+
+    // Capacitor Native Android Push Registration
+    if(isCapacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.PushNotifications){
+      try{
+        let permStatus = await window.Capacitor.Plugins.PushNotifications.checkPermissions();
+        if(permStatus.receive === "denied"){
+          await sbAlert(getNotifyHintBlocked(), t("settings.notifyBlockedTitle"));
+          return;
+        }
+        if(permStatus.receive !== "granted"){
+          permStatus = await window.Capacitor.Plugins.PushNotifications.requestPermissions();
+        }
+        if(permStatus.receive === "granted"){
+          await window.Capacitor.Plugins.PushNotifications.register();
+          window.Capacitor.Plugins.PushNotifications.removeAllListeners();
+          window.Capacitor.Plugins.PushNotifications.addListener("registration", async (token)=>{
+            console.log("FCM Token registered:", token.value);
+            if(myMember && myMember.id){
+              const { error } = await sb.from("push_subscriptions").upsert({
+                member_id: myMember.id,
+                endpoint: "fcm:" + token.value,
+                p256dh: "fcm",
+                auth: "fcm"
+              }, { onConflict: "endpoint" });
+              if(error) console.error("FCM Token 寫入失敗：", error);
+            }
+            await updateNotifyBtnState();
+          });
+          window.Capacitor.Plugins.PushNotifications.addListener("registrationError", (err)=>{
+            console.error("FCM 註冊失敗：", err);
+          });
+        }
+      }catch(e){
+        console.error("Capacitor 註冊推播異常：", e);
+      }
+      await updateNotifyBtnState();
+      return;
+    }
+
+    // Web Push Registration
+    if(Notification.permission === "denied"){ await updateNotifyBtnState(); return; }
+
+    const permission = await Notification.requestPermission();
+    if(permission !== "granted"){ await updateNotifyBtnState(); return; }
+
+    try{
+      const reg = await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if(!sub){
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+        });
+      }
+      const subJson = sub.toJSON();
+      const { error } = await sb.from("push_subscriptions").upsert({
+        member_id: myMember.id,
+        endpoint: subJson.endpoint,
+        p256dh: subJson.keys.p256dh,
+        auth: subJson.keys.auth
+      }, { onConflict: "endpoint" });
+      if(error){
+        console.error("推播訂閱寫入失敗：", error);
+        await sub.unsubscribe();
+        await sbAlert(t("settings.msg.enableNotifyFailed"), t("settings.errorTitle"));
+      }
+    }catch(e){
+      console.error("推播訂閱失敗：", e);
+    }
+    await updateNotifyBtnState();
+  }
+
+  async function toggleNotify(){
+    if(!pushSupported || !currentUser) return;
+
+    if(isCapacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.PushNotifications){
+      await ensurePushSubscribed();
+      return;
+    }
+
+    if(Notification.permission === "denied"){ await sbAlert(getNotifyHintBlocked(), t("settings.notifyBlockedTitle")); return; }
+    if(Notification.permission === "granted"){
+      const reg = await navigator.serviceWorker.getRegistration();
+      const sub = reg ? await reg.pushManager.getSubscription() : null;
+      if(sub){
+        const { error } = await sb.from("push_subscriptions").delete().eq("endpoint", sub.endpoint);
+        if(error) console.error("取消推播訂閱寫入失敗：", error);
+        await sub.unsubscribe();
+        await updateNotifyBtnState();
+        return;
+      }
+    }
+    await ensurePushSubscribed();
+  }
+
+  if(notifyBtn){
+    notifyBtn.addEventListener("click", toggleNotify);
+  }
+
+
+
+  // ---------- 主流程：確認登入狀態、載入資料、填入畫面 ----------
+  async function onLoggedIn(user){
+    if(isSessionExpired()){ await forceLogout(); return; }
+    refreshLoginTime();
+
+    // 關鍵：從伺服器獲取即時 User 資料（包含其他裝置上傳的最新 avatar_url）
+    let freshUser = user;
+    try {
+      const { data: freshData, error: freshErr } = await sb.auth.getUser();
+      if(!freshErr && freshData && freshData.user){
+        freshUser = freshData.user;
+      }
+    } catch(e){}
+
+    currentUser = freshUser;
+    window.currentUser = freshUser;
+
+    // 第一時間顯示畫面與關閉 Splash 遮罩，保證 100% 不卡死
+    appScreen.style.display = "block";
+    hidePwaSplash();
+    // appScreen 顯示出來之前分頁膠囊量到的寬度/位置都是 0，必須等這裡畫面
+    // 真的展開後再重新量一次，不然「帳號」分頁預設看起來會沒有滑動指示條。
+    updateSettingsTabIndicator();
+
+    try{
+      await loadMembers();
+      window.myMember = myMember;
+
+      let myAvatar = "";
+      if(myMember && myMember.avatar_url){
+        myAvatar = myMember.avatar_url;
+      } else if(currentUser && currentUser.user_metadata && currentUser.user_metadata.avatar_url){
+        myAvatar = currentUser.user_metadata.avatar_url;
+      }
+
+      if(myMember){
+        myMember.avatar_url = myAvatar;
+        if(myAvatar){
+          localStorage.setItem("sb_my_avatar", myAvatar);
+          if(currentUser && currentUser.id) localStorage.setItem("sb_avatar_" + currentUser.id, myAvatar);
+          localStorage.setItem("sb_avatar_" + myMember.id, myAvatar);
+          if(myMember.user_id) localStorage.setItem("sb_avatar_" + myMember.user_id, myAvatar);
+        } else {
+          localStorage.removeItem("sb_avatar_" + myMember.id);
+          if(myMember.user_id) localStorage.removeItem("sb_avatar_" + myMember.user_id);
+          if(currentUser) localStorage.removeItem("sb_avatar_" + currentUser.id);
+          localStorage.removeItem("sb_my_avatar");
+        }
+      }
+
+      const whoamiAvatarEl = document.getElementById("whoamiAvatar");
+      renderWhoamiGroupSwitcher(sb, currentUser, myMember, () => myMember ? (myMember.name || currentUser.email) : currentUser.email);
+      if(whoamiAvatarEl && myMember){
+        whoamiAvatarEl.innerHTML = renderAvatarHTML(myMember, "avatar-md whoami-avatar");
+      }
+
+      if(typeof initDesktopShortcuts === "function") initDesktopShortcuts();
+      if(typeof initNotificationBell === "function") initNotificationBell(sb, myMember);
+      if(typeof initOfflineBanner === "function") initOfflineBanner();
+      if(typeof initLocationWeatherWidget === "function") initLocationWeatherWidget().catch(()=>{});
+
+      renderSettingsAvatarPreview();
+
+      const nameInp = document.getElementById("settingsName");
+      if(nameInp && myMember) nameInp.value = myMember.accountName || "";
+      const nicknameInp = document.getElementById("settingsNickname");
+      if(nicknameInp && myMember) nicknameInp.value = myMember.nickname || "";
+      // payment_accounts 已改存在 Supabase Vault 裡（不是 members 的明碼
+      // 欄位了），myMember 上不會再有這個欄位，要另外呼叫 RPC 解密拿回來。
+      if(myMember){
+        sb.rpc("get_my_payment_accounts").then(({ data, error })=>{
+          if(error){ console.error("讀取收款帳戶失敗：", error); return; }
+          renderPaymentAccountRows(Array.isArray(data) ? data : []);
+        });
+      }
+      renderPaymentVisibilityList();
+
+      // 掃 QR code 邀請碼進來時，index.html 的 <head> 那段腳本已經把邀請碼
+      // 存進 localStorage 了；但這裡是「已經有帳號、已經在某個群組裡」的
+      // 人要加入另一個群組的入口（跟全新註冊、還沒有任何群組時走的
+      // showGroupChoiceScreen() 是不同路徑），原本沒有接這段，掃了碼也
+      // 不會自動帶進來，要自己回想邀請碼再手動打一次。這裡補上同樣的
+      // 邏輯，用過一次就清掉，不要留著影響下次進來。
+      const pendingInviteCode = localStorage.getItem("splitbill-pending-invite-code");
+      if(pendingInviteCode){
+        const joinCodeInp = document.getElementById("settingsJoinCode");
+        if(joinCodeInp) joinCodeInp.value = pendingInviteCode;
+        localStorage.removeItem("splitbill-pending-invite-code");
+      }
+      const emailInp = document.getElementById("settingsEmail");
+      const currentEmail = isRealEmail(myMember && myMember.email) ? myMember.email : (isRealEmail(currentUser.email) ? currentUser.email : "");
+      if(emailInp) emailInp.value = currentEmail;
+      document.getElementById("pwChangeSection").classList.toggle("hidden", !currentEmail);
+      document.getElementById("pwChangeLockedHint").classList.toggle("hidden", !!currentEmail);
+      const showLeftInp = document.getElementById("showLeftMembersToggle");
+      if(showLeftInp) showLeftInp.checked = showLeftMembers;
+
+      const emailStatusHint = document.getElementById("emailStatusHint");
+      if(emailStatusHint){
+        emailStatusHint.textContent = currentEmail ? t("settings.currentEmailLabel", { email: currentEmail }) : t("settings.noEmailOnFile");
+      }
+
+      renderSettingsCurrencyList();
+      initRecurringTemplateForm();
+
+      // 其餘背景資料並行載入，不阻塞主畫面
+      Promise.allSettled([
+        renderSettingsGroupSection(),
+        renderLinkedIdentities(),
+        updateNotifyBtnState(),
+        renderRecurringTemplates().then(()=>{
+          // 從幣別頁「這筆以後都改」導過來的（?editRecurring=範本id），資料載入
+          // 完成後直接幫忙開好編輯表單，不用使用者自己再找一次範本。
+          const editId = new URLSearchParams(location.search).get("editRecurring");
+          if(editId && typeof window.openRecurringTemplateForm === "function"){
+            window.openRecurringTemplateForm(editId);
+          }
+        }),
+        (async ()=>{
+          // 全域使用者名稱存在獨立的 usernames 表，不會併在 loadMembers()
+          // 裡，要另外查一次；這裡才是真正的權威資料，跟 members.name
+          // 理論上應該一致，但保險起見還是以這裡查到的為準（例如萬一
+          // 兩邊哪次沒同步成功，這裡看到的才是登入頁實際會用到的值）。
+          const nameInp = document.getElementById("settingsName");
+          if(!nameInp) return;
+          const { data } = await sb.from("usernames").select("username").eq("user_id", currentUser.id).maybeSingle();
+          if(data && data.username) nameInp.value = data.username;
+        })(),
+        (async ()=>{
+          if(emailStatusHint){
+            const { data } = await sb.auth.getUser();
+            const u = data && data.user;
+            if(u && u.new_email && u.new_email !== u.email){
+              emailStatusHint.textContent = t("settings.pendingNewEmail", { email: u.new_email });
+            }
+          }
+        })()
+      ]);
+      checkLinkIdentityRedirectError();
+    }catch(e){
+      console.warn("Settings 資料載入部分異常：", e);
+    }
+  }
+
+  const appScreen = document.getElementById("appScreen");
+
+  (async function boot(){
+    try {
+      const { data:{ session } } = await sb.auth.getSession();
+      if(session && session.user){
+        await onLoggedIn(session.user);
+      } else {
+        localStorage.removeItem(LOGIN_TIME_KEY);
+        hidePwaSplash();
+        location.href = "index.html?redirect=settings.html";
+      }
+    } catch(e){
+      hidePwaSplash();
+      location.href = "index.html?redirect=settings.html";
+    }
+  })();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,2580 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<script>
+(function(){
+  try{
+    var t = localStorage.getItem("splitbill-theme");
+    if(t !== "dark" && t !== "light"){
+      t = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+    }
+    document.documentElement.setAttribute("data-theme", t);
+  }catch(e){}
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Splitbill｜帳務總覽</title>
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#7A6B9E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Splitbill">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;700&family=Noto+Sans+TC:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css?v=855">
+<link rel="stylesheet" href="shared.css?v=855">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="i18n.js?v=855"></script>
+<script src="currencies.js?v=855"></script>
+<script src="version.js?v=855"></script>
+<script src="shared-ui.js?v=855"></script>
+<script src="theme.js?v=855" defer></script>
+<script src="app-banner.js?v=855" defer></script>
+<script>
+if("serviceWorker" in navigator){
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  });
+}
+</script>
+</head>
+<body>
+<div id="pwaSplash" class="pwa-splash">
+  <div class="pwa-splash-content">
+    <svg class="pwa-splash-logo" viewBox="0 0 512 512" aria-hidden="true">
+      <path class="s1" d="M256,238 L118.5,138.1 A170,170 0 0,1 393.5,138.1 Z"/>
+      <path class="s2" d="M271.6,265 L426.9,195.9 A170,170 0 0,1 289.4,434.1 Z"/>
+      <path class="s3" d="M240.4,265 L222.6,434.1 A170,170 0 0,1 85.1,195.9 Z"/>
+    </svg>
+  </div>
+</div>
+<script>
+(function(){
+  const splashEl = document.getElementById("pwaSplash");
+  if(!splashEl) return;
+  const splashStartTime = performance.now();
+  const hasSplashed = sessionStorage.getItem("sb_splashed_in_session") === "1";
+  let splashTimer = null;
+
+  if(!hasSplashed){
+    splashEl.classList.add("pwa-splash-visible");
+    sessionStorage.setItem("sb_splashed_in_session", "1");
+  } else {
+    splashTimer = setTimeout(()=>{
+      if(splashEl) splashEl.classList.add("pwa-splash-visible");
+    }, 300);
+  }
+
+  window.hidePwaSplash = function(){
+    if(splashTimer) clearTimeout(splashTimer);
+    if(!splashEl) return;
+    splashEl.classList.add("pwa-splash-out");
+    setTimeout(()=>{ if(splashEl.parentNode) splashEl.remove(); }, 200);
+  };
+  setTimeout(window.hidePwaSplash, 600);
+})();
+</script>
+<svg class="svg-defs-hidden" aria-hidden="true">
+  <defs>
+    <linearGradient id="logoGrad" x1="90" y1="90" x2="430" y2="430" gradientUnits="userSpaceOnUse">
+      <stop class="logo-stop-a" offset="0%"/>
+      <stop class="logo-stop-b" offset="100%"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<div class="wrap">
+
+  <div class="app-header">
+    <div class="location-weather-row">
+      <div class="location-weather-badge hidden" id="locationCard">
+        <span id="locationText"></span>
+      </div>
+      <div class="location-weather-badge hidden" id="weatherCard">
+        <span id="weatherText"></span>
+      </div>
+    </div>
+    <div class="title-row">
+      <svg class="app-logo" viewBox="0 0 512 512" aria-hidden="true">
+        <path class="s1" d="M256,238 L118.5,138.1 A170,170 0 0,1 393.5,138.1 Z"/>
+        <path class="s2" d="M271.6,265 L426.9,195.9 A170,170 0 0,1 289.4,434.1 Z"/>
+        <path class="s3" d="M240.4,265 L222.6,434.1 A170,170 0 0,1 85.1,195.9 Z"/>
+      </svg>
+      <h1 data-i18n="summary.title">帳務總覽</h1>
+    </div>
+    <div class="nav-links" id="navLinks"></div>
+  </div>
+
+  <div id="configWarning" class="card hidden">
+    <h2 data-i18n="configWarning.title">⚠️ 尚未設定 Supabase</h2>
+    <p class="config-warning-text">
+      打開這個檔案，把最下面 <code>&lt;script&gt;</code> 區塊裡的
+      <code>SUPABASE_URL</code> 跟 <code>SUPABASE_ANON_KEY</code>
+      換成你自己 Supabase 專案的值，存檔後重新整理即可。
+    </p>
+  </div>
+
+  <div id="appScreen">
+    <div class="topbar">
+      <div class="whoami whoami-wrap" id="whoamiWrap">
+        <span id="whoamiAvatar"></span>
+        <span id="whoamiText"><b id="whoamiName"></b></span>
+      </div>
+      <div class="topbar-actions">
+        <div id="notificationBellContainer"></div>
+        <button type="button" class="icon-btn" id="openAchievementsModalBtn" data-i18n-title="currency.achievementsTitle" title="成就榜" aria-label="成就榜">🎖️</button>
+        <a class="icon-btn" id="settingsBtn" href="settings.html" data-i18n-title="common.settings" title="設定" aria-label="設定">⚙️</a>
+        <button class="btn secondary small" id="logoutBtn" data-i18n="common.logout">登出</button>
+      </div>
+    </div>
+
+    <div class="offline-banner hidden" id="offlineBanner">
+      <span class="offline-banner-text" data-i18n="shared.offlineBannerText">📴 目前離線，部分功能可能無法使用</span>
+    </div>
+
+    <div class="card email-reminder hidden" id="emailReminderCard">
+      <span class="email-reminder-text" data-i18n="currency.emailReminder">⚠️ 你還沒設定電子信箱，忘記密碼會沒辦法用</span>
+      <button type="button" class="link-btn" id="emailReminderBtn" data-i18n="currency.goToSettings">去設定</button>
+    </div>
+
+    <div class="summary-grid-2">
+      <!-- 1. 我的餘額：只顯示有交易紀錄過的幣別 -->
+      <div class="card">
+        <h2 data-i18n="summary.myAmtTitle">💰 我的款項</h2>
+        <div id="myAmtList">
+          <div class="my-mini-balance"><span class="skeleton skeleton-name"></span><span class="skeleton skeleton-mybalance"></span></div>
+          <div class="my-mini-balance"><span class="skeleton skeleton-name"></span><span class="skeleton skeleton-mybalance"></span></div>
+        </div>
+      </div>
+
+      <!-- 2. 淨餘額比較：長條圖，取代原本的文字總表 (在群組留言之上) -->
+      <div class="card">
+        <div class="chart-title-row">
+          <h2 data-i18n="summary.balanceCompareTitle">📊 淨餘額比較</h2>
+          <div class="chart-gran-select" id="balanceCurrencySelect">
+            <button type="button" class="chart-gran-btn" id="balanceCurrencyBtn">
+              <span id="balanceCurrencyText"></span>
+              <span class="chart-gran-caret">▾</span>
+            </button>
+            <div class="chart-gran-menu hidden" id="balanceCurrencyMenu"></div>
+          </div>
+        </div>
+        <div id="balanceChartWrap">
+          <p class="filter-hint" data-i18n="common.loading">載入中…</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 🔁 本月週期性支出總覽：純粹用 recurring_expenses 現有資料算出來，不用等
+         自動記錄跑過才看得到，一打開總覽就知道每個月固定要繳多少、最近哪幾筆快到期 -->
+    <div class="card hidden" id="recurringOverviewCard">
+      <h2 data-i18n="summary.recurringOverviewTitle">🔁 週期性支出總覽</h2>
+      <div id="recurringOverviewTotals" class="recurring-overview-totals"></div>
+      <div id="recurringOverviewUpcoming" class="recurring-overview-upcoming"></div>
+    </div>
+
+    <!-- 3. 群組留言：只有同一個群組的人看得到，只能刪自己寫的 -->
+        <div class="card">
+          <h2 data-i18n="summary.feedbackTitle">💬 群組留言</h2>
+          <textarea id="feedbackInput" data-i18n-placeholder="summary.feedbackPlaceholder" placeholder="想跟這個群組的大家說什麼都可以打在這裡…" rows="3"></textarea>
+          <button class="btn secondary small" id="feedbackSubmitBtn" data-i18n="summary.feedbackSubmit">送出</button>
+          <div class="msg" id="feedbackMsg"></div>
+
+          <button type="button" class="filter-toggle-head" id="feedbackToggleHead">
+            <span data-i18n="summary.feedbackViewToggle">💭 查看留言</span>
+            <span class="chevron">▾</span>
+          </button>
+          <div class="filter-body" id="feedbackBody">
+            <div id="feedbackList"></div>
+          </div>
+        </div>
+
+    <!-- ⚡ 浮動快速記帳按鈕 -->
+    <button type="button" class="quick-exp-fab" id="openQuickExpenseBtn" data-i18n-title="summary.quickExpFab" title="一鍵快速記帳" aria-label="一鍵快速記帳">
+      <span class="quick-exp-fab-icon">⚡</span>
+      <span class="quick-exp-fab-text" data-i18n="summary.quickExpFabText">記一筆</span>
+    </button>
+
+    <div class="app-footer" id="appFooter"></div>
+  </div><!-- /appScreen -->
+</div><!-- /wrap -->
+
+<!-- ⚡ 一鍵快速記帳彈窗 (iOS 原生 Bottom Sheet) -->
+<div id="quickExpenseModal" class="calc-modal sb-bottom-sheet hidden">
+  <div class="calc-card quick-exp-modal-card">
+    <div class="sb-drag-handle" id="quickExpDragHandle"></div>
+    <div class="calc-header">
+      <div class="quick-exp-modal-title">
+        <span class="quick-exp-modal-title-icon">⚡</span>
+        <span class="quick-exp-modal-title-text" data-i18n="summary.quickExpModalTitle">快速記帳</span>
+      </div>
+      <button type="button" class="calc-close" id="quickExpenseCloseBtn" data-i18n-title="common.close" aria-label="關閉">✕</button>
+    </div>
+
+    <div class="quick-exp-modal-body">
+
+      <div class="form-wizard-progress" id="quickExpWizardProgress">
+        <div class="form-wizard-dots" id="quickExpWizardDots">
+          <span class="form-wizard-dot active" data-step="0"></span>
+          <span class="form-wizard-dot" data-step="1"></span>
+          <span class="form-wizard-dot" data-step="2"></span>
+          <span class="form-wizard-dot" data-step="3"></span>
+        </div>
+        <div class="form-wizard-step-title" id="quickExpWizardStepTitle">步驟 1 / 4・支出內容</div>
+      </div>
+
+      <div class="exp-form-section sec-content">
+        <div class="exp-form-section-head">
+          <span class="exp-form-section-icon">🍽️</span>
+          <span class="exp-form-section-title" data-i18n="currency.contentSectionTitle">支出內容</span>
+          <button type="button" class="btn-ai-receipt quick-exp-ai-receipt-btn exp-form-section-action" id="quickExpAiReceiptBtn" data-i18n-title="currency.aiReceiptBtnTitle" title="拍照或上傳發票/收據自動辨識品項與拆單" data-i18n="currency.aiReceiptBtn">📷 AI 拆單</button>
+        </div>
+
+        <!-- 幣別智慧推薦與手動切換 -->
+        <div class="quick-field-label-row">
+          <label for="quickExpCurrencySelect" data-i18n="summary.currencyLabel">幣別</label>
+          <span class="quick-cur-auto-badge" id="quickCurAutoBadge" data-i18n="summary.currencyAutoBadge">🌍 依時區自動推薦</span>
+        </div>
+        <div class="select-wrap">
+          <select id="quickExpCurrencySelect" class="quick-exp-currency-select"></select>
+        </div>
+
+        <label for="quickExpDesc" data-i18n="currency.itemNameLabel">項目 / 店名</label>
+        <input type="text" id="quickExpDesc" data-i18n-placeholder="currency.itemNamePlaceholder" placeholder="例如 晚餐、淺草雷門 星巴克">
+
+        <!-- 類別下拉式選單 -->
+        <label for="quickExpCategorySelect" data-i18n="currency.categoryLabel">類別 (自動辨識 / 可手動選擇)</label>
+        <div class="select-wrap exp-category-select-wrap">
+          <select id="quickExpCategorySelect" class="exp-category-select">
+            <option value="general" data-i18n="cat.general">🧾 一般支出</option>
+            <option value="food" selected data-i18n="cat.food">🍜 美食餐飲</option>
+            <option value="drink" data-i18n="cat.drink">☕ 飲料甜點</option>
+            <option value="transit" data-i18n="cat.transit">🚄 大眾交通</option>
+            <option value="car" data-i18n="cat.car">🚗 租車用油</option>
+            <option value="flight" data-i18n="cat.flight">✈️ 機票航班</option>
+            <option value="hotel" data-i18n="cat.hotel">🏨 住宿溫泉</option>
+            <option value="ticket" data-i18n="cat.ticket">🎟️ 門票娛樂</option>
+            <option value="shopping" data-i18n="cat.shopping">🛍️ 購物藥妝</option>
+            <option value="medical" data-i18n="cat.medical">💊 醫療藥品</option>
+            <option value="network" data-i18n="cat.network">📶 網卡通訊</option>
+          </select>
+        </div>
+
+        <!-- 金額 -->
+        <label id="quickExpAmountLabel">支出總金額 (已含稅/免稅)</label>
+        <div class="input-calc-wrap">
+          <input type="number" id="quickExpAmount" data-i18n-placeholder="currency.amountPlaceholder" placeholder="例如 850" min="0" step="1">
+          <button type="button" class="amt-row-calc-btn input-calc-btn" id="quickExpAmountCalcBtn" data-i18n-title="common.calculator" title="小計算機">🧮</button>
+        </div>
+
+        <!-- 服務費 / 稅：預設「沒有」，大部分時候金額已含稅、不用理它。摘要卡片
+             故意放在收合區塊外面，即使收合起來、只要有填資料就看得到組成 -->
+        <div class="exp-lightweight-container" id="quickTaxContainer">
+          <label class="exp-addon-label" data-i18n="currency.hasTaxLabel">這筆有另外加服務費或稅嗎？</label>
+          <div class="filter-type-toggle">
+            <button type="button" class="split-mode-btn active" id="quickTaxHasNoBtn" data-tax-has="no" data-i18n="currency.taxNo">沒有</button>
+            <button type="button" class="split-mode-btn" id="quickTaxHasYesBtn" data-tax-has="yes" data-i18n="currency.taxYes">有，要另外加</button>
+          </div>
+          <div class="exp-addons-body hidden" id="quickTaxBody">
+            <div class="exp-addons-hint" data-i18n="currency.taxHint">💡 若有餐廳服務費、消費稅或附加稅額，在此填入金額並選擇分配方式。系統會自動計算各成員最終應付金額。</div>
+            <label class="exp-addon-label" data-i18n="currency.taxAmountLabel">服務費 / 稅額金額</label>
+            <div class="input-calc-wrap exp-addon-calc-wrap">
+              <input type="number" id="quickTaxAmount" data-i18n-placeholder="summary.taxAmountPlaceholder" placeholder="例如 85" min="0" step="1">
+              <button type="button" class="amt-row-calc-btn input-calc-btn" id="quickTaxCalcBtn" data-i18n-title="common.calculator" title="小計算機">🧮</button>
+            </div>
+            <label class="exp-tax-label" data-i18n="currency.taxSplitModeLabel">分配方式</label>
+            <div class="ai-tax-split-toggle exp-tax-split-wrap">
+              <button type="button" class="ai-tax-btn active" data-quick-tax-mode="ratio" id="quickTaxRatioBtn" data-i18n="currency.taxRatio">依消費比例</button>
+              <button type="button" class="ai-tax-btn" data-quick-tax-mode="equal" id="quickTaxEqualBtn" data-i18n="currency.taxEqual">全員平分</button>
+            </div>
+          </div>
+          <div class="exp-tax-preview hidden exp-tax-preview-box" id="quickTaxPreview"></div>
+        </div>
+      </div>
+
+      <div class="exp-form-section sec-payer hidden">
+        <div class="exp-form-section-head">
+          <span class="exp-form-section-icon">💰</span>
+          <span class="exp-form-section-title" data-i18n="currency.payerSectionTitle">誰付的錢</span>
+        </div>
+
+        <label>
+          <span data-i18n="currency.payerModeLabel">付款方式</span>
+          <span class="split-toggle">
+            <button type="button" class="split-mode-btn active" data-quick-payer-mode="single" data-i18n="currency.payerSingle">單人全付</button>
+            <button type="button" class="split-mode-btn" data-quick-payer-mode="multi" data-i18n="currency.payerMulti">多人付款</button>
+          </span>
+        </label>
+        <select id="quickExpPaidBy"></select>
+        <div class="amt-grid hidden" id="quickExpPayers"></div>
+        <div class="sum-check" id="quickPayerSumCheck"></div>
+      </div>
+
+      <div class="exp-form-section sec-split hidden">
+        <div class="exp-form-section-head">
+          <span class="exp-form-section-icon">🤝</span>
+          <span class="exp-form-section-title" data-i18n="currency.splitSectionTitle">怎麼分攤</span>
+        </div>
+
+        <label>
+          <span data-i18n="currency.splitModeLabel">分攤方式</span>
+          <span class="split-toggle">
+            <button type="button" class="split-mode-btn active" data-quick-mode="equal" data-i18n="common.equalSplit">平均分攤</button>
+            <button type="button" class="split-mode-btn" data-quick-mode="custom" data-i18n="common.customAmount">自訂金額</button>
+            <button type="button" class="split-mode-btn" data-quick-mode="ratio" data-i18n="common.ratioSplit">依比例分攤</button>
+          </span>
+        </label>
+        <div class="checks" id="quickExpParticipants"></div>
+        <button type="button" class="link-btn" id="quickToggleAllParticipants" data-i18n="currency.deselectAll">取消全選</button>
+
+        <div class="exp-ratio-hint hidden" id="quickRatioHint" data-i18n="currency.ratioHint">💡 填每個人的「份數」就好，不用加總到 100（例如房間比例 2:1:1、食量默契 3:2:1），沒填或填 0 代表這個人不參與分攤。</div>
+        <div class="amt-grid hidden" id="quickSharesRatio"></div>
+
+        <!-- 個人自付/額外消費：跟上面「怎麼分攤」的勾選名單是分開的，
+             不會因為那邊勾選誰而跟著變動或消失 -->
+        <div class="exp-lightweight-container" id="quickAddonsContainer">
+          <button type="button" class="exp-lightweight-toggle" id="quickAddonsToggle">
+            <span class="exp-lightweight-toggle-icon" id="quickAddonsCaret">+</span>
+            <span data-i18n="currency.addonsToggle">有人另外加點或自己買了什麼嗎？</span>
+          </button>
+          <div class="exp-addons-body hidden" id="quickAddonsBody">
+            <div class="exp-addons-hint" data-i18n="currency.addonsHint">💡 先設定誰有個人專屬消費（如個人加點、自購用品、私人支出等），系統會自動先扣除這些金額，剩下的部分才由其餘人平分。</div>
+            <div class="exp-addons-tax-warn hidden" id="quickAddonsTaxWarn" data-i18n="currency.addonsTaxWarn">⚠️ 下面請填「未稅」金額——服務費/稅會由系統依你選的方式自動計算。</div>
+            <div class="filter-type-toggle" id="quickAddonModeToggle">
+              <button type="button" class="split-mode-btn exp-addon-mode-btn active" data-addon-mode="custom" data-i18n="currency.addonModeCustom">每人自訂金額</button>
+              <button type="button" class="split-mode-btn exp-addon-mode-btn" data-addon-mode="shared" data-i18n="currency.addonModeShared">新增共同品項</button>
+            </div>
+            <div class="amt-grid" id="quickAddonsList"></div>
+            <div class="exp-shared-addons hidden" id="quickSharedAddonsWrap">
+              <div class="exp-shared-addon-hint" data-i18n="currency.sharedAddonHint">💡 適合「大家一起買、但不是每個人都有份」的情況（例如點了一輪酒，有一兩位不喝）：填入品項總價，再勾選要分攤的人，系統會平分給勾到的人。</div>
+              <div id="quickSharedAddonsList"></div>
+              <button type="button" class="link-btn exp-shared-addon-add" id="quickSharedAddonAddBtn" data-i18n="currency.addSharedAddon">+ 新增共同品項</button>
+            </div>
+            <button type="button" class="link-btn exp-lightweight-clear" id="quickAddonsClearBtn" data-i18n="currency.clearAddons">清除個人自付資料</button>
+          </div>
+          <div class="exp-addons-preview hidden" id="quickAddonsPreview"></div>
+        </div>
+
+        <div class="exp-addons-tax-warn hidden" id="quickSharesTaxWarn" data-i18n="currency.addonsTaxWarn">⚠️ 下面請填「未稅」金額——服務費/稅會由系統依你選的方式自動計算。</div>
+        <div class="amt-grid hidden" id="quickSharesCustom"></div>
+        <div class="sum-check" id="quickShareSumCheck"></div>
+      </div>
+
+      <div class="exp-form-section sec-note hidden">
+        <div class="exp-form-section-head">
+          <span class="exp-form-section-icon">🗒️</span>
+          <span class="exp-form-section-title" data-i18n="currency.noteDateSectionTitle">備註與日期</span>
+        </div>
+
+        <label data-i18n="common.note">備註（選填）</label>
+        <textarea id="quickExpNote" data-i18n-placeholder="summary.notePlaceholder" placeholder="例如 金額+匯率、備註說明" rows="2" style="resize:vertical;"></textarea>
+
+        <label data-i18n="common.date">日期</label>
+        <input type="date" id="quickExpDate" lang="en-CA">
+      </div>
+
+      <div class="msg" id="quickExpMsg"></div>
+
+      <div class="form-wizard-nav" id="quickExpWizardNav">
+        <button type="button" class="btn secondary form-wizard-back hidden" id="quickExpWizardBackBtn" data-i18n="common.wizardBack">← 上一步</button>
+        <button type="button" class="btn" id="quickExpSubmitBtn" data-i18n="common.wizardNext">下一步</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 🧮 小計算機（快速記帳表單內各金額欄位共用） -->
+<div class="calc-modal" id="calcModal">
+  <div class="calc-card card">
+    <div class="calc-header">
+      <span class="calc-header-name" id="calcTargetName"></span>
+      <button type="button" class="calc-close" id="calcCloseBtn" data-i18n-title="common.close" aria-label="關閉">✕</button>
+    </div>
+    <div class="calc-display" id="calcDisplay">0</div>
+    <div class="calc-keys">
+      <button type="button" class="calc-key calc-key-op" data-key="C">C</button>
+      <button type="button" class="calc-key calc-key-op" data-key="back">⌫</button>
+      <button type="button" class="calc-key calc-key-paren" data-key="(">(</button>
+      <button type="button" class="calc-key calc-key-paren" data-key=")">)</button>
+      <button type="button" class="calc-key" data-key="7">7</button>
+      <button type="button" class="calc-key" data-key="8">8</button>
+      <button type="button" class="calc-key" data-key="9">9</button>
+      <button type="button" class="calc-key calc-key-op" data-key="/">÷</button>
+      <button type="button" class="calc-key" data-key="4">4</button>
+      <button type="button" class="calc-key" data-key="5">5</button>
+      <button type="button" class="calc-key" data-key="6">6</button>
+      <button type="button" class="calc-key calc-key-op" data-key="*">×</button>
+      <button type="button" class="calc-key" data-key="1">1</button>
+      <button type="button" class="calc-key" data-key="2">2</button>
+      <button type="button" class="calc-key" data-key="3">3</button>
+      <button type="button" class="calc-key calc-key-op" data-key="-">−</button>
+      <button type="button" class="calc-key calc-key-zero" data-key="0">0</button>
+      <button type="button" class="calc-key" data-key=".">.</button>
+      <button type="button" class="calc-key calc-key-op" data-key="+">+</button>
+      <button type="button" class="calc-key calc-key-eq" data-key="=">=</button>
+    </div>
+  </div>
+</div>
+
+<!-- 🎖️ 成就榜彈窗 (iOS 原生 Bottom Sheet) -->
+<div id="achievementsModal" class="calc-modal sb-bottom-sheet hidden">
+  <div class="calc-card achievements-modal-card">
+    <div class="sb-drag-handle"></div>
+    <div class="calc-header">
+      <h3 data-i18n="currency.achievementsTitle">🎖️ 成就榜</h3>
+      <button type="button" class="calc-close" id="achievementsCloseBtn" data-i18n-title="common.close" aria-label="關閉">✕</button>
+    </div>
+    <div class="achievements-list-scroll" id="achievementsListScroll">
+      <!-- 動態載入成就清單 -->
+    </div>
+  </div>
+</div>
+
+<div id="memberProfileModal" class="calc-modal sb-bottom-sheet hidden">
+  <div class="calc-card member-profile-modal-card">
+    <div class="sb-drag-handle"></div>
+    <div class="calc-header">
+      <h3 data-i18n="currency.memberProfileTitle">👤 成員資料</h3>
+      <button type="button" class="calc-close" id="memberProfileCloseBtn" data-i18n-title="common.close" aria-label="關閉">✕</button>
+    </div>
+    <div class="member-profile-body">
+      <div class="member-profile-avatar-wrap" id="memberProfileAvatarWrap"></div>
+      <div class="member-profile-name" id="memberProfileName"></div>
+      <div class="member-profile-relation hidden" id="memberProfileRelation"></div>
+      <div class="member-profile-payment-info hidden" id="memberProfilePaymentInfo"></div>
+      <div class="member-profile-badges" id="memberProfileBadges"></div>
+    </div>
+  </div>
+</div>
+
+<script>document.getElementById("appFooter").textContent = "菘. v" + APP_VERSION;</script>
+<script>
+const SUPABASE_URL = "https://ofevarwtqzvzrvhbanmf.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_pWT6foelsonrb1sLMXhnCw_oA3ytvaX";
+
+let shownCurrencies = JSON.parse(localStorage.getItem("splitbill-shown-currencies") || "null") || ["TWD"];
+let showLeftMembers = localStorage.getItem("splitbill-show-left-members") !== "0";
+function renderNavLinks(){
+  renderSplitbillNav("navLinks", "SUMMARY", shownCurrencies);
+}
+renderNavLinks();
+
+(function(){
+  if(typeof window.supabase === "undefined"){
+    if(typeof hidePwaSplash === "function") hidePwaSplash();
+    const warn = document.getElementById("configWarning");
+    if(warn){
+      warn.innerHTML = "<h2>" + t("summary.configLoadFailTitle") + "</h2><p class='config-warning-text'>" + t("summary.configLoadFailText") + "</p>";
+      warn.classList.remove("hidden");
+    }
+    return;
+  }
+
+  if(!SUPABASE_URL || SUPABASE_URL.startsWith("YOUR_") || !SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.startsWith("YOUR_")){
+    if(typeof hidePwaSplash === "function") hidePwaSplash();
+    const warn = document.getElementById("configWarning");
+    if(warn) warn.classList.remove("hidden");
+    return;
+  }
+
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  window.sb = sb;
+
+  // 帳密連結/解除連結 Google／Discord 失敗時的常見情況翻譯（登入本身已經搬去 index.html）。
+  function friendlyAuthErr(error){
+    const msg = (error && error.message) || "";
+    if(/captcha/i.test(msg)) return t("summary.authErrCaptcha");
+    if(/already linked|already exists/i.test(msg)) return t("summary.authErrAlreadyLinked");
+    return null;
+  }
+
+  // ---------- 所有 .msg 狀態訊息（成功/失敗提示）5 秒後自動消失 ----------
+  // 用 MutationObserver 統一處理，不用每個 msg.textContent = "..." 的地方都手動加 setTimeout。
+  (function(){
+    const timers = new WeakMap();
+    function scheduleClear(el){
+      if(!el.textContent) return;
+      if(timers.has(el)) clearTimeout(timers.get(el));
+      timers.set(el, setTimeout(()=>{ el.textContent = ""; timers.delete(el); }, 5000));
+    }
+    new MutationObserver(muts=>{
+      const seen = new Set();
+      muts.forEach(m=>{
+        let el = m.target.nodeType === 1 ? m.target : m.target.parentElement;
+        while(el && el !== document.body){
+          if(el.classList && el.classList.contains("msg")){
+            if(!seen.has(el)){ seen.add(el); scheduleClear(el); }
+            break;
+          }
+          el = el.parentElement;
+        }
+      });
+    }).observe(document.body, { childList: true, characterData: true, subtree: true });
+  })();
+
+  // ---------- 設定頁裡的 ⓘ 說明按鈕：點了才展開對應的說明文字 ----------
+  document.addEventListener("click", (e)=>{
+    const btn = e.target.closest(".info-btn");
+    if(!btn) return;
+    const target = document.getElementById(btn.dataset.infoFor);
+    if(target) target.classList.toggle("hidden");
+  });
+
+  // ---------- 密碼欄位的小眼睛（顯示/隱藏密碼） ----------
+  document.querySelectorAll(".pw-toggle-btn").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const input = btn.closest(".pw-input-wrap").querySelector("input");
+      const show = input.type === "password";
+      input.type = show ? "text" : "password";
+      btn.textContent = show ? "🙈" : "👁️";
+      btn.setAttribute("aria-label", show ? t("login.hidePassword") : t("login.showPassword"));
+    });
+  });
+
+  let currentUser = null;
+  // myMember：目前登入的人在「目前啟用群組」裡對應的那一筆 members 資料。
+  // members.id 不等於 auth 的 user id（一人可能同時屬於多個群組，每個群組各一筆
+  // members 列），所有代表「我自己」的地方都要用 myMember.id，不能用 currentUser.id。
+  let myMember = null;
+  let memberRows = [];
+  let memberById = {};
+
+  function formatAmt(v){
+    if(v === undefined || v === null || isNaN(v) || Math.abs(v) < 0.001) return "0";
+    return Number(v).toLocaleString("zh-TW", { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  }
+
+  const appScreen = document.getElementById("appScreen");
+
+  // ---------- 成員名單：直接從 Supabase members 表讀取，改人不用改程式碼 ----------
+  let MEMBERS = [];
+  function isRealEmail(email){
+    return !!email && !email.endsWith("@splitbill.local");
+  }
+  // 實際抓資料的邏輯統一放在 shared-ui.js 的 loadGroupMembers()，
+  // summary.html/currency.html/settings.html 三邊共用同一份，這裡只
+  // 負責把結果存進這個檔案自己的變數。
+  async function loadMembers(){
+    const result = await loadGroupMembers(sb, currentUser, showLeftMembers);
+    MEMBERS = result.MEMBERS;
+    memberById = result.memberById;
+    myMember = result.myMember;
+    memberRows = result.memberRows;
+  }
+
+  // LOGIN_TIME_KEY/SESSION_DURATION_MS/isSessionExpired()/refreshLoginTime()
+  // 移到全站共用的 shared-ui.js 了。登入畫面已經搬去 index.html，
+  // 這裡只留這頁自己導向邏輯不一樣的 forceLogout()。
+  async function forceLogout(){
+    try{ await sb.auth.signOut(); }catch(e){}
+    localStorage.removeItem(LOGIN_TIME_KEY);
+    location.href = "index.html?redirect=summary.html";
+  }
+  setInterval(()=>{ if(isSessionExpired()) forceLogout(); else refreshLoginTime(); }, 5 * 60 * 1000);
+
+  document.getElementById("logoutBtn").addEventListener("click", async ()=>{
+    localStorage.removeItem(LOGIN_TIME_KEY);
+    await sb.auth.signOut();
+    location.href = "index.html";
+  });
+
+  // escapeHtml() 移到全站共用的 shared-ui.js 了。
+
+  // ---------- 群組留言：只有同一個群組的人看得到，只能刪自己寫的 ----------
+  function formatFeedbackTime(iso){
+    const d = new Date(iso);
+    if(isNaN(d.getTime())) return "";
+    return d.toLocaleString("zh-TW", { year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit", hour12:false });
+  }
+
+  function paginationHTML(page, totalPages){
+    if(totalPages <= 1) return "";
+    return `<div class="pagination">
+      <button type="button" class="btn secondary small pagination-prev" ${page <= 0 ? "disabled" : ""}>${t("common.paginationPrev")}</button>
+      <span class="pagination-info">${t("common.paginationInfo", {page: page + 1, total: totalPages})}</span>
+      <button type="button" class="btn secondary small pagination-next" ${page >= totalPages - 1 ? "disabled" : ""}>${t("common.paginationNext")}</button>
+    </div>`;
+  }
+
+  const FEEDBACK_PAGE_SIZE = 5;
+  let cachedFeedback = [];
+  let feedbackPage = 0;
+  let editingFeedbackId = null;
+
+  // 展開狀態下，留言內容高度會變（分頁、進入/離開編輯模式都會），
+  // 每次重繪後都要重新量一次 #feedbackBody 的 max-height，
+  // 不然編輯用的文字框跟儲存按鈕會被舊的高度裁掉、也沒辦法滑動看到。
+  function syncFeedbackBodyHeight(){
+    const body = document.getElementById("feedbackBody");
+    if(body && body.classList.contains("open")){
+      body.style.maxHeight = body.scrollHeight + "px";
+    }
+  }
+
+  function renderFeedbackList(){
+    const el = document.getElementById("feedbackList");
+    const head = document.getElementById("feedbackToggleHead");
+    if(!el) return;
+    if(head) head.querySelector("span").textContent = t("summary.feedbackViewToggleCount", {count: cachedFeedback.length});
+    if(!cachedFeedback.length){
+      el.innerHTML = `<p class="filter-hint">${t("summary.feedbackEmpty")}</p>`;
+      syncFeedbackBodyHeight();
+      return;
+    }
+    const totalPages = Math.ceil(cachedFeedback.length / FEEDBACK_PAGE_SIZE);
+    if(feedbackPage >= totalPages) feedbackPage = totalPages - 1;
+    if(feedbackPage < 0) feedbackPage = 0;
+    const pageItems = cachedFeedback.slice(feedbackPage * FEEDBACK_PAGE_SIZE, (feedbackPage + 1) * FEEDBACK_PAGE_SIZE);
+
+    el.innerHTML = pageItems.map(f=>{
+      const canEdit = myMember && f.created_by === myMember.id;
+
+      if(editingFeedbackId === f.id){
+        return `<div class="exp-item">
+          <div class="exp-main">
+            <textarea class="fb-edit-input" rows="3">${escapeHtml(f.content)}</textarea>
+            <div class="exp-actions fb-edit-actions">
+              <button type="button" class="btn secondary small fb-save" data-id="${f.id}">${t("common.save")}</button>
+              <button type="button" class="btn secondary small fb-cancel">${t("common.cancel")}</button>
+            </div>
+          </div>
+        </div>`;
+      }
+
+      return `<div class="exp-item">
+        <div class="exp-main">
+          <div class="exp-desc">${escapeHtml(f.content)}</div>
+          <div class="exp-meta">${escapeHtml(memberById[f.created_by] || "?")} ・ ${formatFeedbackTime(f.created_at)}</div>
+        </div>
+        ${canEdit ? `<div class="exp-right"><div class="exp-actions"><button class="exp-edit fb-edit" data-id="${f.id}" title="${t("common.edit")}">✎</button><button class="exp-del fb-del" data-id="${f.id}" title="${t("settings.delete")}">✕</button></div></div>` : ""}
+      </div>`;
+    }).join("") + paginationHTML(feedbackPage, totalPages);
+
+    el.querySelectorAll(".fb-edit").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        editingFeedbackId = btn.dataset.id;
+        renderFeedbackList();
+      });
+    });
+    el.querySelectorAll(".fb-cancel").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        editingFeedbackId = null;
+        renderFeedbackList();
+      });
+    });
+    el.querySelectorAll(".fb-save").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const wrap = btn.closest(".exp-item");
+        const newContent = wrap.querySelector(".fb-edit-input").value.trim();
+        if(!newContent) return;
+        const { error } = await sb.from("feedback").update({ content: newContent }).eq("id", btn.dataset.id);
+        if(error){ await sbAlert(t("summary.feedbackSaveFailed", {error: error.message}), t("settings.errorTitle")); return; }
+        editingFeedbackId = null;
+        await loadFeedback();
+      });
+    });
+    el.querySelectorAll(".fb-del").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const ok = await sbConfirm(t("summary.feedbackDeleteConfirm"));
+        if(!ok) return;
+        const { error } = await sb.from("feedback").delete().eq("id", btn.dataset.id);
+        if(error){ await sbAlert(t("summary.feedbackDeleteFailed", {error: error.message}), t("settings.errorTitle")); return; }
+        await loadFeedback();
+      });
+    });
+    const prevBtn = el.querySelector(".pagination-prev");
+    if(prevBtn) prevBtn.addEventListener("click", ()=>{ feedbackPage--; renderFeedbackList(); });
+    const nextBtn = el.querySelector(".pagination-next");
+    if(nextBtn) nextBtn.addEventListener("click", ()=>{ feedbackPage++; renderFeedbackList(); });
+
+    syncFeedbackBodyHeight();
+  }
+
+  async function loadFeedback(){
+    if(!myMember) return;
+    const { data } = await sb.from("feedback").select("*").eq("group_id", myMember.group_id).order("created_at", { ascending:false });
+    cachedFeedback = data || [];
+    renderFeedbackList();
+  }
+
+  const feedbackToggleHead = document.getElementById("feedbackToggleHead");
+  if(feedbackToggleHead){
+    feedbackToggleHead.addEventListener("click", ()=>{
+      const body = document.getElementById("feedbackBody");
+      const open = feedbackToggleHead.classList.toggle("open");
+      body.classList.toggle("open", open);
+      body.style.maxHeight = open ? (body.scrollHeight + "px") : "0px";
+    });
+  }
+
+  const feedbackSubmitBtn = document.getElementById("feedbackSubmitBtn");
+  if(feedbackSubmitBtn){
+    feedbackSubmitBtn.addEventListener("click", async ()=>{
+      const input = document.getElementById("feedbackInput");
+      const msg = document.getElementById("feedbackMsg");
+      const content = input.value.trim();
+      if(!content){ msg.textContent = t("summary.feedbackContentRequired"); msg.className = "msg error"; return; }
+      const { error } = await sb.from("feedback").insert({ content, created_by: myMember.id, group_id: myMember.group_id });
+      if(error){ msg.textContent = t("summary.feedbackSubmitFailed", {error: error.message}); msg.className = "msg error"; return; }
+      input.value = "";
+      msg.textContent = t("summary.feedbackSubmitted"); msg.className = "msg ok";
+      feedbackPage = 0;
+      await loadFeedback();
+      const body = document.getElementById("feedbackBody");
+      if(body){
+        feedbackToggleHead.classList.add("open");
+        body.classList.add("open");
+        body.style.maxHeight = body.scrollHeight + "px";
+      }
+    });
+  }
+
+  // showToast() 移到全站共用的 shared-ui.js 了。
+
+  // Web Push 公鑰（可公開，用來讓瀏覽器跟推播服務建立訂閱）
+  const VAPID_PUBLIC_KEY = "BNR-GFJ6UxpQWVk6ghTFNUl9RYncDp_WX9W6XNA1vqsyWk9zQ4WC5ghAGiuBqqXQhluRiVB7KsAPGxTWNl27JW4";
+
+  function urlBase64ToUint8Array(base64String){
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const rawData = atob(base64);
+    return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+  }
+
+  const notifyBtn = document.getElementById("notifyBtn");
+  const pushSupported = "serviceWorker" in navigator && "PushManager" in window && typeof Notification !== "undefined";
+
+  const notifyHint = document.getElementById("notifyHint");
+  function NOTIFY_HINT_DEFAULT_FN(){ return t("settings.notifyHintDefault"); }
+  function NOTIFY_HINT_BLOCKED_FN(){ return t("settings.notifyHintBlockedBrowser"); }
+
+  async function updateNotifyBtnState(){
+    if(!notifyBtn) return;
+    if(!pushSupported){
+      notifyBtn.classList.add("hidden");
+      return;
+    }
+    notifyBtn.classList.remove("hidden");
+    notifyBtn.disabled = false;
+    if(Notification.permission === "denied"){
+      notifyBtn.textContent = "🔕";
+      notifyBtn.title = t("summary.notifyBlockedTitle");
+      notifyBtn.classList.remove("active");
+      if(notifyHint) notifyHint.textContent = NOTIFY_HINT_BLOCKED_FN();
+      return;
+    }
+    if(notifyHint) notifyHint.textContent = NOTIFY_HINT_DEFAULT_FN();
+    if(Notification.permission === "granted"){
+      const reg = await navigator.serviceWorker.getRegistration();
+      const sub = reg ? await reg.pushManager.getSubscription() : null;
+      if(sub){
+        notifyBtn.textContent = "🔔";
+        notifyBtn.title = t("summary.notifyOnTitle");
+        notifyBtn.classList.add("active");
+        return;
+      }
+    }
+    notifyBtn.textContent = "🔔";
+    notifyBtn.title = t("summary.notifyOffTitle");
+    notifyBtn.classList.remove("active");
+  }
+
+  // 登入後自動嘗試訂閱（預設開啟）；如果瀏覽器已經封鎖或使用者已關閉過，
+  // 這裡什麼都不會發生，不會硬跳出來吵。
+  async function ensurePushSubscribed(){
+    if(!pushSupported || !currentUser) return;
+    if(Notification.permission === "denied"){ await updateNotifyBtnState(); return; }
+
+    const permission = await Notification.requestPermission();
+    if(permission !== "granted"){ await updateNotifyBtnState(); return; }
+
+    try{
+      const reg = await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if(!sub){
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+        });
+      }
+      const subJson = sub.toJSON();
+      const { error } = await sb.from("push_subscriptions").upsert({
+        member_id: myMember.id,
+        endpoint: subJson.endpoint,
+        p256dh: subJson.keys.p256dh,
+        auth: subJson.keys.auth
+      }, { onConflict: "endpoint" });
+      if(error){
+        console.error("推播訂閱寫入失敗：", error);
+        await sub.unsubscribe();
+        await sbAlert(t("summary.pushSubFailed"), t("settings.errorTitle"));
+      }
+    }catch(e){
+      console.error("推播訂閱失敗：", e);
+    }
+    await updateNotifyBtnState();
+  }
+
+  // 按鈕點擊：目前開著就關掉，目前關著就打開
+  async function toggleNotify(){
+    if(!pushSupported || !currentUser) return;
+
+    if(Notification.permission === "denied"){
+      await sbAlert(NOTIFY_HINT_BLOCKED_FN(), t("summary.notifyBrowserSettingsTitle"));
+      return;
+    }
+
+    if(Notification.permission === "granted"){
+      const reg = await navigator.serviceWorker.getRegistration();
+      const sub = reg ? await reg.pushManager.getSubscription() : null;
+      if(sub){
+        const { error } = await sb.from("push_subscriptions").delete().eq("endpoint", sub.endpoint);
+        if(error) console.error("取消推播訂閱寫入失敗：", error);
+        await sub.unsubscribe();
+        await updateNotifyBtnState();
+        return;
+      }
+    }
+
+    await ensurePushSubscribed();
+  }
+
+  if(notifyBtn){
+    updateNotifyBtnState();
+    notifyBtn.addEventListener("click", toggleNotify);
+  }
+
+  function isRelevantToMe(table, row){
+    if(!row || !myMember) return false;
+    if(table === "expenses"){
+      return (row.payers || []).some(p => p.member_id === myMember.id) ||
+             (row.shares || []).some(s => s.member_id === myMember.id);
+    }
+    if(table === "repayments"){
+      return row.from_member === myMember.id || row.to_member === myMember.id;
+    }
+    return false;
+  }
+
+  function notifyRelevantChange(table, payload){
+    const row = (payload.new && Object.keys(payload.new).length) ? payload.new : payload.old;
+    if(!isRelevantToMe(table, row)) return;
+    if(payload.eventType === "DELETE") return; // 刪除先不通知，避免太吵
+
+    // 1. 如果是操作者本人自己的動作，不發送遠端即時廣播通知給自己（避免雙重通知）
+    if(myMember && (row.created_by === myMember.id || (table === "repayments" && row.from_member === myMember.id))){
+      return;
+    }
+
+    const sym = currencyMeta(row.currency).symbol;
+    const actor = memberById[row.created_by] || t("summary.someone");
+    let title, body;
+    if(table === "expenses"){
+      title = payload.eventType === "INSERT" ? t("summary.notifExpenseNew") : t("summary.notifExpenseUpdate");
+      let cleanDesc = (row.description || "")
+        .replace(/<!--[\s\S]*?-->/gi, "")
+        .replace(/<!--AI_RECEIPT_DATA:[\s\S]*?-->/gi, "")
+        .replace(/AI_RECEIPT_DATA:[\s\S]*/gi, "")
+        .replace(/\s*\[xcur[:_][^\]]+\]/gi, "")
+        .trim();
+      cleanDesc = cleanDesc.split("\n")[0].replace(/\(AI自動拆單\)/g, "").trim() || t("summary.notifExpenseItemFallback");
+      body = t("summary.notifExpenseBody", {actor, desc: cleanDesc, amount: sym + formatAmt(row.amount)});
+    } else {
+      title = payload.eventType === "INSERT" ? t("summary.notifRepayNew") : t("summary.notifRepayUpdate");
+      body = t("summary.notifRepayBody", {from: memberById[row.from_member] || "?", to: memberById[row.to_member] || "?", amount: sym + formatAmt(row.amount)});
+    }
+
+    showToast(title, body);
+
+    if(typeof Notification !== "undefined" && Notification.permission === "granted"){
+      try{ new Notification(title, { body, icon: "icon.svg" }); }catch(e){}
+    }
+  }
+
+  // ---------- 設定入口：設定已經搬到獨立的 settings.html，這裡只留信箱
+  // 提醒卡片的「去設定」按鈕，改成導頁而不是開彈窗。 ----------
+  const emailReminderBtn = document.getElementById("emailReminderBtn");
+  if(emailReminderBtn) emailReminderBtn.addEventListener("click", ()=>{ location.href = "settings.html"; });
+
+  // 每人淨餘額改成呼叫資料庫的 member_balances() 函式算，跟各幣別頁
+  // 共用同一份邏輯，不會有算法不一致的風險。傳 sinceDate 可以只算某天之後的。
+  // balances 的形狀： { 幣別代碼: { 成員id: 淨餘額 } }，幣別完全依 RPC 實際
+  // 回傳的資料決定 ── 沒用過的幣別根本不會出現，總表跟我的款項都不用列出來。
+  async function loadBalances(sinceDate){
+    const { data, error } = await sb.rpc("member_balances", { p_since: sinceDate || null });
+    if(error){
+      // 讀取失敗不能回傳空物件——下面 renderMyAmtList() 會把「查無資料」
+      // 跟「這個人真的每個幣別都結清了」當成同一件事，顯示假的「已結清 🎉」，
+      // 回傳 null 讓呼叫端知道這次是讀取失敗、不要拿去畫面。
+      console.error("讀取餘額失敗：", error);
+      return null;
+    }
+    const balances = {};
+    (data || []).forEach(row=>{
+      if(!balances[row.currency]) balances[row.currency] = {};
+      balances[row.currency][row.member_id] = Number(row.balance);
+    });
+    return balances;
+  }
+
+  function currencyMeta(code){
+    return CURRENCIES.find(c => c.code === code) || { code, symbol: code, label: code, flag: "" };
+  }
+
+  // 依 CURRENCIES 設定的順序，只列出使用者在設定裡選擇要顯示的幣別，
+  // 跟這個幣別有沒有交易紀錄無關 —— 選了就顯示（沒紀錄就顯示 0／已結清）。
+  function activeCurrencyCodes(){
+    return CURRENCIES.map(c => c.code).filter(code => shownCurrencies.includes(code));
+  }
+
+  // ---------- 淨餘額比較：頭貼＋名字＋長條，取代原本的文字總表。不同幣別數字
+  // 不能混在一起比，所以用下拉選單一次只看一種。
+  let balanceChartCode = null;
+  let balanceChartData = null; // 存最新一次的 balances，切換幣別時不用重算
+
+  function renderBalanceCurrencyMenu(codes){
+    const menu = document.getElementById("balanceCurrencyMenu");
+    const text = document.getElementById("balanceCurrencyText");
+    if(!menu || !text) return;
+    if(!codes.length){
+      menu.innerHTML = "";
+      text.textContent = "";
+      balanceChartCode = null;
+      return;
+    }
+    if(!balanceChartCode || !codes.includes(balanceChartCode)) balanceChartCode = codes[0];
+    menu.innerHTML = codes.map(code=>{
+      const meta = currencyMeta(code);
+      return `<button type="button" class="chart-gran-option${code === balanceChartCode ? " active" : ""}" data-code="${code}">${meta.label}</button>`;
+    }).join("");
+    text.textContent = currencyMeta(balanceChartCode).label;
+  }
+
+  function renderBalanceChart(){
+    const wrap = document.getElementById("balanceChartWrap");
+    if(!wrap || !balanceChartData) return;
+    if(!balanceChartCode){
+      wrap.innerHTML = `<p class="filter-hint">${t("summary.selectShownCurrenciesHint")}</p>`;
+      return;
+    }
+    const meta = currencyMeta(balanceChartCode);
+    const rows = memberRows.map(m => ({
+      member: m,
+      name: m.name,
+      amt: (balanceChartData[balanceChartCode] && balanceChartData[balanceChartCode][m.id]) || 0
+    })).sort((a, b) => a.amt - b.amt);
+
+    if(!rows.length){
+      wrap.innerHTML = `<p class="filter-hint">${t("summary.noGroupMembersHint")}</p>`;
+      return;
+    }
+    if(!rows.some(r => Math.abs(r.amt) > 0.05)){
+      wrap.innerHTML = `<p class="filter-hint">${t("summary.allSettledHint", {currency: meta.label})}</p>`;
+      return;
+    }
+
+    const max = Math.max(1, ...rows.map(r => Math.abs(r.amt)));
+
+    // 零線置中，左右兩欄天生等寬。紅色（欠款）那一側：頭貼－金額－長條，
+    // 長條尾端貼零線；綠色（該收）那一側鏡像：長條－金額－頭貼。長條長度
+    // 代表金額比例（上限抓這一側可用寬度的 55%），真的空間不夠時長條會
+    // 優先被壓縮（flex-shrink），永遠不會把頭貼、金額擠出畫面外。頭貼點
+    // 一下才彈出小小的暱稱懸浮框。
+    const rowsHtml = rows.map(r=>{
+      const isPos = r.amt > 0.05;
+      const isNeg = r.amt < -0.05;
+      const cls = isPos ? "pos" : isNeg ? "neg" : "zero";
+      const amtLabel = isPos ? `+${meta.symbol}${formatAmt(r.amt)}` : isNeg ? `-${meta.symbol}${formatAmt(Math.abs(r.amt))}` : t("summary.settledShort");
+      const pct = Math.abs(r.amt) > 0.05 ? Math.max(8, Math.round((Math.abs(r.amt) / max) * 55)) : 0;
+      const avatarHtml = `
+        <span class="bal-cmp-avatar-wrap">
+          ${renderAvatarHTML(r.member, "avatar-sm")}
+        </span>
+      `;
+      const amtHtml = `<span class="bal-cmp-amt ${cls}">${amtLabel}</span>`;
+      const barHtml = `<div class="bal-cmp-bar-track" style="${pct > 0 ? `width:${pct}%;` : ""}">${pct > 0 ? `<div class="bal-cmp-fill ${cls}" style="width:100%;"></div>` : ""}</div>`;
+
+      if(isNeg){
+        // 欠錢：頭貼－金額－長條，長條貼零線
+        return `<div class="bal-cmp-side neg">${avatarHtml}${amtHtml}${barHtml}</div><div class="bal-cmp-side"></div>`;
+      }
+      // 該收錢／已結清：長條－金額－頭貼，長條貼零線
+      return `<div class="bal-cmp-side"></div><div class="bal-cmp-side pos">${barHtml}${amtHtml}${avatarHtml}</div>`;
+    }).join("");
+
+    wrap.innerHTML = `<div class="bal-cmp-grid"><div class="bal-cmp-zeroline"></div>${rowsHtml}</div>`;
+  }
+
+  let isSettledListExpanded = false;
+
+  function renderMyAmtList(balances){
+    const codes = activeCurrencyCodes();
+    const list = document.getElementById("myAmtList");
+    if(!list) return;
+    if(!codes.length){
+      list.innerHTML = `<p class="filter-hint">${t("summary.selectShownCurrenciesHint")}</p>`;
+      return;
+    }
+
+    const items = codes.map(code => {
+      const meta = currencyMeta(code);
+      const amt = (balances[code] && myMember && balances[code][myMember.id]) || 0;
+      const isPos = amt > 0.05;
+      const isNeg = amt < -0.05;
+      const isSettled = !isPos && !isNeg;
+      const cls = isPos ? "pos" : isNeg ? "neg" : "zero";
+      const label = isPos ? t("summary.owedLabel", {amount: meta.symbol + formatAmt(amt)}) : isNeg ? t("summary.oweLabel", {amount: meta.symbol + formatAmt(Math.abs(amt))}) : t("summary.settledCheer");
+      return { code, meta, amt, isPos, isNeg, isSettled, cls, label };
+    });
+
+    const activeItems = items.filter(it => !it.isSettled);
+    const settledItems = items.filter(it => it.isSettled);
+
+    // 全部都已結清時：顯示一個清爽精緻的歡呼卡片
+    if(!activeItems.length){
+      list.innerHTML = `
+        <div class="my-mini-balance zero all-settled-card">
+          <span>${t("summary.allSettledTitle")}</span>
+          <span class="amt zero">${t("summary.noBalanceDue")}</span>
+        </div>
+        ${settledItems.length > 1 ? `
+          <button type="button" class="settled-toggle-btn ${isSettledListExpanded ? 'open' : ''}" id="settledToggleBtn">
+            <span>${t("summary.viewByCurrency", {count: settledItems.length})}</span>
+            <span class="chevron">▾</span>
+          </button>
+          <div class="settled-collapse-body ${isSettledListExpanded ? '' : 'hidden'}" id="settledCollapseBody">
+            <div class="settled-grid">
+              ${settledItems.map(it => `
+                <a href="currency.html?c=${it.code}" class="my-mini-balance zero mini-pill">
+                  <span>${it.meta.label}</span>
+                  <span class="amt zero">${t("summary.settledCheckmark")}</span>
+                </a>
+              `).join("")}
+            </div>
+          </div>
+        ` : ''}
+      `;
+    } else {
+      // 有欠款/待收款幣別：高亮優先顯示
+      const activeHtml = activeItems.map(it => `
+        <a href="currency.html?c=${it.code}" class="my-mini-balance ${it.cls}">
+          <span>${it.meta.label}</span>
+          <span class="amt ${it.cls}">${it.label}</span>
+        </a>
+      `).join("");
+
+      // 已結清的幣別：自動折疊收納成一行
+      let settledHtml = "";
+      if(settledItems.length === 1){
+        settledHtml = `
+          <a href="currency.html?c=${settledItems[0].code}" class="my-mini-balance zero">
+            <span>${settledItems[0].meta.label}</span>
+            <span class="amt zero">${settledItems[0].label}</span>
+          </a>
+        `;
+      } else if(settledItems.length > 1){
+        const namesPreview = settledItems.slice(0, 3).map(it => it.meta.label).join("、") + (settledItems.length > 3 ? "…" : "");
+        settledHtml = `
+          <button type="button" class="settled-toggle-btn ${isSettledListExpanded ? 'open' : ''}" id="settledToggleBtn">
+            <span>${t("summary.othersSettledCount", {count: settledItems.length})} <small class="settled-preview">(${namesPreview})</small></span>
+            <span class="chevron">▾</span>
+          </button>
+          <div class="settled-collapse-body ${isSettledListExpanded ? '' : 'hidden'}" id="settledCollapseBody">
+            <div class="settled-grid">
+              ${settledItems.map(it => `
+                <a href="currency.html?c=${it.code}" class="my-mini-balance zero mini-pill">
+                  <span>${it.meta.label}</span>
+                  <span class="amt zero">${t("summary.settledCheckmark")}</span>
+                </a>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      list.innerHTML = activeHtml + settledHtml;
+    }
+
+    // 幣別名稱長度隨語言/幣別差很多（日文尤其明顯），每一列都跑一次
+    // fitTextToOneLine() 自動縮字級塞進一行，不會跟旁邊的金額擠在一起。
+    if(typeof window.fitTextToOneLine === "function"){
+      list.querySelectorAll(".my-mini-balance > span:first-child").forEach(span => {
+        window.fitTextToOneLine(span, 11);
+      });
+    }
+
+    const toggleBtn = document.getElementById("settledToggleBtn");
+    const collapseBody = document.getElementById("settledCollapseBody");
+    if(toggleBtn && collapseBody){
+      toggleBtn.addEventListener("click", ()=>{
+        isSettledListExpanded = !isSettledListExpanded;
+        toggleBtn.classList.toggle("open", isSettledListExpanded);
+        collapseBody.classList.toggle("hidden", !isSettledListExpanded);
+      });
+    }
+  }
+
+  // 🎛️ iOS 原生 Bottom Sheet 下拉手勢拖曳關閉 (Swipe-down to dismiss)
+  (function initBottomSheetGestures(){
+    const modal = document.getElementById("quickExpenseModal");
+    const handle = document.getElementById("quickExpDragHandle");
+    const card = modal ? modal.querySelector(".quick-exp-modal-card") : null;
+    if(!modal || !handle || !card) return;
+
+    let startY = 0;
+    let currentY = 0;
+    let isDragging = false;
+
+    handle.addEventListener("touchstart", (e) => {
+      startY = e.touches[0].clientY;
+      isDragging = true;
+      card.style.transition = "none";
+    }, { passive: true });
+
+    window.addEventListener("touchmove", (e) => {
+      if(!isDragging) return;
+      currentY = e.touches[0].clientY;
+      const deltaY = Math.max(0, currentY - startY);
+      card.style.transform = `translateY(${deltaY}px)`;
+    }, { passive: true });
+
+    window.addEventListener("touchend", () => {
+      if(!isDragging) return;
+      isDragging = false;
+      const deltaY = Math.max(0, currentY - startY);
+      card.style.transition = "transform 0.24s cubic-bezier(0.16, 1, 0.3, 1)";
+      if(deltaY > 90){
+        modal.classList.add("is-closing");
+        setTimeout(() => {
+          modal.classList.remove("is-closing");
+          modal.classList.add("hidden");
+          card.style.transform = "";
+        }, 220);
+      } else {
+        card.style.transform = "translateY(0)";
+      }
+    });
+  })();
+
+  const balanceCurrencyBtn = document.getElementById("balanceCurrencyBtn");
+  const balanceCurrencyMenu = document.getElementById("balanceCurrencyMenu");
+  const balanceCurrencyText = document.getElementById("balanceCurrencyText");
+  if(balanceCurrencyBtn && balanceCurrencyMenu){
+    balanceCurrencyBtn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const willOpen = balanceCurrencyMenu.classList.contains("hidden");
+      balanceCurrencyMenu.classList.toggle("hidden", !willOpen);
+      balanceCurrencyBtn.classList.toggle("open", willOpen);
+    });
+    balanceCurrencyMenu.addEventListener("click", (e)=>{
+      const opt = e.target.closest(".chart-gran-option");
+      if(!opt) return;
+      balanceChartCode = opt.dataset.code;
+      balanceCurrencyText.textContent = opt.textContent;
+      balanceCurrencyMenu.querySelectorAll(".chart-gran-option").forEach(o => o.classList.remove("active"));
+      opt.classList.add("active");
+      balanceCurrencyMenu.classList.add("hidden");
+      balanceCurrencyBtn.classList.remove("open");
+      renderBalanceChart();
+    });
+    document.addEventListener("click", (e)=>{
+      if(!balanceCurrencyMenu.classList.contains("hidden") && !balanceCurrencyMenu.contains(e.target) && e.target !== balanceCurrencyBtn){
+        balanceCurrencyMenu.classList.add("hidden");
+        balanceCurrencyBtn.classList.remove("open");
+      }
+    });
+  }
+
+  // ---------- 主流程：確認登入狀態、沒有群組就導去 index.html ----------
+  async function onLoggedIn(user){
+    if(appScreen){
+      appScreen.style.display = "block";
+      appScreen.classList.add("sb-fade-in");
+    }
+    if(typeof hidePwaSplash === "function") hidePwaSplash();
+    if(isSessionExpired()){ await forceLogout(); return; }
+    refreshLoginTime();
+    currentUser = user;
+    window.currentUser = user;
+
+    // 背景非阻塞獲取即時 User 資料（包含其他裝置上傳的最新 avatar_url）
+    sb.auth.getUser().then(({ data: freshData, error: freshErr })=>{
+      if(!freshErr && freshData && freshData.user){
+        currentUser = freshData.user;
+        window.currentUser = freshData.user;
+      }
+    }).catch(()=>{});
+
+    try{
+      await loadMembers();
+
+      // 沒有任何啟用中的群組（例如在別的分頁退出了最後一個群組）：
+      // 選擇/建立群組的畫面只做在 index.html，這裡直接導過去，
+      // 帶著 redirect 記住回來要到總覽頁。
+      if(!myMember){
+        location.href = "index.html?redirect=summary.html";
+        return;
+      }
+
+      if(!myMember.name && !isRealEmail(myMember.email)){
+        // 讀得到成員資料列，但名字跟信箱都是空的——代表資料異常，
+        // 與其卡在畫面上一堆轉圈圈，不如直接登出讓使用者重新登入。
+        throw new Error("member data incomplete");
+      }
+
+      window.myMember = myMember;
+
+      let myAvatar = "";
+      if(myMember && myMember.avatar_url){
+        myAvatar = myMember.avatar_url;
+      } else if(user && user.user_metadata && user.user_metadata.avatar_url){
+        myAvatar = user.user_metadata.avatar_url;
+      }
+
+      if(myMember){
+        myMember.avatar_url = myAvatar;
+        if(myAvatar){
+          localStorage.setItem("sb_my_avatar", myAvatar);
+          if(user && user.id) localStorage.setItem("sb_avatar_" + user.id, myAvatar);
+          localStorage.setItem("sb_avatar_" + myMember.id, myAvatar);
+          if(myMember.user_id) localStorage.setItem("sb_avatar_" + myMember.user_id, myAvatar);
+        } else {
+          localStorage.removeItem("sb_avatar_" + myMember.id);
+          if(myMember.user_id) localStorage.removeItem("sb_avatar_" + myMember.user_id);
+          if(user) localStorage.removeItem("sb_avatar_" + user.id);
+          localStorage.removeItem("sb_my_avatar");
+        }
+      }
+
+      {
+        const whoamiAvatarEl = document.getElementById("whoamiAvatar");
+        renderWhoamiGroupSwitcher(sb, user, myMember, () => myMember.name || user.email);
+        if(whoamiAvatarEl && myMember){
+          whoamiAvatarEl.innerHTML = renderAvatarHTML(myMember, "avatar-md whoami-avatar");
+        }
+      }
+
+      const myLatestRow = myMember;
+
+      const emailReminderCard = document.getElementById("emailReminderCard");
+      if(emailReminderCard){
+        emailReminderCard.classList.toggle("hidden", !!(myLatestRow && isRealEmail(myLatestRow.email)));
+      }
+
+      shownCurrencies = (myLatestRow && myLatestRow.shown_currencies) || ["TWD"];
+      localStorage.setItem("splitbill-shown-currencies", JSON.stringify(shownCurrencies));
+      renderNavLinks();
+
+      if(typeof initDesktopShortcuts === "function") initDesktopShortcuts();
+      if(typeof initNotificationBell === "function") initNotificationBell(sb, myMember);
+      if(typeof initOfflineBanner === "function") initOfflineBanner();
+
+      window.memberRows = memberRows;
+      initAchievementsModal();
+      initQuickExpenseModal();
+
+      // 同時並行讀取餘額、支出與還款紀錄（大幅縮短載入時間）
+      const [allTime, expRes, repRes] = await Promise.all([
+        loadBalances(null),
+        sb.from("expenses").select("*").eq("group_id", myMember.group_id).order("created_at", { ascending:false }),
+        sb.from("repayments").select("*").eq("group_id", myMember.group_id).order("created_at", { ascending:false })
+      ]);
+
+      if(allTime){
+        renderMyAmtList(allTime);
+        balanceChartData = allTime;
+        renderBalanceCurrencyMenu(activeCurrencyCodes());
+        renderBalanceChart();
+      }
+
+      window.cachedExpenses = expRes.data || [];
+      window.cachedRepayments = repRes.data || [];
+      window.allGroupExpenses = expRes.data || [];
+      window.allGroupRepayments = repRes.data || [];
+
+      // 非核心功能在背景非同步執行
+      loadFeedback().catch(e => console.error("loadFeedback error:", e));
+      renderRecurringOverview().catch(e => console.error("renderRecurringOverview error:", e));
+      subscribeRealtime();
+      ensurePushSubscribed().catch(e => console.error("ensurePushSubscribed error:", e));
+      // 背景偵測城市/國家變化
+      detectAndNotifyLocationChange().catch(() => {});
+    }catch(e){
+      console.error("總覽頁載入異常：", e);
+      if(!myMember){
+        await forceLogout();
+      }
+    }
+  }
+
+  // 🔁 週期性支出總覽：純粹用 recurring_expenses 現有資料算出來（依幣別加總金額、
+  // 列出最近幾筆快到期的），不用等自動記錄真的跑過才看得到。資料表可能還沒建
+  // （使用者尚未執行 scripts/recurring_expenses.sql）就整張卡藏起來，不影響其他功能。
+  // 到期日用相對天數講（今天／明天／X 天後），比原始日期直覺；超過一週就
+  // 改回原始日期，不然「13 天後」這種講法反而比看日期更難換算。
+  function formatRelativeDueDate(dateStr, todayStr){
+    const diffDays = Math.round((new Date(dateStr) - new Date(todayStr)) / 86400000);
+    if(diffDays === 0) return t("summary.dueToday");
+    if(diffDays === 1) return t("summary.dueTomorrow");
+    if(diffDays > 1 && diffDays <= 6) return t("summary.dueInDays", { days: diffDays });
+    return dateStr;
+  }
+
+  async function renderRecurringOverview(){
+    const card = document.getElementById("recurringOverviewCard");
+    const totalsEl = document.getElementById("recurringOverviewTotals");
+    const upcomingEl = document.getElementById("recurringOverviewUpcoming");
+    if(!card || !myMember || !myMember.group_id) return;
+
+    const { data: allData, error } = await sb.from("recurring_expenses")
+      .select("*")
+      .eq("group_id", myMember.group_id)
+      .eq("active", true);
+    if(error){
+      console.warn("讀取週期性支出總覽失敗（可能尚未建立 recurring_expenses 資料表）：", error);
+      card.classList.add("hidden");
+      return;
+    }
+
+    // 標題是「我的週期性支出」，只算「我自己有份」的範本（我是付款人或分攤人
+    // 之一）——不是這個群組全部的週期性支出，跟別人設的、與我無關的範本不該
+    // 混在一起算給我看。
+    const data = (allData || []).filter(tmpl =>
+      (tmpl.payers || []).some(p => p.member_id === myMember.id) ||
+      (tmpl.shares || []).some(s => s.member_id === myMember.id)
+    );
+    if(!data.length){
+      card.classList.add("hidden");
+      return;
+    }
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+
+    // 只有 1 筆範本時，「依幣別加總」這格會跟下面「即將到期」那唯一一列的
+    // 金額完全重複，沒有加值，索性不顯示，直接看那一列就好；2 筆以上（不管
+    // 同不同幣別）加總才有意義，看得出來每期固定要準備多少錢。
+    if(totalsEl){
+      if(data.length > 1){
+        const totalsByCurrency = {};
+        data.forEach(tmpl => {
+          totalsByCurrency[tmpl.currency] = (totalsByCurrency[tmpl.currency] || 0) + Number(tmpl.amount);
+        });
+        totalsEl.innerHTML = Object.keys(totalsByCurrency).map(code => {
+          const curObj = CURRENCIES.find(c => c.code === code);
+          const sym = curObj ? curObj.symbol : code;
+          return `<div class="recurring-overview-total-row">
+            <span>${curObj ? escapeHtml(curObj.label) : code}</span>
+            <span class="recurring-overview-total-amt">${sym}${formatAmt(totalsByCurrency[code])}</span>
+          </div>`;
+        }).join("");
+      } else {
+        totalsEl.innerHTML = "";
+      }
+    }
+
+    if(upcomingEl){
+      // 已經過期、還沒被自動記錄處理到的範本（例如很久沒開任何幣別頁）不算
+      // 「即將到期」，硬列出來反而誤導；這種會在下次真的打開那個幣別頁時
+      // 自動補上，這裡先跳過就好。
+      const upcoming = data
+        .filter(tmpl => tmpl.next_due_date >= todayStr)
+        .sort((a, b) => a.next_due_date < b.next_due_date ? -1 : 1)
+        .slice(0, 3);
+      if(upcoming.length){
+        upcomingEl.innerHTML = `<div class="recurring-overview-upcoming-label">${t("summary.recurringUpcomingLabel")}</div>` +
+          upcoming.map(tmpl => {
+            const curObj = CURRENCIES.find(c => c.code === tmpl.currency);
+            const sym = curObj ? curObj.symbol : tmpl.currency;
+            return `<div class="recurring-overview-upcoming-row">
+              <span class="recurring-overview-upcoming-desc">🔁 ${escapeHtml(tmpl.description || "")}</span>
+              <span class="recurring-overview-upcoming-meta">${sym}${formatAmt(tmpl.amount)} · ${formatRelativeDueDate(tmpl.next_due_date, todayStr)}</span>
+            </div>`;
+          }).join("");
+      } else {
+        upcomingEl.innerHTML = "";
+      }
+    }
+
+    // 兩塊都沒東西可顯示的話（例如唯一一筆範本剛好逾期、還沒被任何幣別頁
+    // 處理過），整張卡先藏起來，不要只留一個空盪盪的標題。
+    const hasContent = (totalsEl && totalsEl.innerHTML.trim()) || (upcomingEl && upcomingEl.innerHTML.trim());
+    card.classList.toggle("hidden", !hasContent);
+  }
+
+  async function loadAndRenderAllBalances(){
+    const allTime = await loadBalances(null);
+    if(!allTime) return; // 讀取失敗，維持畫面上一次成功的內容，不要蓋成假的「已結清」
+    renderMyAmtList(allTime);
+
+    balanceChartData = allTime;
+    renderBalanceCurrencyMenu(activeCurrencyCodes());
+    renderBalanceChart();
+  }
+
+  // ---------- 即時同步：別人新增/編輯/刪除支出或還款時，自動重新整理 ----------
+  // 需要先在 Supabase 後台的 Database > Replication 把 expenses、repayments
+  // 這兩張表加進 supabase_realtime publication，這段程式碼才收得到變動通知。
+  let realtimeSubscribed = false;
+  function subscribeRealtime(){
+    if(realtimeSubscribed) return;
+    realtimeSubscribed = true;
+
+    let refreshTimer = null;
+    function scheduleRefresh(){
+      clearTimeout(refreshTimer);
+      refreshTimer = setTimeout(()=>{ loadAndRenderAllBalances(); }, 400);
+    }
+
+    // filter 一定要帶 group_id，不然即時同步會把「所有群組」的異動都廣播過來，
+    // 雖然畫面上會被 isRelevantToMe() 擋掉不顯示，但資料還是會傳到瀏覽器裡，
+    // 等於別的群組的支出內容在網路層/記憶體裡洩漏出來，不是真的隔離。
+    sb.channel("splitbill-overview")
+      .on("postgres_changes", { event: "*", schema: "public", table: "expenses", filter: `group_id=eq.${myMember.group_id}` }, (payload)=>{
+        notifyRelevantChange("expenses", payload);
+        scheduleRefresh();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "repayments", filter: `group_id=eq.${myMember.group_id}` }, (payload)=>{
+        notifyRelevantChange("repayments", payload);
+        scheduleRefresh();
+      })
+      .subscribe();
+  }
+
+  // ============================================================
+  // 🌏 GPS 城市/國家變化偵測（GPS 拿不到時退而求其次用免費 IP 定位）
+  // 城市/天氣兩顆徽章的偵測與渲染邏輯搬到 shared-ui.js 的
+  // initLocationWeatherWidget() 共用給 summary/currency/settings 三頁；
+  // 這裡只留這頁專屬的「切換國家時提示切換幣別」邏輯，透過 callback 接手。
+  // ============================================================
+  async function detectAndNotifyLocationChange(){
+    const CC_MAP = { jp:'JPY', kr:'KRW', th:'THB', sg:'SGD', hk:'HKD', cn:'CNY', gb:'GBP', us:'USD', au:'AUD', vn:'VND', tw:'TWD', fr:'EUR', de:'EUR', it:'EUR', es:'EUR', nl:'EUR', be:'EUR', at:'EUR', pl:'EUR', se:'EUR', my:'MYR', id:'IDR', ph:'PHP', in:'INR' };
+    if(typeof initLocationWeatherWidget !== "function") return;
+    await initLocationWeatherWidget((info) => {
+      const { countryCode, city, countryName } = info;
+      if(!countryCode) return;
+      const detectedCurrency = CC_MAP[countryCode] || null;
+      const lastCountry = localStorage.getItem('sb_last_country_code');
+      localStorage.setItem('sb_last_country_code', countryCode);
+      if(city) localStorage.setItem('sb_last_city', city);
+      if(lastCountry && lastCountry !== countryCode && detectedCurrency){
+        const avail = (shownCurrencies && shownCurrencies.length) ? shownCurrencies : ['TWD'];
+        const curOk = avail.includes(detectedCurrency);
+        const cnLabel = countryName || countryCode.toUpperCase();
+        const cityStr = city ? ` ${city}` : '';
+        if(typeof showToast === 'function'){
+          showToast(t("summary.detectedLocation", {location: cnLabel + cityStr}), curOk ? t("summary.quickAddWillPreselect", {currency: detectedCurrency}) : t("summary.currencyNotEnabledReminder", {currency: detectedCurrency}), 6000);
+        }
+      }
+    });
+  }
+
+  // ============================================================
+  // 🎖️ 成就榜管理 (Achievements Wall Management)
+  // ============================================================
+  function initAchievementsModal(){
+    const openBtn = document.getElementById("openAchievementsModalBtn");
+    const modal = document.getElementById("achievementsModal");
+    const closeBtn = document.getElementById("achievementsCloseBtn");
+    const listScroll = document.getElementById("achievementsListScroll");
+
+    if(!modal) return;
+
+    function renderAchievementsWall(){
+      if(!listScroll) return;
+      const badges = window.BADGES_CATALOG || [];
+      const expList = window.cachedExpenses || [];
+      const repList = window.cachedRepayments || [];
+      const members = (memberRows && memberRows.length) ? memberRows : (MEMBERS || []);
+
+      const html = badges.map(b => {
+        const unlockedHolders = members.filter(m => {
+          try { return b.check(m, expList, repList, members); } catch(e){ return false; }
+        });
+
+        const isUnlocked = unlockedHolders.length > 0;
+        const holdersHtml = isUnlocked
+          ? unlockedHolders.map(m => `
+              <span class="achievement-holder-chip">
+                ${renderAvatarHTML(m, "avatar-xs")}
+                <span>${escapeHtml(m.name || t("common.memberFallback"))}</span>
+              </span>
+            `).join("")
+          : `<span class="achievement-desc" style="color:var(--ink-soft);font-style:italic;">${t("summary.achievementLocked")}</span>`;
+
+        return `
+          <div class="achievement-card ${isUnlocked ? 'unlocked' : ''}">
+            <div class="achievement-icon-wrap">${b.icon}</div>
+            <div class="achievement-info-col">
+              <div class="achievement-name">${escapeHtml(b.name)}</div>
+              <div class="achievement-desc">${escapeHtml(b.desc)}</div>
+              <div class="achievement-holders">${holdersHtml}</div>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      listScroll.innerHTML = html;
+    }
+
+    function openModal(){
+      renderAchievementsWall();
+      modal.classList.remove("hidden");
+      modal.classList.add("show");
+    }
+
+    function closeModal(){
+      modal.classList.remove("show");
+      setTimeout(()=> modal.classList.add("hidden"), 200);
+    }
+
+    if(openBtn) openBtn.addEventListener("click", openModal);
+    if(closeBtn) closeBtn.addEventListener("click", closeModal);
+    if(modal){
+      modal.addEventListener("click", (e) => {
+        if(e.target === modal) closeModal();
+      });
+    }
+    window.openAchievementsModal = openModal;
+  }
+
+  // ============================================================
+  // ⚡ 總覽頁一鍵快速記帳 (Quick Expense Modal)
+  // ============================================================
+  function initQuickExpenseModal(){
+    const fabBtn = document.getElementById("openQuickExpenseBtn");
+    const modal = document.getElementById("quickExpenseModal");
+    const closeBtn = document.getElementById("quickExpenseCloseBtn");
+    if(!modal || !fabBtn) return;
+
+    const curSelect = document.getElementById("quickExpCurrencySelect");
+    const curAutoBadge = document.getElementById("quickCurAutoBadge");
+    const amtInput = document.getElementById("quickExpAmount");
+    const amtLabel = document.getElementById("quickExpAmountLabel");
+    const descInput = document.getElementById("quickExpDesc");
+    const catSelect = document.getElementById("quickExpCategorySelect");
+    const taxHasYesBtn = document.getElementById("quickTaxHasYesBtn");
+    const taxHasNoBtn = document.getElementById("quickTaxHasNoBtn");
+    const taxBody = document.getElementById("quickTaxBody");
+    const taxAmtInput = document.getElementById("quickTaxAmount");
+    const paidBySelect = document.getElementById("quickExpPaidBy");
+    const participantsWrap = document.getElementById("quickExpParticipants");
+    const toggleAllBtn = document.getElementById("quickToggleAllParticipants");
+    const addonsToggle = document.getElementById("quickAddonsToggle");
+    const addonsBody = document.getElementById("quickAddonsBody");
+    const addonsCaret = document.getElementById("quickAddonsCaret");
+    const addonsList = document.getElementById("quickAddonsList");
+    const quickSharesCustom = document.getElementById("quickSharesCustom");
+    const quickShareSumCheck = document.getElementById("quickShareSumCheck");
+    const quickPayerSumCheck = document.getElementById("quickPayerSumCheck");
+    const noteInput = document.getElementById("quickExpNote");
+    const dateInput = document.getElementById("quickExpDate");
+    const submitBtn = document.getElementById("quickExpSubmitBtn");
+    const msgEl = document.getElementById("quickExpMsg");
+    const aiReceiptBtn = document.getElementById("quickExpAiReceiptBtn");
+
+    // 快速記帳沒有另外做一套照片辨識流程（跟幣別頁「新增支出」共用同一套，
+    // 避免同樣的邏輯維護兩份）——改成直接帶著目前選好的幣別跳過去，
+    // 並自動幫忙打開那邊的「照片自動拆單」。
+    if(aiReceiptBtn){
+      aiReceiptBtn.addEventListener("click", ()=>{
+        const cur = (curSelect && curSelect.value) || "TWD";
+        location.href = `currency.html?c=${encodeURIComponent(cur)}&ai=1`;
+      });
+    }
+
+    // --- 小計算機（金額/稅額/共同品項總價欄位共用）---
+    const calcModal = document.getElementById("calcModal");
+    const calcDisplay = document.getElementById("calcDisplay");
+    const calcTargetNameEl = document.getElementById("calcTargetName");
+    let calcTargetInput = null;
+    let calcExpr = "";
+
+    function openCalc(inp, name){
+      calcTargetInput = inp;
+      calcExpr = inp.dataset.calc || "";
+      calcTargetNameEl.textContent = name;
+      calcDisplay.textContent = calcExpr || "0";
+      calcModal.classList.add("show");
+    }
+    function closeCalc(){
+      calcModal.classList.remove("show");
+      calcTargetInput = null;
+    }
+    function safeEvalCalc(expr){
+      if(!expr || !/^[0-9+\-*/.()]+$/.test(expr)) return null;
+      if(/[+\-*/.]{2,}/.test(expr)) return null;
+      try{
+        const result = Function(`"use strict"; return (${expr});`)();
+        return (typeof result === "number" && isFinite(result)) ? result : null;
+      }catch(e){ return null; }
+    }
+    if(calcModal){
+      calcModal.querySelectorAll(".calc-key").forEach(btn=>{
+        btn.addEventListener("click", ()=>{
+          const key = btn.dataset.key;
+          if(key === "C"){
+            calcExpr = "";
+          } else if(key === "back"){
+            calcExpr = calcExpr.slice(0, -1);
+          } else if(key === "="){
+            const result = safeEvalCalc(calcExpr || "0");
+            if(result === null){ calcDisplay.textContent = t("summary.calcFormatError"); return; }
+            const rounded = Math.round(result * 100) / 100;
+            if(calcTargetInput){
+              calcTargetInput.value = rounded;
+              calcTargetInput.dataset.calc = calcExpr;
+              const btnEl = calcTargetInput.closest(".amt-row") ? calcTargetInput.closest(".amt-row").querySelector(".amt-row-calc-btn") : (calcTargetInput.parentElement ? calcTargetInput.parentElement.querySelector(".input-calc-btn") : null);
+              if(btnEl) btnEl.classList.add("has-calc");
+              calcTargetInput.dispatchEvent(new Event("input", { bubbles: true }));
+            }
+            closeCalc();
+            return;
+          } else {
+            calcExpr += key;
+          }
+          calcDisplay.textContent = calcExpr || "0";
+        });
+      });
+      const calcCloseBtn = document.getElementById("calcCloseBtn");
+      if(calcCloseBtn) calcCloseBtn.addEventListener("click", closeCalc);
+    }
+    const quickAmtCalcBtn = document.getElementById("quickExpAmountCalcBtn");
+    if(quickAmtCalcBtn && amtInput){
+      quickAmtCalcBtn.addEventListener("click", ()=> openCalc(amtInput, t("summary.amountCalcTargetName")));
+    }
+    const quickTaxCalcBtn = document.getElementById("quickTaxCalcBtn");
+    if(quickTaxCalcBtn && taxAmtInput){
+      quickTaxCalcBtn.addEventListener("click", ()=> openCalc(taxAmtInput, t("summary.taxCalcTargetName")));
+    }
+
+    let userManuallyPickedCat = false;
+    let quickTaxMode = "inclusive"; // inclusive | exclusive
+    let quickPayerMode = "single";
+    let quickSplitMode = "equal";
+    let quickTaxSplitMode = "ratio";
+    let quickActiveMembers = []; // populateMembers() 填入，個人自付區共用同一份成員清單
+    let quickAddonMode = "custom"; // "custom" | "shared"
+    let quickSharedAddonItems = []; // [{ id, name, price, memberIds: [] }]
+
+    // --- 時區自動偵測幣別 ---
+    function detectLocalCurrency(availableList){
+      try {
+        const tz = (Intl.DateTimeFormat().resolvedOptions().timeZone || "").toLowerCase();
+        const map = [
+          [["tokyo","japan"], "JPY"], [["seoul","korea"], "KRW"],
+          [["bangkok","thailand"], "THB"], [["singapore"], "SGD"],
+          [["hong_kong"], "HKD"], [["shanghai","beijing"], "CNY"],
+          [["paris","berlin","rome","madrid","amsterdam","brussels","vienna","warsaw","stockholm"], "EUR"],
+          [["london"], "GBP"], [["new_york","los_angeles","chicago","denver","phoenix"], "USD"],
+          [["sydney","melbourne"], "AUD"], [["ho_chi_minh","saigon","hanoi"], "VND"]
+        ];
+        for(const [keys, code] of map){
+          if(keys.some(k => tz.includes(k)) && availableList.includes(code)) return { code, isAuto: true };
+        }
+        const lastCur = localStorage.getItem("sb_last_active_currency");
+        if(lastCur && availableList.includes(lastCur)) return { code: lastCur, isAuto: false };
+        return { code: availableList[0] || "TWD", isAuto: false };
+      } catch(e){
+        return { code: availableList[0] || "TWD", isAuto: false };
+      }
+    }
+
+    async function detectCurrencyByGPS(){
+      const CC_MAP = {
+        jp:'JPY', kr:'KRW', th:'THB', sg:'SGD', hk:'HKD', cn:'CNY',
+        gb:'GBP', fr:'EUR', de:'EUR', it:'EUR', es:'EUR', nl:'EUR',
+        be:'EUR', at:'EUR', pl:'EUR', se:'EUR', us:'USD', au:'AUD',
+        nz:'NZD', vn:'VND', tw:'TWD', my:'MYR', id:'IDR', ph:'PHP',
+        in:'INR'
+      };
+      const gpsResult = await new Promise((resolve) => {
+        if(!navigator.geolocation){ resolve(null); return; }
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+          try {
+            const lat = pos.coords.latitude, lon = pos.coords.longitude;
+            const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=5&addressdetails=1&accept-language=en`;
+            const ctrl = new AbortController();
+            setTimeout(() => ctrl.abort(), 4000);
+            const r = await fetch(url, { headers: { 'Accept': 'application/json' }, signal: ctrl.signal }).catch(() => null);
+            if(r && r.ok){
+              const d = await r.json();
+              const cc = ((d.address || {}).country_code || '').toLowerCase();
+              const currency = CC_MAP[cc] || null;
+              resolve(currency ? { code: currency, countryCode: cc } : { code: null, countryCode: cc });
+            } else { resolve(null); }
+          } catch(e){ resolve(null); }
+        }, () => resolve(null), { enableHighAccuracy: true, timeout: 8000, maximumAge: 120000 });
+      });
+      if(gpsResult) return gpsResult;
+
+      // GPS 沒開權限、使用者拒絕、或裝置不支援時，退而求其次用免費 IP 定位
+      // （跟 detectAndNotifyLocationChange 共用同一支 getIpBasedLocation()）。
+      const ipLoc = await getIpBasedLocation();
+      if(!ipLoc) return null;
+      const currency = CC_MAP[ipLoc.countryCode] || null;
+      return currency ? { code: currency, countryCode: ipLoc.countryCode } : { code: null, countryCode: ipLoc.countryCode };
+    }
+
+    function populateCurrencies(){
+      const avail = (shownCurrencies && shownCurrencies.length) ? shownCurrencies : ["TWD"];
+      const allCur = (typeof CURRENCIES !== "undefined") ? CURRENCIES : [];
+      curSelect.innerHTML = allCur.map(c => {
+        const isShown = avail.includes(c.code);
+        return `<option value="${c.code}" data-sym="${c.symbol}">${c.label} (${c.symbol})${isShown ? ' ★' : ''}</option>`;
+      }).join("");
+      const detected = detectLocalCurrency(avail);
+      curSelect.value = detected.code;
+      enhanceSelect(curSelect);
+      if(curAutoBadge){
+        curAutoBadge.textContent = detected.isAuto ? t("summary.autoDetectByTimezone", {code: detected.code}) : t("summary.defaultCurrencyBadge", {code: detected.code});
+      }
+    }
+
+    curSelect && curSelect.addEventListener("change", ()=>{
+      if(curAutoBadge) curAutoBadge.textContent = t("summary.manualSwitchBadge", {code: curSelect.value});
+      localStorage.setItem("sb_last_active_currency", curSelect.value);
+    });
+
+    // --- 稅費模式切換 ---
+    function setTaxMode(mode){
+      quickTaxMode = mode;
+      if(amtLabel){
+        amtLabel.textContent = mode === "inclusive" ? t("summary.amountLabelInclusive") : t("summary.amountLabelExclusive");
+      }
+    }
+    // 是否算有稅，改成只看「稅額欄位有沒有數字」，跟折疊卡片展開/收合是
+    // 兩件事——收合起來只是暫時看不到欄位，資料跟計算都還在。
+    function recomputeQuickTaxMode(){
+      const v = Number(taxAmtInput && taxAmtInput.value) || 0;
+      setTaxMode(v > 0 ? "exclusive" : "inclusive");
+    }
+    // 自訂分攤區塊如果有服務費/稅，要提醒使用者這裡填的是未稅金額
+    // （服務費/稅會由系統另外依比例/平分加算進去，不是自訂金額裡自己加）。
+    function updateQuickShareTaxWarn(){
+      const warnEl = document.getElementById("quickSharesTaxWarn");
+      const hasTax = quickTaxMode === "exclusive" && (Number(taxAmtInput && taxAmtInput.value) || 0) > 0;
+      if(warnEl) warnEl.classList.toggle("hidden", !hasTax);
+      if(quickSharesCustom){
+        quickSharesCustom.querySelectorAll(".quick-share-inp").forEach(inp => {
+          inp.placeholder = hasTax ? t("summary.untaxedAmountPlaceholder") : "0";
+        });
+      }
+    }
+    function updateQuickTaxPreview(){
+      const previewEl = document.getElementById("quickTaxPreview");
+      if(!previewEl) return;
+      if(quickTaxMode === "inclusive"){ previewEl.classList.add("hidden"); return; }
+      const subtotal = Number(amtInput.value) || 0;
+      const taxAmt = Number(taxAmtInput ? taxAmtInput.value : 0) || 0;
+      if(taxAmt <= 0){ previewEl.classList.add("hidden"); return; }
+      const curObj = (typeof CURRENCIES !== "undefined") ? CURRENCIES.find(c => c.code === curSelect.value) : null;
+      const sym = curObj ? curObj.symbol : "$";
+      const total = subtotal + taxAmt;
+      const modeText = quickTaxSplitMode === "ratio" ? t("summary.taxModeRatioDesc") : t("currency.taxEqual");
+      previewEl.classList.remove("hidden");
+      previewEl.innerHTML = `
+        <div>${t("summary.taxPreviewSummary", {subtotal: sym+formatAmt(subtotal), tax: sym+formatAmt(taxAmt), total: sym+formatAmt(total)})}</div>
+        <div style="font-size:11.5px;color:var(--ink-soft);margin-top:3px;">${t("summary.taxPreviewMode", {mode: modeText})}</div>
+      `;
+    }
+
+    // --- 服務費/稅：有沒有另外加，改成明確的 有/沒有 按鈕 ---
+    function collapseQuickTaxBody(){
+      if(taxBody) taxBody.classList.add("hidden");
+      if(taxHasYesBtn) taxHasYesBtn.classList.remove("active");
+      if(taxHasNoBtn) taxHasNoBtn.classList.add("active");
+    }
+    if(taxAmtInput){
+      taxAmtInput.addEventListener("input", ()=>{
+        recomputeQuickTaxMode();
+        updateQuickTaxPreview();
+        updateQuickAddonsPreview();
+        updateQuickShareTaxWarn();
+      });
+    }
+    function setQuickTaxHasExtra(hasExtra){
+      if(taxHasYesBtn) taxHasYesBtn.classList.toggle("active", hasExtra);
+      if(taxHasNoBtn) taxHasNoBtn.classList.toggle("active", !hasExtra);
+      if(taxBody) taxBody.classList.toggle("hidden", !hasExtra);
+      if(!hasExtra){
+        if(taxAmtInput) taxAmtInput.value = "";
+        quickTaxSplitMode = "ratio";
+        document.getElementById("quickTaxRatioBtn") && document.getElementById("quickTaxRatioBtn").classList.add("active");
+        document.getElementById("quickTaxEqualBtn") && document.getElementById("quickTaxEqualBtn").classList.remove("active");
+      }
+      recomputeQuickTaxMode();
+      updateQuickTaxPreview();
+      updateQuickShareTaxWarn();
+    }
+    if(taxHasYesBtn && taxHasNoBtn){
+      taxHasYesBtn.addEventListener("click", ()=> setQuickTaxHasExtra(true));
+      taxHasNoBtn.addEventListener("click", ()=> setQuickTaxHasExtra(false));
+    }
+
+    // --- 服務費分配方式切換 ---
+    document.getElementById("quickTaxRatioBtn") && document.getElementById("quickTaxRatioBtn").addEventListener("click", ()=>{
+      quickTaxSplitMode = "ratio";
+      document.getElementById("quickTaxRatioBtn").classList.add("active");
+      document.getElementById("quickTaxEqualBtn").classList.remove("active");
+      updateQuickTaxPreview();
+    });
+    document.getElementById("quickTaxEqualBtn") && document.getElementById("quickTaxEqualBtn").addEventListener("click", ()=>{
+      quickTaxSplitMode = "equal";
+      document.getElementById("quickTaxEqualBtn").classList.add("active");
+      document.getElementById("quickTaxRatioBtn").classList.remove("active");
+      updateQuickTaxPreview();
+    });
+
+    function getQuickCurSym(){
+      const curObj = (typeof CURRENCIES !== "undefined") ? CURRENCIES.find(c => c.code === curSelect.value) : null;
+      return curObj ? curObj.symbol : "$";
+    }
+
+    function quickSumCheckHTML(total, sum){
+      const sym = getQuickCurSym();
+      const diff = Math.round((total - sum) * 100) / 100;
+      if(!total) return "";
+      if(Math.abs(diff) < 0.5) return `<span class="sum-ok">${t("summary.sumOk", {amount: sym+formatAmt(sum)})}</span>`;
+      if(diff > 0) return `<span class="sum-warn">${t("summary.sumRemaining", {diff: sym+formatAmt(diff), sum: sym+formatAmt(sum), total: sym+formatAmt(total)})}</span>`;
+      return `<span class="sum-warn">${t("summary.sumExceeded", {diff: sym+formatAmt(Math.abs(diff)), sum: sym+formatAmt(sum), total: sym+formatAmt(total)})}</span>`;
+    }
+
+    function updateQuickPayerSumCheck(){
+      if(quickPayerMode !== "multi") {
+        if(quickPayerSumCheck) quickPayerSumCheck.innerHTML = "";
+        return;
+      }
+      const total = (Number(amtInput.value) || 0) + (quickTaxMode === "exclusive" ? (Number(taxAmtInput ? taxAmtInput.value : 0) || 0) : 0);
+      let sum = 0;
+      document.querySelectorAll("#quickExpPayers .amt-row-input").forEach(inp => { sum += Number(inp.value) || 0; });
+      if(quickPayerSumCheck) quickPayerSumCheck.innerHTML = quickSumCheckHTML(total, sum);
+    }
+
+    function updateQuickShareSumCheck(){
+      if(quickSplitMode !== "custom"){
+        if(quickShareSumCheck) quickShareSumCheck.innerHTML = "";
+        return;
+      }
+      const subtotal = Number(amtInput.value) || 0;
+      let sum = 0;
+      document.querySelectorAll("#quickSharesCustom .quick-share-inp").forEach(inp => { sum += Number(inp.value) || 0; });
+      if(quickShareSumCheck) quickShareSumCheck.innerHTML = quickSumCheckHTML(subtotal, sum);
+    }
+
+    // --- 誰付的錢：單人/多人 ---
+    function setPayerMode(mode){
+      quickPayerMode = mode;
+      modal.querySelectorAll("[data-quick-payer-mode]").forEach(btn =>{
+        btn.classList.toggle("active", btn.dataset.quickPayerMode === mode);
+      });
+      paidBySelect.classList.toggle("hidden", mode === "multi");
+      const payersGrid = document.getElementById("quickExpPayers");
+      if(payersGrid) payersGrid.classList.toggle("hidden", mode === "single");
+      updateQuickPayerSumCheck();
+    }
+    modal.querySelectorAll("[data-quick-payer-mode]").forEach(btn =>{
+      btn.addEventListener("click", () => setPayerMode(btn.dataset.quickPayerMode));
+    });
+
+    // --- 怎麼分攤：平均/自訂 ---
+    function setSplitMode(mode){
+      quickSplitMode = mode;
+      modal.querySelectorAll("[data-quick-mode]").forEach(btn =>{
+        btn.classList.toggle("active", btn.dataset.quickMode === mode);
+      });
+      participantsWrap.classList.toggle("hidden", mode !== "equal");
+      if(toggleAllBtn) toggleAllBtn.classList.toggle("hidden", mode !== "equal");
+      const quickAddonsContainer = document.getElementById("quickAddonsContainer");
+      if(quickAddonsContainer) quickAddonsContainer.classList.toggle("hidden", mode !== "equal");
+      if(quickSharesCustom) quickSharesCustom.classList.toggle("hidden", mode !== "custom");
+      const quickSharesRatio = document.getElementById("quickSharesRatio");
+      if(quickSharesRatio) quickSharesRatio.classList.toggle("hidden", mode !== "ratio");
+      const quickRatioHint = document.getElementById("quickRatioHint");
+      if(quickRatioHint) quickRatioHint.classList.toggle("hidden", mode !== "ratio");
+      if(mode === "custom") {
+        updateQuickShareTaxWarn();
+        updateQuickShareSumCheck();
+      } else {
+        const warnEl = document.getElementById("quickSharesTaxWarn");
+        if(warnEl) warnEl.classList.add("hidden");
+        if(quickShareSumCheck) quickShareSumCheck.innerHTML = "";
+      }
+    }
+    modal.querySelectorAll("[data-quick-mode]").forEach(btn =>{
+      btn.addEventListener("click", () => setSplitMode(btn.dataset.quickMode));
+    });
+
+    if(amtInput){
+      amtInput.addEventListener("input", ()=>{
+        updateQuickPayerSumCheck();
+        updateQuickShareSumCheck();
+      });
+    }
+
+    // --- 取消全選/全選 ---
+    let allSelected = true;
+    toggleAllBtn && toggleAllBtn.addEventListener("click", ()=>{
+      allSelected = !allSelected;
+      participantsWrap.querySelectorAll("input[type=checkbox]").forEach(inp =>{
+        inp.checked = allSelected;
+        inp.closest(".check-pill").classList.toggle("checked", allSelected);
+      });
+      toggleAllBtn.textContent = allSelected ? t("currency.deselectAll") : t("summary.selectAll");
+      updateQuickAddonsPreview();
+    });
+
+    // --- 個人自付折疊 ---
+    addonsToggle && addonsToggle.addEventListener("click", ()=>{
+      const isHidden = addonsBody.classList.contains("hidden");
+      addonsBody.classList.toggle("hidden", !isHidden);
+      addonsToggle.classList.toggle("open", isHidden);
+      if(addonsCaret) addonsCaret.classList.toggle("open", isHidden);
+    });
+    const quickAddonsClearBtn = document.getElementById("quickAddonsClearBtn");
+    if(quickAddonsClearBtn){
+      quickAddonsClearBtn.addEventListener("click", ()=>{
+        addonsList.querySelectorAll(".quick-addon-inp").forEach(i=>{ i.value=""; });
+        quickSharedAddonItems = [];
+        setQuickAddonMode("custom");
+        renderQuickAddonsList();
+      });
+    }
+
+    // --- 成員渲染 ---
+    function populateMembers(){
+      const list = (memberRows && memberRows.length) ? memberRows : (MEMBERS || []);
+      const activeList = list.filter(m => !m.left_at && !m.account_deleted_at);
+      quickActiveMembers = activeList;
+
+      // 代付人
+      paidBySelect.innerHTML = activeList.map(m => {
+        const isMe = myMember && m.id === myMember.id;
+        return `<option value="${m.id}" ${isMe ? 'selected' : ''}>${escapeHtml(m.name || t("common.memberFallback"))}${isMe ? t("common.meSuffix") : ''}</option>`;
+      }).join("");
+
+      // 多人付款列
+      const payersGrid = document.getElementById("quickExpPayers");
+      if(payersGrid){
+        payersGrid.innerHTML = activeList.map(m =>
+          `<div class="amt-row">${renderAvatarHTML(m, "avatar-xs")}<span class="amt-row-name">${escapeHtml(m.name||t("common.memberFallback"))}</span><input type="number" class="amt-row-input" data-member="${m.id}" placeholder="0" min="0" step="1"><button type="button" class="amt-row-calc-btn" title="${t("common.calculator")}">🧮</button></div>`
+        ).join("");
+        payersGrid.querySelectorAll(".amt-row-input").forEach(inp => {
+          inp.addEventListener("input", ()=>{ delete inp.dataset.calc; updateQuickPayerSumCheck(); });
+        });
+        payersGrid.querySelectorAll(".amt-row-calc-btn").forEach(btn => {
+          btn.addEventListener("click", ()=>{
+            const row = btn.closest(".amt-row");
+            openCalc(row.querySelector(".amt-row-input"), row.querySelector(".amt-row-name").textContent);
+          });
+        });
+      }
+
+      // 平均分攤藥丸
+      participantsWrap.innerHTML = activeList.map(m =>
+        `<label class="check-pill checked"><input type="checkbox" value="${m.id}" checked>${renderAvatarHTML(m, "avatar-xs")}<span class="check-pill-name">${escapeHtml(m.name || t("common.memberFallback"))}</span></label>`
+      ).join("");
+      participantsWrap.querySelectorAll("input").forEach(inp =>{
+        inp.addEventListener("change", ()=>{
+          inp.closest(".check-pill").classList.toggle("checked", inp.checked);
+          updateQuickAddonsPreview();
+        });
+      });
+
+      // 自訂分攤列
+      if(quickSharesCustom){
+        quickSharesCustom.innerHTML = activeList.map(m =>
+          `<div class="amt-row">${renderAvatarHTML(m, "avatar-xs")}<span class="amt-row-name">${escapeHtml(m.name||t("common.memberFallback"))}</span><input type="number" class="amt-row-input quick-share-inp" data-member="${m.id}" placeholder="0" min="0" step="1"><button type="button" class="amt-row-calc-btn" title="${t("common.calculator")}">🧮</button></div>`
+        ).join("");
+        quickSharesCustom.querySelectorAll(".quick-share-inp").forEach(inp => {
+          inp.addEventListener("input", ()=>{ delete inp.dataset.calc; updateQuickShareSumCheck(); });
+        });
+        quickSharesCustom.querySelectorAll(".amt-row-calc-btn").forEach(btn => {
+          btn.addEventListener("click", ()=>{
+            const row = btn.closest(".amt-row");
+            openCalc(row.querySelector(".quick-share-inp"), row.querySelector(".amt-row-name").textContent);
+          });
+        });
+      }
+
+      // 依比例分攤列：填的是份數不是金額，跟「新增支出」完整表單同一套邏輯
+      const quickSharesRatio = document.getElementById("quickSharesRatio");
+      if(quickSharesRatio){
+        quickSharesRatio.innerHTML = activeList.map(m =>
+          `<div class="amt-row">${renderAvatarHTML(m, "avatar-xs")}<span class="amt-row-name">${escapeHtml(m.name||t("common.memberFallback"))}</span><input type="number" class="amt-row-input quick-ratio-inp" data-member="${m.id}" placeholder="0" min="0" step="0.5"><span class="ratio-row-unit">${t("common.shareUnit")}</span></div>`
+        ).join("");
+      }
+
+      renderQuickAddonsList();
+
+      allSelected = true;
+      if(toggleAllBtn) toggleAllBtn.textContent = t("currency.deselectAll");
+      updateQuickPayerSumCheck();
+      updateQuickShareSumCheck();
+    }
+
+    function quickMemberName(id){
+      const m = quickActiveMembers.find(x => x.id === id);
+      return m ? (m.name || t("common.memberFallback")) : "?";
+    }
+
+    // ---------- 個人自付 / 額外消費（跟 currency.html 完整表單同一套邏輯，
+    // 兩種模式：custom 每人自己填多付多少；shared 大家一起買、但不是全員
+    // 分攤，填總價後勾選要分攤的人，系統平分給勾到的人）----------
+    function renderQuickAddonsList(){
+      if(!addonsList) return;
+      // 個人自付要獨立於「怎麼分攤」勾選狀態之外，用全體在團成員
+      const checked = quickActiveMembers.map(m => m.id);
+
+      const existingValues = {};
+      addonsList.querySelectorAll(".quick-addon-inp").forEach(inp => { existingValues[inp.dataset.member] = inp.value; });
+
+      addonsList.innerHTML = checked.map(mId => `
+        <div class="amt-row">${renderAvatarHTML({ id: mId, name: quickMemberName(mId) }, "avatar-xs")}<span class="amt-row-name">${escapeHtml(quickMemberName(mId))}</span><input type="number" class="amt-row-input quick-addon-inp" data-member="${mId}" placeholder="0" min="0" step="1" value="${existingValues[mId] || ''}"><button type="button" class="amt-row-calc-btn" title="${t("common.calculator")}">🧮</button></div>
+      `).join("");
+
+      addonsList.querySelectorAll(".quick-addon-inp").forEach(inp => {
+        inp.addEventListener("input", updateQuickAddonsPreview);
+      });
+      addonsList.querySelectorAll(".amt-row-calc-btn").forEach(btn => {
+        btn.addEventListener("click", ()=>{
+          const row = btn.closest(".amt-row");
+          openCalc(row.querySelector(".quick-addon-inp"), row.querySelector(".amt-row-name").textContent);
+        });
+      });
+
+      renderQuickSharedAddonsList();
+      updateQuickAddonsPreview();
+    }
+
+    function updateQuickSharedAddonItemHint(rowEl, item){
+      const hintEl = rowEl.querySelector(".exp-shared-addon-item-hint");
+      if(!hintEl) return;
+      const n = item.memberIds.length;
+      const perPerson = n > 0 ? Math.floor((Number(item.price) || 0) / n) : 0;
+      const curObj = (typeof CURRENCIES !== "undefined") ? CURRENCIES.find(c => c.code === curSelect.value) : null;
+      const sym = curObj ? curObj.symbol : "$";
+      hintEl.textContent = n > 0 ? t("summary.perPersonShare", {amount: sym+formatAmt(perPerson), count: n}) : t("summary.noOneSelectedForShare");
+    }
+
+    function renderQuickSharedAddonsList(){
+      const listEl = document.getElementById("quickSharedAddonsList");
+      if(!listEl) return;
+      // 跟 renderQuickAddonsList() 一樣，用全體在團成員，不受「怎麼分攤」勾選影響
+      const checked = quickActiveMembers.map(m => m.id);
+      const checkedSet = new Set(checked);
+      quickSharedAddonItems.forEach(item => { item.memberIds = item.memberIds.filter(id => checkedSet.has(id)); });
+
+      const curObj = (typeof CURRENCIES !== "undefined") ? CURRENCIES.find(c => c.code === curSelect.value) : null;
+      const sym = curObj ? curObj.symbol : "$";
+
+      if(!quickSharedAddonItems.length){
+        listEl.innerHTML = `<div class="exp-shared-addon-empty">${t("summary.sharedAddonEmpty")}</div>`;
+      } else {
+        listEl.innerHTML = quickSharedAddonItems.map(item => {
+          const n = item.memberIds.length;
+          const perPerson = n > 0 ? Math.floor((Number(item.price) || 0) / n) : 0;
+          const hintText = n > 0 ? t("summary.perPersonShare", {amount: sym+formatAmt(perPerson), count: n}) : t("summary.noOneSelectedForShare");
+          return `
+            <div class="exp-shared-addon-item" data-id="${item.id}">
+              <div class="exp-shared-addon-item-top">
+                <input type="text" class="exp-shared-addon-name" placeholder="${t("summary.sharedAddonNamePlaceholder")}" value="${escapeHtml(item.name || "")}">
+                <button type="button" class="exp-shared-addon-del" title="${t("settings.delete")}">✕</button>
+              </div>
+              <div class="input-calc-wrap exp-shared-addon-price-wrap">
+                <input type="number" class="exp-shared-addon-price" placeholder="${t("summary.sharedAddonPricePlaceholder")}" min="0" step="1" value="${item.price || ""}">
+                <button type="button" class="amt-row-calc-btn input-calc-btn exp-shared-addon-calc-btn" title="${t("common.calculator")}">🧮</button>
+              </div>
+              <div class="exp-shared-addon-members">
+                ${checked.map(pid => `
+                  <label class="check-pill exp-shared-addon-member${item.memberIds.includes(pid) ? ' checked' : ''}">
+                    <input type="checkbox" value="${pid}"${item.memberIds.includes(pid) ? " checked" : ""}>
+                    ${renderAvatarHTML({ id: pid, name: quickMemberName(pid) }, "avatar-xs")}
+                    <span class="check-pill-name">${escapeHtml(quickMemberName(pid))}</span>
+                  </label>
+                `).join("")}
+              </div>
+              <div class="exp-shared-addon-item-hint">${hintText}</div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      listEl.querySelectorAll(".exp-shared-addon-item").forEach(rowEl => {
+        const itemId = rowEl.dataset.id;
+        const item = quickSharedAddonItems.find(x => x.id === itemId);
+        if(!item) return;
+        const nameInp = rowEl.querySelector(".exp-shared-addon-name");
+        if(nameInp) nameInp.addEventListener("input", () => { item.name = nameInp.value; });
+        const priceInp = rowEl.querySelector(".exp-shared-addon-price");
+        if(priceInp) priceInp.addEventListener("input", () => {
+          item.price = Number(priceInp.value) || 0;
+          updateQuickSharedAddonItemHint(rowEl, item);
+          updateQuickAddonsPreview();
+        });
+        const calcBtn = rowEl.querySelector(".exp-shared-addon-calc-btn");
+        if(calcBtn && priceInp){
+          calcBtn.addEventListener("click", () => openCalc(priceInp, item.name || t("summary.sharedAddonCalcTargetFallback")));
+        }
+        const delBtn = rowEl.querySelector(".exp-shared-addon-del");
+        if(delBtn) delBtn.addEventListener("click", () => {
+          quickSharedAddonItems = quickSharedAddonItems.filter(x => x.id !== itemId);
+          renderQuickSharedAddonsList();
+          updateQuickAddonsPreview();
+        });
+        rowEl.querySelectorAll(".exp-shared-addon-member input").forEach(chk => {
+          chk.addEventListener("change", () => {
+            const pid = chk.value;
+            chk.closest(".check-pill").classList.toggle("checked", chk.checked);
+            if(chk.checked){
+              if(!item.memberIds.includes(pid)) item.memberIds.push(pid);
+            } else {
+              item.memberIds = item.memberIds.filter(id => id !== pid);
+            }
+            updateQuickSharedAddonItemHint(rowEl, item);
+            updateQuickAddonsPreview();
+          });
+        });
+      });
+    }
+
+    function getQuickAddonsData(){
+      if(quickAddonMode === "shared"){
+        const items = {};
+        let totalAddon = 0;
+        quickSharedAddonItems.forEach(item => {
+          const n = item.memberIds.length;
+          const price = Number(item.price) || 0;
+          if(n === 0 || price <= 0) return;
+          const base = Math.floor(price / n);
+          const remainder = Math.round(price - base * n);
+          item.memberIds.forEach((mId, idx) => {
+            const amt = base + (idx < remainder ? 1 : 0);
+            if(amt <= 0) return;
+            if(!items[mId]) items[mId] = 0;
+            items[mId] += amt;
+            totalAddon += amt;
+          });
+        });
+        return { totalAddon, items };
+      }
+      const items = {};
+      let totalAddon = 0;
+      if(addonsList){
+        addonsList.querySelectorAll(".quick-addon-inp").forEach(inp => {
+          const mId = inp.dataset.member;
+          const amt = Number(inp.value) || 0;
+          if(amt > 0){ items[mId] = amt; totalAddon += amt; }
+        });
+      }
+      return { totalAddon, items };
+    }
+
+    function setQuickAddonMode(mode){
+      quickAddonMode = mode;
+      const toggleEl = document.getElementById("quickAddonModeToggle");
+      if(toggleEl){
+        toggleEl.querySelectorAll(".exp-addon-mode-btn").forEach(b => b.classList.toggle("active", b.dataset.addonMode === mode));
+      }
+      if(addonsList) addonsList.classList.toggle("hidden", mode !== "custom");
+      const sharedWrapEl = document.getElementById("quickSharedAddonsWrap");
+      if(sharedWrapEl) sharedWrapEl.classList.toggle("hidden", mode !== "shared");
+      updateQuickAddonsPreview();
+    }
+
+    const quickAddonModeToggle = document.getElementById("quickAddonModeToggle");
+    if(quickAddonModeToggle){
+      quickAddonModeToggle.querySelectorAll(".exp-addon-mode-btn").forEach(btn => {
+        btn.addEventListener("click", () => setQuickAddonMode(btn.dataset.addonMode));
+      });
+    }
+    const quickSharedAddonAddBtn = document.getElementById("quickSharedAddonAddBtn");
+    if(quickSharedAddonAddBtn){
+      quickSharedAddonAddBtn.addEventListener("click", () => {
+        quickSharedAddonItems.push({ id: "qsadd_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6), name: "", price: 0, memberIds: [] });
+        renderQuickSharedAddonsList();
+      });
+    }
+
+    function updateQuickAddonsPreview(){
+      const previewEl = document.getElementById("quickAddonsPreview");
+      if(!previewEl) return;
+      const subtotal = Number(amtInput.value) || 0;
+      const { totalAddon } = getQuickAddonsData();
+      const checked = Array.from(participantsWrap.querySelectorAll("input:checked")).map(i => i.value);
+
+      const taxWarnEl = document.getElementById("quickAddonsTaxWarn");
+      const taxAmt = Number(taxAmtInput ? taxAmtInput.value : 0) || 0;
+      if(taxWarnEl) taxWarnEl.classList.toggle("hidden", taxAmt <= 0);
+
+      if(totalAddon <= 0 || checked.length === 0){
+        previewEl.classList.add("hidden");
+        return;
+      }
+      const curObj = (typeof CURRENCIES !== "undefined") ? CURRENCIES.find(c => c.code === curSelect.value) : null;
+      const sym = curObj ? curObj.symbol : "$";
+      const baseAmount = Math.max(0, subtotal - totalAddon);
+      const baseShare = Math.floor(baseAmount / checked.length);
+      previewEl.classList.remove("hidden");
+      previewEl.innerHTML = `
+        <div style="font-size:11.5px;color:var(--ink-soft);">
+          扣除個人自付合計 ${sym}${formatAmt(totalAddon)} ➔ 共同平分基本額 ${sym}${formatAmt(baseAmount)}（每人約 ${sym}${formatAmt(baseShare)}）
+        </div>
+      `;
+    }
+    if(amtInput) amtInput.addEventListener("input", ()=>{ updateQuickAddonsPreview(); updateQuickTaxPreview(); });
+
+    // --- 類別自動預測 ---
+    if(catSelect) enhanceSelect(catSelect);
+    descInput && descInput.addEventListener("input", ()=>{
+      if(!userManuallyPickedCat || !descInput.value.trim()){
+        const meta = window.getCategoryMeta ? window.getCategoryMeta(descInput.value) : { type: "general" };
+        if(catSelect && meta.type){
+          catSelect.value = meta.type;
+          enhanceSelect(catSelect);
+        }
+        if(!descInput.value.trim()) userManuallyPickedCat = false;
+      }
+    });
+    catSelect && catSelect.addEventListener("change", () => userManuallyPickedCat = true);
+
+    // ============================================================
+    // 📝 Step-by-step 表單導覽：跟「新增支出」完整表單（app.js）共用
+    // expense-form-shared.js 的 createFormWizard()，驗證規則統一套用
+    // 較嚴格的那一套（金額整數、付款總和容錯、自訂分攤總和容錯）。
+    // ============================================================
+    function validateQuickStep1(){
+      const rawAmt = (amtInput.value || "").trim();
+      if(!rawAmt) return { ok:false, message:t("summary.amountRequired") };
+      const subtotal = Number(rawAmt);
+      if(isNaN(subtotal) || subtotal <= 0) return { ok:false, message:t("summary.amountMustBePositive") };
+      if(!Number.isInteger(subtotal)) return { ok:false, message:t("summary.amountMustBeInteger") };
+      return { ok:true };
+    }
+
+    function validateQuickStep2(){
+      if(quickPayerMode === "single"){
+        if(!paidBySelect.value) return { ok:false, message:t("summary.selectPayerRequired") };
+        return { ok:true };
+      }
+      const payersGrid = document.getElementById("quickExpPayers");
+      const rows = payersGrid ? payersGrid.querySelectorAll(".amt-row-input") : [];
+      const payers = [];
+      rows.forEach(inp => { const v = Number(inp.value); if(v > 0) payers.push({ member_id: inp.dataset.member, amount: v }); });
+      if(!payers.length) return { ok:false, message:t("summary.atLeastOnePayerRequired") };
+
+      const subtotal = Number((amtInput.value || "").trim()) || 0;
+      const taxAmt = Number(taxAmtInput ? taxAmtInput.value : 0) || 0;
+      const totalAmount = quickTaxMode === "exclusive" ? subtotal + taxAmt : subtotal;
+      const payerSum = payers.reduce((s,p)=>s+p.amount, 0);
+      if(Math.abs(payerSum - totalAmount) >= 0.5){
+        const diff = Math.round((totalAmount - payerSum) * 100) / 100;
+        return { ok:false, message: diff > 0
+          ? t("summary.payerSumShort", {diff: formatAmt(diff), total: formatAmt(totalAmount)})
+          : t("summary.payerSumOver", {diff: formatAmt(Math.abs(diff)), total: formatAmt(totalAmount)}) };
+      }
+      return { ok:true };
+    }
+
+    function validateQuickStep3(){
+      const subtotal = Number((amtInput.value || "").trim()) || 0;
+      const taxAmt = Number(taxAmtInput ? taxAmtInput.value : 0) || 0;
+      const totalAmount = quickTaxMode === "exclusive" ? subtotal + taxAmt : subtotal;
+
+      if(quickSplitMode === "equal"){
+        const checked = Array.from(participantsWrap.querySelectorAll("input:checked")).map(i => i.value);
+        if(!checked.length) return { ok:false, message:t("summary.atLeastOneShareRequired") };
+        const { totalAddon } = getQuickAddonsData();
+        if(totalAddon > subtotal){
+          return { ok:false, message:t("summary.addonExceedsSubtotal", {addon: totalAddon, subtotal: subtotal}) };
+        }
+      } else if(quickSplitMode === "custom"){
+        const customRows = [];
+        if(quickSharesCustom){
+          quickSharesCustom.querySelectorAll(".quick-share-inp").forEach(inp => {
+            const v = Number(inp.value);
+            if(v > 0) customRows.push({ member_id: inp.dataset.member, amount: v });
+          });
+        }
+        if(!customRows.length) return { ok:false, message:t("summary.atLeastOneCustomShareRequired") };
+        const customBaseSum = customRows.reduce((s,p)=>s+p.amount, 0);
+        if(taxAmt > 0){
+          if(subtotal > 0 && Math.abs(customBaseSum - subtotal) >= 0.5){
+            const diff = Math.round((subtotal - customBaseSum) * 100) / 100;
+            return { ok:false, message: diff > 0
+              ? t("summary.customShareShort", {diff: formatAmt(diff), subtotal: formatAmt(subtotal)})
+              : t("summary.customShareOver", {diff: formatAmt(Math.abs(diff)), subtotal: formatAmt(subtotal)}) };
+          }
+        } else {
+          if(Math.abs(customBaseSum - totalAmount) >= 0.5){
+            const diff = Math.round((totalAmount - customBaseSum) * 100) / 100;
+            return { ok:false, message: diff > 0
+              ? t("summary.shareSumShort", {diff: formatAmt(diff), total: formatAmt(totalAmount)})
+              : t("summary.shareSumOver", {diff: formatAmt(Math.abs(diff)), total: formatAmt(totalAmount)}) };
+          }
+        }
+      } else {
+        // 依比例分攤：份數不用加總到金額，只要求至少一個人有填份數即可。
+        const quickSharesRatio = document.getElementById("quickSharesRatio");
+        const ratioRows = [];
+        if(quickSharesRatio){
+          quickSharesRatio.querySelectorAll(".quick-ratio-inp").forEach(inp => {
+            const v = Number(inp.value);
+            if(v > 0) ratioRows.push({ member_id: inp.dataset.member, weight: v });
+          });
+        }
+        if(!ratioRows.length) return { ok:false, message:t("summary.ratioAtLeastOne") };
+      }
+      return { ok:true };
+    }
+
+    function quickExpWizardStepLabels(){
+      return [t("currency.contentSectionTitle"), t("currency.payerSectionTitle"), t("currency.splitSectionTitle"), t("currency.noteDateSectionTitle")];
+    }
+    function updateQuickExpWizardChrome(index){
+      document.querySelectorAll("#quickExpWizardDots .form-wizard-dot").forEach((dot, i)=>{
+        dot.classList.toggle("active", i === index);
+        dot.classList.toggle("done", i < index);
+      });
+      const labels = quickExpWizardStepLabels();
+      const titleEl = document.getElementById("quickExpWizardStepTitle");
+      if(titleEl) titleEl.textContent = t("common.stepFormat", {step: index+1, total: 4, label: labels[index]});
+      const backBtn = document.getElementById("quickExpWizardBackBtn");
+      if(backBtn) backBtn.classList.toggle("hidden", index === 0);
+      if(submitBtn){
+        submitBtn.textContent = (index === labels.length - 1) ? t("summary.addExpenseSubmit") : t("common.wizardNext");
+      }
+    }
+
+    let quickExpWizardInstance = null;
+    async function getQuickExpWizard(){
+      if(quickExpWizardInstance) return quickExpWizardInstance;
+      const formShared = await import("./expense-form-shared.js?v=" + APP_VERSION);
+      quickExpWizardInstance = formShared.createFormWizard({
+        steps: [
+          { id:"content", sectionEl: document.querySelector("#quickExpenseModal .sec-content"), validate: validateQuickStep1 },
+          { id:"payer", sectionEl: document.querySelector("#quickExpenseModal .sec-payer"), validate: validateQuickStep2 },
+          { id:"split", sectionEl: document.querySelector("#quickExpenseModal .sec-split"), validate: validateQuickStep3 },
+          { id:"note", sectionEl: document.querySelector("#quickExpenseModal .sec-note") }
+        ],
+        onStepChange: updateQuickExpWizardChrome
+      });
+      return quickExpWizardInstance;
+    }
+    // 提早建好 wizard，讓 updateQuickExpWizardChrome(0) 立刻跑一次，避免
+    // 使用者還沒按過下一步時，步驟小字停在 HTML 預設的中文（切成日文/
+    // 英文時尤其明顯）。
+    getQuickExpWizard();
+    document.addEventListener("splitbill-lang-changed", ()=>{
+      if(quickExpWizardInstance) updateQuickExpWizardChrome(quickExpWizardInstance.getCurrentIndex());
+    });
+
+    async function resetQuickExpWizardToStep0(){
+      const wizard = await getQuickExpWizard();
+      wizard.goToStep(0);
+    }
+
+    const quickExpWizardBackBtn = document.getElementById("quickExpWizardBackBtn");
+    if(quickExpWizardBackBtn){
+      quickExpWizardBackBtn.addEventListener("click", async ()=>{
+        const wizard = await getQuickExpWizard();
+        wizard.goBack();
+      });
+    }
+
+    // --- 開啟 / 關閉 ---
+    function openModal(){
+      populateCurrencies();
+      populateMembers();
+      amtInput.value = "";
+      descInput.value = "";
+      if(noteInput) noteInput.value = "";
+      if(taxAmtInput) taxAmtInput.value = "";
+      userManuallyPickedCat = false;
+      if(catSelect){ catSelect.value = "food"; enhanceSelect(catSelect); }
+      setTaxMode("inclusive");
+      setPayerMode("single");
+      setSplitMode("equal");
+      collapseQuickTaxBody();
+      updateQuickTaxPreview();
+      if(addonsBody) addonsBody.classList.add("hidden");
+      if(addonsToggle) addonsToggle.classList.remove("open");
+      if(addonsCaret) addonsCaret.classList.remove("open");
+      quickSharedAddonItems = [];
+      setQuickAddonMode("custom");
+      dateInput.value = new Date().toISOString().split("T")[0];
+      if(msgEl){ msgEl.textContent = ""; msgEl.className = "msg"; }
+      resetQuickExpWizardToStep0();
+      modal.classList.remove("hidden");
+      modal.classList.add("show");
+      setTimeout(() => amtInput.focus(), 150);
+      // 背景 GPS 精準幣別偵測：一打開彈窗就先猜一下目前所在國家對應的幣別。
+      detectCurrencyByGPS().then(result => {
+        if(!result || !result.code) return;
+        const avail = (shownCurrencies && shownCurrencies.length) ? shownCurrencies : ['TWD'];
+        const code = avail.includes(result.code) ? result.code : avail[0];
+        if(curSelect){ curSelect.value = code; enhanceSelect(curSelect); }
+        if(curAutoBadge) curAutoBadge.textContent = t("summary.gpsPreciseBadge", {code});
+      }).catch(() => {});
+    }
+
+    function closeModal(){
+      modal.classList.remove("show");
+      setTimeout(() => modal.classList.add("hidden"), 200);
+    }
+
+    fabBtn.addEventListener("click", openModal);
+    if(closeBtn) closeBtn.addEventListener("click", closeModal);
+    // 故意不加「點背景關閉」：快速記帳表單填到一半，手機上很容易不小心點到
+    // 卡片外面的空白處就整筆消失，只留右上角 ✕ 這個明確的關閉方式。
+
+    // --- 提交支出 ---
+    submitBtn && submitBtn.addEventListener("click", async () =>{
+      const wizard = await getQuickExpWizard();
+      if(wizard.getCurrentIndex() < wizard.getStepCount() - 1){
+        const result = wizard.goNext();
+        if(!result.ok){
+          msgEl.textContent = result.message || "";
+          msgEl.className = "msg error";
+        } else {
+          msgEl.textContent = "";
+          msgEl.className = "msg";
+        }
+        return;
+      }
+
+      const rawAmt = (amtInput.value || "").trim();
+      const subtotal = Number(rawAmt) || 0;
+      const taxAmt = Number(taxAmtInput ? taxAmtInput.value : 0) || 0;
+      const totalAmount = quickTaxMode === "exclusive" ? subtotal + taxAmt : subtotal;
+
+      const itemTitle = descInput.value.trim() || t("summary.untitledExpense");
+      const cat = catSelect ? catSelect.value : "general";
+      let fullDesc = itemTitle;
+      const currency = curSelect.value;
+      const expense_date = dateInput.value || new Date().toISOString().split("T")[0];
+      const noteVal = noteInput ? noteInput.value.trim() : "";
+
+      // 代付人
+      let payers = [];
+      if(quickPayerMode === "single"){
+        payers = [{ member_id: paidBySelect.value, amount: totalAmount }];
+      } else {
+        const payersGrid = document.getElementById("quickExpPayers");
+        const rows = payersGrid ? payersGrid.querySelectorAll(".amt-row-input") : [];
+        rows.forEach(inp => { const v = Number(inp.value); if(v > 0) payers.push({ member_id: inp.dataset.member, amount: v }); });
+      }
+
+      // 分攤人
+      let shares = [];
+      if(quickSplitMode === "equal"){
+        const checked = Array.from(participantsWrap.querySelectorAll("input:checked")).map(i => i.value);
+
+        // 扣除個人自付／共同品項後，剩餘款項才由全員平分（跟完整記帳表單同一套邏輯）
+        const { items: addonItems } = getQuickAddonsData();
+        // 均分/自訂分攤的計算已經抽成共用的 expense-form-shared.js（ES
+        // module），跟「新增支出」完整表單共用同一套演算法，不用再各自維護一份。
+        const formShared = await import("./expense-form-shared.js?v=" + APP_VERSION);
+        shares = formShared.computeEqualSplitShares({
+          subtotal, taxAmount: taxAmt, taxSplitMode: quickTaxSplitMode,
+          participantIds: checked,
+          payerIds: payers.map(p => p.member_id),
+          addonAmounts: addonItems
+        });
+      } else if(quickSplitMode === "custom"){
+        const customRows = [];
+        if(quickSharesCustom){
+          quickSharesCustom.querySelectorAll(".quick-share-inp").forEach(inp => {
+            const v = Number(inp.value);
+            if(v > 0) customRows.push({ member_id: inp.dataset.member, amount: v });
+          });
+        }
+
+        // 均分/自訂分攤的計算已經抽成共用的 expense-form-shared.js（ES
+        // module），跟「新增支出」完整表單共用同一套演算法，不用再各自維護一份。
+        const formShared = await import("./expense-form-shared.js?v=" + APP_VERSION);
+        shares = formShared.computeCustomSplitShares({ subtotal, taxAmount: taxAmt, taxSplitMode: quickTaxSplitMode, rows: customRows });
+      } else {
+        const quickSharesRatio = document.getElementById("quickSharesRatio");
+        const ratioRows = [];
+        if(quickSharesRatio){
+          quickSharesRatio.querySelectorAll(".quick-ratio-inp").forEach(inp => {
+            const v = Number(inp.value);
+            if(v > 0) ratioRows.push({ member_id: inp.dataset.member, weight: v });
+          });
+        }
+        const formShared = await import("./expense-form-shared.js?v=" + APP_VERSION);
+        shares = formShared.computeRatioSplitShares({
+          subtotal, taxAmount: taxAmt, taxSplitMode: quickTaxSplitMode,
+          rows: ratioRows,
+          payerIds: payers.map(p => p.member_id)
+        });
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = t("summary.savingEllipsis");
+
+      try {
+        const { error } = await sb.from("expenses").insert({
+          amount: totalAmount, description: fullDesc, note: noteVal || null,
+          expense_date, created_by: myMember ? myMember.id : payers[0].member_id,
+          payers, shares, currency, category: cat || "general"
+        });
+        if(error) throw error;
+
+        localStorage.setItem("sb_last_active_currency", currency);
+        closeModal();
+        const curObj = (typeof CURRENCIES !== "undefined") ? CURRENCIES.find(c => c.code === currency) : null;
+        const sym = curObj ? curObj.symbol : "$";
+        const firstPayerId = (payers && payers[0] && payers[0].member_id);
+        const payerName = (firstPayerId && quickMemberName(firstPayerId)) || (myMember && myMember.name) || t("summary.meFallback");
+        const catMeta = (window.getCategoryMeta && window.getCategoryMeta(itemTitle, noteVal, cat)) || {};
+
+        if(typeof window.triggerReceiptFlyAnimation === "function"){
+          window.triggerReceiptFlyAnimation({
+            buttonEl: document.getElementById("openQuickExpenseBtn") || submitBtn,
+            desc: itemTitle || t("summary.quickAddDefaultDesc"),
+            amount: totalAmount,
+            symbol: sym,
+            categoryIcon: catMeta.icon || "🧾",
+            payerName: payerName,
+            splitCount: (shares || []).length,
+            targetListEl: document.getElementById("allCurrenciesList") || document.querySelector(".currency-card")
+          });
+        }
+
+        if(typeof showToast === "function"){
+          showToast(t("summary.saveSuccessToastTitle"), t("summary.saveSuccessToastBody", {title: itemTitle, amount: sym+formatAmt(totalAmount), currency}));
+        }
+        await loadAndRenderAllBalances();
+      } catch(err){
+        msgEl.textContent = t("summary.saveFailedPrefix") + (err.message || t("summary.networkErrorFallback"));
+        msgEl.className = "msg error";
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = t("summary.addExpenseSubmit");
+      }
+    });
+  }
+
+  (async function boot(){
+    try {
+      const { data:{ session } } = await sb.auth.getSession();
+      if(session && session.user){
+        await onLoggedIn(session.user);
+      } else {
+        localStorage.removeItem(LOGIN_TIME_KEY);
+        location.href = "index.html?redirect=summary.html";
+      }
+    } catch(e){
+      location.href = "index.html?redirect=summary.html";
+    }
+  })();
+})();
+</script>
+</body>
+</html>
