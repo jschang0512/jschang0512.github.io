@@ -91,7 +91,3 @@ cfg$out_dir    <- "路徑/輸出資料夾"
 config_file <- "config_alzheimer.R"
 source("run_all.R")
 ```
-
-## 備註
-
-- `all_cause_dementia_ITT.R` 是整理前的原始單一檔版本，保留作為對照。
