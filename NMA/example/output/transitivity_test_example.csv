@@ -1,0 +1,7 @@
+"Modifier","Level","groups","Shapiro_p","Test","p"
+"Age","Node",5,0.377,"ANOVA",0.871
+"Age","Comparison",3,0.985,"ANOVA",0.506
+"Sex","Node",5,0.983,"ANOVA",0.275
+"Sex","Comparison",3,0.947,"ANOVA",0.401
+"Followup","Node",4,0.273,"ANOVA",0.945
+"Followup","Comparison",2,0.952,"ANOVA",0.828

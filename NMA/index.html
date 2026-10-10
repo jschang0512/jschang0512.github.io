@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>貝氏 NMA 實作教學</title>
+<meta name="description" content="用 R 套件 multinma 做貝氏網絡統合分析：從資料整理、主模型、排名、不一致性檢定到 meta-regression 與敏感度分析，分 11 個步驟的實作教學。">
+<link rel="stylesheet" id="hl-light" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+<link rel="stylesheet" id="hl-dark" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" media="(prefers-color-scheme: dark)">
+<style>
+  :root {
+    --bg: #f7f8fa;
+    --card: #ffffff;
+    --text: #1d2330;
+    --muted: #5f6b7a;
+    --line: #e3e7ed;
+    --accent: #2f6fde;
+    --accent-soft: #eaf1fd;
+    --code-bg: #f3f5f8;
+    --warn: #b45309;
+    --warn-soft: #fff6e6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #101318;
+      --card: #181d24;
+      --text: #e6e9ef;
+      --muted: #9aa5b4;
+      --line: #2a313c;
+      --accent: #7aa7ff;
+      --accent-soft: #1d2a40;
+      --code-bg: #0f1319;
+      --warn: #f5b454;
+      --warn-soft: #2a2215;
+    }
+  }
+  @media (prefers-color-scheme: light) { #hl-dark { display: none; } }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 16px; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    line-height: 1.75;
+    font-size: 16px;
+  }
+  a { color: var(--accent); }
+  code, pre { font-family: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+  :not(pre) > code {
+    background: var(--code-bg);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0 4px;
+    font-size: .88em;
+  }
+
+  /* layout */
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 16px; display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 40px; }
+  nav.toc { position: sticky; top: 16px; align-self: start; max-height: calc(100vh - 32px); overflow: auto; padding: 24px 0; font-size: .9rem; }
+  nav.toc .toc-title { font-weight: 700; margin-bottom: 8px; }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; }
+  nav.toc li a { display: block; padding: 3px 10px; border-left: 2px solid var(--line); color: var(--muted); text-decoration: none; }
+  nav.toc li a:hover { color: var(--text); }
+  nav.toc li a.active { color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+  nav.toc li.sub a { padding-left: 22px; font-size: .85rem; }
+  main { padding: 32px 0 80px; min-width: 0; }
+  @media (max-width: 960px) {
+    .wrap { grid-template-columns: minmax(0, 1fr); gap: 0; }
+    nav.toc { display: none; }
+  }
+
+  /* hero */
+  header.hero { padding: 8px 0 28px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+  .crumb { font-size: .85rem; color: var(--muted); }
+  .crumb a { color: var(--muted); }
+  h1 { font-size: 2rem; line-height: 1.3; margin: 8px 0 10px; }
+  .lead { color: var(--muted); font-size: 1.05rem; margin: 0 0 18px; }
+  .btns { display: flex; flex-wrap: wrap; gap: 10px; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--text); text-decoration: none; font-size: .92rem; font-weight: 600; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  @media (prefers-color-scheme: dark) { .btn.primary { color: #0d1420; } }
+
+  /* sections */
+  section { padding-top: 36px; }
+  h2 { font-size: 1.45rem; margin: 0 0 12px; padding-top: 8px; }
+  h3 { font-size: 1.1rem; margin: 26px 0 8px; }
+  .step-no { display: inline-block; min-width: 2.2em; padding: 0 8px; margin-right: 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); font-size: .85rem; text-align: center; vertical-align: 3px; }
+  .meta { display: grid; grid-template-columns: auto 1fr; gap: 2px 12px; font-size: .9rem; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin: 12px 0; }
+  .meta dt { color: var(--muted); }
+  .meta dd { margin: 0; }
+
+  pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; overflow: auto; font-size: .85rem; line-height: 1.55; margin: 12px 0; }
+  pre code.hljs { background: transparent; padding: 0; }
+
+  .note, .warn { border-radius: 10px; padding: 10px 14px; margin: 14px 0; font-size: .95rem; }
+  .note { background: var(--accent-soft); border-left: 4px solid var(--accent); }
+  .warn { background: var(--warn-soft); border-left: 4px solid var(--warn); }
+
+  figure { margin: 16px 0; background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+  figure img { display: block; width: 100%; height: auto; border-radius: 6px; }
+  figure.narrow { max-width: 520px; }
+  figcaption { font-size: .85rem; color: #5f6b7a; padding: 8px 4px 0; }
+
+  .tbl-wrap { overflow: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--card); margin: 12px 0; }
+  table { border-collapse: collapse; width: 100%; font-size: .85rem; }
+  th, td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+  th { background: var(--code-bg); font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  .tbl-caption { font-size: .85rem; color: var(--muted); margin-top: -4px; }
+
+  details { background: var(--card); border: 1px solid var(--line); border-radius: 10px; margin: 12px 0; }
+  details > summary { cursor: pointer; padding: 10px 14px; font-weight: 600; font-size: .92rem; }
+  details > pre { margin: 0 12px 12px; }
+
+  .flow { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0; padding: 0; list-style: none; counter-reset: s; }
+  .flow li { counter-increment: s; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; font-size: .88rem; }
+  .flow li::before { content: counter(s, decimal-leading-zero); color: var(--accent); font-weight: 700; margin-right: 6px; }
+  .flow li a { color: inherit; text-decoration: none; }
+
+  ul.tight li, ol.tight li { margin: 2px 0; }
+  footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line); font-size: .85rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav class="toc" aria-label="目錄">
+  <div class="toc-title">目錄</div>
+  <ol>
+    <li><a href="#overview">概覽</a></li>
+    <li><a href="#setup">環境準備</a></li>
+    <li><a href="#files">下載與檔案結構</a></li>
+    <li><a href="#data">資料格式</a></li>
+    <li><a href="#config">設定 config.R</a></li>
+    <li><a href="#run">執行</a></li>
+    <li class="sub"><a href="#s01">01 讀資料</a></li>
+    <li class="sub"><a href="#s02">02 網絡圖</a></li>
+    <li class="sub"><a href="#s03">03 主模型</a></li>
+    <li class="sub"><a href="#s04">04 森林圖</a></li>
+    <li class="sub"><a href="#s05">05 排名與 SUCRA</a></li>
+    <li class="sub"><a href="#s06">06 Node-splitting</a></li>
+    <li class="sub"><a href="#s07">07 League table</a></li>
+    <li class="sub"><a href="#s08">08 全域不一致性</a></li>
+    <li class="sub"><a href="#s09">09 Transitivity</a></li>
+    <li class="sub"><a href="#s10">10 Meta-regression</a></li>
+    <li class="sub"><a href="#s11">11 敏感度分析</a></li>
+    <li><a href="#new-outcome">換一個 outcome</a></li>
+    <li><a href="#faq">常見問題</a></li>
+    <li><a href="#refs">參考資料</a></li>
+  </ol>
+</nav>
+
+<main>
+<header class="hero">
+  <div class="crumb"><a href="../menu/">網站目錄</a> / NMA</div>
+  <h1>貝氏網絡統合分析（NMA）實作教學</h1>
+  <p class="lead">用 R 套件 <a href="https://dmphillippo.github.io/multinma/" target="_blank" rel="noopener">multinma</a> 做 contrast-based（log HR）的隨機效應 NMA。從讀資料到敏感度分析拆成 11 個步驟，只要改一個設定檔就能套用到自己的研究。</p>
+  <div class="btns">
+    <a class="btn primary" href="nma-toolkit.zip" download>下載程式碼（zip）</a>
+    <a class="btn" href="example/example_data.csv" download>示範資料（CSV）</a>
+    <a class="btn" href="https://github.com/jschang0512/jschang0512.github.io/tree/main/NMA" target="_blank" rel="noopener">在 GitHub 上查看</a>
+  </div>
+</header>
+
+<!-- ============================================================ -->
+<section id="overview">
+  <h2>概覽</h2>
+  <p>網絡統合分析（network meta-analysis, NMA）把多個治療之間的直接比較與間接比較放進同一個模型，同時估計所有治療兩兩之間的相對效果。這份教學的流程：</p>
+  <ol class="flow">
+    <li><a href="#s01">讀資料</a></li>
+    <li><a href="#s02">網絡圖</a></li>
+    <li><a href="#s03">主模型</a></li>
+    <li><a href="#s04">森林圖</a></li>
+    <li><a href="#s05">排名與 SUCRA</a></li>
+    <li><a href="#s06">Node-splitting</a></li>
+    <li><a href="#s07">League table</a></li>
+    <li><a href="#s08">全域不一致性</a></li>
+    <li><a href="#s09">Transitivity</a></li>
+    <li><a href="#s10">Meta-regression</a></li>
+    <li><a href="#s11">敏感度分析</a></li>
+  </ol>
+  <p>每個步驟都是獨立的 R 檔，會自動輸出論文可用的圖（PNG，600 dpi）與表（CSV）。</p>
+  <div class="note">頁面上的所有圖表都是用<strong>示範資料</strong>實際跑出來的。示範資料改編自 multinma 內建的 <code>parkinsons</code> 資料集，藥名與研究特徵都是虛構的，只用來示範操作，沒有臨床意義。</div>
+</section>
+
+<!-- ============================================================ -->
+<section id="setup">
+  <h2>環境準備</h2>
+  <ol class="tight">
+    <li>安裝 <a href="https://cran.r-project.org/" target="_blank" rel="noopener">R</a>（4.3 以上）與 <a href="https://posit.co/download/rstudio-desktop/" target="_blank" rel="noopener">RStudio</a>。</li>
+    <li>multinma 底層使用 Stan。Windows 需要另外安裝與 R 版本對應的 <a href="https://cran.r-project.org/bin/windows/Rtools/" target="_blank" rel="noopener">Rtools</a>；macOS 需要 Xcode Command Line Tools。</li>
+    <li>安裝套件（程式第一次執行時也會自動安裝缺少的套件）：</li>
+  </ol>
+<pre><code class="language-r">install.packages(c("multinma", "tidyverse", "scales", "patchwork", "ggsci",
+                   "igraph", "ggraph", "forestploter", "ggrepel", "readxl"))</code></pre>
+  <div class="note">MCMC 很花時間。程式會讓每條 Markov chain 用一個 CPU 核心平行跑；正式分析（4 條鏈 × 10,000 次）加上 node-splitting、meta-regression、敏感度分析，總共可能要幾十分鐘以上。</div>
+</section>
+
+<!-- ============================================================ -->
+<section id="files">
+  <h2>下載與檔案結構</h2>
+  <p>下載 <a href="nma-toolkit.zip" download>nma-toolkit.zip</a> 並解壓縮，會得到：</p>
+<pre><code class="language-plaintext">NMA/
+├── config.R              ← 所有設定都在這裡
+├── run_all.R             ← 一鍵跑完全部步驟
+├── R/functions.R         ← 共用函數（建網絡、跑模型、存檔）
+├── steps/
+│   ├── 01_data.R
+│   ├── 02_network_graph.R
+│   ├── …
+│   └── 11_sensitivity.R
+└── example/
+    ├── example_data.csv     ← 示範資料
+    └── config_example.R     ← 示範設定</code></pre>
+  <p>原則上只需要改 <code>config.R</code>；<code>steps/</code> 裡的程式不用動。</p>
+  <details data-src="R/functions.R"><summary>看 R/functions.R 完整程式碼</summary><pre><code class="language-r">載入中…</code></pre></details>
+</section>
+
+<!-- ============================================================ -->
+<section id="data">
+  <h2>資料格式</h2>
+  <p>資料用 Excel 或 CSV，採 <strong>contrast-based</strong> 格式：每列是一個研究中的一個治療組（arm），效果量是相對於該研究參考組的 log HR。</p>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>欄位</th><th>說明</th></tr></thead>
+    <tbody>
+      <tr><td><code>studylab</code></td><td>研究名稱，例如 <code>Study 1, 2011</code></td></tr>
+      <tr><td><code>treat</code></td><td>治療組名稱</td></tr>
+      <tr><td><code>logTE</code></td><td>log HR（相對於同一研究的參考組）；<strong>參考組那一列留空</strong></td></tr>
+      <tr><td><code>selogTE</code></td><td>log HR 的標準誤；參考組那一列填該組的 SE（多臂研究用來計算共變異）</td></tr>
+      <tr><td><code>Coeff</code></td><td><code>Y</code> 表示這個研究的 SE 需依相關係數 ρ 調整（見下方）</td></tr>
+      <tr><td><code>Sex</code>、<code>Age</code>、<code>Followup</code></td><td>連續型研究特徵（男性 %、平均年齡、追蹤年數），供 transitivity 與 meta-regression 使用</td></tr>
+      <tr><td><code>Region_category</code>、<code>ROBINS</code></td><td>類別型研究特徵（地區、ROBINS-I 偏誤風險）</td></tr>
+    </tbody>
+  </table></div>
+  <p>示範資料的內容（Study 3 是三臂研究，所以有 3 列）：</p>
+  <div class="tbl-wrap" data-csv="example/example_data.csv"></div>
+
+  <h3>依 ρ 調整 SE</h3>
+  <p><code>Coeff = "Y"</code> 的研究，SE 會乘上 √ρ（等同變異數乘上 ρ），其他研究維持原本的 SE：</p>
+<pre><code class="language-r">selogTE_adj = if (Coeff == "Y") selogTE * sqrt(rho) else selogTE</code></pre>
+  <p>主分析用 ρ = 0.5，敏感度分析再用 0.25 與 0.75 檢查結果是否穩定。不需要這個調整的話，把所有研究的 <code>Coeff</code> 都填 <code>N</code> 即可。</p>
+  <div class="note">欄位名稱跟上表不同也沒關係，在 <code>config.R</code> 的 <code>cfg$cols</code> 對應到你的欄位名稱就好。</div>
+</section>
+
+<!-- ============================================================ -->
+<section id="config">
+  <h2>設定 config.R</h2>
+  <p>研究名稱、檔案路徑等共用設定都集中在 <code>config.R</code> 最前面。最少要改這幾項：</p>
+<pre><code class="language-r">#---- 1. 研究名稱（會用在圖表標題與輸出檔名）----
+cfg$outcome_label  &lt;- "All-cause dementia"   # 結果名稱
+cfg$analysis_label &lt;- "ITT"                  # 分析族群，如 ITT / AT
+cfg$file_tag       &lt;- "dementia"             # 輸出檔名後綴
+
+#---- 2. 檔案路徑 ----
+cfg$data_file  &lt;- "D:/project/hrdata.xlsx"   # .xlsx 或 .csv
+cfg$data_sheet &lt;- "AllCause_ITT"             # .xlsx 才需要
+cfg$out_dir    &lt;- "D:/project/result"</code></pre>
+  <p>其餘可以調整的項目：</p>
+  <div class="tbl-wrap"><table>
+    <thead><tr><th>設定</th><th>用途</th></tr></thead>
+    <tbody>
+      <tr><td><code>cfg$ref_trt</code></td><td>相對效果與森林圖的比較基準（預設 <code>"SoC"</code>）</td></tr>
+      <tr><td><code>cfg$lower_better</code></td><td>HR 越低越好（排名用）</td></tr>
+      <tr><td><code>cfg$rho_values</code>、<code>cfg$rho_main</code></td><td>要建立哪些 ρ 的 SE 欄位、主分析用哪一個</td></tr>
+      <tr><td><code>cfg$mcmc</code></td><td>先驗分佈、抽樣次數、預熱期、鏈數</td></tr>
+      <tr><td><code>cfg$reuse_models</code></td><td>重複使用已經跑好的模型（見<a href="#run">執行</a>）</td></tr>
+      <tr><td><code>cfg$trans_num</code>、<code>cfg$trans_cat</code></td><td>Transitivity 要比較的研究特徵</td></tr>
+      <tr><td><code>cfg$reg_covariates</code></td><td>Meta-regression 的共變項</td></tr>
+      <tr><td><code>cfg$sensitivity</code></td><td>敏感度分析的情境</td></tr>
+      <tr><td><code>cfg$plot</code></td><td>圖表的座標範圍與解析度</td></tr>
+    </tbody>
+  </table></div>
+  <details data-src="config.R"><summary>看 config.R 完整內容</summary><pre><code class="language-r">載入中…</code></pre></details>
+</section>
+
+<!-- ============================================================ -->
+<section id="run">
+  <h2>執行</h2>
+  <p>在 RStudio 開啟 <code>run_all.R</code>，按右上角的 <strong>Source</strong>，就會依序跑完 11 個步驟。想先用示範資料試跑：</p>
+<pre><code class="language-r">setwd("解壓縮後的 NMA 資料夾")
+config_file &lt;- "example/config_example.R"
+source("run_all.R")</code></pre>
+  <ul class="tight">
+    <li><strong>只跑部分步驟：</strong>把 <code>run_all.R</code> 裡 <code>steps</code> 不需要的那行註解掉。後面的步驟會用到前面步驟的結果，每個步驟下方的「需要」有寫清楚。</li>
+    <li><strong>不用每次重跑 MCMC：</strong><code>cfg$reuse_models = TRUE</code> 時，跑過的模型會存在 <code>out_dir/models/</code>，下次直接讀取。只想改圖的樣式時特別省時間。</li>
+  </ul>
+  <div class="warn">改了資料、ρ 或 MCMC 設定之後，一定要刪掉 <code>out_dir/models/</code> 資料夾（或設 <code>cfg$reuse_models &lt;- FALSE</code>），否則會讀到舊的模型。</div>
+  <details data-src="run_all.R"><summary>看 run_all.R 完整程式碼</summary><pre><code class="language-r">載入中…</code></pre></details>
+</section>
+
+<!-- ============================================================ -->
+<section id="s01">
+  <h2><span class="step-no">01</span>讀資料、建立網絡</h2>
+  <dl class="meta"><dt>需要</dt><dd>config.R</dd><dt>產出</dt><dd><code>rawdata</code>、<code>dm</code>、<code>net</code></dd></dl>
+  <p>讀入資料、依 ρ 建立調整後的 SE 欄位，再用 <code>set_agd_contrast()</code> 建立網絡：</p>
+<pre><code class="language-r">net &lt;- set_agd_contrast(
+  data  = dm,
+  study = studylab,
+  trt   = treat,
+  y     = logTE,        # log HR
+  se    = selogTE0.5    # ρ = 0.5 調整後的 SE
+)
+print(net)</code></pre>
+  <p><code>print(net)</code> 會列出研究數、治療數，並檢查網絡是否連通（<code>Network is connected</code>）。如果出現 disconnected，代表有治療組跟其他治療完全沒有比較路徑，需要先處理資料。</p>
+  <details data-src="steps/01_data.R"><summary>看完整程式碼</summary><pre><code class="language-r">載入中…</code></pre></details>
+</section>
+
+<section id="s02">
+  <h2><span class="step-no">02</span>網絡圖</h2>
+  <dl class="meta"><dt>需要</dt><dd><code>net</code></dd><dt>產出</dt><dd><code>network_graph_&lt;tag&gt;.png</code></dd></dl>
+  <p>每個點是一個治療，連線代表有研究直接比較這兩個治療，<strong>線越粗、研究數越多</strong>（超過 1 篇時會標上數字）。從圖可以看出哪些比較只靠間接證據，以及網絡中是否有封閉迴路（node-splitting 需要迴路才能做）。</p>
+  <figure class="narrow"><img src="example/output/network_graph_example.png" alt="示範資料的網絡圖" loading="lazy"><figcaption>示範資料的網絡圖</figcaption></figure>
+  <details data-src="steps/02_network_graph.R"><summary>看完整程式碼</summary><pre><code class="language-r">載入中…</code></pre></details>
+</section>
+
+<section id="s03">
+  <h2><span class="step-no">03</span>主模型</h2>
+  <dl class="meta"><dt>需要</dt><dd><code>net</code></dd><dt>產出</dt><dd><code>fit_re</code>、<code>nmadata_&lt;tag&gt;.csv</code>、<code>prior_posterior_&lt;tag&gt;.png</code></dd></dl>
+  <p>貝氏隨機效應、consistency 模型。治療效果的先驗為 N(0, 1.5²)，研究間異質性 τ 的先驗為 half-N(0, 0.5²)：</p>
+<pre><code class="language-r">fit_re &lt;- nma(
+  net,
+  consistency = "consistency",
+  trt_effects = "random",          # 隨機效應
+  likelihood  = "normal",          # log HR 服從常態分佈
+  link        = "identity",        # 已經是 log 尺度
+  prior_trt   = normal(scale = 1.5),
+  prior_het   = half_normal(scale = 0.5),
+  iter = 10000, warmup = 2000, chains = 4
+)</code></pre>
+  <h3>先檢查收斂</h3>
+  <p><code>print(fit_re)</code> 的表格中，每個參數的 <code>Rhat</code> 應 &lt; 1.01，<code>Bulk_ESS</code> 與 <code>Tail_ESS</code> 應 &gt; 400。沒有達到時，增加 <code>iter</code> 再跑一次。</p>
+  <h3>先驗與後驗分佈</h3>
+  <p>紅線是先驗、藍色是後驗。後驗明顯比先驗窄，代表結果主要由資料決定；如果後驗跟先驗幾乎重疊，代表這個參數的資料很少，結果主要受先驗影響，解讀時要保守。</p>
+  <figure><img src="example/output/prior_posterior_example.png" alt="先驗與後驗分佈圖" loading="lazy"><figcaption>先驗（紅線）與後驗（藍色長條）分佈</figcaption></figure>
+  <details data-src="steps/03_main_model.R"><summary>看完整程式碼</summary><pre><code class="language-r">載入中…</code></pre></details>
+</section>
+
+<section id="s04">
+  <h2><span class="step-no">04</span>森林圖</h2>
+  <dl class="meta"><dt>需要</dt><dd><code>fit_re</code></dd><dt>產出</dt><dd><code>forestplot_&lt;tag&gt;.png</code>、<code>forestdata_&lt;tag&gt;.csv</code></dd></dl>
+  <p>每個治療相對於參考組（<code>cfg$ref_trt</code>）的 HR 與 95% 可信區間（credible interval, CrI）。HR &lt; 1 代表優於參考組；<strong>CrI 不包含 1</strong> 時，可以說有明確的差異。</p>
+<pre><code class="language-r">relative_effects(fit_re, trt_ref = "SoC")</code></pre>
+  <figure><img src="example/output/forestplot_example.png" alt="森林圖" loading="lazy"><figcaption>各治療 vs SoC 的 HR 與 95% CrI</figcaption></figure>
+  <details data-src="steps/04_forest_plot.R"><summary>看完整程式碼</summary><pre><code class="language-r">載入中…</code></pre></details>
+</section>
+
+<section id="s05">
+  <h2><span class="step-no">05</span>排名與 SUCRA</h2>
+  <dl class="meta"><dt>需要</dt><dd><code>fit_re</code></dd><dt>產出</dt><dd><code>rankplot_&lt;tag&gt;.png</code>、<code>sucradata_&lt;tag&gt;.csv</code></dd></dl>
+  <p>每次 MCMC 抽樣都會產生一組治療排名，統計起來就是各治療排在第 k 名的機率。</p>
+  <ul class="tight">
+    <li><strong>累積排名圖（A）：</strong>曲線越早升到 100%，代表越常排在前面。</li>
+    <li><strong>SUCRA（B）：</strong>把累積排名曲線下的面積換算成 0–100%，越高越好。</li>
+  </ul>
+  <div class="warn">排名只看點估計的相對位置，不代表差異有意義。要搭配森林圖的 CrI 一起解讀，避免只依 SUCRA 下結論。</div>
+  <figure class="narrow"><img src="example/output/rankplot_example.png" alt="排名圖與 SUCRA" loading="lazy"><figcaption>A：累積排名機率；B：SUCRA</figcaption></figure>
+  <details data-src="steps/05_ranking.R"><summary>看完整程式碼</summary><pre><code class="language-r">載入中…</code></pre></details>
+</section>
+
+<section id="s06">
+  <h2><span class="step-no">06</span>Node-splitting（局部不一致性）</h2>
+  <dl class="meta"><dt>需要</dt><dd><code>net</code>、<code>net_graph</code></dd><dt>產出</dt><dd><code>nodesplit1_&lt;tag&gt;.png</code>…、<code>incons_tbl_&lt;tag&gt;.csv</code></dd></dl>
+  <p>NMA 的前提是直接證據與間接證據一致（consistency）。Node-splitting 把每個可拆分的比較分成 <strong>Direct</strong>（直接比較的研究）與 <strong>Indirect</strong>（經由其他治療推得）分別估計，再看兩者是否有差異。</p>
+<pre><code class="language-r">nodesplit &lt;- nma(net, consistency = "nodesplit", trt_effects = "random", ...)</code></pre>
+  <ul class="tight">
+    <li>只有位在<strong>封閉迴路</strong>上的比較才能拆分。</li>
+    <li>Bayesian p &lt; 0.05（圖中標紅）代表直接與間接證據可能不一致。</li>
+    <li><code>incons_tbl</code> 整理成 GRADE 評估不一致性時可以直接使用的表格，並附上 ESS 與 Rhat。</li>
+  </ul>
+  <figure><img src="example/output/nodesplit1_example.png" alt="Node-splitting 森林圖" loading="lazy"><figcaption>黑：Direct；灰：Indirect；藍：Network</figcaption></figure>
+  <div class="tbl-wrap" data-csv="example/output/incons_tbl_example.csv" data-round="3"></div>
+  <p class="tbl-caption">不一致性表（incons_tbl）</p>
+  <details data-src="steps/06_nodesplit.R"><summary>看完整程式碼</summary><pre><code class="language-r">載入中…</code></pre></details>
+</section>
+
+<section id="s07">
+  <h2><span class="step-no">07</span>League table</h2>
+  <dl class="meta"><dt>需要</dt><dd><code>fit_re</code>、<code>sucra_data</code>（05）、<code>ns_raw</code>（06）</dd><dt>產出</dt><dd><code>league_table_&lt;tag&gt;.csv</code></dd></dl>
+  <p>把所有治療兩兩之間的 HR 放進一張表，治療依 SUCRA 由高到低排列。</p>
+  <ul class="tight">
+    <li><strong>左下：</strong>network 估計，每格是「列 vs 欄」的 HR [95% CrI]。</li>
+    <li><strong>右上：</strong>node-splitting 的 direct 估計；空白代表沒有直接比較的研究。</li>
+    <li><strong>標 * 的格子：</strong>只有直接證據、沒有間接證據（無法拆分），顯示的是 network 估計。</li>
+  </ul>
+  <div class="tbl-wrap" data-csv="example/output/league_table_example.csv"></div>
+  <details data-src="steps/07_league_table.R"><summary>看完整程式碼</summary><pre><code class="language-r">載入中…</code></pre></details>
+</section>
+
+<section id="s08">
+  <h2><span class="step-no">08</span>全域不一致性</h2>
+  <dl class="meta"><dt>需要</dt><dd><code>net</code>、<code>fit_re</code></dd><dt>產出</dt><dd><code>ume_&lt;tag&gt;.png</code>、<code>dicplot_&lt;tag&gt;.png</code></dd></dl>
+  <p>另外跑一個 <strong>UME</strong>（unrelated mean effects）模型：每個比較各自估計，不假設 consistency。跟主模型比較 DIC：</p>
+  <ul class="tight">
+    <li>兩個模型的 DIC 差不多（差距 &lt; 3–5），表示整體網絡沒有明顯的不一致。</li>
+    <li>UME 的 DIC 明顯較低，代表 consistency 的假設可能不成立。</li>
+  </ul>
+  <p><strong>Deviance-deviance plot：</strong>每個點是一個研究的資料點，在兩個模型中的殘差離差。落在對角線上表示兩模型配適相當；明顯偏離對角線的點，就是可能造成不一致的研究。</p>
+  <figure class="narrow"><img src="example/output/ume_example.png" alt="Deviance-deviance plot" loading="lazy"><figcaption>Consistency 模型 vs UME 模型的殘差離差</figcaption></figure>
+  <p><strong>Deviance-leverage plot：</strong>橫軸是殘差，縱軸是槓桿值。落在 DIC = 3 等高線外（紅色）的研究配適不佳，可以列入敏感度分析（<a href="#s11">步驟 11</a>）排除後再跑一次。</p>
+  <figure class="narrow"><img src="example/output/dicplot_example.png" alt="Deviance-leverage plot" loading="lazy"><figcaption>紅：DIC ≥ 3；藍：2 ≤ DIC &lt; 3</figcaption></figure>
+  <details data-src="steps/08_global_inconsistency.R"><summary>看完整程式碼</summary><pre><code class="language-r">載入中…</code></pre></details>
+</section>
+
+<section id="s09">
+  <h2><span class="step-no">09</span>Transitivity</h2>
+  <dl class="meta"><dt>需要</dt><dd><code>dm</code></dd><dt>產出</dt><dd><code>transitivity_node/comp/test_&lt;tag&gt;.csv</code></dd></dl>
+  <p>間接比較成立的前提是 <strong>transitivity</strong>：不同比較之間，可能影響療效的研究特徵（effect modifiers）分佈要相近。這一步依 Belavý 等人（2024）的做法，只產出表格：</p>
+  <ol class="tight">
+    <li>在 <strong>Node</strong>（各治療）與 <strong>Comparison</strong>（各比較）兩個層級，描述每個研究特徵的分佈。</li>
+    <li>連續型特徵做組間比較：只納入有 ≥ 2 個研究的組；先用 Shapiro-Wilk 檢查 ANOVA 殘差是否常態，常態用 ANOVA，否則用 Kruskal-Wallis。</li>
+  </ol>
+  <p>p &lt; 0.05 代表該特徵在不同治療或比較之間分佈不平均，transitivity 可能有疑慮，可再用 meta-regression 檢查它是否真的影響療效。</p>
+  <div class="tbl-wrap" data-csv="example/output/transitivity_node_example.csv"></div>
+  <p class="tbl-caption">Node 層級的研究特徵分佈</p>
+  <div class="tbl-wrap" data-csv="example/output/transitivity_test_example.csv"></div>
+  <p class="tbl-caption">組間差異檢定</p>
+  <details data-src="steps/09_transitivity.R"><summary>看完整程式碼</summary><pre><code class="language-r">載入中…</code></pre></details>
+</section>
+
+<section id="s10">
+  <h2><span class="step-no">10</span>Network meta-regression</h2>
+  <dl class="meta"><dt>需要</dt><dd><code>dm</code>、<code>sucra_data</code>（05）</dd><dt>產出</dt><dd><code>reg_&lt;tag&gt;.csv</code></dd></dl>
+  <p>每個共變項各跑一個模型，估計「治療 × 共變項」的交互作用：</p>
+<pre><code class="language-r">nma(net_age,
+    regression = ~ .trt:Age,          # .trt 代表治療效果
+    prior_reg  = normal(scale = 1),
+    control    = list(max_treedepth = 15, adapt_delta = 0.99), ...)</code></pre>
+  <ul class="tight">
+    <li>表中的值是 <strong>HR ratio</strong>：連續型共變項每增加 1 單位，該治療 vs 參考組的 HR 變成幾倍；類別型則是該類別相對於基準類別（例如 Western vs Eastern）。</li>
+    <li>標 * 代表 95% CrI 不含 1，該共變項可能修飾療效。</li>
+    <li>只有單一研究的治療，結果主要由先驗決定，可以在 <code>cfg$reg_sparse_trts</code> 標記。</li>
+  </ul>
+  <div class="tbl-wrap" data-csv="example/output/reg_example.csv"></div>
+  <details data-src="steps/10_meta_regression.R"><summary>看完整程式碼</summary><pre><code class="language-r">載入中…</code></pre></details>
+</section>
+
+<section id="s11">
+  <h2><span class="step-no">11</span>敏感度分析</h2>
+  <dl class="meta"><dt>需要</dt><dd><code>dm</code>、<code>fit_re</code></dd><dt>產出</dt><dd><code>sens_&lt;tag&gt;.csv</code></dd></dl>
+  <p>改變分析條件重跑主模型，看結論是否穩定。情境寫在 <code>cfg$sensitivity</code>，每個情境變成表格的一欄：</p>
+<pre><code class="language-r">cfg$sensitivity &lt;- list(
+  "rho=0.25"                 = list(rho = 0.25),
+  "rho=0.5"                  = list(main = TRUE),          # 主分析放在這一欄
+  "rho=0.75"                 = list(rho = 0.75),
+  "ROBINS-I without serious" = list(filter = quote(ROBINS != "Serious")),
+  "DIC&lt;3"                    = list(drop_studies = c("Study A, 2020", "Study B, 2017"))
+)</code></pre>
+  <p>三種寫法可以組合使用：<code>rho</code> 改用不同 ρ 的 SE、<code>filter</code> 保留符合條件的資料、<code>drop_studies</code> 排除指定研究（例如步驟 08 找出的配適不佳研究）。</p>
+  <div class="tbl-wrap" data-csv="example/output/sens_example.csv"></div>
+  <details data-src="steps/11_sensitivity.R"><summary>看完整程式碼</summary><pre><code class="language-r">載入中…</code></pre></details>
+</section>
+
+<!-- ============================================================ -->
+<section id="new-outcome">
+  <h2>換一個 outcome</h2>
+  <ol class="tight">
+    <li>複製 <code>config.R</code>，例如存成 <code>config_alzheimer.R</code>。</li>
+    <li>修改研究名稱、資料工作表、輸出資料夾。</li>
+    <li>指定設定檔後執行：</li>
+  </ol>
+<pre><code class="language-r">config_file &lt;- "config_alzheimer.R"
+source("run_all.R")</code></pre>
+  <p>也可以像 <code>example/config_example.R</code> 一樣，先 <code>source("config.R")</code> 再只覆寫不同的項目。</p>
+</section>
+
+<section id="faq">
+  <h2>常見問題</h2>
+  <h3>出現 divergent transitions 或 max treedepth 警告</h3>
+  <p>表示抽樣器在某些區域走得不順，常見於資料少、異質性難以估計時。可以提高 <code>adapt_delta</code>（如 0.99）、<code>max_treedepth</code>（如 15），meta-regression 預設已經這樣設定。少量警告通常不影響結果，但要確認 Rhat 與 ESS。</p>
+  <h3>Rhat &gt; 1.01 或 ESS 太低</h3>
+  <p>增加 <code>cfg$mcmc$iter</code>（例如 20,000），記得刪掉 <code>models</code> 資料夾再重跑。</p>
+  <h3>改了資料，結果卻沒變</h3>
+  <p><code>cfg$reuse_models = TRUE</code> 會讀取已存的模型。刪掉 <code>out_dir/models/</code> 再跑一次。</p>
+  <h3>路徑有中文時讀不到檔案</h3>
+  <p>R 的路徑請用正斜線 <code>/</code>，並確認 <code>source()</code> 時有指定 <code>encoding = "UTF-8"</code>（<code>run_all.R</code> 已設定）。</p>
+  <h3>Node-splitting 沒有產出任何圖</h3>
+  <p>網絡中沒有封閉迴路時，沒有可以拆分的比較，程式會顯示訊息並略過，屬於正常情況。</p>
+</section>
+
+<section id="refs">
+  <h2>參考資料</h2>
+  <ul class="tight">
+    <li>Phillippo DM. <em>multinma: Bayesian network meta-analysis of individual and aggregate data</em>. R package. <a href="https://dmphillippo.github.io/multinma/" target="_blank" rel="noopener">dmphillippo.github.io/multinma</a></li>
+    <li>Dias S, Welton NJ, Caldwell DM, Ades AE. Checking consistency in mixed treatment comparison meta-analysis. <em>Stat Med</em>. 2010;29:932–944.</li>
+    <li>Salanti G, Ades AE, Ioannidis JPA. Graphical methods and numerical summaries for presenting results from multiple-treatment meta-analysis. <em>J Clin Epidemiol</em>. 2011;64:163–171.</li>
+  </ul>
+</section>
+
+<footer>
+  Chia-Sung (Bruce) Chang · <a href="../personalcv/">個人網站</a> · <a href="../menu/">網站目錄</a>
+</footer>
+</main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/r.min.js"></script>
+<script>
+(function () {
+  function highlight(el) { if (window.hljs) hljs.highlightElement(el); }
+  document.querySelectorAll('pre code').forEach(highlight);
+
+  // 展開時才載入完整程式碼
+  document.querySelectorAll('details[data-src]').forEach(function (d) {
+    d.addEventListener('toggle', function () {
+      if (!d.open || d.dataset.loaded) return;
+      d.dataset.loaded = '1';
+      var code = d.querySelector('code');
+      fetch(d.dataset.src)
+        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+        .then(function (t) { code.textContent = t; highlight(code); })
+        .catch(function () {
+          code.textContent = '無法載入，請直接開啟 ' + d.dataset.src;
+        });
+    });
+  });
+
+  // CSV → 表格
+  function parseCSV(text) {
+    var rows = [], row = [], cell = '', q = false;
+    for (var i = 0; i < text.length; i++) {
+      var c = text[i];
+      if (q) {
+        if (c === '"' && text[i + 1] === '"') { cell += '"'; i++; }
+        else if (c === '"') q = false;
+        else cell += c;
+      } else if (c === '"') q = true;
+      else if (c === ',') { row.push(cell); cell = ''; }
+      else if (c === '\n' || c === '\r') {
+        if (c === '\r' && text[i + 1] === '\n') i++;
+        row.push(cell); rows.push(row); row = []; cell = '';
+      } else cell += c;
+    }
+    if (cell || row.length) { row.push(cell); rows.push(row); }
+    return rows;
+  }
+  function fmt(v, digits) {
+    if (digits == null || v === '' || isNaN(v) || !/\./.test(v)) return v === 'NA' ? '' : v;
+    return Number(v).toFixed(digits);
+  }
+  document.querySelectorAll('[data-csv]').forEach(function (box) {
+    var digits = box.dataset.round ? Number(box.dataset.round) : null;
+    fetch(box.dataset.csv)
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function (t) {
+        var rows = parseCSV(t.trim());
+        var table = document.createElement('table');
+        var thead = table.createTHead().insertRow();
+        rows[0].forEach(function (h) {
+          var th = document.createElement('th'); th.textContent = h; thead.appendChild(th);
+        });
+        var tbody = table.createTBody();
+        rows.slice(1).forEach(function (r) {
+          var tr = tbody.insertRow();
+          r.forEach(function (v) { tr.insertCell().textContent = fmt(v, digits); });
+        });
+        box.appendChild(table);
+      })
+      .catch(function () {
+        box.innerHTML = '<p style="padding:10px 14px;margin:0">無法載入 <a href="' + box.dataset.csv + '">' + box.dataset.csv + '</a></p>';
+      });
+  });
+
+  // 目錄標示目前位置
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
+  var targets = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+  if ('IntersectionObserver' in window) {
+    var visible = {};
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { visible[e.target.id] = e.isIntersecting; });
+      for (var i = 0; i < targets.length; i++) {
+        if (targets[i] && visible[targets[i].id]) {
+          links.forEach(function (a) { a.classList.remove('active'); });
+          links[i].classList.add('active');
+          break;
+        }
+      }
+    }, { rootMargin: '0px 0px -70% 0px' });
+    targets.forEach(function (t) { if (t) io.observe(t); });
+  }
+})();
+</script>
+</body>
+</html>
