@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title data-en="PRISMA Flow Diagram">PRISMA Flow Diagram</title>
+<link rel="stylesheet" href="../shared/style.css?v=20260930a">
+</head>
+<body>
+<header class="topbar">
+  <a class="back" href="../index.html" data-en="← Home">← 工具首頁</a>
+  <h1>PRISMA 2020 Flow Diagram</h1>
+  <span class="sub" data-en="Systematic review study-selection flow">系統性回顧文獻篩選流程圖</span>
+  <span class="spacer"></span>
+  <div class="btns">
+    <button class="small" id="btnUndo" title="復原 (Ctrl+Z)" data-en-title="Undo (Ctrl+Z)">↶</button>
+    <button class="small" id="btnRedo" title="重做 (Ctrl+Y)" data-en-title="Redo (Ctrl+Y)">↷</button>
+    <button class="small" id="btnSaveJson" title="把目前所有輸入與設定下載成 .json 檔，之後可用「開啟設定檔」繼續編輯或分享給共同作者" data-en-title="Download all inputs and settings as a .json file; reopen it later or share it with co-authors" data-en="Save project">儲存設定檔</button>
+    <button class="small" id="btnLoadJson" title="開啟先前儲存的 .json 設定檔，還原所有輸入" data-en-title="Open a previously saved .json project file" data-en="Open project">開啟設定檔</button>
+    <button class="small" id="btnExample" data-en="Example">範例</button>
+    <button class="small" id="btnReset" data-en="Clear">清空</button>
+  </div>
+</header>
+
+<main class="tool">
+  <section id="form">
+    <div class="card">
+      <p class="hint" style="margin:0" data-en="Fill in from top to bottom. Fields that can be derived (screened, sought, assessed, reports…) are calculated automatically when left blank and shown in <span style='color:var(--accent);font-style:italic'>blue italics</span>; type a number to override. Numbers that don't add up are outlined in red.">由上往下填寫即可。可推算的欄位（screened、sought、assessed、reports…）留空時會自動計算並以<span style="color:var(--accent);font-style:italic">藍色斜體</span>顯示；自己輸入數字即可覆蓋。數字對不上的欄位會以紅框標示。</p>
+      <label class="check"><input type="checkbox" data-k="autoFill"> <span data-en="Auto-calculate blank derived fields">自動推算空白的推導欄位</span></label>
+    </div>
+
+    <div class="card">
+      <h2><span class="step-no">1</span> Identification <span class="pill">Databases &amp; registers</span></h2>
+      <div class="sub-h">Records identified from:</div>
+      <label class="nrow"><span>Databases</span><input class="n" data-k="databases" data-d="databases" inputmode="numeric"></label>
+      <label class="field"><span data-en="Per-database counts (optional, one per line, e.g. <code>PubMed: 523</code>) — Databases total is summed automatically">各資料庫明細（選填，每行一個，例：<code>PubMed: 523</code>）— 會自動加總成 Databases</span>
+        <textarea data-k="dbDetail" rows="3" placeholder="PubMed: 523&#10;Embase: 811&#10;Cochrane Library: 97"></textarea></label>
+      <label class="nrow"><span>Registers</span><input class="n" data-k="registers" inputmode="numeric"></label>
+      <div class="sub-h">Records removed before screening:</div>
+      <label class="nrow"><span>Duplicate records removed</span><input class="n" data-k="dup" inputmode="numeric"></label>
+      <label class="nrow"><span>Marked as ineligible by automation tools</span><input class="n" data-k="autoTools" inputmode="numeric"></label>
+      <label class="nrow"><span>Removed for other reasons</span><input class="n" data-k="otherRemoved" inputmode="numeric"></label>
+    </div>
+
+    <div class="card">
+      <h2><span class="step-no">2</span> Screening</h2>
+      <label class="nrow"><span>Records screened</span><input class="n" data-k="screened" data-d="screened" inputmode="numeric"></label>
+      <label class="nrow"><span>Records excluded</span><input class="n" data-k="excluded" inputmode="numeric"></label>
+      <label class="nrow"><span>Reports sought for retrieval</span><input class="n" data-k="sought" data-d="sought" inputmode="numeric"></label>
+      <label class="nrow"><span>Reports not retrieved</span><input class="n" data-k="notRetrieved" inputmode="numeric"></label>
+      <label class="nrow"><span>Reports assessed for eligibility</span><input class="n" data-k="assessed" data-d="assessed" inputmode="numeric"></label>
+      <div class="sub-h"><span data-en="Reports excluded — reasons">Reports excluded（排除原因）</span> <span class="pill" id="rsSum"></span></div>
+      <div id="reasons"></div>
+      <div class="btns"><button class="small" data-add="reasons" data-en="+ Add reason">＋ 新增排除原因</button><button class="small" data-paste="reasons" data-en="Paste list…">批次貼上…</button></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="step-no">3</span> Included</h2>
+      <label class="nrow"><span>Studies included in review</span><input class="n" data-k="studies" data-d="studies" inputmode="numeric"></label>
+      <label class="nrow"><span>Reports of included studies</span><input class="n" data-k="reports" data-d="reports" inputmode="numeric"></label>
+      <div class="btns" style="margin-top:8px">
+        <button id="btnFill" class="small" title="把目前自動推算的數字正式寫入欄位" data-en-title="Write the auto-calculated numbers into the fields" data-en="Write auto values into fields">把自動值寫入欄位</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <label class="check" style="margin:0 0 6px"><input type="checkbox" data-k="other"> <b data-en="Add “Other methods” column (websites, organisations, citation searching…)">加入「Other methods」欄（網站、機構、引用文獻搜尋等）</b></label>
+      <div data-show="other">
+        <div class="sub-h">Records identified from:</div>
+        <div id="oSources"></div>
+        <div class="btns"><button class="small" data-add="oSources" data-en="+ Add source">＋ 新增來源</button><button class="small" data-paste="oSources" data-en="Paste list…">批次貼上…</button></div>
+        <div style="height:10px"></div>
+        <label class="nrow"><span>Reports sought for retrieval</span><input class="n" data-k="oSought" data-d="oSought" inputmode="numeric"></label>
+        <label class="nrow"><span>Reports not retrieved</span><input class="n" data-k="oNotRetrieved" inputmode="numeric"></label>
+        <label class="nrow"><span>Reports assessed for eligibility</span><input class="n" data-k="oAssessed" data-d="oAssessed" inputmode="numeric"></label>
+        <div class="sub-h">Reports excluded:</div>
+        <div id="oReasons"></div>
+        <div class="btns"><button class="small" data-add="oReasons" data-en="+ Add reason">＋ 新增排除原因</button><button class="small" data-paste="oReasons" data-en="Paste list…">批次貼上…</button></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <details>
+        <summary><span class="step-no" style="display:inline-grid">4</span> <span data-en="Appearance">外觀：字型、顏色、線條、間距</span></summary>
+        <div class="grid2">
+          <label class="field"><span data-en="Colour preset">配色預設</span><select id="themeSel">
+            <option value="" data-en="Choose…">選擇…</option>
+            <option value="classic" data-en="PRISMA classic (yellow/grey/blue)">PRISMA 經典（黃／灰／藍）</option>
+            <option value="blue" data-en="Soft blue">柔和藍</option>
+            <option value="mono" data-en="Grayscale">灰階</option>
+            <option value="plain" data-en="Plain black &amp; white">純黑白</option></select></label>
+          <label class="field"><span data-en="Box width (px)">方框寬度 (px)</span><input type="number" data-k="boxW" min="140" max="600" step="10"></label>
+        </div>
+        <div id="styleFields"></div>
+        <div class="grid2">
+          <label class="field"><span data-en="Header (databases)">左欄標題底色</span><input type="color" data-k="c.hdrDb" style="width:100%"></label>
+          <label class="field"><span data-en="Header (other methods)">右欄標題底色</span><input type="color" data-k="c.hdrOther" style="width:100%"></label>
+          <label class="field"><span data-en="Phase labels">階段標籤底色</span><input type="color" data-k="c.phase" style="width:100%"></label>
+          <label class="field"><span data-en="n format">n 顯示格式</span><select data-k="nStyle">
+            <option value="paren">(n = 1,234)</option><option value="tight">(n=1,234)</option>
+            <option value="plain">n = 1,234</option><option value="N">(N = 1,234)</option></select></label>
+        </div>
+        <label class="check"><input type="checkbox" data-k="comma"> <span data-en="Thousands separator">數字加千分位逗號</span></label>
+        <label class="check"><input type="checkbox" data-k="hideEmpty"> <span data-en="Hide optional lines without a number (registers, automation tools…)">隱藏未填數字的選填項目（registers、automation tools…）</span></label>
+        <label class="check"><input type="checkbox" data-k="phases"> <span data-en="Show phase labels (Identification / Screening / Included)">顯示左側階段標籤</span></label>
+        <label class="check"><input type="checkbox" data-k="hdrBold"> <span data-en="Bold column headers">欄位標題粗體</span></label>
+        <label class="check"><input type="checkbox" data-k="headers"> <span data-en="Show column headers">顯示欄位標題</span></label>
+      </details>
+    </div>
+
+    <div class="card">
+      <details>
+        <summary data-en="Figure text (edit any label)">圖中文字（可改寫任何標籤）</summary>
+        <p class="hint" data-en="Change wording, e.g. for a different language or journal style. Leave a field unchanged to keep the PRISMA 2020 wording.">可改寫成其他用詞或語言，保留預設即為 PRISMA 2020 原文。</p>
+        <div id="labels"></div>
+        <button class="small" id="resetLabels" data-en="Restore PRISMA wording">還原 PRISMA 原文</button>
+      </details>
+      <label class="check" style="margin-top:10px"><input type="checkbox" data-k="srcLine"> <span data-en="Source line under the figure (“From: Page MJ, et al. … BMJ 2021;372:n71”) — the PRISMA template licence (CC BY 4.0) requires citing the original">圖下方加上來源引用行（From: Page MJ, et al. … BMJ 2021;372:n71）— PRISMA 範本授權（CC BY 4.0）要求引用原始出處</span></label>
+      <label class="check"><input type="checkbox" data-k="tplNotes"> <span data-en="Official template footnotes (* per-database counts, ** automation tools)">官方範本註腳（* 各資料庫筆數、** 自動化工具）</span></label>
+      <label class="field" style="margin-top:10px"><span data-en="Footnote (optional)">註腳（選填，顯示在圖下方）</span><textarea data-k="footnote" rows="2"></textarea></label>
+    </div>
+    <div class="card" id="refs"></div>
+  </section>
+
+  <section class="preview-col">
+    <div class="paper" id="preview"></div>
+    <div class="msgs" id="msgs"></div>
+    <div class="card" id="export"></div>
+  </section>
+</main>
+
+<script src="../shared/common.js?v=20260930a"></script>
+<script>
+const T = RT.t;
+const KEY = 'prisma3';
+const LABELS = {
+  hdrDb: 'Identification of new studies via databases and registers',
+  hdrOther: 'Identification of new studies via other methods',
+  identified: 'Records identified from:', databases: 'Databases', registers: 'Registers',
+  removed: 'Records removed before screening:', dup: 'Duplicate records removed',
+  autoTools: 'Records marked as ineligible by automation tools', otherRemoved: 'Records removed for other reasons',
+  screened: 'Records screened', excluded: 'Records excluded',
+  sought: 'Reports sought for retrieval', notRetrieved: 'Reports not retrieved',
+  assessed: 'Reports assessed for eligibility', reportsExcluded: 'Reports excluded:',
+  studies: 'Studies included in review', reports: 'Reports of included studies',
+  phaseId: 'Identification', phaseScr: 'Screening', phaseInc: 'Included',
+};
+const THEMES = {
+  classic: { hdrDb: '#FFC000', hdrOther: '#D9D9D9', phase: '#9DC3E6' },
+  blue: { hdrDb: '#C9DAF8', hdrOther: '#E3E8EF', phase: '#DCE7F7' },
+  mono: { hdrDb: '#D9D9D9', hdrOther: '#EDEDED', phase: '#E6E6E6' },
+  plain: { hdrDb: '#FFFFFF', hdrOther: '#FFFFFF', phase: '#FFFFFF' },
+};
+const R3 = () => [{ t: 'Reason 1', n: '' }, { t: 'Reason 2', n: '' }, { t: 'Reason 3', n: '' }];
+const DEF = {
+  autoFill: true,
+  databases: '', dbDetail: '', registers: '', dup: '', autoTools: '', otherRemoved: '',
+  screened: '', excluded: '', sought: '', notRetrieved: '', assessed: '',
+  reasons: R3(), studies: '', reports: '',
+  other: false,
+  oSources: [{ t: 'Websites', n: '' }, { t: 'Organisations', n: '' }, { t: 'Citation searching', n: '' }],
+  oSought: '', oNotRetrieved: '', oAssessed: '', oReasons: R3(),
+  boxW: 280, nStyle: 'paren', comma: true, hideEmpty: false, phases: true, hdrBold: true, headers: true, srcLine: true, tplNotes: false,
+  c: { ...THEMES.classic },
+  st: { ...RT.STYLE_DEF },
+  L: { ...LABELS }, footnote: '',
+};
+const EXAMPLE = RT.merge(DEF, {
+  databases: '', dbDetail: 'PubMed: 523\nEmbase: 811\nCochrane Library: 97', registers: '46',
+  dup: '312', autoTools: '0', otherRemoved: '5', excluded: '1021', notRetrieved: '4',
+  reasons: [{ t: 'Wrong population', n: '41' }, { t: 'Wrong outcome', n: '37' }, { t: 'Not original research', n: '29' }],
+  studies: '26',
+  other: true, oSources: [{ t: 'Websites', n: '6' }, { t: 'Organisations', n: '0' }, { t: 'Citation searching', n: '9' }],
+  oNotRetrieved: '2', oReasons: [{ t: 'Wrong population', n: '6' }, { t: 'Wrong outcome', n: '4' }],
+});
+EXAMPLE.reasons = [{ t: 'Wrong population', n: '41' }, { t: 'Wrong outcome', n: '37' }, { t: 'Not original research', n: '29' }];
+EXAMPLE.oReasons = [{ t: 'Wrong population', n: '6' }, { t: 'Wrong outcome', n: '4' }];
+let S = RT.load(KEY, DEF);
+
+/* ---------------- form ---------------- */
+const form = document.getElementById('form');
+document.getElementById('styleFields').innerHTML = RT.styleFieldsHTML();
+document.getElementById('refs').innerHTML = RT.refsHTML([RT.REFS.prisma, RT.REFS.prismaFlow, RT.REFS.libs], [RT.LICENSES.prisma]);
+document.getElementById('labels').innerHTML = Object.keys(LABELS).map((k) =>
+  `<label class="field"><span>${RT.esc(LABELS[k])}</span><input data-k="L.${k}"></label>`).join('');
+function syncInputs() {
+  RT.syncForm(form, S);
+  ['reasons', 'oSources', 'oReasons'].forEach(renderList);
+}
+RT.bindForm(form, () => S, () => update());
+form.addEventListener('click', async (e) => {
+  const add = e.target.closest('[data-add]');
+  if (add) { addItem(add.dataset.add); return; }
+  const paste = e.target.closest('[data-paste]');
+  if (paste) {
+    const k = paste.dataset.paste;
+    const txt = await RT.promptText(T('批次貼上', 'Paste list'),
+      T('每行一項：<code>原因[Tab 或 , 或 :]數字</code>，可直接從 Excel 複製兩欄貼上。會取代目前清單。', 'One per line: <code>reason[Tab , or :]number</code> — you can copy two columns from Excel. Replaces the current list.'),
+      S[k].filter((r) => r.t || r.n).map((r) => `${r.t}\t${r.n}`).join('\n'));
+    if (txt === null) return;
+    S[k] = RT.parsePairs(txt);
+    renderList(k); update();
+  }
+});
+document.getElementById('themeSel').onchange = (e) => {
+  const th = THEMES[e.target.value];
+  e.target.value = '';
+  if (!th) return;
+  S.c = { ...th };
+  RT.syncForm(form, S); update();
+};
+document.getElementById('resetLabels').onclick = () => { S.L = { ...LABELS }; RT.syncForm(form, S); update(); };
+function addItem(k, focus = true) {
+  S[k].push({ t: k === 'oSources' ? 'Source' : 'Reason ' + (S[k].length + 1), n: '' });
+  renderList(k); update();
+  if (focus) { const rows = document.querySelectorAll(`#${k} .list-row`); rows[rows.length - 1]?.querySelector('input')?.select(); }
+}
+function renderList(k) {
+  const host = document.getElementById(k);
+  host.innerHTML = '';
+  S[k].forEach((it, i) => {
+    const row = RT.h(`<div class="list-row"><input placeholder="${T('說明', 'Description')}"><input class="n" inputmode="numeric" placeholder="n"><button class="icon" title="${T('刪除', 'Delete')}">✕</button></div>`);
+    const [t, n, del] = row.children;
+    t.value = it.t; n.value = it.n;
+    t.oninput = () => { it.t = t.value; update(); };
+    n.oninput = () => { it.n = n.value; update(); };
+    n.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); if (i === S[k].length - 1) addItem(k); else host.children[i + 1].querySelector('input').focus(); } };
+    del.onclick = () => { S[k].splice(i, 1); renderList(k); update(); };
+    host.appendChild(row);
+  });
+}
+
+/* ---------------- calculations ---------------- */
+const N = RT.num;
+const z = (v) => (v ?? 0);
+function parseDetail(txt) {
+  return String(txt || '').split('\n').map((l) => l.trim()).filter(Boolean).map((l) => {
+    const m = l.match(/^(.*?)\s*[:=,|\t(]\s*n?\s*=?\s*([\d,]+)\s*\)?\s*$/i);
+    return m ? { name: m[1].trim(), n: m[2] } : { name: l, n: null };
+  });
+}
+/** D = derived value from upstream numbers; E = effective value (typed, else derived when autoFill) */
+function compute() {
+  const D = {}, E = {};
+  const g = (k) => N(S[k]);
+  const eff = (k) => { E[k] = g(k) ?? (S.autoFill ? D[k] ?? null : null); return E[k]; };
+  const det = parseDetail(S.dbDetail);
+  D.databases = det.length && det.every((d) => d.n !== null) ? RT.sum(det.map((d) => d.n)) : null;
+  eff('databases');
+  E.registers = g('registers');
+  const ident = E.databases !== null || E.registers !== null ? z(E.databases) + z(E.registers) : null;
+  D.screened = ident !== null ? ident - z(g('dup')) - z(g('autoTools')) - z(g('otherRemoved')) : null;
+  eff('screened');
+  D.sought = E.screened !== null && g('excluded') !== null ? E.screened - g('excluded') : null;
+  eff('sought');
+  D.assessed = E.sought !== null && g('notRetrieved') !== null ? E.sought - g('notRetrieved') : null;
+  eff('assessed');
+  const active = (arr) => arr.filter((r) => r.t || r.n);
+  const rs = RT.sum(active(S.reasons).map((r) => r.n));
+  let rep = E.assessed !== null && rs !== null ? E.assessed - rs : null;
+  if (S.other) {
+    D.oSought = RT.sum(active(S.oSources).map((r) => r.n));
+    eff('oSought');
+    D.oAssessed = E.oSought !== null && g('oNotRetrieved') !== null ? E.oSought - g('oNotRetrieved') : null;
+    eff('oAssessed');
+    const ors = RT.sum(active(S.oReasons).map((r) => r.n));
+    rep = rep !== null && E.oAssessed !== null && ors !== null ? rep + E.oAssessed - ors : null;
+  }
+  D.reports = rep;
+  eff('reports');
+  D.studies = E.reports;
+  eff('studies');
+  return { D, E, rs };
+}
+function checks({ D, E, rs }) {
+  const msgs = [];
+  const fmt = (v) => RT.fmtNum(v);
+  const bad = new Set();
+  const cmp = (k, why) => {
+    const v = N(S[k]);
+    if (v !== null && D[k] !== null && D[k] !== undefined && v !== D[k]) { bad.add(k); msgs.push(`${why}: ${T('推算為', 'expected')} ${fmt(D[k])}, ${T('目前填', 'entered')} ${fmt(v)}`); }
+  };
+  cmp('databases', T('各資料庫明細加總 ≠ Databases（若已去除資料庫內重複可忽略）', 'Per-database sum ≠ Databases (ignore if de-duplicated within databases)'));
+  cmp('screened', T('Records screened = identified − removed', 'Records screened = identified − removed'));
+  cmp('sought', 'Reports sought = screened − excluded');
+  cmp('assessed', 'Reports assessed = sought − not retrieved');
+  if (S.other) cmp('oAssessed', '(Other) assessed = sought − not retrieved');
+  cmp('reports', T('Reports of included studies = assessed − 排除原因合計', 'Reports of included = assessed − excluded reasons'));
+  if (E.studies !== null && E.reports !== null && E.studies > E.reports) { bad.add('studies'); msgs.push(T('Studies included 通常應 ≤ Reports of included studies', 'Studies included should usually be ≤ reports of included studies')); }
+  ['reasons', 'oReasons'].forEach((k) => { if ((k === 'reasons' || S.other) && S[k].some((r) => r.t && String(r.n).trim() === '')) msgs.push(T('有排除原因尚未填人數', 'Some exclusion reasons have no number')); });
+  // field states
+  form.querySelectorAll('input[data-k]').forEach((el) => el.classList.toggle('bad', bad.has(el.dataset.k)));
+  form.querySelectorAll('input[data-d]').forEach((el) => {
+    const k = el.dataset.d;
+    const auto = S.autoFill && String(S[k]).trim() === '' && D[k] !== null && D[k] !== undefined;
+    el.classList.toggle('auto', auto);
+    el.placeholder = auto ? T('自動 ', 'Auto ') + fmt(D[k]) : '';
+  });
+  document.getElementById('rsSum').textContent = rs !== null ? T('合計 ', 'Total ') + fmt(rs) : '';
+  document.getElementById('msgs').innerHTML = msgs.length ? msgs.map((m) => `<div class="msg">⚠ ${RT.esc(m)}</div>`).join('')
+    : (E.screened !== null ? `<div class="msg ok">✓ ${T('數字檢查通過', 'All numbers are consistent')}</div>` : '');
+}
+document.getElementById('btnFill').onclick = () => {
+  const { E } = compute();
+  for (const k of ['databases', 'screened', 'sought', 'assessed', 'oSought', 'oAssessed', 'reports', 'studies'])
+    if (String(S[k] ?? '').trim() === '' && E[k] !== null && E[k] !== undefined) S[k] = String(E[k]);
+  syncInputs(); update();
+  RT.toast(T('已寫入自動推算的數字', 'Auto-calculated values written'));
+};
+
+/* ---------------- drawing ---------------- */
+function build({ E }) {
+  const st = RT.applyStyle(S.st), L = S.L;
+  const fs = Number(st.fontSize) || 13, bw = Number(S.boxW) || 280;
+  const nt = (v) => RT.nText(v ?? '', { style: S.nStyle, comma: S.comma });
+  const val = (k) => E[k] ?? S[k];
+  const show = (v) => !S.hideEmpty || N(v) !== null;
+  const bo = { size: fs, fill: st.boxFill, stroke: st.boxStroke, sw: Number(st.boxSW), radius: Number(st.radius), pad: Number(st.pad), lh: Number(st.lh), color: st.textColor };
+  const boL = { ...bo, align: 'left' };
+  const ind = Math.round(fs * 1.1);
+  const M = 16, pw = S.phases ? Math.round(fs * 2.1) : 0;
+  const gx = Number(st.gapX) || 50, gcol = Math.round(gx * 0.8);
+  const xDbL = M + (S.phases ? pw + 14 : 0), xDbR = xDbL + bw + gx;
+  const xOL = xDbR + bw + gcol, xOR = xOL + bw + gx;
+  const W = (S.other ? xOR : xDbR) + bw + M;
+  const gy = Number(st.gapY) || 34;
+  RT.beginScene();
+  let body = '';
+  let y = M;
+  if (S.headers) {
+    const hdrW = 2 * bw + gx;
+    const hDb = RT.box([{ text: L.hdrDb, bold: S.hdrBold }], hdrW, { ...bo, fill: S.c.hdrDb });
+    const hO = S.other ? RT.box([{ text: L.hdrOther, bold: S.hdrBold }], hdrW, { ...bo, fill: S.c.hdrOther }) : null;
+    const hh = Math.max(hDb.h, hO ? hO.h : 0);
+    body += RT.drawBox(hDb, xDbL, M, hh);
+    if (hO) body += RT.drawBox(hO, xOL, M, hh);
+    y = M + hh + gy * 0.8;
+  }
+  const det = parseDetail(S.dbDetail);
+  const reasonItems = (arr) => arr.filter((r) => r.t || r.n).map((r) => ({ text: `${r.t} ${nt(r.n)}`.trim(), indent: ind }));
+  const rows = [
+    {
+      L: [{ text: L.identified.replace(/:$/, '') + (S.tplNotes ? '*:' : ':') }, { text: `${L.databases} ${nt(val('databases'))}`, indent: ind },
+        ...det.map((d) => ({ text: d.n !== null ? `${d.name} ${nt(d.n)}` : d.name, indent: ind * 2, size: fs - 1 })),
+        show(S.registers) ? { text: `${L.registers} ${nt(S.registers)}`, indent: ind } : null],
+      R: [{ text: L.removed }, { text: `${L.dup} ${nt(S.dup)}`, indent: ind },
+        show(S.autoTools) ? { text: `${L.autoTools} ${nt(S.autoTools)}`, indent: ind } : null,
+        show(S.otherRemoved) ? { text: `${L.otherRemoved} ${nt(S.otherRemoved)}`, indent: ind } : null],
+      La: 'left', Ra: 'left',
+      OL: S.other ? [{ text: L.identified }, ...reasonItems(S.oSources)] : null, OLa: 'left',
+    },
+    { L: [{ text: L.screened }, { text: nt(val('screened')) }], R: [{ text: L.excluded + (S.tplNotes ? '**' : '') }, { text: nt(S.excluded) }] },
+    {
+      L: [{ text: L.sought }, { text: nt(val('sought')) }], R: [{ text: L.notRetrieved }, { text: nt(S.notRetrieved) }],
+      OL: S.other ? [{ text: L.sought }, { text: nt(val('oSought')) }] : null,
+      OR: S.other ? [{ text: L.notRetrieved }, { text: nt(S.oNotRetrieved) }] : null,
+    },
+    {
+      L: [{ text: L.assessed }, { text: nt(val('assessed')) }], R: [{ text: L.reportsExcluded }, ...reasonItems(S.reasons)], Ra: 'left',
+      OL: S.other ? [{ text: L.assessed }, { text: nt(val('oAssessed')) }] : null,
+      OR: S.other ? [{ text: L.reportsExcluded }, ...reasonItems(S.oReasons)] : null, ORa: 'left',
+    },
+    { L: [{ text: L.studies }, { text: nt(val('studies')) }, { text: L.reports, gap: fs * 0.5 }, { text: nt(val('reports')) }] },
+  ];
+  const pos = [];
+  rows.forEach((r) => {
+    const mk = (items, a) => (items ? RT.box(items, bw, a === 'left' ? boL : bo) : null);
+    const b = { L: mk(r.L, r.La), R: mk(r.R, r.Ra), OL: mk(r.OL, r.OLa), OR: mk(r.OR, r.ORa) };
+    const h = Math.max(...Object.values(b).filter(Boolean).map((x) => x.h), fs * 3.4);
+    pos.push({ y, h });
+    for (const [k, x] of [['L', xDbL], ['R', xDbR], ['OL', xOL], ['OR', xOR]]) if (b[k]) body += RT.drawBox(b[k], x, y, h);
+    y += h + gy;
+  });
+  y -= gy;
+  const ao = { color: st.lineColor, sw: Number(st.lineW), head: Number(st.headSize) };
+  const cxL = xDbL + bw / 2, cxO = xOL + bw / 2;
+  for (let i = 0; i < 4; i++) {
+    body += RT.arrow([[cxL, pos[i].y + pos[i].h], [cxL, pos[i + 1].y]], ao);
+    const my = pos[i].y + pos[i].h / 2;
+    body += RT.arrow([[xDbL + bw, my], [xDbR, my]], ao);
+  }
+  if (S.other) {
+    body += RT.arrow([[cxO, pos[0].y + pos[0].h], [cxO, pos[2].y]], ao);
+    body += RT.arrow([[cxO, pos[2].y + pos[2].h], [cxO, pos[3].y]], ao);
+    for (const i of [2, 3]) { const my = pos[i].y + pos[i].h / 2; body += RT.arrow([[xOL + bw, my], [xOR, my]], ao); }
+    const my4 = pos[4].y + pos[4].h / 2;
+    body += RT.arrow([[cxO, pos[3].y + pos[3].h], [cxO, my4], [xDbL + bw, my4]], ao);
+  }
+  if (S.phases) {
+    const po = { size: fs, fill: S.c.phase, stroke: st.boxStroke, sw: Number(st.boxSW), radius: Math.min(8, pw / 3), color: st.textColor };
+    body += RT.vlabel(M, pos[0].y, pw, pos[0].h, L.phaseId, po);
+    body += RT.vlabel(M, pos[1].y, pw, pos[3].y + pos[3].h - pos[1].y, L.phaseScr, po);
+    body += RT.vlabel(M, pos[4].y, pw, pos[4].h, L.phaseInc, po);
+  }
+  const notes = [];
+  if (S.tplNotes) notes.push({ text: '*Consider, if feasible to do so, reporting the number of records identified from each database or register searched (rather than the total number across all databases/registers).' }, { text: '**If automation tools were used, indicate how many records were excluded by a human and how many were excluded by automation tools.' });
+  if (S.footnote && S.footnote.trim()) notes.push({ text: S.footnote });
+  if (S.srcLine) notes.push({ text: 'From: Page MJ, McKenzie JE, Bossuyt PM, Boutron I, Hoffmann TC, Mulrow CD, et al. The PRISMA 2020 statement: an updated guideline for reporting systematic reviews. BMJ 2021;372:n71. doi: 10.1136/bmj.n71. For more information, visit: http://www.prisma-statement.org/', gap: notes.length ? fs * 0.35 : 0 });
+  if (notes.length) {
+    const fb = RT.box(notes, W - 2 * M, { size: fs - 1, align: 'left', stroke: 'none', fill: 'none', pad: 0, padX: 0, lh: Number(st.lh), color: st.textColor });
+    y += fs;
+    body += RT.drawBox(fb, M, y);
+    y += fb.h;
+  }
+  return RT.figure(W, y + M, body);
+}
+
+let fig;
+const preview = document.getElementById('preview');
+const exporter = RT.exportPanel(document.getElementById('export'), () => fig, 'PRISMA_flow');
+const hist = RT.history(() => S, (s) => { S = s; syncInputs(); render(); });
+function render() {
+  const calc = compute();
+  try { fig = build(calc); preview.innerHTML = fig.svg; }
+  catch (e) { console.error(e); preview.innerHTML = `<div class="msg">⚠ ${RT.esc(e.message)}</div>`; }
+  checks(calc);
+  exporter.refresh();
+  RT.save(KEY, S);
+}
+const update = RT.debounce(() => { render(); hist.push(); }, 60);
+
+document.getElementById('btnUndo').onclick = hist.undo;
+document.getElementById('btnRedo').onclick = hist.redo;
+document.getElementById('btnExample').onclick = () => { S = RT.merge(S, structuredClone(EXAMPLE)); ['reasons', 'oSources', 'oReasons'].forEach((k) => (S[k] = structuredClone(EXAMPLE[k]))); syncInputs(); update(); RT.toast(T('已載入範例（虛構數據，僅供示範）', 'Example loaded (fictional numbers, for illustration only)')); };
+document.getElementById('btnReset').onclick = () => { const keep = { st: S.st, c: S.c, L: S.L, boxW: S.boxW }; S = RT.merge(DEF, keep); syncInputs(); update(); RT.toast(T('已清空數字與清單，外觀設定保留（按 ↶ 可復原）', 'Numbers and lists cleared, appearance kept (↶ to undo)')); };
+document.getElementById('btnSaveJson').onclick = () => RT.downloadJSON(S, 'prisma_flow.json');
+document.getElementById('btnLoadJson').onclick = async () => { try { S = RT.merge(DEF, await RT.pickJSON()); syncInputs(); update(); } catch (e) { RT.toast(T('讀取失敗：', 'Could not open file: ') + e.message, 6000); } };
+
+syncInputs();
+render();
+hist.push();
+</script>
+</body>
+</html>

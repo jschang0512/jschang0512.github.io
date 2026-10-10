@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title data-en="Cohort Selection Flow">Cohort Selection Flow</title>
+<link rel="stylesheet" href="../shared/style.css?v=20260930a">
+<style>
+  .step-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="back" href="../index.html" data-en="← Home">← 工具首頁</a>
+  <h1>Cohort Patient Selection Flowchart</h1>
+  <span class="sub" data-en="Patient selection flow for cohort studies">世代研究病人選取流程圖</span>
+  <span class="spacer"></span>
+  <div class="btns">
+    <button class="small" id="btnUndo" title="復原 (Ctrl+Z)" data-en-title="Undo (Ctrl+Z)">↶</button>
+    <button class="small" id="btnRedo" title="重做 (Ctrl+Y)" data-en-title="Redo (Ctrl+Y)">↷</button>
+    <button class="small" id="btnSaveJson" title="把目前所有輸入與設定下載成 .json 檔，之後可用「開啟設定檔」繼續編輯或分享給共同作者" data-en-title="Download all inputs and settings as a .json file; reopen it later or share it with co-authors" data-en="Save project">儲存設定檔</button>
+    <button class="small" id="btnLoadJson" title="開啟先前儲存的 .json 設定檔，還原所有輸入" data-en-title="Open a previously saved .json project file" data-en="Open project">開啟設定檔</button>
+    <button class="small" id="btnExample" data-en="Example">範例</button>
+    <button class="small" id="btnReset" data-en="Clear">清空</button>
+  </div>
+</header>
+
+<main class="tool">
+  <section id="form">
+    <div class="card">
+      <h2><span class="step-no">1</span> <span data-en="Source population">起始族群</span></h2>
+      <div class="list-row wide" style="grid-template-columns:minmax(0,1fr) 110px">
+        <textarea data-k="start.text" rows="2" placeholder="例：Patients in the NHIRD, 2010–2020" data-en-ph="e.g. Patients in the NHIRD, 2010–2020"></textarea>
+        <input class="n" data-k="start.n" inputmode="numeric" placeholder="n">
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="step-no">2</span> <span data-en="Selection steps (top to bottom)">篩選步驟（由上往下）</span></h2>
+      <p class="hint" data-en="Each step has an exclusion box and the remaining population. Leave the remaining n blank to compute it automatically (previous − excluded, shown in <span style='color:var(--accent);font-style:italic'>blue italics</span>). With no exclusion reasons only an arrow is drawn — use the arrow note for steps such as matching.">每一步有一個排除框與排除後的族群。剩餘人數留空會自動以「上一步 − 排除總數」計算（<span style="color:var(--accent);font-style:italic">藍色斜體</span>）。沒有排除原因時只畫箭頭，可用「箭頭旁說明」標註 matching 等步驟。</p>
+      <div id="steps"></div>
+      <button class="small" id="addStep" data-en="+ Add step">＋ 新增步驟</button>
+    </div>
+
+    <div class="card">
+      <h2><span class="step-no">3</span> <span data-en="Groups (optional)">分組（選填）</span></h2>
+      <p class="hint" data-en="Final groups, e.g. exposed / unexposed. Each group can have several levels (e.g. after matching, analysed).">最後分成的組別（例如暴露組／對照組）。每組可有多層方框（例如 matching 後、分析族群）。</p>
+      <div id="groups"></div>
+      <button class="small" id="addGroup" data-en="+ Add group">＋ 新增組別</button>
+    </div>
+
+    <div class="card">
+      <details>
+        <summary><span class="step-no" style="display:inline-grid">4</span> <span data-en="Appearance">外觀：字型、顏色、線條、間距</span></summary>
+        <div class="grid3">
+          <label class="field"><span data-en="Main box width">主方框寬</span><input type="number" data-k="boxW" min="120" max="600" step="10"></label>
+          <label class="field"><span data-en="Exclusion box width">排除框寬</span><input type="number" data-k="exW" min="120" max="600" step="10"></label>
+          <label class="field"><span data-en="Group box width">組別方框寬</span><input type="number" data-k="groupW" min="80" max="500" step="10"></label>
+        </div>
+        <div id="styleFields"></div>
+        <div class="grid3">
+          <label class="field"><span data-en="Exclusion fill">排除框填色</span><input type="color" data-k="exFill" style="width:100%"></label>
+          <label class="field"><span data-en="Group fill">組別填色</span><input type="color" data-k="grpFill" style="width:100%"></label>
+          <label class="field"><span data-en="Excl. text size">排除框字級</span><input type="number" data-k="exSize" min="6" max="30" step="0.5"></label>
+        </div>
+        <div class="grid2">
+          <label class="field"><span data-en="n format">n 顯示格式</span><select data-k="nStyle">
+            <option value="paren">(n = 1,234)</option><option value="tight">(n=1,234)</option>
+            <option value="plain">n = 1,234</option><option value="N">(N = 1,234)</option></select></label>
+          <label class="field"><span data-en="n position">n 位置</span><select data-k="nBreak"><option value="1" data-en="New line">另起一行</option><option value="0" data-en="After text">接在文字後</option></select></label>
+          <label class="field"><span data-en="Default exclusion side">排除框預設位置</span><select data-k="exSide"><option value="right" data-en="Right">右側</option><option value="left" data-en="Left">左側</option></select></label>
+          <label class="field"><span data-en="Bullet symbol">項目符號</span><select data-k="bullet"><option value="• ">•</option><option value="- ">-</option><option value="– ">–</option><option value="" data-en="None">無</option><option value="num" data-en="1. 2. 3.">1. 2. 3.</option></select></label>
+        </div>
+        <label class="check"><input type="checkbox" data-k="comma"> <span data-en="Thousands separator">數字加千分位逗號</span></label>
+        <label class="check"><input type="checkbox" data-k="exTotal"> <span data-en="Show total excluded in exclusion title">排除框標題顯示排除總數</span></label>
+        <label class="check"><input type="checkbox" data-k="exTitleBold"> <span data-en="Bold exclusion title">排除框標題粗體</span></label>
+        <label class="check"><input type="checkbox" data-k="boldMain"> <span data-en="Bold main box text">主方框文字粗體</span></label>
+        <label class="field"><span data-en="Footnote (optional)">註腳（選填）</span><textarea data-k="footnote" rows="2"></textarea></label>
+      </details>
+    </div>
+    <div class="card" id="refs"></div>
+  </section>
+
+  <section class="preview-col">
+    <div class="paper" id="preview"></div>
+    <div class="msgs" id="msgs"></div>
+    <div class="card" id="export"></div>
+  </section>
+</main>
+
+<script src="../shared/common.js?v=20260930a"></script>
+<script>
+const T = RT.t;
+const KEY = 'cohort3';
+const step = (o) => Object.assign({ exTitle: 'Excluded', reasons: [{ t: '', n: '' }], text: '', n: '', side: 'auto', note: '', overlap: false, total: '' }, o);
+const DEF = {
+  start: { text: 'Patients in the database', n: '' },
+  steps: [step({ text: 'Eligible patients' })],
+  groups: [],
+  boxW: 280, exW: 280, groupW: 220, exFill: '#FFFFFF', grpFill: '#FFFFFF', exSize: 13,
+  nStyle: 'paren', exSide: 'right', nBreak: '1', bullet: '• ',
+  comma: true, exTotal: true, exTitleBold: false, boldMain: false, footnote: '',
+  st: { ...RT.STYLE_DEF, gapY: 36, gapX: 32 },
+};
+const EXAMPLE = {
+  start: { text: 'Patients with type 2 diabetes in the NHIRD, 2010–2020', n: '1245678' },
+  steps: [
+    step({ reasons: [{ t: 'Age < 20 years', n: '12034' }, { t: 'Missing sex or birth date', n: '856' }, { t: 'Follow-up < 180 days', n: '41320' }], text: 'Adults with T2D' }),
+    step({ reasons: [{ t: 'Prior cancer diagnosis', n: '98211' }, { t: 'Dialysis before index date', n: '15403' }, { t: 'Used both drug A and drug B at index', n: '2317' }], text: 'New users of drug A or drug B' }),
+  ],
+  groups: [
+    { boxes: [{ text: 'Drug A users', n: '612880' }, { text: 'After 1:1 propensity score matching', n: '301226' }] },
+    { boxes: [{ text: 'Drug B users', n: '462657' }, { text: 'After 1:1 propensity score matching', n: '301226' }] },
+  ],
+};
+let S = RT.load(KEY, DEF);
+
+/* ---------------- form ---------------- */
+const form = document.getElementById('form');
+document.getElementById('styleFields').innerHTML = RT.styleFieldsHTML();
+document.getElementById('refs').innerHTML = RT.refsHTML([RT.REFS.strobe, RT.REFS.record, RT.REFS.libs], [T('重疊的排除原因：若勾選「原因可重疊」，圖中各原因人數加總可能大於排除總數，建議在註腳說明「participants could meet more than one exclusion criterion」。', 'Overlapping exclusion reasons: when ticked, reason counts may add up to more than the total excluded — state in a footnote that participants could meet more than one criterion.')]);
+function syncInputs() { RT.syncForm(form, S); renderSteps(); renderGroups(); }
+RT.bindForm(form, () => S, () => update());
+const move = (arr, i, d) => { const j = i + d; if (j < 0 || j >= arr.length) return; [arr[i], arr[j]] = [arr[j], arr[i]]; };
+
+function renderSteps() {
+  const host = document.getElementById('steps');
+  host.innerHTML = '';
+  S.steps.forEach((st, si) => {
+    const blk = RT.h(`<div class="block">
+      <div class="block-head"><b>${T('步驟', 'Step')} ${si + 1}</b><span class="spacer"></span>
+        <button class="small" data-a="up" title="${T('上移', 'Move up')}">↑</button><button class="small" data-a="down" title="${T('下移', 'Move down')}">↓</button>
+        <button class="icon" data-a="del" title="${T('刪除步驟', 'Delete step')}">✕</button></div>
+      <label class="field"><span>${T('排除框標題', 'Exclusion box title')}</span><input data-f="exTitle"></label>
+      <div class="lbl">${T('排除原因', 'Exclusion reasons')} <span class="pill rs-sum"></span></div><div class="rs"></div>
+      <label class="check" style="margin:4px 0" title="${T('預設各原因互斥（依序套用，每人只算一次），排除總數＝各原因加總。若一人可同時符合多個原因，請勾選並手動填排除總數。', 'By default reasons are mutually exclusive (applied in sequence, each person counted once) so the total is their sum. If a person can meet several reasons, tick this and enter the total.')}"><input type="checkbox" data-f="overlap"> ${T('原因可重疊（手動填排除總數）', 'Reasons overlap (enter total manually)')}</label>
+      <label class="field ov-total"><span>${T('排除總數（不重複人數）', 'Total excluded (unique persons)')}</span><input class="n" data-f="total" inputmode="numeric"></label>
+      <div class="btns"><button class="small" data-a="addR">${T('＋ 排除原因', '+ Reason')}</button><button class="small" data-a="paste">${T('批次貼上…', 'Paste list…')}</button></div>
+      <div class="lbl" style="margin-top:10px">${T('排除後族群', 'Remaining population')}</div>
+      <div class="list-row wide" style="grid-template-columns:minmax(0,1fr) 110px">
+        <textarea data-f="text" rows="1" placeholder="${T('例：Eligible patients', 'e.g. Eligible patients')}"></textarea><input class="n" data-f="n" inputmode="numeric"></div>
+      <div class="step-opts">
+        <label><span class="lbl">${T('排除框位置', 'Exclusion side')}</span><select data-f="side">
+          <option value="auto">${T('預設', 'Default')}</option><option value="right">${T('右側', 'Right')}</option><option value="left">${T('左側', 'Left')}</option></select></label>
+        <label><span class="lbl">${T('箭頭旁說明（選填）', 'Arrow note (optional)')}</span><input data-f="note" placeholder="${T('例：1:1 PS matching', 'e.g. 1:1 PS matching')}"></label>
+      </div>
+    </div>`);
+    const ovTotal = blk.querySelector('.ov-total');
+    blk.querySelectorAll('[data-f]').forEach((el) => {
+      if (el.type === 'checkbox') el.checked = !!st[el.dataset.f]; else el.value = st[el.dataset.f] ?? '';
+      el.oninput = () => {
+        st[el.dataset.f] = el.type === 'checkbox' ? el.checked : el.value;
+        ovTotal.hidden = !st.overlap;
+        update();
+      };
+    });
+    ovTotal.hidden = !st.overlap;
+    blk.querySelector('[data-f="n"]').dataset.step = si;
+    const rs = blk.querySelector('.rs');
+    st.reasons.forEach((r, ri) => {
+      const row = RT.h(`<div class="list-row"><input placeholder="${T('排除原因', 'Reason')}"><input class="n" inputmode="numeric" placeholder="n"><button class="icon" title="${T('刪除', 'Delete')}">✕</button></div>`);
+      const [t, n, del] = row.children;
+      t.value = r.t; n.value = r.n;
+      t.oninput = () => { r.t = t.value; update(); };
+      n.oninput = () => { r.n = n.value; update(); };
+      n.onkeydown = (e) => {
+        if (e.key !== 'Enter') return;
+        e.preventDefault();
+        if (ri === st.reasons.length - 1) { st.reasons.push({ t: '', n: '' }); renderSteps(); update(); focusReason(si, ri + 1); }
+        else rs.children[ri + 1].querySelector('input').focus();
+      };
+      del.onclick = () => { st.reasons.splice(ri, 1); renderSteps(); update(); };
+      rs.appendChild(row);
+    });
+    blk.querySelector('.block-head').onclick = (e) => {
+      const a = e.target.dataset.a;
+      if (a === 'up') move(S.steps, si, -1);
+      else if (a === 'down') move(S.steps, si, 1);
+      else if (a === 'del') S.steps.splice(si, 1);
+      else return;
+      renderSteps(); update();
+    };
+    blk.querySelector('[data-a="addR"]').onclick = () => { st.reasons.push({ t: '', n: '' }); renderSteps(); update(); focusReason(si, st.reasons.length - 1); };
+    blk.querySelector('[data-a="paste"]').onclick = async () => {
+      const txt = await RT.promptText(T('批次貼上排除原因', 'Paste exclusion reasons'),
+        T('每行一項：<code>原因[Tab 或 , 或 :]人數</code>，可直接從 Excel 複製兩欄貼上。會取代此步驟的清單。', 'One per line: <code>reason[Tab , or :]n</code> — copy two columns from Excel. Replaces this step’s list.'),
+        st.reasons.filter((r) => r.t || r.n).map((r) => `${r.t}\t${r.n}`).join('\n'));
+      if (txt === null) return;
+      st.reasons = RT.parsePairs(txt);
+      if (!st.reasons.length) st.reasons = [{ t: '', n: '' }];
+      renderSteps(); update();
+    };
+    host.appendChild(blk);
+  });
+}
+function focusReason(si, ri) { const b = document.querySelectorAll('#steps .block')[si]; b?.querySelectorAll('.rs .list-row')[ri]?.querySelector('input')?.focus(); }
+function renderGroups() {
+  const host = document.getElementById('groups');
+  host.innerHTML = '';
+  S.groups.forEach((g, gi) => {
+    const blk = RT.h(`<div class="block"><div class="block-head"><b>${T('組別', 'Group')} ${gi + 1}</b><span class="spacer"></span>
+      <button class="small" data-a="up" title="${T('左移', 'Move left')}">←</button><button class="small" data-a="down" title="${T('右移', 'Move right')}">→</button>
+      <button class="icon" data-a="del" title="${T('刪除組別', 'Delete group')}">✕</button></div><div class="bx"></div>
+      <button class="small" data-a="addB">${T('＋ 下一層方框', '+ Next level box')}</button></div>`);
+    const bx = blk.querySelector('.bx');
+    g.boxes.forEach((b, bi) => {
+      const row = RT.h(`<div class="list-row"><textarea rows="1" placeholder="${bi === 0 ? T('例：Exposed group', 'e.g. Exposed group') : T('例：After matching', 'e.g. After matching')}"></textarea><input class="n" inputmode="numeric" placeholder="n"><button class="icon" title="${T('刪除', 'Delete')}">✕</button></div>`);
+      const [t, n, del] = row.children;
+      t.value = b.text; n.value = b.n;
+      t.oninput = () => { b.text = t.value; update(); };
+      n.oninput = () => { b.n = n.value; update(); };
+      del.onclick = () => { g.boxes.splice(bi, 1); if (!g.boxes.length) S.groups.splice(gi, 1); renderGroups(); update(); };
+      bx.appendChild(row);
+    });
+    blk.querySelector('.block-head').onclick = (e) => {
+      const a = e.target.dataset.a;
+      if (a === 'up') move(S.groups, gi, -1);
+      else if (a === 'down') move(S.groups, gi, 1);
+      else if (a === 'del') S.groups.splice(gi, 1);
+      else return;
+      renderGroups(); update();
+    };
+    blk.querySelector('[data-a="addB"]').onclick = () => { g.boxes.push({ text: '', n: '' }); renderGroups(); update(); };
+    host.appendChild(blk);
+  });
+}
+document.getElementById('addStep').onclick = () => { S.steps.push(step()); renderSteps(); update(); };
+document.getElementById('addGroup').onclick = () => { S.groups.push({ boxes: [{ text: 'Group ' + String.fromCharCode(65 + S.groups.length), n: '' }] }); renderGroups(); update(); };
+
+/* ---------------- numbers ---------------- */
+const N = RT.num;
+function computeN() {
+  const out = [];
+  let prev = N(S.start.n);
+  S.steps.forEach((st) => {
+    const active = st.reasons.filter((r) => r.t || r.n);
+    const reasonSum = active.length ? RT.sum(active.map((r) => r.n)) : 0;
+    // overlapping (non-mutually-exclusive) reasons: the total excluded is entered separately
+    const total = st.overlap ? N(st.total) : reasonSum;
+    let n = N(st.n), auto = false;
+    const derived = prev !== null && total !== null ? prev - total : null;
+    if (n === null && derived !== null) { n = derived; auto = true; }
+    out.push({ n, auto, total, reasonSum, prev, derived, hasReasons: active.length > 0 });
+    prev = n;
+  });
+  return out;
+}
+
+/* ---------------- drawing ---------------- */
+function build(calc) {
+  const st = RT.applyStyle(S.st);
+  const fs = Number(st.fontSize) || 13, W = Number(S.boxW) || 280, EW = Number(S.exW) || 280, GW = Number(S.groupW) || 220;
+  const nt = (v) => RT.nText(v, { style: S.nStyle, comma: S.comma });
+  const base = { size: fs, stroke: st.boxStroke, sw: Number(st.boxSW), radius: Number(st.radius), pad: Number(st.pad), lh: Number(st.lh), color: st.textColor };
+  const mainO = { ...base, fill: st.boxFill };
+  const exO = { ...base, fill: S.exFill, align: 'left', size: Number(S.exSize) || fs };
+  const grpO = { ...base, fill: S.grpFill };
+  const ao = { color: st.lineColor, sw: Number(st.lineW), head: Number(st.headSize) };
+  const hgap = Number(st.gapX) || 32, vpad = Math.round(fs * 1.1), baseGap = Number(st.gapY) || 36;
+  const mainItems = (text, n) => {
+    const hasN = n !== null && n !== undefined && String(n).trim() !== '';
+    const txt = String(text || '').trim();
+    if (!hasN) return [{ text: txt, bold: S.boldMain }];
+    if (S.nBreak === '0') return [{ text: (txt ? txt + ' ' : '') + nt(n), bold: S.boldMain }];
+    return [txt ? { text: txt, bold: S.boldMain } : null, { text: nt(n) }];
+  };
+  RT.beginScene();
+  let body = '';
+  let minX = -W / 2, maxX = W / 2, y = 0;
+  const b0 = RT.box(mainItems(S.start.text, S.start.n), W, mainO);
+  body += RT.drawBox(b0, -W / 2, y);
+  y += b0.h;
+
+  S.steps.forEach((stp, i) => {
+    const c = calc[i];
+    const active = stp.reasons.filter((rr) => rr.t || rr.n);
+    const esz = exO.size;
+    let ex = null;
+    if (active.length) {
+      const title = (stp.exTitle || '').trim();
+      const items = [];
+      if (title) items.push({ text: S.exTotal && c.total !== null ? `${title} ${nt(c.total)}` : title, bold: S.exTitleBold });
+      active.forEach((rr, k) => {
+        const bullet = S.bullet === 'num' ? `${k + 1}. ` : S.bullet;
+        const hang = bullet ? RT.textWidth(bullet, esz) : 0;
+        items.push({ text: `${bullet}${rr.t}${String(rr.n).trim() !== '' ? ' ' + nt(rr.n) : ''}`, indent: title ? Math.round(esz * 0.4) : 0, hang });
+      });
+      ex = RT.box(items, EW, exO);
+    }
+    const note = (stp.note || '').trim();
+    const noteBox = note ? RT.box([{ text: note, italic: true }], Math.max(EW, 160), { ...exO, fill: 'none', stroke: 'none', pad: 0, padX: 0 }) : null;
+    let gap = baseGap;
+    if (ex) gap = Math.max(gap, ex.h + 2 * vpad);
+    if (noteBox) gap = Math.max(gap, noteBox.h + 2 * vpad);
+    const nb = RT.box(mainItems(stp.text, c.n), W, mainO);
+    body += RT.arrow([[0, y], [0, y + gap]], ao);
+    const side = stp.side === 'auto' || !stp.side ? S.exSide : stp.side;
+    const my = y + gap / 2;
+    if (ex) {
+      if (side === 'left') {
+        const ex0 = -W / 2 - hgap - EW;
+        body += RT.arrow([[0, my], [ex0 + EW, my]], ao);
+        body += RT.drawBox(ex, ex0, my - ex.h / 2);
+        minX = Math.min(minX, ex0);
+      } else {
+        const ex0 = W / 2 + hgap;
+        body += RT.arrow([[0, my], [ex0, my]], ao);
+        body += RT.drawBox(ex, ex0, my - ex.h / 2);
+        maxX = Math.max(maxX, ex0 + EW);
+      }
+    }
+    if (noteBox) {
+      // note sits on the side opposite the exclusion box (or right when there is none)
+      const onLeft = ex ? side !== 'left' : false;
+      const nx = onLeft ? -noteBox.w - 10 : 10;
+      body += RT.drawBox(noteBox, nx, my - noteBox.h / 2);
+      if (onLeft) minX = Math.min(minX, nx); else maxX = Math.max(maxX, nx + noteBox.w);
+    }
+    y += gap;
+    body += RT.drawBox(nb, -W / 2, y);
+    y += nb.h;
+  });
+
+  const G = S.groups.filter((g) => g.boxes.length);
+  if (G.length) {
+    const gg = Math.round(fs * 1.8);
+    const total = G.length * GW + (G.length - 1) * gg;
+    const xs = G.map((_, i) => -total / 2 + i * (GW + gg));
+    const levels = Math.max(...G.map((g) => g.boxes.length));
+    if (G.length === 1) body += RT.arrow([[0, y], [0, y + baseGap]], ao);
+    else {
+      const barY = y + baseGap * 0.45;
+      body += RT.line([[0, y], [0, barY]], ao);
+      body += RT.line([[xs[0] + GW / 2, barY], [xs[xs.length - 1] + GW / 2, barY]], ao);
+      xs.forEach((x) => (body += RT.arrow([[x + GW / 2, barY], [x + GW / 2, y + baseGap]], ao)));
+    }
+    y += baseGap;
+    for (let lv = 0; lv < levels; lv++) {
+      const boxes = G.map((g) => (g.boxes[lv] ? RT.box(mainItems(g.boxes[lv].text, g.boxes[lv].n), GW, grpO) : null));
+      const h = Math.max(...boxes.filter(Boolean).map((b) => b.h));
+      if (lv > 0) G.forEach((g, i) => { if (boxes[i]) body += RT.arrow([[xs[i] + GW / 2, y - baseGap], [xs[i] + GW / 2, y]], ao); });
+      boxes.forEach((b, i) => { if (b) body += RT.drawBox(b, xs[i], y, h); });
+      y += h + baseGap;
+    }
+    y -= baseGap;
+    minX = Math.min(minX, xs[0]);
+    maxX = Math.max(maxX, xs[xs.length - 1] + GW);
+  }
+  const M = 16;
+  RT.shiftScene(0, M - minX, M);
+  const width = maxX - minX + 2 * M;
+  let foot = '';
+  if (S.footnote && S.footnote.trim()) {
+    const fb = RT.box([{ text: S.footnote }], width - 2 * M, { size: fs - 1, align: 'left', stroke: 'none', fill: 'none', pad: 0, padX: 0, lh: Number(st.lh), color: st.textColor });
+    foot = RT.drawBox(fb, M, y + M + fs);
+    y += fs + fb.h;
+  }
+  return RT.figure(width, y + 2 * M, `<g transform="translate(${RT.f(M - minX)},${M})">${body}</g>` + foot);
+}
+
+function checks(calc) {
+  const msgs = [];
+  const fmt = (v) => RT.fmtNum(v);
+  calc.forEach((c, i) => {
+    const st = S.steps[i];
+    const nIn = document.querySelector(`input[data-step="${i}"]`);
+    const bad = c.hasReasons && !c.auto && c.n !== null && c.derived !== null && c.derived !== c.n;
+    if (bad) msgs.push(T(`步驟 ${i + 1}：${fmt(c.prev)} − ${fmt(c.total)} = ${fmt(c.derived)}，但剩餘人數填 ${fmt(c.n)}`, `Step ${i + 1}: ${fmt(c.prev)} − ${fmt(c.total)} = ${fmt(c.derived)}, but remaining n is ${fmt(c.n)}`));
+    if (c.n !== null && c.n < 0) msgs.push(T(`步驟 ${i + 1}：剩餘人數為負值`, `Step ${i + 1}: remaining n is negative`));
+    if (nIn) {
+      nIn.classList.toggle('bad', bad || (c.n !== null && c.n < 0));
+      nIn.classList.toggle('auto', c.auto);
+      nIn.placeholder = c.auto ? T('自動 ', 'Auto ') + fmt(c.n) : 'n';
+    }
+    const sumEl = document.querySelectorAll('#steps .rs-sum')[i];
+    if (sumEl) sumEl.textContent = c.total !== null && c.total > 0 ? T('合計 ', 'Total ') + fmt(c.total) : '';
+    if (st.overlap && c.total === null) msgs.push(T(`步驟 ${i + 1}：勾選了原因可重疊，請填排除總數`, `Step ${i + 1}: reasons overlap — enter the total excluded`));
+    if (st.overlap && c.total !== null && c.reasonSum !== null && c.reasonSum < c.total) msgs.push(T(`步驟 ${i + 1}：各原因加總 ${fmt(c.reasonSum)} 小於排除總數 ${fmt(c.total)}，重疊時加總應 ≥ 總數`, `Step ${i + 1}: reasons sum to ${fmt(c.reasonSum)}, less than the total ${fmt(c.total)} — with overlap the sum should be ≥ the total`));
+    if (st.reasons.some((r) => r.t && String(r.n).trim() === '')) msgs.push(T(`步驟 ${i + 1}：有排除原因未填人數`, `Step ${i + 1}: a reason has no n`));
+  });
+  const G = S.groups.filter((g) => g.boxes.length);
+  const last = calc.length ? calc[calc.length - 1].n : N(S.start.n);
+  if (G.length > 1 && last !== null) {
+    const s = RT.sum(G.map((g) => g.boxes[0].n));
+    if (s !== null && s !== last) msgs.push(T(`各組第一層人數加總 ${fmt(s)} ≠ 最後族群 ${fmt(last)}`, `Sum of groups ${fmt(s)} ≠ final population ${fmt(last)}`));
+  }
+  document.getElementById('msgs').innerHTML = msgs.map((m) => `<div class="msg">⚠ ${RT.esc(m)}</div>`).join('');
+}
+
+let fig;
+const preview = document.getElementById('preview');
+const exporter = RT.exportPanel(document.getElementById('export'), () => fig, 'cohort_flow');
+const hist = RT.history(() => S, (s) => { S = s; syncInputs(); render(); });
+function render() {
+  const calc = computeN();
+  try { fig = build(calc); preview.innerHTML = fig.svg; }
+  catch (e) { console.error(e); preview.innerHTML = `<div class="msg">⚠ ${RT.esc(e.message)}</div>`; }
+  checks(calc);
+  exporter.refresh();
+  RT.save(KEY, S);
+}
+const update = RT.debounce(() => { render(); hist.push(); }, 60);
+
+document.getElementById('btnUndo').onclick = hist.undo;
+document.getElementById('btnRedo').onclick = hist.redo;
+document.getElementById('btnExample').onclick = () => { Object.assign(S, structuredClone(EXAMPLE)); syncInputs(); update(); RT.toast(T('已載入範例（虛構數據，僅供示範）', 'Example loaded (fictional numbers, for illustration only)')); };
+document.getElementById('btnReset').onclick = () => { const d = structuredClone(DEF); S.start = d.start; S.steps = d.steps; S.groups = d.groups; syncInputs(); update(); RT.toast(T('已清空內容，外觀設定保留（按 ↶ 可復原）', 'Content cleared, appearance kept (↶ to undo)')); };
+document.getElementById('btnSaveJson').onclick = () => RT.downloadJSON(S, 'cohort_flow.json');
+document.getElementById('btnLoadJson').onclick = async () => { try { S = RT.merge(DEF, await RT.pickJSON()); syncInputs(); update(); } catch (e) { RT.toast(T('讀取失敗：', 'Could not open file: ') + e.message, 6000); } };
+
+syncInputs();
+render();
+hist.push();
+</script>
+</body>
+</html>

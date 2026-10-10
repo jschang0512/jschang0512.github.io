@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ROBINS-I</title>
+<link rel="stylesheet" href="../shared/style.css?v=20260930a">
+</head>
+<body>
+<div id="app"></div>
+<script src="../shared/common.js?v=20260930a"></script>
+<script src="../shared/rob.js?v=20260930a"></script>
+<script>
+const D = (code, name) => ({ code, name });
+document.getElementById('app').outerHTML = RT.robPage({
+  title: 'ROBINS-I', subZh: '非隨機介入研究偏誤風險評估（ROBINS-I V2）', subEn: 'Risk of bias in non-randomised studies of interventions (ROBINS-I V2)',
+  noteZh: '預設為官方 ROBINS-I V2（2025 年 11 月 20 日版，官方標示仍為草案、可能再修訂），適用於追蹤（世代）研究：6 個 domain（已移除「偏離預定介入」domain，改由 D1 Variant B 處理）。D1 沒有單純的「Low」，最佳為「Low（除未控制干擾的疑慮外）」；D2–D6 為 Low／Moderate／Serious／Critical。整體判斷依官方演算法：取最嚴重的 domain；D1 為 Low（除干擾外）且其餘皆 Low 時為「Low（除干擾外）」。多個 Moderate 可合併判為 Serious、多個 Serious 可合併判為 Critical，這屬評估者判斷，請手動覆蓋並寫明理由。評估對象是「特定結果」，不是整篇研究。signalling questions 與演算法請使用官方文件；也可切換為 V2 2024 年 11 月封存版或 2016 年 V1。',
+  noteEn: 'Defaults to the official ROBINS-I V2 (20 November 2025; still labelled a draft and subject to change) for follow-up (cohort) studies: 6 domains (the deviations domain was removed; addressed via Domain 1 Variant B). D1 has no plain “Low” — the best is “Low (except for concerns about uncontrolled confounding)”; D2–D6 are Low / Moderate / Serious / Critical. The overall judgement follows the official algorithm: the most severe domain; D1 Low-except-confounding with all others Low gives “Low except for uncontrolled confounding”. Several Moderate → Serious and several Serious → Critical are assessor judgements — override and justify. Assessments are for a specific result, not a whole study. Use the official documents for signalling questions and algorithms; the archived Nov 2024 V2 and the 2016 V1 are also available.',
+  niToggle: true,
+});
+RT.initPage();
+RT.robTool({
+  key: 'robinsi2', short: 'ROBINS-I', filePrefix: 'robins_i',
+  variants: {
+    v2025: { zh: 'ROBINS-I V2（2025-11-20，現行草案版）', en: 'ROBINS-I V2 (20 Nov 2025, current draft)', domains: [
+      D('D1', 'Bias due to confounding'),
+      D('D2', 'Bias in classification of interventions'),
+      D('D3', 'Bias in selection of participants into the study (or into the analysis)'),
+      D('D4', 'Bias due to missing data'),
+      D('D5', 'Bias in measurement of the outcome'),
+      D('D6', 'Bias in selection of the reported result'),
+    ] },
+    v2024: { zh: 'ROBINS-I V2（2024-11-22，封存版）', en: 'ROBINS-I V2 (22 Nov 2024, archived)', domains: [
+      D('D1', 'Bias due to confounding'),
+      D('D2', 'Bias in classification of interventions'),
+      D('D3', 'Bias in selection of participants into the study (or into the analysis)'),
+      D('D4', 'Bias due to deviations from intended interventions'),
+      D('D5', 'Bias due to missing data'),
+      D('D6', 'Bias in measurement of the outcome'),
+      D('D7', 'Bias in selection of the reported result'),
+    ] },
+    v1: { zh: 'ROBINS-I V1（2016）', en: 'ROBINS-I V1 (2016)', domains: [
+      D('D1', 'Bias due to confounding'),
+      D('D2', 'Bias in selection of participants into the study'),
+      D('D3', 'Bias in classification of interventions'),
+      D('D4', 'Bias due to deviations from intended interventions'),
+      D('D5', 'Bias due to missing data'),
+      D('D6', 'Bias in measurement of outcomes'),
+      D('D7', 'Bias in selection of the reported result'),
+    ] },
+  },
+  judgments: [
+    // V2: no plain "Low" for Domain 1 or overall
+    { v: 'L', label: 'Low risk of bias', zh: '低偏誤風險', sym: '+', color: '#02C100', rank: 0, alias: ['low', 'l'], allow: (code, variant) => variant === 'v1' || (code !== 'D1' && code !== 'overall') },
+    { v: 'LC', label: 'Low risk of bias except for concerns about uncontrolled confounding', zh: '低（除未控制干擾的疑慮外）', sym: '+', color: '#9ACD32', rank: 1, only: ['D1', 'overall'], variants: ['v2025', 'v2024'], alias: ['low except confounding', 'lc', 'low*'] },
+    { v: 'M', label: 'Moderate risk of bias', zh: '中度偏誤風險', sym: '-', color: '#E2DF07', rank: 2, alias: ['moderate', 'm'] },
+    { v: 'S', label: 'Serious risk of bias', zh: '嚴重偏誤風險', sym: 'X', color: '#BF0000', rank: 3, alias: ['serious', 's'] },
+    { v: 'C', label: 'Critical risk of bias', zh: '極嚴重偏誤風險', sym: '!', color: '#820000', rank: 4, alias: ['critical', 'c'] },
+    // "No information" is a V1 judgement only (V2 uses NI as a signalling-question response, not a judgement)
+    { v: 'NI', label: 'No information', zh: '無資訊', sym: '?', color: '#4EA1F7', rank: 9, optional: true, variants: ['v1'], alias: ['no information', 'ni', 'unclear'] },
+  ],
+  overall: (vals, J, byCode, variant) => {
+    const graded = vals.filter((v) => v !== 'NI');
+    const worst = graded.slice().sort((a, b) => J[b].rank - J[a].rank)[0];
+    if (variant !== 'v1') {
+      // official V2 algorithm (default; several Moderate/Serious may be upgraded by the assessor)
+      if (worst === 'C' || worst === 'S' || worst === 'M') return worst;
+      if (byCode.D1 === 'LC' && Object.entries(byCode).every(([c, v]) => c === 'D1' || v === 'L')) return 'LC';
+      return worst || '';
+    }
+    // V1 (2016): most severe; "No information" only if nothing is Serious/Critical
+    if (worst && J[worst].rank >= 3) return worst;
+    if (vals.includes('NI')) return 'NI';
+    return worst || '';
+  },
+  exampleStudies: [
+    { name: 'Cohort A 2016', j: { D1: 'M', D2: 'L', D3: 'L', D4: 'L', D5: 'M', D6: 'L' }, sup: {}, overall: 'auto', result: 'Hip fracture', w: '' },
+    { name: 'Cohort B 2018', j: { D1: 'S', D2: 'L', D3: 'M', D4: 'M', D5: 'L', D6: 'M' }, sup: {}, overall: 'auto', result: 'Hip fracture', w: '' },
+    { name: 'Cohort C 2019', j: { D1: 'LC', D2: 'L', D3: 'L', D4: 'L', D5: 'L', D6: 'L' }, sup: {}, overall: 'auto', result: 'Hip fracture', w: '' },
+    { name: 'Cohort D 2021', j: { D1: 'C', D2: 'M', D3: 'L', D4: 'L', D5: 'M', D6: 'L' }, sup: {}, overall: 'auto', result: 'Hip fracture', w: '' },
+    { name: 'Cohort E 2022', j: { D1: 'M', D2: 'L', D3: 'S', D4: 'M', D5: 'L', D6: 'L' }, sup: {}, overall: 'auto', result: 'Hip fracture', w: '' },
+  ],
+  refs: [RT.REFS.robinsi, RT.REFS.robinsiV2, RT.REFS.riskofbias, RT.REFS.robvis, RT.REFS.libs],
+});
+</script>
+</body>
+</html>

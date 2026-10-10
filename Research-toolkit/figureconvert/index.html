@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title data-en="Figure DPI Converter">Figure DPI Converter</title>
+<link rel="stylesheet" href="../shared/style.css?v=20260930a">
+<style>
+  .drop {
+    border: 2px dashed var(--border); border-radius: 12px; padding: 26px 16px; text-align: center; cursor: pointer;
+    background: var(--panel-2); transition: border-color .15s, background .15s;
+  }
+  .drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-weak); }
+  .drop b { font-size: 15px; }
+  .drop p { margin: 6px 0 0; color: var(--muted); font-size: 12.5px; }
+  .files { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .file { display: grid; grid-template-columns: auto minmax(0, 1fr) auto 30px; gap: 8px; align-items: center; font-size: 13px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); }
+  .file .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file .sz { color: var(--muted); font-size: 12px; }
+  .tag { font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 5px; background: var(--accent-weak); color: var(--accent); text-transform: uppercase; }
+  .results { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+  .res { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--panel); display: flex; flex-direction: column; }
+  .res .th { background: #fff; aspect-ratio: 4 / 3; display: grid; place-items: center; border-bottom: 1px solid var(--border); background-image: linear-gradient(45deg, #f2f2f2 25%, transparent 25%), linear-gradient(-45deg, #f2f2f2 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f2f2f2 75%), linear-gradient(-45deg, transparent 75%, #f2f2f2 75%); background-size: 16px 16px; background-position: 0 0, 0 8px, 8px -8px, -8px 0; }
+  .res .th img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; }
+  .res .meta { padding: 8px 10px; font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; flex: 1; }
+  .res .meta b { color: var(--text); font-size: 12.5px; word-break: break-all; }
+  .res .meta .warn { color: var(--warn-text); }
+  .res .act { padding: 0 10px 10px; }
+  .res .act button { width: 100%; justify-content: center; }
+  .empty { color: var(--muted); text-align: center; padding: 40px 10px; font-size: 13px; }
+  .progress { height: 6px; background: var(--panel-2); border-radius: 999px; overflow: hidden; border: 1px solid var(--border); }
+  .progress > div { height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+  .status { font-size: 12.5px; color: var(--muted); margin-top: 6px; min-height: 18px; }
+  #docxStage { position: fixed; left: -100000px; top: 0; background: #fff; }
+  .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; width: 100%; }
+  .seg label { flex: 1; text-align: center; font-size: 13px; padding: 6px 4px; cursor: pointer; background: var(--panel-2); border-right: 1px solid var(--border); }
+  .seg label:last-child { border-right: 0; }
+  .seg input { display: none; }
+  .seg label:has(input:checked) { background: var(--accent); color: #fff; font-weight: 600; }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="back" href="../index.html" data-en="← Home">← 工具首頁</a>
+  <h1>Figure DPI &amp; Format Converter</h1>
+  <span class="sub" data-en="PDF / Word / images → PNG · JPG · TIFF">PDF / Word / 圖片 → PNG · JPG · TIFF</span>
+</header>
+
+<main class="tool">
+  <section>
+    <div class="card">
+      <h2><span class="step-no">1</span> <span data-en="Choose files">選擇檔案</span></h2>
+      <div class="drop" id="drop">
+        <b data-en="Drop files here, or click to choose">拖曳檔案到這裡，或點擊選擇</b>
+        <p data-en="PDF, Word (.docx), PNG, JPG, TIFF, WebP, BMP, GIF, SVG — several at once">支援 PDF、Word (.docx)、PNG、JPG、TIFF、WebP、BMP、GIF、SVG，可一次多個</p>
+      </div>
+      <input type="file" id="fileInput" multiple hidden accept=".pdf,.docx,.emf,.wmf,.png,.jpg,.jpeg,.tif,.tiff,.webp,.bmp,.gif,.svg,application/pdf,image/*">
+      <div class="files" id="files"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="step-no">2</span> <span data-en="Output settings">輸出設定</span></h2>
+      <div class="field"><span class="lbl" data-en="Output format">輸出格式</span>
+        <div class="seg">
+          <label><input type="radio" name="fmt" value="tiff">TIFF</label>
+          <label><input type="radio" name="fmt" value="png">PNG</label>
+          <label><input type="radio" name="fmt" value="jpg">JPG</label>
+        </div>
+      </div>
+      <div class="grid2">
+        <label class="field"><span data-en="Resolution (DPI)">解析度 DPI</span><select id="dpi">
+          <option>150</option><option>300</option><option>500</option><option>600</option><option>1000</option><option>1200</option><option value="custom" data-en="Custom…">自訂…</option></select></label>
+        <label class="field" id="dpiCustomWrap" hidden><span data-en="Custom DPI">自訂 DPI</span><input type="number" id="dpiCustom" min="50" max="4800" value="300"></label>
+        <label class="field" id="qualWrap"><span><span data-en="JPG quality">JPG 品質</span> <b id="qualVal"></b></span><input type="range" id="quality" min="0.6" max="1" step="0.01" style="width:100%"></label>
+        <label class="field" id="tiffWrap"><span data-en="TIFF compression">TIFF 壓縮</span><select id="tiffComp"><option value="lzw" data-en="LZW (lossless, smaller)">LZW（無損、較小）</option><option value="none" data-en="None">不壓縮</option></select></label>
+      </div>
+      <label class="field"><span data-en="Print width (cm) — optional: resamples to width × DPI pixels">列印寬度 (cm)（選填：指定後會重新取樣到「寬度 × DPI」的像素）</span>
+        <input type="number" id="widthCm" min="1" step="0.1" placeholder="留空＝PDF/Word 依原始頁面大小；圖片只改 DPI 標記" data-en-ph="Blank = PDF/Word keep page size; images only change the DPI tag"></label>
+      <div class="btns" id="wPresets" style="gap:6px;margin-bottom:6px"><span class="hint" style="margin:0" data-en="Journal width (Elsevier):">期刊寬度（Elsevier）：</span><button class="small" data-w="9" data-en="Single 9 cm">單欄 9 cm</button><button class="small" data-w="14" data-en="1.5-col 14 cm">1.5 欄 14 cm</button><button class="small" data-w="19" data-en="Double 19 cm">雙欄 19 cm</button><button class="small" data-w="" data-en="Original">原始</button></div>
+      <label class="check"><input type="checkbox" id="trim"> <span data-en="Auto-trim white margins">自動裁切四周白邊</span></label>
+      <label class="field" id="trimPadWrap" style="margin-left:24px"><span data-en="Keep margin (mm)">保留邊界 (mm)</span><input type="number" id="trimPad" min="0" max="50" step="0.5" style="max-width:120px"></label>
+      <label class="check"><input type="checkbox" id="keepAlpha"> <span data-en="PNG: keep transparent background (otherwise white)">PNG 保留透明背景（否則填白）</span></label>
+      <label class="check"><input type="checkbox" id="gray"> <span data-en="Convert to grayscale (TIFF saved as 8-bit gray, smaller file)">轉成灰階（TIFF 會存成 8-bit 灰階，檔案較小）</span></label>
+    </div>
+
+    <div class="card">
+      <h2><span class="step-no">3</span> <span data-en="PDF / Word options">PDF / Word 選項</span></h2>
+      <label class="field"><span data-en="Page range (blank = all, e.g. <code>1-3, 5</code>)">頁碼範圍（留空＝全部，例：<code>1-3, 5</code>）</span><input id="pages" placeholder="全部頁面" data-en-ph="All pages"></label>
+      <div class="field"><span class="lbl" data-en="Word handling">Word 處理方式</span>
+        <div class="seg">
+          <label><input type="radio" name="wordMode" value="render"><span data-en="Render pages">整頁渲染</span></label>
+          <label><input type="radio" name="wordMode" value="extract"><span data-en="Extract embedded images">擷取內嵌原圖</span></label>
+        </div>
+      </div>
+      <p class="hint" data-en="“Extract embedded images” pulls out pictures inserted in the Word file at their original resolution (sharpest). “Render pages” re-lays out the document in the browser, so fonts and page breaks may differ slightly from Word; for an exact match, save as PDF in Word first and convert the PDF.">「擷取內嵌原圖」會取出 Word 中插入的圖片（原始解析度，最清晰）。「整頁渲染」由瀏覽器重排版面，字型與分頁可能和 Word 略有差異；若需完全一致，建議在 Word 先「另存為 PDF」再轉換。</p>
+    </div>
+
+    <div class="card">
+      <div class="btns">
+        <button class="primary" id="go" disabled data-en="Convert">開始轉換</button>
+        <button id="clear" data-en="Clear files">清除檔案</button>
+      </div>
+      <div class="progress" style="margin-top:10px"><div id="bar"></div></div>
+      <div class="status" id="status"></div>
+    </div>
+  </section>
+
+  <section class="preview-col">
+    <div class="card">
+      <h2><span data-en="Results">轉換結果</span> <span class="spacer" style="flex:1"></span><button class="small" id="zipAll" disabled data-en="Download all (ZIP)">全部下載 (ZIP)</button></h2>
+      <div id="results"><div class="empty" data-en="Nothing converted yet">尚未轉換任何檔案</div></div>
+    </div>
+    <div class="card">
+      <h3 data-en="About DPI">DPI 小知識</h3>
+      <p class="hint" style="margin:0" data-en="For raster images, DPI is only a tag saying how many pixels to print per inch; sharpness depends on the pixel count.<br>• PDF / Word / SVG are vector or re-renderable, so a higher DPI really is sharper.<br>• For images that are already raster (PNG/JPG), changing the DPI tag does not add sharpness; enlarging pixels to reach a print width only interpolates.<br>• Elsevier’s requirements: photos (halftones) 300 dpi, combination art 500 dpi, line art 1000 dpi; other journals differ — check the author guidelines. TIFF is the most widely accepted format.">點陣圖的 DPI 只是「列印時每英吋放幾個像素」的標記；真正的清晰度取決於像素數。<br>
+        • PDF / Word / SVG 是向量或可重新渲染，提高 DPI 會真的更清晰。<br>
+        • 原本就是點陣圖（PNG/JPG）時，只改 DPI 標記不會變清晰；若指定列印寬度而需要放大像素，只是內插，並不會增加細節。<br>
+        • Elsevier 的要求：照片（灰階／彩色）300 dpi、混合圖 500 dpi、線條圖 1000 dpi；各期刊要求不同，請查投稿須知。格式多為 TIFF。</p>
+    </div>
+    <div class="card" id="refs"></div>
+  </section>
+</main>
+<div id="docxStage"></div>
+
+<script src="../shared/common.js?v=20260930a"></script>
+<script>
+/* ---------------- settings ---------------- */
+const T = RT.t;
+document.getElementById('refs').innerHTML = RT.refsHTML([RT.REFS.artwork, RT.REFS.tiff, RT.REFS.png, RT.REFS.jfif, RT.REFS.libs]);
+const SDEF = { gray: false, fmt: 'tiff', dpi: '300', dpiCustom: 300, quality: 0.95, tiffComp: 'lzw', widthCm: '', trim: false, trimPad: 2, keepAlpha: false, pages: '', wordMode: 'render' };
+SDEF.trim = true; // figures usually sit on a mostly empty page — trim by default
+const S = RT.load('figconv2', SDEF);
+const $ = (id) => document.getElementById(id);
+function syncSettings() {
+  document.querySelector(`input[name="fmt"][value="${S.fmt}"]`).checked = true;
+  document.querySelector(`input[name="wordMode"][value="${S.wordMode}"]`).checked = true;
+  $('dpi').value = S.dpi; $('dpiCustom').value = S.dpiCustom; $('quality').value = S.quality; $('tiffComp').value = S.tiffComp;
+  $('widthCm').value = S.widthCm; $('trim').checked = S.trim; $('trimPad').value = S.trimPad; $('keepAlpha').checked = S.keepAlpha; $('pages').value = S.pages; $('gray').checked = !!S.gray;
+  refreshUI();
+}
+function readSettings() {
+  S.fmt = document.querySelector('input[name="fmt"]:checked').value;
+  S.wordMode = document.querySelector('input[name="wordMode"]:checked').value;
+  S.dpi = $('dpi').value; S.dpiCustom = $('dpiCustom').value; S.quality = Number($('quality').value); S.tiffComp = $('tiffComp').value;
+  S.widthCm = $('widthCm').value; S.trim = $('trim').checked; S.trimPad = $('trimPad').value; S.keepAlpha = $('keepAlpha').checked; S.pages = $('pages').value; S.gray = $('gray').checked;
+  RT.save('figconv2', S);
+  refreshUI();
+}
+function refreshUI() {
+  $('dpiCustomWrap').hidden = S.dpi !== 'custom';
+  $('qualWrap').hidden = S.fmt !== 'jpg';
+  $('tiffWrap').hidden = S.fmt !== 'tiff';
+  $('qualVal').textContent = Math.round(S.quality * 100) + '%';
+  $('trimPadWrap').hidden = !S.trim;
+  $('keepAlpha').closest('label').hidden = S.fmt !== 'png';
+}
+document.querySelector('main').addEventListener('input', (e) => { if (!e.target.closest('#files')) readSettings(); });
+document.querySelector('main').addEventListener('change', (e) => { if (!e.target.closest('#files')) readSettings(); });
+$('wPresets').onclick = (e) => { const b = e.target.closest('[data-w]'); if (!b) return; $('widthCm').value = b.dataset.w; readSettings(); };
+const DPI = () => (S.dpi === 'custom' ? Math.max(50, Math.min(4800, Number(S.dpiCustom) || 300)) : Number(S.dpi));
+
+/* ---------------- file list ---------------- */
+let files = [];
+const kindOf = (f) => {
+  const n = f.name.toLowerCase();
+  if (n.endsWith('.pdf') || f.type === 'application/pdf') return 'pdf';
+  if (n.endsWith('.docx')) return 'docx';
+  if (n.endsWith('.doc')) return 'doc';
+  if (/\.(emf|wmf|emz|wmz)$/.test(n)) return 'emf';
+  if (/\.tiff?$/.test(n) || f.type === 'image/tiff') return 'tiff';
+  if (n.endsWith('.svg') || f.type === 'image/svg+xml') return 'svg';
+  if (/\.(png|jpe?g|webp|bmp|gif)$/.test(n) || f.type.startsWith('image/')) return 'image';
+  return 'unknown';
+};
+function addFiles(list) {
+  for (const f of list) files.push({ file: f, kind: kindOf(f) });
+  renderFiles();
+}
+function renderFiles() {
+  const host = $('files');
+  host.innerHTML = '';
+  files.forEach((it, i) => {
+    const ext = it.file.name.split('.').pop();
+    const row = RT.h(`<div class="file"><span class="tag">${RT.esc(ext)}</span><span class="nm" title="${RT.esc(it.file.name)}">${RT.esc(it.file.name)}</span><span class="sz">${RT.fmtBytes(it.file.size)}</span><button class="icon" title="${T('移除', 'Remove')}">✕</button></div>`);
+    row.querySelector('button').onclick = () => { files.splice(i, 1); renderFiles(); };
+    host.appendChild(row);
+  });
+  $('go').disabled = !files.length;
+}
+const drop = $('drop');
+drop.onclick = () => $('fileInput').click();
+$('fileInput').onchange = (e) => { addFiles(e.target.files); e.target.value = ''; };
+['dragenter', 'dragover'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', (e) => addFiles(e.dataTransfer.files));
+$('clear').onclick = () => { files = []; renderFiles(); };
+
+/* ---------------- helpers ---------------- */
+function parseRange(txt, max) {
+  const t = String(txt || '').trim();
+  if (!t) return Array.from({ length: max }, (_, i) => i + 1);
+  const out = new Set();
+  for (const part of t.split(/[,，;\s]+/)) {
+    if (!part) continue;
+    const m = part.match(/^(\d+)\s*[-–~]\s*(\d*)$/);
+    if (m) { const a = +m[1], b = m[2] ? +m[2] : max; for (let i = Math.min(a, b); i <= Math.max(a, b); i++) if (i >= 1 && i <= max) out.add(i); }
+    else if (/^\d+$/.test(part) && +part >= 1 && +part <= max) out.add(+part);
+  }
+  return [...out].sort((a, b) => a - b);
+}
+function resample(canvas, tw) {
+  const th = Math.max(1, Math.round((canvas.height * tw) / canvas.width));
+  let src = canvas;
+  // halve step-wise for better downscaling quality
+  while (src.width / 2 >= tw) {
+    const c = RT.makeCanvas(Math.round(src.width / 2), Math.round(src.height / 2));
+    const x = c.getContext('2d'); x.imageSmoothingQuality = 'high'; x.drawImage(src, 0, 0, c.width, c.height);
+    src = c;
+  }
+  const out = RT.makeCanvas(tw, th);
+  const ctx = out.getContext('2d'); ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(src, 0, 0, tw, th);
+  return out;
+}
+const whiteCanvas = (w, h) => { const c = RT.makeCanvas(w, h); const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, w, h); return c; };
+const tick = () => new Promise((r) => setTimeout(r, 0));
+function thumbOf(canvas) {
+  const s = Math.min(1, 480 / Math.max(canvas.width, canvas.height));
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(canvas.width * s)); c.height = Math.max(1, Math.round(canvas.height * s));
+  const x = c.getContext('2d'); x.imageSmoothingQuality = 'high'; x.drawImage(canvas, 0, 0, c.width, c.height);
+  return c.toDataURL('image/png');
+}
+/** true when a canvas is (almost) entirely white/transparent — checked on a downscaled copy */
+function isBlank(canvas) {
+  const s = Math.min(1, 300 / Math.max(canvas.width, canvas.height));
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(canvas.width * s)); c.height = Math.max(1, Math.round(canvas.height * s));
+  const x = c.getContext('2d', { willReadFrequently: true });
+  x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
+  x.drawImage(canvas, 0, 0, c.width, c.height);
+  const d = x.getImageData(0, 0, c.width, c.height).data;
+  for (let i = 0; i < d.length; i += 4) if (d[i] < 245 || d[i + 1] < 245 || d[i + 2] < 245) return false;
+  return true;
+}
+const baseName = (n) => n.replace(/\.[^.]+$/, '');
+const extOf = (fmt) => (fmt === 'tiff' ? 'tif' : fmt);
+
+/* ---------------- sources → canvases ---------------- */
+async function loadPdfjs() {
+  await RT.loadScript(RT.CDN.pdfjs);
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc = RT.CDN.pdfjsWorker;
+  return window.pdfjsLib;
+}
+async function renderPdfPage(pdf, pno, scale, transparent) {
+  const page = await pdf.getPage(pno);
+  const vp = page.getViewport({ scale });
+  const c = RT.makeCanvas(Math.ceil(vp.width), Math.ceil(vp.height));
+  const ctx = c.getContext('2d');
+  if (!transparent) { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); }
+  await page.render({ canvasContext: ctx, viewport: vp, background: transparent ? 'rgba(0,0,0,0)' : 'white' }).promise;
+  page.cleanup();
+  return c;
+}
+async function imageToCanvas(blob) {
+  const bmp = await createImageBitmap(blob, { imageOrientation: 'from-image' }).catch(async () => {
+    const img = new Image(); const url = URL.createObjectURL(blob);
+    await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error(T('無法讀取此圖片', 'Cannot read this image'))); img.src = url; });
+    return img;
+  });
+  const c = RT.makeCanvas(bmp.width, bmp.height);
+  c.getContext('2d').drawImage(bmp, 0, 0);
+  return c;
+}
+async function tiffToCanvases(buf) {
+  await RT.loadScript(RT.CDN.utif);
+  const ifds = UTIF.decode(buf);
+  const out = [];
+  for (const ifd of ifds) {
+    if (!ifd.t256) continue;
+    UTIF.decodeImage(buf, ifd, ifds);
+    const rgba = UTIF.toRGBA8(ifd);
+    const c = RT.makeCanvas(ifd.width, ifd.height);
+    c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(rgba.buffer, rgba.byteOffset, ifd.width * ifd.height * 4), ifd.width, ifd.height), 0, 0);
+    const xr = ifd.t282 ? (Array.isArray(ifd.t282[0]) ? ifd.t282[0][0] / (ifd.t282[0][1] || 1) : ifd.t282[0]) : null;
+    out.push({ canvas: c, srcDpi: xr });
+  }
+  return out;
+}
+async function svgToCanvasFile(text, dpi) {
+  const doc = new DOMParser().parseFromString(text, 'image/svg+xml').documentElement;
+  const unit = (v) => {
+    const m = String(v || '').match(/^([\d.]+)\s*(px|pt|mm|cm|in)?$/);
+    if (!m) return null;
+    const k = { px: 1, pt: 96 / 72, mm: 96 / 25.4, cm: 96 / 2.54, in: 96 }[m[2] || 'px'];
+    return parseFloat(m[1]) * k;
+  };
+  let w = unit(doc.getAttribute('width')), h = unit(doc.getAttribute('height'));
+  const vb = (doc.getAttribute('viewBox') || '').split(/[\s,]+/).map(Number);
+  if ((!w || !h) && vb.length === 4) { w = w || vb[2]; h = h || (w * vb[3]) / vb[2]; }
+  w = w || 800; h = h || 600;
+  return RT.svgToCanvas(text, w, h, dpi / 96);
+}
+async function docxPages(file, dpi, pagesSel) {
+  await RT.loadScript(RT.CDN.jszip);
+  await RT.loadScript(RT.CDN.docxPreview);
+  await RT.loadScript(RT.CDN.html2canvas);
+  const stage = $('docxStage');
+  stage.innerHTML = '';
+  const style = document.createElement('div');
+  stage.appendChild(style);
+  const body = document.createElement('div');
+  stage.appendChild(body);
+  await docx.renderAsync(await file.arrayBuffer(), body, style, {
+    inWrapper: false, ignoreWidth: false, ignoreHeight: false, breakPages: true, ignoreLastRenderedPageBreak: false,
+    renderHeaders: true, renderFooters: true, renderFootnotes: true, experimental: true, useBase64URL: true,
+  });
+  await document.fonts.ready;
+  await new Promise((r) => setTimeout(r, 150));
+  const sections = [...body.querySelectorAll('section.docx')];
+  const pick = parseRange(pagesSel, sections.length);
+  const out = [];
+  for (const p of pick) {
+    const sec = sections[p - 1];
+    sec.style.boxShadow = 'none'; sec.style.margin = '0';
+    const c = await html2canvas(sec, { scale: dpi / 96, backgroundColor: '#ffffff', useCORS: true, logging: false });
+    out.push({ canvas: c, page: p, total: sections.length });
+  }
+  stage.innerHTML = '';
+  return out;
+}
+/** Inspect a .docx for content the browser cannot draw. */
+async function analyzeDocx(file) {
+  await RT.loadScript(RT.CDN.jszip);
+  const zip = await JSZip.loadAsync(file);
+  const names = Object.keys(zip.files);
+  const doc = zip.files['word/document.xml'] ? await zip.files['word/document.xml'].async('string') : '';
+  const count = (re) => (doc.match(re) || []).length;
+  return {
+    emf: names.filter((p) => /^word\/media\/.*\.(emf|wmf|emz|wmz)$/i.test(p)).map((p) => p.split('/').pop()),
+    charts: count(/graphicData uri="[^"]*\/chart"/g) + count(/graphicData uri="[^"]*chartex"/g),
+    smartart: count(/graphicData uri="[^"]*\/diagram"/g),
+    shapes: count(/<wps:wsp[ >]/g) + count(/<v:(shape|rect|roundrect|oval|line|group)[ >]/g),
+    ole: names.filter((p) => /^word\/embeddings\//.test(p)).length,
+  };
+}
+function describeIssues(x) {
+  const parts = [];
+  if (x.emf.length) parts.push(T(`${x.emf.length} 張 EMF/WMF 向量圖（常見於從 Excel、PowerPoint、GraphPad Prism 貼上的圖）`, `${x.emf.length} EMF/WMF vector picture(s) (typical of charts pasted from Excel, PowerPoint or GraphPad Prism)`));
+  if (x.charts) parts.push(T(`${x.charts} 個 Word/Excel 圖表`, `${x.charts} Word/Excel chart(s)`));
+  if (x.smartart) parts.push(T(`${x.smartart} 個 SmartArt`, `${x.smartart} SmartArt graphic(s)`));
+  if (x.shapes) parts.push(T(`${x.shapes} 個圖案／文字方塊`, `${x.shapes} shape(s) / text box(es)`));
+  if (x.ole && !x.emf.length) parts.push(T(`${x.ole} 個內嵌物件`, `${x.ole} embedded object(s)`));
+  if (!parts.length) return '';
+  return T('此檔包含瀏覽器無法繪製的內容：', 'This file contains content a browser cannot draw: ') + parts.join(T('、', ', ')) + T('。', '.');
+}
+const PDF_TIP = () => T('解決方式：在 Word 按「檔案 → 另存新檔 → PDF」，再把 PDF 拖進來轉換（保留向量，最清晰）。',
+  'Fix: in Word use File → Save As → PDF, then drop the PDF here (keeps vector quality, sharpest result).');
+async function docxImages(file) {
+  await RT.loadScript(RT.CDN.jszip);
+  const zip = await JSZip.loadAsync(file);
+  const media = Object.keys(zip.files).filter((p) => p.startsWith('word/media/') && !zip.files[p].dir).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  const out = [], skipped = [];
+  for (const p of media) {
+    const ext = p.split('.').pop().toLowerCase();
+    const name = p.split('/').pop();
+    if (!['png', 'jpg', 'jpeg', 'gif', 'bmp', 'tif', 'tiff', 'svg', 'webp'].includes(ext)) { skipped.push(name); continue; }
+    const buf = await zip.files[p].async('arraybuffer');
+    const type = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', bmp: 'image/bmp', svg: 'image/svg+xml', webp: 'image/webp' }[ext];
+    out.push({ name, ext, buf, blob: new Blob([buf], { type: type || 'application/octet-stream' }) });
+  }
+  return { images: out, skipped };
+}
+
+/* ---------------- post-process & encode ---------------- */
+async function finish(canvas, opts) {
+  const { dpi, fmt, vector, rerender } = opts;
+  const notes = [];
+  const mmPx = (mm) => Math.round((mm / 25.4) * dpi);
+  if (S.trim) canvas = RT.trimCanvas(canvas, mmPx(Number(S.trimPad) || 0));
+  const wcm = Number(S.widthCm) || 0;
+  if (wcm > 0) {
+    const tw = Math.round((wcm / 2.54) * dpi);
+    if (tw > canvas.width * 1.02 && vector && rerender) {
+      // re-render the vector source at a higher scale instead of upsampling pixels
+      const factor = tw / canvas.width;
+      canvas = await rerender(factor);
+      if (S.trim) canvas = RT.trimCanvas(canvas, mmPx(Number(S.trimPad) || 0));
+    } else if (tw > canvas.width * 1.02 && !vector) {
+      notes.push(T(`原圖僅 ${canvas.width} px 寬，已內插放大到 ${tw} px（不會增加細節）`, `Source is only ${canvas.width} px wide; interpolated up to ${tw} px (adds no detail)`));
+    }
+    if (canvas.width !== tw) canvas = resample(canvas, tw);
+  }
+  if (fmt !== 'png' || !S.keepAlpha) canvas = RT.flattenWhite(canvas);
+  const blob = await RT.encodeCanvas(canvas, fmt, dpi, { quality: S.quality, tiffCompression: S.tiffComp, gray: S.gray });
+  return { blob, w: canvas.width, h: canvas.height, thumb: thumbOf(canvas), notes };
+}
+
+/* ---------------- results ---------------- */
+let results = [];
+function addResult(r) {
+  results.push(r);
+  const host = $('results');
+  if (results.length === 1) host.innerHTML = '<div class="results"></div>';
+  const cm = (px) => ((px / r.dpi) * 2.54).toFixed(1);
+  const el = RT.h(`<div class="res">
+    <div class="th"><img alt=""></div>
+    <div class="meta"><b>${RT.esc(r.name)}</b>
+      <span>${r.w.toLocaleString()} × ${r.h.toLocaleString()} px · ${r.dpi} dpi</span>
+      <span>${T('列印', 'Print')} ${cm(r.w)} × ${cm(r.h)} cm · ${RT.fmtBytes(r.blob.size)}</span>
+      ${r.notes.map((n) => (n.startsWith('✓') ? `<span>${RT.esc(n)}</span>` : `<span class="warn">⚠ ${RT.esc(n)}</span>`)).join('')}
+    </div>
+    <div class="act"><button class="small">${T('下載', 'Download')}</button></div></div>`);
+  el.querySelector('img').src = r.thumb;
+  el.querySelector('button').onclick = () => RT.download(r.blob, r.name);
+  host.firstElementChild.appendChild(el);
+  $('zipAll').disabled = false;
+}
+$('zipAll').onclick = async () => {
+  if (!results.length) return;
+  if (results.length === 1) { RT.download(results[0].blob, results[0].name); return; }
+  const btn = $('zipAll'); btn.disabled = true; btn.textContent = T('壓縮中…', 'Zipping…');
+  try {
+    await RT.loadScript(RT.CDN.jszip);
+    const zip = new JSZip();
+    const used = new Set();
+    for (const r of results) {
+      let n = r.name, k = 2;
+      while (used.has(n)) n = r.name.replace(/(\.[^.]+)$/, `_${k++}$1`);
+      used.add(n);
+      zip.file(n, r.blob);
+    }
+    RT.download(await zip.generateAsync({ type: 'blob' }), 'converted_figures.zip');
+  } catch (e) { RT.toast(e.message, 6000); }
+  finally { btn.disabled = false; btn.textContent = T('全部下載 (ZIP)', 'Download all (ZIP)'); }
+};
+
+/* ---------------- main ---------------- */
+const setStatus = (t) => ($('status').textContent = t);
+const progress = (p) => ($('bar').style.width = Math.round(p * 100) + '%');
+
+$('go').onclick = async () => {
+  readSettings();
+  const dpi = DPI(), fmt = S.fmt;
+  results = [];
+  $('results').innerHTML = `<div class="empty">${T('轉換中…', 'Converting…')}</div>`;
+  $('go').disabled = true; $('zipAll').disabled = true;
+  const errors = [];
+  for (let fi = 0; fi < files.length; fi++) {
+    const { file, kind } = files[fi];
+    const base = baseName(file.name);
+    const setP = (sub) => progress((fi + sub) / files.length);
+    try {
+      if (kind === 'pdf') {
+        setStatus(T(`讀取 PDF：${file.name}`, `Reading PDF: ${file.name}`));
+        const pdfjs = await loadPdfjs();
+        const pdf = await pdfjs.getDocument({
+          data: new Uint8Array(await file.arrayBuffer()),
+          // character maps + standard fonts so CJK text and non-embedded fonts render
+          cMapUrl: RT.CDN.pdfjsBase + 'cmaps/', cMapPacked: true, standardFontDataUrl: RT.CDN.pdfjsBase + 'standard_fonts/',
+        }).promise;
+        const pages = parseRange(S.pages, pdf.numPages);
+        for (let k = 0; k < pages.length; k++) {
+          const p = pages[k];
+          setStatus(T(`渲染 ${file.name} 第 ${p}/${pdf.numPages} 頁 @ ${dpi} dpi`, `Rendering ${file.name} page ${p}/${pdf.numPages} @ ${dpi} dpi`));
+          const transparent = fmt === 'png' && S.keepAlpha;
+          const scale = dpi / 72;
+          const c = await renderPdfPage(pdf, p, scale, transparent);
+          const r = await finish(c, { dpi, fmt, vector: true, rerender: (f) => renderPdfPage(pdf, p, scale * f, transparent) });
+          addResult({ ...r, dpi, name: `${base}${pdf.numPages > 1 ? '_p' + p : ''}.${extOf(fmt)}` });
+          setP((k + 1) / pages.length);
+          await tick();
+        }
+        pdf.destroy();
+      } else if (kind === 'docx') {
+        // find content a browser cannot draw (EMF/WMF pictures, charts, SmartArt, shapes, OLE objects)
+        const issues = await analyzeDocx(file);
+        const issueText = describeIssues(issues);
+        if (S.wordMode === 'extract') {
+          setStatus(T(`擷取 Word 內嵌圖片：${file.name}`, `Extracting images from ${file.name}`));
+          const { images } = await docxImages(file);
+          if (issueText) errors.push(`${file.name}: ` + issueText + ' ' + PDF_TIP());
+          else if (!images.length) errors.push(`${file.name}: ` + T('沒有可擷取的圖片。', 'no embedded pictures found.'));
+          for (let k = 0; k < images.length; k++) {
+            const im = images[k];
+            await processImageBlob(im.blob, im.ext, `${base}_${baseName(im.name)}`, dpi, fmt, im.buf);
+            setP((k + 1) / images.length);
+          }
+        } else {
+          setStatus(T(`渲染 Word：${file.name}（首次使用需下載函式庫）`, `Rendering Word: ${file.name} (first use downloads libraries)`));
+          if (issueText) errors.push(`${file.name}: ` + issueText + ' ' + T('這些內容在輸出中會是空白。', 'They will be missing (blank) in the output.') + ' ' + PDF_TIP());
+          const pages = await docxPages(file, dpi, S.pages);
+          for (const pg of pages) {
+            if (isBlank(pg.canvas)) {
+              if (!issueText) errors.push(`${file.name}: ` + T(`第 ${pg.page} 頁渲染後是空白。`, `page ${pg.page} rendered blank.`) + ' ' + PDF_TIP());
+              continue;
+            }
+            const r = await finish(pg.canvas, { dpi, fmt, vector: false });
+            r.notes = issueText ? [T('圖表／EMF 圖片未能顯示，見下方說明', 'charts / EMF pictures are missing — see note below')] : [];
+            addResult({ ...r, dpi, name: `${base}${pg.total > 1 ? '_p' + pg.page : ''}.${extOf(fmt)}` });
+          }
+        }
+      } else if (kind === 'emf') {
+        errors.push(`${file.name}: ` + T('EMF / WMF 是 Windows 向量圖格式，瀏覽器無法正確繪製（會缺文字或變形）。', 'EMF / WMF are Windows vector formats that browsers cannot draw correctly (text goes missing, shapes distort).') + ' ' +
+          T('請把它插入 Word 或 PowerPoint，另存為 PDF 後再轉換 PDF（保留向量、最清晰）。', 'Insert it into Word or PowerPoint, save as PDF, then convert that PDF (stays vector and sharpest).'));
+      } else if (kind === 'doc') {
+        errors.push(`${file.name}: ` + T('不支援舊版 .doc，請在 Word 另存為 .docx 或 PDF', 'legacy .doc is not supported — save as .docx or PDF in Word'));
+      } else if (kind === 'unknown') {
+        errors.push(`${file.name}: ` + T('不支援的檔案類型', 'unsupported file type'));
+      } else {
+        setStatus(T(`處理圖片：${file.name}`, `Processing image: ${file.name}`));
+        const ext = file.name.split('.').pop().toLowerCase();
+        await processImageBlob(file, ext, base, dpi, fmt, null, kind);
+      }
+    } catch (e) {
+      console.error(e);
+      errors.push(`${file.name}: ${e.message || e}`);
+    }
+    setP(1);
+  }
+  progress(1);
+  setStatus(T(`完成：${results.length} 個輸出檔${errors.length ? `，${errors.length} 個問題` : ''}`, `Done: ${results.length} file(s)${errors.length ? `, ${errors.length} issue(s)` : ''}`));
+  if (!results.length) $('results').innerHTML = `<div class="empty">${T('沒有產生輸出', 'No output produced')}</div>`;
+  if (errors.length) {
+    const box = RT.h('<div class="msgs" style="margin-top:10px"></div>');
+    errors.forEach((m) => box.appendChild(RT.h(`<div class="msg">⚠ ${RT.esc(m)}</div>`)));
+    $('results').appendChild(box);
+  }
+  $('go').disabled = !files.length;
+};
+
+async function processImageBlob(blob, ext, base, dpi, fmt, buf, kind) {
+  kind = kind || (ext === 'svg' ? 'svg' : /tiff?/.test(ext) ? 'tiff' : 'image');
+  const outName = (suffix = '') => `${base}${suffix}.${extOf(fmt)}`;
+  if (kind === 'svg') {
+    const c = await svgToCanvasFile(await blob.text(), dpi);
+    const r = await finish(c, { dpi, fmt, vector: true, rerender: async (f) => svgToCanvasFile(await blob.text(), dpi * f) });
+    addResult({ ...r, dpi, name: outName() });
+    return;
+  }
+  if (kind === 'tiff') {
+    const pages = await tiffToCanvases(buf || (await blob.arrayBuffer()));
+    for (let i = 0; i < pages.length; i++) {
+      const r = await finish(pages[i].canvas, { dpi, fmt, vector: false });
+      if (pages[i].srcDpi && !(Number(S.widthCm) > 0)) r.notes.push('✓ ' + T(`原始標記 ${Math.round(pages[i].srcDpi)} dpi → ${dpi} dpi（像素未改變）`, `DPI tag ${Math.round(pages[i].srcDpi)} → ${dpi} (pixels unchanged)`));
+      addResult({ ...r, dpi, name: outName(pages.length > 1 ? '_p' + (i + 1) : '') });
+    }
+    return;
+  }
+  // lossless fast path: same format, no resize/trim → only rewrite DPI metadata
+  const noPixelChange = !S.trim && !S.gray && !(Number(S.widthCm) > 0);
+  const u8 = new Uint8Array(buf || (await blob.arrayBuffer()));
+  const isPng = u8[0] === 0x89 && u8[1] === 0x50, isJpg = u8[0] === 0xff && u8[1] === 0xd8;
+  const c = await imageToCanvas(blob);
+  if (noPixelChange && ((fmt === 'png' && isPng) || (fmt === 'jpg' && isJpg && !RT.jpegHasExif(u8)))) {
+    const out = fmt === 'png' ? RT.pngSetDpi(u8, dpi) : RT.jpegSetDpi(u8, dpi);
+    addResult({ blob: out, w: c.width, h: c.height, thumb: thumbOf(c), notes: ['✓ ' + T('無損：僅改寫 DPI 標記，像素未變', 'Lossless: only the DPI tag was rewritten')], dpi, name: outName() });
+    return;
+  }
+  const r = await finish(c, { dpi, fmt, vector: false });
+  addResult({ ...r, dpi, name: outName() });
+}
+
+syncSettings();
+</script>
+</body>
+</html>

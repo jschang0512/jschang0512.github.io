@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RoB 2</title>
+<link rel="stylesheet" href="../shared/style.css?v=20260930a">
+</head>
+<body>
+<div id="app"></div>
+<script src="../shared/common.js?v=20260930a"></script>
+<script src="../shared/rob.js?v=20260930a"></script>
+<script>
+const D = (code, name) => ({ code, name });
+const D2to5 = [
+  D('D2', 'Bias due to deviations from the intended interventions'),
+  D('D3', 'Bias due to missing outcome data'),
+  D('D4', 'Bias in measurement of the outcome'),
+  D('D5', 'Bias in selection of the reported result'),
+];
+document.getElementById('app').outerHTML = RT.robPage({
+  title: 'RoB 2', subZh: '隨機對照試驗偏誤風險評估（Cochrane RoB 2）', subEn: 'Risk of bias in randomised trials (Cochrane RoB 2)',
+  noteZh: '依 RoB 2（主版本 2019-08-22；群集與交叉試驗版本 2021-03-18，皆為目前現行版本）：5 個 domain，判斷為 Low／Some concerns／High。整體規則：全部 Low → Low；任一 High → High；其餘有 Some concerns → Some concerns（多個 Some concerns 嚴重影響信心時，可手動改為 High）。各 domain 的 signalling questions 與演算法請使用官方工具（riskofbias.info），此工具負責整理判斷、理由與出圖。RoB 2 評估對象是「特定結果」，請在每筆的 ▾ 內填寫評估的結果。',
+  noteEn: 'Follows RoB 2 (main tool 22 Aug 2019; cluster-randomised and crossover versions 18 Mar 2021 — all current): 5 domains judged Low / Some concerns / High. Overall rule: all Low → Low; any High → High; otherwise Some concerns (several Some concerns that substantially lower confidence can be overridden to High). Use the official tool (riskofbias.info) for the signalling questions and algorithms; this tool collects judgements and support and draws the plots. RoB 2 assesses a specific result — fill in the result under ▾ for each entry.',
+});
+RT.initPage();
+RT.robTool({
+  key: 'rob2', short: 'RoB 2', filePrefix: 'rob2',
+  variants: {
+    parallel: { zh: '個別隨機分派、平行組（effect of assignment；2019-08-22 版）', en: 'Individually randomised, parallel group — effect of assignment (22 Aug 2019)', domains: [D('D1', 'Bias arising from the randomization process'), ...D2to5] },
+    adhering: { zh: '個別隨機分派、平行組（effect of adhering；2019-08-22 版）', en: 'Individually randomised, parallel group — effect of adhering (22 Aug 2019)', domains: [D('D1', 'Bias arising from the randomization process'), D('D2', 'Bias due to deviations from the intended interventions (effect of adhering to intervention)'), ...D2to5.slice(1)] },
+    cluster: { zh: '群集隨機分派（RoB 2 CRT，2021-03-18 版）', en: 'Cluster-randomised trial — RoB 2 CRT (18 Mar 2021)', domains: [D('D1a', 'Bias arising from the randomization process'), D('D1b', 'Bias arising from the timing of identification or recruitment of participants in a cluster-randomized trial'), ...D2to5] },
+    crossover: { zh: '交叉試驗（2021-03-18 版）', en: 'Crossover trial (18 Mar 2021)', domains: [D('D1', 'Bias arising from the randomization process'), D('DS', 'Bias arising from period and carryover effects'), ...D2to5] },
+  },
+  judgments: [
+    { v: 'L', label: 'Low risk of bias', zh: '低偏誤風險', sym: '+', color: '#02C100', rank: 0, alias: ['low', 'l'] },
+    { v: 'S', label: 'Some concerns', zh: '有些疑慮', sym: '-', color: '#E2DF07', rank: 2, alias: ['some concerns', 'some', 'sc', 'moderate'] },
+    { v: 'H', label: 'High risk of bias', zh: '高偏誤風險', sym: 'X', color: '#BF0000', rank: 3, alias: ['high', 'x'] },
+  ],
+  overall: (vals, J, n) => (vals.includes('H') ? 'H' : vals.includes('S') ? 'S' : 'L'),
+  exampleStudies: [
+    { name: 'Trial A 2018', j: { D1: 'L', D2: 'L', D3: 'L', D4: 'L', D5: 'L' }, sup: {}, overall: 'auto', result: 'Mortality at 12 months', w: '' },
+    { name: 'Trial B 2019', j: { D1: 'L', D2: 'S', D3: 'L', D4: 'L', D5: 'S' }, sup: {}, overall: 'auto', result: 'Mortality at 12 months', w: '' },
+    { name: 'Trial C 2020', j: { D1: 'S', D2: 'H', D3: 'L', D4: 'S', D5: 'L' }, sup: {}, overall: 'auto', result: 'Mortality at 12 months', w: '' },
+    { name: 'Trial D 2021', j: { D1: 'L', D2: 'L', D3: 'S', D4: 'L', D5: 'L' }, sup: {}, overall: 'auto', result: 'Mortality at 12 months', w: '' },
+    { name: 'Trial E 2022', j: { D1: 'H', D2: 'S', D3: 'S', D4: 'L', D5: 'S' }, sup: {}, overall: 'auto', result: 'Mortality at 12 months', w: '' },
+  ],
+  refs: [RT.REFS.rob2, RT.REFS.rob2V, RT.REFS.riskofbias, RT.REFS.robvis, RT.REFS.libs],
+});
+</script>
+</body>
+</html>

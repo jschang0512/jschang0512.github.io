@@ -1,0 +1,1095 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title data-en="Cohort Study Timeline">Cohort Study Timeline</title>
+<link rel="stylesheet" href="../shared/style.css?v=20260930a">
+<style>
+  .trow3 { display: grid; grid-template-columns: 90px 90px minmax(0, 1fr); gap: 6px; align-items: end; margin-top: 6px; }
+  .trow4 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, .9fr) 34px 34px; gap: 6px; align-items: end; margin-top: 6px; }
+  .trow3 .lbl, .trow4 .lbl { margin-bottom: 2px; }
+  .trow4 select { padding: 6px 4px; font-size: 12.5px; }
+  .block textarea + textarea { margin-top: 6px; }
+  .tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; }
+  .tpl { text-align: left; white-space: normal; flex-direction: column; align-items: flex-start; gap: 3px; padding: 7px 9px; height: 100%; }
+  .tpl b { font-size: 12.5px; }
+  .tpl span.d { font-size: 11.5px; color: var(--muted); font-weight: 400; }
+  .fit { font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 999px; }
+  .fit.good { background: var(--ok-bg); color: var(--ok-text); }
+  .fit.ok { background: var(--warn-bg); color: var(--warn-text); }
+  .tpl-note { margin-top: 8px; }
+  .ref-row { display: grid; grid-template-columns: 90px minmax(0, 1fr) 30px; gap: 6px; margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="back" href="../index.html" data-en="← Home">← 工具首頁</a>
+  <h1>Cohort Study Timeline</h1>
+  <span class="sub" data-en="Study design diagram">研究設計時間軸（Study design diagram）</span>
+  <span class="spacer"></span>
+  <div class="btns">
+    <button class="small" id="btnUndo" title="復原 (Ctrl+Z)" data-en-title="Undo (Ctrl+Z)">↶</button>
+    <button class="small" id="btnRedo" title="重做 (Ctrl+Y)" data-en-title="Redo (Ctrl+Y)">↷</button>
+    <button class="small" id="btnSaveJson" title="把目前所有輸入與設定下載成 .json 檔，之後可用「開啟設定檔」繼續編輯或分享給共同作者" data-en-title="Download all inputs and settings as a .json file; reopen it later or share it with co-authors" data-en="Save project">儲存設定檔</button>
+    <button class="small" id="btnLoadJson" title="開啟先前儲存的 .json 設定檔，還原所有輸入" data-en-title="Open a previously saved .json project file" data-en="Open project">開啟設定檔</button>
+  </div>
+</header>
+
+<main class="tool">
+  <section id="form">
+    <div class="card">
+      <h2><span class="step-no">1</span> <span data-en="Study design template">研究設計範本</span></h2>
+      <p class="hint" data-en="A template fills in the time windows; your look (colours, fonts) is kept. <b>All day counts in templates are illustrative — change them to match your protocol.</b> ↶ undoes.">範本只替換時間窗內容，外觀（配色、字型）會保留。<b>範本中的天數都是示意值，請依你的研究計畫修改。</b>按 ↶ 可復原。</p>
+      <div class="btns" style="gap:10px;margin-bottom:8px"><span class="fit good" data-en="Commonly used">常用</span><span class="hint" style="margin:0" data-en="this diagram is the usual way to show the design">此圖是該設計的慣用呈現</span><span class="fit ok" data-en="Usable, pair with">可用，需搭配</span><span class="hint" style="margin:0" data-en="also report another figure/table">還需要搭配其他圖表</span></div>
+      <label class="check" style="margin:0 0 8px"><input type="checkbox" data-k="useConv"> <span data-en="When loading a template, also use that design’s <b>conventional presentation</b> (layout, colours, font)">載入範本時，同時套用該設計的<b>學術慣用呈現</b>（版面、配色、字型）</span></label>
+      <div class="tpl-grid" id="tplGrid"></div>
+      <div id="tplNote" class="tpl-note"></div>
+      <details style="margin-top:10px">
+        <summary data-en="Designs that should NOT use this diagram">哪些設計不適合用這種圖？</summary>
+        <ul class="hint" style="margin:4px 0 0;padding-left:18px">
+          <li data-en="<b>Randomised trials</b>: CONSORT flow diagram + SPIRIT schedule of enrolment, interventions and assessments."><b>隨機對照試驗</b>：CONSORT 流程圖＋SPIRIT 收案／介入／評估時程表。</li>
+          <li data-en="<b>Cross-sectional studies</b>: no time windows — a selection flowchart is enough (Cohort flow tool)."><b>橫斷研究</b>：沒有時間窗，用選取流程圖即可（可用 Cohort 流程圖工具）。</li>
+          <li data-en="<b>Interrupted time series / difference-in-differences</b>: calendar-time plots of the outcome with the intervention date marked."><b>中斷時間序列／差異中的差異</b>：以日曆時間為橫軸畫結果趨勢並標示介入日。</li>
+          <li data-en="<b>Systematic reviews</b>: PRISMA flow diagram (PRISMA tool)."><b>系統性回顧</b>：PRISMA 流程圖（PRISMA 工具）。</li>
+          <li data-en="<b>Diagnostic accuracy studies</b>: STARD flow diagram."><b>診斷準確度研究</b>：STARD 流程圖。</li>
+        </ul>
+      </details>
+    </div>
+
+    <div class="card">
+      <h2><span class="step-no">2</span> <span data-en="Style">樣式</span></h2>
+      <div class="grid2">
+        <label class="field"><span data-en="Layout">版面</span><select data-k="style">
+          <option value="block" data-en="Block (text inside bars)">區塊式（文字在色條內）</option>
+          <option value="classic" data-en="Classic (label column)">經典（左側標籤欄）</option>
+          <option value="track" data-en="Single track (case-crossover, SCCS)">單軌時間線（case-crossover、SCCS）</option></select></label>
+        <label class="field"><span data-en="Time scale">時間比例</span><select data-k="scale">
+          <option value="sqrt" data-en="Square root (moderate)">平方根（適中壓縮）</option>
+          <option value="linear" data-en="Linear (true proportions)">線性（實際比例）</option>
+          <option value="log" data-en="Log (strong compression)">對數（強壓縮）</option>
+          <option value="equal" data-en="Equal spacing">等距（依時間點排序）</option></select></label>
+        <label class="field"><span data-en="Overall style (one click)">整體風格（一鍵套用）</span><select id="themeSel"></select></label>
+        <label class="field"><span data-en="Colour palette (by row type)">配色（依列類型上色）</span><select id="paletteSel"></select></label>
+      </div>
+      <div id="fontFields"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="step-no">3</span> <span data-en="Day 0 &amp; reference lines">Day 0 與參考線</span></h2>
+      <div class="grid2">
+        <label class="field"><span data-en="Title">標題</span><input data-k="day0Title"></label>
+        <label class="field"><span data-en="Time unit">時間單位</span><select data-k="unit"><option value="Days">Day(s)</option><option value="Weeks">Week(s)</option><option value="Months">Month(s)</option><option value="Years">Year(s)</option></select></label>
+      </div>
+      <label class="field"><span data-en="Description">說明文字</span><textarea data-k="day0Text" rows="2"></textarea></label>
+      <div class="lbl" data-en="Extra vertical reference lines (e.g. landmark, end of grace period)">其他垂直參考線（例如 landmark、grace period 結束）</div>
+      <div id="refLines"></div>
+      <button class="small" id="addRef" data-en="+ Reference line">＋ 參考線</button>
+    </div>
+
+    <div class="card">
+      <h2><span class="step-no">4</span> <span data-en="Time windows (one per row)">時間窗（每一列）</span></h2>
+      <p class="hint" data-en="Start/end are relative to Day 0 (e.g. −365 to 0). <b>Blank</b> = extends to the edge (open). Text only (e.g. <code>Censor</code>) = open end shown in the label. <b>Number + label</b>, e.g. <code>280 (delivery)</code> = placed at day 280, shown as “delivery”. <b>Type</b> sets the colour; <b>shape</b> matters in the single-track layout (segment / event marker / bracket above the track).">起訖為相對 Day 0 的時間（例：−365 到 0）。<b>留空</b>＝延伸到邊緣（開放）。<b>只填文字</b>（如 <code>Censor</code>）＝開放端點並顯示在區間文字。<b>數字＋說明</b>（如 <code>280 (delivery)</code>）＝放在第 280 天、顯示為「delivery」。<b>類型</b>決定配色；<b>形狀</b>用於單軌版面（色段／事件標記／軌道上方的括號區間）。</p>
+      <div id="rows"></div>
+      <button class="small" id="addRow" data-en="+ Add row">＋ 新增一列</button>
+    </div>
+
+    <div class="card">
+      <h2><span class="step-no">5</span> <span data-en="Study period in calendar time">研究期間（日曆時間）</span></h2>
+      <label class="check" style="margin-top:0"><input type="checkbox" data-k="cal.on"> <span data-en="Add a calendar-time panel under the diagram (tells readers <i>when</i> the cohort was assembled and followed)">在設計圖下方加上日曆時間面板（讓讀者知道世代<i>何時</i>收案與追蹤）</span></label>
+      <div data-show="cal.on">
+        <label class="field"><span data-en="Panel title">面板標題</span><input data-k="cal.title"></label>
+        <p class="hint" data-en="Dates as <code>YYYY</code>, <code>YYYY-MM</code> or <code>YYYY-MM-DD</code>. A row with only a start date (or shape “event”) is drawn as a point marker. <b>Replace the example dates with your study’s.</b>">日期格式 <code>YYYY</code>、<code>YYYY-MM</code> 或 <code>YYYY-MM-DD</code>。只填起點（或形狀選「事件標記」）會畫成時間點標記。<b>範例日期請換成你研究的實際日期。</b></p>
+        <div id="calRows"></div>
+        <button class="small" id="addCal" data-en="+ Add period">＋ 新增期間</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <details>
+        <summary><span class="step-no" style="display:inline-grid">6</span> <span data-en="Detailed appearance">細部外觀</span></summary>
+        <div class="sub-h" data-en="Bars">色條</div>
+        <div class="grid2">
+          <label class="field"><span data-en="Corner radius (px)">圓角 (px)</span><input type="number" data-k="barR" min="0" max="30" step="1"></label>
+          <label class="field"><span data-en="Border width (px, 0 = none)">框線粗細（0＝無）</span><input type="number" data-k="barBW" min="0" max="6" step="0.1"></label>
+          <label class="field"><span data-en="Border colour">框線顏色</span><input type="color" data-k="barBC" style="width:100%"></label>
+          <label class="field" data-show="style=classic|track"><span data-en="Bar height">色條高度</span><input type="number" data-k="barH" min="8" max="60" step="1"></label>
+        </div>
+        <label class="check"><input type="checkbox" data-k="titleBold"> <span data-en="Bold row titles">列標題粗體</span></label>
+        <label class="check"><input type="checkbox" data-k="winItalic"> <span data-en="Italic window labels">區間文字斜體</span></label>
+        <label class="check"><input type="checkbox" data-k="gray"> <span data-en="Grayscale output">灰階輸出</span></label>
+        <label class="check" data-show="style=track"><input type="checkbox" data-k="trackTicks"> <span data-en="Day numbers under the track">軌道下方標示天數刻度</span></label>
+        <div class="sub-h" data-en="Size &amp; spacing">尺寸與間距</div>
+        <div class="grid2">
+          <label class="field" data-show="style=block|track"><span data-en="Figure width (px)">圖寬 (px)</span><input type="number" data-k="blockW" min="500" max="2400" step="10"></label>
+          <label class="field" data-show="style=block"><span data-en="Day 0 position (% width)">Day 0 位置（% 圖寬）</span><input type="number" data-k="day0Pos" min="15" max="85" step="1"></label>
+          <label class="field" data-show="style=classic"><span data-en="Label column width">標籤欄寬度</span><input type="number" data-k="labelW" min="100" max="500" step="10"></label>
+          <label class="field" data-show="style=classic"><span data-en="Timeline width">時間軸寬度</span><input type="number" data-k="plotW" min="300" max="1200" step="10"></label>
+          <label class="field" data-show="style=block|classic"><span data-en="Row gap (px)">列間距 (px)</span><input type="number" data-k="rowGap" min="0" max="60" step="1"></label>
+          <label class="field" data-show="style=block"><span data-en="Text padding (px)">文字內距 (px)</span><input type="number" data-k="padX" min="2" max="60" step="1"></label>
+          <label class="field" data-show="style=block"><span data-en="Detail indent (px)">細項縮排 (px)</span><input type="number" data-k="indent" min="0" max="80" step="1"></label>
+          <label class="field" data-show="style=classic"><span data-en="Label alignment">標籤對齊</span><select data-k="labelAlign"><option value="left" data-en="Left">靠左</option><option value="right" data-en="Right (next to bars)">靠右（貼近色條）</option></select></label>
+        </div>
+        <div class="sub-h" data-en="Day 0 line, reference lines &amp; axis">Day 0 線、參考線與時間軸</div>
+        <div class="grid2">
+          <label class="field"><span data-en="Day 0 line colour">Day 0 線顏色</span><input type="color" data-k="d0Color" style="width:100%"></label>
+          <label class="field"><span data-en="Day 0 line width">Day 0 線寬</span><input type="number" data-k="d0W" min="0.5" max="30" step="0.5"></label>
+          <label class="field"><span data-en="Day 0 line style">Day 0 線型</span><select data-k="d0Dash"><option value="solid" data-en="Solid">實線</option><option value="dash" data-en="Dashed">虛線</option><option value="dot" data-en="Dotted">點線</option></select></label>
+          <label class="field"><span data-en="Reference line colour">參考線顏色</span><input type="color" data-k="refColor" style="width:100%"></label>
+          <label class="field" data-show="style=block|track"><span data-en="Axis colour">時間軸顏色</span><input type="color" data-k="axisColor" style="width:100%"></label>
+          <label class="field" data-show="style=block|track"><span data-en="Axis width">時間軸線寬</span><input type="number" data-k="axisW" min="0.5" max="12" step="0.5"></label>
+          <label class="field" data-show="style=block|track"><span data-en="Day 0 title size (× font)">Day 0 標題大小（× 字級）</span><input type="number" data-k="titleScale" min="0.8" max="3" step="0.1"></label>
+          <label class="field" data-show="style=block|track"><span data-en="Background">背景顏色</span><input type="color" data-k="bgColor" style="width:100%"></label>
+        </div>
+        <label class="check" data-show="style=block|track"><input type="checkbox" data-k="bgOn"> <span data-en="Use background colour">使用背景顏色</span></label>
+        <label class="check" data-show="style=block|track"><input type="checkbox" data-k="axis"> <span data-en="Axis arrow">時間軸箭頭</span></label>
+        <label class="check" data-show="style=block"><input type="checkbox" data-k="d0Top"> <span data-en="Day 0 box at the top (Schneeweiss style) instead of a title under the axis">Day 0 方框放在頂端（Schneeweiss 風格），而非軸下方標題</span></label>
+        <label class="check" data-show="style=classic"><input type="checkbox" data-k="center0"> <span data-en="Centre Day 0 (non-linear scales)">Day 0 置中（非線性比例時）</span></label>
+        <label class="check" data-show="style=classic"><input type="checkbox" data-k="stripes"> <span data-en="Zebra row background">列背景斑馬紋</span></label>
+        <div class="sub-h" data-en="Window labels">區間文字</div>
+        <div class="grid2">
+          <label class="field"><span data-en="Open start text">開放起點文字</span><input data-k="openL"></label>
+          <label class="field"><span data-en="Open end text">開放終點文字</span><input data-k="openR"></label>
+        </div>
+        <label class="check"><input type="checkbox" data-k="showWin"> <span data-en="Show window labels">顯示區間文字</span></label>
+        <label class="check" data-show="style=block"><input type="checkbox" data-k="winParen"> <span data-en="Wrap in parentheses “( Day [a, b] )”">加括號「( Day [a, b] )」</span></label>
+        <label class="field"><span data-en="Footnote (optional)">註腳（選填）</span><textarea data-k="footnote" rows="3"></textarea></label>
+      </details>
+    </div>
+    <div class="card" id="refs"></div>
+  </section>
+
+  <section class="preview-col">
+    <div class="paper" id="preview"></div>
+    <div class="card" id="export"></div>
+  </section>
+</main>
+
+<script src="../shared/common.js?v=20260930a"></script>
+<script>
+const T = RT.t;
+const KEY = 'timeline5';
+
+/* ---------------- row types, shapes & palettes ---------------- */
+const KINDS = [
+  ['screen', '篩選／資格', 'Screening / qualification'],
+  ['incl', '納入評估', 'Inclusion assessment'],
+  ['excl', '排除評估', 'Exclusion assessment'],
+  ['wash', '洗除期', 'Washout'],
+  ['cov', '共變項', 'Covariates'],
+  ['expo', '暴露', 'Exposure'],
+  ['fu', '追蹤／風險期', 'Follow-up / time at risk'],
+  ['out', '結果／事件', 'Outcome / event'],
+  ['other', '其他', 'Other'],
+];
+const SHAPES = () => [['bar', T('色段', 'Segment')], ['event', T('事件標記', 'Event marker')], ['bracket', T('括號區間', 'Bracket')]];
+const PALETTES = {
+  bold: { zh: '粗色塊（參考圖）', en: 'Bold blocks (reference figure)', c: { screen: '#375482', incl: '#375482', excl: '#D05353', wash: '#7F7F7F', cov: '#9933FF', expo: '#ED7D31', fu: '#00B050', out: '#C00000', other: '#1F9C9C' } },
+  pastel: { zh: '柔和粉彩（Schneeweiss / REPEAT）', en: 'Soft pastel (Schneeweiss / REPEAT)', c: { screen: '#E7E6E6', incl: '#F4CCCC', excl: '#F4CCCC', wash: '#D9D2E9', cov: '#CFE2F3', expo: '#FCE5CD', fu: '#D9EAD3', out: '#EAD1DC', other: '#FFF2CC' } },
+  okabe: { zh: '色盲友善（Okabe–Ito）', en: 'Colour-blind safe (Okabe–Ito)', c: { screen: '#0072B2', incl: '#56B4E9', excl: '#D55E00', wash: '#999999', cov: '#CC79A7', expo: '#E69F00', fu: '#009E73', out: '#F0E442', other: '#8C8C8C' } },
+  tableau: { zh: '現代（Tableau 10）', en: 'Modern (Tableau 10)', c: { screen: '#4E79A7', incl: '#76B7B2', excl: '#E15759', wash: '#BAB0AC', cov: '#B07AA1', expo: '#F28E2B', fu: '#59A14F', out: '#EDC948', other: '#9C755F' } },
+  blues: { zh: '單色藍', en: 'Blue monochrome', c: { screen: '#1F3B57', incl: '#2E5C8A', excl: '#3E7CB1', wash: '#9DB9D5', cov: '#6A9BC9', expo: '#1D4E89', fu: '#5B8DB8', out: '#0B2545', other: '#BCD2E8' } },
+  gray: { zh: '灰階（期刊黑白）', en: 'Grayscale (print)', c: { screen: '#595959', incl: '#7F7F7F', excl: '#A6A6A6', wash: '#D9D9D9', cov: '#BFBFBF', expo: '#404040', fu: '#8C8C8C', out: '#262626', other: '#E7E6E6' } },
+  outline: { zh: '白底線框', en: 'White outline', c: { screen: '#FFFFFF', incl: '#FFFFFF', excl: '#FFFFFF', wash: '#FFFFFF', cov: '#FFFFFF', expo: '#FFFFFF', fu: '#FFFFFF', out: '#FFFFFF', other: '#FFFFFF' } },
+};
+const THEMES = {
+  schneeweiss: { zh: 'Schneeweiss / REPEAT 設計圖風格', en: 'Schneeweiss / REPEAT design-diagram style', palette: 'pastel',
+    s: { style: 'block', st: { font: 'Arial', fontSize: 13, lh: 1.3 }, bgOn: false, barR: 0, barBW: 0.8, barBC: '#555555', titleBold: true, winItalic: false, d0Top: true, d0Color: '#000000', d0W: 1.5, d0Dash: 'solid', axis: false, winParen: true, day0Pos: 55 } },
+  track: { zh: '單軌學術風（灰階、Arial）', en: 'Single-track academic (grayscale, Arial)', palette: 'gray',
+    s: { style: 'track', st: { font: 'Arial', fontSize: 13, lh: 1.3 }, bgOn: false, barR: 0, barBW: 0.8, barBC: '#333333', titleBold: true, winItalic: false, d0Color: '#000000', d0W: 1.5, d0Dash: 'dash', axis: true, axisColor: '#333333', trackTicks: true } },
+  ref: { zh: '參考圖風格（深色色塊、灰底、Times）', en: 'Reference figure (bold blocks, grey background, Times)', palette: 'bold',
+    s: { style: 'block', st: { font: 'Times New Roman', fontSize: 15, lh: 1.38 }, bgOn: true, bgColor: '#F2F2F2', barR: 0, barBW: 0, titleBold: true, winItalic: false, d0Top: false, d0Color: '#BFBFBF', d0W: 9, d0Dash: 'solid', axis: true, axisColor: '#263238', winParen: true, day0Pos: 48 } },
+  repeat: { zh: '學術經典（Schneeweiss / REPEAT）', en: 'Academic classic (Schneeweiss / REPEAT)', palette: 'pastel',
+    s: { style: 'classic', st: { font: 'Arial', fontSize: 13, lh: 1.3 }, barR: 0, barBW: 0.9, barBC: '#333333', titleBold: false, winItalic: false, d0Color: '#000000', d0W: 1.2, d0Dash: 'dash', labelAlign: 'left' } },
+  modern: { zh: '現代圓角（白底、Calibri）', en: 'Modern rounded (white, Calibri)', palette: 'tableau',
+    s: { style: 'block', st: { font: 'Calibri', fontSize: 14, lh: 1.35 }, bgOn: false, barR: 7, barBW: 0, titleBold: true, winItalic: false, d0Top: false, day0Pos: 48, d0Color: '#9AA5B1', d0W: 4, d0Dash: 'solid', axis: true, axisColor: '#52606D', winParen: false } },
+  okabe: { zh: '色盲友善（Okabe–Ito）', en: 'Colour-blind safe (Okabe–Ito)', palette: 'okabe',
+    s: { style: 'block', st: { font: 'Arial', fontSize: 14, lh: 1.35 }, bgOn: false, barR: 3, barBW: 0, titleBold: true, winItalic: false, d0Top: false, day0Pos: 48, d0Color: '#555555', d0W: 3, d0Dash: 'dash', axis: true, axisColor: '#333333', winParen: true } },
+  mono: { zh: '期刊黑白（灰階、細框）', en: 'Journal black & white', palette: 'gray',
+    s: { style: 'classic', st: { font: 'Arial', fontSize: 13, lh: 1.3 }, barR: 0, barBW: 0.9, barBC: '#000000', titleBold: false, winItalic: false, d0Color: '#000000', d0W: 1.2, d0Dash: 'dash', labelAlign: 'left' } },
+  blue: { zh: '單色藍（簡報風）', en: 'Blue monochrome (slides)', palette: 'blues',
+    s: { style: 'block', st: { font: 'Segoe UI', fontSize: 14, lh: 1.35 }, bgOn: false, barR: 4, barBW: 0, titleBold: true, winItalic: true, d0Top: false, day0Pos: 48, d0Color: '#1F3B57', d0W: 2.5, d0Dash: 'dot', axis: true, axisColor: '#1F3B57', winParen: false } },
+  outline: { zh: '白底線框（最省墨）', en: 'White outline (ink-saving)', palette: 'outline',
+    s: { style: 'classic', st: { font: 'Arial', fontSize: 13, lh: 1.3 }, barR: 3, barBW: 1.2, barBC: '#000000', titleBold: true, winItalic: false, d0Color: '#000000', d0W: 1.2, d0Dash: 'dash', labelAlign: 'left' } },
+};
+
+/* ---------------- study-design templates (content only) ---------------- */
+const row = (o) => Object.assign({ label: '', details: '', s: '', e: '0', win: '', kind: 'other', shape: 'bar', color: '', pos: 'auto', tcolor: '' }, o);
+const TEMPLATES = {
+  t2dm: {
+    zh: 'T2DM 世代（time-at-risk）', en: 'T2DM cohort (time-at-risk)', dzh: '參考圖範例：篩選、納入／排除、共變項、風險期', den: 'Reference figure: screening, inclusion/exclusion, covariates, risk windows',
+    fit: 'good', nzh: '資料庫世代研究正是這種圖的原本用途。', nen: 'Database cohort studies are exactly what this diagram was designed for.',
+    scale: 'sqrt', unit: 'Days', openL: '- ∞', openR: 'Censor/ Events', day0Title: 'Index date', day0Text: 'Day [0]', footnote: '',
+    rows: [
+      row({ kind: 'screen', label: 'Initial qualification screening window', details: 'T2DM diagnosis between 2009-01-01 and 2019-12-31', s: '2009-01-01', e: '0' }),
+      row({ kind: 'incl', label: 'Inclusion Assessment window', details: '1. Aged > 40y\n2. T2DM with complications: neurological, renal, cardiovascular disease.', s: '0', e: '0' }),
+      row({ kind: 'excl', label: 'Exclusion Assessment window', details: '1. T1DM\n2. T2DM without chronic complications\n3. No previous visit history\n4. Dementia diagnosis\n5. No DM treatment', s: '', e: '0' }),
+      row({ kind: 'cov', label: 'Demographic factors collection window', s: '0', e: '0' }),
+      row({ kind: 'cov', label: 'Preexisting comorbidities collection window', s: '', e: '0' }),
+      row({ kind: 'cov', label: 'Long-term medication collection window', s: '-180', e: '0' }),
+      row({ kind: 'cov', label: 'Lab test result collection window', s: '-365', e: '0' }),
+      row({ kind: 'fu', label: '5-year time-at-risk window', s: '0', e: '1825', win: 'Day [0, Censor/ Events]' }),
+      row({ kind: 'fu', label: '10-year time-at-risk window', s: '0', e: '3650', win: 'Day [0, Censor/ Events]' }),
+    ],
+  },
+  acnu: {
+    zh: 'New-user active comparator', en: 'New-user, active comparator', dzh: 'Washout、排除、共變項、追蹤', den: 'Washout, exclusions, covariates, follow-up',
+    fit: 'good', nzh: '藥物流行病學最常見的設計；此圖是慣用呈現。', nen: 'The most common pharmacoepidemiology design; this diagram is the usual presentation.',
+    scale: 'sqrt', unit: 'Days', openL: 'all available data', openR: 'censoring*', day0Title: 'Day 0', day0Text: 'Cohort entry date (first dispensing of drug A or drug B)',
+    footnote: '* Censoring at the earliest of: outcome, death, disenrollment, treatment discontinuation or switching (+30-day grace period), or end of the study period.',
+    rows: [
+      row({ kind: 'wash', label: 'Washout window', details: 'No use of drug A or drug B', s: '-365', e: '-1' }),
+      row({ kind: 'excl', label: 'Exclusion assessment window', details: 'Age < 18, prior cancer, dialysis', s: '-365', e: '0' }),
+      row({ kind: 'excl', label: 'Exclusion assessment window', details: 'Prior history of the outcome', s: '', e: '-1' }),
+      row({ kind: 'cov', label: 'Covariate assessment window', details: 'Comorbidities, co-medications, healthcare use', s: '-365', e: '-1' }),
+      row({ kind: 'expo', label: 'Exposure assessment window', s: '0', e: '0' }),
+      row({ kind: 'fu', label: 'Follow-up window', s: '1', e: '' }),
+    ],
+  },
+  itt: {
+    zh: 'ITT 與 as-treated 追蹤', en: 'ITT vs as-treated follow-up', dzh: '同一世代兩種追蹤定義並列', den: 'Two follow-up definitions side by side',
+    fit: 'good', nzh: '並列兩種追蹤定義，常見於主分析＋敏感度分析。', nen: 'Shows two follow-up definitions — common for main + sensitivity analyses.',
+    scale: 'sqrt', unit: 'Days', openL: 'all available data', openR: 'censoring', day0Title: 'Day 0', day0Text: 'Treatment initiation',
+    footnote: 'ITT: follow-up regardless of subsequent treatment changes. As-treated: censored at discontinuation (gap > 30 days) or switching.',
+    rows: [
+      row({ kind: 'wash', label: 'Washout window', details: 'No prior use of either study drug', s: '-365', e: '-1' }),
+      row({ kind: 'cov', label: 'Covariate assessment window', s: '-365', e: '-1' }),
+      row({ kind: 'expo', label: 'Exposure assessment window', s: '0', e: '0' }),
+      row({ kind: 'fu', label: 'Intention-to-treat follow-up', s: '1', e: '365', win: 'Days [1, 365]' }),
+      row({ kind: 'fu', label: 'As-treated follow-up', s: '1', e: '', win: 'Days [1, discontinuation + 30]' }),
+    ],
+  },
+  general: {
+    zh: '一般世代（暴露於 Day 0）', en: 'General cohort (exposure at Day 0)', dzh: '納入、排除、共變項、暴露、追蹤', den: 'Inclusion, exclusion, covariates, exposure, follow-up',
+    fit: 'good', nzh: '一般資料庫世代研究的基本形式。', nen: 'The basic form for a database cohort study.',
+    scale: 'sqrt', unit: 'Days', openL: 'all available data', openR: 'censoring*', day0Title: 'Day 0', day0Text: 'Cohort entry date (first qualifying diagnosis)',
+    footnote: '* Follow-up until outcome, death, loss to follow-up, or end of the study period, whichever came first.',
+    rows: [
+      row({ kind: 'incl', label: 'Inclusion assessment window', details: 'Continuous enrollment', s: '-365', e: '0' }),
+      row({ kind: 'excl', label: 'Exclusion assessment window', details: 'History of the outcome', s: '', e: '-1' }),
+      row({ kind: 'cov', label: 'Covariate assessment window', s: '-365', e: '-1' }),
+      row({ kind: 'expo', label: 'Exposure assessment window', s: '0', e: '0' }),
+      row({ kind: 'fu', label: 'Follow-up window', s: '1', e: '' }),
+    ],
+  },
+  latency: {
+    zh: 'Washout + 誘導／潛伏期', en: 'Washout + induction / latency', dzh: '暴露後先排除潛伏期再計算結果', den: 'Outcome counted after an induction period',
+    fit: 'good', nzh: '適合需要誘導期（例如癌症結果）的世代研究。', nen: 'Suits cohorts needing an induction period (e.g. cancer outcomes).',
+    scale: 'sqrt', unit: 'Days', openL: 'all available data', openR: 'censoring', day0Title: 'Day 0', day0Text: 'Treatment initiation', footnote: '',
+    rows: [
+      row({ kind: 'wash', label: 'Washout window', s: '-183', e: '-1' }),
+      row({ kind: 'cov', label: 'Covariate assessment window', s: '-365', e: '-1' }),
+      row({ kind: 'expo', label: 'Exposure assessment window', s: '0', e: '0' }),
+      row({ kind: 'other', label: 'Induction / latency period', details: 'Outcomes not counted', s: '1', e: '90' }),
+      row({ kind: 'fu', label: 'Follow-up window', s: '91', e: '' }),
+    ],
+  },
+  landmark: {
+    zh: 'Landmark 分析', en: 'Landmark analysis', dzh: 'Day 0＝cohort entry，landmark 為垂直參考線', den: 'Day 0 = cohort entry; landmark shown as a reference line',
+    fit: 'good', nzh: '暴露在 landmark 前定義、追蹤從 landmark 開始；請同時說明 landmark 前發生事件或死亡者的處理（排除）。', nen: 'Exposure is defined before the landmark and follow-up starts at it; also state that people with the event or death before the landmark are excluded.',
+    scale: 'linear', unit: 'Days', openL: '', openR: 'censoring', day0Title: 'Day 0', day0Text: 'Cohort entry (diagnosis)',
+    footnote: 'Patients with the outcome or death before the landmark are excluded; exposure status is fixed at the landmark to avoid immortal time bias.',
+    refLines: [{ t: '180', label: 'Landmark (day 180)' }],
+    rows: [
+      row({ kind: 'cov', label: 'Covariate assessment window', s: '-365', e: '0' }),
+      row({ kind: 'expo', label: 'Exposure assessment window', details: 'Exposure classified by the landmark', s: '0', e: '180' }),
+      row({ kind: 'excl', label: 'Exclusion: outcome or death before landmark', s: '0', e: '180' }),
+      row({ kind: 'fu', label: 'Follow-up from landmark', s: '181', e: '' }),
+    ],
+  },
+  tte: {
+    zh: '目標試驗模擬（Target trial emulation）', en: 'Target trial emulation', dzh: '資格、分派、追蹤起點對齊於 time zero', den: 'Eligibility, assignment and follow-up aligned at time zero',
+    fit: 'ok', nzh: '請搭配 target trial 規格表（eligibility、treatment strategies、assignment、time zero、follow-up、outcome、causal contrast、analysis plan），這張圖只補充說明 time zero 對齊；若使用 cloning 或 sequential trials，此圖無法完整表達。', nen: 'Pair it with the target-trial specification table (eligibility, treatment strategies, assignment, time zero, follow-up, outcome, causal contrast, analysis plan); the diagram only illustrates time-zero alignment and cannot fully show cloning or sequential trials.',
+    scale: 'sqrt', unit: 'Days', openL: 'all available data', openR: 'end of follow-up*', day0Title: 'Time zero', day0Text: 'Eligibility met, treatment strategy assigned, follow-up starts',
+    footnote: '* Earliest of outcome, death, loss to follow-up, deviation from the assigned strategy (per-protocol), or administrative end.',
+    refLines: [{ t: '30', label: 'End of grace period' }],
+    rows: [
+      row({ kind: 'incl', label: 'Eligibility assessment window', details: 'Inclusion criteria of the target trial', s: '-365', e: '0' }),
+      row({ kind: 'wash', label: 'Washout window', details: 'No prior use of the treatments compared', s: '-365', e: '-1' }),
+      row({ kind: 'cov', label: 'Baseline covariate assessment window', s: '-365', e: '0' }),
+      row({ kind: 'expo', label: 'Treatment initiation grace period', s: '0', e: '30' }),
+      row({ kind: 'fu', label: 'Follow-up window', s: '0', e: '' }),
+    ],
+  },
+  ncc: {
+    zh: '巢式病例對照（Nested case-control）', en: 'Nested case-control', dzh: 'Day 0＝病例事件日／對照配對日', den: 'Day 0 = case event date / matched control date',
+    fit: 'ok', nzh: '暴露回溯窗很適合用此圖；risk-set sampling 與配對過程請另以選取流程圖呈現（可用 Cohort 流程圖工具）。', nen: 'Good for the exposure look-back windows; show risk-set sampling and matching in a separate selection flowchart (Cohort flow tool).',
+    scale: 'sqrt', unit: 'Days', openL: 'cohort entry', openR: '', day0Title: 'Index date', day0Text: 'Outcome date for cases; same follow-up time for matched controls',
+    footnote: 'Exposure assessed before the index date with a lag window to reduce protopathic bias.',
+    rows: [
+      row({ kind: 'screen', label: 'Cohort follow-up before index date', s: '', e: '0', win: 'Cohort entry → index date' }),
+      row({ kind: 'excl', label: 'Exclusion assessment window', details: 'Prior history of the outcome', s: '', e: '-1' }),
+      row({ kind: 'expo', label: 'Exposure assessment window', s: '-365', e: '-31' }),
+      row({ kind: 'wash', label: 'Lag window', details: 'Exposure ignored', s: '-30', e: '-1' }),
+      row({ kind: 'cov', label: 'Covariate assessment window', s: '-365', e: '-1' }),
+      row({ kind: 'out', label: 'Outcome (case) / matched index (control)', s: '0', e: '0' }),
+    ],
+  },
+  pregLmp: {
+    zh: '懷孕世代（Day 0＝LMP）', en: 'Pregnancy cohort (Day 0 = LMP)', dzh: '孕前、各孕期暴露、分娩、嬰兒追蹤', den: 'Pre-pregnancy, trimester exposure, delivery, infant follow-up',
+    fit: 'ok', nzh: '孕期界線取決於每位孕婦的孕期長度，圖中是典型孕週位置（T1 < 14 週、T2 14–27 週、T3 ≥ 28 週）；請在註腳說明孕期如何估計。', nen: 'Trimester boundaries depend on each pregnancy’s gestational length; positions shown are typical (T1 < 14 wk, T2 14–27 wk, T3 ≥ 28 wk). State how gestational age was estimated.',
+    scale: 'linear', unit: 'Days', openL: '', openR: '', day0Title: 'Day 0', day0Text: 'Last menstrual period (LMP)',
+    footnote: 'Trimesters by gestational age: T1 0–13+6 weeks, T2 14+0–27+6 weeks, T3 28+0 weeks to delivery; delivery date varies by pregnancy (40 weeks shown).',
+    rows: [
+      row({ kind: 'cov', label: 'Pre-pregnancy baseline window', s: '-90', e: '-1' }),
+      row({ kind: 'expo', label: 'First trimester', s: '0', e: '97' }),
+      row({ kind: 'expo', label: 'Second trimester', s: '98', e: '195' }),
+      row({ kind: 'expo', label: 'Third trimester', s: '196', e: '280 (delivery)' }),
+      row({ kind: 'out', label: 'Delivery outcomes', s: '280', e: '280', win: 'Delivery' }),
+      row({ kind: 'fu', label: 'Infant follow-up', s: '281', e: '645', win: 'Birth to age 1 year' }),
+    ],
+  },
+  pregDel: {
+    zh: '懷孕世代（Day 0＝分娩日）', en: 'Pregnancy cohort (Day 0 = delivery)', dzh: '以分娩日為錨點回推 LMP（理賠資料常用）', den: 'Anchored at delivery, LMP estimated backwards (common in claims data)',
+    fit: 'ok', nzh: '理賠資料常以分娩日為 Day 0，再依孕週回推 LMP；圖中以 40 週孕期示意，實際界線因人而異。', nen: 'Claims-based studies often anchor at delivery and estimate LMP backwards; a 40-week pregnancy is shown, actual boundaries vary.',
+    scale: 'linear', unit: 'Days', openL: '', openR: '', day0Title: 'Day 0', day0Text: 'Delivery date',
+    footnote: 'LMP estimated from the recorded gestational age at delivery; trimester windows shown for a 40-week pregnancy.',
+    rows: [
+      row({ kind: 'cov', label: 'Pre-pregnancy baseline window', s: '-370', e: '-281' }),
+      row({ kind: 'screen', label: 'Pregnancy period', s: '-280 (estimated LMP)', e: '0' }),
+      row({ kind: 'expo', label: 'First trimester', s: '-280', e: '-183' }),
+      row({ kind: 'expo', label: 'Second trimester', s: '-182', e: '-85' }),
+      row({ kind: 'expo', label: 'Third trimester', s: '-84', e: '-1' }),
+      row({ kind: 'out', label: 'Delivery / birth outcomes', s: '0', e: '0' }),
+      row({ kind: 'fu', label: 'Infant follow-up', s: '1', e: '365' }),
+    ],
+  },
+  cco: {
+    zh: '病例交叉（Case-crossover）', en: 'Case-crossover', dzh: '單軌：同一病人的危險期 vs 對照期', den: 'Single track: hazard vs control windows in one person',
+    fit: 'good', layout: 'track', nzh: '以單軌時間線呈現同一病人：事件日在 Day 0，往前標出危險期、洗除期與對照期；對照窗數量與間隔請依研究設定。', nen: 'A single track for one person: event at Day 0, with hazard, washout and control windows before it; set the number and spacing of control windows for your study.',
+    scale: 'linear', unit: 'Days', openL: '', openR: '', day0Title: 'Day 0', day0Text: 'Outcome event',
+    footnote: 'Exposure in the hazard window is compared with exposure in earlier control windows of the same person; washout gaps avoid carry-over between windows.',
+    rows: [
+      row({ kind: 'other', label: 'Control window 2', s: '-67', e: '-61' }),
+      row({ kind: 'wash', label: 'Washout', s: '-60', e: '-38' }),
+      row({ kind: 'other', label: 'Control window 1', s: '-37', e: '-31' }),
+      row({ kind: 'wash', label: 'Washout', s: '-30', e: '-8' }),
+      row({ kind: 'expo', label: 'Hazard window', s: '-7', e: '-1' }),
+      row({ kind: 'out', label: 'Event', shape: 'event', s: '0', e: '0', win: '' }),
+    ],
+  },
+  sccs: {
+    zh: '自身對照病例系列（SCCS）', en: 'Self-controlled case series (SCCS)', dzh: '單軌：觀察期切成 baseline／pre-exposure／risk', den: 'Single track: observation split into baseline / pre-exposure / risk',
+    fit: 'good', layout: 'track', nzh: '以單軌時間線呈現單一個體的觀察期被切成 baseline、pre-exposure 與 risk 期；只納入病例，觀察期常以年齡或日曆時間界定，事件可落在任何期段。', nen: 'A single track for one individual: the observation period is split into baseline, pre-exposure and risk periods; only cases are included, observation is often defined by age or calendar time, and events may fall in any period.',
+    scale: 'linear', unit: 'Days', openL: '', openR: '', day0Title: 'Day 0', day0Text: 'Exposure (e.g. vaccination)',
+    footnote: 'Incidence of events in the risk period is compared with that in baseline periods within the same individuals. Day 0 (the exposure day) is usually analysed as a separate period or included in the risk period — state which.',
+    rows: [
+      row({ kind: 'screen', label: 'Observation period', shape: 'bracket', s: '-180 (start of observation)', e: '365 (end of observation)' }),
+      row({ kind: 'other', label: 'Baseline', s: '-180', e: '-15' }),
+      row({ kind: 'wash', label: 'Pre-exposure', s: '-14', e: '-1' }),
+      row({ kind: 'expo', label: 'Risk period', s: '1', e: '42' }),
+      row({ kind: 'other', label: 'Baseline', s: '43', e: '365' }),
+      row({ kind: 'out', label: 'Event', shape: 'event', s: '20', e: '20', win: '' }),
+      row({ kind: 'out', label: 'Event', shape: 'event', s: '210', e: '210', win: '' }),
+    ],
+  },
+};
+
+/* conventional presentation + calendar-time study period for each design */
+const CAL = (o = {}) => Object.assign({ on: true, title: 'Study period (calendar time)', rows: [
+  { label: 'Data available', start: '2008-01-01', end: '2020-12-31', kind: 'other', shape: 'bar' },
+  { label: 'Baseline look-back (earliest entrants)', start: '2008-01-01', end: '2008-12-31', kind: 'cov', shape: 'bar' },
+  { label: 'Cohort entry (accrual) period', start: '2009-01-01', end: '2019-12-31', kind: 'screen', shape: 'bar' },
+  { label: 'End of follow-up', start: '2020-12-31', end: '', kind: 'fu', shape: 'event' },
+] }, o);
+const CASE_CAL = (label) => CAL({ on: false, rows: [
+  { label: 'Data available', start: '2008-01-01', end: '2020-12-31', kind: 'other', shape: 'bar' },
+  { label, start: '2010-01-01', end: '2020-12-31', kind: 'out', shape: 'bar' },
+] });
+Object.assign(TEMPLATES.t2dm, { conv: { theme: 'ref' }, cal: CAL({ on: false, rows: [
+  { label: 'Data available', start: '2008-01-01', end: '2020-12-31', kind: 'other', shape: 'bar' },
+  { label: 'T2DM diagnosis (cohort entry) period', start: '2009-01-01', end: '2019-12-31', kind: 'screen', shape: 'bar' },
+  { label: 'End of follow-up', start: '2020-12-31', end: '', kind: 'fu', shape: 'event' },
+] }) });
+for (const id of ['acnu', 'itt', 'general', 'latency', 'landmark', 'tte']) Object.assign(TEMPLATES[id], { conv: { theme: 'schneeweiss' }, cal: CAL() });
+Object.assign(TEMPLATES.ncc, { conv: { theme: 'schneeweiss', day0Pos: 80 }, cal: CASE_CAL('Case (index) dates') });
+Object.assign(TEMPLATES.cco, { conv: { theme: 'track' }, cal: CASE_CAL('Event dates of included cases') });
+Object.assign(TEMPLATES.sccs, { conv: { theme: 'track' }, cal: CASE_CAL('Observation periods of cases') });
+// pregnancy: conventional single gestational axis in weeks
+Object.assign(TEMPLATES.pregLmp, {
+  layout: 'track', unit: 'Weeks', conv: { theme: 'track' },
+  cal: CAL({ on: false, rows: [{ label: 'Deliveries included', start: '2010-01-01', end: '2019-12-31', kind: 'screen', shape: 'bar' }, { label: 'End of infant follow-up', start: '2020-12-31', end: '', kind: 'fu', shape: 'event' }] }),
+  footnote: 'Gestational weeks from LMP: T1 0–13, T2 14–27, T3 28 weeks to delivery (delivery week varies; 40 weeks shown).',
+  rows: [
+    row({ kind: 'cov', label: 'Pre-pregnancy', s: '-12', e: '-1' }),
+    row({ kind: 'expo', label: 'First trimester', s: '0', e: '13' }),
+    row({ kind: 'expo', label: 'Second trimester', s: '14', e: '27' }),
+    row({ kind: 'expo', label: 'Third trimester', s: '28', e: '40 (delivery)' }),
+    row({ kind: 'out', label: 'Delivery', shape: 'event', s: '40', e: '40', win: 'Birth outcomes' }),
+    row({ kind: 'fu', label: 'Infant follow-up', s: '41', e: '92', win: 'Birth to age 1 year' }),
+  ],
+});
+Object.assign(TEMPLATES.pregDel, {
+  layout: 'track', unit: 'Weeks', conv: { theme: 'track' },
+  cal: CAL({ on: false, rows: [{ label: 'Deliveries included', start: '2010-01-01', end: '2019-12-31', kind: 'screen', shape: 'bar' }, { label: 'End of infant follow-up', start: '2020-12-31', end: '', kind: 'fu', shape: 'event' }] }),
+  footnote: 'LMP estimated from the recorded gestational age at delivery; windows shown for a 40-week pregnancy.',
+  rows: [
+    row({ kind: 'screen', label: 'Pregnancy (estimated LMP → delivery)', shape: 'bracket', s: '-40 (estimated LMP)', e: '0 (delivery)' }),
+    row({ kind: 'cov', label: 'Pre-pregnancy', s: '-52', e: '-41' }),
+    row({ kind: 'expo', label: 'First trimester', s: '-40', e: '-27' }),
+    row({ kind: 'expo', label: 'Second trimester', s: '-26', e: '-13' }),
+    row({ kind: 'expo', label: 'Third trimester', s: '-12', e: '-1' }),
+    row({ kind: 'out', label: 'Delivery', shape: 'event', s: '0', e: '0', win: 'Birth outcomes' }),
+    row({ kind: 'fu', label: 'Infant follow-up', s: '1', e: '52' }),
+  ],
+});
+
+const DEF = {
+  useConv: true, d0Top: false, cal: CAL({ on: false }),
+  style: 'block', palette: 'bold', scale: 'sqrt', unit: 'Days', openL: '- ∞', openR: 'Censor/ Events',
+  st: { font: 'Times New Roman', fontCustom: '', fontSize: 15, lh: 1.38 },
+  day0Title: 'Index date', day0Text: 'Day [0]', footnote: '', rows: [], refLines: [], tpl: 't2dm',
+  labelW: 240, plotW: 560, barH: 24, blockW: 1100, day0Pos: 48, rowGap: 7, padX: 18, indent: 20, labelAlign: 'left',
+  barR: 0, barBW: 0, barBC: '#333333', titleBold: true, winItalic: false, trackTicks: true,
+  d0Color: '#BFBFBF', d0W: 9, d0Dash: 'solid', refColor: '#555555', axisColor: '#263238', axisW: 4, titleScale: 1.6, bgColor: '#F2F2F2', bgOn: true, axis: true,
+  center0: true, gray: false, stripes: false, showWin: true, winParen: true,
+};
+function loadTemplate(S, id) {
+  const t = structuredClone(TEMPLATES[id]);
+  for (const k of ['scale', 'unit', 'openL', 'openR', 'day0Title', 'day0Text', 'footnote']) S[k] = t[k];
+  S.rows = t.rows;
+  S.refLines = t.refLines || [];
+  S.cal = t.cal ? structuredClone(t.cal) : CAL({ on: false });
+  S.tpl = id;
+  if (S.useConv !== false && t.conv) {
+    applyThemeTo(S, t.conv.theme);
+    if (t.conv.day0Pos) S.day0Pos = t.conv.day0Pos;
+  } else if (t.layout) S.style = t.layout;
+  else if (S.style === 'track') S.style = 'block';
+  applyPalette(S);
+}
+function applyThemeTo(S, id) {
+  const th = THEMES[id];
+  if (!th) return;
+  const s = structuredClone(th.s);
+  S.st = { ...S.st, ...(s.st || {}) };
+  delete s.st;
+  Object.assign(S, s);
+  S.palette = th.palette;
+}
+function applyPalette(S) {
+  const pal = (PALETTES[S.palette] || PALETTES.bold).c;
+  S.rows.forEach((r) => { r.color = pal[r.kind] || pal.other; });
+}
+loadTemplate(DEF, 't2dm');
+let S = RT.load(KEY, DEF);
+
+/* ---------------- form ---------------- */
+const form = document.getElementById('form');
+document.getElementById('fontFields').innerHTML = RT.styleFieldsHTML(['font', 'fontSize', 'lh']);
+document.getElementById('refs').innerHTML = RT.refsHTML([RT.REFS.schneeweiss, RT.REFS.acnu, RT.REFS.tte, RT.REFS.tteJama, RT.REFS.cco, RT.REFS.sccs, RT.REFS.okabe, RT.REFS.record, RT.REFS.libs], [T('設計圖依 Schneeweiss 等人（2019）的架構繪製，並非其官方範本的複製；時間窗括號 [a, b] 表示含起訖兩端的天數。', 'Diagrams follow the framework of Schneeweiss et al. (2019) but are not copies of their official templates; brackets [a, b] denote inclusive day ranges.')]);
+const fitBadge = (f) => (f === 'good' ? `<span class="fit good">${T('常用', 'Common')}</span>` : `<span class="fit ok">${T('可用，需搭配', 'Usable, pair with')}</span>`);
+document.getElementById('tplGrid').innerHTML = Object.entries(TEMPLATES).map(([id, t]) =>
+  `<button class="tpl" data-tpl="${id}">${fitBadge(t.fit)}<b>${RT.esc(T(t.zh, t.en))}</b><span class="d">${RT.esc(T(t.dzh, t.den))}</span></button>`).join('');
+document.getElementById('themeSel').innerHTML = `<option value="">${T('選擇風格…', 'Choose a style…')}</option>` +
+  Object.entries(THEMES).map(([id, t]) => `<option value="${id}">${RT.esc(T(t.zh, t.en))}</option>`).join('');
+document.getElementById('paletteSel').innerHTML = Object.entries(PALETTES).map(([id, p]) => `<option value="${id}">${RT.esc(T(p.zh, p.en))}</option>`).join('');
+
+function showTplNote() {
+  const t = TEMPLATES[S.tpl];
+  document.getElementById('tplNote').innerHTML = t
+    ? `<div class="msg ${t.fit === 'good' ? 'ok' : ''}">${fitBadge(t.fit)} <b>${RT.esc(T(t.zh, t.en))}</b>：${RT.esc(T(t.nzh, t.nen))}</div>` : '';
+}
+function syncInputs() {
+  RT.syncForm(form, S);
+  document.getElementById('paletteSel').value = S.palette;
+  renderRows(); renderRefs(); renderCal(); showTplNote();
+}
+function renderCal() {
+  const host = document.getElementById('calRows');
+  host.innerHTML = '';
+  S.cal ||= CAL({ on: false });
+  S.cal.rows.forEach((c, i) => {
+    const blk = RT.h(`<div class="block" style="padding:8px">
+      <div class="list-row wide" style="grid-template-columns:minmax(0,1fr) 30px;margin-bottom:6px"><input data-f="label" placeholder="${T('期間名稱，例：Cohort entry period', 'Period, e.g. Cohort entry period')}"><button class="icon" title="${T('刪除', 'Delete')}">✕</button></div>
+      <div class="trow4" style="grid-template-columns:1fr 1fr 1fr 1fr;margin-top:0">
+        <label><span class="lbl">${T('起', 'From')}</span><input data-f="start" placeholder="2009-01-01"></label>
+        <label><span class="lbl">${T('迄', 'To')}</span><input data-f="end" placeholder="2019-12-31"></label>
+        <label><span class="lbl">${T('類型', 'Type')}</span><select data-f="kind">${KINDS.map(([v, zh, en]) => `<option value="${v}">${T(zh, en)}</option>`).join('')}</select></label>
+        <label><span class="lbl">${T('形狀', 'Shape')}</span><select data-f="shape"><option value="bar">${T('期間', 'Period')}</option><option value="event">${T('時間點', 'Point')}</option></select></label>
+      </div></div>`);
+    blk.querySelectorAll('[data-f]').forEach((el) => {
+      el.value = c[el.dataset.f] ?? '';
+      el.oninput = () => { c[el.dataset.f] = el.value; update(); };
+    });
+    blk.querySelector('button.icon').onclick = () => { S.cal.rows.splice(i, 1); renderCal(); update(); };
+    host.appendChild(blk);
+  });
+}
+document.getElementById('addCal').onclick = () => { S.cal.rows.push({ label: '', start: '', end: '', kind: 'other', shape: 'bar' }); renderCal(); update(); };
+RT.bindForm(form, () => S, () => update());
+document.getElementById('tplGrid').onclick = (e) => {
+  const b = e.target.closest('[data-tpl]');
+  if (!b) return;
+  loadTemplate(S, b.dataset.tpl);
+  syncInputs(); update();
+  RT.toast(T('已載入範本（按 ↶ 可復原）', 'Template loaded (↶ to undo)'));
+};
+document.getElementById('themeSel').onchange = (e) => {
+  const id = e.target.value, th = THEMES[id];
+  e.target.value = '';
+  if (!th) return;
+  const keepTrack = S.style === 'track';
+  applyThemeTo(S, id);
+  if (keepTrack && th.s.style !== 'track') S.style = 'track';
+  applyPalette(S);
+  syncInputs(); update();
+  RT.toast(T('已套用風格：', 'Style applied: ') + T(th.zh, th.en) + T('（按 ↶ 可復原）', ' (↶ to undo)'));
+};
+document.getElementById('paletteSel').onchange = (e) => { S.palette = e.target.value; applyPalette(S); renderRows(); update(); };
+function renderRefs() {
+  const host = document.getElementById('refLines');
+  host.innerHTML = '';
+  (S.refLines || []).forEach((rf, i) => {
+    const r = RT.h(`<div class="ref-row"><input class="n" placeholder="${T('時間', 'Time')}"><input placeholder="${T('標籤，例：Landmark', 'Label, e.g. Landmark')}"><button class="icon" title="${T('刪除', 'Delete')}">✕</button></div>`);
+    const [t, l, del] = r.children;
+    t.value = rf.t; l.value = rf.label;
+    t.oninput = () => { rf.t = t.value; update(); };
+    l.oninput = () => { rf.label = l.value; update(); };
+    del.onclick = () => { S.refLines.splice(i, 1); renderRefs(); update(); };
+    host.appendChild(r);
+  });
+}
+document.getElementById('addRef').onclick = () => { (S.refLines ||= []).push({ t: '30', label: '' }); renderRefs(); update(); };
+const POS = () => [['auto', T('自動', 'Auto')], ['in', T('色條內', 'Inside')], ['out', T('色條外', 'Outside')]];
+function renderRows() {
+  const host = document.getElementById('rows');
+  host.innerHTML = '';
+  const pal = (PALETTES[S.palette] || PALETTES.bold).c;
+  S.rows.forEach((r, i) => {
+    const blk = RT.h(`<div class="block">
+      <div class="block-head"><b>${T('第', 'Row')} ${i + 1} ${T('列', '')}</b><span class="spacer"></span>
+        <button class="small" data-a="up" title="${T('上移', 'Move up')}">↑</button><button class="small" data-a="down" title="${T('下移', 'Move down')}">↓</button>
+        <button class="small" data-a="dup" title="${T('複製此列', 'Duplicate row')}">⧉</button><button class="icon" data-a="del" title="${T('刪除', 'Delete')}">✕</button></div>
+      <textarea data-f="label" rows="1" placeholder="${T('標題，例：Covariate assessment window', 'Title, e.g. Covariate assessment window')}"></textarea>
+      <textarea data-f="details" rows="2" placeholder="${T('細項（選填，每行一項），例：1. Aged > 40y', 'Details (optional, one per line), e.g. 1. Aged > 40y')}"></textarea>
+      <div class="trow3">
+        <label><span class="lbl">${T('起點', 'Start')}</span><input class="n" data-f="s" placeholder="${T('開放', 'open')}"></label>
+        <label><span class="lbl">${T('終點', 'End')}</span><input class="n" data-f="e" placeholder="${T('開放', 'open')}"></label>
+        <label><span class="lbl">${T('區間文字（留空自動）', 'Window label (blank = auto)')}</span><input data-f="win"></label>
+      </div>
+      <div class="trow4">
+        <label><span class="lbl">${T('類型', 'Type')}</span><select data-f="kind">${KINDS.map(([v, zh, en]) => `<option value="${v}">${T(zh, en)}</option>`).join('')}</select></label>
+        <label><span class="lbl">${T('形狀', 'Shape')}</span><select data-f="shape">${SHAPES().map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></label>
+        <label><span class="lbl">${T('文字', 'Text')}</span><select data-f="pos">${POS().map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></label>
+        <label title="${T('色條顏色（自訂會覆蓋配色）', 'Bar colour (overrides the palette)')}"><span class="lbl">${T('色', 'Bar')}</span><input type="color" data-f="color"></label>
+        <label title="${T('文字顏色（黑色＝自動）', 'Text colour (black = auto)')}"><span class="lbl">${T('字', 'Text')}</span><input type="color" data-f="tcolor"></label>
+      </div></div>`);
+    blk.querySelectorAll('[data-f]').forEach((el) => {
+      const f = el.dataset.f;
+      el.value = r[f] || ({ tcolor: '#000001', pos: 'auto', kind: 'other', shape: 'bar', color: pal[r.kind] || pal.other }[f] ?? '');
+      el.oninput = () => {
+        r[f] = f === 'tcolor' && el.value === '#000001' ? '' : el.value;
+        if (f === 'kind') { r.color = pal[r.kind] || pal.other; blk.querySelector('[data-f="color"]').value = r.color; }
+        update();
+      };
+    });
+    blk.querySelector('[data-f="win"]').placeholder = autoWin(r);
+    blk.querySelector('.block-head').onclick = (e) => {
+      const a = e.target.dataset.a;
+      if (a === 'up' && i > 0) [S.rows[i - 1], S.rows[i]] = [S.rows[i], S.rows[i - 1]];
+      else if (a === 'down' && i < S.rows.length - 1) [S.rows[i + 1], S.rows[i]] = [S.rows[i], S.rows[i + 1]];
+      else if (a === 'dup') S.rows.splice(i + 1, 0, structuredClone(r));
+      else if (a === 'del') S.rows.splice(i, 1);
+      else return;
+      renderRows(); update();
+    };
+    host.appendChild(blk);
+  });
+}
+document.getElementById('addRow').onclick = () => {
+  const pal = (PALETTES[S.palette] || PALETTES.bold).c;
+  S.rows.push(row({ kind: 'cov', color: pal.cov }));
+  renderRows(); update();
+};
+
+/* ---------------- helpers ---------------- */
+const N = RT.num;
+const NB = String.fromCharCode(160);
+/** endpoint: "123" → number; "280 (delivery)" → number + label; "Censor" → open + label; "" → open */
+function ep(raw) {
+  const s = String(raw ?? '').trim();
+  if (!s) return { n: null, label: null };
+  const n = N(s);
+  if (n !== null) return { n, label: null };
+  const m = s.match(/^(-?\d+(?:\.\d+)?)\s*[|(（]\s*(.*?)\s*[)）]?\s*$/);
+  if (m) return { n: Number(m[1]), label: m[2] || null };
+  return { n: null, label: s };
+}
+const unitOne = () => S.unit.replace(/s$/, '');
+/** typographic minus sign (PDF export converts it back to a hyphen) */
+const fmtT = (n) => (n < 0 ? '−' + Math.abs(n) : String(n));
+const endTxt = (raw, open) => { const e = ep(raw); return e.label ?? (e.n !== null ? fmtT(e.n) : open); };
+function autoWin(r) {
+  const s = ep(r.s), e = ep(r.e);
+  if (r.shape === 'event' || (s.n !== null && e.n !== null && s.n === e.n && !s.label && !e.label)) return `${unitOne()} ${(s.n ?? e.n) !== null && (s.n ?? e.n) !== undefined ? fmtT(s.n ?? e.n) : ''}`.trim();
+  if (S.style === 'block' || S.style === 'track') return `${unitOne()} [${endTxt(r.s, S.openL)}, ${endTxt(r.e, S.openR)}]`;
+  return `${S.unit} [${endTxt(r.s, S.openL)}, ${endTxt(r.e, S.openR)}]`;
+}
+const winOf = (r) => (r.win && r.win.trim() ? r.win.trim() : autoWin(r));
+const rgb = (h) => { const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(h || ''); return m ? m.slice(1).map((x) => parseInt(x, 16)) : [200, 200, 200]; };
+const lum = (h) => { const [r, g, b] = rgb(h); return (0.299 * r + 0.587 * g + 0.114 * b) / 255; };
+const toGray = (h) => { const v = Math.round(lum(h) * 255).toString(16).padStart(2, '0'); return '#' + v + v + v; };
+const colorOf = (r) => r.color || (PALETTES[S.palette] || PALETTES.bold).c[r.kind] || '#cccccc';
+const fillOf = (c) => (S.gray ? toGray(c) : c);
+const dashOf = (sw, style = S.d0Dash) => (style === 'dash' ? `${Math.max(4, sw * 3)} ${Math.max(3, sw * 2)}` : style === 'dot' ? `${Math.max(1, sw)} ${Math.max(2.5, sw * 1.8)}` : '');
+const refs = () => (S.refLines || []).map((rf) => ({ t: N(rf.t), label: rf.label || '' })).filter((rf) => rf.t !== null);
+function makeF(vals) {
+  const uniq = [...new Set(vals)].sort((a, b) => a - b);
+  if (S.scale === 'linear') return (t) => t;
+  if (S.scale === 'equal') { const i0 = uniq.indexOf(0); return (t) => { let i = uniq.indexOf(t); if (i < 0) i = uniq.findIndex((u) => u > t) - 0.5; return i - i0; }; }
+  if (S.scale === 'sqrt') return (t) => Math.sign(t) * Math.sqrt(Math.abs(t));
+  return (t) => Math.sign(t) * Math.log1p(Math.abs(t));
+}
+function collect() {
+  const vals = [0]; let openL = false, openR = false;
+  S.rows.forEach((r) => {
+    const s = ep(r.s).n, e = ep(r.e).n;
+    if (r.shape === 'event') { if (s !== null) vals.push(s); return; }
+    if (s === null) openL = true; else vals.push(s);
+    if (e === null) openR = true; else vals.push(e);
+  });
+  refs().forEach((rf) => vals.push(rf.t));
+  return { vals, openL, openR };
+}
+const rowEnds = (r) => { const s = ep(r.s).n; let e = ep(r.e).n; if (r.shape === 'event') e = s; return { s, e }; };
+/** vertical reference lines with small labels at the top */
+function drawRefs(X, yTop, yBot, fs) {
+  let out = '';
+  refs().forEach((rf) => {
+    const x = X(rf.t);
+    out += RT.line([[x, yTop], [x, yBot]], { color: S.refColor || '#555', sw: 1.2, dash: '5 4', dashType: 'dash' });
+    if (rf.label) out += RT.rich([{ runs: [{ t: rf.label, size: fs * 0.85, italic: true, color: S.refColor || '#555' }] }], x + 4, yTop - fs * 0.1, { lh: fs * 1.1 });
+  });
+  return out;
+}
+
+/* ---------------- block style ---------------- */
+function buildBlock() {
+  const fs = Number(S.st.fontSize) || 15;
+  const W = Number(S.blockW) || 1100;
+  const M = 16, left = M, right = W - M - (S.axis ? 6 : 0);
+  const x0 = left + ((right - left) * (Number(S.day0Pos) || 48)) / 100;
+  const LINE = Number(S.d0W) || 9;
+  const lh = fs * (Number(S.st.lh) || 1.38), padX = Number(S.padX) || fs * 1.2, padY = fs * 0.55, gapY = Number(S.rowGap) || 0, indent = Number(S.indent) || 0;
+  const dark = '#222222', tb = S.titleBold !== false, wi = !!S.winItalic;
+  const { vals, openL, openR } = collect();
+  const F = makeF(vals);
+  let negMax = Math.max(1e-9, ...vals.filter((v) => v < 0).map((v) => Math.abs(F(v))));
+  let posMax = Math.max(1e-9, ...vals.filter((v) => v > 0).map((v) => F(v)));
+  // a side with only tiny values (e.g. follow-up starting at day 1) borrows a quarter of the other side's scale
+  const negRaw = Math.max(0, ...vals.filter((v) => v < 0).map((v) => -v)), posRaw = Math.max(0, ...vals.filter((v) => v > 0));
+  if (posRaw < negRaw * 0.05) posMax = Math.max(posMax, Math.abs(F(negRaw * 0.25)));
+  if (negRaw < posRaw * 0.05) negMax = Math.max(negMax, Math.abs(F(posRaw * 0.25)));
+  const reserveL = openL ? 0.15 * (x0 - left) : 0, reserveR = openR ? 0.3 * (right - x0) : 0;
+  const X = (t) => (t < 0 ? x0 - (Math.abs(F(t)) / negMax) * (x0 - left - reserveL) : t > 0 ? x0 + (F(t) / posMax) * (right - x0 - reserveR) : x0);
+
+  const runW = (runs) => runs.reduce((a, r) => a + RT.textWidth(r.t, r.size, r.bold, r.italic), 0);
+  const winStr = (r) => { let w = winOf(r); if (S.winParen && !/^\(/.test(w)) w = `(${NB}${w}${NB})`; return w; };
+  function layout(r, maxW, colTitle, colText) {
+    const lines = [];
+    String(r.label || '').split('\n').flatMap((t) => RT.wrap(t, maxW, fs, tb)).forEach((t) => lines.push({ runs: [{ t, bold: tb, size: fs, color: colTitle }], ind: 0 }));
+    if (S.showWin) {
+      const w = winStr(r);
+      const last = lines[lines.length - 1];
+      if (last && runW(last.runs) + RT.textWidth(NB + w, fs, false, wi) <= maxW) last.runs.push({ t: NB + w, bold: false, italic: wi, size: fs, color: colText });
+      else lines.push({ runs: [{ t: w, bold: false, italic: wi, size: fs, color: colText }], ind: 0 });
+    }
+    String(r.details || '').split('\n').filter((d) => d.trim()).forEach((d) => {
+      const hang = /^\s*(\d+[.)]|[•\-–])\s/.test(d) ? RT.textWidth(d.trim().match(/^(\S+\s)/)[1], fs) : 0;
+      RT.wrap(d.trim(), maxW - indent - hang, fs, false).forEach((t, i) => lines.push({ runs: [{ t, bold: false, size: fs, color: colText }], ind: indent + (i > 0 ? hang : 0) }));
+    });
+    return { lines, width: Math.max(0, ...lines.map((l) => l.ind + runW(l.runs))), height: lines.length * lh };
+  }
+  const natural = (r) => {
+    const ws = String(r.label || '').split('\n').map((t) => RT.textWidth(t, fs, tb));
+    if (S.showWin) ws.push(RT.textWidth(winStr(r), fs, false, wi));
+    String(r.details || '').split('\n').forEach((d) => ws.push(indent + RT.textWidth(d.trim(), fs)));
+    return Math.max(0, ...ws);
+  };
+
+  const hasRefs = refs().some((rf) => rf.label);
+  // Schneeweiss style: Day 0 box at the top with the line running down from it
+  const topBox = S.d0Top && (S.day0Title || S.day0Text)
+    ? RT.box([{ text: S.day0Title, bold: true }, S.day0Text ? { text: S.day0Text } : null], Math.min(320, W * 0.34), { size: fs, fill: '#fff', stroke: '#000', sw: 1.2, radius: 3, lh: Number(S.st.lh) || 1.3 })
+    : null;
+  let y = M + (topBox ? topBox.h + fs : 0) + (hasRefs ? fs * 1.3 : 0);
+  const R = [];
+  S.rows.forEach((r) => {
+    const { s, e } = rowEnds(r);
+    let xs = s === null ? left : X(s), xe = e === null ? right : X(e);
+    if (xe < xs) [xs, xe] = [xe, xs];
+    if (s === 0 && e !== 0) xs = x0 - LINE / 2;
+    if (e === 0) xe = x0 + LINE / 2;
+    if (xe - xs < 12) { if (xe <= x0 + LINE) xs = xe - 12; else xe = xs + 12; }
+    const color = fillOf(colorOf(r));
+    const need = natural(r);
+    let inside = r.pos === 'in' || (r.pos !== 'out' && need + 2 * padX <= xe - xs);
+    let side = null;
+    if (!inside) {
+      // outside: prefer the side away from Day 0, else whichever side has room, else wrap inside the bar
+      const leftSide = xe <= x0 + LINE;
+      const spaceOut = leftSide ? xs - left - padX : W - M - xe - padX;
+      const spaceIn = leftSide ? x0 - LINE / 2 - xe - padX : xs - (x0 + LINE / 2) - padX;
+      if (spaceOut >= need || (spaceOut >= 120 && spaceOut >= spaceIn)) side = leftSide ? 'L' : 'R';
+      else if (spaceIn >= Math.min(need, 160)) side = leftSide ? 'R' : 'L';
+      else if (r.pos !== 'out' && xe - xs >= 90) inside = true;
+      else side = leftSide ? 'L' : 'R';
+    }
+    let L, tx;
+    if (inside) {
+      const tc = r.tcolor || (lum(color) < 0.62 ? '#FFFFFF' : dark);
+      L = layout(r, Math.max(60, xe - xs - 2 * padX), tc, tc);
+      tx = xs + padX;
+    } else {
+      const tcol = r.tcolor || (lum(color) > 0.8 ? dark : color);
+      const avail = side === 'L' ? xs - left - padX : W - M - xe - padX;
+      L = layout(r, Math.max(120, avail), tcol, dark);
+      tx = side === 'L' ? Math.max(left, xs - padX - L.width) : Math.min(xe + padX, W - M - L.width);
+    }
+    const h = Math.max(L.height + 2 * padY, fs * 2);
+    R.push({ xs, xe, y, h, color, L, tx });
+    y += h + gapY;
+  });
+  y -= gapY;
+  const axisY = y + (S.axis ? fs * 0.7 : 0);
+
+  RT.beginScene();
+  const lineTop = topBox ? M + topBox.h : M * 0.2;
+  let body = RT.line([[x0, lineTop], [x0, axisY]], { color: S.d0Color, sw: LINE, dash: dashOf(LINE), dashType: S.d0Dash });
+  if (topBox) body += RT.drawBox(topBox, Math.max(left, Math.min(W - M - topBox.w, x0 - topBox.w / 2)), M);
+  const bw = Number(S.barBW) || 0;
+  R.forEach((r) => {
+    body += RT.rect(r.xs, r.y, r.xe - r.xs, r.h, { fill: r.color, radius: Math.min(Number(S.barR) || 0, r.h / 2, (r.xe - r.xs) / 2), stroke: bw > 0 ? S.barBC : 'none', sw: bw });
+    body += RT.rich(r.L.lines, r.tx, r.y + (r.h - r.L.height) / 2, { lh });
+  });
+  body += drawRefs(X, topBox ? lineTop + 4 : M * 0.3, axisY, fs);
+  let H = axisY;
+  if (S.axis) body += RT.arrow([[left, axisY], [W - M, axisY]], { color: S.axisColor, sw: Number(S.axisW) || 4, head: 4 + (Number(S.axisW) || 4) * 3.5 });
+  const tfs = fs * (Number(S.titleScale) || 1.6);
+  const title = [];
+  if (S.day0Title) title.push({ t: S.day0Title, bold: true, size: tfs, color: '#000' });
+  const sub = String(S.day0Text || '').replace(/\n/g, ' ').trim();
+  if (sub) title.push({ t: (title.length ? NB : '') + sub, bold: false, size: fs * 1.05, color: '#000' });
+  if (title.length && !topBox) {
+    const tw = runW(title);
+    const cx = Math.max(left, Math.min(W - M - tw, x0 - tw / 2));
+    body += RT.rich([{ runs: title }], cx, axisY + tfs * 0.2, { lh: tfs * 1.25 });
+    H = axisY + tfs * 1.45;
+  }
+  return { W, H, body, bg: S.bgOn ? S.bgColor : '#FFFFFF' };
+}
+
+/* ---------------- classic style ---------------- */
+function buildClassic() {
+  const fs = Number(S.st.fontSize) || 13, LW = Number(S.labelW) || 240, PW = Number(S.plotW) || 560, BH = Number(S.barH) || 24;
+  const lhK = Number(S.st.lh) || 1.3, tb = !!S.titleBold, wi = !!S.winItalic;
+  const M = 16, x0 = M + LW + 14, x1 = x0 + PW;
+  const { vals, openL, openR } = collect();
+  const F = makeF(vals);
+  let fmin = F(Math.min(...vals)), fmax = F(Math.max(...vals));
+  if (S.center0 && S.scale !== 'linear') { const a = Math.max(Math.abs(fmin), Math.abs(fmax)); fmin = -a; fmax = a; }
+  if (fmax === fmin) { fmin -= 1; fmax += 1; }
+  const padL = openL ? 56 : 10, padR = openR ? 64 : 10;
+  const X = (t) => x0 + padL + ((F(t) - fmin) / (fmax - fmin)) * (PW - padL - padR);
+
+  RT.beginScene();
+  let body = '';
+  const hx = X(0);
+  const hb = RT.box([{ text: S.day0Title, bold: true }, S.day0Text ? { text: S.day0Text } : null], Math.min(260, PW), { size: fs, fill: '#fff', stroke: '#000', sw: 1.2, radius: 4, lh: lhK });
+  body += RT.drawBox(hb, Math.max(x0, Math.min(x1 - hb.w, hx - hb.w / 2)), M);
+  const topY = M + hb.h;
+  let y = topY + 18 + (refs().some((rf) => rf.label) ? fs * 0.6 : 0);
+  const wfs = fs - 1;
+  let maxX = x1 + M;
+  const R0 = [];
+  const align = S.labelAlign === 'right' ? 'right' : 'left';
+  S.rows.forEach((r) => {
+    const items = [{ text: r.label, bold: tb, color: r.tcolor || undefined }];
+    String(r.details || '').split('\n').filter((d) => d.trim()).forEach((d) => items.push({ text: d.trim(), size: fs - 1.5, indent: align === 'left' ? 10 : 0 }));
+    const lb = RT.box(items, LW, { size: fs, align, fill: 'none', stroke: 'none', pad: 0, padX: 0, lh: lhK });
+    const { s, e } = rowEnds(r);
+    let xs = s === null ? x0 : X(s), xe = e === null ? x1 : X(e);
+    if (xe < xs) [xs, xe] = [xe, xs];
+    if (xe - xs < 12) { const c = (xs + xe) / 2; xs = c - 6; xe = c + 6; }
+    const win = S.showWin ? winOf(r) : '';
+    const tw = win ? RT.textWidth(win, wfs, false, wi) : 0;
+    let place = 'none';
+    if (win) {
+      const fits = tw + 12 <= xe - xs - (s === null ? 12 : 0) - (e === null ? 12 : 0);
+      if (r.pos === 'in' || (r.pos !== 'out' && fits)) place = 'in';
+      else if (xs >= X(0) - 1 && xe + 6 + tw <= x1 + 110) place = 'right';
+      else if (xe <= X(0) + 1 && xs - 6 - tw >= x0) place = 'left';
+      else place = 'below';
+    }
+    const barBlock = BH + (place === 'below' ? wfs * 1.4 + 4 : 0);
+    const rh = Math.max(lb.h, barBlock) + 8 + (Number(S.rowGap) || 0);
+    R0.push({ y, rh, lb, xs, xe, s, e, win, tw, place, color: fillOf(colorOf(r)) });
+    y += rh;
+  });
+  const bottomY = y;
+  const bw = Number(S.barBW) || 0;
+  if (S.stripes) R0.forEach((r, i) => { if (i % 2 === 0) body += RT.rect(M, r.y, x1 - M, r.rh, { fill: '#F4F5F7' }); });
+  R0.forEach((r) => {
+    body += RT.drawBox(r.lb, M, r.y + (r.rh - r.lb.h) / 2);
+    const by = r.y + (r.rh - (BH + (r.place === 'below' ? wfs * 1.4 + 4 : 0))) / 2, bm = by + BH / 2, bb = by + BH;
+    if (r.s !== null && r.e !== null) {
+      body += RT.rect(r.xs, by, r.xe - r.xs, BH, { fill: r.color, radius: Math.min(Number(S.barR) || 0, BH / 2, (r.xe - r.xs) / 2), stroke: bw > 0 ? S.barBC : 'none', sw: bw });
+    } else {
+      const tip = Math.min(12, (r.xe - r.xs) / 3);
+      const pts = [];
+      // left edge bottom->top, then right edge top->bottom; open ends become arrow tips
+      if (r.s === null) pts.push([r.xs + tip, bb], [r.xs, bm], [r.xs + tip, by]); else pts.push([r.xs, bb], [r.xs, by]);
+      if (r.e === null) pts.push([r.xe - tip, by], [r.xe, bm], [r.xe - tip, bb]); else pts.push([r.xe, by], [r.xe, bb]);
+      body += RT.poly(pts, { fill: r.color, stroke: bw > 0 ? S.barBC : 'none', sw: bw });
+    }
+    if (r.win) {
+      const inCol = lum(r.color) < 0.55 ? '#FFFFFF' : '#000000';
+      const line = (col) => [{ runs: [{ t: r.win, size: wfs, italic: wi, color: col }] }];
+      const ty = bm - wfs * 0.65;
+      if (r.place === 'in') body += RT.rich(line(inCol), (r.xs + r.xe) / 2, ty, { lh: wfs * 1.3, anchor: 'middle' });
+      else if (r.place === 'right') { body += RT.rich(line('#000'), r.xe + 6, ty, { lh: wfs * 1.3 }); maxX = Math.max(maxX, r.xe + 6 + r.tw + M); }
+      else if (r.place === 'left') body += RT.rich(line('#000'), r.xs - 6, ty, { lh: wfs * 1.3, anchor: 'end' });
+      else { const cx = Math.max(x0 + r.tw / 2, Math.min(x1 - r.tw / 2, (r.xs + r.xe) / 2)); body += RT.rich(line('#000'), cx, bb + 2, { lh: wfs * 1.3, anchor: 'middle' }); }
+    }
+  });
+  const d0w = Number(S.d0W) || 1.2;
+  body += RT.line([[hx, topY], [hx, bottomY]], { color: S.d0Color, sw: d0w, dash: dashOf(d0w), dashType: S.d0Dash });
+  body += drawRefs(X, topY + 4, bottomY, fs);
+  return { W: Math.max(maxX, x1 + M), H: bottomY, body, bg: '#FFFFFF' };
+}
+
+/* ---------------- single-track style (case-crossover, SCCS…) ---------------- */
+function buildTrack() {
+  const fs = Number(S.st.fontSize) || 14, lhK = Number(S.st.lh) || 1.3, lh = fs * lhK, sfs = fs * 0.86;
+  const W = Number(S.blockW) || 1100, M = 16, left = M + 6, right = W - M - 12;
+  const BH = Number(S.barH) || 24, tb = S.titleBold !== false, wi = !!S.winItalic, dark = '#222222', soft = '#444444';
+  const { vals, openL, openR } = collect();
+  const F = makeF(vals);
+  let fmin = F(Math.min(...vals)), fmax = F(Math.max(...vals));
+  if (fmax === fmin) { fmin -= 1; fmax += 1; }
+  const padL = openL ? 44 : 18, padR = openR ? 44 : 18;
+  const X = (t) => left + padL + ((F(t) - fmin) / (fmax - fmin)) * (right - left - padL - padR);
+  const runW = (runs) => runs.reduce((a, r) => a + RT.textWidth(r.t, r.size, r.bold, r.italic), 0);
+  const titleCol = (r, c) => r.tcolor || (lum(c) < 0.75 ? c : dark);
+  /** centred label: title / window / details */
+  const label = (r, c) => {
+    const lines = [];
+    String(r.label || '').split('\n').filter(Boolean).forEach((t) => lines.push({ runs: [{ t, bold: tb, size: fs, color: titleCol(r, c) }] }));
+    if (S.showWin) { const w = winOf(r); if (w) lines.push({ runs: [{ t: w, italic: wi, size: sfs, color: soft }] }); }
+    String(r.details || '').split('\n').filter((d) => d.trim()).forEach((d) => lines.push({ runs: [{ t: d.trim(), size: sfs, color: soft }] }));
+    return { lines, w: Math.max(10, ...lines.map((l) => runW(l.runs))), h: lines.length * lh };
+  };
+  const clampX = (cx, w) => Math.max(M, Math.min(W - M - w, cx - w / 2));
+  const place = (lv, x0, x1) => { let i = 0; while (lv[i] !== undefined && lv[i] > x0 - 12) i++; lv[i] = x1; return i; };
+
+  const bars = [], above = [];
+  S.rows.forEach((r) => {
+    const s = ep(r.s).n, e = ep(r.e).n, c = fillOf(colorOf(r));
+    if (r.shape === 'event') {
+      const t = s ?? e ?? 0;
+      above.push({ type: 'event', r, c, x: X(t), L: label(r, c) });
+      return;
+    }
+    let xs = s === null ? left : X(s), xe = e === null ? right : X(e);
+    if (xe < xs) [xs, xe] = [xe, xs];
+    if (xe - xs < 6) { const m = (xs + xe) / 2; xs = m - 3; xe = m + 3; }
+    if (r.shape === 'bracket') above.push({ type: 'bracket', r, c, xs, xe, L: label(r, c) });
+    else bars.push({ r, c, xs, xe, s, e, L: label(r, c) });
+  });
+  // above the track: brackets first (outer), then events; greedy levels
+  const upLv = [], upH = [];
+  above.sort((a, b) => (a.type === b.type ? 0 : a.type === 'bracket' ? 1 : -1));
+  above.forEach((it) => {
+    const cx = it.type === 'event' ? it.x : (it.xs + it.xe) / 2;
+    it.lx = clampX(cx, it.L.w);
+    const x0 = it.type === 'bracket' ? Math.min(it.xs, it.lx) : it.lx, x1 = it.type === 'bracket' ? Math.max(it.xe, it.lx + it.L.w) : it.lx + it.L.w;
+    it.lvl = place(upLv, x0, x1);
+    upH[it.lvl] = Math.max(upH[it.lvl] || 0, it.L.h + (it.type === 'bracket' ? 14 : 16));
+  });
+  const tfs = fs * Math.min(Number(S.titleScale) || 1.3, 1.4);
+  const hasRefs = refs().some((rf) => rf.label);
+  const d0H = (S.day0Title || S.day0Text ? tfs * 1.3 : 0) + (hasRefs ? fs * 1.2 : 0);
+  let y = M + d0H + 6;
+  const lvTop = [];
+  for (let i = upH.length - 1; i >= 0; i--) { lvTop[i] = y; y += upH[i] || 0; }
+  const trackTop = y + 6, trackBot = trackTop + BH, trackMid = trackTop + BH / 2;
+  // ticks
+  const tickVals = [...new Set([0, ...vals, ...above.filter((a) => a.type === 'event').map((a) => ep(a.r.s).n).filter((v) => v !== null)])].sort((a, b) => a - b);
+  const tickH = S.trackTicks ? sfs * 1.3 + 6 : 4;
+  // below: bar labels (unless inside)
+  const dnLv = [], dnH = [];
+  bars.forEach((b) => {
+    const inside = b.r.pos === 'in' && b.L.w + 12 <= b.xe - b.xs;
+    b.inside = inside;
+    if (inside || b.r.pos === 'hide') return;
+    b.lx = clampX((b.xs + b.xe) / 2, b.L.w);
+    b.lvl = place(dnLv, b.lx, b.lx + b.L.w);
+    dnH[b.lvl] = Math.max(dnH[b.lvl] || 0, b.L.h + 8);
+  });
+  let yb = trackBot + tickH + 4;
+  const dnTop = [];
+  for (let i = 0; i < dnH.length; i++) { dnTop[i] = yb; yb += dnH[i] || 0; }
+
+  RT.beginScene();
+  let body = '';
+  const x0 = X(0);
+  // Day 0 title (top) + line
+  const title = [];
+  if (S.day0Title) title.push({ t: S.day0Title, bold: true, size: tfs, color: '#000' });
+  const sub = String(S.day0Text || '').replace(/\n/g, ' ').trim();
+  if (sub) title.push({ t: (title.length ? ': ' : '') + sub, size: fs, color: '#000' });
+  if (title.length) body += RT.rich([{ runs: title }], Math.max(M, Math.min(W - M - runW(title), x0 - runW(title) / 2)), M, { lh: tfs * 1.2 });
+  const d0w = Math.min(Number(S.d0W) || 1.5, 4);
+  body += RT.line([[x0, M + tfs * 1.25], [x0, trackBot + tickH]], { color: S.d0Color, sw: d0w, dash: dashOf(d0w), dashType: S.d0Dash });
+  body += drawRefs(X, M + tfs * 1.25 + (hasRefs ? 2 : 0), trackBot + tickH, fs);
+  // axis
+  if (S.axis) body += RT.arrow([[left, trackMid], [W - M, trackMid]], { color: S.axisColor, sw: Math.min(Number(S.axisW) || 2, 3), head: 12 });
+  else body += RT.line([[left, trackMid], [right, trackMid]], { color: S.axisColor, sw: 1.5 });
+  // bars
+  const bw = Number(S.barBW) || 0;
+  bars.forEach((b) => {
+    body += RT.rect(b.xs, trackTop, b.xe - b.xs, BH, { fill: b.c, radius: Math.min(Number(S.barR) || 0, BH / 2, (b.xe - b.xs) / 2), stroke: bw > 0 ? S.barBC : 'none', sw: bw });
+    if (b.inside) {
+      const tc = b.r.tcolor || (lum(b.c) < 0.62 ? '#FFFFFF' : dark);
+      const lines = b.L.lines.slice(0, 1).map((l) => ({ runs: l.runs.map((r) => ({ ...r, color: tc })) }));
+      body += RT.rich(lines, (b.xs + b.xe) / 2, trackMid - lh / 2, { lh, anchor: 'middle' });
+    } else if (b.lvl !== undefined) {
+      const cx = (b.xs + b.xe) / 2, top = dnTop[b.lvl];
+      if (b.lvl > 0 || Math.abs(b.lx + b.L.w / 2 - cx) > 2) body += RT.line([[cx, trackBot + 1], [cx, top - 2]], { color: '#9AA0A6', sw: 0.8 });
+      body += RT.rich(b.L.lines, b.lx + b.L.w / 2, top, { lh, anchor: 'middle' });
+    }
+  });
+  // ticks
+  if (S.trackTicks) {
+    let last = -1e9;
+    tickVals.forEach((v) => {
+      const x = X(v);
+      body += RT.line([[x, trackBot], [x, trackBot + 4]], { color: soft, sw: 0.8 });
+      const t = fmtT(v), w = RT.textWidth(t, sfs * 0.95);
+      if (x - w / 2 > last + 4) { body += RT.rich([{ runs: [{ t, size: sfs * 0.95, color: soft }] }], x, trackBot + 5, { lh: sfs * 1.2, anchor: 'middle' }); last = x + w / 2; }
+    });
+  }
+  // above items
+  above.forEach((it) => {
+    const top = lvTop[it.lvl];
+    const cx = it.lx + it.L.w / 2;
+    body += RT.rich(it.L.lines, cx, top, { lh, anchor: 'middle' });
+    if (it.type === 'bracket') {
+      const ly = top + it.L.h + 5, col = lum(it.c) > 0.85 ? dark : it.c;
+      body += RT.line([[it.xs, ly + 6], [it.xs, ly], [it.xe, ly], [it.xe, ly + 6]], { color: col, sw: 1.6 });
+    } else {
+      const mk = 8, ty = trackTop - 2;
+      if (top + it.L.h + 2 < ty - mk * 1.3 - 2) body += RT.line([[it.x, top + it.L.h + 2], [it.x, ty - mk * 1.3 - 1]], { color: '#9AA0A6', sw: 0.8 });
+      body += RT.poly([[it.x - mk, ty - mk * 1.3], [it.x + mk, ty - mk * 1.3], [it.x, ty]], { fill: it.c, stroke: lum(it.c) > 0.85 ? dark : 'none', sw: 0.8 });
+    }
+  });
+  return { W, H: yb + 4, body, bg: S.bgOn ? S.bgColor : '#FFFFFF' };
+}
+
+/* ---------------- calendar-time study period panel ---------------- */
+function parseDate(s) {
+  const m = String(s || '').trim().match(/^(\d{4})(?:[-/.](\d{1,2}))?(?:[-/.](\d{1,2}))?$/);
+  return m ? Date.UTC(+m[1], m[2] ? +m[2] - 1 : 0, m[3] ? +m[3] : 1) : null;
+}
+function calendarPanel(W, y0, fs) {
+  const M = 16, cal = S.cal, lhK = Number(S.st.lh) || 1.3;
+  const rows = cal.rows.map((r) => ({ r, a: parseDate(r.start), b: parseDate(r.end) })).filter((x) => x.a !== null || x.b !== null);
+  if (!rows.length) return { svg: '', bottom: y0 };
+  const ts = rows.flatMap((x) => [x.a, x.b]).filter((v) => v !== null);
+  let t0 = Math.min(...ts), t1 = Math.max(...ts);
+  if (t1 === t0) t1 = t0 + 365 * 864e5;
+  const pad = (t1 - t0) * 0.03; t0 -= pad; t1 += pad;
+  const sfs = fs * 0.9, LW = Math.min(280, W * 0.3), xL = M + LW + 12, xR = W - M - 10;
+  const Xd = (t) => xL + ((t - t0) / (t1 - t0)) * (xR - xL);
+  const pal = (PALETTES[S.palette] || PALETTES.bold).c;
+  let svg = '', y = y0;
+  if (cal.title) { svg += RT.rich([{ runs: [{ t: cal.title, bold: true, size: fs, color: '#000' }] }], M, y, { lh: fs * 1.3 }); y += fs * 1.7; }
+  const BH = fs * 1.35, gap = fs * 0.45;
+  rows.forEach((x) => {
+    const c = fillOf(pal[x.r.kind] || pal.other);
+    const lb = RT.box([{ text: x.r.label || '' }], LW, { size: sfs, align: 'left', fill: 'none', stroke: 'none', pad: 0, padX: 0, lh: lhK, color: '#222' });
+    const rh = Math.max(BH, lb.h);
+    svg += RT.drawBox(lb, M, y + (rh - lb.h) / 2);
+    const mid = y + rh / 2;
+    const point = x.r.shape === 'event' || x.b === null;
+    if (point) {
+      const px = Xd(x.a ?? x.b), d = BH * 0.32;
+      svg += RT.line([[px, y], [px, y + rh]], { color: lum(c) > 0.85 ? '#333' : c, sw: 2 });
+      svg += RT.poly([[px, mid - d], [px + d, mid], [px, mid + d], [px - d, mid]], { fill: c, stroke: lum(c) > 0.85 ? '#333' : 'none', sw: 0.8 });
+      const lt = x.r.start || x.r.end, lw = RT.textWidth(lt, sfs * 0.95);
+      const onLeft = px + d + 4 + lw > W - M; // keep the date label inside the figure
+      svg += RT.rich([{ runs: [{ t: lt, size: sfs * 0.95, color: '#333' }] }], onLeft ? px - d - 4 : px + d + 4, mid - sfs * 0.62, { lh: sfs * 1.25, anchor: onLeft ? 'end' : 'start' });
+    } else {
+      const xs = Xd(x.a ?? t0 + pad), xe = Math.max(xs + 3, Xd(x.b));
+      svg += RT.rect(xs, mid - BH / 2, xe - xs, BH, { fill: c, radius: Math.min(Number(S.barR) || 0, BH / 2), stroke: (Number(S.barBW) || 0) > 0 ? S.barBC : 'none', sw: Number(S.barBW) || 0 });
+      const txt = `${x.r.start || '…'} – ${x.r.end || '…'}`, tw = RT.textWidth(txt, sfs * 0.95);
+      const inside = tw + 10 <= xe - xs;
+      const tx = inside ? (xs + xe) / 2 : Math.min(xe + 5, xR - tw);
+      svg += RT.rich([{ runs: [{ t: txt, size: sfs * 0.95, color: inside ? (lum(c) < 0.62 ? '#FFFFFF' : '#222') : '#333' }] }], tx, mid - sfs * 0.62, { lh: sfs * 1.25, anchor: inside ? 'middle' : 'start' });
+    }
+    y += rh + gap;
+  });
+  // calendar axis with year ticks
+  const ay = y + 2;
+  svg += RT.line([[xL, ay], [xR, ay]], { color: '#333', sw: 1 });
+  const y0yr = new Date(t0).getUTCFullYear(), y1yr = new Date(t1).getUTCFullYear();
+  const span = y1yr - y0yr, step = span > 30 ? 5 : span > 12 ? 2 : 1;
+  let last = -1e9;
+  for (let yr = y0yr; yr <= y1yr + 1; yr++) {
+    const t = Date.UTC(yr, 0, 1);
+    if (t < t0 || t > t1 || yr % step) continue;
+    const px = Xd(t);
+    svg += RT.line([[px, ay], [px, ay + 4]], { color: '#333', sw: 1 });
+    const w = RT.textWidth(String(yr), sfs * 0.9);
+    if (px - w / 2 > last + 4) { svg += RT.rich([{ runs: [{ t: String(yr), size: sfs * 0.9, color: '#333' }] }], px, ay + 5, { lh: sfs * 1.2, anchor: 'middle' }); last = px + w / 2; }
+  }
+  return { svg, bottom: ay + sfs * 1.5 };
+}
+
+function build() {
+  RT.applyStyle(S.st);
+  const r = S.style === 'track' ? buildTrack() : S.style === 'classic' ? buildClassic() : buildBlock();
+  const fs = Number(S.st.fontSize) || 13, M = 16;
+  let { W, H, body } = r;
+  if (S.cal && S.cal.on && S.cal.rows.length) {
+    const c = calendarPanel(W, H + fs * 1.1, fs);
+    body += c.svg; H = c.bottom;
+  }
+  if (S.footnote && S.footnote.trim()) {
+    const fb = RT.box([{ text: S.footnote }], W - 2 * M, { size: fs * 0.85, align: 'left', stroke: 'none', fill: 'none', pad: 0, padX: 0, lh: Number(S.st.lh) || 1.3 });
+    body += RT.drawBox(fb, M, H + fs * 0.6);
+    H += fs * 0.6 + fb.h;
+  }
+  return RT.figure(W, H + M, body, r.bg);
+}
+
+let fig;
+const preview = document.getElementById('preview');
+const exporter = RT.exportPanel(document.getElementById('export'), () => fig, 'study_timeline');
+const hist = RT.history(() => S, (s) => { S = s; syncInputs(); render(); });
+function render() {
+  try {
+    fig = build();
+    preview.innerHTML = fig.svg;
+  } catch (e) {
+    console.error(e);
+    preview.innerHTML = `<div class="msg">⚠ ${RT.esc(e.message)}</div>`;
+  }
+  document.querySelectorAll('#rows [data-f="win"]').forEach((el, i) => { if (S.rows[i]) el.placeholder = autoWin(S.rows[i]); });
+  exporter.refresh();
+  RT.save(KEY, S);
+}
+const update = RT.debounce(() => { render(); hist.push(); }, 60);
+
+document.getElementById('btnUndo').onclick = hist.undo;
+document.getElementById('btnRedo').onclick = hist.redo;
+document.getElementById('btnSaveJson').onclick = () => RT.downloadJSON(S, 'study_timeline.json');
+document.getElementById('btnLoadJson').onclick = async () => { try { S = RT.merge(DEF, await RT.pickJSON()); syncInputs(); update(); } catch (e) { RT.toast(T('讀取失敗：', 'Could not open file: ') + e.message, 6000); } };
+
+syncInputs();
+render();
+hist.push();
+</script>
+</body>
+</html>
