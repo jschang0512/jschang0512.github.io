@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>網站目錄</title>
+<meta name="description" content="jschang0512.github.io 所有頁面的目錄">
+<meta name="robots" content="noindex">
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --card: #ffffff;
+    --text: #1d2330;
+    --muted: #667085;
+    --line: #e4e7ec;
+    --accent: #2f6fde;
+    --hover: #eef3fd;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #11141a;
+      --card: #1a1f27;
+      --text: #e6e9ef;
+      --muted: #98a2b3;
+      --line: #2a313c;
+      --accent: #7aa7ff;
+      --hover: #222b3a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    line-height: 1.5;
+  }
+  main { max-width: 960px; margin: 0 auto; padding: 40px 16px 56px; }
+  header { margin-bottom: 28px; }
+  h1 { font-size: 1.75rem; margin: 0 0 4px; }
+  header p { margin: 0; color: var(--muted); }
+  .grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+  section {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 18px 18px 10px;
+  }
+  h2 { font-size: 1.05rem; margin: 0 0 2px; }
+  h2 a { color: inherit; text-decoration: none; }
+  h2 a:hover { color: var(--accent); }
+  .desc { color: var(--muted); font-size: .875rem; margin: 0 0 10px; }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li a {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 10px;
+    margin: 0 -10px;
+    border-radius: 8px;
+    color: var(--text);
+    text-decoration: none;
+  }
+  li a:hover { background: var(--hover); color: var(--accent); }
+  li a small { color: var(--muted); font-size: .8rem; white-space: nowrap; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>網站目錄</h1>
+    <p>jschang0512.github.io 上的所有頁面</p>
+  </header>
+
+  <div class="grid">
+    <section>
+      <h2><a href="../personalcv/">個人簡歷</a></h2>
+      <p class="desc">Chia-Sung (Bruce) Chang 的學術簡歷與部落格</p>
+      <ul>
+        <li><a href="../personalcv/">簡歷首頁 <small>CV</small></a></li>
+        <li><a href="../personalcv/blog/">部落格 <small>Blog</small></a></li>
+        <li><a href="../personalcv/blog/feed.xml">RSS 訂閱 <small>Feed</small></a></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><a href="../splitbill/">Splitbill</a></h2>
+      <p class="desc">多人分帳與 AI 收據拆單</p>
+      <ul>
+        <li><a href="../splitbill/">首頁</a></li>
+        <li><a href="../splitbill/currency.html">分帳記帳</a></li>
+        <li><a href="../splitbill/summary.html">帳務總覽</a></li>
+        <li><a href="../splitbill/settings.html">設定</a></li>
+        <li><a href="../splitbill/about.html">關於我們</a></li>
+        <li><a href="../splitbill/privacy.html">隱私權政策</a></li>
+        <li><a href="../splitbill/terms.html">服務條款</a></li>
+        <li><a href="../splitbill/splitbill.apk">Android App <small>APK</small></a></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><a href="../Research-toolkit/">Research Toolkit</a></h2>
+      <p class="desc">研究用圖表與偏誤評估工具</p>
+      <ul>
+        <li><a href="../Research-toolkit/">工具首頁</a></li>
+        <li><a href="../Research-toolkit/cohortflow/">Cohort 病人篩選流程圖</a></li>
+        <li><a href="../Research-toolkit/prismaflow/">PRISMA 2020 流程圖</a></li>
+        <li><a href="../Research-toolkit/timeline/">Cohort 研究時間軸</a></li>
+        <li><a href="../Research-toolkit/tte/">Target Trial 規格表</a></li>
+        <li><a href="../Research-toolkit/rob2/">RoB 2</a></li>
+        <li><a href="../Research-toolkit/robinsi/">ROBINS-I</a></li>
+        <li><a href="../Research-toolkit/figureconvert/">圖片 DPI 與格式轉換</a></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><a href="../Pharmacy/">調劑台複習</a></h2>
+      <p class="desc">藥局調劑練習</p>
+      <ul>
+        <li><a href="../Pharmacy/">開啟</a></li>
+        <li><a href="../Pharmacy/docs/nhi-coverage-1150821.pdf">健保給付規定 <small>PDF</small></a></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2><a href="../trip/">旅遊行程</a></h2>
+      <p class="desc">Travel Log</p>
+      <ul>
+        <li><a href="../trip/">行程總覽</a></li>
+        <li><a href="../trip/fukuoka/schedule.html">九州行程表 <small>福岡・佐賀</small></a></li>
+        <li><a href="../trip/niigata/schedule.html">上越行程表（暫） <small>新潟・東京</small></a></li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>NMA</h2>
+      <p class="desc">網絡統合分析程式碼</p>
+      <ul>
+        <li><a href="../NMA/all_cause_dementia_ITT.R">all_cause_dementia_ITT.R <small>R</small></a></li>
+      </ul>
+    </section>
+  </div>
+</main>
+</body>
+</html>
