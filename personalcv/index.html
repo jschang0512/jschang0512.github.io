@@ -443,8 +443,8 @@
       {%- comment -%} Everything below is pre-rendered from _data/cv.json for search engines and link previews; the script re-renders it on load. {%- endcomment -%}
       <nav id="nav" aria-label="Sections">
         {%- assign nav_ids = "research:about,cv:cv,publications:publications,awards:honors" | split: "," -%}
-        {%- for pair in nav_ids -%}{%- assign kv = pair | split: ":" -%}{%- assign s = cv.sections[kv[0]] -%}
-        <a href="#{{ kv[1] }}">{% include cv-tr.html v=s.nav %}</a>
+        {%- for pair in nav_ids -%}{%- assign kv = pair | split: ":" -%}{%- assign nav_key = kv | first -%}{%- assign nav_id = kv | last -%}{%- assign nav_sec = cv.sections[nav_key] -%}
+        <a href="#{{ nav_id }}">{% include cv-tr.html v=nav_sec.nav %}</a>
         {%- endfor -%}
         {%- if site.posts.size > 0 %}<a href="blog/" class="nav-blog">{% include cv-tr.html v=cv.sections.blog.nav %}</a>{% endif -%}
         {%- if cv.profile.toolkit %}<a href="{{ cv.profile.toolkit }}" target="_blank" rel="noopener" class="nav-ext"><span class="zh">小工具</span><span class="en">Toolkit</span><span class="ja">ツール</span></a>{% endif -%}
