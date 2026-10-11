@@ -4,6 +4,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Research Toolkit</title>
+<meta name="description" content="研究論文圖表小工具：PRISMA 2020 流程圖、世代研究病人選取流程圖、研究設計時間軸、目標試驗模擬規格表、RoB 2、ROBINS-I 與圖片 DPI 轉換，全部在瀏覽器中完成。">
+<link rel="canonical" href="https://jschang0512.github.io/Research-toolkit/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Chia-Sung (Bruce) Chang">
+<meta property="og:title" content="Research Toolkit · 研究論文圖表小工具">
+<meta property="og:description" content="PRISMA、RoB 2、ROBINS-I、研究設計時間軸、目標試驗模擬規格表等研究圖表工具，全部在瀏覽器中完成，檔案不會上傳。">
+<meta property="og:url" content="https://jschang0512.github.io/Research-toolkit/">
+<meta property="og:image" content="https://jschang0512.github.io/assets/og/research-toolkit.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="author" content="Chia-Sung (Bruce) Chang">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="shared/style.css?v=20260930a">
 <style>
   .topbar { justify-content: flex-end; background: transparent; border-bottom: 0; position: static; }
@@ -23,6 +38,10 @@
   .tile .tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
   .below { max-width: 1080px; margin: 0 auto; padding: 0 20px; display: flex; flex-direction: column; gap: 12px; }
   .note { color: var(--muted); font-size: 12.5px; }
+  .group-label { grid-column: 1 / -1; font-size: 13px; font-weight: 700; letter-spacing: .08em; color: var(--muted); margin: 8px 0 -4px; }
+  .group-label:first-child { margin-top: 0; }
+  .pill.tutorial { background: var(--accent-weak); color: var(--accent); border-color: transparent; }
+  .dev-card .site { display: inline-block; margin-top: 4px; }
 </style>
 </head>
 <body>
@@ -33,6 +52,7 @@
 </section>
 
 <main class="tools">
+  <h2 class="group-label" data-en="Online tools">線上工具</h2>
   <a class="tile" href="prismaflow/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="8" height="5" rx="1"/><rect x="3" y="16" width="8" height="5" rx="1"/><rect x="15" y="3" width="6" height="5" rx="1"/><path d="M7 8v8M11 5.5h4"/></svg></div>
     <h2>PRISMA Flow Diagram</h2>
@@ -75,11 +95,12 @@
     <p data-en="Risk of bias in non-randomised studies of interventions — official V2 of 20 Nov 2025 (6 domains), with the archived Nov 2024 V2 and the 2016 V1: overall judgement, plots and tables.">非隨機介入研究偏誤風險：官方 V2（2025-11-20，6 個 domain），另可切換 2024 封存版 V2 與 2016 V1；整體判斷、圖表與表格。</p>
     <div class="tags"><span class="pill">ROBINS-I V2</span><span class="pill">robvis-style</span></div>
   </a>
+  <h2 class="group-label" data-en="Tutorials">教學</h2>
   <a class="tile" href="../NMA/">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="4.5" r="2.3"/><circle cx="4.5" cy="18" r="2.3"/><circle cx="19.5" cy="18" r="2.3"/><path d="M10.9 6.5 5.6 16M13.1 6.5l5.3 9.5M6.8 18h10.4"/></svg></div>
     <h2>Bayesian NMA Tutorial</h2>
     <p data-en="Step-by-step R tutorial for Bayesian network meta-analysis with multinma: network graph, forest plot, SUCRA, node-splitting, league table, meta-regression and sensitivity analysis.">用 R 套件 multinma 做貝氏網絡統合分析的逐步教學：網絡圖、森林圖、SUCRA、node-splitting、league table、meta-regression 與敏感度分析。</p>
-    <div class="tags"><span class="pill">multinma</span><span class="pill" data-en="R code">R 程式碼</span></div>
+    <div class="tags"><span class="pill tutorial" data-en="Tutorial">教學</span><span class="pill">multinma</span><span class="pill" data-en="R code">R 程式碼</span></div>
   </a>
 </main>
 
@@ -96,6 +117,7 @@
       <div>
         <div class="who">張家菘</div>
         <div class="how"><span data-en="Questions, bugs or suggestions? Email me:">使用上有任何問題、錯誤回報或建議，歡迎來信：</span> <a href="mailto:js.chang0512@gmail.com">js.chang0512@gmail.com</a></div>
+        <a class="site" href="/personalcv/" data-en="Personal website →">個人網站 →</a>
       </div>
     </div>
   </div>

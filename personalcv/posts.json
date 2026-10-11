@@ -1,5 +1,6 @@
 ---
 layout: null
+sitemap: false
 ---
 {% assign featured = site.posts | where: "featured", true %}{% assign latest = "" | split: "" %}{% for p in featured %}{% assign latest = latest | push: p %}{% endfor %}{% for p in site.posts %}{% unless p.featured %}{% assign latest = latest | push: p %}{% endunless %}{% endfor %}[{% for post in latest limit: 3 %}
   {

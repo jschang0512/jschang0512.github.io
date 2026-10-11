@@ -5,6 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>貝氏 NMA 實作教學</title>
 <meta name="description" content="用 R 套件 multinma 做貝氏網絡統合分析：從資料整理、主模型、排名、不一致性檢定到 meta-regression 與敏感度分析，分 11 個步驟的實作教學。">
+<link rel="canonical" href="https://jschang0512.github.io/NMA/">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Chia-Sung (Bruce) Chang">
+<meta property="og:title" content="貝氏網絡統合分析（NMA）實作教學">
+<meta property="og:description" content="用 R 套件 multinma 做貝氏網絡統合分析，從資料整理到敏感度分析的 11 個步驟，附完整程式碼與示範資料。">
+<meta property="og:url" content="https://jschang0512.github.io/NMA/">
+<meta property="og:image" content="https://jschang0512.github.io/assets/og/nma.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="author" content="Chia-Sung (Bruce) Chang">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" id="hl-light" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
 <link rel="stylesheet" id="hl-dark" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" media="(prefers-color-scheme: dark)">
 <style>
@@ -66,10 +80,23 @@
   nav.toc li a.active { color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
   nav.toc li.sub a { padding-left: 22px; font-size: .85rem; }
   main { padding: 32px 0 80px; min-width: 0; }
+  .toc-fab { display: none; }
   @media (max-width: 960px) {
     .wrap { grid-template-columns: minmax(0, 1fr); gap: 0; }
     nav.toc { display: none; }
+    /* 手機：右下角按鈕打開目錄 */
+    nav.toc.open {
+      display: block; position: fixed; top: auto; left: 16px; right: 16px; bottom: 76px; z-index: 30;
+      max-height: 65vh; padding: 14px 10px; background: var(--card); border: 1px solid var(--line);
+      border-radius: 14px; box-shadow: 0 12px 40px rgba(0, 0, 0, .25);
+    }
+    .toc-fab {
+      display: inline-flex; align-items: center; gap: 6px; position: fixed; right: 16px; bottom: 16px; z-index: 31;
+      padding: 10px 16px; border: 0; border-radius: 999px; background: var(--accent); color: #fff;
+      font: inherit; font-size: .92rem; font-weight: 600; box-shadow: 0 6px 20px rgba(0, 0, 0, .25); cursor: pointer;
+    }
   }
+  @media (max-width: 960px) and (prefers-color-scheme: dark) { .toc-fab { color: #0d1420; } }
 
   /* hero */
   header.hero { padding: 8px 0 28px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
@@ -119,6 +146,15 @@
   .flow li::before { content: counter(s, decimal-leading-zero); color: var(--accent); font-weight: 700; margin-right: 6px; }
   .flow li a { color: inherit; text-decoration: none; }
 
+  .dag { overflow-x: auto; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin: 12px 0; }
+  .dag svg { display: block; width: 100%; min-width: 640px; height: auto; font-size: 13px; }
+  .dag-node rect { fill: var(--bg); stroke: var(--line); stroke-width: 1.2; }
+  .dag a:hover .dag-node rect { stroke: var(--accent); }
+  .dag-node text { fill: var(--text); font-weight: 600; }
+  .dag-no { fill: var(--accent); font-weight: 700; }
+  .dag-edge { fill: none; stroke: var(--muted); stroke-width: 1.3; opacity: .7; }
+  .dag-head { fill: var(--muted); }
+
   ul.tight li, ol.tight li { margin: 2px 0; }
   footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line); font-size: .85rem; color: var(--muted); }
 </style>
@@ -126,7 +162,10 @@
 <body>
 <div class="wrap">
 
-<nav class="toc" aria-label="目錄">
+<button type="button" class="toc-fab" id="toc-fab" aria-controls="toc" aria-expanded="false">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>目錄
+</button>
+<nav class="toc" id="toc" aria-label="目錄">
   <div class="toc-title">目錄</div>
   <ol>
     <li><a href="#overview">概覽</a></li>
@@ -182,6 +221,35 @@
     <li><a href="#s11">敏感度分析</a></li>
   </ol>
   <p>每個步驟都是獨立的 R 檔，會自動輸出論文可用的圖（PNG，600 dpi）與表（CSV）。</p>
+  <h3>步驟之間的依賴</h3>
+  <p>箭頭代表「後面的步驟會用到前面步驟的結果」（只畫直接依賴）。想只跑某一步時，要先跑完它左邊連到的步驟。點方塊可以跳到該步驟。</p>
+  <div class="dag">
+<svg viewBox="0 0 760 286" role="img" aria-labelledby="dag-title"><title id="dag-title">各步驟之間的依賴關係</title>
+<defs><marker id="dag-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" class="dag-head"/></marker></defs>
+<path class="dag-edge" d="M150 135C177 135 177 31 204 31" marker-end="url(#dag-arrow)"/>
+<path class="dag-edge" d="M150 135C177 135 177 135 204 135" marker-end="url(#dag-arrow)"/>
+<path class="dag-edge" d="M150 135C177 135 177 265 204 265" marker-end="url(#dag-arrow)"/>
+<path class="dag-edge" d="M352 31C379 31 379 31 406 31" marker-end="url(#dag-arrow)"/>
+<path class="dag-edge" d="M352 135C379 135 379 83 406 83" marker-end="url(#dag-arrow)"/>
+<path class="dag-edge" d="M352 135C379 135 379 135 406 135" marker-end="url(#dag-arrow)"/>
+<path class="dag-edge" d="M352 135C379 135 379 187 406 187" marker-end="url(#dag-arrow)"/>
+<path class="dag-edge" d="M352 135C379 135 379 239 406 239" marker-end="url(#dag-arrow)"/>
+<path class="dag-edge" d="M554 135C581 135 581 57 608 57" marker-end="url(#dag-arrow)"/>
+<path class="dag-edge" d="M554 31C581 31 581 57 608 57" marker-end="url(#dag-arrow)"/>
+<path class="dag-edge" d="M554 135C581 135 581 161 608 161" marker-end="url(#dag-arrow)"/>
+<a href="#s10"><g class="dag-node"><rect x="610" y="144" width="146" height="34" rx="8"/><text x="622" y="166"><tspan class="dag-no">10</tspan> Meta-regression</text></g></a>
+<a href="#s11"><g class="dag-node"><rect x="408" y="222" width="146" height="34" rx="8"/><text x="420" y="244"><tspan class="dag-no">11</tspan> 敏感度分析</text></g></a>
+<a href="#s01"><g class="dag-node"><rect x="4" y="118" width="146" height="34" rx="8"/><text x="16" y="140"><tspan class="dag-no">01</tspan> 讀資料</text></g></a>
+<a href="#s02"><g class="dag-node"><rect x="206" y="14" width="146" height="34" rx="8"/><text x="218" y="36"><tspan class="dag-no">02</tspan> 網絡圖</text></g></a>
+<a href="#s03"><g class="dag-node"><rect x="206" y="118" width="146" height="34" rx="8"/><text x="218" y="140"><tspan class="dag-no">03</tspan> 主模型</text></g></a>
+<a href="#s09"><g class="dag-node"><rect x="206" y="248" width="146" height="34" rx="8"/><text x="218" y="270"><tspan class="dag-no">09</tspan> Transitivity</text></g></a>
+<a href="#s06"><g class="dag-node"><rect x="408" y="14" width="146" height="34" rx="8"/><text x="420" y="36"><tspan class="dag-no">06</tspan> Node-splitting</text></g></a>
+<a href="#s04"><g class="dag-node"><rect x="408" y="66" width="146" height="34" rx="8"/><text x="420" y="88"><tspan class="dag-no">04</tspan> 森林圖</text></g></a>
+<a href="#s05"><g class="dag-node"><rect x="408" y="118" width="146" height="34" rx="8"/><text x="420" y="140"><tspan class="dag-no">05</tspan> 排名與 SUCRA</text></g></a>
+<a href="#s08"><g class="dag-node"><rect x="408" y="170" width="146" height="34" rx="8"/><text x="420" y="192"><tspan class="dag-no">08</tspan> 全域不一致性</text></g></a>
+<a href="#s07"><g class="dag-node"><rect x="610" y="40" width="146" height="34" rx="8"/><text x="622" y="62"><tspan class="dag-no">07</tspan> League table</text></g></a>
+</svg>
+  </div>
   <div class="note">頁面上的所有圖表都是用<strong>示範資料</strong>實際跑出來的。示範資料改編自 multinma 內建的 <code>parkinsons</code> 資料集，藥名與研究特徵都是虛構的，只用來示範操作，沒有臨床意義。</div>
 </section>
 
@@ -311,7 +379,7 @@ print(net)</code></pre>
   <h2><span class="step-no">02</span>網絡圖</h2>
   <dl class="meta"><dt>需要</dt><dd><code>net</code></dd><dt>產出</dt><dd><code>network_graph_&lt;tag&gt;.png</code></dd></dl>
   <p>每個點是一個治療，連線代表有研究直接比較這兩個治療，<strong>線越粗、研究數越多</strong>（超過 1 篇時會標上數字）。從圖可以看出哪些比較只靠間接證據，以及網絡中是否有封閉迴路（node-splitting 需要迴路才能做）。</p>
-  <figure class="narrow"><img src="example/output/network_graph_example.png" alt="示範資料的網絡圖" loading="lazy"><figcaption>示範資料的網絡圖</figcaption></figure>
+  <figure class="narrow"><a href="example/output/network_graph_example.png" target="_blank" rel="noopener" title="開啟原始高解析度圖"><img src="example/output/web/network_graph_example.webp" alt="示範資料的網絡圖" loading="lazy" decoding="async"></a><figcaption>示範資料的網絡圖</figcaption></figure>
   <details data-src="steps/02_network_graph.R"><summary>看完整程式碼</summary><pre><code class="language-r">載入中…</code></pre></details>
 </section>
 
@@ -333,7 +401,7 @@ print(net)</code></pre>
   <p><code>print(fit_re)</code> 的表格中，每個參數的 <code>Rhat</code> 應 &lt; 1.01，<code>Bulk_ESS</code> 與 <code>Tail_ESS</code> 應 &gt; 400。沒有達到時，增加 <code>iter</code> 再跑一次。</p>
   <h3>先驗與後驗分佈</h3>
   <p>紅線是先驗、藍色是後驗。後驗明顯比先驗窄，代表結果主要由資料決定；如果後驗跟先驗幾乎重疊，代表這個參數的資料很少，結果主要受先驗影響，解讀時要保守。</p>
-  <figure><img src="example/output/prior_posterior_example.png" alt="先驗與後驗分佈圖" loading="lazy"><figcaption>先驗（紅線）與後驗（藍色長條）分佈</figcaption></figure>
+  <figure><a href="example/output/prior_posterior_example.png" target="_blank" rel="noopener" title="開啟原始高解析度圖"><img src="example/output/web/prior_posterior_example.webp" alt="先驗與後驗分佈圖" loading="lazy" decoding="async"></a><figcaption>先驗（紅線）與後驗（藍色長條）分佈</figcaption></figure>
   <details data-src="steps/03_main_model.R"><summary>看完整程式碼</summary><pre><code class="language-r">載入中…</code></pre></details>
 </section>
 
@@ -342,7 +410,7 @@ print(net)</code></pre>
   <dl class="meta"><dt>需要</dt><dd><code>fit_re</code></dd><dt>產出</dt><dd><code>forestplot_&lt;tag&gt;.png</code>、<code>forestdata_&lt;tag&gt;.csv</code></dd></dl>
   <p>每個治療相對於參考組（<code>cfg$ref_trt</code>）的 HR 與 95% 可信區間（credible interval, CrI）。HR &lt; 1 代表優於參考組；<strong>CrI 不包含 1</strong> 時，可以說有明確的差異。</p>
 <pre><code class="language-r">relative_effects(fit_re, trt_ref = "SoC")</code></pre>
-  <figure><img src="example/output/forestplot_example.png" alt="森林圖" loading="lazy"><figcaption>各治療 vs SoC 的 HR 與 95% CrI</figcaption></figure>
+  <figure><a href="example/output/forestplot_example.png" target="_blank" rel="noopener" title="開啟原始高解析度圖"><img src="example/output/web/forestplot_example.webp" alt="森林圖" loading="lazy" decoding="async"></a><figcaption>各治療 vs SoC 的 HR 與 95% CrI</figcaption></figure>
   <details data-src="steps/04_forest_plot.R"><summary>看完整程式碼</summary><pre><code class="language-r">載入中…</code></pre></details>
 </section>
 
@@ -355,7 +423,7 @@ print(net)</code></pre>
     <li><strong>SUCRA（B）：</strong>把累積排名曲線下的面積換算成 0–100%，越高越好。</li>
   </ul>
   <div class="warn">排名只看點估計的相對位置，不代表差異有意義。要搭配森林圖的 CrI 一起解讀，避免只依 SUCRA 下結論。</div>
-  <figure class="narrow"><img src="example/output/rankplot_example.png" alt="排名圖與 SUCRA" loading="lazy"><figcaption>A：累積排名機率；B：SUCRA</figcaption></figure>
+  <figure class="narrow"><a href="example/output/rankplot_example.png" target="_blank" rel="noopener" title="開啟原始高解析度圖"><img src="example/output/web/rankplot_example.webp" alt="排名圖與 SUCRA" loading="lazy" decoding="async"></a><figcaption>A：累積排名機率；B：SUCRA</figcaption></figure>
   <details data-src="steps/05_ranking.R"><summary>看完整程式碼</summary><pre><code class="language-r">載入中…</code></pre></details>
 </section>
 
@@ -369,7 +437,7 @@ print(net)</code></pre>
     <li>Bayesian p &lt; 0.05（圖中標紅）代表直接與間接證據可能不一致。</li>
     <li><code>incons_tbl</code> 整理成 GRADE 評估不一致性時可以直接使用的表格，並附上 ESS 與 Rhat。</li>
   </ul>
-  <figure><img src="example/output/nodesplit1_example.png" alt="Node-splitting 森林圖" loading="lazy"><figcaption>黑：Direct；灰：Indirect；藍：Network</figcaption></figure>
+  <figure><a href="example/output/nodesplit1_example.png" target="_blank" rel="noopener" title="開啟原始高解析度圖"><img src="example/output/web/nodesplit1_example.webp" alt="Node-splitting 森林圖" loading="lazy" decoding="async"></a><figcaption>黑：Direct；灰：Indirect；藍：Network</figcaption></figure>
   <div class="tbl-wrap" data-csv="example/output/incons_tbl_example.csv" data-round="3"></div>
   <p class="tbl-caption">不一致性表（incons_tbl）</p>
   <details data-src="steps/06_nodesplit.R"><summary>看完整程式碼</summary><pre><code class="language-r">載入中…</code></pre></details>
@@ -397,9 +465,9 @@ print(net)</code></pre>
     <li>UME 的 DIC 明顯較低，代表 consistency 的假設可能不成立。</li>
   </ul>
   <p><strong>Deviance-deviance plot：</strong>每個點是一個研究的資料點，在兩個模型中的殘差離差。落在對角線上表示兩模型配適相當；明顯偏離對角線的點，就是可能造成不一致的研究。</p>
-  <figure class="narrow"><img src="example/output/ume_example.png" alt="Deviance-deviance plot" loading="lazy"><figcaption>Consistency 模型 vs UME 模型的殘差離差</figcaption></figure>
+  <figure class="narrow"><a href="example/output/ume_example.png" target="_blank" rel="noopener" title="開啟原始高解析度圖"><img src="example/output/web/ume_example.webp" alt="Deviance-deviance plot" loading="lazy" decoding="async"></a><figcaption>Consistency 模型 vs UME 模型的殘差離差</figcaption></figure>
   <p><strong>Deviance-leverage plot：</strong>橫軸是殘差，縱軸是槓桿值。落在 DIC = 3 等高線外（紅色）的研究配適不佳，可以列入敏感度分析（<a href="#s11">步驟 11</a>）排除後再跑一次。</p>
-  <figure class="narrow"><img src="example/output/dicplot_example.png" alt="Deviance-leverage plot" loading="lazy"><figcaption>紅：DIC ≥ 3；藍：2 ≤ DIC &lt; 3</figcaption></figure>
+  <figure class="narrow"><a href="example/output/dicplot_example.png" target="_blank" rel="noopener" title="開啟原始高解析度圖"><img src="example/output/web/dicplot_example.webp" alt="Deviance-leverage plot" loading="lazy" decoding="async"></a><figcaption>紅：DIC ≥ 3；藍：2 ≤ DIC &lt; 3</figcaption></figure>
   <details data-src="steps/08_global_inconsistency.R"><summary>看完整程式碼</summary><pre><code class="language-r">載入中…</code></pre></details>
 </section>
 
@@ -561,6 +629,18 @@ source("run_all.R")</code></pre>
         box.innerHTML = '<p style="padding:10px 14px;margin:0">無法載入 <a href="' + box.dataset.csv + '">' + box.dataset.csv + '</a></p>';
       });
   });
+
+  // 手機目錄開關
+  var toc = document.getElementById('toc');
+  var fab = document.getElementById('toc-fab');
+  function setToc(open) {
+    toc.classList.toggle('open', open);
+    fab.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  fab.addEventListener('click', function (e) { e.stopPropagation(); setToc(!toc.classList.contains('open')); });
+  toc.addEventListener('click', function (e) { if (e.target.closest('a')) setToc(false); });
+  document.addEventListener('click', function (e) { if (!toc.contains(e.target)) setToc(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') setToc(false); });
 
   // 目錄標示目前位置
   var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));

@@ -20,7 +20,7 @@ content:
   - name: site
     label: "網站內容"
     type: file
-    path: personalcv/content.json
+    path: _data/cv.json
     format: json
     fields:
       - name: profile

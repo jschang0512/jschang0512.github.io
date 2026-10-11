@@ -1,0 +1,61 @@
+# Rebuilds NMA/nma-toolkit.zip whenever the NMA code or example files change,
+# so the download on the tutorial page never falls out of date.
+name: Build NMA toolkit zip
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - NMA/config.R
+      - NMA/run_all.R
+      - NMA/README.md
+      - NMA/R/**
+      - NMA/steps/**
+      - NMA/example/example_data.csv
+      - NMA/example/config_example.R
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: nma-zip
+  cancel-in-progress: true
+
+jobs:
+  zip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build zip
+        run: |
+          files="NMA/config.R NMA/run_all.R NMA/README.md NMA/R NMA/steps NMA/example/example_data.csv NMA/example/config_example.R"
+          # Fixed timestamps and sorted entries: unchanged files give a byte-identical zip
+          find $files -type f -exec touch -d '2026-01-01 00:00:00' {} +
+          rm -f NMA/nma-toolkit.zip
+          find $files -type f | LC_ALL=C sort | zip -X -q NMA/nma-toolkit.zip -@
+          unzip -l NMA/nma-toolkit.zip
+
+      - name: Commit
+        id: commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add NMA/nma-toolkit.zip
+          if git diff --cached --quiet; then
+            echo "Zip unchanged."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git commit -m "Rebuild NMA toolkit zip"
+            git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Pushes made with GITHUB_TOKEN don't start a Pages build by themselves
+      - name: Rebuild GitHub Pages
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${{ github.repository }}/pages/builds" --jq '.status'

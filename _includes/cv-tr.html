@@ -1,0 +1,16 @@
+{%- comment -%}
+  Pre-renders a CV value the same way index.html's tr() does: a plain string,
+  or { zh, en, ja } as three language spans (empty languages fall back to zh).
+  Pass md=true to render **bold** like md().
+{%- endcomment -%}
+{%- assign _v = include.v -%}
+{%- if _v.zh or _v.en or _v.ja -%}
+{%- assign _zh = _v.zh | default: _v.en | default: _v.ja -%}
+{%- assign _en = _v.en | default: _v.zh | default: _v.ja -%}
+{%- assign _ja = _v.ja | default: _v.zh | default: _v.en -%}
+{%- if include.md -%}
+<span class="zh">{{ _zh | markdownify | remove: '<p>' | remove: '</p>' | strip }}</span><span class="en">{{ _en | markdownify | remove: '<p>' | remove: '</p>' | strip }}</span><span class="ja">{{ _ja | markdownify | remove: '<p>' | remove: '</p>' | strip }}</span>
+{%- else -%}
+<span class="zh">{{ _zh | escape }}</span><span class="en">{{ _en | escape }}</span><span class="ja">{{ _ja | escape }}</span>
+{%- endif -%}
+{%- else -%}{{ _v | escape }}{%- endif -%}
