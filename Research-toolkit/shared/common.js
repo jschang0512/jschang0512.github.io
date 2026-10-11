@@ -913,6 +913,7 @@
         <div class="export-info"></div>
         <div class="btns">
           <button class="primary ex-go">${RT.t('下載', 'Download')}</button>
+          <button class="ex-word" title="${RT.esc(opts.docxInfo || RT.t('Word 原生圖形，每個方框、文字與線條都能在 Word 裡編輯', 'Native Word shapes — every box, text and line can be edited in Word'))}">${opts.docxLabel || RT.t('Word（可編輯）', 'Word (editable)')}</button>
           <button class="ex-copy" title="${RT.t('以 PNG 複製到剪貼簿，可直接貼到 Word / PowerPoint', 'Copy as PNG to paste into Word / PowerPoint')}">${RT.t('複製 PNG', 'Copy PNG')}</button>
         </div>
       </div>`;
@@ -957,6 +958,13 @@
     $('.ex-go').onclick = async () => {
       const btn = $('.ex-go'); btn.disabled = true; const t = btn.textContent; btn.textContent = RT.t('處理中…', 'Working…');
       try { await RT.exportFigure(getFig(), { ...read(), docx: opts.docx }); }
+      catch (e) { console.error(e); RT.toast(String(e.message || e), 6000); }
+      finally { btn.disabled = false; btn.textContent = t; }
+    };
+    // One-click editable Word, whatever format is selected above (uses the chosen print width)
+    $('.ex-word').onclick = async () => {
+      const btn = $('.ex-word'); btn.disabled = true; const t = btn.textContent; btn.textContent = RT.t('處理中…', 'Working…');
+      try { await RT.exportFigure(getFig(), { ...read(), fmt: 'docx', docx: opts.docx }); }
       catch (e) { console.error(e); RT.toast(String(e.message || e), 6000); }
       finally { btn.disabled = false; btn.textContent = t; }
     };
