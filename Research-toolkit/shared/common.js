@@ -32,8 +32,9 @@
       b.textContent = RT.lang === 'en' ? '中文' : 'EN';
       b.title = RT.lang === 'en' ? '切換成中文' : 'Switch to English';
       b.onclick = () => RT.setLang(RT.lang === 'en' ? 'zh' : 'en');
-      bar.appendChild(b);
+      (bar.querySelector('.btns') || bar).appendChild(b);   // keep it in the button row on narrow screens
     }
+    RT.initPreviewJump();
     if (!document.querySelector('.site-foot')) {
       const f = document.createElement('footer');
       f.className = 'site-foot';
@@ -41,6 +42,20 @@
         `<div class="dev-line">${RT.t('開發者', 'Developer')}：${RT.esc(RT.DEV.name)} · ${RT.t('問題與建議', 'Questions & feedback')}：<a href="mailto:${RT.DEV.email}">${RT.DEV.email}</a></div>`;
       document.body.appendChild(f);
     }
+  };
+
+  // Phones: the preview sits below every input, so offer a floating button that jumps to it
+  // (shown only while the preview is off screen).
+  RT.initPreviewJump = () => {
+    const col = document.querySelector('.preview-col');
+    if (!col || document.querySelector('.preview-jump') || !('IntersectionObserver' in window)) return;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'preview-jump';
+    b.textContent = RT.t('看預覽 ↓', 'Preview ↓');
+    b.onclick = () => col.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.body.appendChild(b);
+    new IntersectionObserver((es) => { b.classList.toggle('off', es[0].isIntersecting); }).observe(col);
   };
 
   /* ---------- CDN libraries (lazy loaded only when needed) ---------- */

@@ -1,5 +1,6 @@
 User-agent: *
 Disallow: /trip/
+Disallow: /menu/
 
 Sitemap: https://jschang0512.github.io/sitemap.xml
 Sitemap: https://jschang0512.github.io/splitbill/sitemap.xml

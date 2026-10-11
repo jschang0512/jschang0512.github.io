@@ -14,6 +14,7 @@
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
 <title>行程總覽｜Travel Log</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -176,6 +177,34 @@
   .trip-cta .arrow{ transition:transform .18s ease; }
   .trip-card:hover .trip-cta .arrow{ transform:translateX(4px); }
 
+  /* status badge + finished trips */
+  .trip-status{
+    display:inline-block;
+    margin-left:8px;
+    padding:2px 9px;
+    border-radius:999px;
+    font-family:"Noto Sans TC",sans-serif;
+    font-size:11.5px;
+    font-weight:700;
+    letter-spacing:0;
+    text-transform:none;
+    vertical-align:1px;
+    background:color-mix(in srgb, var(--accent) 18%, transparent);
+    color:var(--ink);
+  }
+  .section-label{
+    font-family:"JetBrains Mono",monospace;
+    font-size:11px;
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin:36px 4px 12px;
+  }
+  .section-label[hidden]{ display:none; }
+  .trip-card.past{ opacity:.72; box-shadow:none; }
+  .trip-card.past:hover{ opacity:1; }
+  .trip-card.past .trip-title{ font-size:20px; }
+
   footer{
     text-align:center;
     padding:20px 20px 40px;
@@ -197,26 +226,64 @@
 </header>
 
 <main>
-  <a class="trip-card fukuoka" href="fukuoka/schedule.html">
-    <div class="trip-eyebrow">Kyushu · 8 Days</div>
-    <div class="trip-title">九州行程表</div>
-    <div class="trip-dates">2026年08月18日 – 08月25日</div>
-    <div class="trip-route">福岡・北九州・相島・太宰府・唐津・佐賀</div>
-    <div class="trip-cta">查看行程 <span class="arrow">→</span></div>
-  </a>
+  <!-- data-start / data-end drive the order and the status badge (see script below) -->
+  <div id="upcoming">
+    <a class="trip-card niigata" href="niigata/schedule.html" data-start="2027-07-30" data-end="2027-08-09">
+      <div class="trip-eyebrow">Joetsu · 11 Days · ⚠️ 尚未定案</div>
+      <div class="trip-title">上越行程表（暫）</div>
+      <div class="trip-dates">2027年07月30日 – 08月09日</div>
+      <div class="trip-route">新潟・長岡花火・越後湯澤・秩父・川越・東京</div>
+      <div class="trip-cta">查看行程 <span class="arrow">→</span></div>
+    </a>
+  </div>
 
-  <a class="trip-card niigata" href="niigata/schedule.html">
-    <div class="trip-eyebrow">Joetsu · 11 Days · ⚠️ 尚未定案</div>
-    <div class="trip-title">上越行程表（暫）</div>
-    <div class="trip-dates">2027年07月30日 – 08月09日</div>
-    <div class="trip-route">新潟・長岡花火・越後湯澤・秩父・川越・東京</div>
-    <div class="trip-cta">查看行程 <span class="arrow">→</span></div>
-  </a>
+  <div class="section-label" id="pastLabel">已結束</div>
+  <div id="past">
+    <a class="trip-card fukuoka past" href="fukuoka/schedule.html" data-start="2026-08-18" data-end="2026-08-25">
+      <div class="trip-eyebrow">Kyushu · 8 Days</div>
+      <div class="trip-title">九州行程表</div>
+      <div class="trip-dates">2026年08月18日 – 08月25日</div>
+      <div class="trip-route">福岡・北九州・相島・太宰府・唐津・佐賀</div>
+      <div class="trip-cta">回顧行程 <span class="arrow">→</span></div>
+    </a>
+  </div>
 </main>
 
 <footer>jschang0512 · Travel Log</footer>
 
 <script>
+// Sort trips by date: upcoming / ongoing first, finished ones under 「已結束」
+(function tripStatus(){
+  const DAY = 86400000;
+  const now = new Date(); now.setHours(0, 0, 0, 0);
+  const d = (s) => { const p = s.split("-").map(Number); return new Date(p[0], p[1] - 1, p[2]); };
+  const up = document.getElementById("upcoming"), past = document.getElementById("past");
+  const cards = [...document.querySelectorAll(".trip-card[data-start]")];
+  cards.forEach((c) => {
+    const start = d(c.dataset.start), end = d(c.dataset.end);
+    const eyebrow = c.querySelector(".trip-eyebrow");
+    const cta = c.querySelector(".trip-cta");
+    const badge = document.createElement("span");
+    badge.className = "trip-status";
+    if (end < now) {
+      c.classList.add("past");
+      badge.textContent = "已結束";
+      cta.firstChild.textContent = "回顧行程 ";
+    } else {
+      c.classList.remove("past");
+      cta.firstChild.textContent = "查看行程 ";
+      const days = Math.round((start - now) / DAY);
+      badge.textContent = start <= now ? "旅行中" : days === 1 ? "明天出發" : days + " 天後出發";
+    }
+    eyebrow.appendChild(badge);
+  });
+  cards.filter((c) => !c.classList.contains("past"))
+    .sort((a, b) => d(a.dataset.start) - d(b.dataset.start)).forEach((c) => up.appendChild(c));
+  cards.filter((c) => c.classList.contains("past"))
+    .sort((a, b) => d(b.dataset.end) - d(a.dataset.end)).forEach((c) => past.appendChild(c));
+  document.getElementById("pastLabel").hidden = !past.children.length;
+})();
+
 (function themeToggle(){
   const KEY = "trips-theme";
   function getPreferred(){

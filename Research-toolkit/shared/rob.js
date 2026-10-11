@@ -351,7 +351,8 @@
   </header>
   <main class="tool">
     <section id="form">
-      <div class="card"><div class="msg" style="margin:0">${o.noteZh ? `<span data-en="${RT.esc(o.noteEn)}">${o.noteZh}</span>` : ''}</div></div>
+      <!-- long tool note: open on wide screens, collapsed on phones so the inputs come first -->
+      <details class="card tool-note"${window.matchMedia && matchMedia('(min-width: 961px)').matches ? ' open' : ''}><summary data-en="About this tool: version and judgement rules">工具說明：版本與判斷規則</summary><div class="msg" style="margin:0">${o.noteZh ? `<span data-en="${RT.esc(o.noteEn)}">${o.noteZh}</span>` : ''}</div></details>
       <div class="card">
         <h2><span class="step-no">1</span> <span data-en="Tool version &amp; domains">版本與 domain</span></h2>
         <label class="field"><span data-en="Version / design">版本／設計</span><select id="variantSel"></select></label>
