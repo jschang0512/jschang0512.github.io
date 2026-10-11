@@ -9,35 +9,84 @@ permalink: /404.html
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>404 找不到頁面</title>
 <meta name="robots" content="noindex">
+<meta name="theme-color" content="#0a1628">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <style>
-  :root { --bg: #f6f7f9; --text: #0b1220; --muted: #5f6b7a; --line: #e3e7ed; --accent: #0d7d69; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg: #070e1a; --text: #eef2f7; --muted: #98a2b3; --line: #22304a; --accent: #34d3b4; }
+  :root {
+    --bg-1: #0a1628;
+    --bg-2: #10233d;
+    --ink: #eef2f7;
+    --muted: #8fa0b8;
+    --faint: rgba(255, 255, 255, .14);
+    --mint: #34d3b4;
+    --mono: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif; line-height: 1.6; text-align: center; }
-  main { width: 100%; max-width: 520px; }
-  .code { font-family: ui-monospace, Consolas, monospace; font-size: 3rem; font-weight: 700; color: var(--accent); letter-spacing: .08em; line-height: 1; }
-  h1 { font-size: 1.5rem; margin: 12px 0 8px; }
-  p { color: var(--muted); margin: 0; }
-  .path { display: inline-block; margin-top: 16px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 8px; font-family: ui-monospace, Consolas, monospace; font-size: .9rem; word-break: break-all; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 32px 16px;
+    color: var(--ink);
+    background:
+      radial-gradient(700px 420px at 85% 0%, rgba(52, 211, 180, .16), transparent 60%),
+      radial-gradient(600px 400px at 0% 100%, rgba(52, 211, 180, .07), transparent 60%),
+      linear-gradient(160deg, var(--bg-1) 0%, var(--bg-2) 100%);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    line-height: 1.6;
+  }
+  main { width: 100%; max-width: 560px; text-align: center; }
+
+  .code {
+    font-family: var(--mono);
+    font-size: clamp(4.5rem, 18vw, 7.5rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: .04em;
+    background: linear-gradient(180deg, #ffffff 0%, var(--mint) 140%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  h1 { font-size: 1.35rem; font-weight: 700; margin: 14px 0 2px; }
+  .en { color: var(--muted); font-size: .95rem; margin: 0; }
+
+  .path {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 100%;
+    margin-top: 28px;
+    padding: 8px 14px;
+    border: 1px solid var(--faint);
+    border-radius: 999px;
+    font-family: var(--mono);
+    font-size: .85rem;
+    color: var(--muted);
+  }
+  .path::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #ff6b6b; flex-shrink: 0; }
+  .path span { white-space: nowrap; }
+  .path b { color: var(--ink); font-weight: 600; overflow-wrap: anywhere; text-align: left; }
+  @media (max-width: 480px) { .path { border-radius: 14px; } }
 </style>
 </head>
 <body>
 <main>
-  <div class="code">404</div>
+  <div class="code" aria-hidden="true">404</div>
   <h1>找不到這個頁面</h1>
-  <p>Page not found</p>
-  <div class="path" id="path" hidden></div>
+  <p class="en">Page not found</p>
+  <div class="path" id="path" hidden><span>請求的網址</span><b id="path-value"></b></div>
 </main>
 <script>
   // Show the address that was requested
   (function () {
-    var el = document.getElementById('path');
-    el.textContent = decodeURIComponent(location.pathname) + location.search;
-    el.hidden = false;
+    var p = location.pathname + location.search;
+    try { p = decodeURIComponent(p); } catch (e) {}
+    document.getElementById('path-value').textContent = p;
+    document.getElementById('path').hidden = false;
   })();
 </script>
 </body>
