@@ -28,16 +28,19 @@
     document.head.appendChild(Object.assign(document.createElement('style'), { textContent: CSS }));
     const J = Object.fromEntries(cfg.judgments.map((j) => [j.v, j]));
     const PALETTES = {
-      robvis: { zh: 'robvis 預設（綠／黃／紅）', en: 'robvis default (green / yellow / red)', map: (j) => j.color },
+      modern: { zh: '精緻（預設）', en: 'Refined (default)', map: (j) => ({ 0: '#2E9E5B', 1: '#93C572', 2: '#F2C14E', 3: '#D64545', 4: '#7A1F2B', 9: '#8FB3D9' }[j.rank]) },
+      robvis: { zh: 'robvis 經典（綠／黃／紅）', en: 'robvis classic (green / yellow / red)', map: (j) => j.color },
       cb: { zh: '色盲友善（藍／橘／朱紅）', en: 'Colour-blind safe (blue / orange / vermilion)', map: (j) => ({ 0: '#56B4E9', 1: '#9ED3F2', 2: '#E69F00', 3: '#D55E00', 4: '#5A1E00', 9: '#BBBBBB' }[j.rank]) },
       gray: { zh: '灰階（期刊黑白）', en: 'Grayscale (print)', map: (j) => ({ 0: '#FFFFFF', 1: '#E6E6E6', 2: '#BDBDBD', 3: '#6E6E6E', 4: '#262626', 9: '#F2F2F2' }[j.rank]) },
     };
     const DEF = {
       variant: Object.keys(cfg.variants)[0], allowNI: false, names: {}, studies: structuredClone(cfg.exampleStudies || []),
-      plot: 'traffic', title: '', symbols: true, palette: 'robvis', cellR: 12, useWeights: false, pctLabels: true, barW: 520,
+      plot: 'traffic', title: '', symbols: true, showResult: false, palette: 'modern', cellR: 12, useWeights: false, pctLabels: true, barW: 520,
       st: { ...RT.STYLE_DEF, fontSize: 12.5, lh: 1.3 },
     };
     let S = RT.load(cfg.key, DEF);
+    // One-time move to the refined palette for people who had the old default saved
+    if (!S.styleV2) { if (S.palette === 'robvis') S.palette = 'modern'; S.styleV2 = true; }
     const form = document.getElementById('form');
     document.getElementById('styleFields').innerHTML = RT.styleFieldsHTML(['font', 'fontSize', 'lh']);
     document.getElementById('refs').innerHTML = RT.refsHTML(cfg.refs, [RT.LICENSES.rob]);
@@ -46,7 +49,7 @@
 
     const domains = () => cfg.variants[S.variant].domains.map((d) => ({ ...d, name: (S.names[S.variant] || {})[d.code] || d.name }));
     const colorOf = (v) => (J[v] ? PALETTES[S.palette]?.map(J[v]) || J[v].color : '#E0E0E0');
-    const textOn = (c) => { const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(c || ''); if (!m) return '#000'; const [r, g, b] = m.slice(1).map((x) => parseInt(x, 16)); return 0.299 * r + 0.587 * g + 0.114 * b < 110 ? '#FFFFFF' : '#000000'; };
+    const textOn = (c) => { const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(c || ''); if (!m) return '#000'; const [r, g, b] = m.slice(1).map((x) => parseInt(x, 16)); return 0.299 * r + 0.587 * g + 0.114 * b < (S.palette === 'modern' ? 150 : 110) ? '#FFFFFF' : '#1F2933'; };
     const inVariant = (j) => !j.variants || j.variants.includes(S.variant);
     const allowed = (code) => cfg.judgments.filter((j) => inVariant(j) && (!j.optional || S.allowNI) && (!j.only || j.only.includes(code)) && (!j.allow || j.allow(code, S.variant)));
     /** overall is only derived once every domain has a judgement (tools define overall from all domains) */
@@ -165,75 +168,109 @@
     };
 
     /* ---------------- plots ---------------- */
+    // Study name, plus the assessed result in brackets only when that option is on (off by default)
+    const studyLabel = (st) => (st.name || '—') + (S.showResult && st.result && st.result.trim() ? ` (${st.result.trim()})` : '');
+    const INK = '#1F2933', MUTED = '#6B7480', GRID_LINE = '#E4E7EC', ZEBRA = '#F7F8FA', OV_BAND = '#EEF1F5';
     const legendItems = () => cfg.judgments.filter((j) => inVariant(j) && (!j.optional || S.allowNI) && S.studies.some((st) => Object.values(st.j).includes(j.v) || effOverall(st) === j.v));
     function traffic(y0, dx = 0) {
       const fs = Number(S.st.fontSize) || 12.5, lh = fs * (Number(S.st.lh) || 1.3), M = 16 + dx;
       const r = Number(S.cellR) || 12, cw = 2 * r + 10, rh = 2 * r + 8;
       const doms = domains();
-      const names = S.studies.map((st) => (st.name || '—') + (st.result && st.result.trim() ? ` (${st.result.trim()})` : ''));
+      const names = S.studies.map(studyLabel);
       const nameW = Math.max(110, ...names.map((n) => RT.textWidth(n, fs))) + 16;
-      // Legend widths come from the text so long domain names / judgement labels do not wrap mid-phrase.
-      // 10% slack: Word lays text out slightly wider than the browser, and would otherwise wrap and clip it.
+      // 10% slack: Word lays text out slightly wider than the browser, and would otherwise wrap and clip it
       const lfs = fs * 0.88, slack = 1.1;
-      const leftW = Math.min(520, Math.max(220, ...doms.map((d) => RT.textWidth(`${d.code}: ${d.name}`, lfs) * slack)) + 6);
-      const judgeW = Math.min(460, Math.max(140, ...legendItems().map((j) => RT.textWidth(j.label, lfs) * slack)) + fs * 1.6 + 6);
-      const ovGap = 10;
+      const ovGap = 18;
       const gridW = nameW + 8 + (doms.length + 1) * cw + ovGap;
-      const legW = Math.max(gridW, leftW + 16 + judgeW);
+      // The legend sits under the grid: as wide as the grid, or as its longest line if that is wider (capped)
+      const codeW = Math.max(...doms.map((d) => RT.textWidth(d.code + ':', lfs, true))) * slack + 6, iconW = lfs * 1.7;
+      const needD = codeW + Math.max(...doms.map((d) => RT.textWidth(d.name, lfs))) * slack + 4;
+      const needJ = iconW + Math.max(0, ...legendItems().map((j) => RT.textWidth(j.label, lfs))) * slack + 4;
+      const legW = Math.min(600, Math.max(gridW, 320, needD, needJ));
       const G = M + (legW - gridW) / 2;   // grid is centred over the legend
       const gx = G + nameW + 8;
       const colX = (i) => gx + i * cw + cw / 2 + (i === doms.length ? ovGap : 0);
       const gridR = colX(doms.length) + cw / 2;
       let body = '', y = y0;
       if (S.title) { body += RT.rich([{ runs: [{ t: S.title, bold: true, size: fs * 1.1, color: '#000' }] }], (gx + gridR) / 2, y, { lh: fs * 1.4, anchor: 'middle' }); y += fs * 1.6; }
-      // header band
-      const hh = fs * 1.7;
-      body += RT.rect(gx, y, colX(doms.length - 1) + cw / 2 - gx, hh, { fill: '#E7E7E7' });
-      body += RT.rect(colX(doms.length) - cw / 2, y, cw, hh, { fill: '#E7E7E7' });
-      doms.forEach((d, i) => { body += RT.rich([{ runs: [{ t: d.code, bold: true, size: fs, color: '#000' }] }], colX(i), y + (hh - lh) / 2, { lh, anchor: 'middle' }); });
-      body += RT.rich([{ runs: [{ t: 'Overall', bold: true, size: fs, color: '#000' }] }], colX(doms.length), y + (hh - lh) / 2, { lh, anchor: 'middle' });
-      y += hh + 4;
-      const gridTop = y;
+      // header: column codes over a hairline; the Overall column sits on a light band
+      const hh = fs * 1.8, gridBot = y + hh + 4 + S.studies.length * rh;
+      const domR = colX(doms.length - 1) + cw / 2;
+      const ovW = Math.max(cw, RT.textWidth("Overall", fs * 0.95, true) * 1.1 + 12);   // band wide enough for the label (also in Word)
+      body += RT.rect(colX(doms.length) - ovW / 2, y, ovW, gridBot - y + 4, { fill: OV_BAND, radius: 6 });
+      doms.forEach((d, i) => { body += RT.rich([{ runs: [{ t: d.code, bold: true, size: fs * 0.95, color: INK }] }], colX(i), y + (hh - lh) / 2, { lh, anchor: 'middle' }); });
+      body += RT.rich([{ runs: [{ t: 'Overall', bold: true, size: fs * 0.95, color: INK }] }], colX(doms.length), y + (hh - lh) / 2, { lh, anchor: 'middle' });
+      y += hh;
+      body += RT.line([[G, y], [domR, y]], { color: GRID_LINE, sw: 1 });
+      y += 4;
+      // zebra rows first, so the circles sit on top
+      S.studies.forEach((st, si) => { if (si % 2 === 1) body += RT.rect(G, y + si * rh, domR - G, rh, { fill: ZEBRA }); });
       S.studies.forEach((st, si) => {
-        if (si % 2 === 1) body += RT.rect(G, y, gridR - G, rh, { fill: '#F5F5F5' });
-        body += RT.rich([{ runs: [{ t: names[si], size: fs, color: '#000' }] }], gx - 8, y + (rh - lh) / 2, { lh, anchor: 'end' });
+        body += RT.rich([{ runs: [{ t: names[si], size: fs, color: INK }] }], gx - 10, y + (rh - lh) / 2, { lh, anchor: 'end' });
         [...doms.map((d) => st.j[d.code]), effOverall(st)].forEach((v, i) => {
           const c = v ? colorOf(v) : '#FFFFFF';
-          body += RT.circle(colX(i), y + rh / 2, r, { fill: c, stroke: v ? (S.palette === 'gray' ? '#555' : 'none') : '#BDBDBD', sw: 1, text: v && S.symbols ? J[v].sym : '', color: textOn(c), size: r * 1.15 });
+          const stroke = !v ? '#C9CED6' : S.palette === 'gray' ? '#555' : '#FFFFFF';
+          body += RT.circle(colX(i), y + rh / 2, r, { fill: c, stroke, sw: v ? 1.5 : 1, text: v && S.symbols ? J[v].sym : '', color: textOn(c), size: r * 1.3 });
         });
         y += rh;
       });
-      body += RT.line([[colX(doms.length) - cw / 2 - ovGap / 2, gridTop], [colX(doms.length) - cw / 2 - ovGap / 2, y]], { color: '#BDBDBD', sw: 1 });
-      // legend: domains (left) + judgements (right)
-      y += fs * 0.9;
-      const dl = RT.box([{ text: 'Domains:', bold: true }, ...doms.map((d) => ({ text: `${d.code}: ${d.name}`, indent: 0 }))], leftW, { size: fs * 0.88, align: 'left', fill: 'none', stroke: 'none', pad: 0, padX: 0, lh: Number(S.st.lh) || 1.3 });
-      body += RT.drawBox(dl, M, y);
-      let jy = y;
-      const jx = M + leftW + 16;
-      body += RT.rich([{ runs: [{ t: 'Judgement', bold: true, size: fs * 0.88, color: '#000' }] }], jx, jy, { lh: fs * 1.2 });
-      jy += fs * 1.35;
+      body += RT.line([[G, y + 2], [domR, y + 2]], { color: GRID_LINE, sw: 1 });
+      y += 4;
+      // Legend under the grid, at the grid's width.
+      // Domains: "D1:" in bold, the name beside it; wrapped lines hang under the name.
+      const L = M, LW = legW, llh = lfs * 1.3;
+      const plain = { align: 'left', fill: 'none', stroke: 'none', pad: 0, padX: 0, lh: 1.3, color: INK };
+      // lines are wrapped for width / slack but the box keeps the full width, so Word never re-wraps and clips them
+      const textBox = (text, w) => Object.assign(RT.box([{ text }], w / slack, { ...plain, size: lfs }), { w });
+      y += fs * 1.1;
+      body += RT.rich([{ runs: [{ t: 'Domains', bold: true, size: lfs, color: INK }] }], L, y, { lh: llh });
+      y += llh + 2;
+      doms.forEach((d) => {
+        const nb = textBox(d.name, LW - codeW);
+        body += RT.rich([{ runs: [{ t: d.code + ':', bold: true, size: lfs, color: INK }] }], L, y, { lh: llh });
+        body += RT.drawBox(nb, L + codeW, y);
+        y += nb.h;
+      });
+      // Judgements: one per line (icon + label), like the domain list
+      y += fs * 0.7;
+      body += RT.rich([{ runs: [{ t: 'Judgement', bold: true, size: lfs, color: INK }] }], L, y, { lh: llh });
+      y += llh + 2;
       legendItems().forEach((j) => {
         const c = colorOf(j.v);
-        body += RT.circle(jx + fs * 0.6, jy + fs * 0.6, fs * 0.6, { fill: c, stroke: S.palette === 'gray' ? '#555' : 'none', sw: 1, text: S.symbols ? j.sym : '', color: textOn(c), size: fs * 0.7 });
-        const lb = RT.box([{ text: j.label }], legW - leftW - fs * 2, { size: fs * 0.88, align: 'left', fill: 'none', stroke: 'none', pad: 0, padX: 0, lh: 1.2 });
-        body += RT.drawBox(lb, jx + fs * 1.6, jy);
-        jy += Math.max(fs * 1.45, lb.h + 3);
+        const lb = textBox(j.label, LW - iconW);
+        body += RT.circle(L + lfs * 0.62, y + llh / 2, lfs * 0.62, { fill: c, stroke: S.palette === 'gray' ? '#555' : 'none', sw: 1, text: S.symbols ? j.sym : '', color: textOn(c), size: lfs * 0.85 });
+        body += RT.drawBox(lb, L + iconW, y);
+        y += lb.h + 3;
       });
-      return { body, W: M + legW + 16 - dx, H: Math.max(y + dl.h, jy) };
+      return { body, W: M + legW + 16 - dx, H: y };
     }
     function summary(y0, showLegend = true, dx = 0) {
       const fs = Number(S.st.fontSize) || 12.5, lhK = Number(S.st.lh) || 1.3, M = 16 + dx;
       const doms = domains();
       const rowsDef = [...doms.map((d) => ({ label: d.name, get: (st) => st.j[d.code] })), { label: 'Overall risk of bias', bold: true, get: (st) => effOverall(st) }];
       const labW = Math.min(500, Math.max(160, ...rowsDef.map((r) => RT.textWidth(r.label, fs, r.bold) * 1.1)) + 12);   // slack for Word, as in traffic()
-      const bx = M + labW + 10, bw = Number(S.barW) || 520, bh = fs * 1.7, gap = fs * 0.55;
+      const bx = M + labW + 14, bw = Number(S.barW) || 520, bh = fs * 1.5, gap = fs * 0.65;
       const weight = (st) => { const w = RT.num(st.w); return S.useWeights && w !== null && w > 0 ? w : 1; };
       const order = cfg.judgments.filter((j) => inVariant(j) && (!j.optional || S.allowNI)).slice().sort((a, b) => a.rank - b.rank);
       let body = '', y = y0;
       if (S.title) { body += RT.rich([{ runs: [{ t: S.title, bold: true, size: fs * 1.1, color: '#000' }] }], bx + bw / 2, y, { lh: fs * 1.4, anchor: 'middle' }); y += fs * 1.6; }
-      rowsDef.forEach((rd) => {
+      // lay the rows out first so the gridlines can be drawn underneath the bars
+      const rows = rowsDef.map((rd) => {
         const lb = RT.box([{ text: rd.label, bold: rd.bold }], labW, { size: fs, align: 'right', fill: 'none', stroke: 'none', pad: 0, padX: 0, lh: lhK });
-        const h = Math.max(bh, lb.h);
+        return { rd, lb, h: Math.max(bh, lb.h) };
+      });
+      const overallGap = fs * 0.7;
+      const plotH = rows.reduce((a, r) => a + r.h + gap, 0) - gap + overallGap;
+      [0, 25, 50, 75, 100].forEach((p) => {
+        const x = bx + (bw * p) / 100;
+        body += RT.line([[x, y - 4], [x, y + plotH + 4]], { color: p === 0 ? '#C9CED6' : GRID_LINE, sw: 1 });
+      });
+      rows.forEach(({ rd, lb, h }, ri) => {
+        if (ri === rows.length - 1) {   // Overall row: set apart by a hairline
+          const ly = y - gap / 2 + overallGap / 2;
+          body += RT.line([[M + labW * 0.3, ly], [bx + bw, ly]], { color: '#C9CED6', sw: 1 });
+          y += overallGap;
+        }
         body += RT.drawBox(lb, M, y + (h - lb.h) / 2);
         const tot = S.studies.reduce((a, st) => a + (rd.get(st) ? weight(st) : 0), 0);
         let x = bx;
@@ -243,28 +280,27 @@
           const part = S.studies.reduce((a, st) => a + (rd.get(st) === j.v ? weight(st) : 0), 0);
           if (!tot || !part) return;
           const w = (bw * part) / tot, c = colorOf(j.v);
-          body += RT.rect(x, by, w, bh, { fill: c, stroke: S.palette === 'gray' ? '#555' : 'none', sw: 0.8 });
+          // white hairline between segments
+          body += RT.rect(x, by, w, bh, { fill: c, stroke: S.palette === 'gray' ? '#555' : '#FFFFFF', sw: S.palette === 'gray' ? 0.8 : 1 });
           const pct = Math.round((100 * part) / tot) + '%';
-          if (S.pctLabels && w > RT.textWidth(pct, fs * 0.85) + 6) body += RT.rich([{ runs: [{ t: pct, size: fs * 0.85, color: textOn(c) }] }], x + w / 2, by + (bh - fs * 1.1) / 2, { lh: fs * 1.1, anchor: 'middle' });
+          if (S.pctLabels && w > RT.textWidth(pct, fs * 0.82, true) + 10) body += RT.rich([{ runs: [{ t: pct, size: fs * 0.82, bold: true, color: textOn(c) }] }], x + w / 2, by + (bh - fs * 1.05) / 2, { lh: fs * 1.05, anchor: 'middle' });
           x += w;
         });
         y += h + gap;
       });
-      // axis
-      body += RT.line([[bx, y], [bx + bw, y]], { color: '#333', sw: 1 });
+      // percentage scale under the gridlines
       [0, 25, 50, 75, 100].forEach((p) => {
         const x = bx + (bw * p) / 100;
-        body += RT.line([[x, y], [x, y + 4]], { color: '#333', sw: 1 });
-        body += RT.rich([{ runs: [{ t: p + '%', size: fs * 0.85, color: '#333' }] }], x, y + 5, { lh: fs * 1.1, anchor: 'middle' });
+        body += RT.rich([{ runs: [{ t: p + '%', size: fs * 0.8, color: MUTED }] }], x, y + 2, { lh: fs * 1.1, anchor: 'middle' });
       });
-      y += fs * 1.6;
+      y += fs * 1.8;
       // legend row (left out when the traffic-light legend above already explains the colours)
       let lx = bx;
       if (showLegend) legendItems().sort((a, b) => a.rank - b.rank).forEach((j) => {
         const c = colorOf(j.v), tw = RT.textWidth(j.label, fs * 0.88);
         if (lx + fs + 6 + tw > bx + bw && lx > bx) { lx = bx; y += fs * 1.4; }
-        body += RT.rect(lx, y + 1, fs * 0.9, fs * 0.9, { fill: c, stroke: '#555', sw: 0.6 });
-        body += RT.rich([{ runs: [{ t: j.label, size: fs * 0.88, color: '#000' }] }], lx + fs * 1.2, y - fs * 0.05, { lh: fs * 1.15 });
+        body += RT.rect(lx, y + 1, fs * 0.9, fs * 0.9, { fill: c, stroke: S.palette === 'gray' ? '#555' : 'none', sw: 0.6, radius: 2 });
+        body += RT.rich([{ runs: [{ t: j.label, size: fs * 0.88, color: INK }] }], lx + fs * 1.2, y - fs * 0.05, { lh: fs * 1.15 });
         lx += fs * 1.2 + tw + fs;
       });
       if (showLegend) y += fs * 1.4;
@@ -288,7 +324,7 @@
       const s = summary(t.H + 28, false, (W - s0.W) / 2);
       return RT.figure(W, s.H + M, tt.body + s.body);
     }
-    const tableRows = () => S.studies.map((st) => [st.name + (st.result ? ` (${st.result})` : ''), ...domains().map((d) => st.j[d.code] || ''), effOverall(st)]);
+    const tableRows = () => S.studies.map((st) => [studyLabel(st), ...domains().map((d) => st.j[d.code] || ''), effOverall(st)]);
     const docxTable = () => {
       RT.applyStyle(S.st);
       const doms = domains();
@@ -380,6 +416,7 @@
           </div>
           <label class="field"><span data-en="Plot title (optional)">圖標題（選填）</span><input data-k="title"></label>
           <label class="check"><input type="checkbox" data-k="symbols"> <span data-en="Symbols inside circles (needed for black-and-white print)">圓點內顯示符號（黑白印刷時必要）</span></label>
+          <label class="check"><input type="checkbox" data-k="showResult"> <span data-en="Show the assessed result after the study name">在研究名稱後顯示評估的結果（outcome）</span></label>
           <label class="check"><input type="checkbox" data-k="pctLabels"> <span data-en="Percent labels on summary bars">摘要長條顯示百分比</span></label>
           <label class="check"><input type="checkbox" data-k="useWeights"> <span data-en="Weight summary bars by study weight">摘要長條依研究權重加權</span></label>
           <div id="styleFields"></div>
