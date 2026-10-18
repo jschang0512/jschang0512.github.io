@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- NMA: a treatment network (nodes = treatments, edges = direct comparisons) -->
+  <rect width="64" height="64" rx="14" fill="#4c3fb0"/>
+  <path d="M17 19L46 14L49 45L19 47ZM17 19L49 45" stroke="#fff" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round" fill="none" opacity=".85"/>
+  <g fill="#34d3b4">
+    <circle cx="17" cy="19" r="7.5"/><circle cx="46" cy="14" r="5.5"/><circle cx="49" cy="45" r="7.5"/><circle cx="19" cy="47" r="5.5"/>
+  </g>
+</svg>
