@@ -10,60 +10,57 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="theme-color" content="#0a1628">
 <style>
+  /* Hallmark · macrostructure: Index-First · theme: Midnight (private index) · genre: modern-minimal
+   * nav: none · footer: Ft2 · 加料: none · tone: 實用 · 推斷: 受眾=本人 用途=快速打開常用頁面
+   * pre-emit critique: P4 H4 E4 S5 R5 V4 · contrast: pass · mobile: pass
+   */
   :root {
-    --bg-1: #0a1628;
-    --bg-2: #10233d;
-    --ink: #eef2f7;
-    --muted: #8fa0b8;
-    --line: rgba(255, 255, 255, .12);
-    --card: rgba(255, 255, 255, .04);
-    --card-hover: rgba(255, 255, 255, .08);
-    --mint: #34d3b4;
-    --mono: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    --color-paper:  oklch(18% 0.025 255);
+    --color-rule:   oklch(32% 0.025 255);
+    --color-hover:  oklch(23% 0.028 255);
+    --color-muted:  oklch(72% 0.025 250);
+    --color-ink:    oklch(95% 0.008 250);
+    --color-accent: oklch(80% 0.120 175);
+    --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    --space-2xs: 0.25rem; --space-xs: 0.5rem; --space-sm: 0.75rem; --space-md: 1rem; --space-lg: 1.5rem; --space-xl: 2.5rem; --space-2xl: 4rem;
   }
   * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    min-height: 100vh;
-    color: var(--ink);
-    background:
-      radial-gradient(700px 420px at 85% 0%, rgba(52, 211, 180, .14), transparent 60%),
-      linear-gradient(160deg, var(--bg-1) 0%, var(--bg-2) 100%) fixed;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
-    line-height: 1.5;
-  }
-  main { max-width: 980px; margin: 0 auto; padding: 48px 16px 64px; }
+  html, body { overflow-x: clip; }
+  body { margin: 0; color: var(--color-ink); background: var(--color-paper); font-family: var(--font-body); line-height: 1.5; }
+  main { max-width: 980px; margin: 0 auto; padding: var(--space-2xl) var(--space-md) var(--space-2xl); }
+  :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 
-  header { margin-bottom: 32px; }
-  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--mint); }
-  h1 { font-size: 2rem; margin: 6px 0 4px; }
-  header p { margin: 0; color: var(--muted); font-size: .92rem; }
+  header { margin-bottom: var(--space-xl); }
+  h1 { font-size: 2rem; margin: 0 0 var(--space-2xs); }
+  header p { margin: 0; color: var(--color-muted); }
 
-  h2 { font-family: var(--mono); font-size: 12px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); margin: 32px 0 12px; }
-  .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+  h2 { font-size: 0.875rem; font-weight: 700; color: var(--color-muted); margin: var(--space-xl) 0 var(--space-xs); }
+  .grid { display: grid; column-gap: var(--space-xl); grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
 
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px 16px 10px; }
-  .card h3 { margin: 0 0 2px; font-size: 1.02rem; }
+  .card { border-top: 1px solid var(--color-rule); padding: var(--space-md) 0 var(--space-sm); }
+  .card h3 { margin: 0; font-size: 1rem; }
   .card h3 a { color: inherit; text-decoration: none; }
-  .card h3 a:hover { color: var(--mint); }
-  .card .desc { margin: 0 0 8px; font-size: .82rem; color: var(--muted); }
+  .card h3 a:hover { color: var(--color-accent); }
+  .card .desc { margin: 0 0 var(--space-xs); font-size: 0.8125rem; color: var(--color-muted); }
   .card ul { list-style: none; margin: 0; padding: 0; }
   .card li a {
-    display: flex; justify-content: space-between; align-items: center; gap: 12px;
-    margin: 0 -8px; padding: 7px 8px; border-radius: 8px;
-    color: var(--ink); text-decoration: none; font-size: .92rem;
+    display: flex; justify-content: space-between; align-items: center; gap: var(--space-sm);
+    margin: 0 calc(-1 * var(--space-xs)); padding: var(--space-xs); border-radius: 6px;
+    color: var(--color-ink); text-decoration: none; font-size: 0.9375rem;
+    transition: background-color 120ms cubic-bezier(.16,1,.3,1), color 120ms cubic-bezier(.16,1,.3,1);
   }
-  .card li a:hover { background: var(--card-hover); color: var(--mint); }
-  .card li small { color: var(--muted); font-family: var(--mono); font-size: .72rem; white-space: nowrap; }
+  .card li a:hover { background: var(--color-hover); color: var(--color-accent); }
+  .card li small { color: var(--color-muted); font-family: var(--font-mono); font-size: 0.75rem; white-space: nowrap; }
   .card li a[target="_blank"] small::after { content: " ↗"; }
 
-  footer { margin-top: 40px; font-family: var(--mono); font-size: .75rem; color: var(--muted); }
+  footer { margin-top: var(--space-xl); padding-top: var(--space-md); border-top: 1px solid var(--color-rule); font-family: var(--font-mono); font-size: 0.75rem; color: var(--color-muted); }
+  @media (prefers-reduced-motion: reduce) { * { transition-duration: 150ms !important; } }
 </style>
 </head>
 <body>
 <main>
   <header>
-    <div class="eyebrow">Bookmarks</div>
     <h1>書籤</h1>
     <p>私人頁面，不對外連結、不被搜尋引擎收錄。</p>
   </header>
