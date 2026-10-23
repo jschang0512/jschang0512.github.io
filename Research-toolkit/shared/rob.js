@@ -6,12 +6,14 @@
   const T = RT.t;
 
   const CSS = `
+  /* the judgement grid needs a wider form column than the other tools */
+  @media (min-width: 961px) { .tool { grid-template-columns: minmax(340px, 600px) minmax(0, 1fr); } }
   .rob-wrap { overflow-x: auto; margin: 0 -4px; }
   .rob-tbl { border-collapse: separate; border-spacing: 3px; font-size: 12.5px; }
   .rob-tbl th { font-weight: 600; color: var(--muted); font-size: 11.5px; text-align: center; padding: 0 2px; white-space: nowrap; }
-  .rob-tbl td.nm input { width: 140px; }
-  .rob-tbl select { width: 46px; padding: 5px 2px; text-align: center; font-weight: 700; border-radius: 6px; cursor: pointer; }
-  .rob-tbl select.ov { width: 62px; }
+  .rob-tbl td.nm input { width: 124px; }
+  .rob-tbl select { width: 50px; padding: 5px 2px; text-align: center; text-align-last: center; font-weight: 700; border-radius: 6px; cursor: pointer; }
+  .rob-tbl select.ov { width: 92px; }
   .rob-tbl .det td { padding: 6px 4px 10px; }
   .rob-det { display: grid; gap: 6px; }
   .rob-det .dom { font-size: 12px; font-weight: 600; margin-bottom: 2px; }
@@ -99,12 +101,22 @@
         return `<span><i style="background:${c};color:${textOn(c)};border:1px solid rgba(0,0,0,.2)">${RT.esc(j.sym)}</i>${RT.esc(T(j.zh, j.label))}${j.only ? ` <small>(${j.only.join(', ')} ${T('與整體', '& overall')})</small>` : ''}</span>`;
       }).join('');
     }
+    // The grid is narrow: a closed select shows only its short label, the open list shows the full one
+    const labelMode = (sel, full) => { for (const o of sel.options) { o.dataset.full ??= o.textContent; o.textContent = full ? o.dataset.full : (o.dataset.short ?? o.dataset.full); } };
+    const compactSel = (sel, name) => {
+      const shorten = () => { labelMode(sel, false); const o = sel.selectedOptions[0]; if (name) sel.title = name + (o && sel.value ? '：' + o.dataset.full : ''); };
+      sel.addEventListener('mousedown', () => labelMode(sel, true));
+      sel.addEventListener('focus', () => labelMode(sel, true));
+      sel.addEventListener('change', shorten);
+      sel.addEventListener('blur', shorten);
+      shorten();
+    };
     const styleSel = (sel, v) => { const c = v ? colorOf(v) : ''; sel.style.background = c || ''; sel.style.color = c ? textOn(c) : ''; };
     const open = new Set();
     function renderGrid() {
       const host = document.getElementById('grid');
       const doms = domains();
-      const opt = (code, v) => `<option value="">·</option>` + allowed(code).map((j) => `<option value="${j.v}"${j.v === v ? ' selected' : ''} title="${RT.esc(j.label)}">${RT.esc(j.sym)} ${RT.esc(T(j.zh, j.label))}</option>`).join('');
+      const opt = (code, v) => `<option value="" data-short="·">·</option>` + allowed(code).map((j) => `<option value="${j.v}"${j.v === v ? ' selected' : ''} title="${RT.esc(j.label)}" data-short="${RT.esc(j.sym)}">${RT.esc(j.sym)} ${RT.esc(T(j.zh, j.label))}</option>`).join('');
       host.innerHTML = `<div class="rob-wrap"><table class="rob-tbl"><thead><tr><th>${T('研究', 'Study')}</th>${doms.map((d) => `<th title="${RT.esc(d.name)}">${RT.esc(d.code)}</th>`).join('')}<th>${T('整體', 'Overall')}</th><th></th></tr></thead><tbody></tbody></table></div>`;
       const tb = host.querySelector('tbody');
       S.studies.forEach((st, i) => {
@@ -115,6 +127,7 @@
         tr.querySelectorAll('select[data-d]').forEach((sel) => {
           styleSel(sel, st.j[sel.dataset.d]);
           sel.onchange = () => { st.j[sel.dataset.d] = sel.value; styleSel(sel, sel.value); refreshOverall(tr, st); update(); };
+          compactSel(sel, sel.dataset.d + '. ' + ((doms.find((d) => d.code === sel.dataset.d) || {}).name || ''));
         });
         refreshOverall(tr, st);
         tr.querySelector('select.ov').onchange = (e) => { st.overall = e.target.value; refreshOverall(tr, st); update(); };
@@ -136,11 +149,13 @@
     function refreshOverall(tr, st) {
       const sel = tr.querySelector('select.ov');
       const auto = overallOf(st);
-      sel.innerHTML = `<option value="auto">${T('自動', 'Auto')}${auto ? ': ' + RT.esc(J[auto].sym) : isIncomplete(st) ? T('：未完成', ': incomplete') : ''}</option>` +
-        allowed('overall').map((j) => `<option value="${j.v}">${RT.esc(j.sym)} ${RT.esc(T(j.zh, j.label))}</option>`).join('');
+      sel.innerHTML = `<option value="auto" data-short="${T('自動', 'Auto')}${auto ? ' ' + RT.esc(J[auto].sym) : isIncomplete(st) ? ' …' : ''}">${T('自動', 'Auto')}${auto ? ': ' + RT.esc(J[auto].sym) : isIncomplete(st) ? T('：未完成', ': incomplete') : ''}</option>` +
+        allowed('overall').map((j) => `<option value="${j.v}" data-short="${T('手動', 'Set')} ${RT.esc(j.sym)}">${RT.esc(j.sym)} ${RT.esc(T(j.zh, j.label))}</option>`).join('');
       sel.value = st.overall && st.overall !== 'auto' ? st.overall : 'auto';
       styleSel(sel, effOverall(st));
       sel.title = st.overall && st.overall !== 'auto' ? T('已手動指定整體判斷', 'Overall set manually') : T('依規則自動計算；可手動改', 'Calculated by the rule; you may override');
+      if (!sel.dataset.compact) { sel.dataset.compact = '1'; sel.addEventListener('mousedown', () => labelMode(sel, true)); sel.addEventListener('focus', () => labelMode(sel, true)); sel.addEventListener('blur', () => labelMode(sel, false)); }
+      labelMode(sel, false);
     }
     document.getElementById('addStudy').onclick = () => { S.studies.push({ name: '', j: {}, sup: {}, overall: 'auto', result: '', w: '' }); renderGrid(); update(); };
     document.getElementById('pasteStudies').onclick = async () => {
