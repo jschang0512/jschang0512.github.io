@@ -14,6 +14,9 @@
   const dateRange = "2027年07月30日～2027年08月09日";
   const phrases = [dests, dateRange];
   const PAUSE_CHARS = ["・", "～"];
+  // static subtitle: show both lines at once instead of typing them
+  el.textContent = dests + "　" + dateRange;
+  return;
   let phraseIndex = 0, charIndex = 0, deleting = false;
 
   function jitter(base){ return base + Math.round((Math.random() - 0.5) * 20); }
@@ -84,7 +87,7 @@
     const now = Date.now();
     let diff = target - now;
     if(diff <= 0){
-      el.innerHTML = '<div class="cd-done">🎉 旅程開始了，出發！</div>';
+      el.innerHTML = '<div class="cd-done">旅程進行中</div>';
       clearInterval(timer);
       return;
     }

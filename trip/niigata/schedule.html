@@ -1423,6 +1423,28 @@
   :root[data-theme="dark"] .maplink:hover{ background:#2E3C5A; }
   :root[data-theme="dark"] .day-popup,
   :root[data-theme="dark"] .popup-card{ color:#232323; }
+
+  /* ---------- Calmer pass: plain header, ruled cards, no decorative motion ---------- */
+  html, body { overflow-x: clip; }
+  #heroBg, :root[data-theme="dark"] #heroBg { background: var(--paper); }
+  header.hero { text-align: left; padding: 40px 16px 20px; }
+  header.hero > :not(#heroBg) { max-width: 640px; margin-inline: auto; }
+  header.hero::after { height: 1px; background: var(--line); opacity: 1; }
+  h1.title { letter-spacing: 0; overflow-wrap: anywhere; }
+  .subtitle { white-space: normal; overflow: visible; padding: 0; font-size: 14px; }
+  .type-cursor { display: none; }
+  .draft-note { margin: 6px 0 0; font-size: 13px; font-weight: 700; color: var(--accent-text); }
+  .header-badges { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; text-align: left; }
+  .countdown-wrap.compact { margin: 0; box-shadow: none; }
+  .countdown-label:empty { display: none; }
+  nav.daynav { box-shadow: none; }
+  .util-bar { justify-content: flex-start; gap: 6px; max-width: 720px; margin-inline: auto; border-bottom: 0; }
+  .util-btn { padding: 7px 12px; }
+  .util-btn { transition: background-color .15s cubic-bezier(.16,1,.3,1), color .15s cubic-bezier(.16,1,.3,1), border-color .15s cubic-bezier(.16,1,.3,1); }
+  .util-btn:hover { transform: none; box-shadow: none; border-color: var(--accent-text); }
+  .activity { border-left-width: 1px; box-shadow: none; }
+  .activity.clickable:hover { box-shadow: none; border-color: var(--accent-text); }
+  .activity .ic { display: none; }
 </style>
 </head>
 <body>
@@ -1431,16 +1453,16 @@
 
 <header class="hero" id="heroHeader">
   <div id="heroBg"></div>
-  <div class="eyebrow">Joetsu Travel Log · 11 Days · ⚠️ 尚未定案，僅供參考</div>
   <h1 class="title">上越行程表（暫）</h1>
+  <p class="draft-note">尚未定案，僅供參考</p>
   <p class="subtitle"><span id="subtitleType"></span><span class="type-cursor">▍</span></p>
   <div class="header-badges">
     <div class="countdown-wrap compact">
-      <span class="countdown-label">✈️</span>
+      <span class="countdown-label"></span>
       <div class="countdown" id="countdown"></div>
     </div>
     <div class="countdown-wrap compact forex-wrap">
-      <span class="countdown-label">💴</span>
+      <span class="countdown-label"></span>
       <div class="forex-badge" id="forexBadge"></div>
     </div>
   </div>
@@ -2384,13 +2406,13 @@ function buildNav(){
 
 function buildUtilBar(){
   return `
-    <button class="util-btn" data-page="contacts">📇 聯絡資訊</button>
-    <button class="util-btn" data-page="flights">✈️ 航班資訊</button>
-    <button class="util-btn" data-page="driving">🚗 租車自駕</button>
-    <button class="util-btn" data-page="weather">🌤 天氣預報</button>
-    <button class="util-btn" data-page="quake">🌏 地震資訊</button>
-    <button class="util-btn" data-page="packing">🧳 行李清單</button>
-    <a class="util-btn" href="https://jschang0512.github.io/splitbill/" target="_blank" rel="noopener">💰 旅費分帳</a>`;
+    <button class="util-btn" data-page="contacts">聯絡資訊</button>
+    <button class="util-btn" data-page="flights">航班資訊</button>
+    <button class="util-btn" data-page="driving">租車自駕</button>
+    <button class="util-btn" data-page="weather">天氣預報</button>
+    <button class="util-btn" data-page="quake">地震資訊</button>
+    <button class="util-btn" data-page="packing">行李清單</button>
+    <a class="util-btn" href="https://jschang0512.github.io/splitbill/" target="_blank" rel="noopener">旅費分帳</a>`;
 }
 
 const main = document.getElementById("main");

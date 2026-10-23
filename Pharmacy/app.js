@@ -1093,9 +1093,9 @@ function renderBrowse(filter){
             ${fl.includes('high')?'<span class="badge b-high">⚠ 高警訊</span>':''}
             ${fl.includes('er')?'<span class="badge b-er">緩釋 不可磨粉</span>':''}
             ${fl.find(f=>f.startsWith('lasa'))?'<span class="badge b-lasa">LASA 易混淆</span>':''}
-            ${fl.includes('g6pd')?'<span class="badge b-g6pd">🫘 蠶豆症禁忌</span>':''}
-            ${fl.includes('g6pdc')?'<span class="badge b-g6pd">🫘 蠶豆症謹慎</span>':''}
-            ${fl.find(f=>f.startsWith('hla'))?'<span class="badge b-hla">🧬 HLA警訊</span>':''}
+            ${fl.includes('g6pd')?'<span class="badge b-g6pd">蠶豆症禁忌</span>':''}
+            ${fl.includes('g6pdc')?'<span class="badge b-g6pd">蠶豆症謹慎</span>':''}
+            ${fl.find(f=>f.startsWith('hla'))?'<span class="badge b-hla">HLA警訊</span>':''}
           </div>
           <div class="tap-affordance">點卡片看機轉／結構／衛教 ›</div>`;
         card.addEventListener("click",()=>openDetail(brand));
@@ -1108,7 +1108,7 @@ function renderBrowse(filter){
 
   document.getElementById("searchCount").textContent = q ? totalShown+" 筆" : "";
   if(totalShown===0){
-    el.innerHTML = `<div class="empty-state"><div class="big">🔍</div>找不到符合「${filter}」的藥品</div>`;
+    el.innerHTML = `<div class="empty-state">找不到符合「${filter}」的藥品</div>`;
   }
 }
 document.getElementById("searchInput").addEventListener("input", e=>renderBrowse(e.target.value));
@@ -1143,10 +1143,10 @@ function openDetail(brand){
       ${d.high?'<span class="badge b-high">⚠ 高警訊藥品</span>':''}
       ${d.er?'<span class="badge b-er">緩釋劑型 不可磨粉</span>':''}
       ${d.lasa?'<span class="badge b-lasa">LASA 易混淆</span>':''}
-      ${d.g6pd==='avoid'?'<span class="badge b-g6pd">🫘 蠶豆症應避免</span>':''}
-      ${d.g6pd==='caution'?'<span class="badge b-g6pd">🫘 蠶豆症謹慎使用</span>':''}
-      ${d.hla?'<span class="badge b-hla">🧬 HLA基因型警訊</span>':''}
-      ${d.pgx?'<span class="badge b-pgx">🧬 CYP2C19相關</span>':''}
+      ${d.g6pd==='avoid'?'<span class="badge b-g6pd">蠶豆症應避免</span>':''}
+      ${d.g6pd==='caution'?'<span class="badge b-g6pd">蠶豆症謹慎使用</span>':''}
+      ${d.hla?'<span class="badge b-hla">HLA基因型警訊</span>':''}
+      ${d.pgx?'<span class="badge b-pgx">CYP2C19相關</span>':''}
     </div>
 
     ${d.moa?`<div class="dsheet-block"><h4>作用機轉 MOA</h4><p>${d.moa}</p></div>`:''}
@@ -1165,12 +1165,12 @@ function openDetail(brand){
       </div>
     </div>`:`<div class="dsheet-block"><h4>臨床資訊</h4><p style="color:var(--ink-faint);">此品項未收錄詳細劑量／藥動資料，調劑時請以最新仿單／醫囑為準。</p></div>`}
 
-    ${g6pdEntry?`<div class="dsheet-block"><h4>🫘 蠶豆症（G6PD缺乏症）警訊</h4><div class="dsheet-warn w-g6pd">${g6pdEntry.why}</div></div>`:''}
-    ${hlaEntry?`<div class="dsheet-block"><h4>🧬 HLA基因型警訊</h4><div class="dsheet-warn w-hla"><b>${hlaEntry.allele}</b>：${hlaEntry.risk}<br>${hlaEntry.why}</div></div>`:''}
+    ${g6pdEntry?`<div class="dsheet-block"><h4>蠶豆症（G6PD缺乏症）警訊</h4><div class="dsheet-warn w-g6pd">${g6pdEntry.why}</div></div>`:''}
+    ${hlaEntry?`<div class="dsheet-block"><h4>HLA基因型警訊</h4><div class="dsheet-warn w-hla"><b>${hlaEntry.allele}</b>：${hlaEntry.risk}<br>${hlaEntry.why}</div></div>`:''}
     ${lasaPair?`<div class="dsheet-block"><h4>⚠ 易混淆配對 LASA</h4><div class="pair-card" style="margin:0;"><div class="pair-top"><span class="a">${lasaPair.a}</span><span class="vs">vs</span><span class="b">${lasaPair.b}</span></div><div class="pair-why">${lasaPair.why}</div></div></div>`:''}
 
     <div class="dsheet-block">
-      <h4>📄 健保給付規定</h4>
+      <h4>健保給付規定</h4>
       ${d.nhi
         ? `<a class="nhi-link" href="https://nhi.showholdings.com/drugs/${d.nhi.id}" target="_blank" rel="noopener">查看給付規定條文（${d.nhi.name}）→</a>
            <p class="nhi-note">依「${d.nhi.term}」比對之條文，由第三方網站 NHIFind 整理健保署公開資料呈現，頁內附回溯官方 nhi.gov.tw 連結；${d.nhi.multi ? '該學名有多筆相關條文，此為最相關者，' : ''}品項/劑型/適應症可能與貴院品項不完全一致，請務必核對條文內容後再引用。</p>`
@@ -1278,8 +1278,8 @@ function showCard(){
   flagsEl.innerHTML = (curCard.high?'<span class="badge b-high">⚠ 高警訊</span>':"") +
     (curCard.er?'<span class="badge b-er">緩釋 不可磨粉</span>':"") +
     (curCard.lasa?'<span class="badge b-lasa">LASA 易混淆</span>':"") +
-    (curCard.g6pd?'<span class="badge b-g6pd">🫘 蠶豆症</span>':"") +
-    (curCard.hla?'<span class="badge b-hla">🧬 HLA</span>':"");
+    (curCard.g6pd?'<span class="badge b-g6pd">蠶豆症</span>':"") +
+    (curCard.hla?'<span class="badge b-hla">HLA</span>':"");
   document.getElementById("cardMoa").textContent = curCard.moa || "";
 }
 function nextCard(result){
@@ -1307,7 +1307,7 @@ function renderSOP(){
     <div class="h">覆核 = 調劑完成後的獨立第二關</div>
     <div class="p">覆核由另一位藥師在調劑完成後獨立執行，聚焦兩件事：① 這張處方本身開得對不對、安不安全；② 調劑的人有沒有拿對藥。以下內容依這兩大任務分類整理。</div>
     <a class="nhi-hero-link" href="${NHI_PDF}" target="_blank" rel="noopener">
-      <span>📄 健保給付規定全文 PDF（${NHI_VERSION} 版）</span><span>開啟 →</span>
+      <span>健保給付規定全文 PDF（${NHI_VERSION} 版）</span><span>開啟 →</span>
     </a>
   </div>
 
@@ -1347,7 +1347,7 @@ function renderSOP(){
   </div>
 
   <div class="sop-section">
-    <div class="sop-section-title"><span class="dot amber"></span>🫘 特殊族群禁忌：蠶豆症（G6PD缺乏症）</div>
+    <div class="sop-section-title"><span class="dot amber"></span>特殊族群禁忌：蠶豆症（G6PD缺乏症）</div>
     <div class="note">${G6PD_NOTE}</div>
     <div class="subgroup-label" style="margin-left:0;">應避免使用</div>
     ${G6PD_DRUGS.avoid.map(g=>`
@@ -1364,7 +1364,7 @@ function renderSOP(){
   </div>
 
   <div class="sop-section">
-    <div class="sop-section-title"><span class="dot" style="background:#6B3FA0;"></span>🧬 特殊族群禁忌：HLA 基因型警訊</div>
+    <div class="sop-section-title"><span class="dot" style="background:#6B3FA0;"></span>特殊族群禁忌：HLA 基因型警訊</div>
     <div class="note">${HLA_NOTE}</div>
     ${HLA_DRUGS.map(h=>`
       <div class="high-card hla">
@@ -1530,7 +1530,7 @@ function renderSOP(){
     <div class="note">依劑型分類整理常見衛教重點，發藥時可據此提醒病人正確使用方式，減少因使用錯誤導致療效不佳或不良反應。</div>
     ${DOSAGE_FORM_TIPS.map(f=>`
       <div class="pair-card" style="border-left-color:var(--accent);">
-        <div class="pair-top" style="margin-bottom:4px;"><span style="font-size:16px;">${f.icon}</span><span class="a" style="font-size:14px;">${f.title}</span></div>
+        <div class="pair-top" style="margin-bottom:4px;"><span class="a" style="font-size:14px;">${f.title}</span></div>
         <div class="items" style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--ink-faint); margin-bottom:6px;">${f.drugs}</div>
         <ul style="margin:0; padding-left:18px; font-size:12px; color:var(--ink-soft); line-height:1.7;">
           ${f.tips.map(t=>`<li>${t}</li>`).join("")}
