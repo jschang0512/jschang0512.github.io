@@ -91,7 +91,7 @@
     const now = Date.now();
     let diff = target - now;
     if(diff <= 0){
-      el.innerHTML = '<div class="cd-done">旅程進行中</div>';
+      el.innerHTML = '<div class="cd-done">已出發</div>';
       clearInterval(timer);
       return;
     }
