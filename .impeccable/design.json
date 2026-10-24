@@ -1,0 +1,464 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-24T06:23:34.267Z",
+  "title": "Design System: 張家菘 · Chia-Sung Chang",
+  "extensions": {
+    "colorMeta": {
+      "paper": {
+        "role": "neutral",
+        "displayName": "Garden Paper",
+        "canonical": "oklch(97% 0.010 145)",
+        "tonalRamp": [
+          "oklch(15% 0.003 145)",
+          "oklch(25% 0.005 145)",
+          "oklch(35% 0.007 145)",
+          "oklch(45% 0.011 145)",
+          "oklch(58% 0.012 145)",
+          "oklch(72% 0.008 145)",
+          "oklch(86% 0.004 145)",
+          "oklch(95% 0.003 145)"
+        ]
+      },
+      "paper-2": {
+        "role": "neutral",
+        "displayName": "Pressed Leaf",
+        "canonical": "oklch(94.5% 0.015 145)",
+        "tonalRamp": [
+          "oklch(15% 0.004 145)",
+          "oklch(25% 0.006 145)",
+          "oklch(35% 0.009 145)",
+          "oklch(45% 0.013 145)",
+          "oklch(58% 0.015 145)",
+          "oklch(72% 0.010 145)",
+          "oklch(86% 0.005 145)",
+          "oklch(95% 0.004 145)"
+        ]
+      },
+      "paper-3": {
+        "role": "neutral",
+        "displayName": "Pressed Leaf, deeper",
+        "canonical": "oklch(91.5% 0.018 145)",
+        "tonalRamp": [
+          "oklch(15% 0.004 145)",
+          "oklch(25% 0.007 145)",
+          "oklch(35% 0.011 145)",
+          "oklch(45% 0.016 145)",
+          "oklch(58% 0.018 145)",
+          "oklch(72% 0.013 145)",
+          "oklch(86% 0.006 145)",
+          "oklch(95% 0.004 145)"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "oklch(86% 0.016 145)",
+        "tonalRamp": [
+          "oklch(15% 0.004 145)",
+          "oklch(25% 0.006 145)",
+          "oklch(35% 0.010 145)",
+          "oklch(45% 0.014 145)",
+          "oklch(58% 0.016 145)",
+          "oklch(72% 0.011 145)",
+          "oklch(86% 0.006 145)",
+          "oklch(95% 0.004 145)"
+        ]
+      },
+      "neutral": {
+        "role": "neutral",
+        "displayName": "Stem",
+        "canonical": "oklch(58% 0.016 150)",
+        "tonalRamp": [
+          "oklch(15% 0.004 150)",
+          "oklch(25% 0.006 150)",
+          "oklch(35% 0.010 150)",
+          "oklch(45% 0.014 150)",
+          "oklch(58% 0.016 150)",
+          "oklch(72% 0.011 150)",
+          "oklch(86% 0.006 150)",
+          "oklch(95% 0.004 150)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Bark",
+        "canonical": "oklch(44% 0.018 155)",
+        "tonalRamp": [
+          "oklch(15% 0.004 155)",
+          "oklch(25% 0.007 155)",
+          "oklch(35% 0.011 155)",
+          "oklch(45% 0.016 155)",
+          "oklch(58% 0.018 155)",
+          "oklch(72% 0.013 155)",
+          "oklch(86% 0.006 155)",
+          "oklch(95% 0.004 155)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "oklch(23% 0.025 160)",
+        "tonalRamp": [
+          "oklch(15% 0.006 160)",
+          "oklch(25% 0.009 160)",
+          "oklch(35% 0.016 160)",
+          "oklch(45% 0.022 160)",
+          "oklch(58% 0.025 160)",
+          "oklch(72% 0.017 160)",
+          "oklch(86% 0.009 160)",
+          "oklch(95% 0.006 160)"
+        ]
+      },
+      "forest": {
+        "role": "primary",
+        "displayName": "Deep Forest",
+        "canonical": "oklch(35% 0.060 155)",
+        "tonalRamp": [
+          "oklch(15% 0.015 155)",
+          "oklch(25% 0.022 155)",
+          "oklch(35% 0.037 155)",
+          "oklch(45% 0.052 155)",
+          "oklch(58% 0.060 155)",
+          "oklch(72% 0.042 155)",
+          "oklch(86% 0.021 155)",
+          "oklch(95% 0.015 155)"
+        ]
+      },
+      "forest-2": {
+        "role": "primary",
+        "displayName": "Moss Forest",
+        "canonical": "oklch(45% 0.070 155)",
+        "tonalRamp": [
+          "oklch(15% 0.018 155)",
+          "oklch(25% 0.026 155)",
+          "oklch(35% 0.044 155)",
+          "oklch(45% 0.061 155)",
+          "oklch(58% 0.070 155)",
+          "oklch(72% 0.049 155)",
+          "oklch(86% 0.025 155)",
+          "oklch(95% 0.018 155)"
+        ]
+      },
+      "copper": {
+        "role": "secondary",
+        "displayName": "Burnished Copper",
+        "canonical": "oklch(52% 0.115 48)",
+        "tonalRamp": [
+          "oklch(15% 0.029 48)",
+          "oklch(25% 0.043 48)",
+          "oklch(35% 0.072 48)",
+          "oklch(45% 0.101 48)",
+          "oklch(58% 0.115 48)",
+          "oklch(72% 0.081 48)",
+          "oklch(86% 0.040 48)",
+          "oklch(95% 0.029 48)"
+        ]
+      },
+      "copper-ink": {
+        "role": "secondary",
+        "displayName": "Copper Ink",
+        "canonical": "oklch(98% 0.008 80)",
+        "tonalRamp": [
+          "oklch(15% 0.003 80)",
+          "oklch(25% 0.005 80)",
+          "oklch(35% 0.007 80)",
+          "oklch(45% 0.011 80)",
+          "oklch(58% 0.012 80)",
+          "oklch(72% 0.008 80)",
+          "oklch(86% 0.004 80)",
+          "oklch(95% 0.003 80)"
+        ]
+      },
+      "copper-soft": {
+        "role": "secondary",
+        "displayName": "Copper Wash",
+        "canonical": "oklch(93% 0.035 60)",
+        "tonalRamp": [
+          "oklch(15% 0.009 60)",
+          "oklch(25% 0.013 60)",
+          "oklch(35% 0.022 60)",
+          "oklch(45% 0.031 60)",
+          "oklch(58% 0.035 60)",
+          "oklch(72% 0.025 60)",
+          "oklch(86% 0.012 60)",
+          "oklch(95% 0.009 60)"
+        ]
+      },
+      "review": {
+        "role": "tertiary",
+        "displayName": "Ochre Review",
+        "canonical": "oklch(45% 0.090 75)",
+        "tonalRamp": [
+          "oklch(15% 0.022 75)",
+          "oklch(25% 0.034 75)",
+          "oklch(35% 0.056 75)",
+          "oklch(45% 0.079 75)",
+          "oklch(58% 0.090 75)",
+          "oklch(72% 0.063 75)",
+          "oklch(86% 0.032 75)",
+          "oklch(95% 0.022 75)"
+        ]
+      },
+      "review-bg": {
+        "role": "tertiary",
+        "displayName": "Ochre Review wash",
+        "canonical": "oklch(93% 0.040 85)",
+        "tonalRamp": [
+          "oklch(15% 0.010 85)",
+          "oklch(25% 0.015 85)",
+          "oklch(35% 0.025 85)",
+          "oklch(45% 0.035 85)",
+          "oklch(58% 0.040 85)",
+          "oklch(72% 0.028 85)",
+          "oklch(86% 0.014 85)",
+          "oklch(95% 0.010 85)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "CV 姓名與 404 數字，只用這兩處。"
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "區塊標題，森林綠。"
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "副標、導言、出版編號。"
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "內文，段落最寬約 60–65ch。"
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "導覽、日期、標籤、膠囊；不轉大寫、不加字距。"
+      }
+    },
+    "shadows": [
+      {
+        "name": "ambient-card",
+        "value": "0 1px 2px rgba(36,32,36,.06)",
+        "purpose": "生活工具中可點的卡片，靜止時的上限。"
+      },
+      {
+        "name": "floating-sheet",
+        "value": "0 -8px 30px rgba(0,0,0,.2)",
+        "purpose": "底部滑出的面板。"
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "所有狀態過渡的預設 easing。"
+      },
+      {
+        "name": "ease-in-out",
+        "value": "cubic-bezier(0.65, 0, 0.35, 1)",
+        "purpose": "雙向切換（例如面板展開收合）。"
+      },
+      {
+        "name": "dur-micro",
+        "value": "120ms",
+        "purpose": "hover、按下、顏色變化。"
+      },
+      {
+        "name": "dur-short",
+        "value": "220ms",
+        "purpose": "小區塊顯示／隱藏。"
+      },
+      {
+        "name": "dur-long",
+        "value": "420ms",
+        "purpose": "頁面層級的轉場。"
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "xs",
+        "value": "360px"
+      },
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "900px"
+      },
+      {
+        "name": "tool",
+        "value": "960px"
+      }
+    ],
+    "subThemes": [
+      {
+        "area": "Research Toolkit",
+        "theme": "精密工作台（Cobalt）",
+        "source": "Research-toolkit/shared/style.css",
+        "accent": "oklch(50% 0.170 260)",
+        "paper": "oklch(97.5% 0.006 250)"
+      },
+      {
+        "area": "NMA 教學",
+        "theme": "教科書",
+        "source": "NMA/index.html",
+        "accent": "#2f6fde",
+        "paper": "#f7f8fa"
+      },
+      {
+        "area": "行程頁",
+        "theme": "每趟旅行的顏色",
+        "source": "trip/<trip>/theme.css",
+        "accent": "var(--accent)",
+        "paper": "var(--paper)"
+      },
+      {
+        "area": "menu 書籤",
+        "theme": "深夜藍（Midnight）",
+        "source": "menu/index.html",
+        "accent": "oklch(80% 0.120 175)",
+        "paper": "oklch(18% 0.025 255)"
+      },
+      {
+        "area": "調劑台複習",
+        "theme": "藥局綠",
+        "source": "Pharmacy/style.css",
+        "accent": "#2F6B4F",
+        "paper": "#F6F3EC"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "銅色膠囊，每個畫面只有一個（例：聯絡我）。",
+      "html": "<button class=\"ds-btn-primary\"><svg viewBox=\"0 0 24 24\" width=\"15\" height=\"15\" aria-hidden=\"true\"><path fill=\"currentColor\" d=\"M3 5h18v14H3z\" opacity=\".25\"/><path fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" d=\"M3 6l9 7 9-7\"/></svg>聯絡我</button>",
+      "css": ".ds-btn-primary{--color-paper:oklch(97% 0.010 145);--color-paper-2:oklch(94.5% 0.015 145);--color-rule:oklch(86% 0.016 145);--color-neutral:oklch(58% 0.016 150);--color-muted:oklch(44% 0.018 155);--color-ink:oklch(23% 0.025 160);--color-forest:oklch(35% 0.060 155);--color-forest-2:oklch(45% 0.070 155);--color-accent:oklch(52% 0.115 48);--color-accent-ink:oklch(98% 0.008 80);--color-review:oklch(45% 0.090 75);--color-review-bg:oklch(93% 0.040 85);--font-display:\"Fraunces\",\"Noto Serif TC\",Georgia,serif;--font-body:\"Noto Sans TC\",\"PingFang TC\",\"Microsoft JhengHei\",system-ui,sans-serif;--ease-out:cubic-bezier(0.16,1,0.3,1);font-family:var(--font-body);}.ds-btn-primary{display:inline-flex;align-items:center;gap:.5rem;height:44px;padding:0 1.5rem;border-radius:999px;border:1px solid var(--color-accent);background:var(--color-accent);color:var(--color-accent-ink);font-weight:700;font-size:1rem;cursor:pointer;transition:color 120ms var(--ease-out), border-color 120ms var(--ease-out), background-color 120ms var(--ease-out);}.ds-btn-primary:hover{background:var(--color-forest);border-color:var(--color-forest);color:var(--color-paper);}.ds-btn-primary:active{background:var(--color-forest-2);}.ds-btn-primary:focus-visible{outline:2px solid var(--color-accent);outline-offset:2px;}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "細線膠囊，用於 ORCID、LinkedIn 等次要動作。",
+      "html": "<button class=\"ds-btn-secondary\">ORCID</button>",
+      "css": ".ds-btn-secondary{--color-paper:oklch(97% 0.010 145);--color-paper-2:oklch(94.5% 0.015 145);--color-rule:oklch(86% 0.016 145);--color-neutral:oklch(58% 0.016 150);--color-muted:oklch(44% 0.018 155);--color-ink:oklch(23% 0.025 160);--color-forest:oklch(35% 0.060 155);--color-forest-2:oklch(45% 0.070 155);--color-accent:oklch(52% 0.115 48);--color-accent-ink:oklch(98% 0.008 80);--color-review:oklch(45% 0.090 75);--color-review-bg:oklch(93% 0.040 85);--font-display:\"Fraunces\",\"Noto Serif TC\",Georgia,serif;--font-body:\"Noto Sans TC\",\"PingFang TC\",\"Microsoft JhengHei\",system-ui,sans-serif;--ease-out:cubic-bezier(0.16,1,0.3,1);font-family:var(--font-body);}.ds-btn-secondary{display:inline-flex;align-items:center;height:44px;padding:0 1.5rem;border-radius:999px;border:1px solid var(--color-rule);background:transparent;color:var(--color-ink);font-weight:700;font-size:1rem;cursor:pointer;transition:color 120ms var(--ease-out), border-color 120ms var(--ease-out), background-color 120ms var(--ease-out);}.ds-btn-secondary:hover{border-color:var(--color-ink);}.ds-btn-secondary:active{background:var(--color-paper-2);}.ds-btn-secondary:focus-visible{outline:2px solid var(--color-accent);outline-offset:2px;}"
+    },
+    {
+      "name": "Language Toggle",
+      "kind": "nav",
+      "refersTo": "control-pill",
+      "description": "頂列的語言切換膠囊；選中時墨色邊框加粗體。",
+      "html": "<div class=\"ds-langs\"><button class=\"is-active\" aria-pressed=\"true\">中文</button><button aria-pressed=\"false\">English</button><button aria-pressed=\"false\">日本語</button></div>",
+      "css": ".ds-langs{--color-paper:oklch(97% 0.010 145);--color-paper-2:oklch(94.5% 0.015 145);--color-rule:oklch(86% 0.016 145);--color-neutral:oklch(58% 0.016 150);--color-muted:oklch(44% 0.018 155);--color-ink:oklch(23% 0.025 160);--color-forest:oklch(35% 0.060 155);--color-forest-2:oklch(45% 0.070 155);--color-accent:oklch(52% 0.115 48);--color-accent-ink:oklch(98% 0.008 80);--color-review:oklch(45% 0.090 75);--color-review-bg:oklch(93% 0.040 85);--font-display:\"Fraunces\",\"Noto Serif TC\",Georgia,serif;--font-body:\"Noto Sans TC\",\"PingFang TC\",\"Microsoft JhengHei\",system-ui,sans-serif;--ease-out:cubic-bezier(0.16,1,0.3,1);font-family:var(--font-body);}.ds-langs{display:inline-flex;gap:.25rem;}.ds-langs button{height:32px;padding:0 .75rem;border-radius:999px;border:1px solid var(--color-rule);background:transparent;color:var(--color-muted);font:inherit;font-size:.8125rem;cursor:pointer;white-space:nowrap;transition:color 120ms var(--ease-out), border-color 120ms var(--ease-out), background-color 120ms var(--ease-out);}.ds-langs button:hover{color:var(--color-ink);border-color:var(--color-neutral);}.ds-langs button:active{background:var(--color-paper-2);}.ds-langs button.is-active{color:var(--color-ink);border-color:var(--color-ink);font-weight:700;}.ds-langs button:focus-visible{outline:2px solid var(--color-accent);outline-offset:2px;}"
+    },
+    {
+      "name": "Section Nav",
+      "kind": "nav",
+      "refersTo": "control-pill",
+      "description": "齊左純文字導覽；hover 出現銅色底線。",
+      "html": "<nav class=\"ds-nav\"><a href=\"#\">研究方向</a><a href=\"#\">學經歷</a><a href=\"#\">學術著作</a><a href=\"#\">獎項活動</a></nav>",
+      "css": ".ds-nav{--color-paper:oklch(97% 0.010 145);--color-paper-2:oklch(94.5% 0.015 145);--color-rule:oklch(86% 0.016 145);--color-neutral:oklch(58% 0.016 150);--color-muted:oklch(44% 0.018 155);--color-ink:oklch(23% 0.025 160);--color-forest:oklch(35% 0.060 155);--color-forest-2:oklch(45% 0.070 155);--color-accent:oklch(52% 0.115 48);--color-accent-ink:oklch(98% 0.008 80);--color-review:oklch(45% 0.090 75);--color-review-bg:oklch(93% 0.040 85);--font-display:\"Fraunces\",\"Noto Serif TC\",Georgia,serif;--font-body:\"Noto Sans TC\",\"PingFang TC\",\"Microsoft JhengHei\",system-ui,sans-serif;--ease-out:cubic-bezier(0.16,1,0.3,1);font-family:var(--font-body);}.ds-nav{display:flex;gap:1.5rem;font-size:.8125rem;}.ds-nav a{color:var(--color-muted);text-decoration:none;white-space:nowrap;padding-block:.25rem;border-bottom:1px solid transparent;transition:color 120ms var(--ease-out), border-color 120ms var(--ease-out), background-color 120ms var(--ease-out);}.ds-nav a:hover{color:var(--color-ink);border-bottom-color:var(--color-accent);}.ds-nav a:focus-visible{outline:2px solid var(--color-accent);outline-offset:2px;}"
+    },
+    {
+      "name": "Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "紙色膠囊標籤，與「審查中」狀態膠囊。",
+      "html": "<span class=\"ds-chips\"><span class=\"ds-chip\">Pharmacoepidemiology</span><span class=\"ds-chip ds-chip-review\">審查中</span></span>",
+      "css": ".ds-chips{--color-paper:oklch(97% 0.010 145);--color-paper-2:oklch(94.5% 0.015 145);--color-rule:oklch(86% 0.016 145);--color-neutral:oklch(58% 0.016 150);--color-muted:oklch(44% 0.018 155);--color-ink:oklch(23% 0.025 160);--color-forest:oklch(35% 0.060 155);--color-forest-2:oklch(45% 0.070 155);--color-accent:oklch(52% 0.115 48);--color-accent-ink:oklch(98% 0.008 80);--color-review:oklch(45% 0.090 75);--color-review-bg:oklch(93% 0.040 85);--font-display:\"Fraunces\",\"Noto Serif TC\",Georgia,serif;--font-body:\"Noto Sans TC\",\"PingFang TC\",\"Microsoft JhengHei\",system-ui,sans-serif;--ease-out:cubic-bezier(0.16,1,0.3,1);font-family:var(--font-body);}.ds-chips{display:inline-flex;gap:.5rem;flex-wrap:wrap;}.ds-chip{font-size:.8125rem;font-weight:700;color:var(--color-ink);background:var(--color-paper-2);border-radius:999px;padding:.125rem .75rem;}.ds-chip-review{color:var(--color-review);background:var(--color-review-bg);}"
+    },
+    {
+      "name": "Timeline Row",
+      "kind": "custom",
+      "refersTo": "Timeline Row",
+      "description": "CV 的招牌元件：銅色日期欄＋內容，細線分隔。",
+      "html": "<div class=\"ds-rows\"><div class=\"ds-row\"><span class=\"d\">2025.11 – 2027.09</span><b>臺北醫學大學附設醫院 藥劑部</b><span class=\"s\">兼任執業藥師</span></div><div class=\"ds-row\"><span class=\"d\">2025 – 2027</span><b>臺北醫學大學 臨床醫學研究所</b><span class=\"s\">臨床醫學碩士（在學）</span></div></div>",
+      "css": ".ds-rows{--color-paper:oklch(97% 0.010 145);--color-paper-2:oklch(94.5% 0.015 145);--color-rule:oklch(86% 0.016 145);--color-neutral:oklch(58% 0.016 150);--color-muted:oklch(44% 0.018 155);--color-ink:oklch(23% 0.025 160);--color-forest:oklch(35% 0.060 155);--color-forest-2:oklch(45% 0.070 155);--color-accent:oklch(52% 0.115 48);--color-accent-ink:oklch(98% 0.008 80);--color-review:oklch(45% 0.090 75);--color-review-bg:oklch(93% 0.040 85);--font-display:\"Fraunces\",\"Noto Serif TC\",Georgia,serif;--font-body:\"Noto Sans TC\",\"PingFang TC\",\"Microsoft JhengHei\",system-ui,sans-serif;--ease-out:cubic-bezier(0.16,1,0.3,1);font-family:var(--font-body);}.ds-rows{max-width:560px;}.ds-row{display:grid;grid-template-columns:7.5rem minmax(0,1fr);gap:.125rem 1rem;padding-block:1rem;border-top:1px solid var(--color-rule);}.ds-row .d{grid-row:1 / span 2;font-size:.8125rem;font-weight:700;color:var(--color-accent);font-variant-numeric:tabular-nums;}.ds-row b{color:var(--color-ink);}.ds-row .s{color:var(--color-muted);}"
+    },
+    {
+      "name": "Tool Index Row",
+      "kind": "custom",
+      "refersTo": "Tool Index Row",
+      "description": "Toolkit 首頁一行一個工具（鈷藍子主題）。",
+      "html": "<a class=\"ds-tool\" href=\"#\"><span class=\"n\">PRISMA Flow Diagram</span><span class=\"p\">依 PRISMA 2020 範本產生系統性回顧的文獻篩選流程圖。</span><span class=\"t\"><i>PRISMA 2020</i><i>可編輯 Word</i></span></a>",
+      "css": ".ds-tool{--cobalt:oklch(50% 0.170 260);--cobalt-weak:oklch(94% 0.025 260);--ink:oklch(24% 0.025 255);--muted:oklch(47% 0.022 255);--border:oklch(89% 0.010 250);display:grid;grid-template-columns:minmax(0,13rem) minmax(0,1fr) auto;gap:6px 20px;align-items:baseline;padding:16px 0;border-top:1px solid var(--border);color:var(--ink);text-decoration:none;font-family:\"Noto Sans TC\",system-ui,sans-serif;}.ds-tool .n{font-family:\"Fraunces\",Georgia,serif;font-weight:700;font-size:19px;transition:color 120ms cubic-bezier(.16,1,.3,1);}.ds-tool .n::after{content:\"\\00a0→\";color:var(--cobalt);}.ds-tool:hover .n{color:var(--cobalt);}.ds-tool .p{color:var(--muted);font-size:14px;}.ds-tool .t{display:flex;gap:6px;}.ds-tool .t i{font-style:normal;font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px;background:var(--cobalt-weak);color:var(--cobalt);}.ds-tool:focus-visible{outline:2px solid var(--cobalt);outline-offset:2px;}"
+    },
+    {
+      "name": "Toolkit Input",
+      "kind": "input",
+      "refersTo": "Inputs / Fields",
+      "description": "工具表單欄位：淡底、細線、焦點時 2px 主題外框，邊框粗細不變。",
+      "html": "<label class=\"ds-field\"><span>檔名</span><input value=\"prisma_flow\"></label>",
+      "css": ".ds-field{--cobalt:oklch(50% 0.170 260);--panel-2:oklch(97% 0.007 250);--border:oklch(89% 0.010 250);--ink:oklch(24% 0.025 255);--muted:oklch(47% 0.022 255);display:grid;gap:3px;max-width:280px;font-family:\"Noto Sans TC\",system-ui,sans-serif;}.ds-field span{font-size:12.5px;color:var(--muted);}.ds-field input{font:inherit;font-size:14px;color:var(--ink);background:var(--panel-2);border:1px solid var(--border);border-radius:7px;padding:6px 8px;outline:2px solid transparent;outline-offset:1px;transition:outline-color 120ms cubic-bezier(.16,1,.3,1);}.ds-field input:hover{border-color:var(--muted);}.ds-field input:focus{outline-color:var(--cobalt);}"
+    }
+  ],
+  "narrative": {
+    "northStar": "個人的學術與生活工具",
+    "overview": "這個網站不是一個品牌，而是一個人的工具箱。學術履歷、研究工具、教學、私人生活工具住在同一個網域，各自依用途定主題。它們之所以是一家人，靠的是一套共同的骨架，而不是同一個顏色：\n- 同一組字體：Fraunces 展示字搭 Noto Sans TC 內文。\n- 同一種分隔語言：紙張底色加細線，而不是一疊卡片。\n- 同一套圓角：小圓角、膠囊按鈕。\n- 同一個習慣：OKLCH 色票，每頁都支援深淺兩種模式。\n\n每一區依用途有自己的主題，主色只在該區內有效：\n\n| 區域 | 主題 | 用途 | 主題色 |\n| --- | --- | --- | --- |\n| CV、blog、404 | **學術期刊**（Garden） | 閱讀、建立可信度 | 森林綠＋銅色（本檔 token 即此套） |\n| Research Toolkit | **精密工作台**（Cobalt） | 操作：填資料、匯出論文圖表 | 鈷藍 |\n| NMA 教學 | **教科書** | 逐步閱讀並照做 | 藍色、程式碼底色 |\n| 行程頁 | 各趟旅行自己的顏色 | 旅途中查看 | 每趟的 `theme.css` |\n| menu 書籤 | 深夜藍（Midnight） | 私人索引 | 深藍底、青綠 accent |\n| 調劑台複習 | 藥局綠 | 執業時手機上複習 | 深綠＋米紙色 |\n\nsplitbill 是獨立的公開工具，維持現狀，不受本系統約束。",
+    "keyCharacteristics": [
+      "紙張底色，絕不用純白或純黑；中性色都帶一點綠、藍等色相。",
+      "以細線分組，盡量不用卡片；不用卡片包卡片，也不用粗的彩色側邊條。",
+      "展示字用 Fraunces；中文標題落到 Noto Serif TC，內文一律用 Noto Sans TC。",
+      "每頁都有深淺兩種模式，並且用同一組 token 名稱互換。",
+      "工作工具精準而克制；生活工具溫和而親切。"
+    ],
+    "rules": [
+      {
+        "name": "The One Copper Rule",
+        "body": "銅色只標記「可以按」或「時間點」，一個畫面裡的面積不超過約 5%。標題永遠用森林綠，不用銅色。",
+        "section": "colors"
+      },
+      {
+        "name": "The Room Color Rule",
+        "body": "每一區只用自己那一區的主題色。Toolkit 不出現森林綠，CV 不出現鈷藍。跨區共用的只有字體、形狀和分隔語言。",
+        "section": "colors"
+      },
+      {
+        "name": "The Tinted Neutral Rule",
+        "body": "中性色一律帶該區的色相：CV 偏綠，Toolkit 偏藍。不用零彩度的灰。",
+        "section": "colors"
+      },
+      {
+        "name": "The Upright Heading Rule",
+        "body": "標題與展示字一律正體，不用斜體，也不把標題裡的某個字轉成斜體來強調。",
+        "section": "typography"
+      },
+      {
+        "name": "The No Eyebrow Rule",
+        "body": "不在標題上方或旁邊放大寫加字距的英文小標（例如「TRAVEL LOG」「BLOG」）。標題自己就要能說清楚。",
+        "section": "typography"
+      },
+      {
+        "name": "The Light Touch Rule",
+        "body": "陰影只能輕：模糊不超過 30px，透明度不超過 .2。工作工具的表單區不用陰影，改用細線和底色分組。",
+        "section": "elevation"
+      },
+      {
+        "name": "The Two Temperaments Rule",
+        "body": "工作工具（CV、Toolkit、NMA）精準而克制：細邊框、膠囊按鈕、狀態只換顏色。生活工具（行程、調劑台、書籤）溫和而親切：圓角可以放寬到 12–14px、底色更柔和，也可以用輕微的陰影，但仍然不用漸層和 emoji 圖示。",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "**Do** 所有顏色和字體都引用 `:root` 上的具名 token；需要新值時，先加進 token 區再使用。",
+      "**Do** 每頁都同時定義淺色與深色，用同一組 token 名稱互換，並確認文字對比至少 4.5:1。",
+      "**Do** 用細線（1px，rule 色）分組。分隔線比卡片優先。",
+      "**Do** 數字（日期、編號、統計）用 tabular-nums。",
+      "**Do** 過渡效果明確寫出屬性（color、border-color、background-color），使用 ease-out，時間 120–220ms，並且支援 prefers-reduced-motion。"
+    ],
+    "donts": [
+      "**Don't** 在標題上用漸層文字，或用漸層膠囊按鈕。",
+      "**Don't** 用粗的彩色側邊條標記卡片，也不要卡片包卡片。",
+      "**Don't** 用 emoji 當主圖示（工具按鈕、功能入口、徽章）。純文字符號例如 ⚠ ✓ ✕ 可以用。",
+      "**Don't** 在標題上下或兩側放大寫加字距的英文小標，或打字機、游標這類裝飾性動效。",
+      "**Don't** 把一區的主題色帶到另一區，例如 CV 出現鈷藍、Toolkit 出現森林綠。",
+      "**Don't** 編造數字、推薦語或使用量。沒有資料的地方留白，或標示待確認。"
+    ]
+  }
+}
