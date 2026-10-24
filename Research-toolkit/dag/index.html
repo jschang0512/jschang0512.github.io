@@ -33,6 +33,11 @@
   #preview svg { touch-action: none; }
   #preview [data-node] { cursor: grab; }
   #preview.dragging [data-node] { cursor: grabbing; }
+  #preview.linking [data-node] { cursor: crosshair; }
+  #preview [data-node]:focus { outline: none; }
+  #preview [data-node]:focus-visible rect:last-of-type { stroke: var(--accent); stroke-width: 3; }
+  .dag-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  #linkMode[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
   .msg .btns { margin-top: 6px; }
   .msg .set-btn { white-space: normal; text-align: left; }
   .msg .set-btn[aria-pressed="true"] { opacity: 1; border-color: var(--ok-text); color: var(--ok-text); }
@@ -96,6 +101,10 @@
   </section>
 
   <section class="preview-col">
+    <div class="dag-tools">
+      <button type="button" class="small" id="linkMode" aria-pressed="false" data-en="Draw arrows">拉線畫箭頭</button>
+      <span class="hint" style="margin:0" data-en="Drag from one variable to another to add an arrow (or hold Shift while dragging). Click a variable, then use the arrow keys to move it (Shift = larger steps).">從一個變項拖到另一個即可加箭頭（也可按住 Shift 拖曳）。點選變項後可用方向鍵移動（加 Shift 移動較多）。</span>
+    </div>
     <div class="paper" id="preview"></div>
     <div class="msgs" id="msgs"></div>
     <div id="methods"></div>
@@ -415,7 +424,7 @@ function build() {
     } else {
       s += RT.drawBox(RT.box([{ text: n.label, bold: key }], g.w, { size: fs, pad: 0, fill, stroke, sw: key ? 2 : 1.2, radius: 6, color: ink }), x, y, g.h);
     }
-    body += `<g data-node="${n.id}">${s}</g>`;
+    body += `<g data-node="${n.id}" tabindex="0" role="button" aria-label="${RT.esc(`${n.label || T('（未命名）', '(unnamed)')}, ${roleName(n.role)}`)}">${s}</g>`;
   });
   let H = Math.max(H0, top + Math.max(0, ...S.nodes.map((n) => G[n.id].y + G[n.id].h / 2 + 10)));
   // legend: only the roles that appear, plus the adjusted box
@@ -452,17 +461,32 @@ const toFig = (e) => {
   const svg = preview.querySelector('svg'), r = svg.getBoundingClientRect();
   return [((e.clientX - r.left) / r.width) * fig.w, ((e.clientY - r.top) / r.height) * fig.h];
 };
+let linking = false, link = null, focusId = null;
+const linkBtn = document.getElementById('linkMode');
+linkBtn.onclick = () => { linking = !linking; linkBtn.setAttribute('aria-pressed', String(linking)); preview.classList.toggle('linking', linking); };
 preview.addEventListener('pointerdown', (e) => {
   const g = e.target.closest('[data-node]');
   if (!g) return;
   const n = byId(g.dataset.node); if (!n) return;
   const [px, py] = toFig(e);
-  drag = { n, dx: n.x - px, dy: n.y - py };
   preview.setPointerCapture(e.pointerId);
-  preview.classList.add('dragging');
   e.preventDefault();
+  focusId = n.id;
+  if (linking || e.shiftKey) {
+    // a temporary line follows the pointer until it is released over another variable
+    const svg = preview.querySelector('svg');
+    const ln = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    ln.setAttribute('stroke', '#888'); ln.setAttribute('stroke-width', '2'); ln.setAttribute('stroke-dasharray', '5 4');
+    ln.setAttribute('x1', px); ln.setAttribute('y1', py); ln.setAttribute('x2', px); ln.setAttribute('y2', py);
+    svg.appendChild(ln);
+    link = { from: n.id, ln };
+    return;
+  }
+  drag = { n, dx: n.x - px, dy: n.y - py };
+  preview.classList.add('dragging');
 });
 preview.addEventListener('pointermove', (e) => {
+  if (link) { const [px, py] = toFig(e); link.ln.setAttribute('x2', px); link.ln.setAttribute('y2', py); return; }
   if (!drag) return;
   const [px, py] = toFig(e);
   const W = Number(S.W) || 760, H = Number(S.H) || 440;
@@ -470,9 +494,45 @@ preview.addEventListener('pointermove', (e) => {
   drag.n.y = Math.round(Math.max(20, Math.min(H - 20, py + drag.dy)));
   if (!raf) raf = requestAnimationFrame(() => { raf = 0; fig = build(); preview.innerHTML = fig.svg; });
 });
-const endDrag = () => { if (!drag) return; drag = null; preview.classList.remove('dragging'); renderNodes(); update(); };
+const endDrag = (e) => {
+  if (link) {
+    const { from, ln } = link;
+    link = null; ln.remove();
+    const el = e && e.type === 'pointerup' ? document.elementFromPoint(e.clientX, e.clientY)?.closest('#preview [data-node]') : null;
+    const to = el && el.dataset.node;
+    if (!to || to === from) return;
+    if (S.edges.some((x) => x.from === from && x.to === to)) { RT.toast(T('這個箭頭已經存在', 'That arrow already exists')); return; }
+    S.edges.push({ from, to, bend: 0 });
+    renderEdges(); update();
+    RT.toast(T(`已加入：${nameOf(from)} → ${nameOf(to)}（按 ↶ 可復原）`, `Added: ${nameOf(from)} → ${nameOf(to)} (↶ to undo)`));
+    return;
+  }
+  if (!drag) return;
+  drag = null; preview.classList.remove('dragging'); renderNodes(); update();
+};
 preview.addEventListener('pointerup', endDrag);
 preview.addEventListener('pointercancel', endDrag);
+// arrow keys move the focused variable; Shift moves further
+preview.addEventListener('keydown', (e) => {
+  const g = e.target.closest && e.target.closest('[data-node]');
+  if (!g) return;
+  const d = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[e.key];
+  if (!d) return;
+  e.preventDefault();
+  const n = byId(g.dataset.node); if (!n) return;
+  const step = e.shiftKey ? 20 : 5, W = Number(S.W) || 760, H = Number(S.H) || 440;
+  n.x = Math.max(30, Math.min(W - 30, n.x + d[0] * step));
+  n.y = Math.max(20, Math.min(H - 20, n.y + d[1] * step));
+  focusId = n.id;
+  fig = build(); preview.innerHTML = fig.svg; refocus();
+  renderNodes(); update();
+});
+preview.addEventListener('focusin', (e) => { const g = e.target.closest && e.target.closest('[data-node]'); if (g) focusId = g.dataset.node; });
+// the preview is redrawn on every change: give focus back to the variable being moved
+function refocus() {
+  if (!focusId || !preview.contains(document.activeElement) && document.activeElement !== document.body) return;
+  preview.querySelector(`[data-node="${focusId}"]`)?.focus({ preventScroll: true });
+}
 
 let fig;
 const exporter = RT.exportPanel(document.getElementById('export'), () => fig, 'dag', {
@@ -482,7 +542,9 @@ const hist = RT.history(() => S, (s) => { S = s; syncInputs(); render(); });
 function render() {
   try {
     fig = build();
+    const hadFocus = preview.contains(document.activeElement);
     preview.innerHTML = S.nodes.length ? fig.svg : `<p class="hint" style="align-self:center">${T('按「＋ 新增變項」或「範例」開始。', 'Start with “+ Add variable” or “Example”.')}</p>`;
+    if (hadFocus) refocus();
   } catch (e) { console.error(e); preview.innerHTML = `<div class="msg">⚠ ${RT.esc(e.message)}</div>`; }
   exporter.setIssues(renderAnalysis());
   exporter.refresh();
