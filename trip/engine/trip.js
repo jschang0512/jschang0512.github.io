@@ -787,6 +787,26 @@ const main = document.getElementById("main");
 main.innerHTML = days.map(buildPage).join("") + buildContactsPage() + buildFlightsPage() + buildDrivingPage() + buildWeatherPage() + buildQuakePage() + (TRIP.food ? buildFoodPage() : "") + buildPackingPage();
 document.getElementById("dayNav").innerHTML = buildNav();
 document.getElementById("utilBar").innerHTML = buildUtilBar();
+// one top bar: the menu button names where you are and opens every page;
+// beside it sit the date tabs on day pages, or a way back to them elsewhere
+(function topBar(){
+  const nav = document.getElementById("dayNav"), util = document.getElementById("utilBar"), home = document.querySelector(".home-link");
+  const bar = document.createElement("div");
+  bar.className = "sb-top";
+  bar.innerHTML = `<button type="button" class="sb-menu-btn" aria-expanded="false" aria-controls="utilBar"><svg class="sb-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span class="sb-menu-lbl">每日行程</span></button><button type="button" class="sb-back" hidden></button>`;
+  document.body.prepend(bar);
+  bar.appendChild(nav);
+  bar.after(util);
+  util.hidden = true;
+  if(home) util.appendChild(home);
+  const btn = bar.querySelector(".sb-menu-btn");
+  const setOpen = (open)=>{ util.hidden = !open; btn.setAttribute("aria-expanded", String(open)); document.documentElement.classList.toggle("menu-open", open); };
+  btn.addEventListener("click", ()=> setOpen(util.hidden));
+  util.addEventListener("click", (e)=>{ if(e.target.closest(".util-btn, .home-link")) setOpen(false); });
+  document.addEventListener("click", (e)=>{ if(!util.hidden && !e.target.closest(".sb-top, #utilBar")) setOpen(false); });
+  document.addEventListener("keydown", (e)=>{ if(e.key === "Escape" && !util.hidden){ setOpen(false); btn.focus(); } });
+  bar.querySelector(".sb-back").addEventListener("click", ()=> activatePage(lastDayPage));
+})();
 
 // ---- Scroll reveal for cards ----
 const REDUCED_EARLY = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
@@ -1213,7 +1233,10 @@ function activatePage(page, {jump=true, dir=null}={}){
   if(menuBtn) menuBtn.setAttribute("aria-current", "page");
   const nav = document.getElementById("dayNav"); if(nav) nav.hidden = isExtra;
   try{ history.replaceState(null, "", "#" + (isExtra ? page : "day-" + page)); }catch(e){}
-  if(menuBtn && menuBtn.scrollIntoView) menuBtn.scrollIntoView({behavior: REDUCED ? "auto" : "smooth", inline:"center", block:"nearest"});
+  const lbl = document.querySelector(".sb-menu-lbl");
+  if(lbl) lbl.textContent = isExtra ? btn.textContent.trim() : "每日行程";
+  const back = document.querySelector(".sb-back");
+  if(back){ back.hidden = !isExtra; back.textContent = "‹ 回到 DAY " + String(Number(lastDayPage) + 1).padStart(2, "0"); }
   if(!isExtra) markNext(Number(page));
   el.querySelectorAll(".reveal:not(.revealed)").forEach(r=>r.classList.add("revealed"));
   if(dir === "next") el.classList.add("slide-next");
@@ -1227,7 +1250,7 @@ function activatePage(page, {jump=true, dir=null}={}){
   if(!isExtra) btn.scrollIntoView({behavior:"smooth", inline:"center", block:"nearest"});
   if(jump){
     // land on the page's own heading, just under the fixed menu and the date bar
-    const bars = (document.querySelector(".util-bar")?.offsetHeight || 0) + (nav && !nav.hidden ? nav.offsetHeight : 0);
+    const bars = document.querySelector(".sb-top")?.offsetHeight || 0;
     let y = -bars - 8;   // offsetTop ignores the page's entrance bounce transform
     for(let n = el; n; n = n.offsetParent) y += n.offsetTop;
     window.scrollTo({top: Math.max(0, y), behavior: REDUCED ? "auto" : "smooth"});
