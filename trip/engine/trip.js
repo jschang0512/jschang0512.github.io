@@ -22,7 +22,12 @@
   const phrases = [dests, dateRange];
   const PAUSE_CHARS = ["・", "～"];
   // static subtitle: show both lines at once instead of typing them
-  el.textContent = dests + "　" + dateRange;
+  const dr = dateRange.match(/^(\d{4})年(.+?)～(\d{4})年(.+)$/);
+  const dates = dr && dr[1] === dr[3] ? `${dr[1]}年${dr[2]}～${dr[4]}` : dateRange;
+  el.innerHTML = `<span class="sub-route">${TRIP.dests.join("・")}</span><span class="sub-dates">${dates}</span>`;
+  // the draft note joins the badges row instead of sitting between the title and the route
+  const draft = document.querySelector(".draft-note"), badges = document.querySelector(".header-badges");
+  if(draft && badges) badges.prepend(draft);
   return;
   let phraseIndex = 0, charIndex = 0, deleting = false;
 
@@ -793,18 +798,33 @@ document.getElementById("utilBar").innerHTML = buildUtilBar();
   const nav = document.getElementById("dayNav"), util = document.getElementById("utilBar"), home = document.querySelector(".home-link");
   const bar = document.createElement("div");
   bar.className = "sb-top";
-  bar.innerHTML = `<button type="button" class="sb-menu-btn" aria-expanded="false" aria-controls="utilBar"><svg class="sb-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span class="sb-menu-lbl">每日行程</span></button><button type="button" class="sb-back" hidden></button>`;
+  bar.innerHTML = `<button type="button" class="sb-menu-btn" aria-expanded="false" aria-controls="utilBar"><svg class="sb-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span class="sb-menu-lbl">選單</span></button><div class="sb-daypick"><button type="button" class="sb-step" data-step="-1" aria-label="前一天">‹</button><button type="button" class="sb-day-cur" aria-expanded="false" aria-controls="dayNav"><span class="sb-day-num"></span><span class="sb-day-lbl"></span></button><button type="button" class="sb-step" data-step="1" aria-label="後一天">›</button></div><button type="button" class="sb-back" hidden></button>`;
   document.body.prepend(bar);
-  bar.appendChild(nav);
   bar.after(util);
-  util.hidden = true;
+  util.after(nav);
+  util.hidden = true; nav.hidden = true;
   if(home) util.appendChild(home);
-  const btn = bar.querySelector(".sb-menu-btn");
-  const setOpen = (open)=>{ util.hidden = !open; btn.setAttribute("aria-expanded", String(open)); document.documentElement.classList.toggle("menu-open", open); };
-  btn.addEventListener("click", ()=> setOpen(util.hidden));
-  util.addEventListener("click", (e)=>{ if(e.target.closest(".util-btn, .home-link")) setOpen(false); });
-  document.addEventListener("click", (e)=>{ if(!util.hidden && !e.target.closest(".sb-top, #utilBar")) setOpen(false); });
-  document.addEventListener("keydown", (e)=>{ if(e.key === "Escape" && !util.hidden){ setOpen(false); btn.focus(); } });
+  const btn = bar.querySelector(".sb-menu-btn"), cur = bar.querySelector(".sb-day-cur");
+  // two dropdowns share the space under the bar; opening one closes the other
+  const panels = [[util, btn], [nav, cur]];
+  const setOpen = (panel)=>{
+    panels.forEach(([p, b])=>{ const open = p === panel; p.hidden = !open; b.setAttribute("aria-expanded", String(open)); });
+    document.documentElement.classList.toggle("menu-open", !!panel);
+  };
+  btn.addEventListener("click", ()=> setOpen(util.hidden ? util : null));
+  cur.addEventListener("click", ()=> setOpen(nav.hidden ? nav : null));
+  bar.querySelectorAll(".sb-step").forEach(s=> s.addEventListener("click", ()=>{
+    const next = Number(lastDayPage) + Number(s.dataset.step);
+    if(next >= 0 && next < days.length){ setOpen(null); activatePage(String(next)); }
+  }));
+  util.addEventListener("click", (e)=>{ if(e.target.closest(".util-btn, .home-link")) setOpen(null); });
+  nav.addEventListener("click", (e)=>{ if(e.target.closest(".daytab")) setOpen(null); });
+  document.addEventListener("click", (e)=>{ if(!e.target.closest(".sb-top, #utilBar, #dayNav")) setOpen(null); });
+  document.addEventListener("keydown", (e)=>{
+    if(e.key !== "Escape") return;
+    const open = panels.find(([p])=> !p.hidden);
+    if(open){ setOpen(null); open[1].focus(); }
+  });
   bar.querySelector(".sb-back").addEventListener("click", ()=> activatePage(lastDayPage));
 })();
 
@@ -1208,20 +1228,6 @@ function markNext(idx){
   rows.forEach((r, i)=>{ if(i < current) r.classList.add("is-past"); });
   if(next >= 0){ rows[next].classList.add("is-next"); rows[next].insertAdjacentHTML("afterbegin", '<span class="next-pill">下一站</span>'); }
 }
-// scroll the date tabs (not the page) so the chosen day sits in the middle of the bar
-function centerDayTab(tab, smooth){
-  const sc = tab && tab.closest(".daytabs-scroll");
-  if(!sc) return;
-  const left = sc.scrollLeft + (tab.getBoundingClientRect().left - sc.getBoundingClientRect().left) - (sc.clientWidth - tab.offsetWidth) / 2;
-  sc.scrollTo({left: Math.max(0, left), behavior: smooth && !REDUCED ? "smooth" : "auto"});
-}
-// tab widths change once the web font arrives and when the window is resized: keep the active day in view
-function recenterActiveDay(){ centerDayTab(document.querySelector(".daytab.active"), false); }
-if(document.fonts && document.fonts.ready) document.fonts.ready.then(recenterActiveDay);
-window.addEventListener("load", recenterActiveDay);
-let recenterTimer;
-window.addEventListener("resize", ()=>{ clearTimeout(recenterTimer); recenterTimer = setTimeout(recenterActiveDay, 120); });
-
 function activatePage(page, {jump=true, dir=null}={}){
   const isExtra = EXTRA_PAGES.includes(page);
   const btn = isExtra ? document.querySelector(`.util-btn[data-page="${page}"]`)
@@ -1245,10 +1251,18 @@ function activatePage(page, {jump=true, dir=null}={}){
   btn.setAttribute("aria-current", "page");
   const menuBtn = isExtra ? btn : document.querySelector('.util-btn[data-page="days"]');
   if(menuBtn) menuBtn.setAttribute("aria-current", "page");
-  const nav = document.getElementById("dayNav"); if(nav) nav.hidden = isExtra;
+  const pick = document.querySelector(".sb-daypick");
+  if(pick){
+    pick.hidden = isExtra;
+    const d = Number(lastDayPage);
+    pick.querySelector(".sb-day-num").textContent = "DAY " + String(d + 1).padStart(2, "0") + (d === todayIndex() ? "・今天" : "");
+    pick.querySelector(".sb-day-lbl").textContent = days[d] ? days[d].theme : "";
+    pick.querySelector('[data-step="-1"]').disabled = d <= 0;
+    pick.querySelector('[data-step="1"]').disabled = d >= days.length - 1;
+  }
   try{ history.replaceState(null, "", "#" + (isExtra ? page : "day-" + page)); }catch(e){}
   const lbl = document.querySelector(".sb-menu-lbl");
-  if(lbl) lbl.textContent = isExtra ? btn.textContent.trim() : "每日行程";
+  if(lbl) lbl.textContent = isExtra ? btn.textContent.trim() : "選單";
   const back = document.querySelector(".sb-back");
   if(back){ back.hidden = !isExtra; back.textContent = "‹ 回到 DAY " + String(Number(lastDayPage) + 1).padStart(2, "0"); }
   if(!isExtra) markNext(Number(page));
@@ -1261,7 +1275,6 @@ function activatePage(page, {jump=true, dir=null}={}){
   else if(page==="quake") loadQuakes();
   else if(!isExtra){ buildDayMap(Number(page)); if(TRIP.sun) loadSunTimes(Number(page)); }
 
-  if(!isExtra) centerDayTab(btn, jump);
   if(jump){
     // land on the page's own heading, just under the fixed menu and the date bar
     const bars = document.querySelector(".sb-top")?.offsetHeight || 0;

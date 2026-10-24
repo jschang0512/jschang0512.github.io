@@ -33,10 +33,8 @@
   .lead { margin-top: 6px; color: var(--ink-soft); font-size: 15px; }
 
   main { max-width: 640px; margin: 0 auto; padding: 16px 16px 40px; }
-  .group-label {
-    display: inline-block; margin: 26px 0 12px; padding: 2px 14px; border: 2px solid var(--ink); border-radius: 999px;
-    background: var(--green); font-size: 14px;
-  }
+  /* section headings: plain text, same as the trip pages */
+  .group-label { margin: 22px 0 10px; font-size: 15px; letter-spacing: .02em; }
   .group-label[hidden] { display: none; }
   .trips { display: grid; gap: 16px; }
 
@@ -57,12 +55,26 @@
   .trip-title { margin-top: 8px; font-size: 26px; line-height: 1.25; }
   .trip-dates { margin-top: 2px; font-size: 15px; }
   .trip-route { margin-top: 2px; color: var(--ink-soft); font-size: 14px; }
-  .trip-cta {
-    display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 4px 16px;
-    border: var(--frame); border-radius: 999px; background: var(--yellow); font-size: 15px;
-  }
-  .trip-card.past .trip-cta { background: var(--mizu); }
+  /* the whole card is the link: the call to action is a quiet line, not another pill */
+  .trip-cta { display: block; margin-top: 10px; padding-top: 10px; border-top: 2px dashed var(--hair); font-size: 15px; text-align: right; }
+  .trip-card:hover .trip-cta { text-decoration: underline; text-decoration-color: var(--coral); text-decoration-thickness: 3px; text-underline-offset: 4px; }
   .trip-card.past .tag.status { background: var(--wash); }
+  .trip-tags:empty { display: none; }
+
+  /* phone: the trips come first, the drawings stay but get smaller */
+  @media (max-width: 600px) {
+    header { padding: 18px 16px 0; }
+    .hero-art { width: 96px; margin-bottom: 2px; }
+    h1 { font-size: 28px; }
+    .lead { margin-top: 2px; font-size: 14px; }
+    main { padding-top: 4px; }
+    .group-label { margin-top: 16px; }
+    /* full width, a slightly shorter strip: only a little sky is trimmed, the ground and sea stay */
+    .trip-art svg { height: 158px; }
+    .trip-body { padding: 12px 16px 12px; }
+    .trip-title { font-size: 22px; margin-top: 6px; }
+    .trip-tags:empty + .trip-title { margin-top: 0; }
+  }
 
   footer { text-align: center; padding: 8px 16px 32px; color: var(--ink-soft); font-size: 13px; }
 
@@ -108,9 +120,9 @@
     <a class="trip-card" href="niigata/schedule.html" data-start="2027-07-30" data-end="2027-08-09" data-art="joetsu">
       <div class="trip-art" aria-hidden="true"></div>
       <div class="trip-body">
-        <div class="trip-tags"><span class="tag">11 天</span><span class="tag draft">尚未定案</span></div>
+        <div class="trip-tags"><span class="tag draft">尚未定案</span></div>
         <div class="trip-title">上越行程表（暫）</div>
-        <div class="trip-dates">2027年07月30日 – 08月09日</div>
+        <div class="trip-dates">2027年07月30日 – 08月09日・11 天</div>
         <div class="trip-route">新潟・長岡花火・越後湯澤・秩父・川越・東京</div>
         <span class="trip-cta">查看行程 →</span>
       </div>
@@ -122,9 +134,9 @@
     <a class="trip-card" href="fukuoka/schedule.html" data-start="2026-08-18" data-end="2026-08-25" data-art="kyushu">
       <div class="trip-art" aria-hidden="true"></div>
       <div class="trip-body">
-        <div class="trip-tags"><span class="tag">8 天</span></div>
+        <div class="trip-tags"></div>
         <div class="trip-title">九州行程表</div>
-        <div class="trip-dates">2026年08月18日 – 08月25日</div>
+        <div class="trip-dates">2026年08月18日 – 08月25日・8 天</div>
         <div class="trip-route">福岡・北九州・相島・太宰府・唐津・佐賀</div>
         <span class="trip-cta">回顧行程 →</span>
       </div>
@@ -145,7 +157,10 @@
   const cards = [...document.querySelectorAll(".trip-card[data-start]")];
   cards.forEach((c) => {
     const art = window.TRIP_ART && window.TRIP_ART[c.dataset.art];
-    if (art) c.querySelector(".trip-art").innerHTML = art;
+    if (art) {
+      c.querySelector(".trip-art").innerHTML = art;
+      c.querySelector(".trip-art svg").setAttribute("preserveAspectRatio", "xMidYMax slice");
+    }
     else c.querySelector(".trip-art").remove();
     const start = d(c.dataset.start), end = d(c.dataset.end);
     const tag = document.createElement("span");
