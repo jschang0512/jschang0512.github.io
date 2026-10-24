@@ -43,7 +43,7 @@
       const f = document.createElement('footer');
       f.className = 'site-foot';
       f.innerHTML = `<div>${RT.esc(RT.VERSION)}</div>` +
-        `<div class="dev-line">${RT.t('開發者', 'Developer')}：${RT.esc(RT.DEV.name)} · ${RT.t('問題與建議', 'Questions & feedback')}：<a href="mailto:${RT.DEV.email}">${RT.DEV.email}</a></div>`;
+        `<div class="dev-line">${RT.t('開發者', 'Developer')}${RT.t('：', ': ')}${RT.esc(RT.DEV.name)} · ${RT.t('問題與建議', 'Questions & feedback')}${RT.t('：', ': ')}<a href="mailto:${RT.DEV.email}">${RT.DEV.email}</a></div>`;
       document.body.appendChild(f);
     }
   };

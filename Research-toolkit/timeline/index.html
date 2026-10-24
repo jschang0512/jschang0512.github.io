@@ -187,7 +187,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261025b"></script>
+<script src="../shared/common.js?v=20261025c"></script>
 <script>
 const T = RT.t;
 const KEY = 'timeline5';
@@ -520,7 +520,7 @@ document.getElementById('paletteSel').innerHTML = Object.entries(PALETTES).map((
 function showTplNote() {
   const t = TEMPLATES[S.tpl];
   document.getElementById('tplNote').innerHTML = t
-    ? `<div class="msg ${t.fit === 'good' ? 'ok' : ''}">${fitBadge(t.fit)} <b>${RT.esc(T(t.zh, t.en))}</b>：${RT.esc(T(t.nzh, t.nen))}</div>` : '';
+    ? `<div class="msg ${t.fit === 'good' ? 'ok' : ''}">${fitBadge(t.fit)} <b>${RT.esc(T(t.zh, t.en))}</b>${T('：', ': ')}${RT.esc(T(t.nzh, t.nen))}</div>` : '';
 }
 function syncInputs() {
   RT.syncForm(form, S);

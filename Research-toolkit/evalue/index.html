@@ -34,6 +34,13 @@
   .res-tbl td.copy button + button { margin-left: 4px; }
   .res-tbl tr:last-child td { border-bottom: 0; }
   .res-tbl .err { text-align: left; color: var(--warn-text); }
+  /* phones: the two copy buttons stack so the table fits the screen */
+  @media (max-width: 640px) {
+    .res-tbl td.copy { white-space: normal; width: 6.5rem; }
+    .res-tbl td.copy button { display: flex; width: 100%; justify-content: center; }
+    .res-tbl td.copy button + button { margin: 4px 0 0; }
+    .res-tbl td.num { font-size: 16px; }
+  }
   .brow { display: grid; grid-template-columns: minmax(0, 1fr) 7rem 30px; gap: 6px; align-items: center; margin-bottom: 6px; }
 </style>
 </head>
@@ -110,7 +117,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261025b"></script>
+<script src="../shared/common.js?v=20261025c"></script>
 <script>
 const T = RT.t;
 const KEY = 'evalue1';

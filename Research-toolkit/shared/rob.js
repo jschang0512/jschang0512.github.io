@@ -129,7 +129,7 @@
     // The grid is narrow: a closed select shows only its short label, the open list shows the full one
     const labelMode = (sel, full) => { for (const o of sel.options) { o.dataset.full ??= o.textContent; o.textContent = full ? o.dataset.full : (o.dataset.short ?? o.dataset.full); } };
     const compactSel = (sel, name) => {
-      const shorten = () => { labelMode(sel, false); const o = sel.selectedOptions[0]; if (name) { sel.title = name + (o && sel.value ? '：' + o.dataset.full : '：' + T('尚未判斷', 'not judged')); sel.setAttribute('aria-label', sel.title); } };
+      const shorten = () => { labelMode(sel, false); const o = sel.selectedOptions[0]; if (name) { sel.title = name + (o && sel.value ? T('：', ': ') + o.dataset.full : T('：', ': ') + T('尚未判斷', 'not judged')); sel.setAttribute('aria-label', sel.title); } };
       sel.addEventListener('mousedown', () => labelMode(sel, true));
       sel.addEventListener('focus', () => labelMode(sel, true));
       sel.addEventListener('change', shorten);

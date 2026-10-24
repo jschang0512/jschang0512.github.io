@@ -91,7 +91,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261025b"></script>
+<script src="../shared/common.js?v=20261025c"></script>
 <script>
 const T = RT.t;
 const KEY = 'panels1';
@@ -149,7 +149,7 @@ function renderPanels() {
       <button class="icon" data-a="del" aria-label="${T(`移除面板 ${letter(i) || i + 1}`, `Remove panel ${letter(i) || i + 1}`)}">✕</button></div>`);
     if (src) el.querySelector('img').src = src;
     const nm = el.querySelector('.name');
-    nm.textContent = `${letter(i) ? letter(i) + '　' : ''}${p.name}`;
+    nm.textContent = `${letter(i) ? letter(i) + T('　', '  ') : ''}${p.name}`;
     nm.appendChild(RT.h(`<small>${src ? `${p.w} × ${p.h} px` : T('圖片未載入：請重新加入此檔案', 'Image not loaded: add this file again')}</small>`));
     const sel = el.querySelector('select');
     sel.value = String(Math.min(cols, p.span || 1));

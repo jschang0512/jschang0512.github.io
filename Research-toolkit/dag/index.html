@@ -112,7 +112,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261025b"></script>
+<script src="../shared/common.js?v=20261025c"></script>
 <script>
 const T = RT.t;
 const KEY = 'dag1';
@@ -324,7 +324,7 @@ function methodsText(a) {
   } else { en += ` Following the back-door criterion, adjustment is needed to block the back-door paths between ${X} and ${Y}.`; zh += `依後門準則，需要調整變項才能阻斷${X}與${Y}之間的後門路徑。`; }
   if (med.length) { en += ` ${listEn(med)} ${pl(med, 'was', 'were')} not adjusted for because ${pl(med, 'it lies', 'they lie')} on the causal pathway from ${X} to ${Y}.`; zh += `${med.join('、')}位於${X}到${Y}的因果路徑上，屬於中介變項，因此未加以調整。`; }
   if (col.length) { en += ` ${listEn(col)} ${pl(col, 'was', 'were')} not adjusted for because ${pl(col, 'it is', 'they are')} affected by both ${X} and ${Y}.`; zh += `${col.join('、')}同時受${X}與${Y}影響，為碰撞變項，因此未加以調整。`; }
-  if (unm.length) { en += ` The back-door ${pl(unm, 'path', 'paths')} through ${listEn(unm)}, which ${pl(unm, 'was', 'were')} not measured, could not be blocked [; its potential impact was assessed with E-values — delete if not done].`; zh += `經過未測量變項${unm.join('、')}的後門路徑無法阻斷［若有進行：並以 E-value 評估其可能影響］。`; }
+  if (unm.length) { en += ` The back-door ${pl(unm, 'path', 'paths')} through ${listEn(unm)}, which ${pl(unm, 'was', 'were')} not measured, could not be blocked [and its potential impact was assessed with E-values — delete if not done].`; zh += `經過未測量變項${unm.join('、')}的後門路徑無法阻斷［若有進行：並以 E-value 評估其可能影響］。`; }
   return { en, zh };
 }
 function renderAnalysis() {
@@ -351,7 +351,7 @@ function renderAnalysis() {
     if (a.tooMany) out.push(`<div class="msg">ℹ ${T('候選變項超過 16 個，未計算最小調整集合。', 'More than 16 candidate variables — minimal adjustment sets were not computed.')}</div>`);
     else {
       const inUse = (s) => s.length === a.Z.size && s.every((v) => a.Z.has(v));
-      const btns = a.sets.map((s, i) => `<button type="button" class="small set-btn" data-set="${i}"${inUse(s) ? ' aria-pressed="true" disabled' : ''}>${inUse(s) ? T('使用中', 'In use') : T('套用', 'Apply')}：${RT.esc(s.length ? s.map(nameOf).join(T('、', ', ')) : T('不需調整', 'none'))}</button>`).join('');
+      const btns = a.sets.map((s, i) => `<button type="button" class="small set-btn" data-set="${i}"${inUse(s) ? ' aria-pressed="true" disabled' : ''}>${inUse(s) ? T('使用中', 'In use') : T('套用', 'Apply')}${T('：', ': ')}${RT.esc(s.length ? s.map(nameOf).join(T('、', ', ')) : T('不需調整', 'none'))}</button>`).join('');
       const head = a.residual
         ? T(`只用已測量變項無法阻斷全部後門路徑。以下最小集合能阻斷其餘路徑，仍有 ${a.residual} 條經過未測量變項：`, `Measured variables cannot block every back-door path. These minimal sets block the rest; ${a.residual} still ${a.residual === 1 ? 'runs' : 'run'} through unmeasured variables:`)
         : T('最小充分調整集合（後門準則，估計總效果）：', 'Minimal sufficient adjustment sets (back-door criterion, total effect):');
