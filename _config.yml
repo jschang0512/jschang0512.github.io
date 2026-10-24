@@ -21,6 +21,9 @@ exclude:
   - NMA/README.md
   - .pages.yml
   - .github
+  - PRODUCT.md
+  - DESIGN.md
+  - .impeccable
 
 markdown: kramdown
 kramdown:
