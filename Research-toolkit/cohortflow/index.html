@@ -21,6 +21,9 @@
 <link rel="stylesheet" href="../shared/style.css?v=20261025a">
 <style>
   .step-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+  /* exclusions inside a group sit indented between the two boxes they connect */
+  .grp-ex { margin: 2px 0 8px 12px; padding: 4px 0 4px 10px; border-left: 1px solid var(--border); }
+  .grp-ex .lbl { margin-bottom: 4px; }
 </style>
 </head>
 <body>
@@ -123,8 +126,8 @@ const EXAMPLE = {
     step({ reasons: [{ t: 'Prior cancer diagnosis', n: '98211' }, { t: 'Dialysis before index date', n: '15403' }, { t: 'Used both drug A and drug B at index', n: '2317' }], text: 'New users of drug A or drug B' }),
   ],
   groups: [
-    { boxes: [{ text: 'Drug A users', n: '612880' }, { text: 'After 1:1 propensity score matching', n: '301226' }] },
-    { boxes: [{ text: 'Drug B users', n: '462657' }, { text: 'After 1:1 propensity score matching', n: '301226' }] },
+    { boxes: [{ text: 'Drug A users', n: '612880' }, { text: 'After 1:1 propensity score matching', n: '', exTitle: 'Excluded', reasons: [{ t: 'Unmatched', n: '311654' }] }] },
+    { boxes: [{ text: 'Drug B users', n: '462657' }, { text: 'After 1:1 propensity score matching', n: '', exTitle: 'Excluded', reasons: [{ t: 'Unmatched', n: '161431' }] }] },
   ],
 };
 let S = RT.load(KEY, DEF);
@@ -218,9 +221,33 @@ function renderGroups() {
       <button class="small" data-a="addB">${T('＋ 下一層方框', '+ Next level box')}</button></div>`);
     const bx = blk.querySelector('.bx');
     g.boxes.forEach((b, bi) => {
+      // exclusions between the box above and this one
+      if (bi > 0) {
+        b.reasons = b.reasons || [];
+        const exb = RT.h(`<div class="grp-ex">
+          <div class="lbl">${T('從上一層排除', 'Excluded from the box above')} <span class="pill grp-ex-sum"></span></div>
+          <label class="field" ${b.reasons.length ? '' : 'hidden'}><span>${T('排除框標題', 'Exclusion box title')}</span><input data-g="exTitle"></label>
+          <div class="grp-rs"></div>
+          <button class="small" data-a="addEx">${T('＋ 排除原因', '+ Reason')}</button></div>`);
+        const ti = exb.querySelector('[data-g="exTitle"]');
+        ti.value = b.exTitle ?? 'Excluded';
+        ti.oninput = () => { b.exTitle = ti.value; update(); };
+        b.reasons.forEach((r, ri) => {
+          const rr = RT.h(`<div class="list-row"><input placeholder="${T('排除原因', 'Reason')}" aria-label="${T(`組別 ${gi + 1} 第 ${bi + 1} 層排除原因 ${ri + 1}`, `Group ${gi + 1} level ${bi + 1} reason ${ri + 1}`)}"><input class="n" inputmode="numeric" placeholder="n" aria-label="${T(`組別 ${gi + 1} 第 ${bi + 1} 層排除原因 ${ri + 1} 人數`, `Group ${gi + 1} level ${bi + 1} reason ${ri + 1} n`)}"><button class="icon" title="${T('刪除', 'Delete')}" aria-label="${T(`刪除組別 ${gi + 1} 第 ${bi + 1} 層排除原因 ${ri + 1}`, `Delete group ${gi + 1} level ${bi + 1} reason ${ri + 1}`)}">✕</button></div>`);
+          const [rt, rn, rd] = rr.children;
+          rt.value = r.t; rn.value = r.n;
+          rt.oninput = () => { r.t = rt.value; update(); };
+          rn.oninput = () => { r.n = rn.value; update(); };
+          rd.onclick = () => { b.reasons.splice(ri, 1); renderGroups(); update(); };
+          exb.querySelector('.grp-rs').appendChild(rr);
+        });
+        exb.querySelector('[data-a="addEx"]').onclick = () => { b.reasons.push({ t: '', n: '' }); if (b.exTitle === undefined) b.exTitle = 'Excluded'; renderGroups(); update(); const ins = document.querySelectorAll(`#groups .block:nth-child(${gi + 1}) .grp-ex`)[bi - 1]?.querySelectorAll('.list-row input:first-child'); ins?.[ins.length - 1]?.focus(); };
+        bx.appendChild(exb);
+      }
       const row = RT.h(`<div class="list-row"><textarea rows="2" placeholder="${bi === 0 ? T('例：Exposed group', 'e.g. Exposed group') : T('例：After matching', 'e.g. After matching')}"></textarea><input class="n" inputmode="numeric" placeholder="n"><button class="icon" title="${T('刪除', 'Delete')}">✕</button></div>`);
       const [t, n, del] = row.children;
       t.value = b.text; n.value = b.n;
+      n.dataset.g = gi; n.dataset.b = bi;
       t.oninput = () => { b.text = t.value; update(); };
       n.oninput = () => { b.n = n.value; update(); };
       del.onclick = () => { g.boxes.splice(bi, 1); if (!g.boxes.length) S.groups.splice(gi, 1); renderGroups(); update(); };
@@ -258,6 +285,21 @@ function computeN() {
     prev = n;
   });
   return out;
+}
+function computeGroups() {
+  return S.groups.filter((g) => g.boxes.length).map((g) => {
+    let prev = null;
+    return g.boxes.map((b, bi) => {
+      const active = bi > 0 ? (b.reasons || []).filter((r) => r.t || r.n) : [];
+      const total = active.length ? RT.sum(active.map((r) => r.n)) : null;
+      let n = N(b.n), auto = false;
+      const derived = prev !== null && total !== null ? prev - total : null;
+      if (n === null && derived !== null) { n = derived; auto = true; }
+      const out = { n, auto, total, derived, prev, active };
+      prev = n;
+      return out;
+    });
+  });
 }
 
 /* ---------------- drawing ---------------- */
@@ -337,7 +379,24 @@ function build(calc) {
 
   const G = S.groups.filter((g) => g.boxes.length);
   if (G.length) {
-    const gg = Math.round(fs * 1.8);
+    const gc = computeGroups();
+    // exclusion boxes inside groups: the first group's go left, the others' right
+    const sideOf = (i) => (i === 0 && G.length > 1 ? 'left' : 'right');
+    const exBox = (i, lv) => {
+      const c = gc[i][lv];
+      if (!c || !c.active.length) return null;
+      const title = (G[i].boxes[lv].exTitle ?? 'Excluded').trim(), esz = exO.size, items = [];
+      if (title) items.push({ text: S.exTotal && c.total !== null ? `${title} ${nt(c.total)}` : title, bold: S.exTitleBold });
+      c.active.forEach((rr, k) => {
+        const bullet = S.bullet === 'num' ? `${k + 1}. ` : S.bullet;
+        items.push({ text: `${bullet}${rr.t}${String(rr.n).trim() !== '' ? ' ' + nt(rr.n) : ''}`, indent: title ? Math.round(esz * 0.4) : 0, hang: bullet ? RT.textWidth(bullet, esz) : 0 });
+      });
+      return RT.box(items, Math.min(EW, Math.max(GW, fs * 12)), exO);
+    };
+    // only a middle group's exclusions land between two groups and need extra room
+    const anyInnerEx = G.some((g, i) => i > 0 && i < G.length - 1 && g.boxes.some((_, lv) => lv > 0 && gc[i][lv].active.length));
+    const exWmax = Math.max(0, ...G.flatMap((g, i) => g.boxes.map((_, lv) => (lv > 0 ? exBox(i, lv)?.w || 0 : 0))));
+    const gg = anyInnerEx ? Math.max(Math.round(fs * 1.8), exWmax + 2 * hgap) : Math.round(fs * 1.8);
     const total = G.length * GW + (G.length - 1) * gg;
     const xs = G.map((_, i) => -total / 2 + i * (GW + gg));
     const levels = Math.max(...G.map((g) => g.boxes.length));
@@ -349,12 +408,37 @@ function build(calc) {
       xs.forEach((x) => (body += RT.arrow([[x + GW / 2, barY], [x + GW / 2, y + baseGap]], ao)));
     }
     y += baseGap;
+    let gapAbove = baseGap;
     for (let lv = 0; lv < levels; lv++) {
-      const boxes = G.map((g) => (g.boxes[lv] ? RT.box(mainItems(g.boxes[lv].text, g.boxes[lv].n), GW, grpO) : null));
+      const boxes = G.map((g, i) => (g.boxes[lv] ? RT.box(mainItems(g.boxes[lv].text, gc[i][lv].n), GW, grpO) : null));
       const h = Math.max(...boxes.filter(Boolean).map((b) => b.h));
-      if (lv > 0) G.forEach((g, i) => { if (boxes[i]) body += RT.arrow([[xs[i] + GW / 2, y - baseGap], [xs[i] + GW / 2, y]], ao); });
+      if (lv > 0) {
+        // the gap above this level grows to fit the tallest exclusion box
+        const exs = G.map((_, i) => (boxes[i] ? exBox(i, lv) : null));
+        const need = Math.max(baseGap, ...exs.filter(Boolean).map((e) => e.h + 2 * vpad));
+        y += need - gapAbove;
+        G.forEach((g, i) => {
+          if (!boxes[i]) return;
+          const cx = xs[i] + GW / 2, top = y - need, my = top + need / 2;
+          body += RT.arrow([[cx, top], [cx, y]], ao);
+          const e = exs[i];
+          if (!e) return;
+          if (sideOf(i) === 'left') {
+            const ex0 = xs[i] - hgap - e.w;
+            body += RT.arrow([[cx, my], [ex0 + e.w, my]], ao);
+            body += RT.drawBox(e, ex0, my - e.h / 2);
+            minX = Math.min(minX, ex0);
+          } else {
+            const ex0 = xs[i] + GW + hgap;
+            body += RT.arrow([[cx, my], [ex0, my]], ao);
+            body += RT.drawBox(e, ex0, my - e.h / 2);
+            maxX = Math.max(maxX, ex0 + e.w);
+          }
+        });
+      }
       boxes.forEach((b, i) => { if (b) body += RT.drawBox(b, xs[i], y, h); });
       y += h + baseGap;
+      gapAbove = baseGap;
     }
     y -= baseGap;
     minX = Math.min(minX, xs[0]);
@@ -398,6 +482,22 @@ function checks(calc) {
     const s = RT.sum(G.map((g) => g.boxes[0].n));
     if (s !== null && s !== last) msgs.push(T(`各組第一層人數加總 ${fmt(s)} ≠ 最後族群 ${fmt(last)}`, `Sum of groups ${fmt(s)} ≠ final population ${fmt(last)}`));
   }
+  // exclusions inside groups
+  const gc = computeGroups();
+  gc.forEach((boxes, gi) => boxes.forEach((c, bi) => {
+    const nIn = document.querySelector(`#groups input[data-g="${gi}"][data-b="${bi}"]`);
+    const bad = c.active.length && !c.auto && c.n !== null && c.derived !== null && c.derived !== c.n;
+    if (bad) msgs.push(T(`組別 ${gi + 1} 第 ${bi + 1} 層：${fmt(c.prev)} − ${fmt(c.total)} = ${fmt(c.derived)}，但人數填 ${fmt(c.n)}`, `Group ${gi + 1} level ${bi + 1}: ${fmt(c.prev)} − ${fmt(c.total)} = ${fmt(c.derived)}, but n is ${fmt(c.n)}`));
+    if (c.n !== null && c.n < 0) msgs.push(T(`組別 ${gi + 1} 第 ${bi + 1} 層：人數為負值`, `Group ${gi + 1} level ${bi + 1}: n is negative`));
+    if (c.active.some((r) => r.t && String(r.n).trim() === '')) msgs.push(T(`組別 ${gi + 1} 第 ${bi + 1} 層：有排除原因未填人數`, `Group ${gi + 1} level ${bi + 1}: a reason has no n`));
+    if (nIn) {
+      nIn.classList.toggle('bad', !!bad || (c.n !== null && c.n < 0));
+      nIn.classList.toggle('auto', c.auto);
+      nIn.placeholder = c.auto ? T('自動 ', 'Auto ') + fmt(c.n) : 'n';
+    }
+    const sumEl = document.querySelectorAll(`#groups .block:nth-child(${gi + 1}) .grp-ex-sum`)[bi - 1];
+    if (sumEl) sumEl.textContent = c.total !== null && c.total > 0 ? T('合計 ', 'Total ') + fmt(c.total) : '';
+  }));
   document.getElementById('msgs').innerHTML = msgs.map((m) => `<div class="msg">⚠ ${RT.esc(m)}</div>`).join('');
   return msgs.length;
 }
