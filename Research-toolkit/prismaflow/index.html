@@ -50,7 +50,11 @@
       <label class="field"><span data-en="Per-database counts (optional, one per line, e.g. <code>PubMed: 523</code>) — Databases total is summed automatically">各資料庫明細（選填，每行一個，例：<code>PubMed: 523</code>）— 會自動加總成 Databases</span>
         <textarea data-k="dbDetail" rows="3" placeholder="PubMed: 523&#10;Embase: 811&#10;Cochrane Library: 97"></textarea></label>
       <label class="check"><input type="checkbox" data-k="registersOn"> <span data-en="Registers were searched (e.g. ClinicalTrials.gov, WHO ICTRP)">有搜尋 registers（例如 ClinicalTrials.gov、WHO ICTRP）</span></label>
-      <label class="nrow" data-show="registersOn"><span>Registers</span><input class="n" data-k="registers" inputmode="numeric"></label>
+      <div data-show="registersOn">
+        <label class="nrow"><span>Registers</span><input class="n" data-k="registers" data-d="registers" inputmode="numeric"></label>
+        <label class="field"><span data-en="Per-register counts (optional, one per line, e.g. &lt;code&gt;ClinicalTrials.gov: 31&lt;/code&gt;) — Registers total is summed automatically">各 register 明細（選填，每行一個，例：<code>ClinicalTrials.gov: 31</code>）— 會自動加總成 Registers</span>
+          <textarea data-k="regDetail" rows="2" placeholder="ClinicalTrials.gov: 31&#10;WHO ICTRP: 15"></textarea></label>
+      </div>
       <div class="sub-h">Records removed before screening:</div>
       <label class="nrow"><span>Duplicate records removed</span><input class="n" data-k="dup" inputmode="numeric"></label>
       <label class="nrow"><span>Marked as ineligible by automation tools</span><input class="n" data-k="autoTools" inputmode="numeric"></label>
@@ -73,6 +77,11 @@
       <h2><span class="step-no">3</span> Included</h2>
       <label class="nrow"><span>Studies included in review</span><input class="n" data-k="studies" data-d="studies" inputmode="numeric"></label>
       <label class="nrow"><span>Reports of included studies</span><input class="n" data-k="reports" data-d="reports" inputmode="numeric"></label>
+      <label class="check" style="margin-top:10px"><input type="checkbox" data-k="subOn"> <span data-en="Add boxes below Included (e.g. studies in the meta-analysis, or by design)">在 Included 下方加入子分類（例如納入統合分析的研究、依研究設計分類）</span></label>
+      <div data-show="subOn">
+        <div id="subs"></div>
+        <div class="btns"><button class="small" data-add="subs" data-en="+ Add box">＋ 新增子分類</button><button class="small" data-paste="subs" data-en="Paste list…">批次貼上…</button></div>
+      </div>
       <div class="btns" style="margin-top:8px">
         <button id="btnFill" class="small" title="把目前自動推算的數字正式寫入欄位" data-en-title="Write the auto-calculated numbers into the fields" data-en="Write auto values into fields">把自動值寫入欄位</button>
       </div>
@@ -169,9 +178,10 @@ const THEMES = {
 const R3 = () => [{ t: 'Reason 1', n: '' }, { t: 'Reason 2', n: '' }, { t: 'Reason 3', n: '' }];
 const DEF = {
   autoFill: true,
-  databases: '', dbDetail: '', registersOn: true, registers: '', dup: '', autoTools: '', otherRemoved: '',
+  databases: '', dbDetail: '', registersOn: true, registers: '', regDetail: '', dup: '', autoTools: '', otherRemoved: '',
   screened: '', excluded: '', sought: '', notRetrieved: '', assessed: '',
   reasons: R3(), studies: '', reports: '',
+  subOn: false, subs: [{ t: 'Studies included in meta-analysis', n: '' }],
   other: false,
   oSources: [{ t: 'Websites', n: '' }, { t: 'Organisations', n: '' }, { t: 'Citation searching', n: '' }],
   oSought: '', oNotRetrieved: '', oAssessed: '', oReasons: R3(),
@@ -181,7 +191,7 @@ const DEF = {
   L: { ...LABELS }, footnote: '',
 };
 const EXAMPLE = RT.merge(DEF, {
-  databases: '', dbDetail: 'PubMed: 523\nEmbase: 811\nCochrane Library: 97', registers: '46',
+  databases: '', dbDetail: 'PubMed: 523\nEmbase: 811\nCochrane Library: 97', registers: '', regDetail: 'ClinicalTrials.gov: 31\nWHO ICTRP: 15',
   dup: '312', autoTools: '0', otherRemoved: '5', excluded: '1021', notRetrieved: '4',
   reasons: [{ t: 'Wrong population', n: '41' }, { t: 'Wrong outcome', n: '37' }, { t: 'Not original research', n: '29' }],
   studies: '26',
@@ -200,7 +210,7 @@ document.getElementById('labels').innerHTML = Object.keys(LABELS).map((k) =>
   `<label class="field"><span>${RT.esc(LABELS[k])}</span><input data-k="L.${k}"></label>`).join('');
 function syncInputs() {
   RT.syncForm(form, S);
-  ['reasons', 'oSources', 'oReasons'].forEach(renderList);
+  ['reasons', 'oSources', 'oReasons', 'subs'].forEach(renderList);
 }
 RT.bindForm(form, () => S, () => update());
 form.addEventListener('click', async (e) => {
@@ -226,7 +236,7 @@ document.getElementById('themeSel').onchange = (e) => {
 };
 document.getElementById('resetLabels').onclick = () => { S.L = { ...LABELS }; RT.syncForm(form, S); update(); };
 function addItem(k, focus = true) {
-  S[k].push({ t: k === 'oSources' ? 'Source' : 'Reason ' + (S[k].length + 1), n: '' });
+  S[k].push({ t: k === 'oSources' ? 'Source' : k === 'subs' ? 'Subgroup ' + (S[k].length + 1) : 'Reason ' + (S[k].length + 1), n: '' });
   renderList(k); update();
   if (focus) { const rows = document.querySelectorAll(`#${k} .list-row`); rows[rows.length - 1]?.querySelector('input')?.select(); }
 }
@@ -262,7 +272,9 @@ function compute() {
   const det = parseDetail(S.dbDetail);
   D.databases = det.length && det.every((d) => d.n !== null) ? RT.sum(det.map((d) => d.n)) : null;
   eff('databases');
-  E.registers = S.registersOn ? g('registers') : null;
+  const rdet = parseDetail(S.regDetail);
+  D.registers = rdet.length && rdet.every((d) => d.n !== null) ? RT.sum(rdet.map((d) => d.n)) : null;
+  if (S.registersOn) eff('registers'); else E.registers = null;
   const ident = E.databases !== null || E.registers !== null ? z(E.databases) + z(E.registers) : null;
   D.screened = ident !== null ? ident - z(g('dup')) - z(g('autoTools')) - z(g('otherRemoved')) : null;
   eff('screened');
@@ -296,12 +308,14 @@ function checks({ D, E, rs }) {
     if (v !== null && D[k] !== null && D[k] !== undefined && v !== D[k]) { bad.add(k); msgs.push({ text: `${why}: ${T('推算為', 'expected')} ${fmt(D[k])}, ${T('目前填', 'entered')} ${fmt(v)}`, k, v: D[k] }); }
   };
   cmp('databases', T('各資料庫明細加總 ≠ Databases（若已去除資料庫內重複可忽略）', 'Per-database sum ≠ Databases (ignore if de-duplicated within databases)'));
+  if (S.registersOn) cmp('registers', T('各 register 明細加總 ≠ Registers', 'Per-register sum ≠ Registers'));
   cmp('screened', T('Records screened = identified − removed', 'Records screened = identified − removed'));
   cmp('sought', 'Reports sought = screened − excluded');
   cmp('assessed', 'Reports assessed = sought − not retrieved');
   if (S.other) cmp('oAssessed', '(Other) assessed = sought − not retrieved');
   cmp('reports', T('Reports of included studies = assessed − 排除原因合計', 'Reports of included = assessed − excluded reasons'));
   if (E.studies !== null && E.reports !== null && E.studies > E.reports) { bad.add('studies'); msgs.push(T('Studies included 通常應 ≤ Reports of included studies', 'Studies included should usually be ≤ reports of included studies')); }
+  if (S.subOn && E.studies !== null) S.subs.filter((r) => N(r.n) !== null && N(r.n) > E.studies).forEach((r) => msgs.push(T(`「${r.t}」的人數大於 Studies included in review`, `“${r.t}” is larger than the studies included in the review`)));
   ['reasons', 'oReasons'].forEach((k) => { if ((k === 'reasons' || S.other) && S[k].some((r) => r.t && !/^Reason \d+$/.test(r.t) && String(r.n).trim() === '')) msgs.push(T('有排除原因尚未填人數', 'Some exclusion reasons have no number')); });
   // field states
   form.querySelectorAll('input[data-k]').forEach((el) => el.classList.toggle('bad', bad.has(el.dataset.k)));
@@ -324,7 +338,7 @@ document.getElementById('msgs').addEventListener('click', (e) => {
 });
 document.getElementById('btnFill').onclick = () => {
   const { E } = compute();
-  for (const k of ['databases', 'screened', 'sought', 'assessed', 'oSought', 'oAssessed', 'reports', 'studies'])
+  for (const k of ['databases', 'registers', 'screened', 'sought', 'assessed', 'oSought', 'oAssessed', 'reports', 'studies'])
     if (String(S[k] ?? '').trim() === '' && E[k] !== null && E[k] !== undefined) S[k] = String(E[k]);
   syncInputs(); update();
   RT.toast(T('已寫入自動推算的數字', 'Auto-calculated values written'));
@@ -344,7 +358,7 @@ function build({ E }) {
   const gx = Number(st.gapX) || 50, gcol = Math.round(gx * 0.8);
   const xDbL = M + (S.phases ? pw + 14 : 0), xDbR = xDbL + bw + gx;
   const xOL = xDbR + bw + gcol, xOR = xOL + bw + gx;
-  const W = (S.other ? xOR : xDbR) + bw + M;
+  let W = (S.other ? xOR : xDbR) + bw + M;
   const gy = Number(st.gapY) || 34;
   RT.beginScene();
   let body = '';
@@ -366,7 +380,8 @@ function build({ E }) {
     {
       L: [{ text: L.identified.replace(/:$/, '') + (S.tplNotes ? '*:' : ':') }, { text: `${L.databases} ${nt(val('databases'))}`, indent: ind },
         ...det.map((d) => ({ text: d.n !== null ? `${d.name} ${nt(d.n)}` : d.name, indent: ind * 2, size: fs - 1 })),
-        S.registersOn && show(S.registers) ? { text: `${L.registers} ${nt(S.registers)}`, indent: ind } : null],
+        S.registersOn && show(val('registers')) ? { text: `${L.registers} ${nt(val('registers'))}`, indent: ind } : null,
+        ...(S.registersOn ? parseDetail(S.regDetail).map((d) => ({ text: d.n !== null ? `${d.name} ${nt(d.n)}` : d.name, indent: ind * 2, size: fs - 1 })) : [])],
       R: [{ text: L.removed }, { text: `${L.dup} ${nt(S.dup)}`, indent: ind },
         show(S.autoTools) ? { text: `${L.autoTools} ${nt(S.autoTools)}`, indent: ind } : null,
         show(S.otherRemoved) ? { text: `${L.otherRemoved} ${nt(S.otherRemoved)}`, indent: ind } : null],
@@ -410,11 +425,34 @@ function build({ E }) {
     const my4 = pos[4].y + pos[4].h / 2;
     body += RT.arrow([[cxO, pos[3].y + pos[3].h], [cxO, my4], [xDbL + bw, my4]], ao);
   }
+  // boxes below Included: one sits straight under it, several branch from it
+  const subs = S.subOn ? S.subs.filter((r) => r.t || r.n) : [];
+  let incBottom = pos[4].y + pos[4].h;
+  if (subs.length) {
+    const sw = subs.length === 1 ? bw : Math.min(bw, Math.max(fs * 9, (W - xDbL - M - gx * (subs.length - 1)) / subs.length));
+    const span = subs.length * sw + (subs.length - 1) * gx;
+    W = Math.max(W, xDbL + span + M);
+    const bxs = subs.map((r) => RT.box([{ text: r.t }, { text: nt(r.n) }], sw, bo));
+    const sh = Math.max(...bxs.map((b) => b.h), fs * 3.4);
+    const sy = incBottom + gy * (subs.length === 1 ? 1 : 1.4);
+    const x0 = subs.length === 1 ? xDbL + (bw - sw) / 2 : xDbL;
+    const centres = bxs.map((b, k) => x0 + k * (sw + gx) + sw / 2);
+    bxs.forEach((b, k) => { body += RT.drawBox(b, x0 + k * (sw + gx), sy, sh); });
+    if (subs.length === 1) body += RT.arrow([[cxL, incBottom], [cxL, sy]], ao);
+    else {
+      const by = incBottom + (sy - incBottom) / 2;
+      body += RT.line([[cxL, incBottom], [cxL, by]], { color: ao.color, sw: ao.sw });
+      body += RT.line([[Math.min(cxL, centres[0]), by], [Math.max(cxL, centres[centres.length - 1]), by]], { color: ao.color, sw: ao.sw });
+      centres.forEach((cx) => { body += RT.arrow([[cx, by], [cx, sy]], ao); });
+    }
+    incBottom = sy + sh;
+    y = Math.max(y, incBottom);
+  }
   if (S.phases) {
     const po = { size: fs, fill: S.c.phase, stroke: st.boxStroke, sw: Number(st.boxSW), radius: Math.min(8, pw / 3), color: st.textColor };
     body += RT.vlabel(M, pos[0].y, pw, pos[0].h, L.phaseId, po);
     body += RT.vlabel(M, pos[1].y, pw, pos[3].y + pos[3].h - pos[1].y, L.phaseScr, po);
-    body += RT.vlabel(M, pos[4].y, pw, pos[4].h, L.phaseInc, po);
+    body += RT.vlabel(M, pos[4].y, pw, incBottom - pos[4].y, L.phaseInc, po);
   }
   const notes = [];
   if (S.tplNotes) notes.push({ text: S.registersOn ? '*Consider, if feasible to do so, reporting the number of records identified from each database or register searched (rather than the total number across all databases/registers).' : '*Consider, if feasible to do so, reporting the number of records identified from each database searched (rather than the total number across all databases).' }, { text: '**If automation tools were used, indicate how many records were excluded by a human and how many were excluded by automation tools.' });
