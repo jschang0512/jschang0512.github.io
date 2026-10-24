@@ -1208,6 +1208,20 @@ function markNext(idx){
   rows.forEach((r, i)=>{ if(i < current) r.classList.add("is-past"); });
   if(next >= 0){ rows[next].classList.add("is-next"); rows[next].insertAdjacentHTML("afterbegin", '<span class="next-pill">下一站</span>'); }
 }
+// scroll the date tabs (not the page) so the chosen day sits in the middle of the bar
+function centerDayTab(tab, smooth){
+  const sc = tab && tab.closest(".daytabs-scroll");
+  if(!sc) return;
+  const left = sc.scrollLeft + (tab.getBoundingClientRect().left - sc.getBoundingClientRect().left) - (sc.clientWidth - tab.offsetWidth) / 2;
+  sc.scrollTo({left: Math.max(0, left), behavior: smooth && !REDUCED ? "smooth" : "auto"});
+}
+// tab widths change once the web font arrives and when the window is resized: keep the active day in view
+function recenterActiveDay(){ centerDayTab(document.querySelector(".daytab.active"), false); }
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(recenterActiveDay);
+window.addEventListener("load", recenterActiveDay);
+let recenterTimer;
+window.addEventListener("resize", ()=>{ clearTimeout(recenterTimer); recenterTimer = setTimeout(recenterActiveDay, 120); });
+
 function activatePage(page, {jump=true, dir=null}={}){
   const isExtra = EXTRA_PAGES.includes(page);
   const btn = isExtra ? document.querySelector(`.util-btn[data-page="${page}"]`)
@@ -1247,7 +1261,7 @@ function activatePage(page, {jump=true, dir=null}={}){
   else if(page==="quake") loadQuakes();
   else if(!isExtra){ buildDayMap(Number(page)); if(TRIP.sun) loadSunTimes(Number(page)); }
 
-  if(!isExtra) btn.scrollIntoView({behavior:"smooth", inline:"center", block:"nearest"});
+  if(!isExtra) centerDayTab(btn, jump);
   if(jump){
     // land on the page's own heading, just under the fixed menu and the date bar
     const bars = document.querySelector(".sb-top")?.offsetHeight || 0;
