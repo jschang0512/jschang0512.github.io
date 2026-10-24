@@ -1048,22 +1048,47 @@
       let minPx = Infinity;
       fig.svg.replace(/font-size="([\d.]+)"/g, (m, v) => { minPx = Math.min(minPx, Number(v)); return m; });
       const leg = $('.export-legible');
-      if (Number.isFinite(minPx)) {
+      leg.innerHTML = ''; leg.className = 'export-legible';
+      // a table tool's Word export is a real table at its own size, so the check only concerns the image formats
+      if (Number.isFinite(minPx) && !(opts.tablePrimary && fmt === 'docx')) {
         const pt = minPx * 0.75 * (g.inches / (fig.w / 96));
         const p = pt.toFixed(1);
+        const pre = opts.tablePrimary ? RT.t('圖片版：', 'Image version: ') : '';
         leg.className = 'export-legible ' + (pt < 6 ? 'bad' : pt < 7 ? 'near' : 'good');
-        leg.textContent = pt < 6
-          ? RT.t(`⚠ 最小字約 ${p} pt，低於多數期刊 6–8 pt 的下限：請放大字級，或改用較寬的版面（例如雙欄 19 cm）。`, `⚠ Smallest text ≈ ${p} pt — below most journals' 6–8 pt minimum. Increase the font size or use a wider layout (e.g. double column, 19 cm).`)
-          : pt < 7
-            ? RT.t(`最小字約 ${p} pt：接近下限，部分期刊要求 7 pt 以上，請對照投稿須知。`, `Smallest text ≈ ${p} pt — close to the limit; some journals ask for 7 pt or more, so check the author guidelines.`)
-            : RT.t(`✓ 最小字約 ${p} pt，符合多數期刊 6–8 pt 以上的要求。`, `✓ Smallest text ≈ ${p} pt, above most journals' 6–8 pt minimum.`);
-      } else { leg.textContent = ''; leg.className = 'export-legible'; }
+        if (pt >= 7) leg.textContent = pre + RT.t(`✓ 最小字約 ${p} pt（多數期刊要求 ≥ 6–8 pt）`, `✓ Smallest text ≈ ${p} pt (most journals ask for ≥ 6–8 pt)`);
+        else {
+          const k = 7 / pt;
+          const fs = opts.fontSize ? Number(opts.fontSize.get()) || 0 : 0;
+          const need = fs ? Math.ceil(fs * k * 2) / 2 : 0;
+          const wider = (o.widthCm || 0) < 19;
+          let t = pre + RT.t(`⚠ 最小字約 ${p} pt（多數期刊要求 ≥ 6–8 pt）。`, `⚠ Smallest text ≈ ${p} pt (most journals ask for ≥ 6–8 pt). `);
+          if (need && need <= 40) t += RT.t(`把字級調到 ${need} px 可達 7 pt`, `Font size ${need} px reaches 7 pt`) + (wider ? RT.t('，或改用較寬的版面。', ', or use a wider layout.') : RT.t('。', '.'));
+          else t += wider ? RT.t('請改用較寬的版面或放大字級。', 'Use a wider layout or a larger font size.') : RT.t('請放大字級或縮小圖寬。', 'Increase the font size or reduce the figure width.');
+          leg.textContent = t;
+          if (need && need <= 40) {
+            const b = document.createElement('button');
+            b.type = 'button'; b.className = 'small'; b.style.marginLeft = '8px';
+            b.textContent = RT.t(`字級改為 ${need} px`, `Set font to ${need} px`);
+            b.onclick = () => opts.fontSize.set(need);
+            leg.appendChild(b);
+          }
+        }
+      }
       const w = $('.ex-width').value;
       host.querySelectorAll('.ex-presets [data-w]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.w === w)));
       RT.save('export', { fmt, dpi: $('.ex-dpi').value, dpiC: $('.ex-dpic').value, widthCm: $('.ex-width').value, gray: $('.ex-gray').checked });
     };
     host.addEventListener('input', info);
     host.addEventListener('change', info);
+    if (opts.tablePrimary) {
+      // the editable Word table is the deliverable; images are the alternative
+      const go = $('.ex-go'), word = $('.ex-word');
+      go.classList.remove('primary'); go.textContent = RT.t('下載圖片', 'Download image');
+      word.classList.add('primary'); word.textContent = RT.t('下載 Word 表格', 'Download Word table');
+      word.parentNode.insertBefore(word, go);
+      $('.ex-fmt').querySelector('option[value="docx"]').remove();
+      if ($('.ex-fmt').value === '' || $('.ex-fmt').value === 'docx') $('.ex-fmt').value = 'png';
+    }
     $('.ex-presets').addEventListener('click', (e) => {
       const b = e.target.closest('[data-w]');
       if (!b) return;

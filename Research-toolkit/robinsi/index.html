@@ -28,8 +28,8 @@
 const D = (code, name) => ({ code, name });
 document.getElementById('app').outerHTML = RT.robPage({
   title: 'ROBINS-I', subZh: '非隨機介入研究偏誤風險評估（ROBINS-I V2）', subEn: 'Risk of bias in non-randomised studies of interventions (ROBINS-I V2)',
-  noteZh: 'ROBINS-I V2（2025-11-20，官方仍標示為草案），適用世代研究，6 個 domain。D1 最佳為「Low（除未控制干擾外）」；D2–D6 為 Low／Moderate／Serious／Critical。整體＝最嚴重的 domain；多個 Moderate 判為 Serious、多個 Serious 判為 Critical 需由評估者手動覆蓋並寫明理由。評估的是特定結果；signalling questions 請用官方文件。可切換 V2 2024-11 封存版或 2016 V1。',
-  noteEn: 'ROBINS-I V2 (2025-11-20, still labelled a draft) for cohort studies, 6 domains. D1 is at best “Low (except for uncontrolled confounding)”; D2–D6 are Low / Moderate / Serious / Critical. Overall = the most severe domain; raising several Moderate to Serious, or several Serious to Critical, is your call: override and give the reason. Assessments are of a specific result; use the official documents for the signalling questions. The archived V2 (Nov 2024) and the 2016 V1 are also available.',
+  noteZh: 'ROBINS-I V2（2025-11-20 草案），6 個 domain。<br>整體＝最嚴重的 domain；多個 Moderate／Serious 需要升級時，請手動覆蓋並寫理由。',
+  noteEn: 'ROBINS-I V2 (2025-11-20 draft), 6 domains.<br>Overall = the most severe domain; to raise several Moderate or Serious judgements, override it and give the reason.',
   niToggle: true,
 });
 RT.initPage();
@@ -66,7 +66,7 @@ RT.robTool({
   judgments: [
     // V2: no plain "Low" for Domain 1 or overall
     { v: 'L', label: 'Low risk of bias', zh: '低偏誤風險', sym: '+', color: '#02C100', rank: 0, alias: ['low', 'l'], allow: (code, variant) => variant === 'v1' || (code !== 'D1' && code !== 'overall') },
-    { v: 'LC', label: 'Low risk of bias except for concerns about uncontrolled confounding', zh: '低（除未控制干擾的疑慮外）', sym: '+', color: '#9ACD32', rank: 1, only: ['D1', 'overall'], variants: ['v2025', 'v2024'], alias: ['low except confounding', 'lc', 'low*'] },
+    { v: 'LC', label: 'Low risk of bias except for concerns about uncontrolled confounding', zh: '低（除未控制干擾的疑慮外）', sym: '+', uiSym: '+*', color: '#9ACD32', rank: 1, only: ['D1', 'overall'], variants: ['v2025', 'v2024'], alias: ['low except confounding', 'lc', 'low*'] },
     { v: 'M', label: 'Moderate risk of bias', zh: '中度偏誤風險', sym: '-', color: '#E2DF07', rank: 2, alias: ['moderate', 'm'] },
     { v: 'S', label: 'Serious risk of bias', zh: '嚴重偏誤風險', sym: 'X', color: '#BF0000', rank: 3, alias: ['serious', 's'] },
     { v: 'C', label: 'Critical risk of bias', zh: '極嚴重偏誤風險', sym: '!', color: '#820000', rank: 4, alias: ['critical', 'c'] },

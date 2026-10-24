@@ -32,7 +32,7 @@
   <div class="btns">
     <button class="small" id="btnUndo" title="復原 (Ctrl+Z)" data-en-title="Undo (Ctrl+Z)">↶</button>
     <button class="small" id="btnRedo" title="重做 (Ctrl+Y)" data-en-title="Redo (Ctrl+Y)">↷</button>
-    <button class="small" id="btnSaveJson" title="把目前所有輸入與設定下載成 .json 檔，之後可用「開啟設定檔」繼續編輯或分享給共同作者" data-en-title="Download all inputs and settings as a .json file; reopen it later or share it with co-authors" data-en="Save project">儲存設定檔</button>
+    <button class="small" id="btnSaveJson" title="下載 .json，之後可再開啟或傳給共同作者" data-en-title="Download a .json file to reopen later or share with co-authors" data-en="Save project">儲存設定檔</button>
     <button class="small" id="btnLoadJson" title="開啟先前儲存的 .json 設定檔，還原所有輸入" data-en-title="Open a previously saved .json project file" data-en="Open project">開啟設定檔</button>
     <button class="small" id="btnExample" data-en="Example">範例</button>
     <button class="small" id="btnReset" data-en="Clear">清空</button>
@@ -51,7 +51,7 @@
 
     <div class="card">
       <h2><span class="step-no">2</span> <span data-en="Selection steps (top to bottom)">篩選步驟（由上往下）</span></h2>
-      <p class="hint" data-en="Each step: exclusion reasons and the remaining n. Leave n blank to use previous − excluded (&lt;span style='color:var(--accent);font-style:italic'&gt;blue italics&lt;/span&gt;). With no reasons only an arrow is drawn; label it with the arrow note (e.g. matching).">每一步填排除原因與剩餘人數。剩餘人數留空＝上一步 − 排除總數（<span style="color:var(--accent);font-style:italic">藍色斜體</span>）。不填排除原因只畫箭頭，可用「箭頭旁說明」標註 matching 等步驟。</p>
+      <p class="hint" data-en="Remaining n left blank is calculated (<span style='color:var(--accent);font-style:italic'>blue italics</span>). With no exclusion reasons only an arrow is drawn.">剩餘人數留空會自動計算（<span style="color:var(--accent);font-style:italic">藍色斜體</span>）。沒有排除原因時只畫箭頭。</p>
       <div id="steps"></div>
       <button class="small" id="addStep" data-en="+ Add step">＋ 新增步驟</button>
     </div>
@@ -148,11 +148,11 @@ function renderSteps() {
       <label class="field"><span>${T('排除框標題', 'Exclusion box title')}</span><input data-f="exTitle"></label>
       <div class="lbl">${T('排除原因', 'Exclusion reasons')} <span class="pill rs-sum"></span></div><div class="rs"></div>
       <label class="check" style="margin:4px 0" title="${T('預設各原因互斥（依序套用，每人只算一次），排除總數＝各原因加總。若一人可同時符合多個原因，請勾選並手動填排除總數。', 'By default reasons are mutually exclusive (applied in sequence, each person counted once) so the total is their sum. If a person can meet several reasons, tick this and enter the total.')}"><input type="checkbox" data-f="overlap"> ${T('原因可重疊（手動填排除總數）', 'Reasons overlap (enter total manually)')}</label>
-      <label class="field ov-total"><span>${T('排除總數（不重複人數）', 'Total excluded (unique persons)')}</span><input class="n" data-f="total" inputmode="numeric"></label>
+      <label class="field ov-total"><span>${T('排除總數（不重複人數）', 'Total excluded (unique persons)')}</span><input class="n" data-f="total" inputmode="numeric"><span class="hint" style="display:block;margin:4px 0 0">${T('一人可符合多個原因時，填不重複的排除總數。', 'When one person can meet several reasons, enter the unique total.')}</span></label>
       <div class="btns"><button class="small" data-a="addR">${T('＋ 排除原因', '+ Reason')}</button><button class="small" data-a="paste">${T('批次貼上…', 'Paste list…')}</button></div>
       <div class="lbl" style="margin-top:10px">${T('排除後族群', 'Remaining population')}</div>
       <div class="list-row wide" style="grid-template-columns:minmax(0,1fr) 110px">
-        <textarea data-f="text" rows="1" placeholder="${T('例：Eligible patients', 'e.g. Eligible patients')}"></textarea><input class="n" data-f="n" inputmode="numeric"></div>
+        <textarea data-f="text" rows="2" aria-label="${T(`步驟 ${si + 1} 排除後族群`, `Step ${si + 1} remaining population`)}" placeholder="${T('例：Eligible patients', 'e.g. Eligible patients')}"></textarea><input class="n" data-f="n" inputmode="numeric" aria-label="${T(`步驟 ${si + 1} 剩餘人數`, `Step ${si + 1} remaining n`)}"></div>
       <div class="step-opts">
         <label><span class="lbl">${T('排除框位置', 'Exclusion side')}</span><select data-f="side">
           <option value="auto">${T('預設', 'Default')}</option><option value="right">${T('右側', 'Right')}</option><option value="left">${T('左側', 'Left')}</option></select></label>
@@ -172,7 +172,7 @@ function renderSteps() {
     blk.querySelector('[data-f="n"]').dataset.step = si;
     const rs = blk.querySelector('.rs');
     st.reasons.forEach((r, ri) => {
-      const row = RT.h(`<div class="list-row"><input placeholder="${T('排除原因', 'Reason')}"><input class="n" inputmode="numeric" placeholder="n"><button class="icon" title="${T('刪除', 'Delete')}">✕</button></div>`);
+      const row = RT.h(`<div class="list-row"><input placeholder="${T('排除原因', 'Reason')}" aria-label="${T(`步驟 ${si + 1} 排除原因 ${ri + 1}`, `Step ${si + 1} reason ${ri + 1}`)}"><input class="n" inputmode="numeric" placeholder="n" aria-label="${T(`步驟 ${si + 1} 排除原因 ${ri + 1} 人數`, `Step ${si + 1} reason ${ri + 1} n`)}"><button class="icon" title="${T('刪除', 'Delete')}" aria-label="${T(`刪除步驟 ${si + 1} 排除原因 ${ri + 1}`, `Delete step ${si + 1} reason ${ri + 1}`)}">✕</button></div>`);
       const [t, n, del] = row.children;
       t.value = r.t; n.value = r.n;
       t.oninput = () => { r.t = t.value; update(); };
@@ -218,7 +218,7 @@ function renderGroups() {
       <button class="small" data-a="addB">${T('＋ 下一層方框', '+ Next level box')}</button></div>`);
     const bx = blk.querySelector('.bx');
     g.boxes.forEach((b, bi) => {
-      const row = RT.h(`<div class="list-row"><textarea rows="1" placeholder="${bi === 0 ? T('例：Exposed group', 'e.g. Exposed group') : T('例：After matching', 'e.g. After matching')}"></textarea><input class="n" inputmode="numeric" placeholder="n"><button class="icon" title="${T('刪除', 'Delete')}">✕</button></div>`);
+      const row = RT.h(`<div class="list-row"><textarea rows="2" placeholder="${bi === 0 ? T('例：Exposed group', 'e.g. Exposed group') : T('例：After matching', 'e.g. After matching')}"></textarea><input class="n" inputmode="numeric" placeholder="n"><button class="icon" title="${T('刪除', 'Delete')}">✕</button></div>`);
       const [t, n, del] = row.children;
       t.value = b.text; n.value = b.n;
       t.oninput = () => { b.text = t.value; update(); };
@@ -399,17 +399,18 @@ function checks(calc) {
     if (s !== null && s !== last) msgs.push(T(`各組第一層人數加總 ${fmt(s)} ≠ 最後族群 ${fmt(last)}`, `Sum of groups ${fmt(s)} ≠ final population ${fmt(last)}`));
   }
   document.getElementById('msgs').innerHTML = msgs.map((m) => `<div class="msg">⚠ ${RT.esc(m)}</div>`).join('');
+  return msgs.length;
 }
 
 let fig;
 const preview = document.getElementById('preview');
-const exporter = RT.exportPanel(document.getElementById('export'), () => fig, 'cohort_flow');
+const exporter = RT.exportPanel(document.getElementById('export'), () => fig, 'cohort_flow', { fontSize: { get: () => S.st.fontSize, set: (v) => { S.st.fontSize = v; syncInputs(); update(); } } });
 const hist = RT.history(() => S, (s) => { S = s; syncInputs(); render(); });
 function render() {
   const calc = computeN();
   try { fig = build(calc); preview.innerHTML = fig.svg; }
   catch (e) { console.error(e); preview.innerHTML = `<div class="msg">⚠ ${RT.esc(e.message)}</div>`; }
-  checks(calc);
+  exporter.setIssues(checks(calc));
   exporter.refresh();
   RT.save(KEY, S);
 }

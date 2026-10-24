@@ -22,7 +22,9 @@
 <style>
   .comp textarea { min-height: 54px; }
   .comp .cols { display: grid; grid-template-columns: 1fr; gap: 6px; }
-  .comp .guide { font-size: 11.5px; color: var(--muted); margin: 2px 0 6px; }
+  .comp .guide { font-size: 12.5px; color: var(--muted); margin: 2px 0 6px; }
+  .tl-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  @media (max-width: 640px) { .tl-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 </style>
 </head>
 <body>
@@ -34,7 +36,7 @@
   <div class="btns">
     <button class="small" id="btnUndo" title="復原 (Ctrl+Z)" data-en-title="Undo (Ctrl+Z)">↶</button>
     <button class="small" id="btnRedo" title="重做 (Ctrl+Y)" data-en-title="Redo (Ctrl+Y)">↷</button>
-    <button class="small" id="btnSaveJson" title="把目前所有輸入與設定下載成 .json 檔，之後可用「開啟設定檔」繼續編輯或分享給共同作者" data-en-title="Download all inputs and settings as a .json file; reopen it later or share it with co-authors" data-en="Save project">儲存設定檔</button>
+    <button class="small" id="btnSaveJson" title="下載 .json，之後可再開啟或傳給共同作者" data-en-title="Download a .json file to reopen later or share with co-authors" data-en="Save project">儲存設定檔</button>
     <button class="small" id="btnLoadJson" title="開啟先前儲存的 .json 設定檔，還原所有輸入" data-en-title="Open a previously saved .json project file" data-en="Open project">開啟設定檔</button>
     <button class="small" id="btnExample" data-en="Example">範例</button>
     <button class="small" id="btnReset" data-en="Clear">清空</button>
@@ -44,7 +46,7 @@
 <main class="tool">
   <section id="form">
     <div class="card">
-      <p class="hint" style="margin:0" data-en="Column 2: the randomised trial you would ideally run (the target trial). Column 3: how each part is emulated with observational data. Eligibility, assignment and the start of follow-up must share one time zero. For the design diagram, use the “Target trial emulation” template in the Timeline tool.">第 2 欄寫理想中的隨機試驗（target trial），第 3 欄寫如何用觀察性資料模擬。資格、分派與追蹤起點要對齊同一個 time zero。研究設計時間軸可用 Timeline 工具的「目標試驗模擬」範本。</p>
+      <p class="hint" style="margin:0" data-en="For each component fill two columns: how the ideal trial does it, and how your data emulate it.">每個要素填兩欄：理想試驗怎麼做、資料中怎麼模擬。</p>
     </div>
 
     <div class="card">
@@ -66,8 +68,20 @@
     </div>
 
     <div class="card">
+      <h2><span class="step-no">3</span> <span data-en="Design diagram">研究設計時間軸</span></h2>
+      <p class="hint" data-en="Days relative to time zero. These go straight into the Timeline tool’s target trial emulation template.">相對 time zero 的天數，會直接帶入 Timeline 工具的「目標試驗模擬」範本。</p>
+      <div class="tl-grid">
+        <label class="field"><span data-en="Eligibility look-back">資格回溯</span><input type="number" min="0" step="1" data-k="tl.look"></label>
+        <label class="field"><span data-en="Washout">Washout</span><input type="number" min="0" step="1" data-k="tl.wash"></label>
+        <label class="field"><span data-en="Grace period">Grace period</span><input type="number" min="0" step="1" data-k="tl.grace"></label>
+        <label class="field"><span data-en="Follow-up (blank = open)">追蹤（留空＝不設上限）</span><input type="number" min="1" step="1" data-k="tl.fu"></label>
+      </div>
+      <button type="button" class="primary small" id="toTimeline" data-en="Make the design diagram →">產生研究設計時間軸 →</button>
+    </div>
+
+    <div class="card">
       <details>
-        <summary><span class="step-no" style="display:inline-grid">3</span> <span data-en="Appearance">外觀：字型、顏色、欄寬</span></summary>
+        <summary><span class="step-no" style="display:inline-grid">4</span> <span data-en="Appearance">外觀：字型、顏色、欄寬</span></summary>
         <div id="styleFields"></div>
         <div class="grid2">
           <label class="field"><span data-en="Table width (px)">表格寬度 (px)</span><input type="number" data-k="tableW" min="500" max="2000" step="10"></label>
@@ -87,6 +101,7 @@
 
   <section class="preview-col">
     <div class="paper" id="preview"></div>
+    <div class="msgs" id="msgs"></div>
     <div class="card" id="export"></div>
   </section>
 </main>
@@ -109,6 +124,7 @@ const comp = (name, g, a = '', b = '', c = '') => ({ name, g, a, b, c });
 const DEF = {
   title: 'Table. Specification and emulation of the target trial',
   h0: 'Protocol component', h1: 'Target trial specification', h2: 'Emulation using observational data', h3: 'Deviation from target trial / justification',
+  tl: { look: '365', wash: '365', grace: '30', fu: '' },
   col4: false, comps: COMPONENTS.map(([n], i) => comp(n, i)),
   tableW: 1000, c0: 20, headFill: '#D9D9D9', firstFill: '#F2F2F2', border: '#000000', borderW: 1, zebra: false, landscape: false, footnote: '',
   st: { ...RT.STYLE_DEF, fontSize: 12.5, lh: 1.3, pad: 7 },
@@ -223,13 +239,20 @@ const docxTable = () => {
 let fig;
 const preview = document.getElementById('preview');
 const exporter = RT.exportPanel(document.getElementById('export'), () => fig, 'target_trial_table', {
-  docx: docxTable, docxLabel: T('Word 表格（可編輯）', 'Word table (editable)'),
+  docx: docxTable, docxLabel: T('Word 表格（可編輯）', 'Word table (editable)'), tablePrimary: true,
+  fontSize: { get: () => S.st.fontSize, set: (v) => { S.st.fontSize = v; syncInputs(); update(); } },
   docxInfo: T('匯出為真正的 Word 表格，可直接編輯文字、欄寬與框線', 'Exports a real Word table — edit text, column widths and borders directly'),
 });
 const hist = RT.history(() => S, (s) => { S = s; syncInputs(); render(); });
 function render() {
   try { fig = build(); preview.innerHTML = fig.svg; }
   catch (e) { console.error(e); preview.innerHTML = `<div class="msg">⚠ ${RT.esc(e.message)}</div>`; }
+  // once anything is written, point out the cells still empty
+  const filled = S.comps.some((c) => (c.a || '').trim() || (c.b || '').trim());
+  const ea = S.comps.filter((c) => !(c.a || '').trim()).length, eb = S.comps.filter((c) => !(c.b || '').trim()).length;
+  const msgs = filled ? [ea && T(`「${S.h1}」欄有 ${ea} 格空白`, `${ea} empty ${ea === 1 ? 'cell' : 'cells'} in “${S.h1}”`), eb && T(`「${S.h2}」欄有 ${eb} 格空白`, `${eb} empty ${eb === 1 ? 'cell' : 'cells'} in “${S.h2}”`)].filter(Boolean) : [];
+  document.getElementById('msgs').innerHTML = msgs.map((m) => `<div class="msg">⚠ ${RT.esc(m)}</div>`).join('');
+  exporter.setIssues(msgs.length);
   exporter.refresh();
   RT.save(KEY, S);
 }
@@ -239,12 +262,21 @@ document.getElementById('btnUndo').onclick = hist.undo;
 document.getElementById('btnRedo').onclick = hist.redo;
 document.getElementById('btnExample').onclick = () => {
   S.comps = COMPONENTS.map(([n], i) => comp(n, i, EX[i][0], EX[i][1], EX[i][2]));
-  S.footnote = 'Example for illustration only. IPCW, inverse probability of censoring weights; SGLT2, sodium–glucose cotransporter 2; DPP-4, dipeptidyl peptidase 4.';
+  S.col4 = true;
+  S.footnote = 'IPCW, inverse probability of censoring weights; SGLT2, sodium–glucose cotransporter 2; DPP-4, dipeptidyl peptidase 4.';
   syncInputs(); update();
   RT.toast(T('已載入範例（虛構研究，僅供示範；按 ↶ 可復原）', 'Example loaded (a fictional study, for illustration; ↶ to undo)'));
 };
 document.getElementById('btnReset').onclick = () => { S.comps = COMPONENTS.map(([n], i) => comp(n, i)); S.footnote = ''; syncInputs(); update(); RT.toast(T('已清空內容（按 ↶ 可復原）', 'Content cleared (↶ to undo)')); };
 document.getElementById('btnSaveJson').onclick = () => RT.downloadJSON(S, 'target_trial_table.json');
+// hand the time settings (and the eligibility / follow-up text) to the Timeline tool
+document.getElementById('toTimeline').onclick = () => {
+  const byName = (re) => S.comps.find((c) => re.test(c.name || '')) || {};
+  const first = (t) => String(t || '').trim().split(/\n/).slice(0, 3).join('\n');
+  const data = { ...S.tl, elig: first(byName(/eligib/i).b || byName(/eligib/i).a), fuText: first(byName(/follow/i).b || byName(/follow/i).a), at: Date.now() };
+  try { localStorage.setItem('rt:handoff-tte', JSON.stringify(data)); } catch (e) { /* ignore */ }
+  location.href = '../timeline/index.html?from=tte';
+};
 document.getElementById('btnLoadJson').onclick = async () => { try { S = RT.merge(DEF, await RT.pickJSON()); syncInputs(); update(); } catch (e) { RT.toast(T('讀取失敗：', 'Could not open file: ') + e.message, 6000); } };
 
 syncInputs();

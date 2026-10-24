@@ -25,10 +25,15 @@
   .trow3 .lbl, .trow4 .lbl { margin-bottom: 2px; }
   .trow4 select { padding: 6px 4px; font-size: 12.5px; }
   .block textarea + textarea { margin-top: 6px; }
-  .tpl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; }
+  .tpl-grid { display: block; }
+  .tpl-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; }
   .tpl { text-align: left; white-space: normal; flex-direction: column; align-items: flex-start; gap: 3px; padding: 7px 9px; height: 100%; }
   .tpl b { font-size: 12.5px; }
-  .tpl span.d { font-size: 11.5px; color: var(--muted); font-weight: 400; }
+  .tpl span.d { font-size: 12.5px; color: var(--muted); font-weight: 400; }
+  .tpl-group { font-size: 12.5px; font-weight: 700; color: var(--muted); margin: 10px 0 4px; }
+  .tpl-group:first-child { margin-top: 0; }
+  .row-more > summary { font-size: 12.5px; font-weight: 400; color: var(--muted); margin-top: 6px; }
+  .row-more[open] > summary { margin-bottom: 4px; }
   .fit { font-size: 12px; font-weight: 700; padding: 1px 7px; border-radius: 999px; }
   .fit.good { background: var(--ok-bg); color: var(--ok-text); }
   .fit.ok { background: var(--warn-bg); color: var(--warn-text); }
@@ -39,13 +44,13 @@
 <body>
 <header class="topbar">
   <a class="back" href="../index.html" data-en="← Home">← 工具首頁</a>
-  <h1>Cohort Study Timeline</h1>
+  <h1>Study Design Timeline</h1>
   <span class="sub" data-en="Study design diagram">研究設計時間軸（Study design diagram）</span>
   <span class="spacer"></span>
   <div class="btns">
     <button class="small" id="btnUndo" title="復原 (Ctrl+Z)" data-en-title="Undo (Ctrl+Z)">↶</button>
     <button class="small" id="btnRedo" title="重做 (Ctrl+Y)" data-en-title="Redo (Ctrl+Y)">↷</button>
-    <button class="small" id="btnSaveJson" title="把目前所有輸入與設定下載成 .json 檔，之後可用「開啟設定檔」繼續編輯或分享給共同作者" data-en-title="Download all inputs and settings as a .json file; reopen it later or share it with co-authors" data-en="Save project">儲存設定檔</button>
+    <button class="small" id="btnSaveJson" title="下載 .json，之後可再開啟或傳給共同作者" data-en-title="Download a .json file to reopen later or share with co-authors" data-en="Save project">儲存設定檔</button>
     <button class="small" id="btnLoadJson" title="開啟先前儲存的 .json 設定檔，還原所有輸入" data-en-title="Open a previously saved .json project file" data-en="Open project">開啟設定檔</button>
   </div>
 </header>
@@ -54,9 +59,8 @@
   <section id="form">
     <div class="card">
       <h2><span class="step-no">1</span> <span data-en="Study design template">研究設計範本</span></h2>
-      <p class="hint" data-en="A template replaces the time windows only; colours and fonts stay. Its day counts are placeholders. ↶ undoes.">套用範本只換時間窗，配色與字型不變。範本的天數是示意值，按 ↶ 可復原。</p>
-      <div class="btns" style="gap:10px;margin-bottom:8px"><span class="fit good" data-en="Commonly used">常用</span><span class="hint" style="margin:0" data-en="this diagram is the usual way to show the design">此圖是該設計的慣用呈現</span><span class="fit ok" data-en="Usable, pair with">可用，需搭配</span><span class="hint" style="margin:0" data-en="also report another figure/table">還需要搭配其他圖表</span></div>
-      <label class="check" style="margin:0 0 8px"><input type="checkbox" data-k="useConv"> <span data-en="When loading a template, also use that design’s <b>conventional presentation</b> (layout, colours, font)">載入範本時，同時套用該設計的<b>學術慣用呈現</b>（版面、配色、字型）</span></label>
+      <p class="hint" data-en="A template replaces all time windows; its day counts are placeholders, so change them to your design. ↶ undoes.">範本會取代全部時間窗；天數是示意值，請改成你的設定。按 ↶ 可復原。</p>
+      <label class="check" style="margin:0 0 8px"><input type="checkbox" data-k="useConv"> <span data-en="Also apply the design’s usual layout and colours">載入範本時一併套用慣用版面與配色</span></label>
       <div class="tpl-grid" id="tplGrid"></div>
       <div id="tplNote" class="tpl-note"></div>
       <details style="margin-top:10px">
@@ -71,22 +75,15 @@
       </details>
     </div>
 
+
+
+
+
     <div class="card">
-      <h2><span class="step-no">2</span> <span data-en="Style">樣式</span></h2>
-      <div class="grid2">
-        <label class="field"><span data-en="Layout">版面</span><select data-k="style">
-          <option value="block" data-en="Block (text inside bars)">區塊式（文字在色條內）</option>
-          <option value="classic" data-en="Classic (label column)">經典（左側標籤欄）</option>
-          <option value="track" data-en="Single track (case-crossover, SCCS)">單軌時間線（case-crossover、SCCS）</option></select></label>
-        <label class="field"><span data-en="Time scale">時間比例</span><select data-k="scale">
-          <option value="sqrt" data-en="Square root (moderate)">平方根（適中壓縮）</option>
-          <option value="linear" data-en="Linear (true proportions)">線性（實際比例）</option>
-          <option value="log" data-en="Log (strong compression)">對數（強壓縮）</option>
-          <option value="equal" data-en="Equal spacing">等距（依時間點排序）</option></select></label>
-        <label class="field"><span data-en="Overall style (one click)">整體風格（一鍵套用）</span><select id="themeSel"></select></label>
-        <label class="field"><span data-en="Colour palette (by row type)">配色（依列類型上色）</span><select id="paletteSel"></select></label>
-      </div>
-      <div id="fontFields"></div>
+      <h2><span class="step-no">2</span> <span data-en="Time windows (one per row)">時間窗（每一列）</span></h2>
+      <p class="hint" data-en="Start and end are days relative to Day 0 (e.g. −365, 0); blank = open end. Hover a field for the label syntax.">起訖填相對 Day 0 的天數（例：−365、0），留空＝開放端點。游標移到欄位上可看標示寫法。</p>
+      <div id="rows"></div>
+      <button class="small" id="addRow" data-en="+ Add row">＋ 新增一列</button>
     </div>
 
     <div class="card">
@@ -102,15 +99,8 @@
     </div>
 
     <div class="card">
-      <h2><span class="step-no">4</span> <span data-en="Time windows (one per row)">時間窗（每一列）</span></h2>
-      <p class="hint" data-en="Start and end are days relative to Day 0 (e.g. −365, 0). Blank = runs to the edge; text only (e.g. Censor) = open end; number plus label (e.g. 280 (delivery)) = drawn at day 280, labelled “delivery”. Type sets the colour.">起訖填相對 Day 0 的天數（例：−365、0）。留空＝延伸到邊緣；只寫文字（如 Censor）＝開放端點；數字加括號（如 280 (delivery)）＝畫在第 280 天並標示 delivery。類型決定顏色。</p>
-      <div id="rows"></div>
-      <button class="small" id="addRow" data-en="+ Add row">＋ 新增一列</button>
-    </div>
-
-    <div class="card">
-      <h2><span class="step-no">5</span> <span data-en="Study period in calendar time">研究期間（日曆時間）</span></h2>
-      <label class="check" style="margin-top:0"><input type="checkbox" data-k="cal.on"> <span data-en="Add a calendar-time panel under the diagram (tells readers <i>when</i> the cohort was assembled and followed)">在設計圖下方加上日曆時間面板（讓讀者知道世代<i>何時</i>收案與追蹤）</span></label>
+      <h2><span class="step-no">4</span> <span data-en="Study period in calendar time">研究期間（日曆時間）</span></h2>
+      <label class="check" style="margin-top:0"><input type="checkbox" data-k="cal.on"> <span data-en="Add a calendar-time panel (enrolment and follow-up periods)">加上日曆時間面板（收案與追蹤期間）</span></label>
       <div data-show="cal.on">
         <label class="field"><span data-en="Panel title">面板標題</span><input data-k="cal.title"></label>
         <p class="hint" data-en="Dates as &lt;code&gt;YYYY&lt;/code&gt;, &lt;code&gt;YYYY-MM&lt;/code&gt; or &lt;code&gt;YYYY-MM-DD&lt;/code&gt;. A row with only a start date is drawn as a point.">日期填 <code>YYYY</code>、<code>YYYY-MM</code> 或 <code>YYYY-MM-DD</code>。只填起點會畫成時間點。</p>
@@ -120,8 +110,26 @@
     </div>
 
     <div class="card">
+      <h2><span class="step-no">5</span> <span data-en="Style">樣式</span></h2>
+      <div class="grid2">
+        <label class="field"><span data-en="Layout">版面</span><select data-k="style">
+          <option value="block" data-en="Block (text inside bars)">區塊式（文字在色條內）</option>
+          <option value="classic" data-en="Classic (label column)">經典（左側標籤欄）</option>
+          <option value="track" data-en="Single track (case-crossover, SCCS)">單軌時間線（case-crossover、SCCS）</option></select></label>
+        <label class="field"><span data-en="Time scale">時間比例</span><select data-k="scale">
+          <option value="sqrt" data-en="Square root (moderate)">平方根（適中壓縮）</option>
+          <option value="linear" data-en="Linear (true proportions)">線性（實際比例）</option>
+          <option value="log" data-en="Log (strong compression)">對數（強壓縮）</option>
+          <option value="equal" data-en="Equal spacing">等距（依時間點排序）</option></select></label>
+        <label class="field"><span data-en="Style">風格</span><select id="themeSel"></select></label>
+      </div>
+      <div id="fontFields"></div>
+    </div>
+
+    <div class="card">
       <details>
         <summary><span class="step-no" style="display:inline-grid">6</span> <span data-en="Detailed appearance">細部外觀</span></summary>
+        <label class="field"><span data-en="Colour palette (overrides the style’s colours)">配色（覆蓋風格的顏色）</span><select id="paletteSel"></select></label>
         <div class="sub-h" data-en="Bars">色條</div>
         <div class="grid2">
           <label class="field"><span data-en="Corner radius (px)">圓角 (px)</span><input type="number" data-k="barR" min="0" max="30" step="1"></label>
@@ -198,7 +206,7 @@ const KINDS = [
 ];
 const SHAPES = () => [['bar', T('色段', 'Segment')], ['event', T('事件標記', 'Event marker')], ['bracket', T('括號區間', 'Bracket')]];
 const PALETTES = {
-  bold: { zh: '粗色塊（參考圖）', en: 'Bold blocks (reference figure)', c: { screen: '#375482', incl: '#375482', excl: '#D05353', wash: '#7F7F7F', cov: '#9933FF', expo: '#ED7D31', fu: '#00B050', out: '#C00000', other: '#1F9C9C' } },
+  bold: { zh: '深色色塊', en: 'Bold blocks', c: { screen: '#375482', incl: '#375482', excl: '#D05353', wash: '#7F7F7F', cov: '#9933FF', expo: '#ED7D31', fu: '#00B050', out: '#C00000', other: '#1F9C9C' } },
   pastel: { zh: '柔和粉彩（Schneeweiss / REPEAT）', en: 'Soft pastel (Schneeweiss / REPEAT)', c: { screen: '#E7E6E6', incl: '#F4CCCC', excl: '#F4CCCC', wash: '#D9D2E9', cov: '#CFE2F3', expo: '#FCE5CD', fu: '#D9EAD3', out: '#EAD1DC', other: '#FFF2CC' } },
   okabe: { zh: '色盲友善（Okabe–Ito）', en: 'Colour-blind safe (Okabe–Ito)', c: { screen: '#0072B2', incl: '#56B4E9', excl: '#D55E00', wash: '#999999', cov: '#CC79A7', expo: '#E69F00', fu: '#009E73', out: '#F0E442', other: '#8C8C8C' } },
   tableau: { zh: '現代（Tableau 10）', en: 'Modern (Tableau 10)', c: { screen: '#4E79A7', incl: '#76B7B2', excl: '#E15759', wash: '#BAB0AC', cov: '#B07AA1', expo: '#F28E2B', fu: '#59A14F', out: '#EDC948', other: '#9C755F' } },
@@ -208,10 +216,10 @@ const PALETTES = {
 };
 const THEMES = {
   schneeweiss: { zh: 'Schneeweiss / REPEAT 設計圖風格', en: 'Schneeweiss / REPEAT design-diagram style', palette: 'pastel',
-    s: { style: 'block', st: { font: 'Arial', fontSize: 13, lh: 1.3 }, bgOn: false, barR: 0, barBW: 0.8, barBC: '#555555', titleBold: true, winItalic: false, d0Top: true, d0Color: '#000000', d0W: 1.5, d0Dash: 'solid', axis: false, winParen: true, day0Pos: 55 } },
+    s: { style: 'block', st: { font: 'Arial', fontSize: 16.5, lh: 1.3 }, blockW: 1000, bgOn: false, barR: 0, barBW: 0.8, barBC: '#555555', titleBold: true, winItalic: false, d0Top: true, d0Color: '#000000', d0W: 1.5, d0Dash: 'solid', axis: false, winParen: true, day0Pos: 55 } },
   track: { zh: '單軌學術風（灰階、Arial）', en: 'Single-track academic (grayscale, Arial)', palette: 'gray',
-    s: { style: 'track', st: { font: 'Arial', fontSize: 13, lh: 1.3 }, bgOn: false, barR: 0, barBW: 0.8, barBC: '#333333', titleBold: true, winItalic: false, d0Color: '#000000', d0W: 1.5, d0Dash: 'dash', axis: true, axisColor: '#333333', trackTicks: true } },
-  ref: { zh: '參考圖風格（深色色塊、灰底、Times）', en: 'Reference figure (bold blocks, grey background, Times)', palette: 'bold',
+    s: { style: 'track', st: { font: 'Arial', fontSize: 18, lh: 1.3 }, bgOn: false, barR: 0, barBW: 0.8, barBC: '#333333', titleBold: true, winItalic: false, d0Color: '#000000', d0W: 1.5, d0Dash: 'dash', axis: true, axisColor: '#333333', trackTicks: true } },
+  ref: { zh: '深色色塊（灰底、Times）', en: 'Bold blocks (grey background, Times)', palette: 'bold',
     s: { style: 'block', st: { font: 'Times New Roman', fontSize: 15, lh: 1.38 }, bgOn: true, bgColor: '#F2F2F2', barR: 0, barBW: 0, titleBold: true, winItalic: false, d0Top: false, d0Color: '#BFBFBF', d0W: 9, d0Dash: 'solid', axis: true, axisColor: '#263238', winParen: true, day0Pos: 48 } },
   repeat: { zh: '學術經典（Schneeweiss / REPEAT）', en: 'Academic classic (Schneeweiss / REPEAT)', palette: 'pastel',
     s: { style: 'classic', st: { font: 'Arial', fontSize: 13, lh: 1.3 }, barR: 0, barBW: 0.9, barBC: '#333333', titleBold: false, winItalic: false, d0Color: '#000000', d0W: 1.2, d0Dash: 'dash', labelAlign: 'left' } },
@@ -235,7 +243,7 @@ const TEMPLATES = {
     fit: 'good', nzh: '資料庫世代研究正是這種圖的原本用途。', nen: 'Database cohort studies are exactly what this diagram was designed for.',
     scale: 'sqrt', unit: 'Days', openL: '- ∞', openR: 'Censor/ Events', day0Title: 'Index date', day0Text: 'Day [0]', footnote: '',
     rows: [
-      row({ kind: 'screen', label: 'Initial qualification screening window', details: 'T2DM diagnosis between 2009-01-01 and 2019-12-31', s: '2009-01-01', e: '0' }),
+      row({ kind: 'screen', label: 'Initial qualification screening window', details: 'T2DM diagnosis between 2009-01-01 and 2019-12-31', s: '', e: '0' }),
       row({ kind: 'incl', label: 'Inclusion Assessment window', details: '1. Aged > 40y\n2. T2DM with complications: neurological, renal, cardiovascular disease.', s: '0', e: '0' }),
       row({ kind: 'excl', label: 'Exclusion Assessment window', details: '1. T1DM\n2. T2DM without chronic complications\n3. No previous visit history\n4. Dementia diagnosis\n5. No DM treatment', s: '', e: '0' }),
       row({ kind: 'cov', label: 'Demographic factors collection window', s: '0', e: '0' }),
@@ -410,7 +418,7 @@ const CASE_CAL = (label) => CAL({ on: false, rows: [
   { label: 'Data available', start: '2008-01-01', end: '2020-12-31', kind: 'other', shape: 'bar' },
   { label, start: '2010-01-01', end: '2020-12-31', kind: 'out', shape: 'bar' },
 ] });
-Object.assign(TEMPLATES.t2dm, { conv: { theme: 'ref' }, cal: CAL({ on: false, rows: [
+Object.assign(TEMPLATES.t2dm, { conv: { theme: 'schneeweiss' }, cal: CAL({ on: false, rows: [
   { label: 'Data available', start: '2008-01-01', end: '2020-12-31', kind: 'other', shape: 'bar' },
   { label: 'T2DM diagnosis (cohort entry) period', start: '2009-01-01', end: '2019-12-31', kind: 'screen', shape: 'bar' },
   { label: 'End of follow-up', start: '2020-12-31', end: '', kind: 'fu', shape: 'event' },
@@ -450,8 +458,8 @@ Object.assign(TEMPLATES.pregDel, {
 
 const DEF = {
   useConv: true, d0Top: false, cal: CAL({ on: false }),
-  style: 'block', palette: 'bold', scale: 'sqrt', unit: 'Days', openL: '- ∞', openR: 'Censor/ Events',
-  st: { font: 'Times New Roman', fontCustom: '', fontSize: 15, lh: 1.38 },
+  style: 'block', palette: 'pastel', scale: 'sqrt', unit: 'Days', openL: '- ∞', openR: 'Censor/ Events',
+  st: { font: 'Arial', fontCustom: '', fontSize: 15, lh: 1.3 },
   day0Title: 'Index date', day0Text: 'Day [0]', footnote: '', rows: [], refLines: [], tpl: 't2dm',
   labelW: 240, plotW: 560, barH: 24, blockW: 1100, day0Pos: 48, rowGap: 7, padX: 18, indent: 20, labelAlign: 'left',
   barR: 0, barBW: 0, barBC: '#333333', titleBold: true, winItalic: false, trackTicks: true,
@@ -493,8 +501,18 @@ const form = document.getElementById('form');
 document.getElementById('fontFields').innerHTML = RT.styleFieldsHTML(['font', 'fontSize', 'lh']);
 document.getElementById('refs').innerHTML = RT.refsHTML([RT.REFS.schneeweiss, RT.REFS.acnu, RT.REFS.tte, RT.REFS.tteJama, RT.REFS.cco, RT.REFS.sccs, RT.REFS.okabe, RT.REFS.record, RT.REFS.libs], [T('設計圖依 Schneeweiss 等人（2019）的架構繪製，並非其官方範本的複製；時間窗括號 [a, b] 表示含起訖兩端的天數。', 'Diagrams follow the framework of Schneeweiss et al. (2019) but are not copies of their official templates; brackets [a, b] denote inclusive day ranges.')]);
 const fitBadge = (f) => (f === 'good' ? `<span class="fit good">${T('常用', 'Common')}</span>` : `<span class="fit ok">${T('可用，需搭配', 'Usable, pair with')}</span>`);
-document.getElementById('tplGrid').innerHTML = Object.entries(TEMPLATES).map(([id, t]) =>
-  `<button class="tpl" data-tpl="${id}">${fitBadge(t.fit)}<b>${RT.esc(T(t.zh, t.en))}</b><span class="d">${RT.esc(T(t.dzh, t.den))}</span></button>`).join('');
+const TPL_GROUPS = [
+  [T('世代研究', 'Cohort designs'), ['t2dm', 'acnu', 'itt', 'general', 'latency', 'landmark', 'tte']],
+  [T('以病例為基礎', 'Case-based designs'), ['ncc', 'cco', 'sccs']],
+  [T('懷孕', 'Pregnancy'), ['pregLmp', 'pregDel']],
+];
+{
+  const listed = new Set(TPL_GROUPS.flatMap((g) => g[1]));
+  const rest = Object.keys(TEMPLATES).filter((id) => !listed.has(id));
+  if (rest.length) TPL_GROUPS.push([T('其他', 'Other'), rest]);
+  const card = (id) => { const t = TEMPLATES[id]; return t ? `<button class="tpl" data-tpl="${id}" title="${t.fit === 'good' ? T('此設計的慣用呈現', 'The usual diagram for this design') : T('需搭配其他圖表', 'Pair with another figure')}">${fitBadge(t.fit)}<b>${RT.esc(T(t.zh, t.en))}</b><span class="d">${RT.esc(T(t.dzh, t.den))}</span></button>` : ''; };
+  document.getElementById('tplGrid').innerHTML = TPL_GROUPS.map(([name, ids]) => `<div class="tpl-group">${name}</div><div class="tpl-row">${ids.map(card).join('')}</div>`).join('');
+}
 document.getElementById('themeSel').innerHTML = `<option value="">${T('選擇風格…', 'Choose a style…')}</option>` +
   Object.entries(THEMES).map(([id, t]) => `<option value="${id}">${RT.esc(T(t.zh, t.en))}</option>`).join('');
 document.getElementById('paletteSel').innerHTML = Object.entries(PALETTES).map(([id, p]) => `<option value="${id}">${RT.esc(T(p.zh, p.en))}</option>`).join('');
@@ -566,6 +584,7 @@ function renderRefs() {
 }
 document.getElementById('addRef').onclick = () => { (S.refLines ||= []).push({ t: '30', label: '' }); renderRefs(); update(); };
 const POS = () => [['auto', T('自動', 'Auto')], ['in', T('色條內', 'Inside')], ['out', T('色條外', 'Outside')]];
+const openRows = new Set();
 function renderRows() {
   const host = document.getElementById('rows');
   host.innerHTML = '';
@@ -578,26 +597,34 @@ function renderRows() {
       <textarea data-f="label" rows="1" placeholder="${T('標題，例：Covariate assessment window', 'Title, e.g. Covariate assessment window')}"></textarea>
       <textarea data-f="details" rows="2" placeholder="${T('細項（選填，每行一項），例：1. Aged > 40y', 'Details (optional, one per line), e.g. 1. Aged > 40y')}"></textarea>
       <div class="trow3">
-        <label><span class="lbl">${T('起點', 'Start')}</span><input class="n" data-f="s" placeholder="${T('開放', 'open')}"></label>
-        <label><span class="lbl">${T('終點', 'End')}</span><input class="n" data-f="e" placeholder="${T('開放', 'open')}"></label>
-        <label><span class="lbl">${T('區間文字（留空自動）', 'Window label (blank = auto)')}</span><input data-f="win"></label>
-      </div>
-      <div class="trow4">
+        <label><span class="lbl">${T('起點', 'Start')}</span><input class="n" data-f="s" placeholder="${T('開放', 'open')}" title="${T('數字加括號可加標示，例：280 (delivery)', 'Add a label in brackets, e.g. 280 (delivery)')}"></label>
+        <label><span class="lbl">${T('終點', 'End')}</span><input class="n" data-f="e" placeholder="${T('開放', 'open')}" title="${T('只寫文字（如 Censor）＝開放端點；數字加括號可加標示', 'Text only (e.g. Censor) = open end; add a label in brackets')}"></label>
         <label><span class="lbl">${T('類型', 'Type')}</span><select data-f="kind">${KINDS.map(([v, zh, en]) => `<option value="${v}">${T(zh, en)}</option>`).join('')}</select></label>
+      </div>
+      <details class="row-more"${openRows.has(i) ? ' open' : ''}><summary>${T('更多：區間文字、形狀、顏色', 'More: window label, shape, colours')}</summary>
+      <label class="field" style="margin-top:4px"><span class="lbl">${T('區間文字（留空自動）', 'Window label (blank = auto)')}</span><input data-f="win"></label>
+      <div class="trow4">
         <label><span class="lbl">${T('形狀', 'Shape')}</span><select data-f="shape">${SHAPES().map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></label>
         <label><span class="lbl">${T('文字', 'Text')}</span><select data-f="pos">${POS().map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></label>
-        <label title="${T('色條顏色（自訂會覆蓋配色）', 'Bar colour (overrides the palette)')}"><span class="lbl">${T('色', 'Bar')}</span><input type="color" data-f="color"></label>
-        <label title="${T('文字顏色（黑色＝自動）', 'Text colour (black = auto)')}"><span class="lbl">${T('字', 'Text')}</span><input type="color" data-f="tcolor"></label>
-      </div></div>`);
+        <label title="${T('色條顏色（自訂會覆蓋配色）', 'Bar colour (overrides the palette)')}"><span class="lbl">${T('色條', 'Bar')}</span><input type="color" data-f="color"></label>
+        <label><span class="lbl">${T('文字色', 'Text')}</span><input type="color" data-f="tcolor"></label>
+      </div>
+      <label class="check"><input type="checkbox" class="tc-on"> ${T('自訂文字顏色（不勾＝依底色自動）', 'Custom text colour (off = automatic)')}</label>
+      </details></div>`);
+    blk.querySelector('.row-more').addEventListener('toggle', (e) => { if (e.target.open) openRows.add(i); else openRows.delete(i); });
     blk.querySelectorAll('[data-f]').forEach((el) => {
       const f = el.dataset.f;
-      el.value = r[f] || ({ tcolor: '#000001', pos: 'auto', kind: 'other', shape: 'bar', color: pal[r.kind] || pal.other }[f] ?? '');
+      el.value = r[f] || ({ tcolor: '#000000', pos: 'auto', kind: 'other', shape: 'bar', color: pal[r.kind] || pal.other }[f] ?? '');
+      if (f === 'tcolor') el.disabled = !r.tcolor;
       el.oninput = () => {
-        r[f] = f === 'tcolor' && el.value === '#000001' ? '' : el.value;
+        r[f] = el.value;
         if (f === 'kind') { r.color = pal[r.kind] || pal.other; blk.querySelector('[data-f="color"]').value = r.color; }
         update();
       };
     });
+    const tcOn = blk.querySelector('.tc-on'), tc = blk.querySelector('[data-f="tcolor"]');
+    tcOn.checked = !!r.tcolor;
+    tcOn.onchange = () => { tc.disabled = !tcOn.checked; r.tcolor = tcOn.checked ? tc.value : ''; update(); };
     blk.querySelector('[data-f="win"]').placeholder = autoWin(r);
     blk.querySelector('.block-head').onclick = (e) => {
       const a = e.target.dataset.a;
@@ -1080,7 +1107,7 @@ function build() {
 
 let fig;
 const preview = document.getElementById('preview');
-const exporter = RT.exportPanel(document.getElementById('export'), () => fig, 'study_timeline');
+const exporter = RT.exportPanel(document.getElementById('export'), () => fig, 'study_timeline', { fontSize: { get: () => S.st.fontSize, set: (v) => { S.st.fontSize = v; syncInputs(); update(); } } });
 const hist = RT.history(() => S, (s) => { S = s; syncInputs(); render(); });
 function render() {
   try {
@@ -1104,6 +1131,26 @@ document.getElementById('btnLoadJson').onclick = async () => { try { S = RT.merg
 syncInputs();
 render();
 hist.push();
+(() => {
+  if (new URLSearchParams(location.search).get('from') !== 'tte') return;
+  let h = null;
+  try { h = JSON.parse(localStorage.getItem('rt:handoff-tte') || 'null'); localStorage.removeItem('rt:handoff-tte'); } catch (e) { /* ignore */ }
+  history.replaceState(null, '', location.pathname);
+  if (!h) return;
+  const d = (v, def) => (String(v ?? '').trim() === '' ? def : String(Math.round(Number(v))));
+  const look = d(h.look, '365'), wash = d(h.wash, '365'), grace = d(h.grace, '30'), fu = String(h.fu ?? '').trim() === '' ? '' : d(h.fu, '');
+  loadTemplate(S, 'tte');
+  const byKind = (k) => S.rows.find((r) => r.kind === k);
+  const elig = byKind('incl'), w = byKind('wash'), cov = byKind('cov'), gp = byKind('expo'), f = byKind('fu');
+  if (elig) { elig.s = '-' + look; if (h.elig) elig.details = h.elig; }
+  if (w) { w.s = '-' + wash; w.e = '-1'; if (wash === '0') S.rows.splice(S.rows.indexOf(w), 1); }
+  if (cov) cov.s = '-' + look;
+  if (gp) { gp.e = grace; if (grace === '0') S.rows.splice(S.rows.indexOf(gp), 1); }
+  if (f) { f.e = fu; if (h.fuText) f.details = h.fuText; }
+  S.refLines = grace === '0' ? [] : [{ t: grace, label: 'End of grace period' }];
+  syncInputs(); update();
+  RT.toast(T('已依 Target Trial 規格表的時間設定產生時間軸（按 ↶ 可回到原本的圖）', 'Diagram made from the target trial table’s time settings (↶ returns to your previous diagram)'), 6000);
+})();
 </script>
 </body>
 </html>

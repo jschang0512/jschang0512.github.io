@@ -29,7 +29,7 @@
   <div class="btns">
     <button class="small" id="btnUndo" title="復原 (Ctrl+Z)" data-en-title="Undo (Ctrl+Z)">↶</button>
     <button class="small" id="btnRedo" title="重做 (Ctrl+Y)" data-en-title="Redo (Ctrl+Y)">↷</button>
-    <button class="small" id="btnSaveJson" title="把目前所有輸入與設定下載成 .json 檔，之後可用「開啟設定檔」繼續編輯或分享給共同作者" data-en-title="Download all inputs and settings as a .json file; reopen it later or share it with co-authors" data-en="Save project">儲存設定檔</button>
+    <button class="small" id="btnSaveJson" title="下載 .json，之後可再開啟或傳給共同作者" data-en-title="Download a .json file to reopen later or share with co-authors" data-en="Save project">儲存設定檔</button>
     <button class="small" id="btnLoadJson" title="開啟先前儲存的 .json 設定檔，還原所有輸入" data-en-title="Open a previously saved .json project file" data-en="Open project">開啟設定檔</button>
     <button class="small" id="btnExample" data-en="Example">範例</button>
     <button class="small" id="btnReset" data-en="Clear">清空</button>
@@ -428,7 +428,7 @@ function build({ E }) {
 
 let fig;
 const preview = document.getElementById('preview');
-const exporter = RT.exportPanel(document.getElementById('export'), () => fig, 'PRISMA_flow');
+const exporter = RT.exportPanel(document.getElementById('export'), () => fig, 'PRISMA_flow', { fontSize: { get: () => S.st.fontSize, set: (v) => { S.st.fontSize = v; syncInputs(); update(); } } });
 const hist = RT.history(() => S, (s) => { S = s; syncInputs(); render(); });
 function render() {
   const calc = compute();

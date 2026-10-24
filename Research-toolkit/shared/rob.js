@@ -10,8 +10,10 @@
   @media (min-width: 961px) { .tool { grid-template-columns: minmax(340px, 600px) minmax(0, 1fr); } }
   .rob-wrap { overflow-x: auto; margin: 0 -4px; }
   .rob-tbl { border-collapse: separate; border-spacing: 3px; font-size: 12.5px; }
-  .rob-tbl th { font-weight: 600; color: var(--muted); font-size: 11.5px; text-align: center; padding: 0 2px; white-space: nowrap; }
+  .rob-tbl th { font-weight: 600; color: var(--muted); font-size: 12.5px; text-align: center; padding: 0 2px; white-space: nowrap; }
   .rob-tbl td.nm input { width: 124px; }
+  /* phones: the study name stays visible while the judgements scroll sideways */
+  .rob-tbl td.nm, .rob-tbl th:first-child { position: sticky; left: 0; z-index: 1; background: var(--bg); }
   .rob-tbl select { width: 50px; padding: 5px 2px; text-align: center; text-align-last: center; font-weight: 700; border-radius: 6px; cursor: pointer; }
   .rob-tbl select.ov { width: 92px; }
   .rob-tbl .det td { padding: 6px 4px 10px; }
@@ -51,6 +53,16 @@
 
     const domains = () => cfg.variants[S.variant].domains.map((d) => ({ ...d, name: (S.names[S.variant] || {})[d.code] || d.name }));
     const colorOf = (v) => (J[v] ? PALETTES[S.palette]?.map(J[v]) || J[v].color : '#E0E0E0');
+    const lum = (rgb) => { const f = (x) => { x /= 255; return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(rgb[0]) + 0.7152 * f(rgb[1]) + 0.0722 * f(rgb[2]); };
+    const uiPair = (c) => {
+      const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(c || ''); if (!m) return { bg: c, fg: '' };
+      let rgb = m.slice(1).map((x) => parseInt(x, 16));
+      const dark = [31, 41, 51];
+      const cr = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+      if (cr(rgb, dark) >= 4.5) return { bg: c, fg: '#1F2933' };
+      for (let i = 0; i < 12 && cr(rgb, [255, 255, 255]) < 4.5; i++) rgb = rgb.map((x) => Math.round(x * 0.92));
+      return { bg: '#' + rgb.map((x) => x.toString(16).padStart(2, '0')).join(''), fg: '#FFFFFF' };
+    };
     const textOn = (c) => { const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(c || ''); if (!m) return '#000'; const [r, g, b] = m.slice(1).map((x) => parseInt(x, 16)); return 0.299 * r + 0.587 * g + 0.114 * b < (S.palette === 'modern' ? 150 : 110) ? '#FFFFFF' : '#1F2933'; };
     const inVariant = (j) => !j.variants || j.variants.includes(S.variant);
     const allowed = (code) => cfg.judgments.filter((j) => inVariant(j) && (!j.optional || S.allowNI) && (!j.only || j.only.includes(code)) && (!j.allow || j.allow(code, S.variant)));
@@ -72,7 +84,19 @@
       renderDomains(); renderGrid(); renderLegend();
     }
     RT.bindForm(form, () => S, () => { renderGrid(); renderLegend(); update(); });
+    // "Bias in selection of participants into the study (or into the analysis)" → "selection participants into study"
+    const domainKey = (name) => String(name || '').toLowerCase().replace(/\(.*?\)/g, ' ').replace(/^bias (due to|in) /, '')
+      .replace(/\b(the|of)\b/g, ' ').replace(/outcomes/g, 'outcome').replace(/\s+/g, ' ').trim();
     document.getElementById('variantSel').onchange = (e) => {
+      const from = cfg.variants[S.variant].domains, to = cfg.variants[e.target.value].domains;
+      const map = {};   // new code → old code with the same domain
+      to.forEach((d) => { const hit = from.find((o) => domainKey(o.name) === domainKey(d.name)); if (hit) map[d.code] = hit.code; });
+      const fresh = to.filter((d) => !map[d.code]).map((d) => d.code);
+      S.studies.forEach((st) => {
+        const j = {}, sup = {};
+        to.forEach((d) => { if (map[d.code]) { j[d.code] = st.j[map[d.code]] || ''; sup[d.code] = (st.sup || {})[map[d.code]] || ''; } });
+        st.j = j; st.sup = sup;
+      });
       S.variant = e.target.value;
       // drop judgements that the chosen version does not allow in that domain
       let dropped = 0;
@@ -81,7 +105,7 @@
         if (st.overall && st.overall !== 'auto' && !allowed('overall').some((j) => j.v === st.overall)) st.overall = 'auto';
       });
       renderDomains(); renderGrid(); renderLegend(); update();
-      RT.toast(T('已切換版本：各版本的 domain 編號與內容不同，請逐一確認判斷。', 'Version switched: domain numbering differs between versions — re-check each judgement.') + (dropped ? T(`（已清除 ${dropped} 個此版本不允許的判斷）`, ` (${dropped} judgement(s) not allowed in this version were cleared)`) : ''), 6000);
+      RT.toast(T(`已依 domain 名稱對應判斷${fresh.length ? `；${fresh.join('、')} 是新的 domain，請判斷` : ''}${dropped ? `；${dropped} 格判斷在此版本不適用，已清空` : ''}。`, `Judgements carried over by domain name${fresh.length ? `; ${fresh.join(', ')} ${fresh.length === 1 ? 'is a new domain' : 'are new domains'}, please judge` : ''}${dropped ? `; ${dropped} not allowed in this version, cleared` : ''}.`), 7000);
     };
     document.getElementById('paletteSel').onchange = (e) => { S.palette = e.target.value; renderGrid(); renderLegend(); update(); };
     function renderDomains() {
@@ -98,7 +122,8 @@
     function renderLegend() {
       document.getElementById('legend').innerHTML = cfg.judgments.filter((j) => inVariant(j) && (!j.optional || S.allowNI)).map((j) => {
         const c = colorOf(j.v);
-        return `<span><i style="background:${c};color:${textOn(c)};border:1px solid rgba(0,0,0,.2)">${RT.esc(j.sym)}</i>${RT.esc(T(j.zh, j.label))}${j.only ? ` <small>(${j.only.join(', ')} ${T('與整體', '& overall')})</small>` : ''}</span>`;
+        const p = uiPair(c);
+        return `<span><i style="background:${p.bg};color:${p.fg};border:1px solid rgba(0,0,0,.2)">${RT.esc(j.uiSym || j.sym)}</i>${RT.esc(T(j.zh, j.label))}${j.only ? ` <small>${T('（僅 D1 與整體）', '(D1 and overall only)')}</small>` : ''}</span>`;
       }).join('');
     }
     // The grid is narrow: a closed select shows only its short label, the open list shows the full one
@@ -111,22 +136,12 @@
       sel.addEventListener('blur', shorten);
       shorten();
     };
-    const lum = (rgb) => { const f = (x) => { x /= 255; return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(rgb[0]) + 0.7152 * f(rgb[1]) + 0.0722 * f(rgb[2]); };
-    const uiPair = (c) => {
-      const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(c || ''); if (!m) return { bg: c, fg: '' };
-      let rgb = m.slice(1).map((x) => parseInt(x, 16));
-      const dark = [31, 41, 51];
-      const cr = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
-      if (cr(rgb, dark) >= 4.5) return { bg: c, fg: '#1F2933' };
-      for (let i = 0; i < 12 && cr(rgb, [255, 255, 255]) < 4.5; i++) rgb = rgb.map((x) => Math.round(x * 0.92));
-      return { bg: '#' + rgb.map((x) => x.toString(16).padStart(2, '0')).join(''), fg: '#FFFFFF' };
-    };
     const styleSel = (sel, v) => { const p = v ? uiPair(colorOf(v)) : { bg: '', fg: '' }; sel.style.background = p.bg || ''; sel.style.color = p.fg; };
     const open = new Set();
     function renderGrid() {
       const host = document.getElementById('grid');
       const doms = domains();
-      const opt = (code, v) => `<option value="" data-short="·">·</option>` + allowed(code).map((j) => `<option value="${j.v}"${j.v === v ? ' selected' : ''} title="${RT.esc(j.label)}" data-short="${RT.esc(j.sym)}">${RT.esc(j.sym)} ${RT.esc(T(j.zh, j.label))}</option>`).join('');
+      const opt = (code, v) => `<option value="" data-short="·">·</option>` + allowed(code).map((j) => `<option value="${j.v}"${j.v === v ? ' selected' : ''} title="${RT.esc(j.label)}" data-short="${RT.esc(j.uiSym || j.sym)}">${RT.esc(j.uiSym || j.sym)} ${RT.esc(T(j.zh, j.label))}</option>`).join('');
       host.innerHTML = `<div class="rob-wrap"><table class="rob-tbl"><thead><tr><th>${T('研究', 'Study')}</th>${doms.map((d) => `<th title="${RT.esc(d.name)}">${RT.esc(d.code)}</th>`).join('')}<th>${T('整體', 'Overall')}</th><th></th></tr></thead><tbody></tbody></table></div>`;
       const tb = host.querySelector('tbody');
       S.studies.forEach((st, i) => {
@@ -423,7 +438,7 @@
 
     let fig;
     const preview = document.getElementById('preview');
-    const exporter = RT.exportPanel(document.getElementById('export'), () => fig, `${cfg.filePrefix}_plot`);
+    const exporter = RT.exportPanel(document.getElementById('export'), () => fig, `${cfg.filePrefix}_plot`, { fontSize: { get: () => S.st.fontSize, set: (v) => { S.st.fontSize = v; syncInputs(); update(); } } });
     const hist = RT.history(() => S, (s) => { S = s; syncInputs(); render(); });
     function render() {
       try { fig = build(); preview.innerHTML = fig.svg; }
@@ -464,7 +479,7 @@
     <div class="btns">
       <button class="small" id="btnUndo" title="復原 (Ctrl+Z)" data-en-title="Undo (Ctrl+Z)">↶</button>
       <button class="small" id="btnRedo" title="重做 (Ctrl+Y)" data-en-title="Redo (Ctrl+Y)">↷</button>
-      <button class="small" id="btnSaveJson" title="把目前所有輸入與設定下載成 .json 檔，之後可用「開啟設定檔」繼續編輯或分享給共同作者" data-en-title="Download all inputs and settings as a .json file; reopen it later or share it with co-authors" data-en="Save project">儲存設定檔</button>
+      <button class="small" id="btnSaveJson" title="下載 .json，之後可再開啟或傳給共同作者" data-en-title="Download a .json file to reopen later or share with co-authors" data-en="Save project">儲存設定檔</button>
       <button class="small" id="btnLoadJson" title="開啟先前儲存的 .json 設定檔" data-en-title="Open a previously saved .json project file" data-en="Open project">開啟設定檔</button>
       <button class="small" id="btnExample" data-en="Example">範例</button>
       <button class="small" id="btnReset" data-en="Clear">清空</button>
