@@ -148,14 +148,16 @@ function renderSteps() {
       <div class="block-head"><b>${T('步驟', 'Step')} ${si + 1}</b><span class="spacer"></span>
         <button class="small" data-a="up" title="${T('上移', 'Move up')}">↑</button><button class="small" data-a="down" title="${T('下移', 'Move down')}">↓</button>
         <button class="icon" data-a="del" title="${T('刪除步驟', 'Delete step')}">✕</button></div>
-      <label class="field"><span>${T('排除框標題', 'Exclusion box title')}</span><input data-f="exTitle"></label>
-      <div class="lbl">${T('排除原因', 'Exclusion reasons')} <span class="pill rs-sum"></span></div><div class="rs"></div>
-      <label class="check" style="margin:4px 0" title="${T('預設各原因互斥（依序套用，每人只算一次），排除總數＝各原因加總。若一人可同時符合多個原因，請勾選並手動填排除總數。', 'By default reasons are mutually exclusive (applied in sequence, each person counted once) so the total is their sum. If a person can meet several reasons, tick this and enter the total.')}"><input type="checkbox" data-f="overlap"> ${T('原因可重疊（手動填排除總數）', 'Reasons overlap (enter total manually)')}</label>
-      <label class="field ov-total"><span>${T('排除總數（不重複人數）', 'Total excluded (unique persons)')}</span><input class="n" data-f="total" inputmode="numeric"><span class="hint" style="display:block;margin:4px 0 0">${T('一人可符合多個原因時，填不重複的排除總數。', 'When one person can meet several reasons, enter the unique total.')}</span></label>
-      <div class="btns"><button class="small" data-a="addR">${T('＋ 排除原因', '+ Reason')}</button><button class="small" data-a="paste">${T('批次貼上…', 'Paste list…')}</button></div>
-      <div class="lbl" style="margin-top:10px">${T('排除後族群', 'Remaining population')}</div>
-      <div class="list-row wide" style="grid-template-columns:minmax(0,1fr) 110px">
-        <textarea data-f="text" rows="2" aria-label="${T(`步驟 ${si + 1} 排除後族群`, `Step ${si + 1} remaining population`)}" placeholder="${T('例：Eligible patients', 'e.g. Eligible patients')}"></textarea><input class="n" data-f="n" inputmode="numeric" aria-label="${T(`步驟 ${si + 1} 剩餘人數`, `Step ${si + 1} remaining n`)}"></div>
+      <div class="grp-ex">
+        <div class="lbl">${T('從上一層排除', 'Excluded from the box above')} <span class="pill rs-sum"></span></div>
+        <label class="field"><span>${T('排除框標題', 'Exclusion box title')}</span><input data-f="exTitle"></label>
+        <div class="rs"></div>
+        <label class="check" style="margin:4px 0" title="${T('預設各原因互斥（依序套用，每人只算一次），排除總數＝各原因加總。若一人可同時符合多個原因，請勾選並手動填排除總數。', 'By default reasons are mutually exclusive (applied in sequence, each person counted once) so the total is their sum. If a person can meet several reasons, tick this and enter the total.')}"><input type="checkbox" data-f="overlap"> ${T('原因可重疊（手動填排除總數）', 'Reasons overlap (enter total manually)')}</label>
+        <label class="field ov-total"><span>${T('排除總數（不重複人數）', 'Total excluded (unique persons)')}</span><input class="n" data-f="total" inputmode="numeric"><span class="hint" style="display:block;margin:4px 0 0">${T('一人可符合多個原因時，填不重複的排除總數。', 'When one person can meet several reasons, enter the unique total.')}</span></label>
+        <div class="btns"><button class="small" data-a="addR">${T('＋ 排除原因', '+ Reason')}</button><button class="small" data-a="paste">${T('批次貼上…', 'Paste list…')}</button></div>
+      </div>
+      <div class="list-row">
+        <textarea data-f="text" rows="2" aria-label="${T(`步驟 ${si + 1} 排除後族群`, `Step ${si + 1} remaining population`)}" placeholder="${T('例：Eligible patients', 'e.g. Eligible patients')}"></textarea><input class="n" data-f="n" inputmode="numeric" placeholder="n" aria-label="${T(`步驟 ${si + 1} 剩餘人數`, `Step ${si + 1} remaining n`)}"><span aria-hidden="true"></span></div>
       <div class="step-opts">
         <label><span class="lbl">${T('排除框位置', 'Exclusion side')}</span><select data-f="side">
           <option value="auto">${T('預設', 'Default')}</option><option value="right">${T('右側', 'Right')}</option><option value="left">${T('左側', 'Left')}</option></select></label>
