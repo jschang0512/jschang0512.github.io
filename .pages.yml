@@ -99,44 +99,6 @@ content:
           - name: toolkit
             label: "小工具網址（留空則不顯示）"
             type: string
-      - name: stats
-        label: "數字卡（最多 4 張）"
-        type: object
-        list:
-          max: 4
-          collapsible:
-            collapsed: false
-            summary: "{value}"
-        fields:
-          - name: value
-            label: "大字"
-            type: string
-          - name: label
-            label: "標題"
-            type: object
-            fields:
-              - name: zh
-                label: "中文"
-                type: string
-              - name: en
-                label: English
-                type: string
-              - name: ja
-                label: "日本語"
-                type: string
-          - name: detail
-            label: "說明"
-            type: object
-            fields:
-              - name: zh
-                label: "中文"
-                type: string
-              - name: en
-                label: English
-                type: string
-              - name: ja
-                label: "日本語"
-                type: string
       - name: research
         label: "研究方向"
         type: object
@@ -367,6 +329,12 @@ content:
                   label: "預印本"
                 - name: draft
                   label: "撰寫中"
+          - name: year
+            label: "年份（選填）"
+            type: string
+          - name: authors
+            label: "作者列（選填，英文逗號分隔；你的名字會自動加粗）"
+            type: text
           - name: link
             label: "論文連結（選填，例如 DOI 網址）"
             type: string

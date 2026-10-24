@@ -2,7 +2,7 @@
   "profile": {
     "name": {
       "zh": "張家菘",
-      "en": "Bruce Chia-Sung Chang",
+      "en": "Chia-Sung (Bruce) Chang",
       "ja": "張家菘"
     },
     "subtitle": {
@@ -26,52 +26,11 @@
     "linkedin": "https://www.linkedin.com/in/jschang0512",
     "toolkit": "https://jschang0512.github.io/Research-toolkit/"
   },
-  "stats": [
-    {
-      "value": "R.Ph.",
-      "label": {
-        "zh": "中華民國執業藥師",
-        "en": "Registered Pharmacist",
-        "ja": "中華民国薬剤師"
-      },
-      "detail": {
-        "zh": "北醫附醫藥劑部",
-        "en": "TMU Hospital Pharmacy",
-        "ja": "台北医学大学附属病院"
-      }
-    },
-    {
-      "value": "M.Sc.",
-      "label": {
-        "zh": "臨床醫學（在學）",
-        "en": "Clinical Medicine (current)",
-        "ja": "臨床医学（在籍）"
-      },
-      "detail": {
-        "zh": "健康科技評估與轉譯資訊",
-        "en": "HTA & Translational Informatics",
-        "ja": "医療技術評価・情報学"
-      }
-    },
-    {
-      "value": "RWE",
-      "label": {
-        "zh": "藥物流行病學",
-        "en": "Pharmacoepidemiology",
-        "ja": "薬剤疫学"
-      },
-      "detail": {
-        "zh": "大型資料庫・試驗模擬",
-        "en": "Claims data · Trial emulation",
-        "ja": "大規模データ・因果推論"
-      }
-    }
-  ],
   "research": {
     "summary": {
       "zh": "藥師與臨床醫學碩士生，研究工作聚焦於**真實世界證據（Real-World Evidence, RWE）**與**實證統合（Evidence Synthesis）**的交會點。方法學涵蓋系統性回顧與統合分析、貝氏網絡統合分析（Bayesian Network Meta-Analysis），以及目標試驗模擬（Target Trial Emulation），應用領域包含腫瘤學（HR+/HER2- 乳癌之 CDK4/6 抑制劑）、移植醫學（以 everolimus 為基礎之免疫抑制方案）與神經退化疾病。未來將以大型理賠與登錄資料庫持續延伸此研究方向。",
       "en": "Pharmacist and clinical-medicine graduate researcher working at the intersection of **real-world evidence (RWE)** and **evidence synthesis**. Methodological work spans systematic review & meta-analysis, Bayesian network meta-analysis, and target trial emulation, applied to oncology (CDK4/6 inhibitors in HR+/HER2- breast cancer), transplant medicine (everolimus-based immunosuppression), and neurodegenerative disease. Ongoing work extends this research using large-scale claims and registry databases.",
-      "ja": "薬剤師であり臨床医学修士課程の大学院生として、**リアルワールドエビデンス（RWE）**と**エビデンス統合**が交わる領域を研究している。方法論としてはシステマティックレビュー・メタアナリシス、ベイズ・ネットワークメタアナリシス、ターゲット・トライアル・エミュレーションを扱い、腫瘍学（HR+/HER2- 乳がんにおける CDK4/6 阻害薬）、移植医学（everolimus を基盤とした免疫抑制療法）、神経変性疾患を対象領域としている。今後は大規模な保険請求・登録データベースを用いて、この研究をさらに発展させていく。"
+      "ja": "薬剤師であり臨床医学修士課程の大学院生として、**リアルワールドエビデンス（RWE）**と**エビデンス統合**が交わる領域を研究しています。方法論としてはシステマティックレビュー・メタアナリシス、ベイズ・ネットワークメタアナリシス、ターゲット・トライアル・エミュレーションを扱い、腫瘍学（HR+/HER2- 乳がんにおける CDK4/6 阻害薬）、移植医学（everolimus を基盤とした免疫抑制療法）、神経変性疾患を対象領域としています。今後は大規模な保険請求・登録データベースを用いて、この研究をさらに発展させていきます。"
     },
     "methods": [
       {
@@ -155,7 +114,9 @@
         "ja": "非常勤薬剤師"
       },
       "dates": {
-        "zh": "2025.11 – 2027.09"
+        "zh": "2025.11 – 至今",
+        "en": "2025.11 – present",
+        "ja": "2025.11 – 現在"
       },
       "institution": {
         "zh": "臺北醫學大學附設醫院 藥劑部",
@@ -210,7 +171,10 @@
         "en": "Co-first author",
         "ja": "共同筆頭著者"
       },
-      "status": "published"
+      "status": "published",
+      "year": "2025",
+      "authors": "Hsiang-Ying Wu, Chia-Sung Chang, Wei-Hong Cheng, Jin-Hua Chen, Yuan-Hung Wang",
+      "link": "https://doi.org/10.1080/07853890.2025.2557509"
     },
     {
       "title": "Efficacy, safety, and timing of everolimus with calcineurin inhibitor reduction or withdrawal in liver transplantation: a systematic review and meta-analysis",
@@ -221,26 +185,6 @@
         "ja": "第二著者"
       },
       "status": "review"
-    },
-    {
-      "title": "Real-world effectiveness of CDK4/6 inhibitors in HR-positive/HER2-negative metastatic and high recurrence-risk non-metastatic breast cancer: a Taiwanese retrospective cohort study",
-      "journal": "The Breast Journal",
-      "role": {
-        "zh": "共同第一作者",
-        "en": "Co-first author",
-        "ja": "共同筆頭著者"
-      },
-      "status": "draft"
-    },
-    {
-      "title": "Antidiabetic agents and neurodegenerative disease: a Bayesian network meta-analysis",
-      "journal": "JAMA Network Open",
-      "role": {
-        "zh": "第一作者",
-        "en": "First author",
-        "ja": "筆頭著者"
-      },
-      "status": "draft"
     }
   ],
   "awards": [
@@ -300,7 +244,7 @@
       "icon": "mic",
       "kicker": {
         "zh": "受邀專題演講",
-        "en": "Invited Keynote",
+        "en": "Invited Talk",
         "ja": "招待講演"
       },
       "title": {
@@ -398,6 +342,6 @@
       "en": "“Building the rigorous evidence base between prescription and outcome — from meta-analysis to real-world data research.”",
       "ja": "「処方と臨床アウトカムの間にエビデンスの基盤を築く——メタアナリシスからリアルワールドデータ研究へ。」"
     },
-    "updated": "2026-10-11"
+    "updated": "2026-10-24"
   }
 }

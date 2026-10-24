@@ -9,6 +9,32 @@
 <title>Chia-Sung (Bruce) Chang, B.S.Pharm, R.Ph. — Pharmacoepidemiology &amp; Real-World Evidence</title>
 <meta name="description" content="Academic Curriculum Vitae of Chia-Sung (Bruce) Chang — Pharmacist and Clinical Medicine Graduate Researcher in Pharmacoepidemiology, Evidence Synthesis, and Real-World Evidence.">
 <link rel="canonical" href="https://jschang0512.github.io/personalcv/">
+<link rel="alternate" hreflang="zh-Hant" href="https://jschang0512.github.io/personalcv/">
+<link rel="alternate" hreflang="en" href="https://jschang0512.github.io/personalcv/?lang=en">
+<link rel="alternate" hreflang="ja" href="https://jschang0512.github.io/personalcv/?lang=ja">
+<link rel="alternate" hreflang="x-default" href="https://jschang0512.github.io/personalcv/">
+<script>
+  // Language: ?lang= link, then the visitor's last choice, then the browser language. Theme: last choice, then the OS.
+  (function(){
+    var root = document.documentElement, ok = { zh: 1, en: 1, ja: 1 }, lang = '', theme = '';
+    try{
+      var q = new URLSearchParams(location.search).get('lang');
+      lang = ok[q] ? q : (ok[localStorage.getItem('cv-lang')] ? localStorage.getItem('cv-lang') : '');
+      theme = localStorage.getItem('cv-theme') || '';
+    }catch(e){}
+    if(!lang){
+      var nav = String(navigator.language || '').toLowerCase();
+      lang = nav.indexOf('ja') === 0 ? 'ja' : (nav.indexOf('zh') === 0 ? 'zh' : (nav ? 'en' : 'zh'));
+    }
+    if(theme !== 'dark' && theme !== 'light'){
+      theme = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    root.setAttribute('data-lang', lang);
+    root.setAttribute('lang', { zh: 'zh-Hant', en: 'en', ja: 'ja' }[lang]);
+    root.setAttribute('data-theme', theme);
+  })();
+</script>
+<noscript><style>html:not(.is-ready) .hero-main, html:not(.is-ready) main, html:not(.is-ready) .closing { visibility: visible !important; }</style></noscript>
 <meta property="og:type" content="profile">
 <meta property="og:site_name" content="Chia-Sung (Bruce) Chang">
 <meta property="og:title" content="Chia-Sung (Bruce) Chang, B.S.Pharm, R.Ph.">
@@ -109,6 +135,11 @@
     --color-scrim:    oklch(17% 0.014 155 / 0.92);
   }
 
+  html[data-lang="ja"] {
+    --font-display: "Fraunces", "Noto Serif JP", "Noto Serif TC", ui-serif, Georgia, serif;
+    --font-body:    "Noto Sans JP", "Noto Sans TC", "Hiragino Sans", ui-sans-serif, system-ui, sans-serif;
+  }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { overflow-x: clip; }
   html { scroll-behavior: smooth; }
@@ -122,6 +153,10 @@
   button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
   :focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
   .container { max-width: 1120px; margin-inline: auto; padding-inline: var(--space-lg); }
+  ::selection { background: var(--color-accent-soft); color: var(--color-ink); }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  .skip { position: fixed; top: var(--space-xs); left: var(--space-xs); z-index: var(--z-toast); padding: var(--space-xs) var(--space-md); border-radius: var(--radius-pill); background: var(--color-forest); color: var(--color-paper); font-weight: 700; transform: translateY(-200%); }
+  .skip:focus-visible { transform: none; }
 
   /* Language display */
   .zh, .en, .ja { display: none; }
@@ -132,8 +167,6 @@
   .bar nav { display: flex; align-items: center; gap: var(--space-lg); font-size: var(--text-sm); }
   .bar nav a { color: var(--color-muted); white-space: nowrap; padding-block: var(--space-2xs); border-bottom: 1px solid transparent; transition: color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out); }
   .bar nav a:hover { color: var(--color-ink); border-bottom-color: var(--color-accent); }
-  .bar nav .nav-ext { display: inline-flex; align-items: center; gap: var(--space-2xs); color: var(--color-accent); }
-  .bar nav .nav-ext svg { width: 11px; height: 11px; fill: currentColor; }
   .controls { margin-left: auto; display: flex; align-items: center; gap: var(--space-xs); }
   .ctl, .langs button {
     display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2xs);
@@ -169,21 +202,16 @@
     transition: border-color var(--dur-micro) var(--ease-out), background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out);
   }
   .btn svg { width: 15px; height: 15px; fill: currentColor; }
+  .btn.icon { width: 44px; padding-inline: 0; justify-content: center; }
   .btn:hover { border-color: var(--color-ink); }
   .btn:active { background-color: var(--color-paper-2); }
   .btn.primary { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-accent-ink); }
   .btn.primary:hover { background: var(--color-forest); border-color: var(--color-forest); color: var(--color-paper); }
   html[data-theme="dark"] .btn.primary:hover { color: var(--color-paper); }
   .photo-card { margin-top: var(--space-xl); }
+  .photo-card img { color: var(--color-muted); }
   .photo-card img { display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; object-position: center 20%; border-radius: var(--radius-sm); background: var(--color-photo); }
 
-  /* Highlights: one hairline-divided row, no cards */
-  .stats { margin-top: var(--space-xl); display: grid; grid-template-columns: repeat(var(--stat-cols, 3), minmax(0, 1fr)); }
-  .stat { padding: var(--space-xs) var(--space-md); border-left: 1px solid var(--color-rule); }
-  .stat:first-child { padding-left: 0; border-left: 0; }
-  .stat b { display: block; font-family: var(--font-display); font-size: var(--text-xl); font-weight: 700; line-height: 1.1; color: var(--color-forest); }
-  .stat .lbl { display: block; margin-top: var(--space-2xs); font-size: var(--text-sm); font-weight: 700; color: var(--color-ink); }
-  .stat .desc { display: block; font-size: var(--text-sm); color: var(--color-muted); line-height: 1.5; }
 
   /* ---------- Document sections, separated by rules ---------- */
   main.container { display: block; }
@@ -201,13 +229,17 @@
   .stack > .card:first-child { border-top: 0; padding-top: 0; }
   .card h3 { font-size: var(--text-sm); font-weight: 700; color: var(--color-forest-2); margin-bottom: var(--space-xs); }
   .pills { display: flex; flex-wrap: wrap; gap: var(--space-2xs) var(--space-xs); }
-  .pill { font-size: var(--text-sm); color: var(--color-ink); background: var(--color-paper-2); border-radius: var(--radius-pill); padding: var(--space-3xs) var(--space-sm); }
-  .projects { display: grid; }
-  .projects a { display: block; padding-block: var(--space-xs); font-size: var(--text-sm); color: var(--color-muted); }
-  .projects a + a { border-top: 1px solid var(--color-rule); }
-  .projects a b { display: block; font-size: var(--text-base); color: var(--color-ink); }
-  .projects a b::after { content: " →"; color: var(--color-accent); }
-  .projects a:hover b { color: var(--color-forest); }
+  .pill { font-size: var(--text-sm); color: var(--color-ink); background: var(--color-paper-2); border-radius: var(--radius-pill); padding: var(--space-2xs) var(--space-sm); line-height: 1.4; }
+  /* Tools & tutorials: work other researchers use, so it gets a row of its own */
+  .tools { margin-top: var(--space-2xl); padding-top: var(--space-lg); border-top: 1px solid var(--color-rule); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: var(--space-lg) var(--space-2xl); }
+  .tools h3 { font-family: var(--font-display); font-size: var(--text-md); font-weight: 700; line-height: 1.3; color: var(--color-forest); }
+  .tools .note { margin-top: var(--space-xs); max-width: 44ch; font-size: var(--text-sm); color: var(--color-muted); }
+  .tool-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg); }
+  .tool-links a { display: block; font-size: var(--text-sm); color: var(--color-muted); }
+  .tool-links a b { display: block; font-family: var(--font-display); font-size: var(--text-md); font-weight: 700; line-height: 1.3; color: var(--color-ink); transition: color var(--dur-micro) var(--ease-out); }
+  .tool-links a b::after { content: "\00a0→"; color: var(--color-accent); }
+  .tool-links a:hover b { color: var(--color-forest); }
+  .tool-links a span { display: block; margin-top: var(--space-2xs); }
 
   /* Education / experience */
   .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg) var(--space-2xl); }
@@ -217,7 +249,7 @@
   .row .t { font-weight: 700; color: var(--color-ink); }
   .row .s { color: var(--color-muted); }
   .row .n { font-size: var(--text-sm); color: var(--color-muted); }
-  .row .seal { justify-self: start; margin-top: var(--space-2xs); font-size: var(--text-sm); color: var(--color-forest-2); background: var(--color-paper-2); padding: var(--space-3xs) var(--space-sm); border-radius: var(--radius-pill); }
+  .row .seal { justify-self: start; margin-top: var(--space-2xs); font-size: var(--text-sm); color: var(--color-forest-2); background: var(--color-paper-2); padding: var(--space-2xs) var(--space-sm); border-radius: var(--radius-pill); line-height: 1.4; }
 
   /* Publications: numbered list */
   .pubs { display: grid; counter-reset: pub; }
@@ -229,7 +261,9 @@
   .pub .pt a:hover { text-decoration-color: var(--color-accent); }
   .pub .pm { margin-top: var(--space-2xs); font-size: var(--text-sm); color: var(--color-muted); }
   .pub .pm i { font-style: italic; color: var(--color-ink); }
-  .status { font-size: var(--text-sm); font-weight: 700; padding: var(--space-3xs) var(--space-sm); border-radius: var(--radius-pill); white-space: nowrap; }
+  .pub .pa { margin-top: var(--space-2xs); font-size: var(--text-sm); color: var(--color-muted); max-width: 72ch; }
+  .pub .pa strong { color: var(--color-ink); font-weight: 700; }
+  .status { font-size: var(--text-sm); font-weight: 700; line-height: 1.4; padding: var(--space-2xs) var(--space-sm); border-radius: var(--radius-pill); white-space: nowrap; }
   .s-pub { background: var(--color-paper-3); color: var(--color-forest); }
   .s-rev { background: var(--color-review-bg); color: var(--color-review); }
   .s-draft { background: var(--color-paper-2); color: var(--color-muted); }
@@ -237,7 +271,7 @@
   /* Awards & activities: two-column list */
   .honors { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--space-2xl); }
   .honor { display: grid; grid-template-columns: 1.75rem minmax(0, 1fr); column-gap: var(--space-sm); align-content: start; padding-block: var(--space-md); border-top: 1px solid var(--color-rule); }
-  .honor .ic { grid-row: 1 / span 3; color: var(--color-accent); padding-top: var(--space-3xs); }
+  .honor .ic { grid-row: 1 / span 3; color: var(--color-forest-2); padding-top: var(--space-3xs); }
   .honor .ic svg { width: 18px; height: 18px; fill: currentColor; }
   .honor .k { font-size: var(--text-sm); font-weight: 700; color: var(--color-forest-2); }
   .honor h3 { font-size: var(--text-base); font-weight: 700; line-height: 1.45; margin-top: var(--space-3xs); color: var(--color-ink); }
@@ -255,6 +289,8 @@
   /* ---------- Ft6 letter sign-off ---------- */
   .closing.container { margin-bottom: var(--space-xl); }
   .closing-card { border-top: 2px solid var(--color-forest); padding-block: var(--space-xl) var(--space-lg); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-lg) var(--space-2xl); align-items: end; }
+  .closing .note { margin-top: var(--space-sm); font-size: var(--text-sm); color: var(--color-muted); max-width: 56ch; }
+  .closing .mail { color: var(--color-ink); font-weight: 700; border-bottom: 1px solid var(--color-accent); }
   .closing blockquote { font-family: var(--font-display); font-size: var(--text-md); font-weight: 400; line-height: 1.6; color: var(--color-forest); max-width: 56ch; }
   .closing .meta { grid-column: 1 / -1; display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--space-xs); padding-top: var(--space-md); border-top: 1px solid var(--color-rule); font-size: var(--text-sm); color: var(--color-muted); }
 
@@ -262,7 +298,6 @@
   html:not(.is-ready) .hero-main, html:not(.is-ready) main, html:not(.is-ready) .closing { visibility: hidden; }
   .load-error { margin-top: var(--space-lg); padding: var(--space-md) var(--space-lg); border-radius: var(--radius-sm); background: var(--color-review-bg); color: var(--color-review); font-weight: 700; }
   [hidden] { display: none !important; }
-  .quiet-link, .quiet-link:hover { color: inherit; text-decoration: none; cursor: text; }
 
   /* ---------- Motion: one entrance, reveal once ---------- */
   .progress { position: fixed; top: 0; left: 0; right: 0; height: 2px; z-index: var(--z-toast); pointer-events: none; transform-origin: 0 50%; transform: scaleX(0); background: var(--color-accent); }
@@ -283,8 +318,6 @@
   .sticky-nav a { padding-block: var(--space-sm); border-bottom: 2px solid transparent; flex-shrink: 0; transition: color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out); }
   .sticky-nav a:hover { color: var(--color-ink); }
   .sticky-nav a.active { color: var(--color-ink); border-bottom-color: var(--color-accent); }
-  .sticky-nav .nav-ext { display: inline-flex; align-items: center; gap: var(--space-2xs); color: var(--color-accent); }
-  .sticky-nav .nav-ext svg { width: 11px; height: 11px; fill: currentColor; }
 
   html.theme-anim *, html.theme-anim *::before, html.theme-anim *::after { transition: background-color var(--dur-long) var(--ease-in-out), color var(--dur-long) var(--ease-in-out), border-color var(--dur-long) var(--ease-in-out) !important; }
 
@@ -301,6 +334,8 @@
     .bar nav { order: 3; width: 100%; overflow-x: auto; scrollbar-width: none; padding-bottom: var(--space-2xs); }
     .bar nav::-webkit-scrollbar { display: none; }
     .bar nav a { flex-shrink: 0; }
+    .bar nav.has-more { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 3rem), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 3rem), transparent); }
+    .tools, .tool-links { grid-template-columns: minmax(0, 1fr); }
     .hero { grid-template-columns: minmax(0, 1fr) minmax(0, 0.55fr); gap: var(--space-xl); padding-block: var(--space-lg) var(--space-2xl); }
     .about, .two, .honors { grid-template-columns: minmax(0, 1fr); }
     .latest { grid-template-columns: minmax(0, 1fr); }
@@ -314,10 +349,11 @@
     .photo-card img { aspect-ratio: 1; }
     .hero .sub { font-size: var(--text-base); }
     .cta .btn { flex: 1 1 auto; justify-content: center; padding-inline: var(--space-md); }
-    .stats { grid-template-columns: minmax(0, 1fr); }
-    .stat, .stat:first-child { padding: var(--space-sm) 0; border-left: 0; border-top: 1px solid var(--color-rule); display: grid; grid-template-columns: 5rem minmax(0, 1fr); column-gap: var(--space-sm); align-items: baseline; }
-    .stat b { grid-row: 1 / span 2; font-size: var(--text-md); }
-    .stat .lbl { margin-top: 0; }
+    .cta .btn.icon { flex: 0 0 44px; }
+    .hero-main { display: flex; flex-direction: column; }
+    .hero-main .cta { order: 1; }
+    .hero-main .creds { order: 2; }
+    .hero-main .pitch { order: 3; }
     .card.big p { font-size: var(--text-base); }
     .row { grid-template-columns: minmax(0, 1fr); }
     .row .d { grid-row: auto; padding-top: 0; }
@@ -332,16 +368,23 @@
     .controls { gap: var(--space-2xs); }
   }
 
+  @media (pointer: coarse) {
+    .ctl, .langs button { height: 44px; min-width: 44px; }
+  }
+
   @media print {
-    .bar, .cta, .sticky-nav, .progress { display: none !important; }
+    .bar, .cta, .sticky-nav, .progress, .skip, .closing .btn { display: none !important; }
+    .closing .mail { border-bottom: 0; }
     section, .pub, .honor { break-inside: avoid; }
   }
 </style>
 </head>
 <body>
+<a class="skip" href="#main"><span class="zh">跳到主要內容</span><span class="en">Skip to content</span><span class="ja">本文へスキップ</span></a>
+<p class="sr-only" id="sr-status" role="status" aria-live="polite"></p>
 
 <div class="progress" id="progress" aria-hidden="true"></div>
-<nav class="sticky-nav" id="sticky-nav" aria-label="Sections (compact)"><div class="inner"></div></nav>
+<nav class="sticky-nav" id="sticky-nav" aria-label="Sections (compact)" inert><div class="inner"></div></nav>
 
 <header class="container">
   <div class="bar">
@@ -352,21 +395,21 @@
       <a href="#{{ nav_id }}">{% include cv-tr.html v=nav_sec.nav %}</a>
       {%- endfor -%}
       {%- if site.posts.size > 0 %}<a href="blog/" class="nav-blog">{% include cv-tr.html v=cv.sections.blog.nav %}</a>{% endif -%}
-      {%- if cv.profile.toolkit %}<a href="{{ cv.profile.toolkit }}" target="_blank" rel="noopener" class="nav-ext"><span class="zh">小工具</span><span class="en">Toolkit</span><span class="ja">ツール</span></a>{% endif -%}
+      {%- if cv.profile.toolkit %}<a href="{{ cv.profile.toolkit }}" class="nav-ext"><span class="zh">小工具</span><span class="en">Toolkit</span><span class="ja">ツール</span></a>{% endif -%}
     </nav>
     <div class="controls">
       <button type="button" class="ctl" id="btn-share" onclick="shareLink()" aria-label="Share">
         <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
         <span class="lbl-share"><span class="zh">分享</span><span class="en">Share</span><span class="ja">共有</span></span>
       </button>
-      <button type="button" class="ctl" id="btn-theme" onclick="toggleTheme()" aria-label="Toggle dark mode">
+      <button type="button" class="ctl" id="btn-theme" onclick="toggleTheme()" aria-label="深色模式" aria-pressed="false">
         <svg class="icon-moon" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
         <svg class="icon-sun" viewBox="0 0 24 24"><path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zM11 1h2v3h-2zM11 20h2v3h-2zM1 11h3v2H1zM20 11h3v2h-3zM4.22 5.64l1.42-1.42 2.12 2.12-1.42 1.42zM16.24 17.66l1.42-1.42 2.12 2.12-1.42 1.42zM4.22 18.36l2.12-2.12 1.42 1.42-2.12 2.12zM16.24 6.34l2.12-2.12 1.42 1.42-2.12 2.12z"/></svg>
       </button>
       <div class="langs" role="group" aria-label="Language">
-        <button type="button" id="btn-zh" class="active" onclick="setLang('zh')">中文</button>
-        <button type="button" id="btn-en" onclick="setLang('en')">English</button>
-        <button type="button" id="btn-ja" onclick="setLang('ja')">日本語</button>
+        <button type="button" id="btn-zh" lang="zh-Hant" aria-pressed="false" onclick="setLang('zh', true)">中文</button>
+        <button type="button" id="btn-en" lang="en" aria-pressed="false" onclick="setLang('en', true)">English</button>
+        <button type="button" id="btn-ja" lang="ja" aria-pressed="false" onclick="setLang('ja', true)">日本語</button>
       </div>
     </div>
   </div>
@@ -382,21 +425,17 @@
       </ul>
       <p class="pitch" id="hero-pitch">{% include cv-tr.html v=cv.profile.pitch md=true %}</p>
       <div class="cta">
-        <button type="button" class="btn primary" id="btn-email" onclick="copyEmail()"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg><span class="zh">聯絡我</span><span class="en">Get in touch</span><span class="ja">お問い合わせ</span></button>
+        <a class="btn primary" id="btn-email" href="mailto:{{ cv.profile.email }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg><span class="zh">寄信聯絡</span><span class="en">Email me</span><span class="ja">メールで連絡</span></a>
+        <button type="button" class="btn icon" id="btn-copy" onclick="copyEmail(this)" aria-label="複製 email" title="{{ cv.profile.email }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg></button>
         <a class="btn" id="link-orcid" href="{{ cv.profile.orcid }}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zM7.369 4.378c.525 0 .947.431.947.947s-.422.947-.947.947a.95.95 0 0 1-.947-.947c0-.516.422-.947.947-.947zm-.722 3.038h1.444v10.041H6.647V7.416zm3.562 0h3.9c3.712 0 5.344 2.653 5.344 5.025 0 2.578-2.016 5.016-5.325 5.016h-3.919V7.416zm1.444 1.303v7.444h2.297c3.272 0 4.022-2.484 4.022-3.722 0-2.016-1.294-3.722-4.097-3.722h-2.222z"/></svg>ORCID</a>
         <a class="btn" id="link-linkedin" href="{{ cv.profile.linkedin }}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.64a1.64 1.64 0 1 0 0 3.28 1.64 1.64 0 0 0 0-3.28z"/></svg>LinkedIn</a>
-      </div>
-      <div class="stats" id="stats">
-        {%- for s in cv.stats -%}
-        <div class="stat"><b>{{ s.value | escape }}</b><span class="lbl">{% include cv-tr.html v=s.label %}</span><span class="desc">{% include cv-tr.html v=s.detail %}</span></div>
-        {%- endfor -%}
       </div>
     </div>
     <div class="photo-card"><img id="hero-photo" src="{{ cv.profile.photo }}" alt="Chia-Sung (Bruce) Chang"></div>
   </div>
 </header>
 
-<main class="container">
+<main class="container" id="main" tabindex="-1">
 
   <section id="about">
     <div class="sec-head" data-section="research" data-index="01">{% assign s = cv.sections.research %}<h2>{% include cv-tr.html v=s.title %}</h2>{% if s.subtitle %}<p>{% include cv-tr.html v=s.subtitle %}</p>{% endif %}</div>
@@ -411,19 +450,22 @@
           <h3><span class="zh">治療領域</span><span class="en">Therapeutic Areas</span><span class="ja">臨床応用領域</span></h3>
           <div class="pills" id="research-areas">{% for m in cv.research.areas %}<span class="pill">{% include cv-tr.html v=m %}</span>{% endfor %}</div>
         </div>
-        <div class="card">
-          <h3><span class="zh">工具與教學</span><span class="en">Tools &amp; Tutorials</span><span class="ja">ツールとチュートリアル</span></h3>
-          <div class="projects">
-            <a href="/Research-toolkit/">
-              <b>Research Toolkit</b>
-              <span class="zh">PRISMA、RoB 2、ROBINS-I 等研究圖表工具</span><span class="en">PRISMA, RoB 2, ROBINS-I and other figure tools</span><span class="ja">PRISMA、RoB 2、ROBINS-I などの研究図表ツール</span>
-            </a>
-            <a href="/NMA/">
-              <b>Bayesian NMA</b>
-              <span class="zh">用 R 套件 multinma 做貝氏網絡統合分析的教學</span><span class="en">Step-by-step Bayesian network meta-analysis in R (multinma)</span><span class="ja">R パッケージ multinma によるベイズ NMA の手順</span>
-            </a>
-          </div>
-        </div>
+      </div>
+    </div>
+    <div class="tools" id="tools">
+      <div>
+        <h3><span class="zh">工具與教學</span><span class="en">Tools &amp; Tutorials</span><span class="ja">ツールとチュートリアル</span></h3>
+        <p class="note"><span class="zh">給研究者用的論文圖表工具：全部在瀏覽器中執行，資料不會上傳，並可匯出可編輯的 Word 檔。</span><span class="en">Figure and table tools for researchers. Everything runs in the browser, nothing is uploaded, and each tool exports an editable Word file.</span><span class="ja">研究者向けの論文図表ツール。すべてブラウザ内で動作し、データはアップロードされません。編集可能な Word ファイルも書き出せます。</span></p>
+      </div>
+      <div class="tool-links">
+        <a href="/Research-toolkit/">
+          <b>Research Toolkit</b>
+          <span class="zh">PRISMA、RoB 2、ROBINS-I、目標試驗模擬等研究圖表工具</span><span class="en">PRISMA, RoB 2, ROBINS-I, target trial tables and other figure tools</span><span class="ja">PRISMA、RoB 2、ROBINS-I、ターゲット・トライアルなどの研究図表ツール</span>
+        </a>
+        <a href="/NMA/">
+          <b>Bayesian NMA</b>
+          <span class="zh">用 R 套件 multinma 一步步做貝氏網絡統合分析</span><span class="en">Step-by-step Bayesian network meta-analysis in R (multinma)</span><span class="ja">R パッケージ multinma によるベイズ NMA の手順</span>
+        </a>
       </div>
     </div>
   </section>
@@ -449,7 +491,8 @@
       <article class="pub">
         <span class="no">{% if forloop.index < 10 %}0{% endif %}{{ forloop.index }}</span>
         <div><div class="pt">{% if pub.link %}<a href="{{ pub.link }}" target="_blank" rel="noopener">{{ pub.title | escape }}</a>{% else %}{{ pub.title | escape }}{% endif %}</div>
-        <div class="pm"><i>{{ pub.journal | escape }}</i>{% if pub.role %} · {% include cv-tr.html v=pub.role %}{% endif %}</div></div>
+        {% if pub.authors %}<div class="pa">{{ pub.authors | escape | replace: "Chia-Sung Chang", "<strong>Chia-Sung Chang</strong>" }}</div>{% endif %}
+        <div class="pm"><i>{{ pub.journal | escape }}</i>{% if pub.year %} · {{ pub.year | escape }}{% endif %}{% if pub.role %} · {% include cv-tr.html v=pub.role %}{% endif %}</div></div>
       </article>
       {%- endfor -%}
     </div>
@@ -473,11 +516,14 @@
 
 <footer class="closing container">
   <div class="closing-card">
-    <blockquote id="footer-quote">{% include cv-tr.html v=cv.footer.quote %}</blockquote>
-    <button type="button" class="btn primary" onclick="copyEmail(this)"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg><span class="zh">聯絡我</span><span class="en">Get in touch</span><span class="ja">お問い合わせ</span></button>
+    <div>
+      <blockquote id="footer-quote">{% include cv-tr.html v=cv.footer.quote %}</blockquote>
+      <p class="note"><span class="zh">研究合作、Research Toolkit 的使用意見或錯誤回報，都歡迎來信：</span><span class="en">Write for research collaboration, or for feedback and bug reports on the Research Toolkit:</span><span class="ja">共同研究のご相談や、Research Toolkit へのご意見・不具合報告はこちらへ：</span><a class="mail" id="footer-mail" href="mailto:{{ cv.profile.email }}">{{ cv.profile.email }}</a></p>
+    </div>
+    <a class="btn primary" id="footer-email" href="mailto:{{ cv.profile.email }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg><span class="zh">寄信聯絡</span><span class="en">Email me</span><span class="ja">メールで連絡</span></a>
     <div class="meta">
       <span id="footer-updated"></span>
-      <span><a class="quiet-link" href="https://app.pagescms.org/jschang0512/jschang0512.github.io/" target="_blank" rel="noopener nofollow">&copy; <span id="footer-year">{{ cv.footer.updated | slice: 0, 4 }}</span> Chia-Sung (Bruce) Chang</a> · Pharmacoepidemiology &amp; Evidence Synthesis</span>
+      <span>&copy; <span id="footer-year">{{ cv.footer.updated | slice: 0, 4 }}</span> Chia-Sung (Bruce) Chang · Pharmacoepidemiology &amp; Evidence Synthesis</span>
     </div>
   </div>
 </footer>
@@ -551,7 +597,7 @@
     nav += '<a href="blog/" class="nav-blog">' + tr(blog.nav || { zh: '文章', en: 'Blog', ja: 'ブログ' }) + '</a>';
     var p = CONTENT.profile || {};
     if(safeUrl(p.toolkit)){
-      nav += '<a href="' + esc(safeUrl(p.toolkit)) + '" target="_blank" rel="noopener" class="nav-ext"><span class="zh">小工具</span><span class="en">Toolkit</span><span class="ja">ツール</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7zM19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2v7z"/></svg></a>';
+      nav += '<a href="' + esc(safeUrl(p.toolkit)) + '" class="nav-ext"><span class="zh">小工具</span><span class="en">Toolkit</span><span class="ja">ツール</span></a>';
     }
     $('nav').innerHTML = nav;
 
@@ -586,19 +632,16 @@
       return '<li><b>' + tr(it.institution) + '</b>' + tr(it.title) + '</li>';
     }).join('');
     if(p.photo){ $('hero-photo').src = localPath(p.photo); }
-    $('btn-email').title = p.email || '';
-    $('btn-email').hidden = !has(p.email);
+    var mail = has(p.email) ? 'mailto:' + p.email : '';
+    ['btn-email', 'footer-email', 'footer-mail'].forEach(function(id){ $(id).hidden = !mail; if(mail){ $(id).href = mail; } });
+    $('footer-mail').textContent = p.email || '';
+    $('btn-copy').hidden = !mail;
+    $('btn-copy').title = p.email || '';
     [['link-orcid', p.orcid], ['link-linkedin', p.linkedin]].forEach(function(pair){
       var url = safeUrl(pair[1]);
       $(pair[0]).hidden = !url;
       if(url){ $(pair[0]).href = url; }
     });
-
-    $('stats').innerHTML = list(c.stats).map(function(s){
-      return '<div class="stat"><b>' + esc(s.value) + '</b><span class="lbl">' + tr(s.label) + '</span><span class="desc">' + tr(s.detail) + '</span></div>';
-    }).join('');
-    $('stats').style.setProperty('--stat-cols', Math.max(1, Math.min(list(c.stats).length, 4)));
-    $('stats').hidden = !list(c.stats).length;
 
     renderSectionHeads(c.sections || {});
 
@@ -618,7 +661,8 @@
       return '<article class="pub">' +
         '<span class="no">' + String(i + 1).padStart(2, '0') + '</span>' +
         '<div><div class="pt">' + title + '</div>' +
-        '<div class="pm"><i>' + esc(pub.journal) + '</i>' + (filled(pub.role) ? ' · ' + tr(pub.role) : '') + '</div></div>' +
+        (has(pub.authors) ? '<div class="pa">' + esc(pub.authors).replace(/Chia-Sung Chang/g, '<strong>Chia-Sung Chang</strong>') + '</div>' : '') +
+        '<div class="pm"><i>' + esc(pub.journal) + '</i>' + (has(pub.year) ? ' · ' + esc(pub.year) : '') + (filled(pub.role) ? ' · ' + tr(pub.role) : '') + '</div></div>' +
         '<span class="status ' + st.cls + '">' + tr(st) + '</span>' +
       '</article>';
     }).join('');
@@ -642,8 +686,8 @@
 
   function showLoadError(){
     document.documentElement.classList.add('is-ready');
-    $('stats').outerHTML = '<p class="load-error">' +
-      '<span class="zh">內容載入失敗，請重新整理頁面。</span><span class="en">Could not load content. Please refresh the page.</span><span class="ja">コンテンツを読み込めませんでした。ページを再読み込みしてください。</span></p>';
+    document.querySelector('.cta').insertAdjacentHTML('afterend', '<p class="load-error">' +
+      '<span class="zh">內容載入失敗，請重新整理頁面。</span><span class="en">Could not load content. Please refresh the page.</span><span class="ja">コンテンツを読み込めませんでした。ページを再読み込みしてください。</span></p>');
   }
 
   // Latest blog posts (posts.json is generated by Jekyll on GitHub Pages)
@@ -702,7 +746,6 @@
     document.querySelectorAll(selector).forEach(function(el){
       if(el.dataset.revealed) return;
       el.dataset.revealed = '1';
-      if(el.classList.contains('row')){ onceVisible(el, function(){ el.classList.add('lit'); }); }
       if(REDUCE_MOTION || !HAS_IO) return;
       var i = counts.get(el.parentNode) || 0;
       counts.set(el.parentNode, i + 1);
@@ -728,7 +771,9 @@
     bar.querySelector('.inner').innerHTML = $('nav').innerHTML;
     if(!HAS_IO) return;
     new IntersectionObserver(function(entries){
-      bar.classList.toggle('show', !entries[0].isIntersecting);
+      var show = !entries[0].isIntersecting;
+      bar.classList.toggle('show', show);
+      bar.inert = !show; // keep its links out of the tab order while it is off-screen
     }, { rootMargin: '-60px 0px 0px 0px' }).observe(document.querySelector('.hero'));
   }
   var spyObserver = null;
@@ -767,16 +812,13 @@
     update();
   }
 
-  // Pointer-following glow on cards
-  function initCardGlow(){
-    if(REDUCE_MOTION || !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-    document.addEventListener('pointermove', function(e){
-      var card = e.target.closest && e.target.closest('.pub, .honor, .card, .latest-card');
-      if(!card) return;
-      var r = card.getBoundingClientRect();
-      card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
-      card.style.setProperty('--my', (e.clientY - r.top) + 'px');
-    }, { passive: true });
+  // A section bar that scrolls sideways fades at the edge while there is more to see
+  function initNavOverflow(){
+    var nav = $('nav');
+    function check(){ nav.classList.toggle('has-more', nav.scrollWidth - nav.clientWidth - nav.scrollLeft > 4); }
+    nav.addEventListener('scroll', check, { passive: true });
+    window.addEventListener('resize', check);
+    check();
   }
 
   function initMotion(){
@@ -788,6 +830,7 @@
     initStickyNav();
     initScrollSpy();
     initProgress();
+    initNavOverflow();
   }
 
   /* ---------- In-page links ---------- */
@@ -811,20 +854,42 @@
     jaFontsLoaded = true;
     var link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = 'https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500;600&family=Noto+Sans+JP:wght@400;500;700;900&display=swap';
+    link.href = 'https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap';
     document.head.appendChild(link);
   }
-  function setLang(lang){
+  // Labels that live in attributes, so they cannot use the zh/en/ja spans
+  var A11Y = {
+    zh: { theme: '深色模式', copy: '複製 email', share: '分享', copied: '已複製 email：' },
+    en: { theme: 'Dark mode', copy: 'Copy email address', share: 'Share', copied: 'Email address copied: ' },
+    ja: { theme: 'ダークモード', copy: 'メールアドレスをコピー', share: '共有', copied: 'メールアドレスをコピーしました：' }
+  };
+  function setLang(lang, chosen){
     var root = document.documentElement;
+    if(!LANG_ATTR[lang]){ lang = 'zh'; }
     if(lang === 'ja'){ loadJaFonts(); }
     root.setAttribute('data-lang', lang);
-    root.setAttribute('lang', LANG_ATTR[lang] || 'zh-Hant');
-    LANGS.forEach(function(l){ $('btn-' + l).classList.toggle('active', l === lang); });
-    try{ localStorage.setItem('cv-lang', lang); }catch(e){}
+    root.setAttribute('lang', LANG_ATTR[lang]);
+    LANGS.forEach(function(l){
+      $('btn-' + l).classList.toggle('active', l === lang);
+      $('btn-' + l).setAttribute('aria-pressed', String(l === lang));
+    });
+    $('btn-theme').setAttribute('aria-label', A11Y[lang].theme);
+    $('btn-copy').setAttribute('aria-label', A11Y[lang].copy);
+    $('btn-share').setAttribute('aria-label', A11Y[lang].share);
+    if(chosen){
+      try{ localStorage.setItem('cv-lang', lang); }catch(e){}
+      // keep the address bar shareable in the language being read
+      try{
+        var u = new URL(location.href);
+        if(lang === 'zh'){ u.searchParams.delete('lang'); } else { u.searchParams.set('lang', lang); }
+        history.replaceState(null, '', u.pathname + u.search + u.hash);
+      }catch(e){}
+    }
   }
-  function setTheme(theme){
+  function setTheme(theme, chosen){
     document.documentElement.setAttribute('data-theme', theme);
-    try{ localStorage.setItem('cv-theme', theme); }catch(e){}
+    $('btn-theme').setAttribute('aria-pressed', String(theme === 'dark'));
+    if(chosen){ try{ localStorage.setItem('cv-theme', theme); }catch(e){} }
   }
   var themeAnimTimer = null;
   function toggleTheme(){
@@ -832,7 +897,7 @@
     root.classList.add('theme-anim');
     clearTimeout(themeAnimTimer);
     themeAnimTimer = setTimeout(function(){ root.classList.remove('theme-anim'); }, 500);
-    setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+    setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark', true);
   }
 
   /* ---------- Clipboard ---------- */
@@ -865,16 +930,18 @@
   function copyEmail(from){
     var email = (CONTENT && CONTENT.profile && CONTENT.profile.email) || '';
     if(!email) return;
-    var btn = (from && from.nodeType === 1) ? from : $('btn-email');
+    var btn = (from && from.nodeType === 1) ? from : $('btn-copy');
     copyText(email, function(){
-      var e = esc(email);
-      flash(btn, CHECK + '<span class="zh">已複製 ' + e + '</span><span class="en">Copied ' + e + '</span><span class="ja">コピーしました ' + e + '</span>', 2200);
+      var lang = document.documentElement.getAttribute('data-lang') || 'zh';
+      flash(btn, CHECK, 1600);
+      $('sr-status').textContent = '';
+      setTimeout(function(){ $('sr-status').textContent = A11Y[lang].copied + email; }, 50);
     });
   }
 
   function shareLink(){
     var lang = document.documentElement.getAttribute('data-lang');
-    var url = 'https://jschang0512.github.io/personalcv/';
+    var url = 'https://jschang0512.github.io/personalcv/' + (lang && lang !== 'zh' ? '?lang=' + lang : '');
     var text = lang === 'en'
       ? 'Chia-Sung (Bruce) Chang, B.S.Pharm, R.Ph. — Curriculum Vitae in Pharmacoepidemiology and Real-World Evidence: ' + url
       : lang === 'ja'
@@ -885,13 +952,9 @@
     });
   }
 
-  (function(){
-    try{
-      if(localStorage.getItem('cv-theme') === 'dark'){ setTheme('dark'); }
-      var savedLang = localStorage.getItem('cv-lang');
-      if(savedLang && LANG_ATTR[savedLang]){ setLang(savedLang); }
-    }catch(e){}
-  })();
+  // The head script already picked language and theme; sync the controls to it
+  setLang(document.documentElement.getAttribute('data-lang'));
+  setTheme(document.documentElement.getAttribute('data-theme'));
 </script>
 </body>
 </html>

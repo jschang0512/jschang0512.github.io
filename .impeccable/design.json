@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-24T06:23:34.267Z",
+  "generatedAt": "2026-10-24T06:40:06.750Z",
   "title": "Design System: 張家菘 · Chia-Sung Chang",
   "extensions": {
     "colorMeta": {
@@ -212,6 +212,21 @@
           "oklch(72% 0.028 85)",
           "oklch(86% 0.014 85)",
           "oklch(95% 0.010 85)"
+        ]
+      },
+      "photo": {
+        "role": "neutral",
+        "displayName": "Lichen",
+        "canonical": "oklch(88% 0.014 145)",
+        "tonalRamp": [
+          "oklch(15% 0.004 145)",
+          "oklch(25% 0.005 145)",
+          "oklch(35% 0.009 145)",
+          "oklch(45% 0.012 145)",
+          "oklch(58% 0.014 145)",
+          "oklch(72% 0.010 145)",
+          "oklch(86% 0.005 145)",
+          "oklch(95% 0.004 145)"
         ]
       }
     },

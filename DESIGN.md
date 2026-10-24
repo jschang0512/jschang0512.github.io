@@ -16,6 +16,7 @@ colors:
   copper-soft: "oklch(93% 0.035 60)"
   review: "oklch(45% 0.090 75)"
   review-bg: "oklch(93% 0.040 85)"
+  photo: "oklch(88% 0.014 145)"
 typography:
   display:
     fontFamily: "Fraunces, Noto Serif TC, Noto Serif JP, ui-serif, Georgia, serif"
@@ -89,7 +90,7 @@ components:
     rounded: "{rounded.pill}"
     padding: "0.125rem 0.75rem"
   photo:
-    backgroundColor: "{colors.paper-3}"
+    backgroundColor: "{colors.photo}"
     rounded: "{rounded.sm}"
 ---
 
@@ -143,7 +144,8 @@ CV 這一套是「森林與銅」：深森林綠負責權威感，銅色只負�
 
 ### Neutral
 - **Garden Paper**（paper）：頁面底色。
-- **Pressed Leaf**（paper-2 / paper-3）：膠囊、照片占位、點擊時的底色。
+- **Pressed Leaf**（paper-2 / paper-3）：膠囊、點擊時的底色。
+- **Lichen**（photo）：照片載入前的占位底色。
 - **Hairline**（rule）：所有分隔線、按鈕與控制項的邊框。
 - **Stem**（neutral）：hover 時的邊框。
 - **Bark**（muted）：說明文字、次要資訊。
