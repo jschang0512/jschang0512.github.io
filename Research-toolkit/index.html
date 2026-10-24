@@ -7,7 +7,7 @@
 <link rel="icon" href="/Research-toolkit/icons/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="/Research-toolkit/icons/apple-touch-icon.png">
 <title>Research Toolkit</title>
-<meta name="description" content="研究論文圖表小工具：PRISMA 2020 流程圖、世代研究病人選取流程圖、研究設計時間軸、目標試驗模擬規格表、RoB 2、ROBINS-I 與圖片 DPI 轉換，全部在瀏覽器中完成。">
+<meta name="description" content="研究論文圖表小工具：PRISMA 2020 流程圖、世代研究病人選取流程圖、研究設計時間軸、目標試驗模擬規格表、森林圖、E-value、因果圖 DAG、RoB 2、ROBINS-I 與圖片 DPI 轉換，全部在瀏覽器中完成。">
 <link rel="canonical" href="https://jschang0512.github.io/Research-toolkit/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Chia-Sung (Bruce) Chang">
@@ -96,6 +96,24 @@
     <h2>Target Trial Specification</h2>
     <p data-en="Protocol table for target trial emulation: eligibility, strategies, assignment, time zero, outcome, causal contrasts, analysis — target trial vs emulation.&lt;span class=&quot;out&quot;&gt;Output: editable Word table, or PNG, TIFF, PDF, SVG&lt;/span&gt;">目標試驗模擬規格表：eligibility、treatment strategies、assignment、time zero、outcome、causal contrast、analysis，並列 target trial 與模擬方式。<span class="out">輸出：可編輯的 Word 表格，或 PNG、TIFF、PDF、SVG</span></p>
     <div class="tags"><span class="pill">TTE</span><span class="pill" data-en="Word table">Word 表格</span></div>
+  </a>
+  <a class="tile" href="forestplot/index.html">
+    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20" stroke-dasharray="2 2"/><path d="M5 6h8M9 12h10M4 18h12"/><rect x="8" y="5" width="2" height="2"/><rect x="13" y="11" width="2" height="2"/><rect x="9" y="17" width="2" height="2"/></svg></div>
+    <h2>Forest Plot</h2>
+    <p data-en="Estimates with 95% CIs for subgroup, sensitivity or meta-analyses: log or linear axis, group headings, summary diamonds, paste from Excel.&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG, editable Word shapes, plus a Word table of the numbers&lt;/span&gt;">次族群、敏感度分析或統合分析的效果量與 95% CI：對數或線性座標、分組標題、彙總菱形，可直接從 Excel 貼上。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG、可編輯的 Word 圖形，以及數值的 Word 表格</span></p>
+    <div class="tags"><span class="pill">HR · OR · RR</span><span class="pill" data-en="Paste from Excel">Excel 貼上</span></div>
+  </a>
+  <a class="tile" href="evalue/index.html">
+    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M7 4c1 8 4 12 14 13"/><circle cx="10.5" cy="12.5" r="1.5"/></svg></div>
+    <h2>E-value</h2>
+    <p data-en="Sensitivity analysis for unmeasured confounding: E-values for RR, OR, HR (rare or common outcome) and SMD, a sentence ready for the results section, and the E-value curve.&lt;span class=&quot;out&quot;&gt;Output: curve or results table as PNG, TIFF, PDF, SVG or Word, plus an editable Word table&lt;/span&gt;">未測量干擾的敏感度分析：計算 RR、OR、HR（罕見或常見結果）與 SMD 的 E-value，產生可放進結果段落的描述，並畫出 E-value 曲線。<span class="out">輸出：曲線圖或結果表（PNG、TIFF、PDF、SVG、Word），以及可編輯的 Word 表格</span></p>
+    <div class="tags"><span class="pill">VanderWeele &amp; Ding</span><span class="pill" data-en="Ready-made sentence">結果描述</span></div>
+  </a>
+  <a class="tile" href="dag/index.html">
+    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="2.5" width="6" height="4" rx="1"/><rect x="2" y="16" width="6" height="4" rx="1"/><rect x="16" y="16" width="6" height="4" rx="1"/><path d="M10.5 6.5 6 16M13.5 6.5 18 16M8 18h8"/></svg></div>
+    <h2>Causal Diagram (DAG)</h2>
+    <p data-en="Directed acyclic graph with drag-to-place variables: exposure, outcome, confounders, mediators, colliders and unmeasured variables; lists open back-door paths and minimal sufficient adjustment sets.&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG or editable Word shapes&lt;/span&gt;">因果圖（有向無環圖）：拖曳排版暴露、結果、干擾、中介、碰撞與未測量變項，自動列出仍未阻斷的後門路徑與最小充分調整集合。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG，或可編輯的 Word 圖形</span></p>
+    <div class="tags"><span class="pill" data-en="Back-door check">後門路徑檢查</span><span class="pill" data-en="Adjustment sets">調整集合</span></div>
   </a>
   <a class="tile" href="rob2/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="7" r="2.5"/><circle cx="12" cy="7" r="2.5"/><circle cx="18" cy="7" r="2.5"/><circle cx="6" cy="16" r="2.5"/><circle cx="12" cy="16" r="2.5"/><circle cx="18" cy="16" r="2.5"/></svg></div>

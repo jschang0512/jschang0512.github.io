@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/Research-toolkit/icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/Research-toolkit/icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/Research-toolkit/icons/apple-touch-icon.png">
+<title data-en="Forest Plot · Research Toolkit">森林圖 · Research Toolkit</title>
+<meta name="description" content="森林圖（forest plot）：次族群分析、敏感度分析或統合分析的 HR、OR、RR 與 95% CI，對數或線性座標，可匯出可編輯 Word 圖形與 Word 表格。">
+<link rel="canonical" href="https://jschang0512.github.io/Research-toolkit/forestplot/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Research Toolkit">
+<meta property="og:title" content="森林圖 · Research Toolkit">
+<meta property="og:description" content="森林圖（forest plot）：次族群分析、敏感度分析或統合分析的 HR、OR、RR 與 95% CI，可匯出可編輯 Word 圖形與 Word 表格。">
+<meta property="og:url" content="https://jschang0512.github.io/Research-toolkit/forestplot/">
+<meta property="og:image" content="https://jschang0512.github.io/assets/og/research-toolkit.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../shared/style.css?v=20261011a">
+<style>
+  .frow .block-head input { flex: 1; }
+  .frow .nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .frow .opts { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; margin-top: 6px; }
+  .frow .opts .check { margin: 0; }
+  .frow.is-head .nums, .frow.is-head .extra { display: none; }
+  .frow .extra { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 6px; }
+  .cols-grid { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 10px; align-items: center; }
+  .cols-grid .check { margin: 0; white-space: nowrap; }
+  @media (max-width: 640px) { .frow .extra { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="back" href="../index.html" data-en="← Home">← 工具首頁</a>
+  <h1>Forest Plot</h1>
+  <span class="sub" data-en="Estimates with 95% CI for subgroups, sensitivity analyses or meta-analyses">次族群、敏感度分析或統合分析的效果量與 95% CI</span>
+  <span class="spacer"></span>
+  <div class="btns">
+    <button class="small" id="btnUndo" title="復原 (Ctrl+Z)" data-en-title="Undo (Ctrl+Z)">↶</button>
+    <button class="small" id="btnRedo" title="重做 (Ctrl+Y)" data-en-title="Redo (Ctrl+Y)">↷</button>
+    <button class="small" id="btnSaveJson" title="下載 .json，之後可再開啟或傳給共同作者" data-en-title="Download a .json file to reopen later or share with co-authors" data-en="Save project">儲存專案</button>
+    <button class="small" id="btnLoadJson" title="匯入先前儲存的 .json 專案檔，還原所有輸入" data-en-title="Import a previously saved .json project file" data-en="Import project">匯入專案</button>
+    <button class="small" id="btnExample" data-en="Example">範例</button>
+    <button class="small" id="btnReset" data-en="Clear">清空</button>
+  </div>
+</header>
+
+<main class="tool">
+  <section id="form">
+    <div class="card">
+      <h2><span class="step-no">1</span> <span data-en="Rows">資料列</span></h2>
+      <p class="hint" data-en="One row per estimate. A group heading row has a label only; a summary row is drawn as a diamond.">每個估計值一列。分組標題列只填名稱；彙總列（例如 Overall）以菱形呈現。</p>
+      <div class="btns" style="margin-bottom:10px">
+        <button class="small" id="btnPaste" data-en="Paste from Excel…">從 Excel 貼上…</button>
+        <button class="small" id="addRow" data-en="+ Estimate row">＋ 估計值列</button>
+        <button class="small" id="addHead" data-en="+ Group heading">＋ 分組標題</button>
+      </div>
+      <div id="rows"></div>
+    </div>
+
+    <div class="card">
+      <h2><span class="step-no">2</span> <span data-en="Measure and axis">效果量與座標軸</span></h2>
+      <div class="grid2">
+        <label class="field"><span data-en="Measure">效果量</span><select data-k="measure">
+          <option value="HR">HR</option><option value="OR">OR</option><option value="RR">RR</option><option value="IRR">IRR</option>
+          <option value="MD">MD</option><option value="SMD">SMD</option><option value="RD">RD</option></select></label>
+        <label class="field"><span data-en="Scale">座標</span><select data-k="scale">
+          <option value="log" data-en="Log (ratios)">對數（比值）</option><option value="linear" data-en="Linear (differences)">線性（差值）</option></select></label>
+        <label class="field"><span data-en="Line of no effect">無效線位置</span><input type="number" step="any" data-k="nullV"></label>
+        <label class="field"><span data-en="Decimals">小數位數</span><input type="number" min="0" max="4" step="1" data-k="dec"></label>
+        <label class="field"><span data-en="Axis from (blank = auto)">座標起點（留空＝自動）</span><input type="number" step="any" data-k="xmin"></label>
+        <label class="field"><span data-en="Axis to (blank = auto)">座標終點（留空＝自動）</span><input type="number" step="any" data-k="xmax"></label>
+      </div>
+      <label class="field"><span data-en="Tick marks (comma-separated, blank = auto)">刻度（以逗號分隔，留空＝自動）</span><input data-k="ticks" placeholder="0.5, 1, 2"></label>
+      <label class="field"><span data-en="Axis title (optional)">座標軸標題（選填）</span><input data-k="axisLabel"></label>
+      <div class="grid2">
+        <label class="field"><span data-en="Label left of the line">無效線左側說明</span><input data-k="favL"></label>
+        <label class="field"><span data-en="Label right of the line">無效線右側說明</span><input data-k="favR"></label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="step-no">3</span> <span data-en="Columns">欄位</span></h2>
+      <p class="hint" data-en="Use a line break in a heading to set it on two lines.">標題中換行可分成兩行。</p>
+      <div class="cols-grid">
+        <span class="lbl" style="margin:0" data-en="Label column">名稱欄</span><input data-k="hLabel" aria-label="Label column heading">
+        <label class="check"><input type="checkbox" data-k="showC1"> <span data-en="Column A">欄 A</span></label><textarea rows="2" data-k="hC1" aria-label="Column A heading"></textarea>
+        <label class="check"><input type="checkbox" data-k="showC2"> <span data-en="Column B">欄 B</span></label><textarea rows="2" data-k="hC2" aria-label="Column B heading"></textarea>
+        <label class="check"><input type="checkbox" data-k="showEst"> <span data-en="Estimate (CI)">估計值（CI）</span></label><input data-k="hEst" placeholder="HR (95% CI)" aria-label="Estimate column heading">
+        <label class="check"><input type="checkbox" data-k="showP"> <span data-en="P value">P 值</span></label><textarea rows="2" data-k="hP" aria-label="P value column heading"></textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <details>
+        <summary><span class="step-no" style="display:inline-grid">4</span> <span data-en="Appearance">外觀：字型、顏色、尺寸</span></summary>
+        <div id="styleFields"></div>
+        <div class="grid2">
+          <label class="field"><span data-en="Plot width (px)">圖區寬度 (px)</span><input type="number" data-k="plotW" min="120" max="900" step="10"></label>
+          <label class="field"><span data-en="Row height (× font size)">列高（字級倍數）</span><input type="number" data-k="rowSp" min="1.3" max="3.5" step="0.1"></label>
+          <label class="field"><span data-en="Marker size (px)">標記大小 (px)</span><input type="number" data-k="marker" min="3" max="24" step="0.5"></label>
+          <label class="field"><span data-en="CI line width (px)">CI 線寬 (px)</span><input type="number" data-k="ciW" min="0.4" max="5" step="0.1"></label>
+          <label class="field"><span data-en="Marker / CI colour">標記與 CI 顏色</span><input type="color" data-k="color" style="width:100%"></label>
+          <label class="field"><span data-en="Summary diamond colour">彙總菱形顏色</span><input type="color" data-k="sumColor" style="width:100%"></label>
+        </div>
+        <label class="check"><input type="checkbox" data-k="refDash"> <span data-en="Dashed line of no effect">無效線用虛線</span></label>
+        <label class="field"><span data-en="Title (optional)">圖標題（選填）</span><input data-k="title"></label>
+        <label class="field"><span data-en="Footnote (optional)">註腳（選填）</span><textarea data-k="footnote" rows="2"></textarea></label>
+      </details>
+    </div>
+    <div class="card" id="refs"></div>
+  </section>
+
+  <section class="preview-col">
+    <div class="paper" id="preview"></div>
+    <div class="msgs" id="msgs"></div>
+    <div class="card" id="export"></div>
+  </section>
+</main>
+
+<script src="../shared/common.js?v=20261011b"></script>
+<script>
+const T = RT.t;
+const KEY = 'forest1';
+// measure → default scale and line of no effect
+const MEAS = { HR: ['log', 1], OR: ['log', 1], RR: ['log', 1], IRR: ['log', 1], MD: ['linear', 0], SMD: ['linear', 0], RD: ['linear', 0] };
+const row = (o = {}) => ({ label: '', ind: 0, head: false, sum: false, c1: '', c2: '', est: '', lo: '', hi: '', p: '', ...o });
+const DEF = {
+  title: '', footnote: '', measure: 'HR', scale: 'log', nullV: 1, xmin: '', xmax: '', ticks: '', dec: 2, axisLabel: '',
+  favL: 'Favours treatment', favR: 'Favours control',
+  hLabel: 'Subgroup', showC1: true, hC1: 'Treatment\nevents/N', showC2: true, hC2: 'Control\nevents/N', showEst: true, hEst: '', showP: false, hP: 'P for\ninteraction',
+  rows: [row()], plotW: 280, rowSp: 1.9, marker: 8, ciW: 1.3, color: '#000000', sumColor: '#000000', refDash: true,
+  st: { ...RT.STYLE_DEF, fontSize: 12 },
+};
+const REFS = [
+  'Lewis S, Clarke M. Forest plots: trying to see the wood and the trees. <i>BMJ</i> 2001;322:1479–80. <a href="https://doi.org/10.1136/bmj.322.7300.1479" target="_blank" rel="noopener">doi:10.1136/bmj.322.7300.1479</a>',
+  'Wang R, Lagakos SW, Ware JH, Hunter DJ, Drazen JM. Statistics in medicine — reporting of subgroup analyses in clinical trials. <i>N Engl J Med</i> 2007;357:2189–94. <a href="https://doi.org/10.1056/NEJMsr077003" target="_blank" rel="noopener">doi:10.1056/NEJMsr077003</a>',
+  RT.REFS.libs,
+];
+let S = RT.load(KEY, DEF);
+
+/* ---------------- form ---------------- */
+const form = document.getElementById('form');
+document.getElementById('styleFields').innerHTML = RT.styleFieldsHTML(['font', 'fontSize', 'textColor']);
+document.getElementById('refs').innerHTML = RT.refsHTML(REFS);
+function syncInputs() { RT.syncForm(form, S); renderRows(); }
+RT.bindForm(form, () => S, (k) => {
+  if (k === 'measure') { [S.scale, S.nullV] = MEAS[S.measure] || ['log', 1]; RT.syncForm(form, S); }
+  update();
+});
+
+function renderRows() {
+  const host = document.getElementById('rows');
+  host.innerHTML = '';
+  S.rows.forEach((r, i) => {
+    const blk = RT.h(`<div class="block frow${r.head ? ' is-head' : ''}">
+      <div class="block-head"><b>${i + 1}.</b><input data-f="label" placeholder="${T(r.head ? '分組名稱，例如：年齡' : '名稱，例如：< 65 歲', r.head ? 'Group name, e.g. Age' : 'Label, e.g. < 65 years')}">
+        <button class="small" data-a="up">↑</button><button class="small" data-a="down">↓</button><button class="small" data-a="dup">⧉</button><button class="icon" data-a="del">✕</button></div>
+      <div class="nums">
+        <label><span class="lbl">${T('估計值', 'Estimate')}</span><input data-f="est" inputmode="decimal"></label>
+        <label><span class="lbl">${T('95% CI 下限', 'Lower 95% CI')}</span><input data-f="lo" inputmode="decimal"></label>
+        <label><span class="lbl">${T('95% CI 上限', 'Upper 95% CI')}</span><input data-f="hi" inputmode="decimal"></label>
+      </div>
+      <div class="extra">
+        <label><span class="lbl" data-col="1"></span><input data-f="c1"></label>
+        <label><span class="lbl" data-col="2"></span><input data-f="c2"></label>
+        <label><span class="lbl" data-col="p"></span><input data-f="p"></label>
+      </div>
+      <div class="opts">
+        <label class="check"><input type="checkbox" data-f="head"> ${T('分組標題', 'Group heading')}</label>
+        <label class="check"><input type="checkbox" data-f="sum"> ${T('彙總（菱形）', 'Summary (diamond)')}</label>
+        <label class="check"><input type="checkbox" data-f="ind"> ${T('縮排', 'Indent')}</label>
+      </div></div>`);
+    const lbl = { 1: S.hC1, 2: S.hC2, p: S.hP };
+    blk.querySelectorAll('[data-col]').forEach((el) => (el.textContent = String(lbl[el.dataset.col] || '').replace(/\n/g, ' ')));
+    blk.querySelectorAll('[data-f]').forEach((el) => {
+      const f = el.dataset.f;
+      if (el.type === 'checkbox') el.checked = !!r[f]; else el.value = r[f] ?? '';
+      el.oninput = () => {
+        r[f] = el.type === 'checkbox' ? (f === 'ind' ? (el.checked ? 1 : 0) : el.checked) : el.value;
+        if (f === 'head') { blk.classList.toggle('is-head', r.head); }
+        update();
+      };
+    });
+    blk.querySelector('.block-head').onclick = (e) => {
+      const a = e.target.dataset.a;
+      if (a === 'up' && i > 0) [S.rows[i - 1], S.rows[i]] = [S.rows[i], S.rows[i - 1]];
+      else if (a === 'down' && i < S.rows.length - 1) [S.rows[i + 1], S.rows[i]] = [S.rows[i], S.rows[i + 1]];
+      else if (a === 'dup') S.rows.splice(i + 1, 0, structuredClone(r));
+      else if (a === 'del') S.rows.splice(i, 1);
+      else return;
+      renderRows(); update();
+    };
+    host.appendChild(blk);
+  });
+}
+document.getElementById('addRow').onclick = () => { S.rows.push(row({ ind: S.rows.some((r) => r.head) ? 1 : 0 })); renderRows(); update(); };
+document.getElementById('addHead').onclick = () => { S.rows.push(row({ head: true })); renderRows(); update(); };
+
+// "1.23 (0.98–1.54)" or "1.23, 0.98, 1.54" in one cell
+const triple = (s) => {
+  const m = String(s || '').replace(/[–—−]/g, '-').match(/(-?\d*\.?\d+)\s*[(\[,;\s]\s*(-?\d*\.?\d+)\s*(?:-|to|,|;|\s)\s*(-?\d*\.?\d+)/i);
+  return m ? [m[1], m[2], m[3]] : null;
+};
+document.getElementById('btnPaste').onclick = async () => {
+  const txt = await RT.promptText(T('從 Excel 貼上', 'Paste from Excel'),
+    T('每列一個估計值，欄位以 Tab 分隔：<code>名稱</code>、<code>估計值</code>、<code>下限</code>、<code>上限</code>，之後可接欄 A、欄 B、P 值。估計值也可以寫成 <code>0.78 (0.69–0.88)</code>。只有名稱的列會成為分組標題。',
+      'One estimate per line, tab-separated: <code>label</code>, <code>estimate</code>, <code>lower</code>, <code>upper</code>, optionally followed by column A, column B and P. The estimate may also be written as <code>0.78 (0.69–0.88)</code>. A line with a label only becomes a group heading.'));
+  if (txt == null) return;
+  const out = [];
+  let inGroup = false;
+  String(txt).split(/\r?\n/).forEach((line) => {
+    if (!line.trim()) return;
+    const c = line.split('\t').map((x) => x.trim());
+    let est, lo, hi, rest;
+    const t3 = triple(c[1]);
+    if (t3 && c.length < 4) { [est, lo, hi] = t3; rest = c.slice(2); }
+    else { [est, lo, hi] = [c[1], c[2], c[3]]; rest = c.slice(4); }
+    const isNum = [est, lo, hi].every((v) => RT.num(v) !== null);
+    if (!isNum && c.filter(Boolean).length === 1) { out.push(row({ label: c[0], head: true })); inGroup = true; return; }
+    if (!isNum) return;   // a header line from the spreadsheet
+    out.push(row({ label: c[0], est, lo, hi, c1: rest[0] || '', c2: rest[1] || '', p: rest[2] || '', ind: inGroup ? 1 : 0 }));
+  });
+  if (!out.length) { RT.toast(T('沒有讀到數字，請確認欄位以 Tab 分隔', 'No numbers found — check the columns are tab-separated'), 5000); return; }
+  S.rows = out; syncInputs(); update();
+  RT.toast(T(`已貼上 ${out.length} 列（按 ↶ 可復原）`, `${out.length} rows pasted (↶ to undo)`));
+};
+
+/* ---------------- scale ---------------- */
+const LOG_TICKS = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100];
+const trimNum = (v) => String(Number(Number(v).toFixed(4)));
+function axis(vals) {
+  const log = S.scale === 'log';
+  const nv = RT.num(S.nullV);
+  const pool = vals.slice();
+  if (nv !== null && (!log || nv > 0)) pool.push(nv);
+  let a = Math.min(...pool), b = Math.max(...pool);
+  if (!Number.isFinite(a)) { a = log ? 0.5 : -1; b = log ? 2 : 1; }
+  if (a === b) { a = log ? a / 2 : a - 1; b = log ? b * 2 : b + 1; }
+  let ticks;
+  if (log) {
+    a = [...LOG_TICKS].reverse().find((t) => t <= a) ?? a;
+    b = LOG_TICKS.find((t) => t >= b) ?? b;
+    ticks = LOG_TICKS.filter((t) => t >= a && t <= b);
+  } else {
+    const raw = (b - a) / 5, p = 10 ** Math.floor(Math.log10(raw)), step = [1, 2, 2.5, 5, 10].map((m) => m * p).find((s) => s >= raw);
+    a = Math.floor(a / step) * step; b = Math.ceil(b / step) * step;
+    ticks = []; for (let v = a; v <= b + step / 1e6; v += step) ticks.push(Number(v.toFixed(10)));
+  }
+  const ua = RT.num(S.xmin), ub = RT.num(S.xmax);
+  if (ua !== null && (!log || ua > 0)) a = ua;
+  if (ub !== null && (!log || ub > 0) && ub > a) b = ub;
+  const custom = String(S.ticks || '').split(/[,，\s]+/).map(RT.num).filter((v) => v !== null && (!log || v > 0));
+  ticks = (custom.length ? custom : ticks).filter((t) => t >= a - 1e-9 && t <= b + 1e-9);
+  const tf = log ? Math.log : (v) => v;
+  return { a, b, ticks, pos: (v, x0, w) => x0 + ((tf(v) - tf(a)) / (tf(b) - tf(a))) * w };
+}
+const vals = (r) => [RT.num(r.est), RT.num(r.lo), RT.num(r.hi)];
+const usable = (r) => !r.head && vals(r).every((v) => v !== null) && (S.scale !== 'log' || vals(r).every((v) => v > 0));
+
+/* ---------------- figure ---------------- */
+function columns() {
+  const dec = Math.max(0, Math.min(4, Number(S.dec) || 0));
+  const fmt = (v) => Number(v).toFixed(dec);
+  const estText = (r) => (usable(r) ? `${fmt(r.est)} (${fmt(r.lo)}–${fmt(r.hi)})` : '');
+  const cols = [{ head: S.hLabel, anchor: 'start', text: (r) => r.label, label: true }];
+  if (S.showC1) cols.push({ head: S.hC1, anchor: 'middle', text: (r) => r.c1 });
+  if (S.showC2) cols.push({ head: S.hC2, anchor: 'middle', text: (r) => r.c2 });
+  cols.push({ plot: true, head: '' });
+  if (S.showEst) cols.push({ head: S.hEst || `${S.measure} (95% CI)`, anchor: 'start', text: estText });
+  if (S.showP) cols.push({ head: S.hP, anchor: 'middle', text: (r) => r.p });
+  return cols;
+}
+function build() {
+  const st = RT.applyStyle(S.st);
+  const fs = Number(st.fontSize) || 12, ink = st.textColor || '#000000';
+  const M = 16, gap = fs * 1.4, rowH = fs * (Number(S.rowSp) || 1.9), headLH = fs * 1.3, ind = fs * 1.2;
+  const rows = S.rows, cols = columns();
+  const ax = axis(rows.filter(usable).flatMap(vals));
+  const bold = (r) => r.head || r.sum;
+  cols.forEach((c) => {
+    if (c.plot) { c.w = Math.max(120, Number(S.plotW) || 280); return; }
+    const hw = Math.max(0, ...String(c.head || '').split('\n').map((t) => RT.textWidth(t, fs, true)));
+    const rw = Math.max(0, ...rows.map((r) => RT.textWidth(String(c.text(r) ?? ''), fs, bold(r)) + (c.label && r.ind ? ind : 0)));
+    c.w = Math.ceil(Math.max(hw, rw)) + 2;
+  });
+  let x = M;
+  cols.forEach((c) => { c.x = x; x += c.w + gap; });
+  const W = x - gap + M;
+  RT.beginScene();
+  let body = '', y = M;
+  if (S.title && S.title.trim()) { body += RT.rich([{ runs: [{ t: S.title, bold: true, size: fs * 1.1, color: ink }] }], M, y, { lh: fs * 1.5 }); y += fs * 1.9; }
+  // headings, bottom-aligned
+  const nHead = Math.max(1, ...cols.map((c) => String(c.head || '').split('\n').length));
+  cols.forEach((c) => {
+    if (c.plot || !c.head) return;
+    const lines = String(c.head).split('\n');
+    const ax0 = c.anchor === 'middle' ? c.x + c.w / 2 : c.x;
+    body += RT.rich(lines.map((t) => ({ runs: [{ t, bold: true, size: fs, color: ink }] })), ax0, y + (nHead - lines.length) * headLH, { lh: headLH, anchor: c.anchor });
+  });
+  y += nHead * headLH + fs * 0.35;
+  body += RT.line([[M, y], [W - M, y]], { color: ink, sw: 1 });
+  const y0 = y + fs * 0.3;
+  const plot = cols.find((c) => c.plot);
+  const X = (v) => ax.pos(v, plot.x, plot.w);
+  const inRange = (v) => v >= ax.a - 1e-9 && v <= ax.b + 1e-9;
+  const ms = Number(S.marker) || 8, ciW = Number(S.ciW) || 1.3;
+  rows.forEach((r, i) => {
+    const top = y0 + i * rowH, yc = top + rowH / 2;
+    cols.forEach((c) => {
+      if (c.plot) return;
+      const t = String(c.text(r) ?? '');
+      if (!t) return;
+      const ax0 = c.anchor === 'middle' ? c.x + c.w / 2 : c.x + (c.label && r.ind ? ind : 0);
+      body += RT.rich([{ runs: [{ t, bold: bold(r), size: fs, color: ink }] }], ax0, top, { lh: rowH, anchor: c.anchor });
+    });
+    if (!usable(r)) return;
+    const [e, lo, hi] = vals(r);
+    const xl = X(Math.max(lo, ax.a)), xh = X(Math.min(hi, ax.b));
+    const col = r.sum ? S.sumColor : S.color;
+    if (r.sum) {
+      const h = ms * 0.75, xe = X(Math.min(Math.max(e, ax.a), ax.b));
+      body += RT.poly([[xl, yc], [xe, yc - h], [xh, yc], [xe, yc + h]], { fill: col, stroke: col, sw: 0.5 });
+      return;
+    }
+    body += RT.line([[xl, yc], [xh, yc]], { color: col, sw: ciW });
+    const head = Math.max(4, fs * 0.55);
+    if (lo < ax.a) body += RT.arrow([[xl + head + 1, yc], [xl, yc]], { color: col, sw: ciW, head });
+    if (hi > ax.b) body += RT.arrow([[xh - head - 1, yc], [xh, yc]], { color: col, sw: ciW, head });
+    if (inRange(e)) body += RT.rect(X(e) - ms / 2, yc - ms / 2, ms, ms, { fill: col });
+  });
+  const yEnd = y0 + rows.length * rowH;
+  const nv = RT.num(S.nullV);
+  if (nv !== null && inRange(nv) && (S.scale !== 'log' || nv > 0)) body += RT.line([[X(nv), y0], [X(nv), yEnd]], { color: ink, sw: 1, dash: S.refDash ? '4 3' : null });
+  // axis
+  const yA = yEnd + fs * 0.2, tk = fs * 0.4;
+  body += RT.line([[plot.x, yA], [plot.x + plot.w, yA]], { color: ink, sw: 1 });
+  ax.ticks.forEach((t) => {
+    body += RT.line([[X(t), yA], [X(t), yA + tk]], { color: ink, sw: 1 });
+    body += RT.rich([{ runs: [{ t: trimNum(t), size: fs * 0.92, color: ink }] }], X(t), yA + tk + 1, { lh: fs * 1.3, anchor: 'middle' });
+  });
+  y = yA + tk + fs * 1.5;
+  if (S.axisLabel && S.axisLabel.trim()) { body += RT.rich([{ runs: [{ t: S.axisLabel, size: fs, color: ink }] }], plot.x + plot.w / 2, y, { lh: fs * 1.35, anchor: 'middle' }); y += fs * 1.45; }
+  if ((S.favL || S.favR) && nv !== null && inRange(nv)) {
+    const xn = X(nv), pad = fs * 0.5;
+    if (S.favL) body += RT.rich([{ runs: [{ t: '← ' + S.favL, size: fs * 0.92, color: ink }] }], xn - pad, y, { lh: fs * 1.35, anchor: 'end' });
+    if (S.favR) body += RT.rich([{ runs: [{ t: S.favR + ' →', size: fs * 0.92, color: ink }] }], xn + pad, y, { lh: fs * 1.35, anchor: 'start' });
+    y += fs * 1.45;
+  }
+  if (S.footnote && S.footnote.trim()) {
+    y += fs * 0.4;
+    const lines = S.footnote.split('\n');
+    body += RT.rich(lines.map((t) => ({ runs: [{ t, size: fs * 0.85, color: ink }] })), M, y, { lh: fs * 1.25 });
+    y += lines.length * fs * 1.25;
+  }
+  // a label may run left past the plot when the label is wider than the side of the line
+  return RT.figure(Math.max(W, plot.x + plot.w + M), y + M, body);
+}
+const docxTable = () => {
+  RT.applyStyle(S.st);
+  const cols = columns().filter((c) => !c.plot);
+  return RT.buildDocxTable({
+    title: S.title, note: S.footnote, headers: cols.map((c) => String(c.head || '').replace(/\n/g, ' ')),
+    widths: cols.map((c) => (c.label ? 3 : 1.6)),
+    rows: S.rows.map((r) => cols.map((c, i) => ({ text: (i === 0 && r.ind ? '    ' : '') + String(c.text(r) ?? ''), bold: r.head || r.sum, align: c.anchor === 'middle' ? 'center' : undefined }))),
+    sizePt: Math.max(8, Math.min(12, (Number(S.st.fontSize) || 12) * 0.8)), headerFill: 'FFFFFF',
+  });
+};
+
+/* ---------------- checks ---------------- */
+function checks() {
+  const log = S.scale === 'log', out = [];
+  const ax = axis(S.rows.filter(usable).flatMap(vals));
+  S.rows.forEach((r, i) => {
+    if (r.head) return;
+    const name = r.label ? `「${r.label}」` : T(`第 ${i + 1} 列`, `row ${i + 1}`);
+    const v = vals(r), given = [r.est, r.lo, r.hi].filter((x) => String(x ?? '').trim()).length;
+    if (!given) { if (r.label) out.push(T(`${name}還沒有數字`, `${name} has no numbers yet`)); return; }
+    if (v.some((x) => x === null)) { out.push(T(`${name}需要估計值、下限與上限三個數字`, `${name} needs an estimate, a lower and an upper limit`)); return; }
+    if (log && v.some((x) => x <= 0)) { out.push(T(`${name}有 ≤ 0 的數值，對數座標無法畫出；比值請確認不是 log 值，差值請改用線性座標`, `${name} has a value ≤ 0, which a log axis cannot show — ratios should not be on the log scale; for differences use a linear axis`)); return; }
+    if (!(v[1] <= v[0] && v[0] <= v[2])) out.push(T(`${name}的估計值不在 CI 之間（下限 ≤ 估計值 ≤ 上限）`, `${name}: the estimate is not between its limits (lower ≤ estimate ≤ upper)`));
+    else if (v[1] < ax.a || v[2] > ax.b) out.push(T(`${name}的 CI 超出座標範圍，已用箭頭表示`, `${name}: the CI runs past the axis and is drawn with an arrow`));
+  });
+  return out;
+}
+
+let fig;
+const preview = document.getElementById('preview');
+const exporter = RT.exportPanel(document.getElementById('export'), () => fig, 'forest_plot', {
+  fontSize: { get: () => S.st.fontSize, set: (v) => { S.st.fontSize = v; syncInputs(); update(); } },
+});
+// the numbers as an editable Word table, for the manuscript's table version
+const tblBtn = RT.h(`<button type="button">${T('Word 表格（數值）', 'Word table (numbers)')}</button>`);
+tblBtn.title = T('匯出同一組數字的可編輯 Word 表格', 'Export the same numbers as an editable Word table');
+tblBtn.onclick = async () => {
+  try { RT.download(await docxTable(), (document.querySelector('.ex-name').value || 'forest_plot') + '_table.docx'); }
+  catch (e) { RT.toast(String(e.message || e), 6000); }
+};
+document.querySelector('#export .ex-copy').after(tblBtn);
+const hist = RT.history(() => S, (s) => { S = s; syncInputs(); render(); });
+function render() {
+  try { fig = build(); preview.innerHTML = fig.svg; }
+  catch (e) { console.error(e); preview.innerHTML = `<div class="msg">⚠ ${RT.esc(e.message)}</div>`; }
+  const msgs = checks();
+  const blocking = msgs.filter((m) => !/箭頭|arrow/.test(m)).length;
+  document.getElementById('msgs').innerHTML = msgs.map((m) => `<div class="msg${/箭頭|arrow/.test(m) ? ' ok' : ''}">${/箭頭|arrow/.test(m) ? 'ℹ' : '⚠'} ${RT.esc(m)}</div>`).join('');
+  exporter.setIssues(blocking);
+  exporter.refresh();
+  RT.save(KEY, S);
+}
+const update = RT.debounce(() => { render(); hist.push(); }, 80);
+
+const EX_ROWS = [
+  row({ label: 'Overall', sum: true, c1: '412/10,250', c2: '538/10,180', est: '0.78', lo: '0.69', hi: '0.88' }),
+  row({ label: 'Age', head: true }),
+  row({ label: '< 65 years', ind: 1, c1: '150/5,830', c2: '201/5,790', est: '0.74', lo: '0.60', hi: '0.91', p: '0.48' }),
+  row({ label: '≥ 65 years', ind: 1, c1: '262/4,420', c2: '337/4,390', est: '0.81', lo: '0.69', hi: '0.95' }),
+  row({ label: 'Sex', head: true }),
+  row({ label: 'Female', ind: 1, c1: '171/4,960', c2: '240/4,900', est: '0.70', lo: '0.56', hi: '0.87', p: '0.21' }),
+  row({ label: 'Male', ind: 1, c1: '241/5,290', c2: '298/5,280', est: '0.84', lo: '0.72', hi: '0.98' }),
+  row({ label: 'Baseline eGFR', head: true }),
+  row({ label: '≥ 60 mL/min/1.73 m²', ind: 1, c1: '290/7,860', c2: '368/7,800', est: '0.80', lo: '0.69', hi: '0.93', p: '0.63' }),
+  row({ label: '< 60 mL/min/1.73 m²', ind: 1, c1: '122/2,390', c2: '170/2,380', est: '0.74', lo: '0.59', hi: '0.93' }),
+  row({ label: 'Prior cardiovascular disease', head: true }),
+  row({ label: 'Yes', ind: 1, c1: '98/1,620', c2: '121/1,590', est: '0.83', lo: '0.64', hi: '1.08', p: '0.55' }),
+  row({ label: 'No', ind: 1, c1: '314/8,630', c2: '417/8,590', est: '0.76', lo: '0.66', hi: '0.88' }),
+];
+document.getElementById('btnUndo').onclick = hist.undo;
+document.getElementById('btnRedo').onclick = hist.redo;
+document.getElementById('btnExample').onclick = () => {
+  S.rows = structuredClone(EX_ROWS);
+  Object.assign(S, { measure: 'HR', scale: 'log', nullV: 1, xmin: '', xmax: '', ticks: '', showP: true, hLabel: 'Subgroup', hC1: 'SGLT2i\nevents/N', hC2: 'DPP-4i\nevents/N', favL: 'Favours SGLT2i', favR: 'Favours DPP-4i',
+    footnote: 'HR, hazard ratio; CI, confidence interval; eGFR, estimated glomerular filtration rate. P values are for interaction.' });
+  syncInputs(); update();
+  RT.toast(T('已載入範例（虛構研究，僅供示範；按 ↶ 可復原）', 'Example loaded (a fictional study, for illustration; ↶ to undo)'));
+};
+document.getElementById('btnReset').onclick = () => { S.rows = [row()]; S.title = ''; S.footnote = ''; syncInputs(); update(); RT.toast(T('已清空內容（按 ↶ 可復原）', 'Content cleared (↶ to undo)')); };
+document.getElementById('btnSaveJson').onclick = () => RT.downloadJSON(S, 'forest_plot.json');
+document.getElementById('btnLoadJson').onclick = async () => { try { S = RT.merge(DEF, await RT.pickJSON()); syncInputs(); update(); } catch (e) { RT.toast(T('讀取失敗：', 'Could not open file: ') + e.message, 6000); } };
+
+syncInputs();
+render();
+hist.push();
+</script>
+</body>
+</html>

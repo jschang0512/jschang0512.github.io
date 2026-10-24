@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/Research-toolkit/icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/Research-toolkit/icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/Research-toolkit/icons/apple-touch-icon.png">
+<title data-en="Causal Diagram (DAG) · Research Toolkit">因果圖 DAG · Research Toolkit</title>
+<meta name="description" content="因果圖（DAG）繪製：拖曳排版暴露、結果、干擾、中介與碰撞變項，自動找出未阻斷的後門路徑與最小充分調整集合，可匯出可編輯 Word 圖形。">
+<link rel="canonical" href="https://jschang0512.github.io/Research-toolkit/dag/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Research Toolkit">
+<meta property="og:title" content="因果圖 DAG · Research Toolkit">
+<meta property="og:description" content="因果圖（DAG）繪製：拖曳排版、自動找出未阻斷的後門路徑與最小充分調整集合，可匯出可編輯 Word 圖形。">
+<meta property="og:url" content="https://jschang0512.github.io/Research-toolkit/dag/">
+<meta property="og:image" content="https://jschang0512.github.io/assets/og/research-toolkit.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../shared/style.css?v=20261011a">
+<style>
+  .nrow2 { display: grid; grid-template-columns: minmax(0, 1fr) 8.5rem 4.2rem 4.2rem 30px; gap: 6px; align-items: center; margin-bottom: 6px; }
+  .nrow2 .check { margin: 0; }
+  .nrow2-sub { display: flex; gap: 14px; margin: -2px 0 10px; }
+  .nrow2-sub .check { margin: 0; font-size: 12.5px; }
+  .erow2 { display: grid; grid-template-columns: minmax(0, 1fr) 6.5rem auto 30px; gap: 6px; align-items: center; margin-bottom: 6px; font-size: 13px; }
+  .add-edge { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto; gap: 6px; align-items: center; margin-bottom: 10px; }
+  @media (max-width: 640px) {
+    .nrow2 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 30px; }
+    .nrow2 .xy { display: none; }
+  }
+  #preview svg { touch-action: none; }
+  #preview [data-node] { cursor: grab; }
+  #preview.dragging [data-node] { cursor: grabbing; }
+  .msg .btns { margin-top: 6px; }
+  .msg ul { margin: 4px 0 0; padding-left: 18px; }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="back" href="../index.html" data-en="← Home">← 工具首頁</a>
+  <h1>Causal Diagram (DAG)</h1>
+  <span class="sub" data-en="Directed acyclic graph with back-door path check">有向無環圖，並檢查後門路徑</span>
+  <span class="spacer"></span>
+  <div class="btns">
+    <button class="small" id="btnUndo" title="復原 (Ctrl+Z)" data-en-title="Undo (Ctrl+Z)">↶</button>
+    <button class="small" id="btnRedo" title="重做 (Ctrl+Y)" data-en-title="Redo (Ctrl+Y)">↷</button>
+    <button class="small" id="btnSaveJson" title="下載 .json，之後可再開啟或傳給共同作者" data-en-title="Download a .json file to reopen later or share with co-authors" data-en="Save project">儲存專案</button>
+    <button class="small" id="btnLoadJson" title="匯入先前儲存的 .json 專案檔，還原所有輸入" data-en-title="Import a previously saved .json project file" data-en="Import project">匯入專案</button>
+    <button class="small" id="btnExample" data-en="Example">範例</button>
+    <button class="small" id="btnReset" data-en="Clear">清空</button>
+  </div>
+</header>
+
+<main class="tool">
+  <section id="form">
+    <div class="card">
+      <p class="hint" style="margin:0" data-en="Drag the variables in the preview to place them. Mark one exposure and one outcome, and tick the variables you adjust for: the panel under the preview then lists back-door paths that are still open and the minimal sets that would close them.">在預覽圖上直接拖曳變項排版。標記一個暴露、一個結果，勾選你調整的變項，預覽下方就會列出仍未阻斷的後門路徑，以及能阻斷它們的最小調整集合。</p>
+    </div>
+    <div class="card">
+      <h2><span class="step-no">1</span> <span data-en="Variables">變項</span></h2>
+      <div id="nodes"></div>
+      <button class="small" id="addNode" data-en="+ Add variable">＋ 新增變項</button>
+    </div>
+    <div class="card">
+      <h2><span class="step-no">2</span> <span data-en="Arrows">箭頭（因果關係）</span></h2>
+      <div class="add-edge">
+        <select id="eFrom" aria-label="From"></select><span aria-hidden="true">→</span><select id="eTo" aria-label="To"></select>
+        <button class="small primary" id="addEdge" data-en="Add">加入</button>
+      </div>
+      <div id="edges"></div>
+    </div>
+    <div class="card">
+      <details>
+        <summary><span class="step-no" style="display:inline-grid">3</span> <span data-en="Appearance">外觀：字型、顏色、尺寸</span></summary>
+        <div id="styleFields"></div>
+        <div class="grid2">
+          <label class="field"><span data-en="Canvas width (px)">畫布寬度 (px)</span><input type="number" data-k="W" min="300" max="1600" step="10"></label>
+          <label class="field"><span data-en="Canvas height (px)">畫布高度 (px)</span><input type="number" data-k="H" min="200" max="1200" step="10"></label>
+          <label class="field"><span data-en="Arrow width (px)">箭頭線寬 (px)</span><input type="number" data-k="lineW" min="0.5" max="5" step="0.1"></label>
+          <label class="field"><span data-en="Arrowhead size (px)">箭頭大小 (px)</span><input type="number" data-k="head" min="4" max="20" step="0.5"></label>
+        </div>
+        <label class="check"><input type="checkbox" data-k="mono"> <span data-en="Black and white (no role colours)">黑白（不以顏色區分角色）</span></label>
+        <label class="check"><input type="checkbox" data-k="legend"> <span data-en="Legend">圖例</span></label>
+        <label class="field"><span data-en="Title (optional)">圖標題（選填）</span><input data-k="title"></label>
+        <label class="field"><span data-en="Footnote (optional)">註腳（選填）</span><textarea data-k="footnote" rows="2"></textarea></label>
+      </details>
+    </div>
+    <div class="card" id="refs"></div>
+  </section>
+
+  <section class="preview-col">
+    <div class="paper" id="preview"></div>
+    <div class="msgs" id="msgs"></div>
+    <div class="card" id="export"></div>
+  </section>
+</main>
+
+<script src="../shared/common.js?v=20261011b"></script>
+<script>
+const T = RT.t;
+const KEY = 'dag1';
+// role colours: Okabe–Ito hues, lightened for fills
+const ROLES = {
+  exposure: ['暴露', 'Exposure', '#FDF0C4', '#A06E00'],
+  outcome: ['結果', 'Outcome', '#D6EAF8', '#0B5E99'],
+  confounder: ['干擾因子', 'Confounder', '#FADBCB', '#B4501A'],
+  mediator: ['中介變項', 'Mediator', '#D3EEE2', '#0E7A5B'],
+  collider: ['碰撞變項', 'Collider', '#EEDCEA', '#9C4B86'],
+  other: ['其他', 'Other', '#FFFFFF', '#000000'],
+  unmeasured: ['未測量', 'Unmeasured', '#FFFFFF', '#6B6B6B'],
+};
+const roleName = (r) => T(ROLES[r][0], ROLES[r][1]);
+let seq = 0;
+const nid = () => 'n' + Date.now().toString(36) + (seq++);
+const node = (o = {}) => ({ id: nid(), label: '', role: 'other', adj: false, x: 200, y: 120, ...o });
+const DEF = { nodes: [], edges: [], W: 760, H: 440, lineW: 1.3, head: 9, mono: false, legend: true, title: '', footnote: '', st: { ...RT.STYLE_DEF, fontSize: 14 } };
+const REFS = [
+  'Greenland S, Pearl J, Robins JM. Causal diagrams for epidemiologic research. <i>Epidemiology</i> 1999;10:37–48. <a href="https://doi.org/10.1097/00001648-199901000-00008" target="_blank" rel="noopener">doi:10.1097/00001648-199901000-00008</a>',
+  'Shrier I, Platt RW. Reducing bias through directed acyclic graphs. <i>BMC Med Res Methodol</i> 2008;8:70. <a href="https://doi.org/10.1186/1471-2288-8-70" target="_blank" rel="noopener">doi:10.1186/1471-2288-8-70</a>',
+  'Textor J, van der Zander B, Gilthorpe MS, Liśkiewicz M, Ellison GTH. Robust causal inference using directed acyclic graphs: the R package ‘dagitty’. <i>Int J Epidemiol</i> 2016;45:1887–94. <a href="https://doi.org/10.1093/ije/dyw341" target="_blank" rel="noopener">doi:10.1093/ije/dyw341</a>',
+  'Tennant PWG, Murray EJ, Arnold KF, et al. Use of directed acyclic graphs (DAGs) to identify confounders in applied health research: review and recommendations. <i>Int J Epidemiol</i> 2021;50:620–32. <a href="https://doi.org/10.1093/ije/dyaa213" target="_blank" rel="noopener">doi:10.1093/ije/dyaa213</a>',
+];
+let S = RT.load(KEY, DEF);
+
+/* ---------------- form ---------------- */
+const form = document.getElementById('form');
+document.getElementById('styleFields').innerHTML = RT.styleFieldsHTML(['font', 'fontSize', 'textColor']);
+document.getElementById('refs').innerHTML = RT.refsHTML(REFS);
+function syncInputs() { RT.syncForm(form, S); renderNodes(); renderEdges(); }
+RT.bindForm(form, () => S, () => update());
+const byId = (id) => S.nodes.find((n) => n.id === id);
+const nameOf = (id) => (byId(id)?.label || T('（未命名）', '(unnamed)'));
+
+function renderNodes() {
+  const host = document.getElementById('nodes');
+  host.innerHTML = '';
+  S.nodes.forEach((n, i) => {
+    const el = RT.h(`<div>
+      <div class="nrow2">
+        <input data-f="label" placeholder="${T('變項名稱', 'Variable name')}" aria-label="${T('變項名稱', 'Variable name')}">
+        <select data-f="role" aria-label="${T('角色', 'Role')}">${Object.keys(ROLES).map((r) => `<option value="${r}">${roleName(r)}</option>`).join('')}</select>
+        <input class="xy" type="number" data-f="x" step="5" aria-label="x" title="x">
+        <input class="xy" type="number" data-f="y" step="5" aria-label="y" title="y">
+        <button class="icon" data-a="del">✕</button>
+      </div>
+      <div class="nrow2-sub"><label class="check"><input type="checkbox" data-f="adj"> ${T('已調整（畫外框）', 'Adjusted for (boxed)')}</label></div></div>`);
+    el.querySelectorAll('[data-f]').forEach((inp) => {
+      const f = inp.dataset.f;
+      if (inp.type === 'checkbox') inp.checked = !!n[f]; else inp.value = n[f] ?? '';
+      inp.oninput = () => {
+        n[f] = inp.type === 'checkbox' ? inp.checked : inp.type === 'number' ? (RT.num(inp.value) ?? n[f]) : inp.value;
+        if (f === 'label') fillEdgeSelects();
+        if (f === 'role' && n.role === 'unmeasured') { n.adj = false; el.querySelector('[data-f="adj"]').checked = false; }
+        update();
+      };
+    });
+    el.querySelector('[data-a="del"]').onclick = () => {
+      S.edges = S.edges.filter((e) => e.from !== n.id && e.to !== n.id);
+      S.nodes.splice(i, 1); syncInputs(); update();
+    };
+    host.appendChild(el);
+  });
+  fillEdgeSelects();
+}
+function fillEdgeSelects() {
+  const opts = S.nodes.map((n) => `<option value="${n.id}">${RT.esc(n.label || T('（未命名）', '(unnamed)'))}</option>`).join('');
+  ['eFrom', 'eTo'].forEach((id, k) => {
+    const sel = document.getElementById(id), keep = sel.value;
+    sel.innerHTML = opts;
+    sel.value = keep && byId(keep) ? keep : S.nodes[k]?.id || '';
+  });
+  document.querySelectorAll('#edges [data-name]').forEach((el) => { const e = S.edges[el.dataset.name]; if (e) el.textContent = `${nameOf(e.from)} → ${nameOf(e.to)}`; });
+}
+function renderEdges() {
+  const host = document.getElementById('edges');
+  host.innerHTML = S.edges.length ? '' : `<p class="hint" style="margin:0">${T('還沒有箭頭。選「從」與「到」後按加入。', 'No arrows yet — pick “from” and “to”, then Add.')}</p>`;
+  S.edges.forEach((e, i) => {
+    const el = RT.h(`<div class="erow2"><span data-name="${i}"></span>
+      <select data-f="bend" aria-label="${T('彎曲', 'Curve')}" title="${T('彎曲，避開其他變項', 'Curve the arrow around other variables')}">
+        ${[-2, -1, 0, 1, 2].map((b) => `<option value="${b}">${b === 0 ? T('直線', 'Straight') : T(`彎曲 ${b > 0 ? '+' : ''}${b}`, `Curve ${b > 0 ? '+' : ''}${b}`)}</option>`).join('')}</select>
+      <button class="small" data-a="rev" title="${T('反轉方向', 'Reverse')}">⇄</button><button class="icon" data-a="del">✕</button></div>`);
+    el.querySelector('[data-name]').textContent = `${nameOf(e.from)} → ${nameOf(e.to)}`;
+    const sel = el.querySelector('select');
+    sel.value = String(e.bend || 0);
+    sel.oninput = () => { e.bend = Number(sel.value); update(); };
+    el.querySelector('[data-a="rev"]').setAttribute('aria-label', T('反轉方向', 'Reverse'));
+    el.querySelector('[data-a="rev"]').onclick = () => { [e.from, e.to] = [e.to, e.from]; renderEdges(); update(); };
+    el.querySelector('[data-a="del"]').onclick = () => { S.edges.splice(i, 1); renderEdges(); update(); };
+    host.appendChild(el);
+  });
+}
+document.getElementById('addNode').onclick = () => {
+  // drop it on the first free spot of a loose grid
+  const W = Number(S.W) || 760, H = Number(S.H) || 440;
+  let spot = { x: W / 2, y: H / 2 };
+  outer: for (let gy = 1; gy <= 4; gy++) for (let gx = 1; gx <= 4; gx++) {
+    const x = (W * gx) / 5, y = (H * gy) / 5;
+    if (!S.nodes.some((n) => Math.abs(n.x - x) < 110 && Math.abs(n.y - y) < 50)) { spot = { x, y }; break outer; }
+  }
+  S.nodes.push(node({ ...spot, role: S.nodes.some((n) => n.role === 'exposure') ? (S.nodes.some((n) => n.role === 'outcome') ? 'confounder' : 'outcome') : 'exposure' }));
+  syncInputs(); update();
+  const inputs = document.querySelectorAll('#nodes [data-f="label"]');
+  inputs[inputs.length - 1]?.focus();
+};
+document.getElementById('addEdge').onclick = () => {
+  const from = document.getElementById('eFrom').value, to = document.getElementById('eTo').value;
+  if (!from || !to) { RT.toast(T('請先新增至少兩個變項', 'Add at least two variables first')); return; }
+  if (from === to) { RT.toast(T('箭頭的起點與終點不能相同', 'An arrow cannot start and end at the same variable')); return; }
+  if (S.edges.some((e) => e.from === from && e.to === to)) { RT.toast(T('這個箭頭已經存在', 'That arrow already exists')); return; }
+  S.edges.push({ from, to, bend: 0 }); renderEdges(); update();
+};
+
+/* ---------------- analysis (back-door criterion) ---------------- */
+function analyse() {
+  const ids = new Set(S.nodes.map((n) => n.id));
+  const E = S.edges.filter((e) => ids.has(e.from) && ids.has(e.to) && e.from !== e.to);
+  const kids = {}, nb = {};
+  S.nodes.forEach((n) => { kids[n.id] = []; nb[n.id] = new Set(); });
+  E.forEach((e) => { kids[e.from].push(e.to); nb[e.from].add(e.to); nb[e.to].add(e.from); });
+  const fwd = (a, b) => E.some((e) => e.from === a && e.to === b);
+  // cycle check
+  const colour = {};
+  const cyc = (v) => { colour[v] = 1; for (const c of kids[v]) { if (colour[c] === 1) return true; if (!colour[c] && cyc(c)) return true; } colour[v] = 2; return false; };
+  if (S.nodes.some((n) => !colour[n.id] && cyc(n.id))) return { cycle: true };
+  const X = S.nodes.filter((n) => n.role === 'exposure'), Y = S.nodes.filter((n) => n.role === 'outcome');
+  if (X.length !== 1 || Y.length !== 1) return { needXY: true, nx: X.length, ny: Y.length };
+  const x = X[0].id, y = Y[0].id;
+  const descMemo = {};
+  const desc = (v) => {
+    if (descMemo[v]) return descMemo[v];
+    const out = new Set(), st = [...kids[v]];
+    while (st.length) { const c = st.pop(); if (!out.has(c)) { out.add(c); st.push(...kids[c]); } }
+    return (descMemo[v] = out);
+  };
+  // every simple path between exposure and outcome, ignoring direction
+  const paths = [];
+  const walk = (v, seen, path) => {
+    if (paths.length > 4000) return;
+    if (v === y) { paths.push(path.slice()); return; }
+    for (const w of nb[v]) if (!seen.has(w)) { seen.add(w); path.push(w); walk(w, seen, path); path.pop(); seen.delete(w); }
+  };
+  walk(x, new Set([x]), [x]);
+  const open = (p, Z) => {
+    for (let k = 1; k < p.length - 1; k++) {
+      const v = p[k], collider = fwd(p[k - 1], v) && fwd(p[k + 1], v);
+      if (collider) { if (!Z.has(v) && ![...desc(v)].some((d) => Z.has(d))) return false; }
+      else if (Z.has(v)) return false;
+    }
+    return true;
+  };
+  const backdoor = paths.filter((p) => fwd(p[1], x));
+  const causal = paths.filter((p) => p.every((v, k) => k === 0 || fwd(p[k - 1], v)));
+  const Z = new Set(S.nodes.filter((n) => n.adj && n.role !== 'unmeasured').map((n) => n.id));
+  const openBack = backdoor.filter((p) => open(p, Z));
+  const dx = desc(x);
+  const adjDesc = [...Z].filter((v) => dx.has(v));
+  // minimal sufficient sets among measured non-descendants of the exposure
+  const cand = S.nodes.filter((n) => n.id !== x && n.id !== y && n.role !== 'unmeasured' && !dx.has(n.id)).map((n) => n.id);
+  const sets = [];
+  if (cand.length <= 16) {
+    const masks = [...Array(1 << cand.length).keys()].sort((a, b) => popcount(a) - popcount(b));
+    for (const m of masks) {
+      if (sets.some((s) => (s & m) === s)) continue;            // a smaller valid set is inside it
+      const Zs = new Set(cand.filter((_, i) => m & (1 << i)));
+      if (backdoor.every((p) => !open(p, Zs))) sets.push(m);
+      if (sets.length >= 4) break;
+    }
+  }
+  return { x, y, backdoor, openBack, causal, adjDesc, sets: sets.map((m) => cand.filter((_, i) => m & (1 << i))), tooMany: cand.length > 16, fwd, Z };
+}
+function popcount(m) { let c = 0; while (m) { c += m & 1; m >>= 1; } return c; }
+const pathText = (p, fwd) => p.map((v, k) => (k === 0 ? nameOf(v) : `${fwd(p[k - 1], v) ? ' → ' : ' ← '}${nameOf(v)}`)).join('');
+
+function renderAnalysis() {
+  const host = document.getElementById('msgs');
+  if (!S.nodes.length) { host.innerHTML = ''; return 0; }
+  const a = analyse();
+  const out = [];
+  if (a.cycle) { host.innerHTML = `<div class="msg">⚠ ${T('圖中有循環（A → … → A），DAG 不能有循環。請刪除或反轉其中一個箭頭。', 'The graph has a cycle (A → … → A); a DAG cannot. Delete or reverse one of its arrows.')}</div>`; return 1; }
+  if (a.needXY) {
+    host.innerHTML = `<div class="msg">ℹ ${T(`要檢查後門路徑，請把一個變項設為「暴露」、一個設為「結果」（目前暴露 ${a.nx} 個、結果 ${a.ny} 個）。`, `To check back-door paths, set exactly one variable as Exposure and one as Outcome (now ${a.nx} and ${a.ny}).`)}</div>`;
+    return 0;
+  }
+  const list = (ps) => `<ul>${ps.slice(0, 6).map((p) => `<li>${RT.esc(pathText(p, a.fwd))}</li>`).join('')}${ps.length > 6 ? `<li>${T(`…還有 ${ps.length - 6} 條`, `…and ${ps.length - 6} more`)}</li>` : ''}</ul>`;
+  const adjNames = [...a.Z].map(nameOf);
+  if (!a.backdoor.length) out.push(`<div class="msg ok">✓ ${T('暴露與結果之間沒有後門路徑，不需調整即可估計總效果。', 'There are no back-door paths between exposure and outcome; no adjustment is needed for the total effect.')}</div>`);
+  else if (!a.openBack.length) out.push(`<div class="msg ok">✓ ${T(`目前的調整集合${adjNames.length ? `（${RT.esc(adjNames.join('、'))}）` : ''}已阻斷全部 ${a.backdoor.length} 條後門路徑。`, `The current adjustment set${adjNames.length ? ` (${RT.esc(adjNames.join(', '))})` : ''} blocks all ${a.backdoor.length} back-door paths.`)}</div>`);
+  else {
+    const viaU = a.openBack.some((p) => p.some((v) => byId(v)?.role === 'unmeasured'));
+    out.push(`<div class="msg">⚠ ${T(`還有 ${a.openBack.length} 條後門路徑未阻斷：`, `${a.openBack.length} back-door ${a.openBack.length === 1 ? 'path is' : 'paths are'} still open:`)}${list(a.openBack)}${viaU ? `<div style="margin-top:4px">${T('其中經過未測量變項的路徑無法靠調整阻斷，可用 <a href="../evalue/index.html">E-value</a> 評估它可能造成的偏差。', 'Paths through an unmeasured variable cannot be closed by adjustment; the <a href="../evalue/index.html">E-value</a> gauges how much bias they could cause.')}</div>` : ''}</div>`);
+  }
+  if (a.adjDesc.length) out.push(`<div class="msg">⚠ ${T(`你調整了暴露的下游變項（${RT.esc(a.adjDesc.map(nameOf).join('、'))}）。若它是中介變項會造成過度調整，若是碰撞變項或其後代則可能引入選擇偏差。`, `You adjust for a variable downstream of the exposure (${RT.esc(a.adjDesc.map(nameOf).join(', '))}). If it is a mediator this over-adjusts; if it is a collider or its descendant it can introduce selection bias.`)}</div>`);
+  if (a.backdoor.length) {
+    if (a.tooMany) out.push(`<div class="msg">ℹ ${T('候選變項超過 16 個，未計算最小調整集合。', 'More than 16 candidate variables — minimal adjustment sets were not computed.')}</div>`);
+    else if (!a.sets.length) out.push(`<div class="msg">ℹ ${T('只用已測量的變項，無法阻斷所有後門路徑。', 'No set of measured variables blocks every back-door path.')}</div>`);
+    else {
+      const btns = a.sets.map((s, i) => `<button type="button" class="small" data-set="${i}">${T('套用', 'Apply')}：${RT.esc(s.length ? s.map(nameOf).join(T('、', ', ')) : T('不需調整', 'none'))}</button>`).join('');
+      out.push(`<div class="msg ok">${T('最小充分調整集合（後門準則，估計總效果）：', 'Minimal sufficient adjustment sets (back-door criterion, total effect):')}<div class="btns">${btns}</div></div>`);
+    }
+  }
+  host.innerHTML = out.join('');
+  host.querySelectorAll('[data-set]').forEach((b) => (b.onclick = () => {
+    const set = new Set(a.sets[Number(b.dataset.set)]);
+    S.nodes.forEach((n) => { n.adj = set.has(n.id); });
+    syncInputs(); update();
+  }));
+  return a.openBack ? a.openBack.length : 0;
+}
+
+/* ---------------- figure ---------------- */
+const geom = (n, fs) => {
+  const w = Math.max(fs * 4, RT.textWidth(n.label || ' ', fs, n.role === 'exposure' || n.role === 'outcome') + fs * 1.8);
+  return { x: n.x, y: n.y, w, h: fs * 2.3 };
+};
+// does point p fall inside node box g (grown by m)?
+const inside = (p, g, m) => Math.abs(p[0] - g.x) <= g.w / 2 + m && Math.abs(p[1] - g.y) <= g.h / 2 + m;
+function build() {
+  const st = RT.applyStyle(S.st);
+  const fs = Number(st.fontSize) || 14, ink = st.textColor || '#000000';
+  const W = Number(S.W) || 760, H0 = Number(S.H) || 440, M = 16;
+  const top = S.title ? fs * 2 : 0;
+  const G = {};
+  S.nodes.forEach((n) => { G[n.id] = geom(n, fs); });
+  RT.beginScene();
+  let body = '';
+  if (S.title) body += RT.rich([{ runs: [{ t: S.title, bold: true, size: fs * 1.1, color: ink }] }], M, M * 0.6, { lh: fs * 1.5 });
+  const lw = Number(S.lineW) || 1.3, hd = Number(S.head) || 9;
+  // arrows first, so the variables sit on top of them
+  S.edges.forEach((e) => {
+    const a = G[e.from], b = G[e.to];
+    if (!a || !b || a === b) return;
+    const ay = a.y + top, by = b.y + top;
+    const mx = (a.x + b.x) / 2, my = (ay + by) / 2, dx = b.x - a.x, dy = by - ay, len = Math.hypot(dx, dy) || 1;
+    const k = (e.bend || 0) * 0.18 * len;
+    const cx = mx - (dy / len) * k, cy = my + (dx / len) * k;
+    const pts = [];
+    for (let i = 0; i <= 40; i++) { const t = i / 40; pts.push([(1 - t) ** 2 * a.x + 2 * (1 - t) * t * cx + t * t * b.x, (1 - t) ** 2 * ay + 2 * (1 - t) * t * cy + t * t * by]); }
+    const ga = { ...a, y: ay }, gb = { ...b, y: by };
+    const mA = byId(e.from)?.adj ? 7 : 3, mB = byId(e.to)?.adj ? 7 : 3;
+    const seg = pts.filter((p) => !inside(p, ga, mA) && !inside(p, gb, mB));
+    if (seg.length < 2) return;
+    const unm = byId(e.from)?.role === 'unmeasured';
+    body += RT.arrow(seg, { color: ink, sw: lw, head: hd, dash: unm ? '5 4' : null });
+  });
+  S.nodes.forEach((n) => {
+    const g = G[n.id], [, , fill0, stroke0] = ROLES[n.role] || ROLES.other;
+    const fill = S.mono ? '#FFFFFF' : fill0, stroke = S.mono ? ink : stroke0;
+    const key = n.role === 'exposure' || n.role === 'outcome';
+    const x = g.x - g.w / 2, y = g.y + top - g.h / 2;
+    let s = '';
+    if (n.adj) s += RT.rect(x - 5, y - 5, g.w + 10, g.h + 10, { stroke: ink, sw: 1.2 });
+    if (n.role === 'unmeasured') {
+      s += RT.rect(x, y, g.w, g.h, { fill: '#FFFFFF', radius: 6 });
+      s += RT.line([[x, y], [x + g.w, y], [x + g.w, y + g.h], [x, y + g.h], [x, y]], { color: stroke, sw: 1.2, dash: '4 3' });
+      s += RT.drawBox(RT.box([{ text: n.label, italic: true }], g.w, { size: fs, pad: 0, fill: 'none', stroke: 'none', color: S.mono ? ink : stroke }), x, y, g.h);
+    } else {
+      s += RT.drawBox(RT.box([{ text: n.label, bold: key }], g.w, { size: fs, pad: 0, fill, stroke, sw: key ? 2 : 1.2, radius: 6, color: ink }), x, y, g.h);
+    }
+    body += `<g data-node="${n.id}">${s}</g>`;
+  });
+  let H = Math.max(H0, top + Math.max(0, ...S.nodes.map((n) => G[n.id].y + G[n.id].h / 2 + 10)));
+  // legend: only the roles that appear, plus the adjusted box
+  if (S.legend && S.nodes.length) {
+    const used = Object.keys(ROLES).filter((r) => S.nodes.some((n) => n.role === r) && !(S.mono && r !== 'unmeasured'));
+    const items = used.map((r) => ({ r, t: ROLES[r][1] }));
+    if (S.nodes.some((n) => n.adj)) items.push({ r: 'adj', t: 'Adjusted for' });
+    let lx = M, ly = H + fs * 0.4;
+    const sw = fs * 1.4, sh = fs * 0.95, ls = fs * 0.85;
+    items.forEach((it) => {
+      const tw = RT.textWidth(it.t, ls) + sw + fs * 1.6;
+      if (lx + tw > W - M) { lx = M; ly += fs * 1.5; }
+      const sy = ly + (fs * 1.3 - sh) / 2;
+      if (it.r === 'adj') body += RT.rect(lx, sy - 2, sw, sh + 4, { stroke: ink, sw: 1.2 });
+      else if (it.r === 'unmeasured') body += RT.line([[lx, sy], [lx + sw, sy], [lx + sw, sy + sh], [lx, sy + sh], [lx, sy]], { color: ROLES.unmeasured[3], sw: 1.2, dash: '3 2' });
+      else body += RT.rect(lx, sy, sw, sh, { fill: ROLES[it.r][2], stroke: ROLES[it.r][3], sw: 1, radius: 3 });
+      body += RT.rich([{ runs: [{ t: it.t, size: ls, color: ink }] }], lx + sw + fs * 0.4, ly, { lh: fs * 1.3 });
+      lx += tw;
+    });
+    H = ly + fs * 1.4;
+  }
+  if (S.footnote && S.footnote.trim()) {
+    const lines = S.footnote.split('\n');
+    body += RT.rich(lines.map((t) => ({ runs: [{ t, size: fs * 0.82, color: ink }] })), M, H + fs * 0.3, { lh: fs * 1.25 });
+    H += fs * 0.3 + lines.length * fs * 1.25;
+  }
+  return RT.figure(W, H + M, body);
+}
+
+/* ---------------- dragging in the preview ---------------- */
+const preview = document.getElementById('preview');
+let drag = null, raf = 0;
+const toFig = (e) => {
+  const svg = preview.querySelector('svg'), r = svg.getBoundingClientRect();
+  return [((e.clientX - r.left) / r.width) * fig.w, ((e.clientY - r.top) / r.height) * fig.h];
+};
+preview.addEventListener('pointerdown', (e) => {
+  const g = e.target.closest('[data-node]');
+  if (!g) return;
+  const n = byId(g.dataset.node); if (!n) return;
+  const [px, py] = toFig(e);
+  drag = { n, dx: n.x - px, dy: n.y - py };
+  preview.setPointerCapture(e.pointerId);
+  preview.classList.add('dragging');
+  e.preventDefault();
+});
+preview.addEventListener('pointermove', (e) => {
+  if (!drag) return;
+  const [px, py] = toFig(e);
+  const W = Number(S.W) || 760, H = Number(S.H) || 440;
+  drag.n.x = Math.round(Math.max(30, Math.min(W - 30, px + drag.dx)));
+  drag.n.y = Math.round(Math.max(20, Math.min(H - 20, py + drag.dy)));
+  if (!raf) raf = requestAnimationFrame(() => { raf = 0; fig = build(); preview.innerHTML = fig.svg; });
+});
+const endDrag = () => { if (!drag) return; drag = null; preview.classList.remove('dragging'); renderNodes(); update(); };
+preview.addEventListener('pointerup', endDrag);
+preview.addEventListener('pointercancel', endDrag);
+
+let fig;
+const exporter = RT.exportPanel(document.getElementById('export'), () => fig, 'dag', {
+  fontSize: { get: () => S.st.fontSize, set: (v) => { S.st.fontSize = v; syncInputs(); update(); } },
+});
+const hist = RT.history(() => S, (s) => { S = s; syncInputs(); render(); });
+function render() {
+  try {
+    fig = build();
+    preview.innerHTML = S.nodes.length ? fig.svg : `<p class="hint" style="align-self:center">${T('按「＋ 新增變項」或「範例」開始。', 'Start with “+ Add variable” or “Example”.')}</p>`;
+  } catch (e) { console.error(e); preview.innerHTML = `<div class="msg">⚠ ${RT.esc(e.message)}</div>`; }
+  exporter.setIssues(renderAnalysis());
+  exporter.refresh();
+  RT.save(KEY, S);
+}
+const update = RT.debounce(() => { render(); hist.push(); }, 80);
+
+document.getElementById('btnUndo').onclick = hist.undo;
+document.getElementById('btnRedo').onclick = hist.redo;
+document.getElementById('btnExample').onclick = () => {
+  const N = {
+    age: node({ label: 'Age', role: 'confounder', x: 200, y: 60, adj: true }),
+    dm: node({ label: 'Diabetes', role: 'confounder', x: 380, y: 60, adj: true }),
+    cvd: node({ label: 'Cardiovascular disease', role: 'confounder', x: 575, y: 60, adj: true }),
+    hsb: node({ label: 'Health-seeking behaviour', role: 'unmeasured', x: 380, y: 160 }),
+    x: node({ label: 'Statin use', role: 'exposure', x: 110, y: 260 }),
+    y: node({ label: 'Dementia', role: 'outcome', x: 650, y: 260 }),
+    ldl: node({ label: 'LDL cholesterol', role: 'mediator', x: 380, y: 320 }),
+    hosp: node({ label: 'Hospitalisation', role: 'collider', x: 380, y: 405 }),
+  };
+  const E = (a, b, bend = 0) => ({ from: N[a].id, to: N[b].id, bend });
+  S.nodes = Object.values(N);
+  S.edges = [E('age', 'x'), E('age', 'y'), E('age', 'cvd', -1), E('dm', 'x'), E('dm', 'y'), E('cvd', 'x'), E('cvd', 'y'), E('hsb', 'x'), E('hsb', 'y'),
+    E('x', 'ldl'), E('ldl', 'y'), E('x', 'y'), E('x', 'hosp'), E('y', 'hosp')];
+  Object.assign(S, { W: 760, H: 440, title: '', footnote: '' });
+  syncInputs(); update();
+  RT.toast(T('已載入範例（虛構研究，僅供示範；按 ↶ 可復原）', 'Example loaded (a fictional study, for illustration; ↶ to undo)'));
+};
+document.getElementById('btnReset').onclick = () => { S.nodes = []; S.edges = []; S.title = ''; S.footnote = ''; syncInputs(); update(); RT.toast(T('已清空內容（按 ↶ 可復原）', 'Content cleared (↶ to undo)')); };
+document.getElementById('btnSaveJson').onclick = () => RT.downloadJSON(S, 'dag.json');
+document.getElementById('btnLoadJson').onclick = async () => { try { S = RT.merge(DEF, await RT.pickJSON()); syncInputs(); update(); } catch (e) { RT.toast(T('讀取失敗：', 'Could not open file: ') + e.message, 6000); } };
+
+syncInputs();
+render();
+hist.push();
+</script>
+</body>
+</html>

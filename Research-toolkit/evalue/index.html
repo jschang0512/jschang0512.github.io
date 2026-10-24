@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/Research-toolkit/icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/Research-toolkit/icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/Research-toolkit/icons/apple-touch-icon.png">
+<title data-en="E-value Calculator · Research Toolkit">E-value 計算器 · Research Toolkit</title>
+<meta name="description" content="E-value 計算器：評估未測量干擾對 RR、OR、HR 或 SMD 結果的影響，產生可放入論文的結果描述、E-value 曲線圖與 Word 結果表。">
+<link rel="canonical" href="https://jschang0512.github.io/Research-toolkit/evalue/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Research Toolkit">
+<meta property="og:title" content="E-value 計算器 · Research Toolkit">
+<meta property="og:description" content="E-value 計算器：評估未測量干擾對 RR、OR、HR 或 SMD 結果的影響，產生結果描述、E-value 曲線圖與 Word 結果表。">
+<meta property="og:url" content="https://jschang0512.github.io/Research-toolkit/evalue/">
+<meta property="og:image" content="https://jschang0512.github.io/assets/og/research-toolkit.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../shared/style.css?v=20261011a">
+<style>
+  .erow .block-head input { flex: 1; }
+  .erow .nums { display: grid; grid-template-columns: 7.5rem repeat(3, minmax(0, 1fr)); gap: 6px; align-items: end; }
+  .erow .opts { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; margin-top: 6px; }
+  .erow .opts .check { margin: 0; }
+  @media (max-width: 640px) { .erow .nums { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+  .res { display: flex; flex-direction: column; gap: 12px; }
+  .res-item + .res-item { border-top: 1px solid var(--border); padding-top: 12px; }
+  .res-item h3 { font-size: 14px; margin: 0 0 6px; }
+  .res-nums { display: flex; flex-wrap: wrap; gap: 6px 20px; font-variant-numeric: tabular-nums; }
+  .res-nums b { font-size: 20px; font-family: var(--font-display); }
+  .res-nums span { color: var(--muted); font-size: 12.5px; display: block; }
+  .res-text { margin: 8px 0 0; font-size: 13px; line-height: 1.6; }
+  .res-text + .btns { margin-top: 6px; }
+  .res-conv { color: var(--muted); font-size: 12.5px; margin-top: 4px; }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="back" href="../index.html" data-en="← Home">← 工具首頁</a>
+  <h1>E-value</h1>
+  <span class="sub" data-en="Sensitivity analysis for unmeasured confounding">未測量干擾的敏感度分析</span>
+  <span class="spacer"></span>
+  <div class="btns">
+    <button class="small" id="btnUndo" title="復原 (Ctrl+Z)" data-en-title="Undo (Ctrl+Z)">↶</button>
+    <button class="small" id="btnRedo" title="重做 (Ctrl+Y)" data-en-title="Redo (Ctrl+Y)">↷</button>
+    <button class="small" id="btnSaveJson" title="下載 .json，之後可再開啟或傳給共同作者" data-en-title="Download a .json file to reopen later or share with co-authors" data-en="Save project">儲存專案</button>
+    <button class="small" id="btnLoadJson" title="匯入先前儲存的 .json 專案檔，還原所有輸入" data-en-title="Import a previously saved .json project file" data-en="Import project">匯入專案</button>
+    <button class="small" id="btnExample" data-en="Example">範例</button>
+    <button class="small" id="btnReset" data-en="Clear">清空</button>
+  </div>
+</header>
+
+<main class="tool">
+  <section id="form">
+    <div class="card">
+      <p class="hint" style="margin:0" data-en="The E-value is the minimum strength of association, on the risk-ratio scale, that an unmeasured confounder would need with both the exposure and the outcome, beyond the measured covariates, to fully explain away the observed association.">E-value 是一個未測量干擾因子在已調整的變項之外，必須同時與暴露、與結果有多強的關聯（以風險比表示），才能把觀察到的關聯完全解釋掉。</p>
+    </div>
+    <div class="card">
+      <h2><span class="step-no">1</span> <span data-en="Estimates">估計值</span></h2>
+      <div id="rows"></div>
+      <button class="small" id="addRow" data-en="+ Add estimate">＋ 新增估計值</button>
+    </div>
+    <div class="card">
+      <h2><span class="step-no">2</span> <span data-en="Figure">圖</span></h2>
+      <div class="grid2">
+        <label class="field"><span data-en="Show">呈現</span><select data-k="view">
+          <option value="plot" data-en="E-value curve (one estimate)">E-value 曲線（單一估計值）</option>
+          <option value="table" data-en="Results table (all estimates)">結果表（全部估計值）</option></select></label>
+        <label class="field" data-show="view=plot"><span data-en="Estimate to plot">要畫的估計值</span><select data-k="sel" id="selRow"></select></label>
+      </div>
+      <details>
+        <summary data-en="Appearance">外觀：字型、尺寸、座標標題</summary>
+        <div id="styleFields"></div>
+        <div class="grid2" data-show="view=plot">
+          <label class="field"><span data-en="Plot width (px)">圖寬 (px)</span><input type="number" data-k="plotW" min="240" max="900" step="10"></label>
+          <label class="field"><span data-en="Plot height (px)">圖高 (px)</span><input type="number" data-k="plotH" min="200" max="800" step="10"></label>
+          <label class="field"><span data-en="Axis maximum (blank = auto)">座標上限（留空＝自動）</span><input type="number" data-k="axMax" min="1.5" step="0.5"></label>
+          <label class="field"><span data-en="Shaded area colour">陰影區顏色</span><input type="color" data-k="shade" style="width:100%"></label>
+        </div>
+        <label class="field" data-show="view=plot"><span data-en="X axis title">X 軸標題</span><input data-k="xLab"></label>
+        <label class="field" data-show="view=plot"><span data-en="Y axis title">Y 軸標題</span><input data-k="yLab"></label>
+        <label class="field"><span data-en="Title (optional)">圖標題（選填）</span><input data-k="title"></label>
+      </details>
+    </div>
+    <div class="card">
+      <details>
+        <summary data-en="Advanced: a true effect other than the null">進階：以非虛無值為比較基準</summary>
+        <p class="hint" data-en="By default the E-value asks what it takes to move the estimate to the null (RR = 1). Enter another risk ratio to ask what it takes to move it to that value instead.">預設計算「要把估計值推到虛無值（RR = 1）」所需的干擾強度。若想問「推到某個非虛無值」需要多強，可在此輸入那個風險比。</p>
+        <label class="field"><span data-en="True risk ratio to compare with">比較用的真實風險比</span><input type="number" data-k="trueV" min="0.01" step="0.05"></label>
+      </details>
+    </div>
+    <div class="card" id="refs"></div>
+  </section>
+
+  <section class="preview-col">
+    <div class="card"><h2 data-en="Results">結果</h2><div class="res" id="results"></div></div>
+    <div class="paper" id="preview"></div>
+    <div class="msgs" id="msgs"></div>
+    <div class="card" id="export"></div>
+  </section>
+</main>
+
+<script src="../shared/common.js?v=20261011b"></script>
+<script>
+const T = RT.t;
+const KEY = 'evalue1';
+const TYPES = {
+  RR: ['RR', 'risk ratio', '風險比'], OR: ['OR', 'odds ratio', '勝算比'], HR: ['HR', 'hazard ratio', '風險比（HR）'], SMD: ['SMD', 'standardised mean difference', '標準化平均差'],
+};
+const est = (o = {}) => ({ label: '', type: 'HR', est: '', lo: '', hi: '', common: false, ...o });
+const DEF = {
+  rows: [est()], view: 'plot', sel: 0, trueV: 1, title: '', plotW: 440, plotH: 340, axMax: '', shade: '#E8EEF8',
+  xLab: 'Risk ratio, exposure–confounder (RR_EU)', yLab: 'Risk ratio, confounder–outcome (RR_UD)',
+  st: { ...RT.STYLE_DEF, fontSize: 13 },
+};
+const REFS = [
+  'VanderWeele TJ, Ding P. Sensitivity analysis in observational research: introducing the E-value. <i>Ann Intern Med</i> 2017;167:268–74. <a href="https://doi.org/10.7326/M16-2607" target="_blank" rel="noopener">doi:10.7326/M16-2607</a>',
+  'Mathur MB, Ding P, Riddell CA, VanderWeele TJ. Web site and R package for computing E-values. <i>Epidemiology</i> 2018;29:e45–7. <a href="https://doi.org/10.1097/EDE.0000000000000864" target="_blank" rel="noopener">doi:10.1097/EDE.0000000000000864</a>',
+  'VanderWeele TJ. Optimal approximate conversions of odds ratios and hazard ratios to risk ratios. <i>Biometrics</i> 2020;76:746–52. <a href="https://doi.org/10.1111/biom.13197" target="_blank" rel="noopener">doi:10.1111/biom.13197</a>',
+  'Ding P, VanderWeele TJ. Sensitivity analysis without assumptions. <i>Epidemiology</i> 2016;27:368–77. <a href="https://doi.org/10.1097/EDE.0000000000000457" target="_blank" rel="noopener">doi:10.1097/EDE.0000000000000457</a>',
+];
+let S = RT.load(KEY, DEF);
+
+/* ---------------- maths ---------------- */
+// observed estimate → approximate risk ratio (VanderWeele & Ding 2017; VanderWeele 2020)
+const toRR = (v, type, common) => {
+  if (type === 'SMD') return Math.exp(0.91 * v);
+  if (type === 'OR' && common) return Math.sqrt(v);
+  if (type === 'HR' && common) return (1 - 0.5 ** Math.sqrt(v)) / (1 - 0.5 ** Math.sqrt(1 / v));
+  return v;
+};
+const eOf = (rr, t) => { let r = rr / t; if (r < 1) r = 1 / r; return r + Math.sqrt(r * (r - 1)); };
+function compute(r) {
+  const t = RT.num(S.trueV) > 0 ? RT.num(S.trueV) : 1;
+  const v = [r.est, r.lo, r.hi].map(RT.num);
+  if (v[0] === null) return null;
+  const ratio = r.type !== 'SMD';
+  if (ratio && v.some((x) => x !== null && x <= 0)) return { err: T('比值必須大於 0', 'Ratios must be greater than 0') };
+  const [rr, lo, hi] = v.map((x) => (x === null ? null : toRR(x, r.type, r.common)));
+  const point = eOf(rr, t);
+  let ci = null, ciNull = false;
+  if (lo !== null && hi !== null) {
+    if (lo > hi) return { err: T('下限大於上限', 'The lower limit is above the upper limit') };
+    const lim = rr >= t ? lo : hi;          // the limit closer to the comparison value
+    ciNull = rr >= t ? lo <= t : hi >= t;
+    ci = ciNull ? 1 : eOf(lim, t);
+  }
+  return { rr, lo, hi, point, ci, ciNull, t, converted: r.type === 'SMD' || (r.common && (r.type === 'OR' || r.type === 'HR')) };
+}
+const f2 = (x) => (x === null || x === undefined ? '' : Number(x).toFixed(2));
+
+/* ---------------- result sentences ---------------- */
+function sentences(r, c) {
+  const [abbr, en, zh] = TYPES[r.type];
+  const obs = `${f2(r.est)}${c.lo !== null ? ` (95% CI ${f2(r.lo)}–${f2(r.hi)})` : ''}`;
+  const obsZh = `${f2(r.est)}${c.lo !== null ? `（95% CI ${f2(r.lo)}–${f2(r.hi)}）` : ''}`;
+  const target = c.t === 1 ? 'the null' : `a risk ratio of ${f2(c.t)}`;
+  const targetZh = c.t === 1 ? '虛無值' : `風險比 ${f2(c.t)}`;
+  const conv = c.converted ? (r.type === 'SMD' ? `, approximated as a risk ratio of ${f2(c.rr)},` : `, approximated as a risk ratio of ${f2(c.rr)} because the outcome was common,`) : '';
+  const convZh = c.converted ? (r.type === 'SMD' ? `（換算為約略風險比 ${f2(c.rr)}）` : `（因結果常見，換算為約略風險比 ${f2(c.rr)}）`) : '';
+  let enS = `The observed ${en} of ${obs}${conv} could be explained away by an unmeasured confounder associated with both the exposure and the outcome by a risk ratio of ${f2(c.point)}-fold each, above and beyond the measured covariates, but weaker confounding could not do so.`;
+  let zhS = `觀察到的 ${abbr} 為 ${obsZh}${convZh}。若要把這個結果完全解釋掉，未測量干擾因子必須在已調整的變項之外，同時與暴露及結果有至少 ${f2(c.point)} 倍的風險比關聯；較弱的干擾無法做到。`;
+  if (c.ci !== null) {
+    if (c.ciNull) { enS += ` The confidence interval already includes ${target}, so its E-value is 1.`; zhS += `信賴區間已包含${targetZh}，因此信賴區間的 E-value 為 1。`; }
+    else { enS += ` To shift the confidence interval to include ${target}, the confounder would need a risk ratio of ${f2(c.ci)}-fold with each.`; zhS += `要讓信賴區間涵蓋${targetZh}，干擾因子與兩者的關聯需至少為 ${f2(c.ci)} 倍。`; }
+  }
+  if (c.t !== 1) { enS = enS.replace('could be explained away', `could be moved to ${target}`); zhS = zhS.replace('把這個結果完全解釋掉', `把這個結果推到${targetZh}`); }
+  return { en: enS, zh: zhS };
+}
+
+/* ---------------- form ---------------- */
+const form = document.getElementById('form');
+document.getElementById('styleFields').innerHTML = RT.styleFieldsHTML(['font', 'fontSize', 'textColor']);
+document.getElementById('refs').innerHTML = RT.refsHTML(REFS);
+function syncInputs() { renderRows(); RT.syncForm(form, S); }
+RT.bindForm(form, () => S, (k) => { if (k === 'sel') S.sel = Number(S.sel) || 0; update(); });
+function renderRows() {
+  const host = document.getElementById('rows');
+  host.innerHTML = '';
+  S.rows.forEach((r, i) => {
+    const blk = RT.h(`<div class="block erow">
+      <div class="block-head"><b>${i + 1}.</b><input data-f="label" placeholder="${T('分析名稱，例如：主要分析', 'Analysis, e.g. Primary analysis')}">
+        <button class="small" data-a="up">↑</button><button class="small" data-a="down">↓</button><button class="icon" data-a="del">✕</button></div>
+      <div class="nums">
+        <label><span class="lbl">${T('效果量', 'Measure')}</span><select data-f="type">${Object.keys(TYPES).map((k) => `<option value="${k}">${k}</option>`).join('')}</select></label>
+        <label><span class="lbl">${T('估計值', 'Estimate')}</span><input data-f="est" inputmode="decimal"></label>
+        <label><span class="lbl">${T('95% CI 下限', 'Lower 95% CI')}</span><input data-f="lo" inputmode="decimal"></label>
+        <label><span class="lbl">${T('95% CI 上限', 'Upper 95% CI')}</span><input data-f="hi" inputmode="decimal"></label>
+      </div>
+      <div class="opts"><label class="check" data-common><input type="checkbox" data-f="common"> ${T('結果常見（發生率 ≥ 15%）', 'Common outcome (≥ 15%)')}</label></div></div>`);
+    const showCommon = () => { blk.querySelector('[data-common]').hidden = !(r.type === 'OR' || r.type === 'HR'); };
+    blk.querySelectorAll('[data-f]').forEach((el) => {
+      const f = el.dataset.f;
+      if (el.type === 'checkbox') el.checked = !!r[f]; else el.value = r[f] ?? '';
+      el.oninput = () => { r[f] = el.type === 'checkbox' ? el.checked : el.value; if (f === 'type') showCommon(); if (f === 'label') fillSel(); update(); };
+    });
+    showCommon();
+    blk.querySelector('.block-head').onclick = (e) => {
+      const a = e.target.dataset.a;
+      if (a === 'up' && i > 0) [S.rows[i - 1], S.rows[i]] = [S.rows[i], S.rows[i - 1]];
+      else if (a === 'down' && i < S.rows.length - 1) [S.rows[i + 1], S.rows[i]] = [S.rows[i], S.rows[i + 1]];
+      else if (a === 'del' && S.rows.length > 1) S.rows.splice(i, 1);
+      else return;
+      S.sel = Math.min(S.sel, S.rows.length - 1);
+      syncInputs(); update();
+    };
+    host.appendChild(blk);
+  });
+  fillSel();
+}
+function fillSel() {
+  const sel = document.getElementById('selRow');
+  sel.innerHTML = S.rows.map((r, i) => `<option value="${i}">${RT.esc(`${i + 1}. ${r.label || T('估計值', 'Estimate')}`)}</option>`).join('');
+  sel.value = String(Math.min(S.sel, S.rows.length - 1));
+}
+document.getElementById('addRow').onclick = () => { S.rows.push(est({ type: S.rows[S.rows.length - 1]?.type || 'HR' })); syncInputs(); update(); };
+
+/* ---------------- results panel ---------------- */
+function renderResults() {
+  const host = document.getElementById('results');
+  const items = S.rows.map((r, i) => ({ r, i, c: compute(r) })).filter((x) => x.c);
+  if (!items.length) { host.innerHTML = `<p class="hint" style="margin:0">${T('輸入估計值與 95% CI 後，這裡會顯示 E-value 與可放進論文的描述。', 'Enter an estimate and its 95% CI to see the E-values and a sentence for your manuscript.')}</p>`; return; }
+  host.innerHTML = '';
+  items.forEach(({ r, i, c }) => {
+    if (c.err) { host.appendChild(RT.h(`<div class="res-item"><h3>${RT.esc(r.label || T(`估計值 ${i + 1}`, `Estimate ${i + 1}`))}</h3><div class="msg">⚠ ${RT.esc(c.err)}</div></div>`)); return; }
+    const s = sentences(r, c);
+    const el = RT.h(`<div class="res-item">
+      <h3>${RT.esc(r.label || T(`估計值 ${i + 1}`, `Estimate ${i + 1}`))}</h3>
+      <div class="res-nums"><div><span>${T('E-value（估計值）', 'E-value (estimate)')}</span><b>${f2(c.point)}</b></div>
+        ${c.ci !== null ? `<div><span>${T('E-value（信賴區間）', 'E-value (CI)')}</span><b>${f2(c.ci)}</b></div>` : ''}</div>
+      ${c.converted ? `<div class="res-conv">${T(`以約略風險比 ${f2(c.rr)} 計算`, `Computed on an approximate risk ratio of ${f2(c.rr)}`)}${c.lo !== null ? `（${f2(c.lo)}–${f2(c.hi)}）` : ''}</div>` : ''}
+      <p class="res-text" lang="en">${RT.esc(s.en)}</p>
+      <div class="btns"><button class="small" data-copy="en">${T('複製英文描述', 'Copy English sentence')}</button><button class="small" data-copy="zh">${T('複製中文描述', 'Copy Chinese sentence')}</button></div></div>`);
+    el.querySelectorAll('[data-copy]').forEach((b) => (b.onclick = async () => {
+      try { await navigator.clipboard.writeText(s[b.dataset.copy]); RT.toast(T('已複製', 'Copied')); }
+      catch (e) { RT.toast(T('無法複製到剪貼簿', 'Could not copy to the clipboard'), 4000); }
+    }));
+    host.appendChild(el);
+  });
+}
+
+/* ---------------- figures ---------------- */
+const niceMax = (v) => [2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 30, 50].find((m) => m >= v) || Math.ceil(v);
+function buildPlot() {
+  const st = RT.applyStyle(S.st);
+  const fs = Number(st.fontSize) || 13, ink = st.textColor || '#000000';
+  const r = S.rows[Math.min(S.sel, S.rows.length - 1)] || est();
+  const c = compute(r);
+  const PW = Number(S.plotW) || 440, PH = Number(S.plotH) || 340;
+  const L = fs * 4.2, top = fs * (S.title ? 3 : 1.2), M = 16;
+  RT.beginScene();
+  let body = '';
+  if (S.title) body += RT.rich([{ runs: [{ t: S.title, bold: true, size: fs * 1.1, color: ink }] }], M, M, { lh: fs * 1.5 });
+  const x0 = M + L, y0 = top + M, x1 = x0 + PW, y1 = y0 + PH;
+  const ok = c && !c.err;
+  const R = ok ? Math.max(c.rr / c.t, c.t / c.rr) : 2;
+  const E = ok ? c.point : 2 + Math.sqrt(2);
+  const mx = RT.num(S.axMax) > 1 ? RT.num(S.axMax) : niceMax(Math.max(E * 1.8, R * 1.5, 3));
+  const X = (v) => x0 + ((v - 1) / (mx - 1)) * PW, Y = (v) => y1 - ((v - 1) / (mx - 1)) * PH;
+  // the curve RR_EU × RR_UD / (RR_EU + RR_UD − 1) = R: every point on or above it explains the estimate away
+  const curve = (Rv) => {
+    if (Rv <= 1.0001) return [];
+    const xs = (Rv * (mx - 1)) / (mx - Rv), pts = [];
+    for (let k = 0; k <= 80; k++) { const xv = xs + ((mx - xs) * k) / 80; pts.push([X(xv), Y((Rv * (xv - 1)) / (xv - Rv))]); }
+    return pts;
+  };
+  const main = curve(R);
+  if (main.length) body += RT.poly([...main, [X(mx), Y(mx)]], { fill: S.shade, stroke: 'none' });
+  // axes and ticks
+  body += RT.line([[x0, y0], [x0, y1], [x1, y1]], { color: ink, sw: 1 });
+  const step = mx <= 4 ? 0.5 : mx <= 10 ? 1 : mx <= 20 ? 2 : 5;
+  for (let v = 1; v <= mx + 1e-9; v += step) {
+    const t = String(Number(v.toFixed(2)));
+    body += RT.line([[X(v), y1], [X(v), y1 + fs * 0.35]], { color: ink, sw: 1 });
+    body += RT.rich([{ runs: [{ t, size: fs * 0.9, color: ink }] }], X(v), y1 + fs * 0.4, { lh: fs * 1.3, anchor: 'middle' });
+    body += RT.line([[x0 - fs * 0.35, Y(v)], [x0, Y(v)]], { color: ink, sw: 1 });
+    body += RT.rich([{ runs: [{ t, size: fs * 0.9, color: ink }] }], x0 - fs * 0.5, Y(v) - fs * 0.65, { lh: fs * 1.3, anchor: 'end' });
+  }
+  body += RT.rich([{ runs: [{ t: S.xLab, size: fs, color: ink }] }], x0 + PW / 2, y1 + fs * 1.9, { lh: fs * 1.4, anchor: 'middle' });
+  // y title: drawn as a rotated label
+  body += `<text transform="translate(${RT.f(M + fs * 0.9)},${RT.f(y0 + PH / 2)}) rotate(-90)" text-anchor="middle" font-size="${fs}" fill="${ink}">${RT.esc(S.yLab)}</text>`;
+  RT.scene && RT.scene.push({ k: 'shape', x: M, y: y0, w: fs * 1.6, h: PH, fill: 'none', stroke: 'none', sw: 0, vert: 'vert270', padL: 0, padR: 0, padT: 0, padB: 0, anchor: 'ctr', paras: [{ align: 'center', indent: 0, hang: 0, gap: 0, lh: fs * 1.3, runs: [{ t: S.yLab, size: fs, color: ink }] }] });
+  if (main.length) body += RT.line(main, { color: ink, sw: 1.6 });
+  if (ok && c.ci !== null && !c.ciNull) {
+    const lim = c.rr >= c.t ? c.lo : c.hi;
+    const ci = curve(Math.max(lim / c.t, c.t / lim));
+    if (ci.length) body += RT.line(ci, { color: ink, sw: 1.2, dash: '5 4' });
+  }
+  if (ok && E <= mx) {
+    body += RT.circle(X(E), Y(E), fs * 0.32, { fill: ink });
+    body += RT.rich([{ runs: [{ t: `E-value = ${f2(E)}`, size: fs, bold: true, color: ink }] }], X(E) + fs * 0.6, Y(E) - fs * 1.5, { lh: fs * 1.4 });
+  }
+  // legend
+  const lx = x1 - fs * 11.5, ly = y0 + fs * 0.4;
+  body += RT.line([[lx, ly + fs * 0.7], [lx + fs * 2, ly + fs * 0.7]], { color: ink, sw: 1.6 });
+  body += RT.rich([{ runs: [{ t: ok ? `Estimate (RR ${f2(R)})` : 'Estimate', size: fs * 0.9, color: ink }] }], lx + fs * 2.5, ly, { lh: fs * 1.4 });
+  if (ok && c.ci !== null && !c.ciNull) {
+    body += RT.line([[lx, ly + fs * 2.1], [lx + fs * 2, ly + fs * 2.1]], { color: ink, sw: 1.2, dash: '5 4' });
+    body += RT.rich([{ runs: [{ t: 'Confidence limit', size: fs * 0.9, color: ink }] }], lx + fs * 2.5, ly + fs * 1.4, { lh: fs * 1.4 });
+  }
+  return RT.figure(x1 + M + fs, y1 + fs * 3.6 + M, body);
+}
+function tableModel() {
+  const heads = ['Analysis', 'Observed estimate (95% CI)', 'Risk ratio used', 'E-value, estimate', 'E-value, CI'];
+  const rows = S.rows.map((r, i) => {
+    const c = compute(r);
+    if (!c || c.err) return null;
+    return [r.label || `Estimate ${i + 1}`, `${r.type} ${f2(r.est)}${c.lo !== null ? ` (${f2(r.lo)}–${f2(r.hi)})` : ''}`, c.converted ? f2(c.rr) : '—', f2(c.point), c.ci === null ? '—' : f2(c.ci)];
+  }).filter(Boolean);
+  return { heads, rows, widths: [28, 26, 14, 16, 16] };
+}
+function buildTable() {
+  const st = RT.applyStyle(S.st);
+  const fs = Number(st.fontSize) || 13, M = 16, W = 760, tw = W - 2 * M;
+  const { heads, rows, widths } = tableModel();
+  const cw = widths.map((p) => (tw * p) / 100);
+  const o = { size: fs, lh: 1.3, pad: 6, align: 'left', color: st.textColor, stroke: 'none', sw: 0, radius: 0, fill: 'none' };
+  RT.beginScene();
+  let body = '', y = M;
+  if (S.title) { const tb = RT.box([{ text: S.title, bold: true }], tw, { ...o, pad: 0, padX: 0, size: fs * 1.08 }); body += RT.drawBox(tb, M, y); y += tb.h + fs * 0.5; }
+  const drawRow = (cells, bold) => {
+    const bs = cells.map((t, i) => RT.box([{ text: t, bold, align: i ? 'center' : 'left' }], cw[i], o));
+    const h = Math.max(...bs.map((b) => b.h));
+    let x = M; bs.forEach((b, i) => { body += RT.drawBox(b, x, y, h); x += cw[i]; });
+    y += h;
+  };
+  body += RT.line([[M, y], [W - M, y]], { color: st.textColor, sw: 1.2 });
+  drawRow(heads, true);
+  body += RT.line([[M, y], [W - M, y]], { color: st.textColor, sw: 0.8 });
+  rows.forEach((r) => drawRow(r, false));
+  body += RT.line([[M, y], [W - M, y]], { color: st.textColor, sw: 1.2 });
+  const note = 'E-values follow VanderWeele & Ding (2017). Odds and hazard ratios for common outcomes, and standardised mean differences, were first converted to approximate risk ratios.';
+  const nb = RT.box([{ text: note }], tw, { ...o, pad: 0, padX: 0, size: fs * 0.82 });
+  body += RT.drawBox(nb, M, y + fs * 0.4); y += fs * 0.4 + nb.h;
+  return RT.figure(W, y + M, body);
+}
+const docxTable = () => {
+  RT.applyStyle(S.st);
+  const { heads, rows, widths } = tableModel();
+  return RT.buildDocxTable({ title: S.title, headers: heads, widths, rows: rows.map((r) => r.map((t, i) => ({ text: t, align: i ? 'center' : undefined }))),
+    note: 'E-values follow VanderWeele & Ding (2017). Odds and hazard ratios for common outcomes, and standardised mean differences, were first converted to approximate risk ratios.',
+    sizePt: Math.max(8, Math.min(12, (Number(S.st.fontSize) || 13) * 0.8)), headerFill: 'FFFFFF' });
+};
+
+let fig;
+const preview = document.getElementById('preview');
+const exporter = RT.exportPanel(document.getElementById('export'), () => fig, 'e_value', {
+  fontSize: { get: () => S.st.fontSize, set: (v) => { S.st.fontSize = v; syncInputs(); update(); } },
+});
+const tblBtn = RT.h(`<button type="button">${T('Word 結果表', 'Word results table')}</button>`);
+tblBtn.title = T('全部估計值的 E-value，匯出為可編輯 Word 表格', 'E-values for every estimate as an editable Word table');
+tblBtn.onclick = async () => {
+  if (!tableModel().rows.length) { RT.toast(T('還沒有可匯出的估計值', 'No estimates to export yet')); return; }
+  try { RT.download(await docxTable(), (document.querySelector('.ex-name').value || 'e_value') + '_table.docx'); }
+  catch (e) { RT.toast(String(e.message || e), 6000); }
+};
+document.querySelector('#export .ex-copy').after(tblBtn);
+const hist = RT.history(() => S, (s) => { S = s; syncInputs(); render(); });
+function render() {
+  renderResults();
+  try { fig = S.view === 'table' ? buildTable() : buildPlot(); preview.innerHTML = fig.svg; }
+  catch (e) { console.error(e); preview.innerHTML = `<div class="msg">⚠ ${RT.esc(e.message)}</div>`; }
+  const msgs = [];
+  S.rows.forEach((r, i) => {
+    const name = r.label ? `「${r.label}」` : T(`估計值 ${i + 1}`, `estimate ${i + 1}`);
+    const v = [r.est, r.lo, r.hi].map(RT.num);
+    if (v[0] !== null && (v[1] === null || v[2] === null)) msgs.push(T(`${name}沒有完整的 95% CI，只能算出估計值的 E-value`, `${name} has no complete 95% CI — only the estimate’s E-value is computed`));
+    if (v[0] !== null && v[1] !== null && v[2] !== null && !(v[1] <= v[0] && v[0] <= v[2])) msgs.push(T(`${name}的估計值不在 CI 之間`, `${name}: the estimate is not between its limits`));
+    if (r.type === 'OR' && !r.common && v[0] !== null) msgs.push(T(`${name}是 OR：若結果發生率 ≥ 15%，請勾選「結果常見」，否則 E-value 會被高估`, `${name} is an OR: tick “Common outcome” if the outcome occurs in ≥ 15%, or the E-value is overstated`));
+  });
+  document.getElementById('msgs').innerHTML = msgs.map((m) => `<div class="msg">⚠ ${RT.esc(m)}</div>`).join('');
+  exporter.setIssues(msgs.filter((m) => !/OR/.test(m)).length);
+  exporter.refresh();
+  RT.save(KEY, S);
+}
+const update = RT.debounce(() => { render(); hist.push(); }, 80);
+
+document.getElementById('btnUndo').onclick = hist.undo;
+document.getElementById('btnRedo').onclick = hist.redo;
+document.getElementById('btnExample').onclick = () => {
+  S.rows = [
+    est({ label: 'Primary analysis', type: 'HR', est: '0.78', lo: '0.69', hi: '0.88' }),
+    est({ label: 'Per-protocol analysis', type: 'HR', est: '0.72', lo: '0.61', hi: '0.85' }),
+    est({ label: 'Secondary outcome (30-day readmission)', type: 'OR', est: '0.85', lo: '0.70', hi: '1.03', common: true }),
+  ];
+  S.sel = 0; S.view = 'plot';
+  syncInputs(); update();
+  RT.toast(T('已載入範例（虛構研究，僅供示範；按 ↶ 可復原）', 'Example loaded (a fictional study, for illustration; ↶ to undo)'));
+};
+document.getElementById('btnReset').onclick = () => { S.rows = [est()]; S.sel = 0; S.title = ''; syncInputs(); update(); RT.toast(T('已清空內容（按 ↶ 可復原）', 'Content cleared (↶ to undo)')); };
+document.getElementById('btnSaveJson').onclick = () => RT.downloadJSON(S, 'e_value.json');
+document.getElementById('btnLoadJson').onclick = async () => { try { S = RT.merge(DEF, await RT.pickJSON()); syncInputs(); update(); } catch (e) { RT.toast(T('讀取失敗：', 'Could not open file: ') + e.message, 6000); } };
+
+syncInputs();
+render();
+hist.push();
+</script>
+</body>
+</html>
