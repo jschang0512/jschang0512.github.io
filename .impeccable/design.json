@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-24T06:40:06.750Z",
+  "generatedAt": "2026-10-24T16:41:20.611Z",
   "title": "Design System: 張家菘 · Chia-Sung Chang",
   "extensions": {
     "colorMeta": {
@@ -326,10 +326,10 @@
       },
       {
         "area": "行程頁",
-        "theme": "每趟旅行的顏色",
-        "source": "trip/<trip>/theme.css",
-        "accent": "var(--accent)",
-        "paper": "var(--paper)"
+        "theme": "日系繪本（Storybook）",
+        "source": "trip/engine/storybook.css, trip/engine/illustrations.js",
+        "accent": "#F2A497",
+        "paper": "#FFFCF6"
       },
       {
         "area": "menu 書籤",
@@ -415,7 +415,7 @@
   ],
   "narrative": {
     "northStar": "個人的學術與生活工具",
-    "overview": "這個網站不是一個品牌，而是一個人的工具箱。學術履歷、研究工具、教學、私人生活工具住在同一個網域，各自依用途定主題。它們之所以是一家人，靠的是一套共同的骨架，而不是同一個顏色：\n- 同一組字體：Fraunces 展示字搭 Noto Sans TC 內文。\n- 同一種分隔語言：紙張底色加細線，而不是一疊卡片。\n- 同一套圓角：小圓角、膠囊按鈕。\n- 同一個習慣：OKLCH 色票，每頁都支援深淺兩種模式。\n\n每一區依用途有自己的主題，主色只在該區內有效：\n\n| 區域 | 主題 | 用途 | 主題色 |\n| --- | --- | --- | --- |\n| CV、blog、404 | **學術期刊**（Garden） | 閱讀、建立可信度 | 森林綠＋銅色（本檔 token 即此套） |\n| Research Toolkit | **精密工作台**（Cobalt） | 操作：填資料、匯出論文圖表 | 鈷藍 |\n| NMA 教學 | **教科書** | 逐步閱讀並照做 | 藍色、程式碼底色 |\n| 行程頁 | 各趟旅行自己的顏色 | 旅途中查看 | 每趟的 `theme.css` |\n| menu 書籤 | 深夜藍（Midnight） | 私人索引 | 深藍底、青綠 accent |\n| 調劑台複習 | 藥局綠 | 執業時手機上複習 | 深綠＋米紙色 |\n\nsplitbill 是獨立的公開工具，維持現狀，不受本系統約束。",
+    "overview": "這個網站不是一個品牌，而是一個人的工具箱。學術履歷、研究工具、教學、私人生活工具住在同一個網域，各自依用途定主題。它們之所以是一家人，靠的是一套共同的骨架，而不是同一個顏色：\n- 同一組字體：Fraunces 展示字搭 Noto Sans TC 內文。\n- 同一種分隔語言：紙張底色加細線，而不是一疊卡片。\n- 同一套圓角：小圓角、膠囊按鈕。\n- 同一個習慣：OKLCH 色票，每頁都支援深淺兩種模式。\n\n每一區依用途有自己的主題，主色只在該區內有效：\n\n| 區域 | 主題 | 用途 | 主題色 |\n| --- | --- | --- | --- |\n| CV、blog、404 | **學術期刊**（Garden） | 閱讀、建立可信度 | 森林綠＋銅色（本檔 token 即此套） |\n| Research Toolkit | **精密工作台**（Cobalt） | 操作：填資料、匯出論文圖表 | 鈷藍 |\n| NMA 教學 | **教科書** | 逐步閱讀並照做 | 藍色、程式碼底色 |\n| 行程頁 | **日系繪本**（Storybook） | 旅途中在手機上查看 | 和紙白 #FFFCF6、3px 墨灰 #3E3A39 粗框、大圓角、平塗；珊瑚粉／山吹黃／水色／若竹綠；Huninn 字型；只用淺色；每趟一張手繪 SVG 插圖（`trip/engine/storybook.css`、`illustrations.js`） |\n| menu 書籤 | 深夜藍（Midnight） | 私人索引 | 深藍底、青綠 accent |\n| 調劑台複習 | 藥局綠 | 執業時手機上複習 | 深綠＋米紙色 |\n\nsplitbill 是獨立的公開工具，維持現狀，不受本系統約束。",
     "keyCharacteristics": [
       "紙張底色，絕不用純白或純黑；中性色都帶一點綠、藍等色相。",
       "以細線分組，盡量不用卡片；不用卡片包卡片，也不用粗的彩色側邊條。",
@@ -457,6 +457,11 @@
       {
         "name": "The Two Temperaments Rule",
         "body": "工作工具（CV、Toolkit、NMA）精準而克制：細邊框、膠囊按鈕、狀態只換顏色。生活工具（行程、調劑台、書籤）溫和而親切：圓角可以放寬到 12–14px、底色更柔和，也可以用輕微的陰影，但仍然不用漸層和 emoji 圖示。",
+        "section": "components"
+      },
+      {
+        "name": "The Storybook Exception",
+        "body": "行程頁依使用者指定的繪本風：3px 墨灰粗框、大圓角、平塗、Huninn 單一字型、只用淺色、插圖輕微動態與換日彈跳（皆支援減少動態效果）。這一區不套用全站的細線分隔與 Fraunces 規則。",
         "section": "components"
       }
     ],
