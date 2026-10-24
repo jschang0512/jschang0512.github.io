@@ -811,6 +811,14 @@ const REDUCED_EARLY = !!(window.matchMedia && matchMedia("(prefers-reduced-motio
   });
 })();
 
+// a move (its label and the legs under it) reads as one block between two places
+main.querySelectorAll(".timeline > .section-label").forEach(label=>{
+  if(!label.nextElementSibling || !label.nextElementSibling.classList.contains("row-transit")) return;
+  const move = document.createElement("div");
+  move.className = "move";
+  label.before(move); move.appendChild(label);
+  while(move.nextElementSibling && move.nextElementSibling.classList.contains("row-transit")) move.appendChild(move.nextElementSibling);
+});
 main.querySelectorAll(".activity.clickable").forEach(card=>{
   card.setAttribute("role", "button"); card.tabIndex = 0; card.setAttribute("aria-expanded", "false");
 });
@@ -1167,7 +1175,7 @@ function markNext(idx){
   const now = new Date(), mins = now.getHours() * 60 + now.getMinutes();
   // most rows carry no time; only legs do. Rows before the latest leg already under way are over,
   // and the first leg still ahead is next.
-  const rows = [...page.querySelectorAll(".timeline > .row")];
+  const rows = [...page.querySelectorAll(".timeline .row")];
   const timeOf = (r)=>{ const t = (r.querySelector(".time")?.textContent || "").match(/(\d{1,2}):(\d{2})/); return t ? Number(t[1]) * 60 + Number(t[2]) : null; };
   let current = -1, next = -1;
   rows.forEach((r, i)=>{ const m = timeOf(r); if(m === null) return; if(m <= mins) current = i; else if(next < 0) next = i; });
