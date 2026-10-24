@@ -423,9 +423,9 @@ function build() {
     H = ly + fs * 1.4;
   }
   if (S.footnote && S.footnote.trim()) {
-    const lines = S.footnote.split('\n');
-    body += RT.rich(lines.map((t) => ({ runs: [{ t, size: fs * 0.82, color: ink }] })), M, H + fs * 0.3, { lh: fs * 1.25 });
-    H += fs * 0.3 + lines.length * fs * 1.25;
+    const fb = RT.box([{ text: S.footnote }], W - 2 * M, { size: fs * 0.85, pad: 0, padX: 0, align: 'left', fill: 'none', stroke: 'none', color: ink, lh: 1.3 });
+    body += RT.drawBox(fb, M, H + fs * 0.3);
+    H += fs * 0.3 + fb.h;
   }
   return RT.figure(W, H + M, body);
 }

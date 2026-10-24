@@ -7,7 +7,7 @@
 <link rel="icon" href="/Research-toolkit/icons/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="/Research-toolkit/icons/apple-touch-icon.png">
 <title>Research Toolkit</title>
-<meta name="description" content="研究論文圖表小工具：PRISMA 2020 流程圖、世代研究病人選取流程圖、研究設計時間軸、森林圖、E-value、因果圖 DAG、RoB 2、ROBINS-I 與圖片 DPI 轉換，全部在瀏覽器中完成。">
+<meta name="description" content="研究論文圖表小工具：PRISMA 2020 流程圖、世代研究病人選取流程圖、研究設計時間軸、森林圖、E-value、因果圖 DAG、治療路徑 Sankey、暴露定義示意圖、多面板圖組合、視覺摘要、RoB 2、ROBINS-I 與圖片 DPI 轉換，全部在瀏覽器中完成。">
 <link rel="canonical" href="https://jschang0512.github.io/Research-toolkit/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Chia-Sung (Bruce) Chang">
@@ -89,6 +89,18 @@
     <p data-en="Patient selection flowchart for cohort studies: step-by-step exclusions, automatic remaining n, final groups (exposed / comparator).&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG or editable Word shapes&lt;/span&gt;">世代研究病人選取流程圖：逐步排除條件、自動計算剩餘人數，最後分組（暴露／對照）。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG，或可編輯的 Word 圖形</span></p>
     <div class="tags"><span class="pill">STROBE</span><span class="pill" data-en="Auto n">自動計算 n</span></div>
   </a>
+  <a class="tile" href="exposure/index.html">
+    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h6M11 7h5M3 13h10M3 19h18"/><path d="M19 4v6" stroke-width="2.4"/><circle cx="16" cy="13" r="1.6"/></svg></div>
+    <h2>Exposure Definition Diagram</h2>
+    <p data-en="Illustrative patients showing how dispensings become exposure: days’ supply, grace period, gaps, stockpiling, discontinuation and switching, computed from the rules you set.&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG or editable Word shapes&lt;/span&gt;">以幾位示範病人說明暴露如何定義：給藥天數、grace period、空窗、stockpiling、停藥與換藥，依你設定的規則自動計算。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG，或可編輯的 Word 圖形</span></p>
+    <div class="tags"><span class="pill">Grace period</span><span class="pill">Methods</span></div>
+  </a>
+  <a class="tile" href="sankey/index.html">
+    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="4" width="3" height="16" rx="1"/><rect x="19" y="3" width="3" height="7" rx="1"/><rect x="19" y="13" width="3" height="8" rx="1"/><path d="M5 7c7 0 7-1 14-1M5 15c7 0 7 2 14 2"/></svg></div>
+    <h2>Treatment Pathway Sankey</h2>
+    <p data-en="Lines of therapy as a Sankey diagram: enter how many patients followed each pathway (first line &gt; second line &gt; …); switches and patients with no further treatment are drawn automatically.&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG or editable Word shapes&lt;/span&gt;">治療路徑 Sankey 圖：輸入各條用藥路徑的人數（第一線 &gt; 第二線 &gt; …），自動畫出轉換與未再用藥的病人。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG，或可編輯的 Word 圖形</span></p>
+    <div class="tags"><span class="pill" data-en="Drug utilisation">藥物利用</span><span class="pill">Sankey</span></div>
+  </a>
   <a class="tile" href="evalue/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M7 4c1 8 4 12 14 13"/><circle cx="10.5" cy="12.5" r="1.5"/></svg></div>
     <h2>E-value</h2>
@@ -138,6 +150,18 @@
     <h2>Figure DPI &amp; Format</h2>
     <p data-en="Convert PDF / Word / images to PNG, JPG or TIFF at a set DPI — auto-trim, print width, grayscale, batch download.&lt;span class=&quot;out&quot;&gt;Output: PNG, JPG, TIFF, batch download as ZIP&lt;/span&gt;">PDF / Word / 圖片轉成指定 DPI 的 PNG、JPG、TIFF，可自動裁白邊、指定列印寬度、灰階、批次下載。<span class="out">輸出：PNG、JPG、TIFF，可批次下載 ZIP</span></p>
     <div class="tags"><span class="pill">PDF · DOCX</span><span class="pill">300 / 600 dpi</span></div>
+  </a>
+  <a class="tile" href="panels/index.html">
+    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="18" height="8" rx="1"/></svg></div>
+    <h2>Multi-panel Figure</h2>
+    <p data-en="Arrange PNG, JPG or SVG figures as A, B, C panels: columns, spans, alignment and panel letters, exported at journal width and DPI, with a warning for panels whose resolution is too low.&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG or Word (embedded picture)&lt;/span&gt;">把 PNG、JPG 或 SVG 圖排成 A、B、C 面板：欄數、跨欄、對齊與面板字母，以期刊寬度與 DPI 匯出，解析度不足的面板會提醒。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG，或 Word（嵌入圖片）</span></p>
+    <div class="tags"><span class="pill">A · B · C</span><span class="pill" data-en="Journal width">期刊寬度</span></div>
+  </a>
+  <a class="tile" href="abstract/index.html">
+    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M2 8h20M8 8v8M15 8v8M2 16h20"/></svg></div>
+    <h2>Visual Abstract</h2>
+    <p data-en="A one-image summary: question, population, design and comparison, main result and a one-sentence conclusion, in a generic visual-abstract layout (16:9, 4:3 or 1:1).&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG or editable Word shapes&lt;/span&gt;">一張圖的研究摘要：研究問題、族群、設計與比較組、主要結果與一句結論，通用的視覺摘要版型（16:9、4:3 或 1:1）。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG，或可編輯的 Word 圖形</span></p>
+    <div class="tags"><span class="pill">Visual abstract</span><span class="pill" data-en="Editable">可編輯</span></div>
   </a>
   </section>
 </main>

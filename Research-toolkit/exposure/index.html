@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/Research-toolkit/icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/Research-toolkit/icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/Research-toolkit/icons/apple-touch-icon.png">
+<title data-en="Exposure Definition Diagram · Research Toolkit">暴露定義示意圖 · Research Toolkit</title>
+<meta name="description" content="暴露定義示意圖：以幾位示範病人的領藥紀錄，畫出給藥天數、grace period、空窗、stockpiling、停藥與換藥，說明藥物暴露如何定義。可匯出可編輯 Word 圖形。">
+<link rel="canonical" href="https://jschang0512.github.io/Research-toolkit/exposure/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Research Toolkit">
+<meta property="og:title" content="暴露定義示意圖 · Research Toolkit">
+<meta property="og:description" content="以示範病人的領藥紀錄畫出給藥天數、grace period、空窗、stockpiling、停藥與換藥，說明藥物暴露如何定義。">
+<meta property="og:url" content="https://jschang0512.github.io/Research-toolkit/exposure/">
+<meta property="og:image" content="https://jschang0512.github.io/assets/og/research-toolkit.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../shared/style.css?v=20261025a">
+<style>
+  .pt .block-head input { flex: 1; }
+  .pt textarea { font-family: var(--font-mono); font-size: 13px; }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="back" href="../index.html" data-en="← Home">← 工具首頁</a>
+  <h1>Exposure Definition Diagram</h1>
+  <span class="sub" data-en="How dispensings become exposed episodes, gaps, discontinuation and switching">領藥紀錄如何變成暴露期間、空窗、停藥與換藥</span>
+  <span class="spacer"></span>
+  <div class="btns">
+    <button class="small" id="btnUndo" title="復原 (Ctrl+Z)" data-en-title="Undo (Ctrl+Z)">↶</button>
+    <button class="small" id="btnRedo" title="重做 (Ctrl+Y)" data-en-title="Redo (Ctrl+Y)">↷</button>
+    <button class="small" id="btnSaveJson" title="下載 .json，之後可再開啟或傳給共同作者" data-en-title="Download a .json file to reopen later or share with co-authors" data-en="Save project">儲存專案</button>
+    <button class="small" id="btnLoadJson" title="匯入先前儲存的 .json 專案檔，還原所有輸入" data-en-title="Import a previously saved .json project file" data-en="Import project">匯入專案</button>
+    <button class="small" id="btnExample" data-en="Example">範例</button>
+    <button class="small" id="btnReset" data-en="Clear">清空</button>
+  </div>
+</header>
+
+<main class="tool">
+  <section id="form">
+    <div class="card">
+      <p class="hint" style="margin:0" data-en="Draw a few illustrative patients to show readers how your exposure definition works. Enter each dispensing as day, days’ supply and drug; the tool applies the grace period and stockpiling rule and marks gaps, discontinuation and switching.">用幾位示範病人說明你的暴露定義。每筆領藥輸入「第幾天、給藥天數、藥名」，工具會套用 grace period 與 stockpiling 規則，標出空窗、停藥與換藥。</p>
+    </div>
+    <div class="card">
+      <h2><span class="step-no">1</span> <span data-en="Exposure rules">暴露規則</span></h2>
+      <div class="grid2">
+        <label class="field"><span data-en="Grace period (days)">Grace period（天）</span><input type="number" data-k="grace" min="0" max="365" step="1"></label>
+        <label class="field"><span data-en="Episode ends at">暴露期間結束於</span><select data-k="endRule">
+          <option value="grace" data-en="Supply end + grace period">供藥結束＋grace period</option>
+          <option value="supply" data-en="Supply end (grace only bridges gaps)">供藥結束（grace 只用來判斷是否連續）</option></select></label>
+      </div>
+      <label class="check"><input type="checkbox" data-k="stockpile"> <span data-en="Stockpiling: an early refill starts after the current supply runs out">Stockpiling：提早領藥時，新的藥量接在目前的藥用完之後</span></label>
+      <label class="check"><input type="checkbox" data-k="censorSwitch"> <span data-en="A switch to another drug ends the current episode at the switch">換成另一種藥時，原本的暴露期間在換藥當天結束</span></label>
+    </div>
+    <div class="card">
+      <h2><span class="step-no">2</span> <span data-en="Illustrative patients">示範病人</span></h2>
+      <p class="hint" data-en="One dispensing per line: day, days’ supply, drug — e.g. &lt;code&gt;0, 30, Drug A&lt;/code&gt;.">每行一筆領藥：第幾天、給藥天數、藥名，例如 <code>0, 30, Drug A</code>。</p>
+      <div id="pts"></div>
+      <button class="small" id="addPt" data-en="+ Add patient">＋ 新增病人</button>
+    </div>
+    <div class="card">
+      <details>
+        <summary><span class="step-no" style="display:inline-grid">3</span> <span data-en="Axis, labels and appearance">座標、圖例文字與外觀</span></summary>
+        <div class="grid2">
+          <label class="field"><span data-en="Axis to (days, blank = auto)">座標終點（天，留空＝自動）</span><input type="number" data-k="axMax" min="30" step="10"></label>
+          <label class="field"><span data-en="Tick every (days)">刻度間隔（天）</span><input type="number" data-k="tick" min="5" step="5"></label>
+        </div>
+        <label class="field"><span data-en="Axis title">座標軸標題</span><input data-k="axisLabel"></label>
+        <div class="grid2">
+          <label class="field"><span data-en="Legend: supply">圖例：給藥天數</span><input data-k="lSupply"></label>
+          <label class="field"><span data-en="Legend: dispensing date">圖例：領藥日</span><input data-k="lDisp"></label>
+          <label class="field"><span data-en="Legend: exposed">圖例：暴露期間</span><input data-k="lExp"></label>
+          <label class="field"><span data-en="Legend: grace period">圖例：grace period</span><input data-k="lGrace"></label>
+          <label class="field"><span data-en="Label: discontinuation">標示：停藥</span><input data-k="lStop"></label>
+          <label class="field"><span data-en="Label: switch">標示：換藥</span><input data-k="lSwitch"></label>
+          <label class="field"><span data-en="Label: gap">標示：空窗</span><input data-k="lGap"></label>
+        </div>
+        <div id="styleFields"></div>
+        <div class="grid2">
+          <label class="field"><span data-en="Width (px)">寬度 (px)</span><input type="number" data-k="W" min="500" max="2000" step="10"></label>
+          <label class="field"><span data-en="Patient label width (px)">病人標籤寬度 (px)</span><input type="number" data-k="labelW" min="60" max="600" step="10"></label>
+        </div>
+        <label class="field"><span data-en="Title (optional)">圖標題（選填）</span><input data-k="title"></label>
+        <label class="field"><span data-en="Footnote (optional)">註腳（選填）</span><textarea data-k="footnote" rows="2"></textarea></label>
+      </details>
+    </div>
+    <div class="card" id="refs"></div>
+  </section>
+
+  <section class="preview-col">
+    <div class="paper" id="preview"></div>
+    <div class="msgs" id="msgs"></div>
+    <div class="card" id="export"></div>
+  </section>
+</main>
+
+<script src="../shared/common.js?v=20261025a"></script>
+<script>
+const T = RT.t;
+const KEY = 'exposure1';
+const DRUG_COLORS = ['#0072B2', '#D55E00', '#009E73', '#CC79A7', '#E69F00'];
+const pt = (o = {}) => ({ label: '', disp: '', ...o });
+const DEF = {
+  grace: 30, endRule: 'grace', stockpile: true, censorSwitch: true, pts: [pt()],
+  axMax: '', tick: 30, axisLabel: 'Days since first dispensing',
+  lSupply: "Days' supply", lDisp: 'Dispensing', lExp: 'Exposed', lGrace: 'Grace period', lStop: 'Discontinuation', lSwitch: 'Switch', lGap: 'Gap',
+  W: 900, labelW: 230, title: '', footnote: '', st: { ...RT.STYLE_DEF, fontSize: 12.5 },
+};
+const REFS = [
+  'Gardarsdottir H, Souverein PC, Egberts TCG, Heerdink ER. Construction of drug treatment episodes from drug-dispensing histories is influenced by the gap length. <i>J Clin Epidemiol</i> 2010;63:422–7. <a href="https://doi.org/10.1016/j.jclinepi.2009.07.001" target="_blank" rel="noopener">doi:10.1016/j.jclinepi.2009.07.001</a>',
+  'Pazzagli L, Linder M, Zhang M, et al. Methods for time-varying exposure related problems in pharmacoepidemiology: an overview. <i>Pharmacoepidemiol Drug Saf</i> 2018;27:148–60. <a href="https://doi.org/10.1002/pds.4372" target="_blank" rel="noopener">doi:10.1002/pds.4372</a>',
+  RT.REFS.acnu, RT.REFS.okabe, RT.REFS.libs,
+];
+let S = RT.load(KEY, DEF);
+
+/* ---------------- episodes ---------------- */
+function parseDisp(txt) {
+  const out = [], bad = [];
+  String(txt || '').split(/\r?\n/).forEach((line, i) => {
+    if (!line.trim()) return;
+    const c = line.split(/[,，\t;]/).map((x) => x.trim());
+    const d = RT.num(c[0]), s = RT.num(c[1]);
+    if (d === null || !(s > 0)) { bad.push(i + 1); return; }
+    out.push({ d, s, drug: c[2] || 'Drug A' });
+  });
+  return { list: out.sort((a, b) => a.d - b.d), bad };
+}
+// supply bars (after stockpiling), exposed episodes, gaps and switch/stop events for one patient
+function episodes(list) {
+  const G = Math.max(0, RT.num(S.grace) ?? 0);
+  const bars = [], eps = [], events = [], gaps = [];
+  let ep = null;
+  const close = (endDay, why) => {
+    const exposedEnd = S.endRule === 'grace' && why !== 'switch' ? ep.supplyEnd + G : ep.supplyEnd;
+    ep.end = why === 'switch' ? Math.min(endDay, exposedEnd) : exposedEnd;
+    eps.push(ep);
+  };
+  list.forEach((x) => {
+    if (ep && x.drug !== ep.drug && x.d <= ep.supplyEnd + G) {
+      events.push({ k: 'switch', day: x.d });
+      if (S.censorSwitch) { close(x.d, 'switch'); ep = null; }
+    } else if (ep && x.d > ep.supplyEnd + G) {
+      close(null, 'stop');
+      events.push({ k: 'stop', day: eps[eps.length - 1].end });
+      gaps.push({ from: eps[eps.length - 1].supplyEnd, to: x.d, long: true });   // the gap runs from the end of supply
+      ep = null;
+    }
+    if (ep && x.drug === ep.drug && x.d > ep.supplyEnd) gaps.push({ from: ep.supplyEnd, to: x.d, long: false });   // bridged by the grace period
+    const prevEnd = ep && ep.drug === x.drug ? ep.supplyEnd : x.d;
+    const start = S.stockpile ? Math.max(x.d, prevEnd) : x.d;
+    const end = start + x.s;
+    bars.push({ from: start, to: end, d: x.d, drug: x.drug, shifted: start > x.d });
+    if (!ep) ep = { drug: x.drug, start: x.d, supplyEnd: end };
+    else { ep.supplyEnd = Math.max(ep.supplyEnd, end); if (x.drug !== ep.drug) ep.drug = x.drug; }
+  });
+  if (ep) { close(null, 'stop'); events.push({ k: 'stop', day: eps[eps.length - 1].end, last: true }); }
+  return { bars, eps, events, gaps, G };
+}
+
+/* ---------------- form ---------------- */
+const form = document.getElementById('form');
+document.getElementById('styleFields').innerHTML = RT.styleFieldsHTML(['font', 'fontSize', 'textColor']);
+document.getElementById('refs').innerHTML = RT.refsHTML(REFS);
+function syncInputs() { RT.syncForm(form, S); renderPts(); }
+RT.bindForm(form, () => S, () => update());
+function renderPts() {
+  const host = document.getElementById('pts');
+  host.innerHTML = '';
+  S.pts.forEach((p, i) => {
+    const el = RT.h(`<div class="block pt">
+      <div class="block-head"><b>${i + 1}.</b><input data-f="label" placeholder="${T('例如：Patient A：連續使用', 'e.g. Patient A: continuous use')}" aria-label="${T(`病人 ${i + 1} 的標籤`, `Label for patient ${i + 1}`)}">
+        <button class="small" data-a="up" aria-label="${T(`上移病人 ${i + 1}`, `Move patient ${i + 1} up`)}">↑</button><button class="small" data-a="down" aria-label="${T(`下移病人 ${i + 1}`, `Move patient ${i + 1} down`)}">↓</button><button class="icon" data-a="del" aria-label="${T(`刪除病人 ${i + 1}`, `Delete patient ${i + 1}`)}">✕</button></div>
+      <textarea data-f="disp" rows="4" placeholder="0, 30, Drug A&#10;28, 30, Drug A" aria-label="${T(`病人 ${i + 1} 的領藥紀錄`, `Dispensings for patient ${i + 1}`)}"></textarea></div>`);
+    el.querySelectorAll('[data-f]').forEach((inp) => { inp.value = p[inp.dataset.f] ?? ''; inp.oninput = () => { p[inp.dataset.f] = inp.value; update(); }; });
+    el.querySelector('.block-head').onclick = (e) => {
+      const a = e.target.dataset.a;
+      if (a === 'up' && i > 0) [S.pts[i - 1], S.pts[i]] = [S.pts[i], S.pts[i - 1]];
+      else if (a === 'down' && i < S.pts.length - 1) [S.pts[i + 1], S.pts[i]] = [S.pts[i], S.pts[i + 1]];
+      else if (a === 'del') { S.pts.splice(i, 1); if (!S.pts.length) S.pts.push(pt()); }
+      else return;
+      renderPts(); update();
+    };
+    host.appendChild(el);
+  });
+}
+document.getElementById('addPt').onclick = () => { S.pts.push(pt({ label: T(`Patient ${String.fromCharCode(65 + S.pts.length)}`, `Patient ${String.fromCharCode(65 + S.pts.length)}`) })); renderPts(); update(); };
+
+/* ---------------- figure ---------------- */
+function build() {
+  const st = RT.applyStyle(S.st);
+  const fs = Number(st.fontSize) || 12.5, ink = st.textColor || '#000000';
+  const W = Number(S.W) || 900, M = 16, LW = Number(S.labelW) || 230;
+  const data = S.pts.map((p) => ({ p, ...parseDisp(p.disp) })).filter((x) => x.list.length).map((x) => ({ ...x, e: episodes(x.list) }));
+  const drugs = [...new Set(data.flatMap((x) => x.list.map((d) => d.drug)))];
+  const colorOf = (d) => DRUG_COLORS[drugs.indexOf(d) % DRUG_COLORS.length];
+  const tint = (hex, a) => { const n = parseInt(hex.slice(1), 16); return '#' + [n >> 16, (n >> 8) & 255, n & 255].map((v) => Math.round(v * a + 255 * (1 - a)).toString(16).padStart(2, '0')).join('').toUpperCase(); };
+  const lastDay = Math.max(30, ...data.flatMap((x) => [...x.e.bars.map((b) => b.to), ...x.e.eps.map((e) => e.end)]));
+  const step = Math.max(5, Number(S.tick) || 30);
+  const axMax = RT.num(S.axMax) > 0 ? RT.num(S.axMax) : Math.ceil((lastDay + step * 0.5) / step) * step;
+  RT.beginScene();
+  let body = '', y = M;
+  if (S.title) { body += RT.rich([{ runs: [{ t: S.title, bold: true, size: fs * 1.1, color: ink }] }], M, y, { lh: fs * 1.5 }); y += fs * 1.9; }
+  const x0 = M + LW, x1 = W - M - fs * 2;
+  const X = (d) => x0 + (Math.min(d, axMax) / axMax) * (x1 - x0);
+  const barH = fs * 1.05, epH = fs * 0.45, laneH = fs * 5.4;
+  data.forEach((x, i) => {
+    const top = y + i * laneH, by = top + fs * 1.2, ey = by + barH + fs * 0.45;
+    const lb = RT.box([{ text: x.p.label || `Patient ${i + 1}`, bold: true }], LW - fs, { size: fs, pad: 0, padX: 0, align: 'left', fill: 'none', stroke: 'none', color: ink, lh: 1.25 });
+    body += RT.drawBox(lb, M, by - fs * 0.25, Math.max(lb.h, barH + epH + fs));
+    body += RT.line([[x0, ey + epH / 2], [x1, ey + epH / 2]], { color: '#D9D9D9', sw: 1 });
+    // days' supply as dispensed (stockpiled supply starts where the previous one ends)
+    x.e.bars.forEach((b) => {
+      const c = colorOf(b.drug);
+      body += RT.rect(X(b.from), by, Math.max(1, X(b.to) - X(b.from)), barH, { fill: tint(c, 0.35), stroke: c, sw: 0.8 });
+      // dispensing date: a small tick above the bar
+      body += RT.poly([[X(b.d), by - 1], [X(b.d) - fs * 0.32, by - fs * 0.55], [X(b.d) + fs * 0.32, by - fs * 0.55]], { fill: ink });
+    });
+    // exposed episodes, with the grace part lighter
+    x.e.eps.forEach((e) => {
+      const c = colorOf(e.drug);
+      const graceFrom = Math.min(e.supplyEnd, e.end);
+      body += RT.rect(X(e.start), ey, Math.max(1, X(graceFrom) - X(e.start)), epH, { fill: c });
+      if (e.end > graceFrom) body += RT.rect(X(graceFrom), ey, X(e.end) - X(graceFrom), epH, { fill: tint(c, 0.4) });
+    });
+    x.e.gaps.forEach((g) => {
+      if (g.to - g.from < 1) return;
+      const mid = (X(g.from) + X(g.to)) / 2, gy = ey + epH + fs * 0.25;
+      body += RT.line([[X(g.from), gy + fs * 0.35], [X(g.to), gy + fs * 0.35]], { color: ink, sw: 0.8, dash: '3 2' });
+      const gt = `${S.lGap} ${Math.round(g.to - g.from)} d${g.long ? ' > ' : ' ≤ '}${Math.round(x.e.G)} d`;
+      body += RT.rich([{ runs: [{ t: gt, size: fs * 0.85, color: ink }] }], mid, gy + fs * 0.4, { lh: fs * 1.2, anchor: 'middle' });
+    });
+    x.e.events.forEach((ev) => {
+      if (ev.last && ev.day >= axMax) return;
+      const ex = X(ev.day), my = ey + epH / 2;
+      if (ev.k === 'stop') {
+        body += RT.line([[ex, ey - fs * 0.35], [ex, ey + epH + fs * 0.35]], { color: ink, sw: 1.6 });
+        body += RT.rich([{ runs: [{ t: S.lStop, size: fs * 0.85, color: ink }] }], ex + fs * 0.3, ey - fs * 1.55, { lh: fs * 1.2 });
+      } else {
+        const r = fs * 0.42;
+        body += RT.poly([[ex, my - r], [ex + r, my], [ex, my + r], [ex - r, my]], { fill: '#FFFFFF', stroke: ink, sw: 1.2 });
+        body += RT.rich([{ runs: [{ t: S.lSwitch, size: fs * 0.85, color: ink }] }], ex + fs * 0.6, ey - fs * 1.55, { lh: fs * 1.2 });
+      }
+    });
+  });
+  y += Math.max(1, data.length) * laneH;
+  // axis
+  body += RT.line([[x0, y], [x1, y]], { color: ink, sw: 1 });
+  for (let d = 0; d <= axMax + 1e-9; d += step) {
+    body += RT.line([[X(d), y], [X(d), y + fs * 0.35]], { color: ink, sw: 1 });
+    body += RT.rich([{ runs: [{ t: String(d), size: fs * 0.9, color: ink }] }], X(d), y + fs * 0.4, { lh: fs * 1.3, anchor: 'middle' });
+  }
+  y += fs * 1.9;
+  if (S.axisLabel) { body += RT.rich([{ runs: [{ t: S.axisLabel, size: fs, color: ink }] }], (x0 + x1) / 2, y, { lh: fs * 1.4, anchor: 'middle' }); y += fs * 1.8; }
+  // legend
+  if (data.length) {
+    const items = [];
+    drugs.forEach((d) => items.push({ k: 'supply', d, t: drugs.length > 1 ? `${S.lSupply}: ${d}` : S.lSupply }));
+    items.push({ k: 'disp', t: S.lDisp }, { k: 'exp', t: S.lExp });
+    if (Number(S.grace) > 0 && S.endRule === 'grace') items.push({ k: 'grace', t: S.lGrace });
+    let lx = M, ly = y;
+    const sw = fs * 1.6;
+    items.forEach((it) => {
+      const tw = RT.textWidth(it.t, fs * 0.9) + sw + fs * 1.6;
+      if (lx + tw > W - M) { lx = M; ly += fs * 1.6; }
+      const c = colorOf(it.d || drugs[0]), cy = ly + fs * 0.7;
+      if (it.k === 'supply') body += RT.rect(lx, cy - barH / 2, sw, barH, { fill: tint(c, 0.35), stroke: c, sw: 0.8 });
+      else if (it.k === 'disp') body += RT.poly([[lx + sw / 2, cy + fs * 0.3], [lx + sw / 2 - fs * 0.32, cy - fs * 0.25], [lx + sw / 2 + fs * 0.32, cy - fs * 0.25]], { fill: ink });
+      else if (it.k === 'exp') body += RT.rect(lx, cy - epH / 2, sw, epH, { fill: c });
+      else body += RT.rect(lx, cy - epH / 2, sw, epH, { fill: tint(c, 0.4) });
+      body += RT.rich([{ runs: [{ t: it.t, size: fs * 0.9, color: ink }] }], lx + sw + fs * 0.4, ly, { lh: fs * 1.4 });
+      lx += tw;
+    });
+    y = ly + fs * 1.8;
+  }
+  if (S.footnote && S.footnote.trim()) {
+    const fb = RT.box([{ text: S.footnote }], W - 2 * M, { size: fs * 0.85, pad: 0, padX: 0, align: 'left', fill: 'none', stroke: 'none', color: ink, lh: 1.3 });
+    body += RT.drawBox(fb, M, y);
+    y += fb.h;
+  }
+  return RT.figure(W, y + M, body);
+}
+
+let fig;
+const preview = document.getElementById('preview');
+const exporter = RT.exportPanel(document.getElementById('export'), () => fig, 'exposure_definition', {
+  fontSize: { get: () => S.st.fontSize, set: (v) => { S.st.fontSize = v; syncInputs(); update(); } },
+});
+const hist = RT.history(() => S, (s) => { S = s; syncInputs(); render(); });
+function render() {
+  const msgs = [];
+  S.pts.forEach((p, i) => {
+    const { list, bad } = parseDisp(p.disp);
+    const name = p.label || T(`病人 ${i + 1}`, `patient ${i + 1}`);
+    if (bad.length) msgs.push(T(`${name}：第 ${bad.join('、')} 行讀不到「第幾天、給藥天數」`, `${name}: line ${bad.join(', ')} has no readable day and days’ supply`));
+    if (!list.length && (p.label || '').trim()) msgs.push(T(`${name}還沒有領藥紀錄`, `${name} has no dispensings yet`));
+  });
+  try {
+    fig = build();
+    preview.innerHTML = S.pts.some((p) => parseDisp(p.disp).list.length) ? fig.svg : `<p class="hint" style="align-self:center">${T('輸入領藥紀錄，或按「範例」。', 'Enter dispensings, or press “Example”.')}</p>`;
+  } catch (e) { console.error(e); preview.innerHTML = `<div class="msg">⚠ ${RT.esc(e.message)}</div>`; }
+  document.getElementById('msgs').innerHTML = msgs.map((m) => `<div class="msg">⚠ ${RT.esc(m)}</div>`).join('');
+  exporter.setIssues(msgs.length);
+  exporter.refresh();
+  RT.save(KEY, S);
+}
+const update = RT.debounce(() => { render(); hist.push(); }, 80);
+
+document.getElementById('btnUndo').onclick = hist.undo;
+document.getElementById('btnRedo').onclick = hist.redo;
+document.getElementById('btnExample').onclick = () => {
+  S.pts = [
+    pt({ label: 'Patient A: early refills (stockpiling)', disp: '0, 30, Drug A\n25, 30, Drug A\n50, 30, Drug A\n85, 30, Drug A' }),
+    pt({ label: 'Patient B: gap within the grace period', disp: '0, 30, Drug A\n45, 30, Drug A\n80, 30, Drug A' }),
+    pt({ label: 'Patient C: gap longer than the grace period', disp: '0, 30, Drug A\n30, 30, Drug A\n125, 30, Drug A' }),
+    pt({ label: 'Patient D: switch to Drug B', disp: '0, 30, Drug A\n32, 30, Drug A\n60, 30, Drug B\n90, 30, Drug B' }),
+  ];
+  Object.assign(S, { grace: 30, endRule: 'grace', stockpile: true, censorSwitch: true, axMax: '', tick: 30, title: '',
+    footnote: 'Illustrative patients. Exposure starts at the first dispensing and continues while the next dispensing falls within the end of supply plus a 30-day grace period; overlapping supply is carried forward (stockpiling). A switch to another drug ends the current episode.' });
+  syncInputs(); update();
+  RT.toast(T('已載入範例（示範病人，僅供說明；按 ↶ 可復原）', 'Example loaded (illustrative patients; ↶ to undo)'));
+};
+document.getElementById('btnReset').onclick = () => { S.pts = [pt()]; S.title = ''; S.footnote = ''; syncInputs(); update(); RT.toast(T('已清空內容（按 ↶ 可復原）', 'Content cleared (↶ to undo)')); };
+document.getElementById('btnSaveJson').onclick = () => RT.downloadJSON(S, 'exposure_definition.json');
+document.getElementById('btnLoadJson').onclick = async () => { try { S = RT.merge(DEF, await RT.pickJSON()); syncInputs(); update(); } catch (e) { RT.toast(T('讀取失敗：', 'Could not open file: ') + e.message, 6000); } };
+
+syncInputs();
+render();
+hist.push();
+</script>
+</body>
+</html>

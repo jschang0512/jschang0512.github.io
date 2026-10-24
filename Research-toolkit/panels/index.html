@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/Research-toolkit/icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/Research-toolkit/icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/Research-toolkit/icons/apple-touch-icon.png">
+<title data-en="Multi-panel Figure · Research Toolkit">多面板圖組合 · Research Toolkit</title>
+<meta name="description" content="多面板圖組合：把多張圖排成 A、B、C 面板，加上面板字母並對齊，以期刊寬度與指定 DPI 匯出 PNG、TIFF、PDF 或 Word。圖片只在瀏覽器中處理，不會上傳。">
+<link rel="canonical" href="https://jschang0512.github.io/Research-toolkit/panels/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Research Toolkit">
+<meta property="og:title" content="多面板圖組合 · Research Toolkit">
+<meta property="og:description" content="把多張圖排成 A、B、C 面板並加上面板字母，以期刊寬度與指定 DPI 匯出。圖片只在瀏覽器中處理。">
+<meta property="og:url" content="https://jschang0512.github.io/Research-toolkit/panels/">
+<meta property="og:image" content="https://jschang0512.github.io/assets/og/research-toolkit.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../shared/style.css?v=20261025a">
+<style>
+  .drop { display: grid; place-items: center; gap: 6px; padding: 18px; border: 1.5px dashed var(--border); border-radius: var(--radius); text-align: center; color: var(--muted); font-size: 13px; cursor: pointer; }
+  .drop.over { border-color: var(--accent); color: var(--accent); background: var(--accent-weak); }
+  .panel-row { display: grid; grid-template-columns: 56px minmax(0, 1fr) 5.5rem auto 30px; gap: 8px; align-items: center; margin-top: 8px; }
+  .panel-row img { width: 56px; height: 42px; object-fit: contain; background: var(--figure); border: 1px solid var(--border); border-radius: 6px; }
+  .panel-row .name { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .panel-row .name small { display: block; color: var(--muted); font-size: 12px; }
+  .panel-row.missing img { visibility: hidden; }
+  .panel-row .mv { display: inline-flex; gap: 4px; }
+  @media (max-width: 640px) { .panel-row { grid-template-columns: 48px minmax(0, 1fr) 5rem 30px; } .panel-row .mv { display: none; } }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="back" href="../index.html" data-en="← Home">← 工具首頁</a>
+  <h1>Multi-panel Figure</h1>
+  <span class="sub" data-en="Arrange figures as A, B, C panels and export at journal size">把多張圖排成 A、B、C 面板，以期刊尺寸匯出</span>
+  <span class="spacer"></span>
+  <div class="btns">
+    <button class="small" id="btnUndo" title="復原 (Ctrl+Z)" data-en-title="Undo (Ctrl+Z)">↶</button>
+    <button class="small" id="btnRedo" title="重做 (Ctrl+Y)" data-en-title="Redo (Ctrl+Y)">↷</button>
+    <button class="small" id="btnSaveJson" title="下載 .json（包含圖片），之後可再開啟或傳給共同作者" data-en-title="Download a .json file (images included) to reopen later or share" data-en="Save project">儲存專案</button>
+    <button class="small" id="btnLoadJson" title="匯入先前儲存的 .json 專案檔，還原所有輸入" data-en-title="Import a previously saved .json project file" data-en="Import project">匯入專案</button>
+    <button class="small" id="btnReset" data-en="Clear">清空</button>
+  </div>
+</header>
+
+<main class="tool">
+  <section id="form">
+    <div class="card">
+      <h2><span class="step-no">1</span> <span data-en="Panels">面板圖片</span></h2>
+      <label class="drop" id="drop">
+        <span data-en="Drop PNG, JPG or SVG files here, or click to choose">把 PNG、JPG 或 SVG 拖到這裡，或點一下選擇檔案</span>
+        <span class="hint" style="margin:0" data-en="PDF or Word figures: convert them first with Figure DPI &amp; Format.">PDF 或 Word 中的圖，請先用「圖檔 DPI 轉換」轉成圖片。</span>
+        <input type="file" id="file" accept="image/png,image/jpeg,image/svg+xml,.svg" multiple hidden>
+      </label>
+      <div id="panels"></div>
+    </div>
+    <div class="card">
+      <h2><span class="step-no">2</span> <span data-en="Layout">排版</span></h2>
+      <div class="grid2">
+        <label class="field"><span data-en="Columns">欄數</span><input type="number" data-k="cols" min="1" max="6" step="1"></label>
+        <label class="field"><span data-en="Gap between panels (px)">面板間距 (px)</span><input type="number" data-k="gap" min="0" max="120" step="2"></label>
+        <label class="field"><span data-en="Panels in a row">同一列的面板</span><select data-k="fit">
+          <option value="width" data-en="Same width (heights follow)">等寬（高度依比例）</option>
+          <option value="height" data-en="Same height (fill the row)">等高（填滿整列）</option></select></label>
+        <label class="field"><span data-en="Vertical alignment">垂直對齊</span><select data-k="valign">
+          <option value="top" data-en="Top">靠上</option><option value="middle" data-en="Middle">置中</option><option value="bottom" data-en="Bottom">靠下</option></select></label>
+      </div>
+    </div>
+    <div class="card">
+      <h2><span class="step-no">3</span> <span data-en="Panel labels">面板字母</span></h2>
+      <div class="grid2">
+        <label class="field"><span data-en="Style">樣式</span><select data-k="lab">
+          <option value="A">A, B, C</option><option value="a">a, b, c</option><option value="(a)">(a), (b), (c)</option><option value="A.">A., B., C.</option><option value="none" data-en="None">不加</option></select></label>
+        <label class="field"><span data-en="Position">位置</span><select data-k="labPos">
+          <option value="outside" data-en="Above the panel">面板上方</option><option value="inside" data-en="Inside, top left">面板內左上</option></select></label>
+      </div>
+      <label class="check"><input type="checkbox" data-k="labBold"> <span data-en="Bold">粗體</span></label>
+      <div id="styleFields"></div>
+      <p class="hint" data-en="The letters are set at the size above in the exported figure; text inside your images keeps its own size.">字母依上方字級輸出；圖片內原有的文字維持原本大小。</p>
+    </div>
+    <div class="card" id="refs"></div>
+  </section>
+
+  <section class="preview-col">
+    <div class="paper" id="preview"></div>
+    <div class="msgs" id="msgs"></div>
+    <div class="card" id="export"></div>
+  </section>
+</main>
+
+<script src="../shared/common.js?v=20261025a"></script>
+<script>
+const T = RT.t;
+const KEY = 'panels1';
+const DEF = { panels: [], cols: 2, gap: 24, fit: 'width', valign: 'top', lab: 'A', labPos: 'outside', labBold: true, st: { ...RT.STYLE_DEF, fontSize: 34 } };
+let S = RT.load(KEY, DEF);
+// the images themselves are too large for browser storage: keep them in memory, save only the layout
+const SRC = new Map();
+const REFS = [RT.REFS.artwork, RT.REFS.tiff, RT.REFS.png, RT.REFS.libs];
+
+/* ---------------- files ---------------- */
+const readAsDataURL = (f) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(r.error); r.readAsDataURL(f); });
+const sizeOf = (src) => new Promise((res) => { const im = new Image(); im.onload = () => res([im.naturalWidth || 800, im.naturalHeight || 600]); im.onerror = () => res(null); im.src = src; });
+async function addFiles(files) {
+  const added = [], failed = [];
+  for (const f of files) {
+    if (!/^image\/(png|jpeg|svg\+xml)$/.test(f.type) && !/\.svg$/i.test(f.name)) { failed.push(f.name); continue; }
+    const src = await readAsDataURL(f);
+    const wh = await sizeOf(src);
+    if (!wh) { failed.push(f.name); continue; }
+    const id = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    SRC.set(id, src);
+    added.push({ id, name: f.name, w: wh[0], h: wh[1], span: 1 });
+  }
+  S.panels.push(...added);
+  syncInputs(); update();
+  if (failed.length) RT.toast(T(`無法讀取：${failed.join('、')}（只支援 PNG、JPG、SVG）`, `Could not read: ${failed.join(', ')} (PNG, JPG and SVG only)`), 6000);
+}
+const drop = document.getElementById('drop'), file = document.getElementById('file');
+file.onchange = () => { addFiles([...file.files]); file.value = ''; };
+['dragenter', 'dragover'].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', (e) => addFiles([...e.dataTransfer.files]));
+
+/* ---------------- form ---------------- */
+const form = document.getElementById('form');
+document.getElementById('styleFields').innerHTML = RT.styleFieldsHTML(['font', 'fontSize', 'textColor']);
+document.getElementById('refs').innerHTML = RT.refsHTML(REFS);
+function syncInputs() { RT.syncForm(form, S); renderPanels(); }
+RT.bindForm(form, () => S, () => { renderPanels(); update(); });
+const letter = (i) => {
+  const c = String.fromCharCode(97 + i);
+  return { A: c.toUpperCase(), a: c, '(a)': `(${c})`, 'A.': c.toUpperCase() + '.', none: '' }[S.lab] ?? c.toUpperCase();
+};
+function renderPanels() {
+  const host = document.getElementById('panels');
+  host.innerHTML = '';
+  const cols = Math.max(1, Math.min(6, Number(S.cols) || 2));
+  S.panels.forEach((p, i) => {
+    const src = SRC.get(p.id);
+    const el = RT.h(`<div class="panel-row${src ? '' : ' missing'}">
+      <img alt="">
+      <div class="name"></div>
+      <select data-f="span" aria-label="${T(`面板 ${letter(i) || i + 1} 的寬度`, `Width of panel ${letter(i) || i + 1}`)}">${Array.from({ length: cols }, (_, k) => `<option value="${k + 1}">${k + 1 === 1 ? T('1 欄', '1 column') : T(`${k + 1} 欄`, `${k + 1} columns`)}</option>`).join('')}</select>
+      <span class="mv"><button class="small" data-a="up" aria-label="${T('前移', 'Move earlier')}">↑</button><button class="small" data-a="down" aria-label="${T('後移', 'Move later')}">↓</button></span>
+      <button class="icon" data-a="del" aria-label="${T(`移除面板 ${letter(i) || i + 1}`, `Remove panel ${letter(i) || i + 1}`)}">✕</button></div>`);
+    if (src) el.querySelector('img').src = src;
+    const nm = el.querySelector('.name');
+    nm.textContent = `${letter(i) ? letter(i) + '　' : ''}${p.name}`;
+    nm.appendChild(RT.h(`<small>${src ? `${p.w} × ${p.h} px` : T('圖片未載入：請重新加入此檔案', 'Image not loaded: add this file again')}</small>`));
+    const sel = el.querySelector('select');
+    sel.value = String(Math.min(cols, p.span || 1));
+    sel.oninput = () => { p.span = Number(sel.value); update(); };
+    el.onclick = (e) => {
+      const a = e.target.dataset.a;
+      if (a === 'up' && i > 0) [S.panels[i - 1], S.panels[i]] = [S.panels[i], S.panels[i - 1]];
+      else if (a === 'down' && i < S.panels.length - 1) [S.panels[i + 1], S.panels[i]] = [S.panels[i], S.panels[i + 1]];
+      else if (a === 'del') { SRC.delete(p.id); S.panels.splice(i, 1); }
+      else return;
+      renderPanels(); update();
+    };
+    host.appendChild(el);
+  });
+}
+
+/* ---------------- figure ---------------- */
+const W = 1600;   // figure units; the print width is set at export
+function build() {
+  const st = RT.applyStyle(S.st);
+  const fs = Number(st.fontSize) || 22, ink = st.textColor || '#000000';
+  const cols = Math.max(1, Math.min(6, Number(S.cols) || 2)), gap = Math.max(0, Number(S.gap) || 0);
+  const labH = S.lab !== 'none' && S.labPos === 'outside' ? fs * 1.35 : 0;
+  const cw = (W - gap * (cols - 1)) / cols;
+  // pack panels into rows by their column span
+  const rows = [];
+  let row = [], used = 0;
+  S.panels.forEach((p, i) => {
+    const span = Math.min(cols, p.span || 1);
+    if (used + span > cols && row.length) { rows.push(row); row = []; used = 0; }
+    row.push({ p, i, span }); used += span;
+  });
+  if (row.length) rows.push(row);
+  RT.beginScene();
+  let body = '', y = 0;
+  rows.forEach((r) => {
+    // width of each slot, then the image size inside it
+    r.forEach((c) => { c.sw = c.span * cw + (c.span - 1) * gap; });
+    if (S.fit === 'height') {
+      // same height across the row, scaled so the row fills the full width
+      const sumRatio = r.reduce((a, c) => a + c.p.w / c.p.h, 0);
+      const free = W - gap * (r.length - 1);
+      const h = free / sumRatio;
+      let x = 0;
+      r.forEach((c) => { c.iw = h * (c.p.w / c.p.h); c.ih = h; c.x = x; x += c.iw + gap; });
+    } else {
+      let x = 0;
+      r.forEach((c) => { c.iw = c.sw; c.ih = c.sw * (c.p.h / c.p.w); c.x = x; x += c.sw + gap; });
+    }
+    const rh = Math.max(...r.map((c) => c.ih));
+    r.forEach((c) => {
+      const off = S.valign === 'middle' ? (rh - c.ih) / 2 : S.valign === 'bottom' ? rh - c.ih : 0;
+      const iy = y + labH + off, src = SRC.get(c.p.id);
+      body += src
+        ? `<image x="${RT.f(c.x)}" y="${RT.f(iy)}" width="${RT.f(c.iw)}" height="${RT.f(c.ih)}" preserveAspectRatio="none" href="${src}"/>`
+        : RT.rect(c.x, iy, c.iw, c.ih, { fill: '#F2F2F2', stroke: '#BBBBBB', sw: 1 });
+      const t = letter(c.i);
+      if (t) {
+        const ly = S.labPos === 'outside' ? y + off : iy + fs * 0.2;
+        const lx = S.labPos === 'outside' ? c.x : c.x + fs * 0.35;
+        body += RT.rich([{ runs: [{ t, bold: !!S.labBold, size: fs, color: ink }] }], lx, ly, { lh: fs * 1.25 });
+      }
+    });
+    y += labH + rh + gap;
+  });
+  return RT.figure(W, Math.max(1, y - gap), body);
+}
+
+/* ---------------- Word: the composed figure as one picture ---------------- */
+async function docxPicture() {
+  // same DPI and print width as chosen in the export panel (17 cm when left at native size)
+  const sel = document.querySelector('.ex-dpi').value;
+  const dpi = sel === 'custom' ? Number(document.querySelector('.ex-dpic').value) || 300 : Number(sel) || 300;
+  const g = RT.figureGeometry(fig, dpi, Number(document.querySelector('.ex-width').value) || 17);
+  const canvas = await RT.svgToCanvas(fig.svg, fig.w, fig.h, g.scale);
+  const png = await RT.encodeCanvas(canvas, 'png', dpi);
+  await RT.loadScript(RT.CDN.jszip);
+  const cx = Math.round((g.cm[0] / 2.54) * 914400), cy = Math.round((g.cm[1] / 2.54) * 914400);
+  const NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"';
+  const doc = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document ${NS}><w:body><w:p><w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="1" name="Figure"/><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="0" name="figure.png"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rId2"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p><w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr></w:body></w:document>`;
+  const zip = new JSZip();
+  zip.file('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>');
+  zip.file('_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>');
+  zip.file('word/_rels/document.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image1.png"/></Relationships>');
+  zip.file('word/document.xml', doc);
+  zip.file('word/media/image1.png', png);
+  return zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+}
+
+let fig;
+const preview = document.getElementById('preview');
+const exporter = RT.exportPanel(document.getElementById('export'), () => fig, 'figure_panels', {
+  docx: docxPicture, docxLabel: T('Word（嵌入圖片）', 'Word (embedded picture)'),
+  docxInfo: T('把組合好的圖以指定 DPI 嵌入 Word；面板不可個別編輯', 'Places the composed figure in Word as one picture at the chosen DPI; panels are not editable separately'),
+  fontSize: { get: () => S.st.fontSize, set: (v) => { S.st.fontSize = v; syncInputs(); update(); } },
+});
+const hist = RT.history(() => S, (s) => { S = s; syncInputs(); render(); });
+function render() {
+  try {
+    fig = build();
+    preview.innerHTML = S.panels.length ? fig.svg : `<p class="hint" style="align-self:center">${T('加入圖片後在這裡預覽。', 'Add images to preview the figure here.')}</p>`;
+  } catch (e) { console.error(e); preview.innerHTML = `<div class="msg">⚠ ${RT.esc(e.message)}</div>`; }
+  const msgs = [];
+  const missing = S.panels.filter((p) => !SRC.has(p.id)).length;
+  if (missing) msgs.push(T(`有 ${missing} 張圖片沒有載入（重新整理後圖片不會保留，只保留排版）。請重新加入，或用「匯入專案」開啟含圖片的專案檔。`, `${missing} image(s) not loaded (images are not kept after a reload, only the layout). Add them again, or import a project file, which includes the images.`));
+  // effective resolution of each panel at the chosen print width
+  const dpi = Number(document.querySelector('.ex-dpi')?.value) || 300, wcm = Number(document.querySelector('.ex-width')?.value) || 0;
+  if (wcm > 0 && S.panels.length && fig) {
+    const inchesPerUnit = wcm / 2.54 / fig.w;
+    const low = [];
+    const cols = Math.max(1, Math.min(6, Number(S.cols) || 2)), cw = (W - (Number(S.gap) || 0) * (cols - 1)) / cols;
+    S.panels.forEach((p, i) => {
+      if (!SRC.has(p.id) || /svg/.test(SRC.get(p.id).slice(5, 20))) return;
+      const span = Math.min(cols, p.span || 1), printIn = (span * cw) * inchesPerUnit, eff = p.w / printIn;
+      if (eff < dpi * 0.9) low.push(`${letter(i) || i + 1}（${Math.round(eff)} dpi）`);
+    });
+    if (low.length) msgs.push(T(`以下面板的原始解析度低於 ${dpi} dpi，放大後可能模糊：${low.join('、')}`, `These panels are below ${dpi} dpi at this width and may look soft: ${low.join(', ')}`));
+  }
+  document.getElementById('msgs').innerHTML = msgs.map((m) => `<div class="msg">⚠ ${RT.esc(m)}</div>`).join('');
+  exporter.setIssues(missing ? 1 : 0);
+  exporter.refresh();
+  RT.save(KEY, S);
+}
+document.getElementById('export').addEventListener('change', () => render());
+const update = RT.debounce(() => { render(); hist.push(); }, 80);
+
+document.getElementById('btnUndo').onclick = hist.undo;
+document.getElementById('btnRedo').onclick = hist.redo;
+document.getElementById('btnReset').onclick = () => { S.panels = []; SRC.clear(); syncInputs(); update(); RT.toast(T('已清空面板', 'Panels cleared')); };
+// the project file carries the images, so it can be reopened elsewhere
+document.getElementById('btnSaveJson').onclick = () => RT.downloadJSON({ ...S, images: Object.fromEntries(S.panels.filter((p) => SRC.has(p.id)).map((p) => [p.id, SRC.get(p.id)])) }, 'figure_panels.json');
+document.getElementById('btnLoadJson').onclick = async () => {
+  try {
+    const j = await RT.pickJSON();
+    Object.entries(j.images || {}).forEach(([id, src]) => SRC.set(id, src));
+    delete j.images;
+    S = RT.merge(DEF, j); syncInputs(); update();
+  } catch (e) { RT.toast(T('讀取失敗：', 'Could not open file: ') + e.message, 6000); }
+};
+
+syncInputs();
+render();
+hist.push();
+</script>
+</body>
+</html>

@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/Research-toolkit/icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/Research-toolkit/icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/Research-toolkit/icons/apple-touch-icon.png">
+<title data-en="Treatment Pathway Sankey · Research Toolkit">治療路徑 Sankey 圖 · Research Toolkit</title>
+<meta name="description" content="治療路徑 Sankey 圖：輸入各條用藥路徑的人數（第一線 → 第二線 → 第三線），自動畫出轉換與停藥，可匯出可編輯 Word 圖形。">
+<link rel="canonical" href="https://jschang0512.github.io/Research-toolkit/sankey/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Research Toolkit">
+<meta property="og:title" content="治療路徑 Sankey 圖 · Research Toolkit">
+<meta property="og:description" content="治療路徑 Sankey 圖：輸入各條用藥路徑的人數，自動畫出轉換與停藥，可匯出可編輯 Word 圖形。">
+<meta property="og:url" content="https://jschang0512.github.io/Research-toolkit/sankey/">
+<meta property="og:image" content="https://jschang0512.github.io/assets/og/research-toolkit.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../shared/style.css?v=20261025a">
+<style>
+  .prow { display: grid; grid-template-columns: minmax(0, 1fr) 6.5rem 30px; gap: 6px; align-items: center; margin-bottom: 6px; }
+  .colors { display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: 6px 12px; }
+  .colors label { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="back" href="../index.html" data-en="← Home">← 工具首頁</a>
+  <h1>Treatment Pathway Sankey</h1>
+  <span class="sub" data-en="Lines of therapy, switches and discontinuation">用藥路徑：各線治療、轉換與停藥</span>
+  <span class="spacer"></span>
+  <div class="btns">
+    <button class="small" id="btnUndo" title="復原 (Ctrl+Z)" data-en-title="Undo (Ctrl+Z)">↶</button>
+    <button class="small" id="btnRedo" title="重做 (Ctrl+Y)" data-en-title="Redo (Ctrl+Y)">↷</button>
+    <button class="small" id="btnSaveJson" title="下載 .json，之後可再開啟或傳給共同作者" data-en-title="Download a .json file to reopen later or share with co-authors" data-en="Save project">儲存專案</button>
+    <button class="small" id="btnLoadJson" title="匯入先前儲存的 .json 專案檔，還原所有輸入" data-en-title="Import a previously saved .json project file" data-en="Import project">匯入專案</button>
+    <button class="small" id="btnExample" data-en="Example">範例</button>
+    <button class="small" id="btnReset" data-en="Clear">清空</button>
+  </div>
+</header>
+
+<main class="tool">
+  <section id="form">
+    <div class="card">
+      <p class="note-box" style="margin:0" data-en="&lt;b&gt;Plotting only.&lt;/b&gt; Enter how many patients followed each treatment pathway (e.g. a frequency table of treatment sequences from SAS, Stata or R). The tool adds them up per line of therapy and draws the flows; it does not derive lines of therapy from patient-level data."><b>只繪圖。</b>輸入每一條用藥路徑的人數（例如從 SAS、Stata 或 R 算出的治療順序次數表）。本工具只把人數依治療線加總並畫出流向，不會從個別病人資料判定治療線。</p>
+    </div>
+    <div class="card">
+      <h2><span class="step-no">1</span> <span data-en="Pathways">用藥路徑</span></h2>
+      <p class="hint" data-en="One pathway per row, treatments in order separated by “&gt;”. A pathway that stops early means those patients had no further line.">每列一條路徑，依順序以「&gt;」分隔各線用藥。路徑較短代表這些病人沒有進入下一線。</p>
+      <div class="btns" style="margin-bottom:10px">
+        <button class="small" id="btnPaste" data-en="Paste from Excel…">從 Excel 貼上…</button>
+        <button class="small" id="addRow" data-en="+ Add pathway">＋ 新增路徑</button>
+      </div>
+      <div id="rows"></div>
+    </div>
+    <div class="card">
+      <h2><span class="step-no">2</span> <span data-en="Lines and labels">治療線與標示</span></h2>
+      <label class="field"><span data-en="Line titles (comma-separated)">各線標題（以逗號分隔）</span><input data-k="stages"></label>
+      <div class="grid2">
+        <label class="field"><span data-en="Next to each treatment">每個用藥旁顯示</span><select data-k="show">
+          <option value="n" data-en="n">人數 n</option><option value="pct" data-en="% of the line">該線百分比</option><option value="both" data-en="n (%)">n（%）</option><option value="none" data-en="Name only">只有名稱</option></select></label>
+        <label class="field"><span data-en="Percent of">百分比的分母</span><select data-k="pctOf">
+          <option value="line" data-en="Patients in that line">該線的人數</option><option value="all" data-en="All patients (first line)">全部病人（第一線）</option></select></label>
+      </div>
+      <label class="check"><input type="checkbox" data-k="showStop"> <span data-en="Show patients with no further line as “No further treatment”">把沒有進入下一線的病人畫成「未再用藥」</span></label>
+      <label class="field" data-show="showStop"><span data-en="Label for no further line">「未再用藥」的文字</span><input data-k="stopLabel"></label>
+    </div>
+    <div class="card">
+      <details>
+        <summary><span class="step-no" style="display:inline-grid">3</span> <span data-en="Appearance">外觀：字型、顏色、尺寸</span></summary>
+        <div id="styleFields"></div>
+        <div class="grid2">
+          <label class="field"><span data-en="Width (px)">寬度 (px)</span><input type="number" data-k="W" min="400" max="2000" step="10"></label>
+          <label class="field"><span data-en="Height (px)">高度 (px)</span><input type="number" data-k="H" min="200" max="1600" step="10"></label>
+          <label class="field"><span data-en="Bar width (px)">長條寬度 (px)</span><input type="number" data-k="nodeW" min="4" max="60" step="1"></label>
+          <label class="field"><span data-en="Gap between treatments (px)">用藥間距 (px)</span><input type="number" data-k="gap" min="0" max="60" step="1"></label>
+          <label class="field"><span data-en="Flow opacity">流向透明度</span><input type="number" data-k="alpha" min="0.1" max="1" step="0.05"></label>
+        </div>
+        <label class="check"><input type="checkbox" data-k="sortBySize"> <span data-en="Order treatments by size (otherwise by first appearance)">依人數排序用藥（否則依出現順序）</span></label>
+        <p class="sub-h" data-en="Colours (same treatment, same colour in every line)">顏色（同一用藥在每一線同色）</p>
+        <div class="colors" id="colors"></div>
+        <label class="field" style="margin-top:8px"><span data-en="Title (optional)">圖標題（選填）</span><input data-k="title"></label>
+        <label class="field"><span data-en="Footnote (optional)">註腳（選填）</span><textarea data-k="footnote" rows="2"></textarea></label>
+      </details>
+    </div>
+    <div class="card" id="refs"></div>
+  </section>
+
+  <section class="preview-col">
+    <div class="paper" id="preview"></div>
+    <div class="msgs" id="msgs"></div>
+    <div class="card" id="export"></div>
+  </section>
+</main>
+
+<script src="../shared/common.js?v=20261025a"></script>
+<script>
+const T = RT.t;
+const KEY = 'sankey1';
+// Okabe–Ito, then two neutrals; "no further treatment" is always grey
+const PALETTE = ['#0072B2', '#E69F00', '#009E73', '#CC79A7', '#56B4E9', '#D55E00', '#F0E442', '#000000', '#8C6D31', '#6B6ECF'];
+const STOP_COLOR = '#B5B5B5';
+const prow = (o = {}) => ({ path: '', n: '', ...o });
+const DEF = {
+  rows: [prow()], stages: 'First line, Second line, Third line', show: 'both', pctOf: 'line', showStop: true, stopLabel: 'No further treatment',
+  W: 900, H: 460, nodeW: 16, gap: 14, alpha: 0.45, sortBySize: true, colors: {}, title: '', footnote: '',
+  st: { ...RT.STYLE_DEF, fontSize: 13 },
+};
+const REFS = [
+  'Riehmann P, Hanfler M, Froehlich B. Interactive Sankey diagrams. <i>IEEE Symposium on Information Visualization</i> 2005:233–40. <a href="https://doi.org/10.1109/INFVIS.2005.1532152" target="_blank" rel="noopener">doi:10.1109/INFVIS.2005.1532152</a>',
+  'Hripcsak G, Ryan PB, Duke JD, et al. Characterizing treatment pathways at scale using the OHDSI network. <i>Proc Natl Acad Sci USA</i> 2016;113:7329–36. <a href="https://doi.org/10.1073/pnas.1510502113" target="_blank" rel="noopener">doi:10.1073/pnas.1510502113</a>',
+  RT.REFS.okabe, RT.REFS.libs,
+];
+let S = RT.load(KEY, DEF);
+
+/* ---------------- model ---------------- */
+const steps = (p) => String(p || '').split(/\s*(?:>|→|->|＞)\s*/).map((x) => x.trim()).filter(Boolean);
+function model() {
+  const paths = S.rows.map((r) => ({ s: steps(r.path), n: RT.num(r.n) })).filter((p) => p.s.length && p.n > 0);
+  const depth = Math.max(0, ...paths.map((p) => p.s.length));
+  const stop = (S.stopLabel || '').trim() || 'No further treatment';
+  // node values per line, flows between consecutive lines
+  const cols = Array.from({ length: depth }, () => new Map());
+  const flows = new Map();
+  const order = [];
+  paths.forEach((p) => {
+    p.s.forEach((d, k) => { cols[k].set(d, (cols[k].get(d) || 0) + p.n); if (!order.includes(d)) order.push(d); });
+    for (let k = 0; k < depth - 1; k++) {
+      if (k >= p.s.length) break;
+      const to = p.s[k + 1] ?? (S.showStop ? stop : null);
+      if (!to) break;
+      if (to === stop) cols[k + 1].set(stop, (cols[k + 1].get(stop) || 0) + p.n);
+      const key = `${k}|${p.s[k]}|${to}`;
+      flows.set(key, (flows.get(key) || 0) + p.n);
+      if (to === stop) break;
+    }
+  });
+  return { paths, depth, cols, flows, order, stop, total: [...(cols[0]?.values() || [])].reduce((a, b) => a + b, 0) };
+}
+function colorOf(d, m) {
+  if (d === m.stop) return STOP_COLOR;
+  if (S.colors[d]) return S.colors[d];
+  const i = m.order.filter((x) => x !== m.stop).indexOf(d);
+  return PALETTE[i % PALETTE.length];
+}
+const tint = (hex, a) => {
+  const n = parseInt(hex.slice(1), 16), c = [n >> 16, (n >> 8) & 255, n & 255].map((v) => Math.round(v * a + 255 * (1 - a)));
+  return '#' + c.map((v) => v.toString(16).padStart(2, '0')).join('').toUpperCase();
+};
+
+/* ---------------- form ---------------- */
+const form = document.getElementById('form');
+document.getElementById('styleFields').innerHTML = RT.styleFieldsHTML(['font', 'fontSize', 'textColor']);
+document.getElementById('refs').innerHTML = RT.refsHTML(REFS);
+function syncInputs() { RT.syncForm(form, S); renderRows(); renderColors(); }
+RT.bindForm(form, () => S, () => { renderColors(); update(); });
+function renderRows() {
+  const host = document.getElementById('rows');
+  host.innerHTML = '';
+  S.rows.forEach((r, i) => {
+    const el = RT.h(`<div class="prow">
+      <input data-f="path" placeholder="${T('例如：Metformin > SGLT2i > Insulin', 'e.g. Metformin > SGLT2i > Insulin')}" aria-label="${T(`路徑 ${i + 1}`, `Pathway ${i + 1}`)}">
+      <input data-f="n" inputmode="numeric" placeholder="n" aria-label="${T(`路徑 ${i + 1} 的人數`, `Patients on pathway ${i + 1}`)}">
+      <button class="icon" data-a="del" aria-label="${T(`刪除路徑 ${i + 1}`, `Delete pathway ${i + 1}`)}">✕</button></div>`);
+    el.querySelectorAll('[data-f]').forEach((inp) => { inp.value = r[inp.dataset.f] ?? ''; inp.oninput = () => { r[inp.dataset.f] = inp.value; renderColors(); update(); }; });
+    el.querySelector('[data-a="del"]').onclick = () => { S.rows.splice(i, 1); if (!S.rows.length) S.rows.push(prow()); renderRows(); renderColors(); update(); };
+    host.appendChild(el);
+  });
+}
+function renderColors() {
+  const m = model(), host = document.getElementById('colors');
+  const names = m.order.filter((d) => d !== m.stop);
+  host.innerHTML = names.length ? '' : `<span class="hint">${T('輸入路徑後可在這裡調整每個用藥的顏色。', 'Colours appear here once you enter pathways.')}</span>`;
+  names.forEach((d) => {
+    const el = RT.h(`<label><input type="color"> <span></span></label>`);
+    el.querySelector('span').textContent = d;
+    const inp = el.querySelector('input');
+    inp.value = colorOf(d, m);
+    inp.setAttribute('aria-label', T(`${d} 的顏色`, `Colour for ${d}`));
+    inp.oninput = () => { S.colors[d] = inp.value.toUpperCase(); update(); };
+    host.appendChild(el);
+  });
+}
+document.getElementById('addRow').onclick = () => { S.rows.push(prow()); renderRows(); update(); document.querySelector('#rows .prow:last-child input')?.focus(); };
+document.getElementById('btnPaste').onclick = async () => {
+  const txt = await RT.promptText(T('從 Excel 貼上', 'Paste from Excel'),
+    T('每列一條路徑。可以是 <code>路徑</code> Tab <code>人數</code>（路徑以 &gt; 分隔），或每一線各佔一欄、最後一欄是人數，例如 <code>Metformin</code> Tab <code>SGLT2i</code> Tab <code>350</code>。',
+      'One pathway per line: either <code>pathway</code> Tab <code>n</code> (steps separated by &gt;), or one column per line of therapy with n in the last column, e.g. <code>Metformin</code> Tab <code>SGLT2i</code> Tab <code>350</code>.'));
+  if (txt == null) return;
+  const out = [], skipped = [];
+  String(txt).split(/\r?\n/).forEach((line) => {
+    if (!line.trim()) return;
+    const c = line.split('\t').map((x) => x.trim());
+    const n = RT.num(c[c.length - 1]);
+    if (!(n > 0) || c.length < 2) { if (out.length) skipped.push(c[0]); return; }
+    const parts = c.slice(0, -1).filter(Boolean);
+    out.push(prow({ path: parts.length === 1 ? parts[0] : parts.join(' > '), n: String(n) }));
+  });
+  if (!out.length) { RT.toast(T('沒有讀到人數，請確認最後一欄是數字、欄位以 Tab 分隔', 'No counts found — the last column must be a number and columns tab-separated'), 5000); return; }
+  S.rows = out; syncInputs(); update();
+  RT.toast(T(`已貼上 ${out.length} 條路徑，取代原本的資料（按 ↶ 可復原）`, `${out.length} pathways pasted, replacing the previous rows (↶ to undo)`) + (skipped.length ? T(`；略過 ${skipped.length} 行`, `; skipped ${skipped.length} line(s)`) : ''), 4000);
+};
+
+/* ---------------- figure ---------------- */
+function build() {
+  const st = RT.applyStyle(S.st);
+  const fs = Number(st.fontSize) || 13, ink = st.textColor || '#000000';
+  const m = model();
+  const W = Number(S.W) || 900, H = Number(S.H) || 460, M = 16;
+  const nodeW = Number(S.nodeW) || 16, gap = Number(S.gap) ?? 14, alpha = Math.min(1, Math.max(0.1, Number(S.alpha) || 0.45));
+  const titles = String(S.stages || '').split(/[,，]/).map((s) => s.trim());
+  RT.beginScene();
+  let body = '', top = M;
+  if (S.title) { body += RT.rich([{ runs: [{ t: S.title, bold: true, size: fs * 1.1, color: ink }] }], M, top, { lh: fs * 1.5 }); top += fs * 1.9; }
+  top += fs * 1.8;   // line titles
+  const bottom = top + H;
+  if (!m.depth) return RT.figure(W, bottom + M, body);
+  const label = (d, v, k) => {
+    const pctBase = S.pctOf === 'all' ? m.total : [...m.cols[k].values()].reduce((a, b) => a + b, 0);
+    const pct = pctBase ? ((100 * v) / pctBase).toFixed(1) + '%' : '';
+    const n = RT.fmtNum(v);
+    return S.show === 'n' ? `${d} (${n})` : S.show === 'pct' ? `${d} (${pct})` : S.show === 'both' ? `${d} ${n} (${pct})` : d;
+  };
+  // room for labels: right of every column, left of the last one
+  const labelW = (k) => Math.max(0, ...[...m.cols[k]].map(([d, v]) => RT.textWidth(label(d, v, k), fs * 0.92)));
+  const leftPad = m.depth > 1 ? labelW(0) + 8 : 0, rightPad = m.depth > 1 ? labelW(m.depth - 1) + 8 : labelW(0) + 8;
+  const x0 = M + leftPad, x1 = W - M - rightPad - nodeW;
+  const colX = (k) => (m.depth === 1 ? x0 : x0 + ((x1 - x0) * k) / (m.depth - 1));
+  // one scale for every line, so the shrinking columns show attrition
+  const maxNodes = Math.max(...m.cols.map((c) => c.size));
+  const scale = (H - gap * Math.max(0, maxNodes - 1)) / Math.max(1, m.total);
+  const nodes = m.cols.map((col, k) => {
+    let list = [...col].map(([d, v]) => ({ d, v }));
+    if (S.sortBySize) list.sort((a, b) => b.v - a.v);
+    else list.sort((a, b) => m.order.indexOf(a.d) - m.order.indexOf(b.d));
+    list = list.filter((n) => n.d !== m.stop).concat(list.filter((n) => n.d === m.stop));   // "no further treatment" sits at the bottom
+    let y = top;
+    list.forEach((n) => { n.y = y; n.h = Math.max(1, n.v * scale); n.k = k; n.out = n.y; n.in = n.y; y += n.h + gap; });
+    return list;
+  });
+  const find = (k, d) => nodes[k].find((n) => n.d === d);
+  // bands, ordered so they leave and arrive top to bottom without needless crossing
+  for (let k = 0; k < m.depth - 1; k++) {
+    const fl = [...m.flows].filter(([key]) => key.startsWith(k + '|')).map(([key, v]) => { const [, a, b] = key.split('|'); return { a: find(k, a), b: find(k + 1, b), v }; })
+      .filter((f) => f.a && f.b);
+    fl.sort((p, q) => p.a.y - q.a.y || p.b.y - q.b.y);
+    const xa = colX(k) + nodeW, xb = colX(k + 1);
+    fl.forEach((f) => {
+      const h = f.v * scale;
+      const ya = f.a.out, yb = f.b.in;
+      f.a.out += h; f.b.in += h;
+      const pts = [], N = 24, cx = (xa + xb) / 2;
+      const bez = (t, y0, y1) => { const u = 1 - t; return [u ** 3 * xa + 3 * u * u * t * cx + 3 * u * t * t * cx + t ** 3 * xb, u ** 3 * y0 + 3 * u * u * t * y0 + 3 * u * t * t * y1 + t ** 3 * y1]; };
+      for (let i = 0; i <= N; i++) pts.push(bez(i / N, ya, yb));
+      for (let i = N; i >= 0; i--) pts.push(bez(i / N, ya + h, yb + h));
+      const col = colorOf(f.a.d, m);
+      // SVG uses opacity; the Word copy gets the same colour as a solid tint
+      RT.scene && RT.scene.push({ k: 'path', pts: pts.map((p) => [...p]), closed: true, fill: tint(col, alpha), stroke: 'none', sw: 0 });
+      body += `<polygon points="${pts.map((p) => RT.f(p[0]) + ',' + RT.f(p[1])).join(' ')}" fill="${col}" fill-opacity="${alpha}"/>`;
+    });
+  }
+  nodes.forEach((list, k) => list.forEach((n) => {
+    body += RT.rect(colX(k), n.y, nodeW, n.h, { fill: colorOf(n.d, m) });
+    const first = k === 0 && m.depth > 1, last = k === m.depth - 1 && m.depth > 1;
+    const tx = first ? colX(k) - 6 : colX(k) + nodeW + 6;
+    const t = label(n.d, n.v, k);
+    // labels of inner columns sit on the bar's right; keep them clear of the bands with a white backing
+    if (!first && !last && m.depth > 1) {
+      const w = RT.textWidth(t, fs * 0.92) + 6;
+      body += RT.rect(tx - 3, n.y + n.h / 2 - fs * 0.7, w, fs * 1.4, { fill: '#FFFFFF', radius: 3 });
+    }
+    body += RT.rich([{ runs: [{ t, size: fs * 0.92, color: ink, bold: false }] }], tx, n.y + n.h / 2 - fs * 0.7, { lh: fs * 1.4, anchor: first ? 'end' : 'start' });
+  }));
+  m.cols.forEach((_, k) => {
+    const t = titles[k] || T(`第 ${k + 1} 線`, `Line ${k + 1}`);
+    body += RT.rich([{ runs: [{ t, bold: true, size: fs, color: ink }] }], colX(k) + nodeW / 2, top - fs * 1.75, { lh: fs * 1.4, anchor: k === 0 ? 'start' : k === m.depth - 1 ? 'end' : 'middle' });
+  });
+  let y = Math.max(bottom, ...nodes.flat().map((n) => n.y + n.h)) + fs * 0.6;
+  if (S.footnote && S.footnote.trim()) {
+    const fb = RT.box([{ text: S.footnote }], W - 2 * M, { size: fs * 0.85, pad: 0, padX: 0, align: 'left', fill: 'none', stroke: 'none', color: ink, lh: 1.3 });
+    body += RT.drawBox(fb, M, y);
+    y += fb.h;
+  }
+  return RT.figure(W, y + M, body);
+}
+
+/* ---------------- checks ---------------- */
+function checks() {
+  const out = [];
+  S.rows.forEach((r, i) => {
+    const has = String(r.path || '').trim(), n = RT.num(r.n);
+    if (has && !(n > 0)) out.push(T(`路徑 ${i + 1}（${has}）沒有人數`, `Pathway ${i + 1} (${has}) has no count`));
+    if (!has && n > 0) out.push(T(`路徑 ${i + 1} 有人數但沒有用藥`, `Pathway ${i + 1} has a count but no treatments`));
+  });
+  const seen = new Map();
+  S.rows.forEach((r) => { const k = steps(r.path).join(' > '); if (k) seen.set(k, (seen.get(k) || 0) + 1); });
+  [...seen].filter(([, c]) => c > 1).forEach(([k]) => out.push(T(`「${k}」出現不只一次，人數會相加`, `“${k}” appears more than once; its counts are added`)));
+  return out;
+}
+
+let fig;
+const preview = document.getElementById('preview');
+const exporter = RT.exportPanel(document.getElementById('export'), () => fig, 'treatment_pathways', {
+  fontSize: { get: () => S.st.fontSize, set: (v) => { S.st.fontSize = v; syncInputs(); update(); } },
+});
+const hist = RT.history(() => S, (s) => { S = s; syncInputs(); render(); });
+function render() {
+  try {
+    fig = build();
+    preview.innerHTML = model().depth ? fig.svg : `<p class="hint" style="align-self:center">${T('輸入路徑與人數，或按「範例」。', 'Enter pathways and counts, or press “Example”.')}</p>`;
+  } catch (e) { console.error(e); preview.innerHTML = `<div class="msg">⚠ ${RT.esc(e.message)}</div>`; }
+  const msgs = checks();
+  document.getElementById('msgs').innerHTML = msgs.map((m) => `<div class="msg">⚠ ${RT.esc(m)}</div>`).join('');
+  exporter.setIssues(msgs.filter((m) => !/相加|added/.test(m)).length);
+  exporter.refresh();
+  RT.save(KEY, S);
+}
+const update = RT.debounce(() => { render(); hist.push(); }, 80);
+
+document.getElementById('btnUndo').onclick = hist.undo;
+document.getElementById('btnRedo').onclick = hist.redo;
+document.getElementById('btnExample').onclick = () => {
+  S.rows = [
+    ['Metformin > SGLT2i > Insulin', 180], ['Metformin > SGLT2i > GLP-1 RA', 140], ['Metformin > SGLT2i', 620],
+    ['Metformin > DPP-4i > Insulin', 210], ['Metformin > DPP-4i > SGLT2i', 160], ['Metformin > DPP-4i', 540],
+    ['Metformin > GLP-1 RA > Insulin', 90], ['Metformin > GLP-1 RA', 260], ['Metformin', 1400],
+    ['Sulfonylurea > DPP-4i', 220], ['Sulfonylurea > Insulin', 130], ['Sulfonylurea', 380],
+  ].map(([path, n]) => prow({ path, n: String(n) }));
+  Object.assign(S, { stages: 'First line, Second line, Third line', colors: {}, title: '', footnote: 'Numbers are patients; percentages are of patients in each line. SGLT2i, sodium–glucose cotransporter 2 inhibitor; DPP-4i, dipeptidyl peptidase 4 inhibitor; GLP-1 RA, glucagon-like peptide 1 receptor agonist.' });
+  syncInputs(); update();
+  RT.toast(T('已載入範例（虛構資料，僅供示範；按 ↶ 可復原）', 'Example loaded (fictional data, for illustration; ↶ to undo)'));
+};
+document.getElementById('btnReset').onclick = () => { S.rows = [prow()]; S.colors = {}; S.title = ''; S.footnote = ''; syncInputs(); update(); RT.toast(T('已清空內容（按 ↶ 可復原）', 'Content cleared (↶ to undo)')); };
+document.getElementById('btnSaveJson').onclick = () => RT.downloadJSON(S, 'treatment_pathways.json');
+document.getElementById('btnLoadJson').onclick = async () => { try { S = RT.merge(DEF, await RT.pickJSON()); syncInputs(); update(); } catch (e) { RT.toast(T('讀取失敗：', 'Could not open file: ') + e.message, 6000); } };
+
+syncInputs();
+render();
+hist.push();
+</script>
+</body>
+</html>
