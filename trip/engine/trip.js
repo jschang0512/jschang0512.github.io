@@ -61,59 +61,33 @@
 // second only the digits that actually changed play a 3D flip animation
 // (the swap to the new number happens at the animation's midpoint, timed
 // by JS via setTimeout — a classic flip-clock technique).
+// date of day i of the trip (labels look like "8/18（二）"; the year comes from TRIP.departISO)
+function tripDayDate(i){
+  const dep = new Date(TRIP.departISO);
+  const m = (days[i] && days[i].date || "").match(/(\d+)\/(\d+)/);
+  if(!m) return null;
+  let y = dep.getFullYear();
+  if(Number(m[1]) < dep.getMonth() + 1) y += 1;   // a trip that crosses New Year
+  return new Date(y, Number(m[1]) - 1, Number(m[2]));
+}
+function todayIndex(){
+  const t = new Date(); t.setHours(0, 0, 0, 0);
+  for(let i = 0; i < days.length; i++){ const d = tripDayDate(i); if(d && d.getTime() === t.getTime()) return i; }
+  return -1;
+}
 (function tripCountdown(){
   const el = document.getElementById("countdown");
   if(!el) return;
-  const target = new Date(TRIP.departISO).getTime();
-  let timer;
-  const prev = { d:null, h:null, m:null, s:null };
-
-  function pad(n){ return String(n).padStart(2,"0"); }
-
-  function unitHTML(id, label){
-    return '<div class="cd-unit"><span class="cd-num"><span class="cd-num-inner" id="' + id + '">--</span></span>' +
-           '<span class="cd-label">' + label + '</span></div>';
+  const DAY = 86400000;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const start = new Date(TRIP.departISO); start.setHours(0, 0, 0, 0);
+  const end = tripDayDate(days.length - 1) || start;
+  if(today > end) el.innerHTML = '<div class="cd-done">旅程已結束</div>';
+  else if(today >= start) el.innerHTML = `<div class="cd-done">旅行中・第 ${Math.round((today - start) / DAY) + 1} 天</div>`;
+  else {
+    const n = Math.round((start - today) / DAY);
+    el.innerHTML = n === 1 ? '<div class="cd-done">明天出發</div>' : `<div class="cd-done">還有 <b class="cd-big">${n}</b> 天出發</div>`;
   }
-
-  el.innerHTML = unitHTML("cdD","天") + '<div class="cd-sep">:</div>' +
-                 unitHTML("cdH","時") + '<div class="cd-sep">:</div>' +
-                 unitHTML("cdM","分") + '<div class="cd-sep">:</div>' +
-                 unitHTML("cdS","秒");
-
-  function flipTo(id, val, prevVal){
-    const inner = document.getElementById(id);
-    if(!inner) return;
-    if(prevVal !== null && val === prevVal) return; // unchanged — no flip needed
-    inner.classList.remove("flip");
-    void inner.offsetWidth; // force reflow so the animation can restart every time
-    inner.classList.add("flip");
-    setTimeout(()=>{ inner.textContent = val; }, 250); // swap at the flip's midpoint
-  }
-
-  function update(){
-    const now = Date.now();
-    let diff = target - now;
-    if(diff <= 0){
-      el.innerHTML = '<div class="cd-done">已出發</div>';
-      clearInterval(timer);
-      return;
-    }
-    const d = String(Math.floor(diff/86400000));
-    diff -= Math.floor(diff/86400000)*86400000;
-    const h = pad(Math.floor(diff/3600000));
-    diff -= Math.floor(diff/3600000)*3600000;
-    const m = pad(Math.floor(diff/60000));
-    diff -= Math.floor(diff/60000)*60000;
-    const s = pad(Math.floor(diff/1000));
-
-    flipTo("cdD", d, prev.d);
-    flipTo("cdH", h, prev.h);
-    flipTo("cdM", m, prev.m);
-    flipTo("cdS", s, prev.s);
-    prev.d = d; prev.h = h; prev.m = m; prev.s = s;
-  }
-  update();
-  timer = setInterval(update, 1000);
 })();
 
 // JPY→TWD exchange rate badge, always visible (no tap needed). Frankfurter
@@ -237,7 +211,7 @@ function renderRow(item){
   if(item.type==="activity"){
     const ic = (TAG[item.tag]||{icon:"・"}).icon;
     const mapUrl = item.map ? (MAP_URL_OVERRIDE[item.map] || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.map)}`) : "";
-    const mapLink = mapUrl ? `<a class="maplink" href="${mapUrl}" target="_blank" rel="noopener">📍 地圖</a>` : "";
+    const mapLink = mapUrl ? `<a class="maplink" href="${mapUrl}" target="_blank" rel="noopener">${SB_ICON.pin}地圖</a>` : "";
     const info = item.map ? INFO[item.map] : null;
     const detail = info ? `<div class="activity-detail">
         <p>${info.intro}</p>
@@ -287,7 +261,7 @@ function renderRow(item){
 }
 function buildPage(day, idx){
   const rows = day.items.map(renderRow).join("");
-  const hotelChip = day.hotel ? `<div class="hotel-info">住宿：${day.hotel}</div>` : "";
+  const hotelChip = day.hotel ? `<button type="button" class="hotel-info" data-goto="contacts">住宿：${day.hotel} ›</button>` : "";
   return `<section class="day-page" id="day-${idx}">
     <div class="day-head">
       <div class="dnum mono">${String(idx+1).padStart(2,"0")}</div>
@@ -296,7 +270,7 @@ function buildPage(day, idx){
         <div class="dtitle">${day.theme}</div>
         ${hotelChip}
       </div>
-      ${TRIP.sun ? `<div class="sun-info" id="sun-${idx}"><span class="spin-icon">☀️</span> 讀取中…</div>` : ""}
+      ${TRIP.sun ? `<div class="sun-info" id="sun-${idx}">${SB_ICON.sun} 讀取中…</div>` : ""}
     </div>
     <div class="daymap-wrap">
       <div class="daymap-label">今日移動路線</div>
@@ -331,7 +305,7 @@ function buildPackingPage(){
     <div class="pack-progress">
       <div class="pack-bar"><div class="pack-fill" id="packFill"></div></div>
       <div class="pack-count mono" id="packCount">0 / 0</div>
-      <button class="pack-reset" id="packReset">重置</button>
+      <button class="pack-reset" id="packReset">全部清空</button>
     </div>
     ${groups}
   </section>`;
@@ -348,7 +322,8 @@ const WMO = {
   80:["🌦","陣雨"],81:["🌧","陣雨"],82:["⛈","強陣雨"],
   95:["⛈","雷雨"],96:["⛈","雷雨（冰雹）"],99:["⛈","雷雨（強冰雹）"]
 };
-function wmoInfo(code){ return WMO[code] || ["🌡","—"]; }
+const WX_KEY = { "☀️":"sun", "🌤":"partly", "⛅":"partly", "☁️":"cloud", "🌫":"fog", "🌦":"drizzle", "🌧":"rain", "🌨":"snow", "❄️":"snow", "⛈":"storm" };
+function wmoInfo(code){ const w = WMO[code]; return w ? [SB_ICON.wx[WX_KEY[w[0]]] || SB_ICON.wx.na, w[1]] : [SB_ICON.wx.na, "—"]; }
 function wmoAnimClass(code){
   if(code === 0) return "wx-anim-sun";
   if(code === 1 || code === 2) return "wx-anim-cloud-sun";
@@ -516,7 +491,7 @@ function buildUtilBar(){
     ${TRIP.food ? `<button class="util-btn" data-page="food">美食地圖</button>` : ""}
     <button class="util-btn" data-page="driving">租車自駕</button>
     <button class="util-btn" data-page="quake">地震</button>
-    <a class="util-btn" href="https://jschang0512.github.io/splitbill/" target="_blank" rel="noopener">旅費分帳</a>`;
+    <a class="util-btn" href="https://jschang0512.github.io/splitbill/" target="_blank" rel="noopener">旅費分帳 ${SB_ICON.arrowOut}</a>`;
 }
 function buildFoodPage(){
   const areaBlocks = FOOD_AREAS.map((a,ai)=>{
@@ -525,7 +500,7 @@ function buildFoodPage(){
       return `<a class="food-item" href="${gmapsUrl}" target="_blank" rel="noopener">
         <span class="food-name">${it.name}</span>
         <span class="food-type">${it.type}</span>
-        <span class="food-pin">📍</span>
+        <span class="food-pin">${SB_ICON.pin}</span>
       </a>`;
     }).join("");
     return `<div class="food-area">
@@ -550,7 +525,7 @@ function buildFoodPage(){
       <button type="button" class="souvenir-item" data-coord-key="${key.replace(/"/g,'&quot;')}" data-map-id="${mapId}" data-name="${key.replace(/"/g,'&quot;')}">
         <span class="souvenir-place">${key}</span>
         <span class="souvenir-text">${text}</span>
-        <span class="food-pin">📍</span>
+        <span class="food-pin">${SB_ICON.pin}</span>
       </button>
       <div class="food-map-slot" id="${mapId}"></div>
     </div>`;
@@ -565,8 +540,8 @@ function buildFoodPage(){
       </div>
     </div>
     <div class="food-tabs">
-      <button type="button" class="food-tab active" data-tab="eat">🍜 美食</button>
-      <button type="button" class="food-tab" data-tab="buy">🛍 伴手禮</button>
+      <button type="button" class="food-tab active" data-tab="eat">美食</button>
+      <button type="button" class="food-tab" data-tab="buy">伴手禮</button>
     </div>
     <div class="food-tab-panel active" id="foodTabEat">
       <p class="wx-note">依地區整理的美食口袋名單，人在附近時可以點開對應區域看看，點餐廳名字會直接開 Google Maps 導航／查詳細資訊。</p>
@@ -583,7 +558,7 @@ function buildContactsPage(){
     <div class="contact-row">
       <div class="contact-name">${c.name}</div>
       <a class="contact-phone" href="tel:${c.phone.replace(/-/g,"")}">${c.phone}</a>
-      <button type="button" class="addr-copy-mini" data-val="${c.phone}">📋</button>
+      <button type="button" class="addr-copy-mini" data-val="${c.phone}" aria-label="複製 ${c.name} 的電話">${SB_ICON.copy}</button>
       ${c.fb ? `<a class="fb-icon" href="${c.fb}" target="_blank" rel="noopener" title="${c.name} 的 Facebook">f</a>` : ""}
     </div>`).join("");
 
@@ -591,12 +566,15 @@ function buildContactsPage(){
     <div class="lodging-card">
       <div class="lodging-city">${l.city}</div>
       <div class="lodging-name">${l.name}</div>
-      <div class="addr-line"><span class="addr-v">${l.addr}</span><button type="button" class="addr-copy-mini" data-val="${l.addr}">📋</button></div>
-      <a class="maplink" href="${MAP_URL_OVERRIDE[l.addr] || ('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(l.addr))}" target="_blank" rel="noopener">📍 地圖</a>
+      <div class="addr-line"><span class="addr-v">${l.addrJa || l.addr}</span><button type="button" class="addr-copy-mini" data-val="${l.addrJa || l.addr}" aria-label="複製 ${l.name} 的地址">${SB_ICON.copy}</button></div>
+      ${l.checkin || l.checkout ? `<div class="lodging-times">${l.checkin ? `入住 ${l.checkin}` : ""}${l.checkin && l.checkout ? "・" : ""}${l.checkout ? `退房 ${l.checkout}` : ""}</div>` : ""}
+      ${l.tel ? `<a class="lodging-tel" href="tel:${l.tel.replace(/[^\d+]/g, "")}">${l.tel}</a>` : ""}
+      <button type="button" class="show-driver" data-name="${l.name}" data-addr="${l.addrJa || l.addr}">給司機看</button>
+      <a class="maplink" href="${MAP_URL_OVERRIDE[l.addr] || ('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(l.addr))}" target="_blank" rel="noopener">${SB_ICON.pin}地圖</a>
     </div>`).join("");
 
   const people = `<div class="section-label">團員聯絡方式</div>
-      <div class="contact-block">${contactRows || `<div class="empty-note">尚未加入團員聯絡資訊。在這趟的 data.js 裡的 CONTACTS 陣列加入姓名、電話（可選 Facebook 連結）即可自動出現在這裡。</div>`}</div>`;
+      ${contactRows ? `<div class="contact-block">${contactRows}</div>` : `<div class="empty-note">還沒有團員聯絡資訊。</div>`}`;
   const gate = TRIP.contactsGate;
 
   return `<section class="day-page" id="page-contacts">
@@ -609,9 +587,9 @@ function buildContactsPage(){
     </div>
     ${gate ? `
     <div class="gate-wrap" id="contactsGate">
-      <div class="gate-q">${gate.question}</div>
+      <div class="gate-q">${SB_ICON.lock}${gate.question.replace(/^[\p{Extended_Pictographic}\uFE0F\s]+/u, "")}</div>
       <div class="gate-row">
-        <input type="text" id="gateInput" class="gate-input" placeholder="輸入答案" autocomplete="off">
+        <input type="text" id="gateInput" class="gate-input" placeholder="輸入答案" aria-label="答案" autocomplete="off">
         <button type="button" id="gateSubmit" class="gate-btn">解鎖</button>
       </div>
       <div class="gate-msg" id="gateMsg"></div>
@@ -622,7 +600,7 @@ function buildContactsPage(){
     </div>` : people}
 
     <div class="section-label">住宿</div>
-    ${lodgingRows || `<div class="empty-note">住宿還沒訂好或還沒填地址。訂房後把飯店名稱、完整地址加進 data.js 的 LODGING 陣列，出示給司機或飯店櫃檯會更方便。</div>`}
+    ${lodgingRows || `<div class="empty-note">住宿還沒訂好，訂好後會出現在這裡。</div>`}
   </section>`;
 }
 function buildFlightsPage(){
@@ -638,7 +616,7 @@ function buildFlightsPage(){
           <div class="flight-item-top">
             <div class="flight-no">${e.flight}</div>
             <div class="flight-airline">${e.airline}・${e.aircraft}</div>
-            ${e.pax ? `<div class="flight-pax">👤×${e.pax}</div>` : ""}
+            ${e.pax ? `<div class="flight-pax">${SB_ICON.person}× ${e.pax}</div>` : ""}
           </div>
           <div class="flight-route">
             <div class="flight-leg">
@@ -683,7 +661,7 @@ function buildQuakePage(){
         <div class="wx-loading"><span class="spinner"></span>讀取地震資訊中…</div>
       </div>
     </div>
-    <div class="section-label">📋 詳細列表（依時間近到遠）</div>
+    <div class="section-label">詳細列表（依時間近到遠）</div>
     <div id="quake-list"></div>
   </section>`;
 }
@@ -722,8 +700,10 @@ async function loadQuakes(){
     const listEl = document.getElementById("quake-list");
     if(listEl){
       if(!valid.length){
+        document.querySelector("#page-quake .wx-loading")?.remove();
         listEl.innerHTML = `<div class="quake-empty">近期${TRIP.quake.region}沒有偵測到地震資訊。</div>`;
       } else {
+        document.querySelector("#page-quake .wx-loading")?.remove();
         listEl.innerHTML = valid.map((q,i)=>{
           const eq = q.earthquake;
           const hp = eq.hypocenter;
@@ -809,10 +789,11 @@ document.getElementById("dayNav").innerHTML = buildNav();
 document.getElementById("utilBar").innerHTML = buildUtilBar();
 
 // ---- Scroll reveal for cards ----
+const REDUCED_EARLY = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
 (function initScrollReveal(){
   const selector = ".row, .pack-item, .contact-row, .flight-item, .drv-block, .sign-card, .lodging-card, .fs-item, .quake-item";
   const els = document.querySelectorAll(selector);
-  if(!("IntersectionObserver" in window)){
+  if(!("IntersectionObserver" in window) || REDUCED_EARLY){
     els.forEach(el=>el.classList.add("revealed"));
     return;
   }
@@ -830,11 +811,40 @@ document.getElementById("utilBar").innerHTML = buildUtilBar();
   });
 })();
 
+main.querySelectorAll(".activity.clickable").forEach(card=>{
+  card.setAttribute("role", "button"); card.tabIndex = 0; card.setAttribute("aria-expanded", "false");
+});
+const toggleCard = (card)=>{ const open = card.classList.toggle("open"); card.setAttribute("aria-expanded", String(open)); };
 main.addEventListener("click", (e)=>{
+  const go = e.target.closest("[data-goto]");
+  if(go){ activatePage(go.dataset.goto); return; }
+  const drv = e.target.closest(".show-driver");
+  if(drv){ showDriver(drv.dataset.name, drv.dataset.addr); return; }
   if(e.target.closest(".maplink")) return; // let the Google Maps link navigate normally
   const card = e.target.closest(".activity.clickable");
   if(!card) return;
-  card.classList.toggle("open");
+  toggleCard(card);
+});
+main.addEventListener("keydown", (e)=>{
+  if(e.key !== "Enter" && e.key !== " ") return;
+  const card = e.target.closest(".activity.clickable");
+  if(!card || e.target !== card) return;
+  e.preventDefault(); toggleCard(card);
+});
+// big address card for a taxi driver
+function showDriver(name, addr){
+  const d = document.createElement("dialog");
+  d.className = "driver-card";
+  d.innerHTML = `<p class="driver-name">${name}</p><p class="driver-addr">${addr}</p><p class="driver-ask" lang="ja">この住所までお願いします</p><button type="button" class="driver-close">關閉</button>`;
+  document.body.appendChild(d);
+  d.querySelector(".driver-close").onclick = ()=>{ d.close(); d.remove(); };
+  d.addEventListener("cancel", ()=> d.remove());
+  d.showModal();
+}
+// strip emoji used as icons at the start of headings and notes written in data.js
+document.querySelectorAll(".drv-title, .section-label, .souvenir, .activity-detail p, .flight-note").forEach(el=>{
+  const first = el.firstChild;
+  if(first && first.nodeType === 3) first.textContent = first.textContent.replace(/^[\p{Extended_Pictographic}\uFE0F\u200D\s]+/u, "");
 });
 
 // ---- Per-day route maps ----
@@ -1145,7 +1155,25 @@ document.getElementById("moreSheet").addEventListener("click", (e)=>{
   if(dayCard){ activatePage(dayCard.dataset.page); closeMoreSheet(); }
   else if(itemCard){ activatePage(itemCard.dataset.page); closeMoreSheet(); }
 });
+const REDUCED = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
 let lastDayPage = "0";   // where "每日行程" in the top menu returns to
+// on today's page: fade what is over, mark what comes next
+function markNext(idx){
+  const page = document.getElementById("day-" + idx);
+  if(!page) return;
+  page.querySelectorAll(".is-past, .is-next").forEach(r=>r.classList.remove("is-past", "is-next"));
+  page.querySelectorAll(".next-pill").forEach(p=>p.remove());
+  if(idx !== todayIndex()) return;
+  const now = new Date(), mins = now.getHours() * 60 + now.getMinutes();
+  // most rows carry no time; only legs do. Rows before the latest leg already under way are over,
+  // and the first leg still ahead is next.
+  const rows = [...page.querySelectorAll(".timeline > .row")];
+  const timeOf = (r)=>{ const t = (r.querySelector(".time")?.textContent || "").match(/(\d{1,2}):(\d{2})/); return t ? Number(t[1]) * 60 + Number(t[2]) : null; };
+  let current = -1, next = -1;
+  rows.forEach((r, i)=>{ const m = timeOf(r); if(m === null) return; if(m <= mins) current = i; else if(next < 0) next = i; });
+  rows.forEach((r, i)=>{ if(i < current) r.classList.add("is-past"); });
+  if(next >= 0){ rows[next].classList.add("is-next"); rows[next].insertAdjacentHTML("afterbegin", '<span class="next-pill">下一站</span>'); }
+}
 function activatePage(page, {jump=true, dir=null}={}){
   const isExtra = EXTRA_PAGES.includes(page);
   const btn = isExtra ? document.querySelector(`.util-btn[data-page="${page}"]`)
@@ -1165,6 +1193,14 @@ function activatePage(page, {jump=true, dir=null}={}){
   btn.classList.add("active");
   el.classList.add("active");
   if(!isExtra){ lastDayPage = String(page); const d = document.querySelector('.util-btn[data-page="days"]'); if(d) d.classList.add("active"); }
+  document.querySelectorAll(".daytab, .util-btn").forEach(b=>b.removeAttribute("aria-current"));
+  btn.setAttribute("aria-current", "page");
+  const menuBtn = isExtra ? btn : document.querySelector('.util-btn[data-page="days"]');
+  if(menuBtn) menuBtn.setAttribute("aria-current", "page");
+  const nav = document.getElementById("dayNav"); if(nav) nav.hidden = isExtra;
+  try{ history.replaceState(null, "", "#" + (isExtra ? page : "day-" + page)); }catch(e){}
+  if(menuBtn && menuBtn.scrollIntoView) menuBtn.scrollIntoView({behavior: REDUCED ? "auto" : "smooth", inline:"center", block:"nearest"});
+  if(!isExtra) markNext(Number(page));
   el.querySelectorAll(".reveal:not(.revealed)").forEach(r=>r.classList.add("revealed"));
   if(dir === "next") el.classList.add("slide-next");
   else if(dir === "prev") el.classList.add("slide-prev");
@@ -1175,7 +1211,13 @@ function activatePage(page, {jump=true, dir=null}={}){
   else if(!isExtra){ buildDayMap(Number(page)); if(TRIP.sun) loadSunTimes(Number(page)); }
 
   if(!isExtra) btn.scrollIntoView({behavior:"smooth", inline:"center", block:"nearest"});
-  if(jump) window.scrollTo({top:0, behavior:"smooth"});
+  if(jump){
+    // land on the page's own heading, just under the fixed menu and the date bar
+    const bars = (document.querySelector(".util-bar")?.offsetHeight || 0) + (nav && !nav.hidden ? nav.offsetHeight : 0);
+    let y = -bars - 8;   // offsetTop ignores the page's entrance bounce transform
+    for(let n = el; n; n = n.offsetParent) y += n.offsetTop;
+    window.scrollTo({top: Math.max(0, y), behavior: REDUCED ? "auto" : "smooth"});
+  }
 }
 
 // plays a brief exit animation on the current day page before switching,
@@ -1229,6 +1271,15 @@ function refreshPackProgress(){
 let packCelebrated = false;
 // small toast that slides up from the bottom, e.g. after a successful copy
 let toastTimer = null;
+function undoToast(msg, undo){
+  let el = document.getElementById("undoToast");
+  if(!el){ el = document.createElement("div"); el.id = "undoToast"; el.className = "app-toast undo-toast"; el.setAttribute("role", "status"); document.body.appendChild(el); }
+  el.innerHTML = `<span>${msg}</span><button type="button">復原</button>`;
+  el.classList.add("show");
+  clearTimeout(el._t);
+  el.querySelector("button").onclick = ()=>{ undo(); el.classList.remove("show"); };
+  el._t = setTimeout(()=> el.classList.remove("show"), 7000);
+}
 function showToast(msg){
   let el = document.getElementById("appToast");
   if(!el){
@@ -1328,10 +1379,10 @@ function packUncelebrate(){ packCelebrated = false; }
       e.stopPropagation();
       const text = btn.dataset.val || "";
       const done = ()=>{
-        btn.textContent = "✓";
+        btn.innerHTML = SB_ICON.check;
         btn.classList.add("copied");
         showToast("已複製");
-        setTimeout(()=>{ btn.textContent = "📋"; btn.classList.remove("copied"); }, 1400);
+        setTimeout(()=>{ btn.innerHTML = SB_ICON.copy; btn.classList.remove("copied"); }, 1400);
       };
       if(navigator.clipboard && navigator.clipboard.writeText){
         navigator.clipboard.writeText(text).then(done).catch(()=>{
@@ -1351,6 +1402,15 @@ function packUncelebrate(){ packCelebrated = false; }
   refreshPackProgress();
   const resetBtn = document.getElementById("packReset");
   if(resetBtn) resetBtn.addEventListener("click", ()=>{
+    const before = loadPackState();
+    undoToast("已清空待辦清單", ()=>{
+      savePackState(before);
+      document.querySelectorAll("#page-packing input[type=checkbox]").forEach(box=>{
+        box.checked = !!before[box.dataset.key];
+        box.closest(".pack-item").classList.toggle("done", box.checked);
+      });
+      refreshPackProgress();
+    });
     savePackState({});
     document.querySelectorAll("#page-packing input[type=checkbox]").forEach(box=>{
       box.checked = false;
@@ -1370,7 +1430,17 @@ function pageFromHash(){
   if(TRIP.food && location.hash === "#food") return "food";
   return m ? m[1] : 0;
 }
-activatePage(pageFromHash(), {jump:false});
+// during the trip, open on today unless a link asks for a page
+(function(){
+  const t = todayIndex();
+  if(t >= 0){
+    document.documentElement.classList.add("trip-live");
+    const tab = document.querySelector(`.daytab[data-page="${t}"] .num`);
+    if(tab) tab.insertAdjacentHTML("beforeend", '<span class="today-dot">今天</span>');
+  }
+  activatePage(location.hash ? pageFromHash() : (t >= 0 ? String(t) : 0), {jump:false});
+  if(t >= 0) setInterval(()=>{ if(document.getElementById("day-" + t)?.classList.contains("active")) markNext(t); }, 60000);
+})();
 window.addEventListener("hashchange", ()=> activatePage(pageFromHash()));
 
 // swipe left/right anywhere on the page to switch days (not just via the

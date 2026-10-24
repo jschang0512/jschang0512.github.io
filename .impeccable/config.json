@@ -8,6 +8,15 @@
         "value": "huninn",
         "createdAt": "2026-10-24T12:12:04.327Z",
         "reason": "user confirmed: storybook brief for the trip pages names Google Fonts Huninn"
+      },
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          "trip/index.html"
+        ],
+        "createdAt": "2026-10-24T12:13:35.747Z",
+        "reason": "user confirmed: storybook brief pins 和紙白 #FFFCF6 as the trip pages' background"
       }
     ]
   }
