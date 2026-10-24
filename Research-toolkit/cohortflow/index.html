@@ -109,7 +109,7 @@
 <script>
 const T = RT.t;
 const KEY = 'cohort3';
-const step = (o) => Object.assign({ exTitle: 'Excluded', reasons: [{ t: '', n: '' }], text: '', n: '', side: 'auto', note: '', overlap: false, total: '' }, o);
+const step = (o) => Object.assign({ exTitle: 'Excluded', reasons: [{ t: '', n: '' }], text: '', n: '', side: 'auto', note: '', noteAt: 'top', overlap: false, total: '' }, o);
 const DEF = {
   start: { text: 'Patients in the database', n: '' },
   steps: [step({ text: 'Eligible patients' })],
@@ -162,6 +162,8 @@ function renderSteps() {
         <label><span class="lbl">${T('排除框位置', 'Exclusion side')}</span><select data-f="side">
           <option value="auto">${T('預設', 'Default')}</option><option value="right">${T('右側', 'Right')}</option><option value="left">${T('左側', 'Left')}</option></select></label>
         <label><span class="lbl">${T('箭頭旁說明（選填）', 'Arrow note (optional)')}</span><input data-f="note" placeholder="${T('例：1:1 PS matching', 'e.g. 1:1 PS matching')}"></label>
+        <label><span class="lbl">${T('說明位置', 'Note position')}</span><select data-f="noteAt">
+          <option value="top">${T('箭頭上段', 'Upper part of the arrow')}</option><option value="middle">${T('箭頭中段', 'Middle of the arrow')}</option><option value="bottom">${T('箭頭下段', 'Lower part of the arrow')}</option></select></label>
       </div>
     </div>`);
     const ovTotal = blk.querySelector('.ov-total');
@@ -346,7 +348,9 @@ function build(calc) {
       ex = RT.box(items, EW, exO);
     }
     const note = (stp.note || '').trim();
-    const noteBox = note ? RT.box([{ text: note, italic: true }], Math.max(EW, 160), { ...exO, fill: 'none', stroke: 'none', pad: 0, padX: 0 }) : null;
+    // as wide as its text (up to the exclusion width), so it sits right against the line
+    const noteW = note ? Math.min(Math.max(EW, 160), Math.ceil(Math.max(...note.split('\n').map((l) => RT.textWidth(l, exO.size, false, true)))) + 4) : 0;
+    const noteBox = note ? RT.box([{ text: note, italic: true }], noteW, { ...exO, fill: 'none', stroke: 'none', pad: 0, padX: 0 }) : null;
     let gap = baseGap;
     if (ex) gap = Math.max(gap, ex.h + 2 * vpad);
     if (noteBox) gap = Math.max(gap, noteBox.h + 2 * vpad);
@@ -370,8 +374,11 @@ function build(calc) {
     if (noteBox) {
       // note sits on the side opposite the exclusion box (or right when there is none)
       const onLeft = ex ? side !== 'left' : false;
-      const nx = onLeft ? -noteBox.w - 10 : 10;
-      body += RT.drawBox(noteBox, nx, my - noteBox.h / 2);
+      const nx = onLeft ? -noteBox.w - 8 : 8;
+      if (onLeft) noteBox.lines.forEach((l) => { l.align = 'right'; });
+      const at = stp.noteAt || 'top', inset = Math.round(fs * 0.35);
+      const ny = at === 'middle' ? my - noteBox.h / 2 : at === 'bottom' ? y + gap - noteBox.h - inset : y + inset;
+      body += RT.drawBox(noteBox, nx, ny);
       if (onLeft) minX = Math.min(minX, nx); else maxX = Math.max(maxX, nx + noteBox.w);
     }
     y += gap;
