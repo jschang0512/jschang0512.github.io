@@ -21,19 +21,23 @@
 <link rel="stylesheet" href="../shared/style.css?v=20261011a">
 <style>
   .drop {
-    border: 2px dashed var(--border); border-radius: 12px; padding: 26px 16px; text-align: center; cursor: pointer;
-    background: var(--panel-2); transition: border-color .15s, background .15s;
+    display: block; width: 100%; font: inherit; color: var(--text);
+    border: 1px dashed var(--muted); border-radius: var(--radius); padding: 26px 16px; text-align: center; cursor: pointer;
+    background: var(--panel-2); transition: border-color .15s var(--ease-out), background-color .15s var(--ease-out);
   }
-  .drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-weak); }
-  .drop b { font-size: 15px; }
-  .drop p { margin: 6px 0 0; color: var(--muted); font-size: 12.5px; }
+  .drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-weak); color: var(--text); }
+  .drop:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .sample { margin-top: 8px; }
+  .drop b { font-size: 15px; display: block; }
+  .drop .p { display: block; margin: 6px 0 0; color: var(--muted); font-size: 12.5px; white-space: normal; }
   .files { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
   .file { display: grid; grid-template-columns: auto minmax(0, 1fr) auto 30px; gap: 8px; align-items: center; font-size: 13px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); }
   .file .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .file .sz { color: var(--muted); font-size: 12px; }
-  .tag { font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 5px; background: var(--accent-weak); color: var(--accent); text-transform: uppercase; }
+  .tag { font-size: 12px; font-weight: 700; padding: 1px 6px; border-radius: var(--radius); background: var(--accent-weak); color: var(--accent); }
+  .tag.unknown { background: var(--warn-bg); color: var(--warn-text); }
   .results { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
-  .res { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--panel); display: flex; flex-direction: column; }
+  .res { border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: var(--panel); display: flex; flex-direction: column; }
   .res .th { background: #fff; aspect-ratio: 4 / 3; display: grid; place-items: center; border-bottom: 1px solid var(--border); background-image: linear-gradient(45deg, #f2f2f2 25%, transparent 25%), linear-gradient(-45deg, #f2f2f2 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f2f2f2 75%), linear-gradient(-45deg, transparent 75%, #f2f2f2 75%); background-size: 16px 16px; background-position: 0 0, 0 8px, 8px -8px, -8px 0; }
   .res .th img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; }
   .res .meta { padding: 8px 10px; font-size: 12px; color: var(--muted); display: flex; flex-direction: column; gap: 2px; flex: 1; }
@@ -49,8 +53,14 @@
   .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; width: 100%; }
   .seg label { flex: 1; text-align: center; font-size: 13px; padding: 6px 4px; cursor: pointer; background: var(--panel-2); border-right: 1px solid var(--border); }
   .seg label:last-child { border-right: 0; }
-  .seg input { display: none; }
-  .seg label:has(input:checked) { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  /* radios stay in the tab order (visually hidden), the label shows focus */
+  .seg input { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); border: 0; }
+  .seg label { position: relative; }
+  .seg label:has(input:checked) { background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+  .seg label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
+  /* phones and short screens: keep Convert in reach */
+  #form > .card.go-card { position: sticky; bottom: 0; z-index: 5; background: var(--bg); border-top: 1px solid var(--border); padding-bottom: 12px; }
+  .go-why { font-size: 12.5px; color: var(--muted); }
 </style>
 </head>
 <body>
@@ -64,10 +74,11 @@
   <section id="form">
     <div class="card">
       <h2><span class="step-no">1</span> <span data-en="Choose files">選擇檔案</span></h2>
-      <div class="drop" id="drop">
+      <button type="button" class="drop" id="drop">
         <b data-en="Drop files here, or click to choose">拖曳檔案到這裡，或點擊選擇</b>
-        <p data-en="PDF, Word (.docx), PNG, JPG, TIFF, WebP, BMP, GIF, SVG — several at once">支援 PDF、Word (.docx)、PNG、JPG、TIFF、WebP、BMP、GIF、SVG，可一次多個</p>
-      </div>
+        <span class="p" data-en="PDF, Word (.docx), PNG, JPG, TIFF, WebP, BMP, GIF, SVG — several at once">支援 PDF、Word (.docx)、PNG、JPG、TIFF、WebP、BMP、GIF、SVG，可一次多個</span>
+      </button>
+      <button type="button" class="small sample" id="sample" data-en="Try with a sample figure">用範例圖試試看</button>
       <input type="file" id="fileInput" multiple hidden accept=".pdf,.docx,.emf,.wmf,.png,.jpg,.jpeg,.tif,.tiff,.webp,.bmp,.gif,.svg,application/pdf,image/*">
       <div class="files" id="files"></div>
     </div>
@@ -106,12 +117,13 @@
           <label><input type="radio" name="wordMode" value="extract"><span data-en="Extract embedded images">擷取內嵌原圖</span></label>
         </div>
       </div>
-      <p class="hint" data-en="“Extract embedded images” pulls out pictures inserted in the Word file at their original resolution (sharpest). “Render pages” re-lays out the document in the browser, so fonts and page breaks may differ slightly from Word; for an exact match, save as PDF in Word first and convert the PDF.">「擷取內嵌原圖」會取出 Word 中插入的圖片（原始解析度，最清晰）。「整頁渲染」由瀏覽器重排版面，字型與分頁可能和 Word 略有差異；若需完全一致，建議在 Word 先「另存為 PDF」再轉換。</p>
+      <p class="hint" data-en="Extract embedded images: takes the pictures inserted in Word at their original resolution. Render pages: re-laid out by the browser, so fonts and page breaks may differ; for an exact match, save as PDF in Word first.">擷取內嵌原圖：取出 Word 裡插入的圖片，保持原始解析度。整頁渲染：由瀏覽器重排，字型與分頁可能和 Word 不同；要完全一致請先在 Word 另存 PDF 再轉。</p>
     </div>
 
-    <div class="card">
+    <div class="card go-card">
       <div class="btns">
         <button class="primary" id="go" disabled data-en="Convert">開始轉換</button>
+        <span class="go-why" id="goWhy" data-en="Add a file first">請先加入檔案</span>
         <button id="clear" data-en="Clear files">清除檔案</button>
       </div>
       <div class="progress" style="margin-top:10px"><div id="bar"></div></div>
@@ -126,10 +138,7 @@
     </div>
     <div class="card">
       <h3 data-en="About DPI">DPI 小知識</h3>
-      <p class="hint" style="margin:0" data-en="For raster images, DPI is only a tag saying how many pixels to print per inch; sharpness depends on the pixel count.<br>• PDF / Word / SVG are vector or re-renderable, so a higher DPI really is sharper.<br>• For images that are already raster (PNG/JPG), changing the DPI tag does not add sharpness; enlarging pixels to reach a print width only interpolates.<br>• Elsevier’s requirements: photos (halftones) 300 dpi, combination art 500 dpi, line art 1000 dpi; other journals differ — check the author guidelines. TIFF is the most widely accepted format.">點陣圖的 DPI 只是「列印時每英吋放幾個像素」的標記；真正的清晰度取決於像素數。<br>
-        • PDF / Word / SVG 是向量或可重新渲染，提高 DPI 會真的更清晰。<br>
-        • 原本就是點陣圖（PNG/JPG）時，只改 DPI 標記不會變清晰；若指定列印寬度而需要放大像素，只是內插，並不會增加細節。<br>
-        • Elsevier 的要求：照片（灰階／彩色）300 dpi、混合圖 500 dpi、線條圖 1000 dpi；各期刊要求不同，請查投稿須知。格式多為 TIFF。</p>
+      <p class="hint" style="margin:0" data-en="DPI is only a tag for how many pixels print per inch; sharpness depends on the pixel count.&lt;br&gt;• PDF, Word and SVG are re-rendered, so a higher DPI is genuinely sharper.&lt;br&gt;• For PNG and JPG, changing the DPI adds no sharpness; enlarging to a print width only interpolates.&lt;br&gt;• Elsevier: photos 300 dpi, combination art 500 dpi, line art 1000 dpi, usually TIFF. Check other journals’ author guidelines.">DPI 只是「每英吋印幾個像素」的標記，清晰度取決於像素數。<br>• PDF、Word、SVG 會重新渲染，提高 DPI 會更清晰。<br>• PNG、JPG 只改 DPI 不會更清晰；放大到指定寬度只是內插，不增加細節。<br>• Elsevier：照片 300 dpi、混合圖 500 dpi、線條圖 1000 dpi，多用 TIFF。其他期刊請看投稿須知。</p>
     </div>
     <div class="card" id="refs"></div>
   </section>
@@ -187,8 +196,10 @@ const kindOf = (f) => {
   return 'unknown';
 };
 function addFiles(list) {
-  for (const f of list) files.push({ file: f, kind: kindOf(f) });
+  const bad = [];
+  for (const f of list) { const kind = kindOf(f); if (kind === 'unknown') bad.push(f.name); else files.push({ file: f, kind }); }
   renderFiles();
+  if (bad.length) RT.toast(T(`不支援的檔案，未加入：${bad.join('、')}`, `Not a supported file, not added: ${bad.join(', ')}`), 6000);
 }
 function renderFiles() {
   const host = $('files');
@@ -200,9 +211,23 @@ function renderFiles() {
     host.appendChild(row);
   });
   $('go').disabled = !files.length;
+  $('goWhy').hidden = !!files.length;
 }
 const drop = $('drop');
 drop.onclick = () => $('fileInput').click();
+$('sample').onclick = () => {
+  const c = document.createElement('canvas'); c.width = 480; c.height = 320;
+  const x = c.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, 480, 320);
+  x.strokeStyle = '#222'; x.lineWidth = 1.5; x.beginPath(); x.moveTo(50, 20); x.lineTo(50, 270); x.lineTo(460, 270); x.stroke();
+  [[0.30, '#3B6FD8'], [0.55, '#3B6FD8'], [0.42, '#3B6FD8'], [0.78, '#D9822B']].forEach(([v, col], i) => { x.fillStyle = col; x.fillRect(80 + i * 95, 270 - v * 230, 60, v * 230); });
+  x.fillStyle = '#222'; x.font = '14px Arial'; x.textAlign = 'center';
+  ['A', 'B', 'C', 'D'].forEach((t, i) => x.fillText('Group ' + t, 110 + i * 95, 292));
+  x.save(); x.translate(20, 145); x.rotate(-Math.PI / 2); x.fillText('Outcome (%)', 0, 0); x.restore();
+  const bin = atob(c.toDataURL('image/png').split(',')[1]), u8 = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  addFiles([new File([u8], 'sample-figure-480px.png', { type: 'image/png' })]);
+};
 $('fileInput').onchange = (e) => { addFiles(e.target.files); e.target.value = ''; };
 ['dragenter', 'dragover'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('over'); }));
 ['dragleave', 'drop'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
@@ -533,7 +558,7 @@ $('go').onclick = async () => {
     setP(1);
   }
   progress(1);
-  setStatus(T(`完成：${results.length} 個輸出檔${errors.length ? `，${errors.length} 個問題` : ''}`, `Done: ${results.length} file(s)${errors.length ? `, ${errors.length} issue(s)` : ''}`));
+  setStatus(T(`完成：${results.length} 個輸出檔${errors.length ? `，${errors.length} 個問題` : ''}`, `Done: ${results.length} ${results.length === 1 ? 'file' : 'files'}${errors.length ? `, ${errors.length} ${errors.length === 1 ? 'issue' : 'issues'}` : ''}`));
   if (!results.length) $('results').innerHTML = `<div class="empty">${T('沒有產生輸出', 'No output produced')}</div>`;
   if (errors.length) {
     const box = RT.h('<div class="msgs" style="margin-top:10px"></div>');

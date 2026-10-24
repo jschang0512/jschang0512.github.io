@@ -29,7 +29,7 @@
   .tpl { text-align: left; white-space: normal; flex-direction: column; align-items: flex-start; gap: 3px; padding: 7px 9px; height: 100%; }
   .tpl b { font-size: 12.5px; }
   .tpl span.d { font-size: 11.5px; color: var(--muted); font-weight: 400; }
-  .fit { font-size: 10.5px; font-weight: 700; padding: 1px 6px; border-radius: 999px; }
+  .fit { font-size: 12px; font-weight: 700; padding: 1px 7px; border-radius: 999px; }
   .fit.good { background: var(--ok-bg); color: var(--ok-text); }
   .fit.ok { background: var(--warn-bg); color: var(--warn-text); }
   .tpl-note { margin-top: 8px; }
@@ -54,7 +54,7 @@
   <section id="form">
     <div class="card">
       <h2><span class="step-no">1</span> <span data-en="Study design template">研究設計範本</span></h2>
-      <p class="hint" data-en="A template fills in the time windows; your look (colours, fonts) is kept. <b>All day counts in templates are illustrative — change them to match your protocol.</b> ↶ undoes.">範本只替換時間窗內容，外觀（配色、字型）會保留。<b>範本中的天數都是示意值，請依你的研究計畫修改。</b>按 ↶ 可復原。</p>
+      <p class="hint" data-en="A template replaces the time windows only; colours and fonts stay. Its day counts are placeholders. ↶ undoes.">套用範本只換時間窗，配色與字型不變。範本的天數是示意值，按 ↶ 可復原。</p>
       <div class="btns" style="gap:10px;margin-bottom:8px"><span class="fit good" data-en="Commonly used">常用</span><span class="hint" style="margin:0" data-en="this diagram is the usual way to show the design">此圖是該設計的慣用呈現</span><span class="fit ok" data-en="Usable, pair with">可用，需搭配</span><span class="hint" style="margin:0" data-en="also report another figure/table">還需要搭配其他圖表</span></div>
       <label class="check" style="margin:0 0 8px"><input type="checkbox" data-k="useConv"> <span data-en="When loading a template, also use that design’s <b>conventional presentation</b> (layout, colours, font)">載入範本時，同時套用該設計的<b>學術慣用呈現</b>（版面、配色、字型）</span></label>
       <div class="tpl-grid" id="tplGrid"></div>
@@ -103,7 +103,7 @@
 
     <div class="card">
       <h2><span class="step-no">4</span> <span data-en="Time windows (one per row)">時間窗（每一列）</span></h2>
-      <p class="hint" data-en="Start/end are relative to Day 0 (e.g. −365 to 0). <b>Blank</b> = extends to the edge (open). Text only (e.g. <code>Censor</code>) = open end shown in the label. <b>Number + label</b>, e.g. <code>280 (delivery)</code> = placed at day 280, shown as “delivery”. <b>Type</b> sets the colour; <b>shape</b> matters in the single-track layout (segment / event marker / bracket above the track).">起訖為相對 Day 0 的時間（例：−365 到 0）。<b>留空</b>＝延伸到邊緣（開放）。<b>只填文字</b>（如 <code>Censor</code>）＝開放端點並顯示在區間文字。<b>數字＋說明</b>（如 <code>280 (delivery)</code>）＝放在第 280 天、顯示為「delivery」。<b>類型</b>決定配色；<b>形狀</b>用於單軌版面（色段／事件標記／軌道上方的括號區間）。</p>
+      <p class="hint" data-en="Start and end are days relative to Day 0 (e.g. −365, 0). Blank = runs to the edge; text only (e.g. Censor) = open end; number plus label (e.g. 280 (delivery)) = drawn at day 280, labelled “delivery”. Type sets the colour.">起訖填相對 Day 0 的天數（例：−365、0）。留空＝延伸到邊緣；只寫文字（如 Censor）＝開放端點；數字加括號（如 280 (delivery)）＝畫在第 280 天並標示 delivery。類型決定顏色。</p>
       <div id="rows"></div>
       <button class="small" id="addRow" data-en="+ Add row">＋ 新增一列</button>
     </div>
@@ -113,7 +113,7 @@
       <label class="check" style="margin-top:0"><input type="checkbox" data-k="cal.on"> <span data-en="Add a calendar-time panel under the diagram (tells readers <i>when</i> the cohort was assembled and followed)">在設計圖下方加上日曆時間面板（讓讀者知道世代<i>何時</i>收案與追蹤）</span></label>
       <div data-show="cal.on">
         <label class="field"><span data-en="Panel title">面板標題</span><input data-k="cal.title"></label>
-        <p class="hint" data-en="Dates as <code>YYYY</code>, <code>YYYY-MM</code> or <code>YYYY-MM-DD</code>. A row with only a start date (or shape “event”) is drawn as a point marker. <b>Replace the example dates with your study’s.</b>">日期格式 <code>YYYY</code>、<code>YYYY-MM</code> 或 <code>YYYY-MM-DD</code>。只填起點（或形狀選「事件標記」）會畫成時間點標記。<b>範例日期請換成你研究的實際日期。</b></p>
+        <p class="hint" data-en="Dates as &lt;code&gt;YYYY&lt;/code&gt;, &lt;code&gt;YYYY-MM&lt;/code&gt; or &lt;code&gt;YYYY-MM-DD&lt;/code&gt;. A row with only a start date is drawn as a point.">日期填 <code>YYYY</code>、<code>YYYY-MM</code> 或 <code>YYYY-MM-DD</code>。只填起點會畫成時間點。</p>
         <div id="calRows"></div>
         <button class="small" id="addCal" data-en="+ Add period">＋ 新增期間</button>
       </div>

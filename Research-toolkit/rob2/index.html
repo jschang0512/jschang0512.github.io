@@ -34,8 +34,8 @@ const D2to5 = [
 ];
 document.getElementById('app').outerHTML = RT.robPage({
   title: 'RoB 2', subZh: '隨機對照試驗偏誤風險評估（Cochrane RoB 2）', subEn: 'Risk of bias in randomised trials (Cochrane RoB 2)',
-  noteZh: '依 RoB 2（主版本 2019-08-22；群集與交叉試驗版本 2021-03-18，皆為目前現行版本）：5 個 domain，判斷為 Low／Some concerns／High。整體規則：全部 Low → Low；任一 High → High；其餘有 Some concerns → Some concerns（多個 Some concerns 嚴重影響信心時，可手動改為 High）。各 domain 的 signalling questions 與演算法請使用官方工具（riskofbias.info），此工具負責整理判斷、理由與出圖。RoB 2 評估對象是「特定結果」，請在每筆的 ▾ 內填寫評估的結果。',
-  noteEn: 'Follows RoB 2 (main tool 22 Aug 2019; cluster-randomised and crossover versions 18 Mar 2021 — all current): 5 domains judged Low / Some concerns / High. Overall rule: all Low → Low; any High → High; otherwise Some concerns (several Some concerns that substantially lower confidence can be overridden to High). Use the official tool (riskofbias.info) for the signalling questions and algorithms; this tool collects judgements and support and draws the plots. RoB 2 assesses a specific result — fill in the result under ▾ for each entry.',
+  noteZh: 'RoB 2（主版本 2019-08-22；群集與交叉試驗版 2021-03-18）。5 個 domain，判斷為 Low／Some concerns／High。整體：全部 Low → Low；任一 High → High；其餘 → Some concerns（多個 Some concerns 可手動改為 High）。Signalling questions 請用官方工具（riskofbias.info）；RoB 2 評估的是特定結果，請在 ▾ 填寫。',
+  noteEn: 'RoB 2 (main tool 2019-08-22; cluster and crossover versions 2021-03-18). 5 domains judged Low / Some concerns / High. Overall: all Low → Low; any High → High; otherwise Some concerns (several Some concerns can be raised to High). Use the official tool (riskofbias.info) for the signalling questions. RoB 2 assesses a specific result: enter it under ▾.',
 });
 RT.initPage();
 RT.robTool({

@@ -104,14 +104,24 @@
     // The grid is narrow: a closed select shows only its short label, the open list shows the full one
     const labelMode = (sel, full) => { for (const o of sel.options) { o.dataset.full ??= o.textContent; o.textContent = full ? o.dataset.full : (o.dataset.short ?? o.dataset.full); } };
     const compactSel = (sel, name) => {
-      const shorten = () => { labelMode(sel, false); const o = sel.selectedOptions[0]; if (name) sel.title = name + (o && sel.value ? '：' + o.dataset.full : ''); };
+      const shorten = () => { labelMode(sel, false); const o = sel.selectedOptions[0]; if (name) { sel.title = name + (o && sel.value ? '：' + o.dataset.full : '：' + T('尚未判斷', 'not judged')); sel.setAttribute('aria-label', sel.title); } };
       sel.addEventListener('mousedown', () => labelMode(sel, true));
       sel.addEventListener('focus', () => labelMode(sel, true));
       sel.addEventListener('change', shorten);
       sel.addEventListener('blur', shorten);
       shorten();
     };
-    const styleSel = (sel, v) => { const c = v ? colorOf(v) : ''; sel.style.background = c || ''; sel.style.color = c ? textOn(c) : ''; };
+    const lum = (rgb) => { const f = (x) => { x /= 255; return x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(rgb[0]) + 0.7152 * f(rgb[1]) + 0.0722 * f(rgb[2]); };
+    const uiPair = (c) => {
+      const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(c || ''); if (!m) return { bg: c, fg: '' };
+      let rgb = m.slice(1).map((x) => parseInt(x, 16));
+      const dark = [31, 41, 51];
+      const cr = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+      if (cr(rgb, dark) >= 4.5) return { bg: c, fg: '#1F2933' };
+      for (let i = 0; i < 12 && cr(rgb, [255, 255, 255]) < 4.5; i++) rgb = rgb.map((x) => Math.round(x * 0.92));
+      return { bg: '#' + rgb.map((x) => x.toString(16).padStart(2, '0')).join(''), fg: '#FFFFFF' };
+    };
+    const styleSel = (sel, v) => { const p = v ? uiPair(colorOf(v)) : { bg: '', fg: '' }; sel.style.background = p.bg || ''; sel.style.color = p.fg; };
     const open = new Set();
     function renderGrid() {
       const host = document.getElementById('grid');
@@ -171,15 +181,23 @@
         const hit = cfg.judgments.find((j) => j.v.toLowerCase() === t || j.label.toLowerCase() === t || j.sym === t || (j.alias || []).includes(t));
         return hit ? hit.v : '';
       };
-      S.studies = txt.split(/\r?\n/).filter((l) => l.trim()).map((l) => {
-        const p = l.split(/\t|,|;/).map((x) => x.trim());
+      const unknown = [];
+      let skipped = 0;
+      S.studies = txt.split(/\r?\n/).map((l) => l.split(/\t|,|;/).map((x) => x.trim())).filter((p) => {
+        if (p.some(Boolean)) return true;
+        skipped++; return false;
+      }).map((p) => {
         const st = { name: p[0], j: {}, sup: {}, overall: 'auto', result: '', w: '' };
-        codes.forEach((c, i) => { st.j[c] = norm(p[i + 1]); });
+        codes.forEach((c, i) => { st.j[c] = norm(p[i + 1]); if (p[i + 1] && !st.j[c]) unknown.push(p[i + 1]); });
         const ov = norm(p[codes.length + 1]);
-        if (ov) st.overall = ov;
+        if (ov) st.overall = ov; else if (p[codes.length + 1]) unknown.push(p[codes.length + 1]);
         return st;
       });
       open.clear(); renderGrid(); update();
+      const uq = [...new Set(unknown)];
+      RT.toast(T(`已匯入 ${S.studies.length} 個研究`, `Imported ${S.studies.length} ${S.studies.length === 1 ? 'study' : 'studies'}`) +
+        (unknown.length ? T(`；${unknown.length} 格無法辨識（${uq.slice(0, 4).join('、')}）已留空`, `; ${unknown.length} ${unknown.length === 1 ? 'cell' : 'cells'} not recognised (${uq.slice(0, 4).join(', ')}) left blank`) : '') +
+        (skipped ? T(`；略過 ${skipped} 個空白列`, `; skipped ${skipped} empty ${skipped === 1 ? 'row' : 'rows'}`) : ''), unknown.length ? 8000 : 3000);
     };
 
     /* ---------------- plots ---------------- */
@@ -411,6 +429,17 @@
       try { fig = build(); preview.innerHTML = fig.svg; }
       catch (e) { console.error(e); preview.innerHTML = `<div class="msg">⚠ ${RT.esc(e.message)}</div>`; }
       exporter.refresh();
+      const doms = domains(), msgs = [];
+      S.studies.forEach((st, i) => {
+        const nm = st.name && st.name.trim() ? st.name.trim() : T(`第 ${i + 1} 列`, `Row ${i + 1}`);
+        if (!st.name || !st.name.trim()) msgs.push(T(`第 ${i + 1} 列沒有研究名稱`, `Row ${i + 1} has no study name`));
+        const miss = doms.filter((d) => !st.j[d.code]).map((d) => d.code);
+        if (miss.length) msgs.push(T(`${nm}：${miss.join('、')} 尚未判斷`, `${nm}: ${miss.join(', ')} not judged`));
+      });
+      document.getElementById('msgs').innerHTML = msgs.length
+        ? msgs.slice(0, 6).map((m) => `<div class="msg">⚠ ${RT.esc(m)}</div>`).join('') + (msgs.length > 6 ? `<div class="msg">${T(`另有 ${msgs.length - 6} 項`, `and ${msgs.length - 6} more`)}</div>` : '')
+        : (S.studies.length ? `<div class="msg ok">✓ ${T('每個研究的每個 domain 都已判斷', 'Every domain is judged for every study')}</div>` : '');
+      exporter.setIssues(msgs.length);
       RT.save(cfg.key, S);
     }
     const update = RT.debounce(() => { render(); hist.push(); }, 80);
@@ -444,7 +473,7 @@
   <main class="tool">
     <section id="form">
       <!-- long tool note: open on wide screens, collapsed on phones so the inputs come first -->
-      <details class="card tool-note"${window.matchMedia && matchMedia('(min-width: 961px)').matches ? ' open' : ''}><summary data-en="About this tool: version and judgement rules">工具說明：版本與判斷規則</summary><div class="msg" style="margin:0">${o.noteZh ? `<span data-en="${RT.esc(o.noteEn)}">${o.noteZh}</span>` : ''}</div></details>
+      <details class="card tool-note"${window.matchMedia && matchMedia('(min-width: 961px)').matches ? ' open' : ''}><summary data-en="About this tool: version and judgement rules">工具說明：版本與判斷規則</summary><div class="note-box">${o.noteZh ? `<span data-en="${RT.esc(o.noteEn)}">${o.noteZh}</span>` : ''}</div></details>
       <div class="card">
         <h2><span class="step-no">1</span> <span data-en="Tool version &amp; domains">版本與 domain</span></h2>
         <label class="field"><span data-en="Version / design">版本／設計</span><select id="variantSel"></select></label>
@@ -453,7 +482,7 @@
       </div>
       <div class="card">
         <h2><span class="step-no">2</span> <span data-en="Judgements per study">各研究判斷</span></h2>
-        <p class="hint" data-en="Choose a judgement per domain; the overall judgement is calculated by the tool’s rule (you can override it). ▾ opens fields for the result assessed, a weight and the support for each judgement.">每個 domain 選擇判斷；整體判斷依工具規則自動計算（可手動覆蓋）。按 ▾ 可填評估的結果、權重與每項判斷的理由。</p>
+        <p class="hint" data-en="Pick a judgement for each domain; the overall is calculated (you can override it). ▾ adds the result assessed, a weight and the support text.">每個 domain 選一個判斷，整體判斷會自動計算，可手動覆蓋。按 ▾ 填評估的結果、權重與判斷理由。</p>
         <div id="grid"></div>
         <div class="btns" style="margin-top:8px"><button class="small" id="addStudy" data-en="+ Add study">＋ 新增研究</button><button class="small" id="pasteStudies" data-en="Paste from Excel…">從 Excel 貼上…</button></div>
         <div class="rob-legend" id="legend"></div>
@@ -478,15 +507,16 @@
           <div id="styleFields"></div>
         </details>
       </div>
-      <div class="card">
-        <h2 data-en="Tables">表格</h2>
-        <div class="btns"><button id="docxBtn" data-en="Word table (with support text)">Word 表格（含理由）</button><button id="csvBtn" data-en="CSV (Excel)">CSV（Excel）</button></div>
-      </div>
       <div class="card" id="refs"></div>
     </section>
     <section class="preview-col">
       <div class="paper" id="preview"></div>
+      <div class="msgs" id="msgs"></div>
       <div class="card" id="export"></div>
+      <div class="card">
+        <h2 data-en="Tables">表格</h2>
+        <div class="btns"><button id="docxBtn" data-en="Word table (with support text)">Word 表格（含理由）</button><button id="csvBtn" data-en="CSV (Excel)">CSV（Excel）</button></div>
+      </div>
     </section>
   </main>`;
 })();

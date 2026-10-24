@@ -31,9 +31,13 @@
       b.className = 'small lang-toggle';
       b.textContent = RT.lang === 'en' ? '中文' : 'EN';
       b.title = RT.lang === 'en' ? '切換成中文' : 'Switch to English';
+      b.setAttribute('lang', RT.lang === 'en' ? 'zh-Hant' : 'en');
       b.onclick = () => RT.setLang(RT.lang === 'en' ? 'zh' : 'en');
-      (bar.querySelector('.btns') || bar).appendChild(b);   // keep it in the button row on narrow screens
+      bar.appendChild(b);   // outside .btns, so it never scrolls out of reach on phones
     }
+    RT.groupTopbar(bar);
+    RT.initA11y();
+    RT.initPaperZoom();
     RT.initPreviewJump();
     if (!document.querySelector('.site-foot')) {
       const f = document.createElement('footer');
@@ -42,6 +46,78 @@
         `<div class="dev-line">${RT.t('開發者', 'Developer')}：${RT.esc(RT.DEV.name)} · ${RT.t('問題與建議', 'Questions & feedback')}：<a href="mailto:${RT.DEV.email}">${RT.DEV.email}</a></div>`;
       document.body.appendChild(f);
     }
+  };
+
+  // Top bar: [undo redo] | [Project ▾: save, open, clear] | [Example]. Clear no longer sits next to Example.
+  RT.groupTopbar = (bar) => {
+    const btns = bar && bar.querySelector('.btns');
+    if (!btns || btns.dataset.grouped) return;
+    const pick = (id) => btns.querySelector('#' + id);
+    const undo = pick('btnUndo'), redo = pick('btnRedo'), ex = pick('btnExample');
+    const items = [pick('btnSaveJson'), pick('btnLoadJson'), pick('btnReset')].filter(Boolean);
+    if (!undo && !items.length) return;
+    btns.dataset.grouped = '1';
+    const group = (els) => { const g = document.createElement('span'); g.className = 'grp'; els.filter(Boolean).forEach((e) => g.appendChild(e)); return g; };
+    const rest = [...btns.children].filter((e) => ![undo, redo, ex, ...items].includes(e));
+    btns.innerHTML = '';
+    if (undo || redo) btns.appendChild(group([undo, redo]));
+    if (items.length) {
+      const menu = RT.h(`<span class="grp menu"><button type="button" class="small menu-btn" aria-haspopup="true" aria-expanded="false">${RT.t('專案', 'Project')} ▾</button><span class="menu-list" role="menu" hidden></span></span>`);
+      const btn = menu.querySelector('.menu-btn'), list = menu.querySelector('.menu-list');
+      items.forEach((b) => { b.classList.remove('small'); b.setAttribute('role', 'menuitem'); if (b.id === 'btnReset') b.classList.add('danger'); list.appendChild(b); });
+      const close = (focus) => { list.hidden = true; btn.setAttribute('aria-expanded', 'false'); if (focus) btn.focus(); };
+      btn.onclick = () => { const open = list.hidden; list.hidden = !open; btn.setAttribute('aria-expanded', String(open)); if (open) list.querySelector('button').focus(); };
+      list.addEventListener('click', () => close(false));
+      menu.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') { close(true); return; }
+        if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+        const bs = [...list.querySelectorAll('button')], i = bs.indexOf(document.activeElement);
+        if (i < 0) return;
+        e.preventDefault(); bs[(i + (e.key === 'ArrowDown' ? 1 : bs.length - 1)) % bs.length].focus();
+      });
+      document.addEventListener('click', (e) => { if (!menu.contains(e.target)) close(false); });
+      btns.appendChild(menu);
+    }
+    if (ex) btns.appendChild(group([ex]));
+    rest.forEach((e) => btns.appendChild(e));
+  };
+
+  // Accessible names for glyph-only buttons and placeholder-only fields, including rows added later
+  const GLYPH_NAMES = { '✕': ['刪除', 'Delete'], '▾': ['展開細節', 'Show details'], '▴': ['收合細節', 'Hide details'], '↑': ['上移', 'Move up'], '↓': ['下移', 'Move down'], '⧉': ['複製此列', 'Duplicate row'], '↶': ['復原', 'Undo'], '↷': ['重做', 'Redo'] };
+  const nameControls = (root) => {
+    if (!root.querySelectorAll) return;
+    root.querySelectorAll('button').forEach((b) => {
+      const t = b.textContent.trim();
+      if (b.hasAttribute('aria-label') || !t || t.length > 2 || /[\p{L}\p{N}]/u.test(t)) return;
+      const g = GLYPH_NAMES[t];
+      const name = b.title || (g && RT.t(g[0], g[1]));
+      if (name) b.setAttribute('aria-label', name);
+    });
+    root.querySelectorAll('input:not([type=hidden]):not([type=file]), textarea, select').forEach((el) => {
+      if (el.hasAttribute('aria-label') || el.hasAttribute('aria-labelledby') || (el.labels && el.labels.length)) return;
+      const prev = el.previousElementSibling;
+      const name = el.placeholder || el.title || (prev && /^(B|SPAN|STRONG)$/.test(prev.tagName) ? prev.textContent.trim() : '');
+      if (name) el.setAttribute('aria-label', name);
+    });
+  };
+  RT.initA11y = () => {
+    ['msgs', 'status'].forEach((id) => { const el = document.getElementById(id); if (el) { el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite'); } });
+    nameControls(document);
+    if (RT._a11yObs || !('MutationObserver' in window)) return;
+    RT._a11yObs = new MutationObserver((ms) => ms.forEach((m) => m.addedNodes.forEach((n) => { if (n.nodeType === 1) nameControls(n.parentNode || n); })));
+    RT._a11yObs.observe(document.body, { childList: true, subtree: true });
+  };
+
+  // Preview: fit-to-column or actual size (wide diagrams otherwise shrink to tiny text)
+  RT.initPaperZoom = () => {
+    const paper = document.querySelector('.preview-col > .paper');
+    if (!paper || document.querySelector('.paper-zoom')) return;
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'small paper-zoom';
+    const label = () => { const actual = paper.classList.contains('zoom-actual'); b.textContent = actual ? RT.t('符合寬度', 'Fit width') : RT.t('實際大小', 'Actual size'); b.setAttribute('aria-pressed', String(actual)); };
+    b.onclick = () => { paper.classList.toggle('zoom-actual'); label(); };
+    label();
+    paper.before(b);
   };
 
   // Phones: the preview sits below every input, so offer a floating button that jumps to it
@@ -118,7 +194,7 @@
   RT.debounce = (fn, ms = 120) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
   RT.toast = (text, ms = 2600) => {
     let el = document.querySelector('.toast');
-    if (!el) { el = document.createElement('div'); el.className = 'toast'; document.body.appendChild(el); }
+    if (!el) { el = document.createElement('div'); el.className = 'toast'; el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite'); document.body.appendChild(el); }
     el.textContent = text; el.classList.add('show');
     clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), ms);
   };
@@ -223,18 +299,23 @@
   });
   /** Show a small modal with a textarea; resolves with the text or null. */
   RT.promptText = (title, hint, initial = '') => new Promise((resolve) => {
-    const dlg = RT.h(`<div class="modal-back"><div class="modal card">
-      <h3>${RT.esc(title)}</h3><p class="hint">${hint}</p>
-      <textarea rows="8" style="font-family:ui-monospace,Consolas,monospace"></textarea>
+    const id = 'dlg' + Date.now();
+    const dlg = RT.h(`<dialog class="modal card" aria-labelledby="${id}">
+      <h3 id="${id}">${RT.esc(title)}</h3><p class="hint">${hint}</p>
+      <textarea rows="8" class="mono" aria-labelledby="${id}"></textarea>
       <div class="btns" style="justify-content:flex-end;margin-top:10px">
-        <button class="m-cancel">${RT.t('取消', 'Cancel')}</button><button class="primary m-ok">${RT.t('套用', 'Apply')}</button></div></div></div>`);
+        <button type="button" class="m-cancel">${RT.t('取消', 'Cancel')}</button><button type="button" class="primary m-ok">${RT.t('套用', 'Apply')}</button></div></dialog>`);
     const ta = dlg.querySelector('textarea');
     ta.value = initial;
-    const close = (v) => { dlg.remove(); resolve(v); };
-    dlg.querySelector('.m-cancel').onclick = () => close(null);
-    dlg.querySelector('.m-ok').onclick = () => close(ta.value);
-    dlg.onclick = (e) => { if (e.target === dlg) close(null); };
+    let done = false;
+    const finish = (v) => { if (done) return; done = true; if (dlg.open) dlg.close(); dlg.remove(); resolve(v); };
+    dlg.querySelector('.m-cancel').onclick = () => finish(null);
+    dlg.querySelector('.m-ok').onclick = () => finish(ta.value);
+    dlg.addEventListener('cancel', (e) => { e.preventDefault(); finish(null); });   // Esc
+    dlg.addEventListener('close', () => finish(null));
+    dlg.addEventListener('click', (e) => { if (e.target === dlg) finish(null); });   // backdrop
     document.body.appendChild(dlg);
+    dlg.showModal();
     ta.focus();
   });
 
@@ -926,8 +1007,10 @@
           <label class="check ex-gray-wrap" style="margin:0 0 0 6px"><input type="checkbox" class="ex-gray"> ${RT.t('灰階', 'Grayscale')}</label>
         </div>
         <div class="export-info"></div>
+        <div class="export-legible"></div>
         <div class="btns">
           <button class="primary ex-go">${RT.t('下載', 'Download')}</button>
+          <span class="ex-issues" hidden></span>
           <button class="ex-word" title="${RT.esc(opts.docxInfo || RT.t('Word 原生圖形，每個方框、文字與線條都能在 Word 裡編輯', 'Native Word shapes — every box, text and line can be edited in Word'))}">${opts.docxLabel || RT.t('Word（可編輯）', 'Word (editable)')}</button>
           <button class="ex-copy" title="${RT.t('以 PNG 複製到剪貼簿，可直接貼到 Word / PowerPoint', 'Copy as PNG to paste into Word / PowerPoint')}">${RT.t('複製 PNG', 'Copy PNG')}</button>
         </div>
@@ -961,6 +1044,22 @@
       if (fmt === 'pdf' && fig.font && !['Arial', 'Helvetica', 'Times New Roman'].includes(fig.font.name))
         txt += RT.t(`　（PDF 會以 ${fig.font.kind === 'serif' ? 'Times' : 'Helvetica'} 取代 ${fig.font.name}）`, `  (PDF substitutes ${fig.font.kind === 'serif' ? 'Times' : 'Helvetica'} for ${fig.font.name})`);
       $('.export-info').textContent = txt;
+      // smallest text at the chosen print width (figure units are CSS px at 96/in; 1 px = 0.75 pt)
+      let minPx = Infinity;
+      fig.svg.replace(/font-size="([\d.]+)"/g, (m, v) => { minPx = Math.min(minPx, Number(v)); return m; });
+      const leg = $('.export-legible');
+      if (Number.isFinite(minPx)) {
+        const pt = minPx * 0.75 * (g.inches / (fig.w / 96));
+        const p = pt.toFixed(1);
+        leg.className = 'export-legible ' + (pt < 6 ? 'bad' : pt < 7 ? 'near' : 'good');
+        leg.textContent = pt < 6
+          ? RT.t(`⚠ 最小字約 ${p} pt，低於多數期刊 6–8 pt 的下限：請放大字級，或改用較寬的版面（例如雙欄 19 cm）。`, `⚠ Smallest text ≈ ${p} pt — below most journals' 6–8 pt minimum. Increase the font size or use a wider layout (e.g. double column, 19 cm).`)
+          : pt < 7
+            ? RT.t(`最小字約 ${p} pt：接近下限，部分期刊要求 7 pt 以上，請對照投稿須知。`, `Smallest text ≈ ${p} pt — close to the limit; some journals ask for 7 pt or more, so check the author guidelines.`)
+            : RT.t(`✓ 最小字約 ${p} pt，符合多數期刊 6–8 pt 以上的要求。`, `✓ Smallest text ≈ ${p} pt, above most journals' 6–8 pt minimum.`);
+      } else { leg.textContent = ''; leg.className = 'export-legible'; }
+      const w = $('.ex-width').value;
+      host.querySelectorAll('.ex-presets [data-w]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.w === w)));
       RT.save('export', { fmt, dpi: $('.ex-dpi').value, dpiC: $('.ex-dpic').value, widthCm: $('.ex-width').value, gray: $('.ex-gray').checked });
     };
     host.addEventListener('input', info);
@@ -993,7 +1092,12 @@
         RT.toast(RT.t('已複製 PNG 到剪貼簿', 'PNG copied to clipboard'));
       } catch (e) { RT.toast(RT.t('無法複製到剪貼簿：', 'Could not copy to clipboard: ') + (e.message || e), 6000); }
     };
-    return { refresh: info };
+    const setIssues = (n) => {
+      const el = $('.ex-issues');
+      el.hidden = !n;
+      el.textContent = n ? RT.t(`還有 ${n} 項檢查未通過`, n === 1 ? '1 check still open' : `${n} checks still open`) : '';
+    };
+    return { refresh: info, setIssues };
   };
 
   /* ---------- references block ---------- */

@@ -33,7 +33,7 @@
   .topbar { justify-content: flex-end; background: transparent; border-bottom: 0; position: static; }
   .hero { max-width: 1080px; margin: 0 auto; padding: 8px 20px 4px; }
   .hero h1 { font-family: var(--font-display); font-size: clamp(2.25rem, 3vw + 1rem, 3.25rem); font-weight: 700; line-height: 1.1; overflow-wrap: anywhere; }
-  .hero p { color: var(--muted); margin: 12px 0 0; max-width: 62ch; }
+  .hero p { color: var(--muted); margin: 12px 0 0; max-width: 62ch; text-wrap: pretty; }
   /* Tools as an index: one ruled row per tool */
   .tools { max-width: 1080px; margin: 0 auto; padding: 28px 20px 32px; display: grid; grid-template-columns: minmax(0, 1fr); }
   .tile {
@@ -44,7 +44,8 @@
   .tile h2 { font-family: var(--font-display); font-size: 19px; font-weight: 700; line-height: 1.3; transition: color .12s cubic-bezier(.16,1,.3,1); }
   .tile h2::after { content: "\00a0→"; color: var(--accent); }
   .tile:hover h2 { color: var(--accent); }
-  .tile p { margin: 0; color: var(--muted); font-size: 14px; max-width: 62ch; }
+  .tile p { margin: 0; color: var(--muted); font-size: 14px; max-width: 62ch; text-wrap: pretty; }
+  .tile p .out { display: block; margin-top: 4px; font-size: 12.5px; color: var(--text); }
   .tile .tags { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
   .group-label { font-size: 14px; font-weight: 700; color: var(--text); margin: 24px 0 6px; }
   .group-label:first-child { margin-top: 0; }
@@ -69,43 +70,43 @@
   <a class="tile" href="prismaflow/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="8" height="5" rx="1"/><rect x="3" y="16" width="8" height="5" rx="1"/><rect x="15" y="3" width="6" height="5" rx="1"/><path d="M7 8v8M11 5.5h4"/></svg></div>
     <h2>PRISMA Flow Diagram</h2>
-    <p data-en="PRISMA 2020 study-selection flow diagram for systematic reviews, with databases / other-methods columns, live auto-calculation and consistency checks.">依 PRISMA 2020 範本產生系統性回顧的文獻篩選流程圖，支援資料庫／其他來源雙欄、即時自動推算與數字檢查。</p>
+    <p data-en="PRISMA 2020 study-selection flow diagram for systematic reviews, with databases / other-methods columns, live auto-calculation and consistency checks.&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG or editable Word shapes&lt;/span&gt;">依 PRISMA 2020 範本產生系統性回顧的文獻篩選流程圖，支援資料庫／其他來源雙欄、即時自動推算與數字檢查。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG，或可編輯的 Word 圖形</span></p>
     <div class="tags"><span class="pill">PRISMA 2020</span><span class="pill" data-en="Editable Word">可編輯 Word</span></div>
   </a>
   <a class="tile" href="cohortflow/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="10" height="4" rx="1"/><rect x="6" y="10" width="10" height="4" rx="1"/><rect x="2" y="18" width="8" height="4" rx="1"/><rect x="14" y="18" width="8" height="4" rx="1"/><path d="M11 6v4M11 14v2H6v2M11 16h7v2"/></svg></div>
     <h2>Cohort Patient Selection</h2>
-    <p data-en="Patient selection flowchart for cohort studies: step-by-step exclusions, automatic remaining n, final groups (exposed / comparator).">世代研究病人選取流程圖：逐步排除條件、自動計算剩餘人數，最後分組（暴露／對照）。</p>
+    <p data-en="Patient selection flowchart for cohort studies: step-by-step exclusions, automatic remaining n, final groups (exposed / comparator).&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG or editable Word shapes&lt;/span&gt;">世代研究病人選取流程圖：逐步排除條件、自動計算剩餘人數，最後分組（暴露／對照）。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG，或可編輯的 Word 圖形</span></p>
     <div class="tags"><span class="pill">STROBE</span><span class="pill" data-en="Auto n">自動計算 n</span></div>
   </a>
   <a class="tile" href="timeline/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20" stroke-dasharray="2 2"/><rect x="3" y="5" width="8" height="3" rx="1"/><rect x="5" y="11" width="6" height="3" rx="1"/><path d="M13 17h8l-2-2M21 17l-2 2"/></svg></div>
     <h2>Cohort Study Timeline</h2>
-    <p data-en="Study design diagram centred on Day 0: exclusion, covariate, exposure and follow-up windows, in block or classic layout.">研究設計時間軸（study design diagram）：以 Day 0 為中心標示排除、共變項、暴露評估與追蹤期間，區塊式或經典版面。</p>
+    <p data-en="Study design diagram centred on Day 0: exclusion, covariate, exposure and follow-up windows, in block or classic layout.&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG or editable Word shapes&lt;/span&gt;">研究設計時間軸（study design diagram）：以 Day 0 為中心標示排除、共變項、暴露評估與追蹤期間，區塊式或經典版面。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG，或可編輯的 Word 圖形</span></p>
     <div class="tags"><span class="pill">Design diagram</span><span class="pill">Day 0</span></div>
   </a>
   <a class="tile" href="figureconvert/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="11" height="14" rx="1.5"/><path d="M14 8h5a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-2"/><path d="M6 8h5M6 11h5"/></svg></div>
     <h2>Figure DPI &amp; Format</h2>
-    <p data-en="Convert PDF / Word / images to PNG, JPG or TIFF at a set DPI — auto-trim, print width, grayscale, batch download.">PDF / Word / 圖片轉成指定 DPI 的 PNG、JPG、TIFF，可自動裁白邊、指定列印寬度、灰階、批次下載。</p>
+    <p data-en="Convert PDF / Word / images to PNG, JPG or TIFF at a set DPI — auto-trim, print width, grayscale, batch download.&lt;span class=&quot;out&quot;&gt;Output: PNG, JPG, TIFF, batch download as ZIP&lt;/span&gt;">PDF / Word / 圖片轉成指定 DPI 的 PNG、JPG、TIFF，可自動裁白邊、指定列印寬度、灰階、批次下載。<span class="out">輸出：PNG、JPG、TIFF，可批次下載 ZIP</span></p>
     <div class="tags"><span class="pill">PDF · DOCX</span><span class="pill">300 / 600 dpi</span></div>
   </a>
   <a class="tile" href="tte/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M3 9h18M9 4v16M15 9v11"/></svg></div>
     <h2>Target Trial Specification</h2>
-    <p data-en="Protocol table for target trial emulation: eligibility, strategies, assignment, time zero, outcome, causal contrasts, analysis — target trial vs emulation.">目標試驗模擬規格表：eligibility、treatment strategies、assignment、time zero、outcome、causal contrast、analysis，並列 target trial 與模擬方式。</p>
+    <p data-en="Protocol table for target trial emulation: eligibility, strategies, assignment, time zero, outcome, causal contrasts, analysis — target trial vs emulation.&lt;span class=&quot;out&quot;&gt;Output: editable Word table, or PNG, TIFF, PDF, SVG&lt;/span&gt;">目標試驗模擬規格表：eligibility、treatment strategies、assignment、time zero、outcome、causal contrast、analysis，並列 target trial 與模擬方式。<span class="out">輸出：可編輯的 Word 表格，或 PNG、TIFF、PDF、SVG</span></p>
     <div class="tags"><span class="pill">TTE</span><span class="pill" data-en="Word table">Word 表格</span></div>
   </a>
   <a class="tile" href="rob2/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="7" r="2.5"/><circle cx="12" cy="7" r="2.5"/><circle cx="18" cy="7" r="2.5"/><circle cx="6" cy="16" r="2.5"/><circle cx="12" cy="16" r="2.5"/><circle cx="18" cy="16" r="2.5"/></svg></div>
     <h2>RoB 2</h2>
-    <p data-en="Risk of bias in randomised trials: domain judgements with support, automatic overall judgement, traffic-light and summary plots.">隨機對照試驗偏誤風險：各 domain 判斷與理由、自動整體判斷、紅綠燈圖與摘要長條圖。</p>
+    <p data-en="Risk of bias in randomised trials: domain judgements with support, automatic overall judgement, traffic-light and summary plots.&lt;span class=&quot;out&quot;&gt;Output: figure (PNG, TIFF, PDF, SVG, Word) plus Word table and CSV&lt;/span&gt;">隨機對照試驗偏誤風險：各 domain 判斷與理由、自動整體判斷、紅綠燈圖與摘要長條圖。<span class="out">輸出：圖（PNG、TIFF、PDF、SVG、Word），以及 Word 表格、CSV</span></p>
     <div class="tags"><span class="pill">Cochrane RoB 2</span><span class="pill">robvis-style</span></div>
   </a>
   <a class="tile" href="robinsi/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="5" cy="12" r="2.3"/><circle cx="12" cy="12" r="2.3"/><circle cx="19" cy="12" r="2.3"/><path d="M3 5h18M3 19h18"/></svg></div>
     <h2>ROBINS-I V2</h2>
-    <p data-en="Risk of bias in non-randomised studies of interventions — official V2 of 20 Nov 2025 (6 domains), with the archived Nov 2024 V2 and the 2016 V1: overall judgement, plots and tables.">非隨機介入研究偏誤風險：官方 V2（2025-11-20，6 個 domain），另可切換 2024 封存版 V2 與 2016 V1；整體判斷、圖表與表格。</p>
+    <p data-en="Risk of bias in non-randomised studies of interventions — official V2 of 20 Nov 2025 (6 domains), with the archived Nov 2024 V2 and the 2016 V1: overall judgement, plots and tables.&lt;span class=&quot;out&quot;&gt;Output: figure (PNG, TIFF, PDF, SVG, Word) plus Word table and CSV&lt;/span&gt;">非隨機介入研究偏誤風險：官方 V2（2025-11-20，6 個 domain），另可切換 2024 封存版 V2 與 2016 V1；整體判斷、圖表與表格。<span class="out">輸出：圖（PNG、TIFF、PDF、SVG、Word），以及 Word 表格、CSV</span></p>
     <div class="tags"><span class="pill">ROBINS-I V2</span><span class="pill">robvis-style</span></div>
   </a>
   <h2 class="group-label" data-en="Tutorials">教學</h2>

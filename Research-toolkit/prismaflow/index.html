@@ -39,7 +39,7 @@
 <main class="tool">
   <section id="form">
     <div class="card">
-      <p class="hint" style="margin:0" data-en="Fill in from top to bottom. Fields that can be derived (screened, sought, assessed, reports…) are calculated automatically when left blank and shown in <span style='color:var(--accent);font-style:italic'>blue italics</span>; type a number to override. Numbers that don't add up are outlined in red.">由上往下填寫即可。可推算的欄位（screened、sought、assessed、reports…）留空時會自動計算並以<span style="color:var(--accent);font-style:italic">藍色斜體</span>顯示；自己輸入數字即可覆蓋。數字對不上的欄位會以紅框標示。</p>
+      <p class="hint" style="margin:0" data-en="Fill in from the top. Derived fields left blank are calculated for you (&lt;span style='color:var(--accent);font-style:italic'&gt;blue italics&lt;/span&gt;); type a number to override. Numbers that don't add up are outlined in red.">由上往下填。可推算的欄位留空時會自動計算（<span style="color:var(--accent);font-style:italic">藍色斜體</span>），自己輸入即覆蓋；對不上的數字會標紅框。</p>
       <label class="check"><input type="checkbox" data-k="autoFill"> <span data-en="Auto-calculate blank derived fields">自動推算空白的推導欄位</span></label>
     </div>
 
@@ -292,7 +292,7 @@ function checks({ D, E, rs }) {
   const bad = new Set();
   const cmp = (k, why) => {
     const v = N(S[k]);
-    if (v !== null && D[k] !== null && D[k] !== undefined && v !== D[k]) { bad.add(k); msgs.push(`${why}: ${T('推算為', 'expected')} ${fmt(D[k])}, ${T('目前填', 'entered')} ${fmt(v)}`); }
+    if (v !== null && D[k] !== null && D[k] !== undefined && v !== D[k]) { bad.add(k); msgs.push({ text: `${why}: ${T('推算為', 'expected')} ${fmt(D[k])}, ${T('目前填', 'entered')} ${fmt(v)}`, k, v: D[k] }); }
   };
   cmp('databases', T('各資料庫明細加總 ≠ Databases（若已去除資料庫內重複可忽略）', 'Per-database sum ≠ Databases (ignore if de-duplicated within databases)'));
   cmp('screened', T('Records screened = identified − removed', 'Records screened = identified − removed'));
@@ -301,7 +301,7 @@ function checks({ D, E, rs }) {
   if (S.other) cmp('oAssessed', '(Other) assessed = sought − not retrieved');
   cmp('reports', T('Reports of included studies = assessed − 排除原因合計', 'Reports of included = assessed − excluded reasons'));
   if (E.studies !== null && E.reports !== null && E.studies > E.reports) { bad.add('studies'); msgs.push(T('Studies included 通常應 ≤ Reports of included studies', 'Studies included should usually be ≤ reports of included studies')); }
-  ['reasons', 'oReasons'].forEach((k) => { if ((k === 'reasons' || S.other) && S[k].some((r) => r.t && String(r.n).trim() === '')) msgs.push(T('有排除原因尚未填人數', 'Some exclusion reasons have no number')); });
+  ['reasons', 'oReasons'].forEach((k) => { if ((k === 'reasons' || S.other) && S[k].some((r) => r.t && !/^Reason \d+$/.test(r.t) && String(r.n).trim() === '')) msgs.push(T('有排除原因尚未填人數', 'Some exclusion reasons have no number')); });
   // field states
   form.querySelectorAll('input[data-k]').forEach((el) => el.classList.toggle('bad', bad.has(el.dataset.k)));
   form.querySelectorAll('input[data-d]').forEach((el) => {
@@ -311,9 +311,16 @@ function checks({ D, E, rs }) {
     el.placeholder = auto ? T('自動 ', 'Auto ') + fmt(D[k]) : '';
   });
   document.getElementById('rsSum').textContent = rs !== null ? T('合計 ', 'Total ') + fmt(rs) : '';
-  document.getElementById('msgs').innerHTML = msgs.length ? msgs.map((m) => `<div class="msg">⚠ ${RT.esc(m)}</div>`).join('')
+  document.getElementById('msgs').innerHTML = msgs.length ? msgs.map((m) => typeof m === 'string' ? `<div class="msg">⚠ ${RT.esc(m)}</div>`
+      : `<div class="msg">⚠ ${RT.esc(m.text)} <button type="button" class="small" data-fix="${m.k}" data-v="${m.v}">${T('改用', 'Use')} ${fmt(m.v)}</button></div>`).join('')
     : (E.screened !== null ? `<div class="msg ok">✓ ${T('數字檢查通過', 'All numbers are consistent')}</div>` : '');
+  return msgs.length;
 }
+document.getElementById('msgs').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-fix]');
+  if (!b) return;
+  S[b.dataset.fix] = b.dataset.v; syncInputs(); update();
+});
 document.getElementById('btnFill').onclick = () => {
   const { E } = compute();
   for (const k of ['databases', 'screened', 'sought', 'assessed', 'oSought', 'oAssessed', 'reports', 'studies'])
@@ -427,7 +434,7 @@ function render() {
   const calc = compute();
   try { fig = build(calc); preview.innerHTML = fig.svg; }
   catch (e) { console.error(e); preview.innerHTML = `<div class="msg">⚠ ${RT.esc(e.message)}</div>`; }
-  checks(calc);
+  exporter.setIssues(checks(calc));
   exporter.refresh();
   RT.save(KEY, S);
 }

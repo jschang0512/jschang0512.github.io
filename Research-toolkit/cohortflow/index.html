@@ -51,14 +51,14 @@
 
     <div class="card">
       <h2><span class="step-no">2</span> <span data-en="Selection steps (top to bottom)">篩選步驟（由上往下）</span></h2>
-      <p class="hint" data-en="Each step has an exclusion box and the remaining population. Leave the remaining n blank to compute it automatically (previous − excluded, shown in <span style='color:var(--accent);font-style:italic'>blue italics</span>). With no exclusion reasons only an arrow is drawn — use the arrow note for steps such as matching.">每一步有一個排除框與排除後的族群。剩餘人數留空會自動以「上一步 − 排除總數」計算（<span style="color:var(--accent);font-style:italic">藍色斜體</span>）。沒有排除原因時只畫箭頭，可用「箭頭旁說明」標註 matching 等步驟。</p>
+      <p class="hint" data-en="Each step: exclusion reasons and the remaining n. Leave n blank to use previous − excluded (&lt;span style='color:var(--accent);font-style:italic'&gt;blue italics&lt;/span&gt;). With no reasons only an arrow is drawn; label it with the arrow note (e.g. matching).">每一步填排除原因與剩餘人數。剩餘人數留空＝上一步 − 排除總數（<span style="color:var(--accent);font-style:italic">藍色斜體</span>）。不填排除原因只畫箭頭，可用「箭頭旁說明」標註 matching 等步驟。</p>
       <div id="steps"></div>
       <button class="small" id="addStep" data-en="+ Add step">＋ 新增步驟</button>
     </div>
 
     <div class="card">
       <h2><span class="step-no">3</span> <span data-en="Groups (optional)">分組（選填）</span></h2>
-      <p class="hint" data-en="Final groups, e.g. exposed / unexposed. Each group can have several levels (e.g. after matching, analysed).">最後分成的組別（例如暴露組／對照組）。每組可有多層方框（例如 matching 後、分析族群）。</p>
+      <p class="hint" data-en="Final groups (e.g. exposed / comparator); each group can have several boxes.">最後的組別（例如暴露組／對照組），每組可加多層方框。</p>
       <div id="groups"></div>
       <button class="small" id="addGroup" data-en="+ Add group">＋ 新增組別</button>
     </div>
