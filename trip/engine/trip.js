@@ -206,7 +206,7 @@
     return (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
   }
 
-  let current = getPreferred();
+  let current = "light";   // the storybook look is light only
   document.documentElement.setAttribute("data-theme", current);
 
   function init(){
@@ -275,11 +275,11 @@ function renderRow(item){
     <div class="transit">
       <div class="leg">
         <span class="stop">${fromLink}${timeFrom? " "+timeFrom : ""}</span>
-        <span class="mid"><span class="mid-icon">${m.icon}</span></span>
+        <span class="mid"><span class="mode-tag" style="--mc:${m.color}">${m.label}</span></span>
         <span class="stop right">${toLink}${timeTo? " "+timeTo : ""}</span>
       </div>
       <div class="meta">
-        <span class="chip line-tag" style="color:${m.color}">${item.line}</span>
+        <span class="chip line-tag" style="--mc:${m.color}">${item.line}</span>
         ${chips.join("")}
       </div>
     </div>
@@ -287,7 +287,7 @@ function renderRow(item){
 }
 function buildPage(day, idx){
   const rows = day.items.map(renderRow).join("");
-  const hotelChip = day.hotel ? `<div class="hotel-info">🏨 住宿：${day.hotel}</div>` : "";
+  const hotelChip = day.hotel ? `<div class="hotel-info">住宿：${day.hotel}</div>` : "";
   return `<section class="day-page" id="day-${idx}">
     <div class="day-head">
       <div class="dnum mono">${String(idx+1).padStart(2,"0")}</div>
@@ -325,7 +325,7 @@ function buildPackingPage(){
       <div class="dnum mono">🧳</div>
       <div class="dmeta">
         <div class="ddate">PACKING LIST</div>
-        <div class="dtitle">行李清單</div>
+        <div class="dtitle">待辦清單</div>
       </div>
     </div>
     <div class="pack-progress">
@@ -508,13 +508,14 @@ function buildNav(){
 }
 function buildUtilBar(){
   return `
-    <button class="util-btn" data-page="contacts">聯絡資訊</button>
-    <button class="util-btn" data-page="flights">航班資訊</button>
-    <button class="util-btn" data-page="driving">租車自駕</button>
-    <button class="util-btn" data-page="weather">天氣預報</button>
-    <button class="util-btn" data-page="quake">地震資訊</button>
+    <button class="util-btn" data-page="days">每日行程</button>
+    <button class="util-btn" data-page="flights">航班</button>
+    <button class="util-btn" data-page="packing">待辦清單</button>
+    <button class="util-btn" data-page="contacts">住宿與聯絡</button>
+    <button class="util-btn" data-page="weather">天氣</button>
     ${TRIP.food ? `<button class="util-btn" data-page="food">美食地圖</button>` : ""}
-    <button class="util-btn" data-page="packing">行李清單</button>
+    <button class="util-btn" data-page="driving">租車自駕</button>
+    <button class="util-btn" data-page="quake">地震</button>
     <a class="util-btn" href="https://jschang0512.github.io/splitbill/" target="_blank" rel="noopener">旅費分帳</a>`;
 }
 function buildFoodPage(){
@@ -594,7 +595,7 @@ function buildContactsPage(){
       <a class="maplink" href="${MAP_URL_OVERRIDE[l.addr] || ('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(l.addr))}" target="_blank" rel="noopener">📍 地圖</a>
     </div>`).join("");
 
-  const people = `<div class="section-label">👥 團員聯絡方式</div>
+  const people = `<div class="section-label">團員聯絡方式</div>
       <div class="contact-block">${contactRows || `<div class="empty-note">尚未加入團員聯絡資訊。在這趟的 data.js 裡的 CONTACTS 陣列加入姓名、電話（可選 Facebook 連結）即可自動出現在這裡。</div>`}</div>`;
   const gate = TRIP.contactsGate;
 
@@ -603,7 +604,7 @@ function buildContactsPage(){
       <div class="dnum mono">📇</div>
       <div class="dmeta">
         <div class="ddate">CONTACTS</div>
-        <div class="dtitle">聯絡資訊</div>
+        <div class="dtitle">住宿與聯絡</div>
       </div>
     </div>
     ${gate ? `
@@ -620,7 +621,7 @@ function buildContactsPage(){
       ${people}
     </div>` : people}
 
-    <div class="section-label">🏨 住宿地址</div>
+    <div class="section-label">住宿</div>
     ${lodgingRows || `<div class="empty-note">住宿還沒訂好或還沒填地址。訂房後把飯店名稱、完整地址加進 data.js 的 LODGING 陣列，出示給司機或飯店櫃檯會更方便。</div>`}
   </section>`;
 }
@@ -792,6 +793,16 @@ async function loadQuakes(){
     mapEl.innerHTML = `<div class="wx-error">地震資料載入失敗，請確認網路連線後重新整理頁面。</div>`;
   }
 }
+(function heroArt(){
+  const art = window.TRIP_ART && window.TRIP_ART[TRIP.key];
+  const h1 = document.querySelector("header.hero h1.title");
+  if(!art || !h1) return;
+  const box = document.createElement("div");
+  box.className = "hero-art";
+  box.setAttribute("aria-hidden", "true");
+  box.innerHTML = art;
+  h1.before(box);
+})();
 const main = document.getElementById("main");
 main.innerHTML = days.map(buildPage).join("") + buildContactsPage() + buildFlightsPage() + buildDrivingPage() + buildWeatherPage() + buildQuakePage() + (TRIP.food ? buildFoodPage() : "") + buildPackingPage();
 document.getElementById("dayNav").innerHTML = buildNav();
@@ -1134,6 +1145,7 @@ document.getElementById("moreSheet").addEventListener("click", (e)=>{
   if(dayCard){ activatePage(dayCard.dataset.page); closeMoreSheet(); }
   else if(itemCard){ activatePage(itemCard.dataset.page); closeMoreSheet(); }
 });
+let lastDayPage = "0";   // where "每日行程" in the top menu returns to
 function activatePage(page, {jump=true, dir=null}={}){
   const isExtra = EXTRA_PAGES.includes(page);
   const btn = isExtra ? document.querySelector(`.util-btn[data-page="${page}"]`)
@@ -1152,6 +1164,7 @@ function activatePage(page, {jump=true, dir=null}={}){
   document.querySelectorAll(".day-page").forEach(p=>p.classList.remove("active","slide-next","slide-prev","exit-next","exit-prev"));
   btn.classList.add("active");
   el.classList.add("active");
+  if(!isExtra){ lastDayPage = String(page); const d = document.querySelector('.util-btn[data-page="days"]'); if(d) d.classList.add("active"); }
   el.querySelectorAll(".reveal:not(.revealed)").forEach(r=>r.classList.add("revealed"));
   if(dir === "next") el.classList.add("slide-next");
   else if(dir === "prev") el.classList.add("slide-prev");
@@ -1184,8 +1197,8 @@ document.getElementById("dayNav").addEventListener("click",(e)=>{
 });
 document.getElementById("utilBar").addEventListener("click",(e)=>{
   const btn = e.target.closest(".util-btn");
-  if(!btn) return;
-  activatePage(btn.dataset.page);
+  if(!btn || !btn.dataset.page) return;
+  activatePage(btn.dataset.page === "days" ? lastDayPage : btn.dataset.page);
 });
 
 // ---- Packing list persistence ----

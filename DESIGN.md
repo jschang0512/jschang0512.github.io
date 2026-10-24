@@ -113,7 +113,7 @@ components:
 | CV、blog、404 | **學術期刊**（Garden） | 閱讀、建立可信度 | 森林綠＋銅色（本檔 token 即此套） |
 | Research Toolkit | **精密工作台**（Cobalt） | 操作：填資料、匯出論文圖表 | 鈷藍 |
 | NMA 教學 | **教科書** | 逐步閱讀並照做 | 藍色、程式碼底色 |
-| 行程頁 | 各趟旅行自己的顏色 | 旅途中查看 | 每趟的 `theme.css` |
+| 行程頁 | **日系繪本**（Storybook） | 旅途中在手機上查看 | 和紙白 #FFFCF6、3px 墨灰 #3E3A39 粗框、大圓角、平塗；珊瑚粉／山吹黃／水色／若竹綠；Huninn 字型；只用淺色；每趟一張手繪 SVG 插圖（`trip/engine/storybook.css`、`illustrations.js`） |
 | menu 書籤 | 深夜藍（Midnight） | 私人索引 | 深藍底、青綠 accent |
 | 調劑台複習 | 藥局綠 | 執業時手機上複習 | 深綠＋米紙色 |
 
@@ -259,6 +259,8 @@ CV 最有辨識度的元件：日期欄（7.5rem，銅色粗體 tabular-nums）�
 Toolkit 首頁的一行：Fraunces 工具名後面接主題色的「→」（用不斷行空白黏在名稱上），中間是 muted 說明，右側是主題色標籤。列與列之間用細線分隔，不用圖示方塊。
 
 ### Named Rules
+**The Storybook Exception.** 行程頁依使用者指定的繪本風：3px 墨灰粗框、大圓角、平塗、Huninn 單一字型、只用淺色、插圖輕微動態與換日彈跳（皆支援減少動態效果）。這一區不套用全站的細線分隔與 Fraunces 規則。
+
 **The Two Temperaments Rule.** 工作工具（CV、Toolkit、NMA）精準而克制：細邊框、膠囊按鈕、狀態只換顏色。生活工具（行程、調劑台、書籤）溫和而親切：圓角可以放寬到 12–14px、底色更柔和，也可以用輕微的陰影，但仍然不用漸層和 emoji 圖示。
 
 ## Do's and Don'ts

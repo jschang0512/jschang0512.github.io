@@ -6,9 +6,7 @@
 (function(){
   try{
     var t = localStorage.getItem("kyushu-theme");
-    if(t !== "dark" && t !== "light"){
-      t = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
-    }
+    t = "light";   // storybook theme: light only
     document.documentElement.setAttribute("data-theme", t);
   }catch(e){}
 })();
@@ -24,6 +22,8 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="stylesheet" href="../engine/trip.css">
 <link rel="stylesheet" href="theme.css">
+<link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../engine/storybook.css">
 </head>
 <body>
 
@@ -83,6 +83,7 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="../engine/trip-core.js"></script>
+<script src="../engine/illustrations.js"></script>
 <script src="data.js"></script>
 <script src="../engine/trip.js"></script>
 </body>
