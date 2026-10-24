@@ -18,23 +18,22 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../shared/style.css?v=20261011a">
+<link rel="stylesheet" href="../shared/style.css?v=20261025a">
 <style>
   .erow .block-head input { flex: 1; }
   .erow .nums { display: grid; grid-template-columns: 7.5rem repeat(3, minmax(0, 1fr)); gap: 6px; align-items: end; }
   .erow .opts { display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center; margin-top: 6px; }
   .erow .opts .check { margin: 0; }
   @media (max-width: 640px) { .erow .nums { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
-  .res { display: flex; flex-direction: column; gap: 12px; }
-  .res-item + .res-item { border-top: 1px solid var(--border); padding-top: 12px; }
-  .res-item h3 { font-size: 14px; margin: 0 0 6px; }
-  .res-nums { display: flex; flex-wrap: wrap; gap: 6px 20px; font-variant-numeric: tabular-nums; }
-  .res-nums b { font-size: 20px; font-family: var(--font-display); }
-  .res-nums span { color: var(--muted); font-size: 12.5px; display: block; }
-  .res-text { margin: 8px 0 0; font-size: 13px; line-height: 1.6; }
-  .res-text + .btns { margin-top: 6px; }
-  .res-conv { color: var(--muted); font-size: 12.5px; margin-top: 4px; }
-  .res-bench { margin-top: 6px; font-size: 13px; }
+  .res-tbl { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .res-tbl th { font-size: 12.5px; font-weight: 600; color: var(--muted); text-align: right; padding: 0 8px 6px; border-bottom: 1px solid var(--border); }
+  .res-tbl td { padding: 7px 8px; border-bottom: 1px solid var(--border); text-align: right; }
+  .res-tbl th:first-child, .res-tbl td:first-child { text-align: left; padding-left: 0; }
+  .res-tbl td.num { font-family: var(--font-display); font-size: 18px; font-weight: 700; }
+  .res-tbl td.copy { white-space: nowrap; padding-right: 0; }
+  .res-tbl td.copy button + button { margin-left: 4px; }
+  .res-tbl tr:last-child td { border-bottom: 0; }
+  .res-tbl .err { text-align: left; color: var(--warn-text); }
   .brow { display: grid; grid-template-columns: minmax(0, 1fr) 7rem 30px; gap: 6px; align-items: center; margin-bottom: 6px; }
 </style>
 </head>
@@ -103,14 +102,14 @@
   </section>
 
   <section class="preview-col">
-    <div class="card"><h2 data-en="Results">結果</h2><div class="res" id="results"></div></div>
     <div class="paper" id="preview"></div>
+    <div class="card"><h2 data-en="Results">結果</h2><div id="results"></div></div>
     <div class="msgs" id="msgs"></div>
     <div class="card" id="export"></div>
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261011b"></script>
+<script src="../shared/common.js?v=20261025a"></script>
 <script>
 const T = RT.t;
 const KEY = 'evalue1';
@@ -169,26 +168,35 @@ function strongest() {
 /* ---------------- result sentences ---------------- */
 function sentences(r, c) {
   const [abbr, en, zh] = TYPES[r.type];
-  const obs = `${f2(r.est)}${c.lo !== null ? ` (95% CI ${f2(r.lo)}–${f2(r.hi)})` : ''}`;
-  const obsZh = `${f2(r.est)}${c.lo !== null ? `（95% CI ${f2(r.lo)}–${f2(r.hi)}）` : ''}`;
+  const [ve, vl, vh] = [r.est, r.lo, r.hi].map(RT.num);
+  const obs = `${f2(ve)}${c.lo !== null ? ` (95% CI ${f2(vl)}–${f2(vh)})` : ''}`;
+  const obsZh = `${f2(ve)}${c.lo !== null ? `（95% CI ${f2(vl)}–${f2(vh)}）` : ''}`;
   const target = c.t === 1 ? 'the null' : `a risk ratio of ${f2(c.t)}`;
   const targetZh = c.t === 1 ? '虛無值' : `風險比 ${f2(c.t)}`;
   const conv = c.converted ? (r.type === 'SMD' ? `, approximated as a risk ratio of ${f2(c.rr)},` : `, approximated as a risk ratio of ${f2(c.rr)} because the outcome was common,`) : '';
   const convZh = c.converted ? (r.type === 'SMD' ? `（換算為約略風險比 ${f2(c.rr)}）` : `（因結果常見，換算為約略風險比 ${f2(c.rr)}）`) : '';
   let enS = `The observed ${en} of ${obs}${conv} could be explained away by an unmeasured confounder associated with both the exposure and the outcome by a risk ratio of ${f2(c.point)}-fold each, above and beyond the measured covariates, but weaker confounding could not do so.`;
   let zhS = `觀察到的 ${abbr} 為 ${obsZh}${convZh}。若要把這個結果完全解釋掉，未測量干擾因子必須在已調整的變項之外，同時與暴露及結果有至少 ${f2(c.point)} 倍的風險比關聯；較弱的干擾無法做到。`;
+  if (c.point <= 1.0001) {
+    enS = `The observed ${en} of ${obs}${conv} shows no association, so there is nothing for unmeasured confounding to explain away (E-value = 1).`;
+    zhS = `觀察到的 ${abbr} 為 ${obsZh}${convZh}，沒有關聯，因此不需要以未測量干擾解釋（E-value = 1）。`;
+    return { en: enS, zh: zhS };
+  }
   if (c.ci !== null) {
     if (c.ciNull) { enS += ` The confidence interval already includes ${target}, so its E-value is 1.`; zhS += `信賴區間已包含${targetZh}，因此信賴區間的 E-value 為 1。`; }
     else { enS += ` To shift the confidence interval to include ${target}, the confounder would need a risk ratio of ${f2(c.ci)}-fold with each.`; zhS += `要讓信賴區間涵蓋${targetZh}，干擾因子與兩者的關聯需至少為 ${f2(c.ci)} 倍。`; }
   }
   const B = strongest();
-  if (B) {
+  if (B && c.ci !== null && !c.ciNull && B.rr >= c.ci && B.rr < c.point) {
+    enS += ` For comparison, a measured covariate (${B.label}) was associated with the outcome by a risk ratio of ${f2(B.rr)}: below the E-value for the estimate (${f2(c.point)}) but at or above the E-value for the confidence interval (${f2(c.ci)}), so confounding of that strength could not explain away the estimate but could move the interval to include the null.`;
+    zhS += `作為比較，已測量變項${B.label}與結果的風險比為 ${f2(B.rr)}：低於估計值的 E-value（${f2(c.point)}），但不低於信賴區間的 E-value（${f2(c.ci)}）。同等強度的干擾無法完全解釋估計值，但可能讓信賴區間涵蓋虛無值。`;
+  } else if (B) {
     if (c.point > B.rr) {
-      enS += ` For comparison, the strongest association of a measured covariate with the outcome (${B.label}) was a risk ratio of ${f2(B.rr)}, below this E-value.`;
-      zhS += `作為比較，已測量變項中與結果關聯最強的是${B.label}（風險比 ${f2(B.rr)}），低於此 E-value。`;
+      enS += ` For comparison, the strongest association of a measured covariate with the outcome (${B.label}) was a risk ratio of ${f2(B.rr)}, below both E-values.`;
+      zhS += `作為比較，已測量變項中與結果關聯最強的是${B.label}（風險比 ${f2(B.rr)}），低於兩個 E-value。`;
     } else {
-      enS += ` For comparison, a measured covariate (${B.label}) was associated with the outcome by a risk ratio of ${f2(B.rr)}, at or above this E-value, so unmeasured confounding of similar strength cannot be ruled out.`;
-      zhS += `作為比較，已測量變項${B.label}與結果的風險比為 ${f2(B.rr)}，不低於此 E-value，因此無法排除同等強度的未測量干擾。`;
+      enS += ` For comparison, a measured covariate (${B.label}) was associated with the outcome by a risk ratio of ${f2(B.rr)}, at or above the E-value for the estimate, so unmeasured confounding of similar strength cannot be ruled out.`;
+      zhS += `作為比較，已測量變項${B.label}與結果的風險比為 ${f2(B.rr)}，不低於估計值的 E-value，因此無法排除同等強度的未測量干擾。`;
     }
   }
   if (c.t !== 1) { enS = enS.replace('could be explained away', `could be moved to ${target}`); zhS = zhS.replace('把這個結果完全解釋掉', `把這個結果推到${targetZh}`); }
@@ -259,28 +267,19 @@ document.getElementById('addRow').onclick = () => { S.rows.push(est({ type: S.ro
 function renderResults() {
   const host = document.getElementById('results');
   const items = S.rows.map((r, i) => ({ r, i, c: compute(r) })).filter((x) => x.c);
-  if (!items.length) { host.innerHTML = `<p class="hint" style="margin:0">${T('輸入估計值與 95% CI 後，這裡會顯示 E-value 與可放進論文的描述。', 'Enter an estimate and its 95% CI to see the E-values and a sentence for your manuscript.')}</p>`; return; }
-  host.innerHTML = '';
-  items.forEach(({ r, i, c }) => {
-    if (c.err) { host.appendChild(RT.h(`<div class="res-item"><h3>${RT.esc(r.label || T(`估計值 ${i + 1}`, `Estimate ${i + 1}`))}</h3><div class="msg">⚠ ${RT.esc(c.err)}</div></div>`)); return; }
-    const s = sentences(r, c);
-    const el = RT.h(`<div class="res-item">
-      <h3>${RT.esc(r.label || T(`估計值 ${i + 1}`, `Estimate ${i + 1}`))}</h3>
-      <div class="res-nums"><div><span>${T('E-value（估計值）', 'E-value (estimate)')}</span><b>${f2(c.point)}</b></div>
-        ${c.ci !== null ? `<div><span>${T('E-value（信賴區間）', 'E-value (CI)')}</span><b>${f2(c.ci)}</b></div>` : ''}</div>
-      ${c.converted ? `<div class="res-conv">${T(`以約略風險比 ${f2(c.rr)} 計算`, `Computed on an approximate risk ratio of ${f2(c.rr)}`)}${c.lo !== null ? `（${f2(c.lo)}–${f2(c.hi)}）` : ''}</div>` : ''}
-      ${(() => { const B = strongest(); if (!B) return '';
-        return c.point > B.rr
-          ? `<div class="res-bench msg ok">${RT.esc(T(`未測量干擾必須比 ${B.label}（RR ${f2(B.rr)}）更強，才能推翻這個結果`, `An unmeasured confounder would have to be stronger than ${B.label} (RR ${f2(B.rr)}) to explain this away`))}</div>`
-          : `<div class="res-bench msg">${RT.esc(T(`與 ${B.label}（RR ${f2(B.rr)}）同等強度的干擾就可能推翻這個結果`, `A confounder as strong as ${B.label} (RR ${f2(B.rr)}) could explain this away`))}</div>`; })()}
-      <p class="res-text" lang="en">${RT.esc(s.en)}</p>
-      <div class="btns"><button class="small" data-copy="en">${T('複製英文描述', 'Copy English sentence')}</button><button class="small" data-copy="zh">${T('複製中文描述', 'Copy Chinese sentence')}</button></div></div>`);
-    el.querySelectorAll('[data-copy]').forEach((b) => (b.onclick = async () => {
-      try { await navigator.clipboard.writeText(s[b.dataset.copy]); RT.toast(T('已複製', 'Copied')); }
-      catch (e) { RT.toast(T('無法複製到剪貼簿', 'Could not copy to the clipboard'), 4000); }
-    }));
-    host.appendChild(el);
-  });
+  if (!items.length) { host.innerHTML = `<p class="hint" style="margin:0">${T('輸入估計值與 95% CI 後顯示 E-value。', 'Enter an estimate and its 95% CI to see the E-values.')}</p>`; return; }
+  const name = (r, i) => RT.esc(r.label || T(`估計值 ${i + 1}`, `Estimate ${i + 1}`));
+  host.innerHTML = `<table class="res-tbl"><thead><tr><th>${T('分析', 'Analysis')}</th><th>${T('E-value（估計值）', 'E-value (estimate)')}</th><th>${T('E-value（CI）', 'E-value (CI)')}</th><th aria-label="${T('複製結果描述', 'Copy sentence')}"></th></tr></thead><tbody>` +
+    items.map(({ r, i, c }) => (c.err
+      ? `<tr><td>${name(r, i)}</td><td class="err" colspan="3">⚠ ${RT.esc(c.err)}</td></tr>`
+      : `<tr><td>${name(r, i)}</td><td class="num">${f2(c.point)}</td><td class="num">${c.ci === null ? '—' : f2(c.ci)}</td>
+          <td class="copy"><button class="small" data-i="${i}" data-copy="en" title="${T('複製英文結果描述', 'Copy the English results sentence')}">${T('複製英文', 'Copy EN')}</button><button class="small" data-i="${i}" data-copy="zh" title="${T('複製中文結果描述', 'Copy the Chinese results sentence')}">${T('複製中文', 'Copy ZH')}</button></td></tr>`)).join('') +
+    '</tbody></table>';
+  host.querySelectorAll('[data-copy]').forEach((btn) => (btn.onclick = async () => {
+    const r = S.rows[Number(btn.dataset.i)];
+    try { await navigator.clipboard.writeText(sentences(r, compute(r))[btn.dataset.copy]); RT.toast(T('已複製', 'Copied')); }
+    catch (e) { RT.toast(T('無法複製到剪貼簿', 'Could not copy to the clipboard'), 4000); }
+  }));
 }
 
 /* ---------------- figures ---------------- */
@@ -354,7 +353,8 @@ function tableModel() {
   const rows = S.rows.map((r, i) => {
     const c = compute(r);
     if (!c || c.err) return null;
-    return [r.label || `Estimate ${i + 1}`, `${r.type} ${f2(r.est)}${c.lo !== null ? ` (${f2(r.lo)}–${f2(r.hi)})` : ''}`, c.converted ? f2(c.rr) : '—', f2(c.point), c.ci === null ? '—' : f2(c.ci)];
+    const [ve, vl, vh] = [r.est, r.lo, r.hi].map(RT.num);
+    return [r.label || `Estimate ${i + 1}`, `${r.type} ${f2(ve)}${c.lo !== null ? ` (${f2(vl)}–${f2(vh)})` : ''}`, c.converted ? f2(c.rr) : '—', f2(c.point), c.ci === null ? '—' : f2(c.ci)];
   }).filter(Boolean);
   return { heads, rows, widths: [28, 26, 14, 16, 16] };
 }

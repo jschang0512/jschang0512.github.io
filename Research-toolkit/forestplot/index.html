@@ -18,7 +18,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../shared/style.css?v=20261011a">
+<link rel="stylesheet" href="../shared/style.css?v=20261025a">
 <style>
   .frow .block-head input { flex: 1; }
   .frow .nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
@@ -127,7 +127,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261011b"></script>
+<script src="../shared/common.js?v=20261025a"></script>
 <script>
 const T = RT.t;
 const KEY = 'forest1';
@@ -217,7 +217,7 @@ document.getElementById('btnPaste').onclick = async () => {
     T('每列一個估計值，欄位以 Tab 分隔：<code>名稱</code>、<code>估計值</code>、<code>下限</code>、<code>上限</code>，之後可接欄 A、欄 B、P 值、權重。估計值也可以寫成 <code>0.78 (0.69–0.88)</code>。只有名稱的列會成為分組標題。',
       'One estimate per line, tab-separated: <code>label</code>, <code>estimate</code>, <code>lower</code>, <code>upper</code>, optionally followed by column A, column B, P and weight. The estimate may also be written as <code>0.78 (0.69–0.88)</code>. A line with a label only becomes a group heading.'));
   if (txt == null) return;
-  const out = [];
+  const out = [], skipped = [];
   let inGroup = false;
   String(txt).split(/\r?\n/).forEach((line) => {
     if (!line.trim()) return;
@@ -228,12 +228,13 @@ document.getElementById('btnPaste').onclick = async () => {
     else { [est, lo, hi] = [c[1], c[2], c[3]]; rest = c.slice(4); }
     const isNum = [est, lo, hi].every((v) => RT.num(v) !== null);
     if (!isNum && c.filter(Boolean).length === 1) { out.push(row({ label: c[0], head: true })); inGroup = true; return; }
-    if (!isNum) return;   // a header line from the spreadsheet
+    if (!isNum) { if (out.length) skipped.push(c[0] || line.slice(0, 20)); return; }   // a header line before the data is expected
     out.push(row({ label: c[0], est, lo, hi, c1: rest[0] || '', c2: rest[1] || '', p: rest[2] || '', w: rest[3] || '', ind: inGroup ? 1 : 0 }));
   });
   if (!out.length) { RT.toast(T('沒有讀到數字，請確認欄位以 Tab 分隔', 'No numbers found — check the columns are tab-separated'), 5000); return; }
   S.rows = out; syncInputs(); update();
-  RT.toast(T(`已貼上 ${out.length} 列（按 ↶ 可復原）`, `${out.length} rows pasted (↶ to undo)`));
+  RT.toast(T(`已貼上 ${out.length} 列，取代原本的資料（按 ↶ 可復原）`, `${out.length} rows pasted, replacing the previous rows (↶ to undo)`) +
+    (skipped.length ? T(`；略過 ${skipped.length} 行無法讀取數字：${skipped.slice(0, 3).join('、')}`, `; skipped ${skipped.length} line(s) without readable numbers: ${skipped.slice(0, 3).join(', ')}`) : ''), skipped.length ? 7000 : 2600);
 };
 
 /* ---------------- scale ---------------- */
@@ -272,7 +273,7 @@ const usable = (r) => !r.head && vals(r).every((v) => v !== null) && (S.scale !=
 function columns() {
   const dec = Math.max(0, Math.min(4, Number(S.dec) || 0));
   const fmt = (v) => Number(v).toFixed(dec);
-  const estText = (r) => (usable(r) ? `${fmt(r.est)} (${fmt(r.lo)}–${fmt(r.hi)})` : '');
+  const estText = (r) => (usable(r) ? `${fmt(RT.num(r.est))} (${fmt(RT.num(r.lo))}–${fmt(RT.num(r.hi))})` : '');
   const cols = [{ head: S.hLabel, anchor: 'start', text: (r) => r.label, label: true }];
   if (S.showC1) cols.push({ head: S.hC1, anchor: 'middle', text: (r) => r.c1 });
   if (S.showC2) cols.push({ head: S.hC2, anchor: 'middle', text: (r) => r.c2 });
@@ -458,7 +459,13 @@ document.getElementById('btnSaveJson').onclick = () => RT.downloadJSON(S, 'fores
 document.getElementById('toEvalue').onclick = () => {
   const type = { HR: 'HR', OR: 'OR', RR: 'RR', IRR: 'RR', SMD: 'SMD' }[S.measure];
   if (!type) { RT.toast(T(`E-value 不適用於 ${S.measure}（差值）；只支援 HR、OR、RR、IRR 與 SMD`, `E-values do not apply to ${S.measure} (a difference); HR, OR, RR, IRR and SMD only`), 6000); return; }
-  const rows = S.rows.filter(usable).map((r) => ({ label: r.label, type, est: r.est, lo: r.lo, hi: r.hi }));
+  let group = '';
+  const rows = [];
+  S.rows.forEach((r) => {
+    if (r.head) { group = r.label; return; }
+    // "Yes" alone means nothing in the E-value list: keep its group heading
+    if (usable(r)) rows.push({ label: r.ind && group ? `${group}: ${r.label}` : r.label, type, est: RT.num(r.est), lo: RT.num(r.lo), hi: RT.num(r.hi) });
+  });
   if (!rows.length) { RT.toast(T('還沒有完整的估計值與 CI 可帶入', 'No complete estimates with CIs to send yet')); return; }
   try { localStorage.setItem('rt:handoff-forest', JSON.stringify({ rows, at: Date.now() })); } catch (e) { /* ignore */ }
   location.href = '../evalue/index.html?from=forest';

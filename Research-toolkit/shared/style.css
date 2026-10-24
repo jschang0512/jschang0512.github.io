@@ -122,6 +122,7 @@ h1, h2, h3 { line-height: 1.25; margin: 0; }
   display: flex; justify-content: center; align-items: flex-start;
 }
 .paper svg { max-width: 100%; height: auto; display: block; }
+.preview-col > .paper { flex-shrink: 0; }   /* results and messages below it never squeeze the figure */
 .paper.zoom-actual svg { max-width: none; }
 
 /* Form controls */

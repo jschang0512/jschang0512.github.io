@@ -164,7 +164,10 @@
   RT.esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   RT.num = (v) => {
     if (v === null || v === undefined) return null;
-    const s = String(v).replace(/[,\s]/g, '');
+    let s = String(v).replace(/\s/g, '');
+    // one comma before other than three digits, or after a leading 0, is a decimal comma ("0,78", "1,5"); "1,234" stays a thousands separator
+    if (/^-?\d+,\d+$/.test(s) && (/^-?0,/.test(s) || !/,\d{3}$/.test(s))) s = s.replace(',', '.');
+    s = s.replace(/,/g, '');
     if (s === '') return null;
     const n = Number(s);
     return Number.isFinite(n) ? n : null;
