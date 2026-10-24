@@ -35,6 +35,9 @@
   #preview.dragging [data-node] { cursor: grabbing; }
   #preview.linking [data-node] { cursor: crosshair; }
   #preview [data-node]:focus { outline: none; }
+  #preview [data-edge] { cursor: pointer; outline: none; }
+  #preview [data-edge]:focus-visible { stroke: rgba(59, 91, 219, .25); }
+  #preview .bend-handle { cursor: grab; }
   #preview [data-node]:focus-visible rect:last-of-type { stroke: var(--accent); stroke-width: 3; }
   .dag-tools { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   #linkMode[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
@@ -103,7 +106,7 @@
   <section class="preview-col">
     <div class="dag-tools">
       <button type="button" class="small" id="linkMode" aria-pressed="false" data-en="Draw arrows">拉線畫箭頭</button>
-      <span class="hint" style="margin:0" data-en="Drag from one variable to another to add an arrow (or hold Shift while dragging). Click a variable, then use the arrow keys to move it (Shift = larger steps).">從一個變項拖到另一個即可加箭頭（也可按住 Shift 拖曳）。點選變項後可用方向鍵移動（加 Shift 移動較多）。</span>
+      <span class="hint" style="margin:0" data-en="Drag from one variable to another to add an arrow (or hold Shift while dragging). Click a variable, then use the arrow keys to move it (Shift = larger steps). Click a line and drag its handle to curve it.">從一個變項拖到另一個即可加箭頭（也可按住 Shift 拖曳）。點選變項後可用方向鍵移動（加 Shift 移動較多）。點一下線條可拖曳圓點調整彎曲。</span>
     </div>
     <div class="paper" id="preview"></div>
     <div class="msgs" id="msgs"></div>
@@ -128,6 +131,7 @@ const ROLES = {
 };
 const roleName = (r) => T(ROLES[r][0], ROLES[r][1]);
 let seq = 0;
+let edgeGeom = [], selEdge = null, bendDrag = null;
 const nid = () => 'n' + Date.now().toString(36) + (seq++);
 const node = (o = {}) => ({ id: nid(), label: '', role: 'other', adj: false, x: 200, y: 120, ...o });
 const DEF = { nodes: [], edges: [], W: 760, H: 440, lineW: 1.3, head: 9, mono: false, legend: true, title: '', footnote: '', st: { ...RT.STYLE_DEF, fontSize: 14 } };
@@ -207,13 +211,12 @@ function renderEdges() {
   host.innerHTML = S.edges.length ? '' : `<p class="hint" style="margin:0">${T('還沒有箭頭。選「從」與「到」後按加入。', 'No arrows yet — pick “from” and “to”, then Add.')}</p>`;
   S.edges.forEach((e, i) => {
     const el = RT.h(`<div class="erow2"><span data-name="${i}"></span>
-      <select data-f="bend" aria-label="${T('彎曲', 'Curve')}" title="${T('彎曲，避開其他變項', 'Curve the arrow around other variables')}">
-        ${[-2, -1, 0, 1, 2].map((b) => `<option value="${b}">${b === 0 ? T('直線', 'Straight') : T(`彎曲 ${b > 0 ? '+' : ''}${b}`, `Curve ${b > 0 ? '+' : ''}${b}`)}</option>`).join('')}</select>
+      <input type="number" data-f="bend" step="0.25" min="-5" max="5" aria-label="${T('彎曲（0 = 直線）', 'Curve (0 = straight)')}" title="${T('彎曲：0 為直線，正負代表彎向兩側；也可在圖上點線條後拖曳圓點', 'Curve: 0 is straight, + and − bend to either side; or click the line in the figure and drag its handle')}">
       <button class="small" data-a="rev" title="${T('反轉方向', 'Reverse')}">⇄</button><button class="icon" data-a="del">✕</button></div>`);
     el.querySelector('[data-name]').textContent = `${nameOf(e.from)} → ${nameOf(e.to)}`;
-    const sel = el.querySelector('select');
+    const sel = el.querySelector('[data-f="bend"]');
     sel.value = String(e.bend || 0);
-    sel.oninput = () => { e.bend = Number(sel.value); update(); };
+    sel.oninput = () => { const v = RT.num(sel.value); if (v === null) return; e.bend = Math.max(-5, Math.min(5, v)); selEdge = i; update(); };
     el.querySelector('[data-a="rev"]').setAttribute('aria-label', T('反轉方向', 'Reverse'));
     el.querySelector('[data-a="rev"]').onclick = () => { [e.from, e.to] = [e.to, e.from]; renderEdges(); update(); };
     el.querySelector('[data-a="del"]').onclick = () => { S.edges.splice(i, 1); renderEdges(); update(); };
@@ -390,11 +393,12 @@ function build() {
   const G = {};
   S.nodes.forEach((n) => { G[n.id] = geom(n, fs); });
   RT.beginScene();
+  edgeGeom = [];
   let body = '';
   if (S.title) body += RT.rich([{ runs: [{ t: S.title, bold: true, size: fs * 1.1, color: ink }] }], M, M * 0.6, { lh: fs * 1.5 });
   const lw = Number(S.lineW) || 1.3, hd = Number(S.head) || 9;
   // arrows first, so the variables sit on top of them
-  S.edges.forEach((e) => {
+  S.edges.forEach((e, ei) => {
     const a = G[e.from], b = G[e.to];
     if (!a || !b || a === b) return;
     const ay = a.y + top, by = b.y + top;
@@ -407,6 +411,7 @@ function build() {
     const mA = byId(e.from)?.adj ? 7 : 3, mB = byId(e.to)?.adj ? 7 : 3;
     const seg = pts.filter((p) => !inside(p, ga, mA) && !inside(p, gb, mB));
     if (seg.length < 2) return;
+    edgeGeom.push({ i: ei, seg, m: [mx, my], n: [-dy / len, dx / len], len, mid: [(a.x + 2 * cx + b.x) / 4, (ay + 2 * cy + by) / 4] });
     const unm = byId(e.from)?.role === 'unmeasured';
     body += RT.arrow(seg, { color: ink, sw: lw, head: hd, dash: unm ? '5 4' : null });
   });
@@ -492,7 +497,7 @@ preview.addEventListener('pointermove', (e) => {
   const W = Number(S.W) || 760, H = Number(S.H) || 440;
   drag.n.x = Math.round(Math.max(30, Math.min(W - 30, px + drag.dx)));
   drag.n.y = Math.round(Math.max(20, Math.min(H - 20, py + drag.dy)));
-  if (!raf) raf = requestAnimationFrame(() => { raf = 0; fig = build(); preview.innerHTML = fig.svg; });
+  if (!raf) raf = requestAnimationFrame(() => { raf = 0; fig = build(); preview.innerHTML = fig.svg; decorate(); });
 });
 const endDrag = (e) => {
   if (link) {
@@ -512,6 +517,65 @@ const endDrag = (e) => {
 };
 preview.addEventListener('pointerup', endDrag);
 preview.addEventListener('pointercancel', endDrag);
+const SVGNS = 'http://www.w3.org/2000/svg';
+const mk = (tag, attrs) => { const el = document.createElementNS(SVGNS, tag); Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v)); return el; };
+function decorate() {
+  const svg = preview.querySelector('svg');
+  if (!svg) return;
+  const layer = mk('g', { class: 'edge-ui' });
+  edgeGeom.forEach((g) => {
+    const pts = g.seg.map((p) => p.join(',')).join(' ');
+    const e = S.edges[g.i];
+    const hit = mk('polyline', { points: pts, fill: 'none', stroke: 'transparent', 'stroke-width': 14, 'data-edge': g.i, tabindex: 0, role: 'button', 'aria-label': T(`箭頭 ${nameOf(e.from)} → ${nameOf(e.to)}，彎曲 ${e.bend || 0}`, `Arrow ${nameOf(e.from)} → ${nameOf(e.to)}, curve ${e.bend || 0}`) });
+    layer.appendChild(hit);
+    if (g.i === selEdge) {
+      layer.insertBefore(mk('polyline', { points: pts, fill: 'none', style: 'stroke: var(--accent)', 'stroke-width': 3, 'pointer-events': 'none' }), layer.firstChild);
+      layer.appendChild(mk('circle', { cx: g.mid[0], cy: g.mid[1], r: 7, fill: '#FFFFFF', style: 'stroke: var(--accent)', 'stroke-width': 2.5, 'data-handle': g.i, class: 'bend-handle' }));
+    }
+  });
+  svg.appendChild(layer);
+}
+const selectEdge = (i, focus) => {
+  selEdge = i;
+  decorate2();
+  if (focus) preview.querySelector(`[data-edge="${i}"]`)?.focus({ preventScroll: true });
+};
+// redraw only the overlay (the figure itself is unchanged)
+function decorate2() { preview.querySelector('.edge-ui')?.remove(); decorate(); }
+preview.addEventListener('pointerdown', (e) => {
+  const h = e.target.closest && e.target.closest('[data-handle]');
+  if (h) { bendDrag = { i: Number(h.dataset.handle) }; preview.setPointerCapture(e.pointerId); preview.classList.add('dragging'); e.preventDefault(); e.stopImmediatePropagation(); return; }
+  const hit = e.target.closest && e.target.closest('[data-edge]');
+  if (hit) { selectEdge(Number(hit.dataset.edge), true); e.preventDefault(); e.stopImmediatePropagation(); return; }
+  if (!e.target.closest('[data-node]') && selEdge !== null) { selEdge = null; decorate2(); }
+}, true);
+preview.addEventListener('pointermove', (e) => {
+  if (!bendDrag) return;
+  const g = edgeGeom.find((x) => x.i === bendDrag.i);
+  if (!g) return;
+  // the curve's midpoint sits half the control offset from the chord midpoint
+  const [px, py] = toFig(e);
+  const d = (px - g.m[0]) * g.n[0] + (py - g.m[1]) * g.n[1];
+  S.edges[g.i].bend = Math.max(-5, Math.min(5, Math.round(((2 * d) / (0.18 * g.len)) * 20) / 20));
+  if (!raf) raf = requestAnimationFrame(() => { raf = 0; fig = build(); preview.innerHTML = fig.svg; decorate(); });
+}, true);
+const endBend = () => { if (!bendDrag) return; bendDrag = null; preview.classList.remove('dragging'); renderEdges(); update(); };
+preview.addEventListener('pointerup', endBend, true);
+preview.addEventListener('pointercancel', endBend, true);
+// with an arrow selected: arrow keys bend it, 0 straightens it
+preview.addEventListener('keydown', (e) => {
+  const hit = e.target.closest && e.target.closest('[data-edge]');
+  if (!hit) return;
+  const i = Number(hit.dataset.edge), d = { ArrowUp: 0.25, ArrowRight: 0.25, ArrowDown: -0.25, ArrowLeft: -0.25 }[e.key];
+  if (d === undefined && e.key !== '0') return;
+  e.preventDefault();
+  S.edges[i].bend = e.key === '0' ? 0 : Math.max(-5, Math.min(5, Math.round(((S.edges[i].bend || 0) + d) * 100) / 100));
+  selEdge = i;
+  fig = build(); preview.innerHTML = fig.svg; decorate();
+  preview.querySelector(`[data-edge="${i}"]`)?.focus({ preventScroll: true });
+  renderEdges(); update();
+});
+
 // arrow keys move the focused variable; Shift moves further
 preview.addEventListener('keydown', (e) => {
   const g = e.target.closest && e.target.closest('[data-node]');
@@ -524,7 +588,7 @@ preview.addEventListener('keydown', (e) => {
   n.x = Math.max(30, Math.min(W - 30, n.x + d[0] * step));
   n.y = Math.max(20, Math.min(H - 20, n.y + d[1] * step));
   focusId = n.id;
-  fig = build(); preview.innerHTML = fig.svg; refocus();
+  fig = build(); preview.innerHTML = fig.svg; decorate(); refocus();
   renderNodes(); update();
 });
 preview.addEventListener('focusin', (e) => { const g = e.target.closest && e.target.closest('[data-node]'); if (g) focusId = g.dataset.node; });
@@ -544,6 +608,7 @@ function render() {
     fig = build();
     const hadFocus = preview.contains(document.activeElement);
     preview.innerHTML = S.nodes.length ? fig.svg : `<p class="hint" style="align-self:center">${T('按「＋ 新增變項」或「範例」開始。', 'Start with “+ Add variable” or “Example”.')}</p>`;
+    decorate();
     if (hadFocus) refocus();
   } catch (e) { console.error(e); preview.innerHTML = `<div class="msg">⚠ ${RT.esc(e.message)}</div>`; }
   exporter.setIssues(renderAnalysis());
