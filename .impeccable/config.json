@@ -17,6 +17,39 @@
         ],
         "createdAt": "2026-10-24T12:13:35.747Z",
         "reason": "user confirmed: storybook brief pins 和紙白 #FFFCF6 as the trip pages' background"
+      },
+      {
+        "rule": "overused-font",
+        "value": "fraunces",
+        "createdAt": "2026-10-24T16:21:54.156Z",
+        "reason": "Claude: Fraunces is the Research Toolkit display face defined in DESIGN.md (line 104) and shared/style.css"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "Research-toolkit/forestplot/index.html"
+        ],
+        "createdAt": "2026-10-24T16:21:54.927Z",
+        "reason": "Claude: flagged .card is the shared #form section rule (transparent, top border only, no side boundary) used by every toolkit tool"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "Research-toolkit/evalue/index.html"
+        ],
+        "createdAt": "2026-10-24T16:21:55.688Z",
+        "reason": "Claude: flagged .card is the shared #form section rule (transparent, top border only, no side boundary) used by every toolkit tool"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "Research-toolkit/dag/index.html"
+        ],
+        "createdAt": "2026-10-24T16:21:56.443Z",
+        "reason": "Claude: flagged .card is the shared #form section rule (transparent, top border only, no side boundary) used by every toolkit tool"
       }
     ]
   }
