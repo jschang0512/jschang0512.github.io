@@ -324,3 +324,21 @@ dialog.driver-card::backdrop { background: rgba(62, 58, 57, .45); }
 /* activity time: plain ink on its own line above the place, like the times in a move */
 .activity .txt { display: flex !important; flex-wrap: wrap; align-items: center; gap: 2px 8px; }
 .activity .txt .time { order: -1; flex-basis: 100%; margin: 0 !important; padding: 0 !important; border: 0 !important; background: none !important; color: var(--sb-ink-soft) !important; font-size: 14px !important; line-height: 1.3; font-variant-numeric: tabular-nums; }
+
+/* ---------- polish ---------- */
+/* a short page can still scroll its heading up under the menu */
+main { min-height: 100svh; }
+/* one section-heading style everywhere (the green pill is reserved for nothing now) */
+.section-label:not(.move .section-label), .daymap-label {
+  display: block !important; margin: 22px 0 8px !important; padding: 0 !important; border: 0 !important; background: none !important;
+  color: var(--sb-ink) !important; font-size: 15px !important; letter-spacing: .02em !important;
+}
+/* copy buttons: a soft square, not another framed circle inside a framed card */
+.addr-copy-mini { border: 0 !important; border-radius: 14px !important; background: var(--sb-wash) !important; color: var(--sb-ink) !important; }
+.addr-copy-mini:hover { background: var(--sb-yellow) !important; }
+.addr-copy-mini.copied { background: var(--sb-green) !important; }
+/* no card inside a card */
+.pack-group .addr-box, .lodging-card .addr-box { border: 0 !important; border-radius: 16px !important; background: var(--sb-wash) !important; }
+/* lodging actions: same size as the map pill beside them, hit area kept at 44px */
+.show-driver { position: relative; display: inline-flex; align-items: center; min-height: 32px !important; padding: 0 12px !important; border: 2px solid var(--sb-ink) !important; font-size: 13px; vertical-align: middle; }
+.show-driver::after { content: ""; position: absolute; inset: -6px -4px; }

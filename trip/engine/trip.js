@@ -849,6 +849,12 @@ function showDriver(name, addr){
   d.addEventListener("cancel", ()=> d.remove());
   d.showModal();
 }
+// copy buttons written into data.js still carry the clipboard emoji: give them the shared icon and a name
+document.querySelectorAll(".addr-copy-mini").forEach(b=>{
+  if(b.querySelector(".sb-ic")) return;
+  b.innerHTML = SB_ICON.copy;
+  if(!b.hasAttribute("aria-label")) b.setAttribute("aria-label", "複製 " + (b.dataset.val || ""));
+});
 // strip emoji used as icons at the start of headings and notes written in data.js
 document.querySelectorAll(".drv-title, .section-label, .souvenir, .activity-detail p, .flight-note").forEach(el=>{
   const first = el.firstChild;
