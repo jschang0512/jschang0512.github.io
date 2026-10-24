@@ -35,6 +35,8 @@
   #preview.dragging [data-node] { cursor: grabbing; }
   .msg .btns { margin-top: 6px; }
   .msg ul { margin: 4px 0 0; padding-left: 18px; }
+  .methods { font-size: 13px; line-height: 1.6; }
+  .methods p { margin: 6px 0 0; }
 </style>
 </head>
 <body>
@@ -268,11 +270,34 @@ function analyse() {
       if (sets.length >= 4) break;
     }
   }
-  return { x, y, backdoor, openBack, causal, adjDesc, sets: sets.map((m) => cand.filter((_, i) => m & (1 << i))), tooMany: cand.length > 16, fwd, Z };
+  const mediators = [...new Set(causal.flatMap((p) => p.slice(1, -1)))];
+  const colliders = S.nodes.map((n) => n.id).filter((v) => kids[x].includes(v) && kids[y].includes(v));
+  return { x, y, backdoor, openBack, causal, adjDesc, mediators, colliders, sets: sets.map((m) => cand.filter((_, i) => m & (1 << i))), tooMany: cand.length > 16, fwd, Z };
 }
 function popcount(m) { let c = 0; while (m) { c += m & 1; m >>= 1; } return c; }
 const pathText = (p, fwd) => p.map((v, k) => (k === 0 ? nameOf(v) : `${fwd(p[k - 1], v) ? ' → ' : ' ← '}${nameOf(v)}`)).join('');
 
+const listEn = (xs) => (xs.length < 2 ? xs.join('') : xs.slice(0, -1).join(', ') + ' and ' + xs[xs.length - 1]);
+function methodsText(a) {
+  const X = nameOf(a.x), Y = nameOf(a.y);
+  const adj = [...a.Z].map(nameOf);
+  const med = a.mediators.filter((v) => !a.Z.has(v)).map(nameOf);
+  const col = a.colliders.filter((v) => !a.Z.has(v)).map(nameOf);
+  const unm = [...new Set(a.openBack.flatMap((p) => p.filter((v) => byId(v)?.role === 'unmeasured')))].map(nameOf);
+  const allBlocked = !a.openBack.length;
+  const pl = (xs, one, many) => (xs.length > 1 ? many : one);
+  let en = `We used a directed acyclic graph (DAG) to set out our assumptions about the causal relations between ${X}, ${Y} and other variables (Figure X).`;
+  let zh = `我們以有向無環圖（DAG）描述${X}、${Y}與其他變項之間的因果假設（圖 X）。`;
+  if (!a.backdoor.length) { en += ` The DAG implies no back-door paths between ${X} and ${Y}, so no adjustment for confounding was required.`; zh += `依此 DAG，${X}與${Y}之間沒有後門路徑，因此不需調整干擾因子。`; }
+  else if (adj.length) {
+    en += ` Following the back-door criterion, we adjusted for ${listEn(adj)}${allBlocked ? `, which blocks all back-door paths between ${X} and ${Y}` : ''}.`;
+    zh += `依後門準則，我們調整了${adj.join('、')}${allBlocked ? `，可阻斷${X}與${Y}之間所有的後門路徑` : ''}。`;
+  } else { en += ` Following the back-door criterion, adjustment is needed to block the back-door paths between ${X} and ${Y}.`; zh += `依後門準則，需要調整變項才能阻斷${X}與${Y}之間的後門路徑。`; }
+  if (med.length) { en += ` ${listEn(med)} ${pl(med, 'was', 'were')} not adjusted for because ${pl(med, 'it lies', 'they lie')} on the causal pathway from ${X} to ${Y}.`; zh += `${med.join('、')}位於${X}到${Y}的因果路徑上，屬於中介變項，因此未加以調整。`; }
+  if (col.length) { en += ` ${listEn(col)} ${pl(col, 'was', 'were')} not adjusted for because ${pl(col, 'it is', 'they are')} affected by both ${X} and ${Y}.`; zh += `${col.join('、')}同時受${X}與${Y}影響，為碰撞變項，因此未加以調整。`; }
+  if (unm.length) { en += ` The back-door ${pl(unm, 'path', 'paths')} through ${listEn(unm)}, which ${pl(unm, 'was', 'were')} not measured, could not be blocked and ${pl(unm, 'was', 'were')} addressed with a sensitivity analysis for unmeasured confounding (E-value).`; zh += `經過未測量變項${unm.join('、')}的後門路徑無法阻斷，另以未測量干擾的敏感度分析（E-value）評估。`; }
+  return { en, zh };
+}
 function renderAnalysis() {
   const host = document.getElementById('msgs');
   if (!S.nodes.length) { host.innerHTML = ''; return 0; }
@@ -300,7 +325,14 @@ function renderAnalysis() {
       out.push(`<div class="msg ok">${T('最小充分調整集合（後門準則，估計總效果）：', 'Minimal sufficient adjustment sets (back-door criterion, total effect):')}<div class="btns">${btns}</div></div>`);
     }
   }
+  const ms = methodsText(a);
+  out.push(`<div class="card methods"><h3 style="margin:0">${T('Methods 段落描述', 'Methods paragraph')}</h3><p lang="en">${RT.esc(ms.en)}</p>
+    <div class="btns" style="margin-top:6px"><button class="small" data-copy="en">${T('複製英文', 'Copy English')}</button><button class="small" data-copy="zh">${T('複製中文', 'Copy Chinese')}</button></div></div>`);
   host.innerHTML = out.join('');
+  host.querySelectorAll('[data-copy]').forEach((b) => (b.onclick = async () => {
+    try { await navigator.clipboard.writeText(ms[b.dataset.copy]); RT.toast(T('已複製', 'Copied')); }
+    catch (e) { RT.toast(T('無法複製到剪貼簿', 'Could not copy to the clipboard'), 4000); }
+  }));
   host.querySelectorAll('[data-set]').forEach((b) => (b.onclick = () => {
     const set = new Set(a.sets[Number(b.dataset.set)]);
     S.nodes.forEach((n) => { n.adj = set.has(n.id); });

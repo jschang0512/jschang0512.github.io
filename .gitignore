@@ -1,0 +1,6 @@
+
+# local agent / design-tool working files
+.agents/
+.claude/
+skills-lock.json
+.impeccable/critique/

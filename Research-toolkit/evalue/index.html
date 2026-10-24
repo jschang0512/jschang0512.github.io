@@ -34,6 +34,8 @@
   .res-text { margin: 8px 0 0; font-size: 13px; line-height: 1.6; }
   .res-text + .btns { margin-top: 6px; }
   .res-conv { color: var(--muted); font-size: 12.5px; margin-top: 4px; }
+  .res-bench { margin-top: 6px; font-size: 13px; }
+  .brow { display: grid; grid-template-columns: minmax(0, 1fr) 7rem 30px; gap: 6px; align-items: center; margin-bottom: 6px; }
 </style>
 </head>
 <body>
@@ -63,7 +65,13 @@
       <button class="small" id="addRow" data-en="+ Add estimate">＋ 新增估計值</button>
     </div>
     <div class="card">
-      <h2><span class="step-no">2</span> <span data-en="Figure">圖</span></h2>
+      <h2><span class="step-no">2</span> <span data-en="Measured confounders for comparison (optional)">已測量干擾因子作比較（選填）</span></h2>
+      <p class="hint" data-en="Enter how strongly measured covariates are associated with the outcome (risk ratio, e.g. the adjusted HR for age). The results then say whether an unmeasured confounder would have to be stronger than these.">輸入已測量變項與結果的關聯強度（風險比，例如模型中年齡的校正後 HR）。結果會說明未測量干擾是否必須比它們更強。</p>
+      <div id="bench"></div>
+      <button class="small" id="addBench" data-en="+ Add confounder">＋ 新增干擾因子</button>
+    </div>
+    <div class="card">
+      <h2><span class="step-no">3</span> <span data-en="Figure">圖</span></h2>
       <div class="grid2">
         <label class="field"><span data-en="Show">呈現</span><select data-k="view">
           <option value="plot" data-en="E-value curve (one estimate)">E-value 曲線（單一估計值）</option>
@@ -111,7 +119,7 @@ const TYPES = {
 };
 const est = (o = {}) => ({ label: '', type: 'HR', est: '', lo: '', hi: '', common: false, ...o });
 const DEF = {
-  rows: [est()], view: 'plot', sel: 0, trueV: 1, title: '', plotW: 440, plotH: 340, axMax: '', shade: '#E8EEF8',
+  rows: [est()], bench: [], view: 'plot', sel: 0, trueV: 1, title: '', plotW: 440, plotH: 340, axMax: '', shade: '#E8EEF8',
   xLab: 'Risk ratio, exposure–confounder (RR_EU)', yLab: 'Risk ratio, confounder–outcome (RR_UD)',
   st: { ...RT.STYLE_DEF, fontSize: 13 },
 };
@@ -151,6 +159,13 @@ function compute(r) {
 }
 const f2 = (x) => (x === null || x === undefined ? '' : Number(x).toFixed(2));
 
+// the strongest measured covariate–outcome association, on the risk-ratio scale (≥ 1)
+function strongest() {
+  const bs = S.bench.map((b) => ({ label: b.label || T('已測量變項', 'measured covariate'), rr: RT.num(b.rr) })).filter((b) => b.rr > 0)
+    .map((b) => ({ ...b, rr: b.rr < 1 ? 1 / b.rr : b.rr }));
+  return bs.length ? bs.reduce((a, b) => (b.rr > a.rr ? b : a)) : null;
+}
+
 /* ---------------- result sentences ---------------- */
 function sentences(r, c) {
   const [abbr, en, zh] = TYPES[r.type];
@@ -166,6 +181,16 @@ function sentences(r, c) {
     if (c.ciNull) { enS += ` The confidence interval already includes ${target}, so its E-value is 1.`; zhS += `信賴區間已包含${targetZh}，因此信賴區間的 E-value 為 1。`; }
     else { enS += ` To shift the confidence interval to include ${target}, the confounder would need a risk ratio of ${f2(c.ci)}-fold with each.`; zhS += `要讓信賴區間涵蓋${targetZh}，干擾因子與兩者的關聯需至少為 ${f2(c.ci)} 倍。`; }
   }
+  const B = strongest();
+  if (B) {
+    if (c.point > B.rr) {
+      enS += ` For comparison, the strongest association of a measured covariate with the outcome (${B.label}) was a risk ratio of ${f2(B.rr)}, below this E-value.`;
+      zhS += `作為比較，已測量變項中與結果關聯最強的是${B.label}（風險比 ${f2(B.rr)}），低於此 E-value。`;
+    } else {
+      enS += ` For comparison, a measured covariate (${B.label}) was associated with the outcome by a risk ratio of ${f2(B.rr)}, at or above this E-value, so unmeasured confounding of similar strength cannot be ruled out.`;
+      zhS += `作為比較，已測量變項${B.label}與結果的風險比為 ${f2(B.rr)}，不低於此 E-value，因此無法排除同等強度的未測量干擾。`;
+    }
+  }
   if (c.t !== 1) { enS = enS.replace('could be explained away', `could be moved to ${target}`); zhS = zhS.replace('把這個結果完全解釋掉', `把這個結果推到${targetZh}`); }
   return { en: enS, zh: zhS };
 }
@@ -174,7 +199,7 @@ function sentences(r, c) {
 const form = document.getElementById('form');
 document.getElementById('styleFields').innerHTML = RT.styleFieldsHTML(['font', 'fontSize', 'textColor']);
 document.getElementById('refs').innerHTML = RT.refsHTML(REFS);
-function syncInputs() { renderRows(); RT.syncForm(form, S); }
+function syncInputs() { renderRows(); renderBench(); RT.syncForm(form, S); }
 RT.bindForm(form, () => S, (k) => { if (k === 'sel') S.sel = Number(S.sel) || 0; update(); });
 function renderRows() {
   const host = document.getElementById('rows');
@@ -215,6 +240,19 @@ function fillSel() {
   sel.innerHTML = S.rows.map((r, i) => `<option value="${i}">${RT.esc(`${i + 1}. ${r.label || T('估計值', 'Estimate')}`)}</option>`).join('');
   sel.value = String(Math.min(S.sel, S.rows.length - 1));
 }
+function renderBench() {
+  const host = document.getElementById('bench');
+  host.innerHTML = '';
+  S.bench.forEach((b, i) => {
+    const el = RT.h(`<div class="brow"><input data-f="label" placeholder="${T('變項，例如：年齡', 'Covariate, e.g. Age')}" aria-label="${T('變項', 'Covariate')}">
+      <input data-f="rr" inputmode="decimal" placeholder="RR" aria-label="${T('與結果的風險比', 'Risk ratio with the outcome')}"><button class="icon" data-a="del">✕</button></div>`);
+    el.querySelectorAll('[data-f]').forEach((inp) => { inp.value = b[inp.dataset.f] ?? ''; inp.oninput = () => { b[inp.dataset.f] = inp.value; update(); }; });
+    el.querySelector('[data-a="del"]').onclick = () => { S.bench.splice(i, 1); renderBench(); update(); };
+    host.appendChild(el);
+  });
+}
+document.getElementById('addBench').onclick = () => { S.bench.push({ label: '', rr: '' }); renderBench(); update(); focusLastBench(); };
+function focusLastBench() { const ins = document.querySelectorAll('#bench [data-f="label"]'); ins[ins.length - 1]?.focus(); }
 document.getElementById('addRow').onclick = () => { S.rows.push(est({ type: S.rows[S.rows.length - 1]?.type || 'HR' })); syncInputs(); update(); };
 
 /* ---------------- results panel ---------------- */
@@ -231,6 +269,10 @@ function renderResults() {
       <div class="res-nums"><div><span>${T('E-value（估計值）', 'E-value (estimate)')}</span><b>${f2(c.point)}</b></div>
         ${c.ci !== null ? `<div><span>${T('E-value（信賴區間）', 'E-value (CI)')}</span><b>${f2(c.ci)}</b></div>` : ''}</div>
       ${c.converted ? `<div class="res-conv">${T(`以約略風險比 ${f2(c.rr)} 計算`, `Computed on an approximate risk ratio of ${f2(c.rr)}`)}${c.lo !== null ? `（${f2(c.lo)}–${f2(c.hi)}）` : ''}</div>` : ''}
+      ${(() => { const B = strongest(); if (!B) return '';
+        return c.point > B.rr
+          ? `<div class="res-bench msg ok">${RT.esc(T(`未測量干擾必須比 ${B.label}（RR ${f2(B.rr)}）更強，才能推翻這個結果`, `An unmeasured confounder would have to be stronger than ${B.label} (RR ${f2(B.rr)}) to explain this away`))}</div>`
+          : `<div class="res-bench msg">${RT.esc(T(`與 ${B.label}（RR ${f2(B.rr)}）同等強度的干擾就可能推翻這個結果`, `A confounder as strong as ${B.label} (RR ${f2(B.rr)}) could explain this away`))}</div>`; })()}
       <p class="res-text" lang="en">${RT.esc(s.en)}</p>
       <div class="btns"><button class="small" data-copy="en">${T('複製英文描述', 'Copy English sentence')}</button><button class="small" data-copy="zh">${T('複製中文描述', 'Copy Chinese sentence')}</button></div></div>`);
     el.querySelectorAll('[data-copy]').forEach((b) => (b.onclick = async () => {
@@ -291,6 +333,11 @@ function buildPlot() {
   if (ok && E <= mx) {
     body += RT.circle(X(E), Y(E), fs * 0.32, { fill: ink });
     body += RT.rich([{ runs: [{ t: `E-value = ${f2(E)}`, size: fs, bold: true, color: ink }] }], X(E) + fs * 0.6, Y(E) - fs * 1.5, { lh: fs * 1.4 });
+  }
+  const B = strongest();
+  if (B && B.rr <= mx) {
+    body += RT.circle(X(B.rr), Y(B.rr), fs * 0.32, { fill: '#FFFFFF', stroke: ink, sw: 1.2 });
+    body += RT.rich([{ runs: [{ t: `${B.label} (${f2(B.rr)})`, size: fs * 0.9, color: ink }] }], X(B.rr) + fs * 0.6, Y(B.rr) - fs * 0.2, { lh: fs * 1.3 });
   }
   // legend
   const lx = x1 - fs * 11.5, ly = y0 + fs * 0.4;
@@ -385,6 +432,7 @@ document.getElementById('btnExample').onclick = () => {
     est({ label: 'Per-protocol analysis', type: 'HR', est: '0.72', lo: '0.61', hi: '0.85' }),
     est({ label: 'Secondary outcome (30-day readmission)', type: 'OR', est: '0.85', lo: '0.70', hi: '1.03', common: true }),
   ];
+  S.bench = [{ label: 'Age ≥ 75 years', rr: '1.65' }, { label: 'Prior stroke', rr: '1.42' }];
   S.sel = 0; S.view = 'plot';
   syncInputs(); update();
   RT.toast(T('已載入範例（虛構研究，僅供示範；按 ↶ 可復原）', 'Example loaded (a fictional study, for illustration; ↶ to undo)'));
@@ -396,6 +444,18 @@ document.getElementById('btnLoadJson').onclick = async () => { try { S = RT.merg
 syncInputs();
 render();
 hist.push();
+// estimates sent from the forest plot
+(() => {
+  if (new URLSearchParams(location.search).get('from') !== 'forest') return;
+  let h = null;
+  try { h = JSON.parse(localStorage.getItem('rt:handoff-forest') || 'null'); localStorage.removeItem('rt:handoff-forest'); } catch (e) { /* ignore */ }
+  history.replaceState(null, '', location.pathname);
+  if (!h || !Array.isArray(h.rows) || !h.rows.length) return;
+  S.rows = h.rows.map((r) => est({ label: r.label || '', type: r.type, est: r.est, lo: r.lo, hi: r.hi }));
+  S.sel = 0;
+  syncInputs(); update();
+  RT.toast(T(`已帶入森林圖的 ${S.rows.length} 個估計值（按 ↶ 可回到原本的內容）。OR 或 HR 若結果常見，請記得勾選。`, `${S.rows.length} estimates brought in from the forest plot (↶ restores your previous entries). Tick “Common outcome” where it applies.`), 7000);
+})();
 </script>
 </body>
 </html>

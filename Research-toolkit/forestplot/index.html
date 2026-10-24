@@ -59,6 +59,7 @@
         <button class="small" id="btnPaste" data-en="Paste from Excel…">從 Excel 貼上…</button>
         <button class="small" id="addRow" data-en="+ Estimate row">＋ 估計值列</button>
         <button class="small" id="addHead" data-en="+ Group heading">＋ 分組標題</button>
+        <button class="small" id="toEvalue" title="把各列的估計值與 CI 帶入 E-value 計算器" data-en-title="Send each row’s estimate and CI to the E-value calculator" data-en="Send to E-value →">帶入 E-value →</button>
       </div>
       <div id="rows"></div>
     </div>
@@ -92,6 +93,7 @@
         <label class="check"><input type="checkbox" data-k="showC1"> <span data-en="Column A">欄 A</span></label><textarea rows="2" data-k="hC1" aria-label="Column A heading"></textarea>
         <label class="check"><input type="checkbox" data-k="showC2"> <span data-en="Column B">欄 B</span></label><textarea rows="2" data-k="hC2" aria-label="Column B heading"></textarea>
         <label class="check"><input type="checkbox" data-k="showEst"> <span data-en="Estimate (CI)">估計值（CI）</span></label><input data-k="hEst" placeholder="HR (95% CI)" aria-label="Estimate column heading">
+        <label class="check"><input type="checkbox" data-k="showW"> <span data-en="Weight">權重</span></label><textarea rows="2" data-k="hW" aria-label="Weight column heading"></textarea>
         <label class="check"><input type="checkbox" data-k="showP"> <span data-en="P value">P 值</span></label><textarea rows="2" data-k="hP" aria-label="P value column heading"></textarea>
       </div>
     </div>
@@ -104,6 +106,8 @@
           <label class="field"><span data-en="Plot width (px)">圖區寬度 (px)</span><input type="number" data-k="plotW" min="120" max="900" step="10"></label>
           <label class="field"><span data-en="Row height (× font size)">列高（字級倍數）</span><input type="number" data-k="rowSp" min="1.3" max="3.5" step="0.1"></label>
           <label class="field"><span data-en="Marker size (px)">標記大小 (px)</span><input type="number" data-k="marker" min="3" max="24" step="0.5"></label>
+          <label class="field"><span data-en="Marker size by">標記大小依據</span><select data-k="sizeBy">
+            <option value="fixed" data-en="Fixed">固定</option><option value="weight" data-en="Weight (area ∝ weight)">權重（面積與權重成正比）</option></select></label>
           <label class="field"><span data-en="CI line width (px)">CI 線寬 (px)</span><input type="number" data-k="ciW" min="0.4" max="5" step="0.1"></label>
           <label class="field"><span data-en="Marker / CI colour">標記與 CI 顏色</span><input type="color" data-k="color" style="width:100%"></label>
           <label class="field"><span data-en="Summary diamond colour">彙總菱形顏色</span><input type="color" data-k="sumColor" style="width:100%"></label>
@@ -129,11 +133,11 @@ const T = RT.t;
 const KEY = 'forest1';
 // measure → default scale and line of no effect
 const MEAS = { HR: ['log', 1], OR: ['log', 1], RR: ['log', 1], IRR: ['log', 1], MD: ['linear', 0], SMD: ['linear', 0], RD: ['linear', 0] };
-const row = (o = {}) => ({ label: '', ind: 0, head: false, sum: false, c1: '', c2: '', est: '', lo: '', hi: '', p: '', ...o });
+const row = (o = {}) => ({ label: '', ind: 0, head: false, sum: false, c1: '', c2: '', est: '', lo: '', hi: '', p: '', w: '', ...o });
 const DEF = {
   title: '', footnote: '', measure: 'HR', scale: 'log', nullV: 1, xmin: '', xmax: '', ticks: '', dec: 2, axisLabel: '',
   favL: 'Favours treatment', favR: 'Favours control',
-  hLabel: 'Subgroup', showC1: true, hC1: 'Treatment\nevents/N', showC2: true, hC2: 'Control\nevents/N', showEst: true, hEst: '', showP: false, hP: 'P for\ninteraction',
+  hLabel: 'Subgroup', showC1: true, hC1: 'Treatment\nevents/N', showC2: true, hC2: 'Control\nevents/N', showEst: true, hEst: '', showP: false, hP: 'P for\ninteraction', showW: false, hW: 'Weight\n(%)', sizeBy: 'fixed',
   rows: [row()], plotW: 280, rowSp: 1.9, marker: 8, ciW: 1.3, color: '#000000', sumColor: '#000000', refDash: true,
   st: { ...RT.STYLE_DEF, fontSize: 12 },
 };
@@ -170,13 +174,14 @@ function renderRows() {
         <label><span class="lbl" data-col="1"></span><input data-f="c1"></label>
         <label><span class="lbl" data-col="2"></span><input data-f="c2"></label>
         <label><span class="lbl" data-col="p"></span><input data-f="p"></label>
+        <label><span class="lbl" data-col="w"></span><input data-f="w" inputmode="decimal"></label>
       </div>
       <div class="opts">
         <label class="check"><input type="checkbox" data-f="head"> ${T('分組標題', 'Group heading')}</label>
         <label class="check"><input type="checkbox" data-f="sum"> ${T('彙總（菱形）', 'Summary (diamond)')}</label>
         <label class="check"><input type="checkbox" data-f="ind"> ${T('縮排', 'Indent')}</label>
       </div></div>`);
-    const lbl = { 1: S.hC1, 2: S.hC2, p: S.hP };
+    const lbl = { 1: S.hC1, 2: S.hC2, p: S.hP, w: S.hW };
     blk.querySelectorAll('[data-col]').forEach((el) => (el.textContent = String(lbl[el.dataset.col] || '').replace(/\n/g, ' ')));
     blk.querySelectorAll('[data-f]').forEach((el) => {
       const f = el.dataset.f;
@@ -209,8 +214,8 @@ const triple = (s) => {
 };
 document.getElementById('btnPaste').onclick = async () => {
   const txt = await RT.promptText(T('從 Excel 貼上', 'Paste from Excel'),
-    T('每列一個估計值，欄位以 Tab 分隔：<code>名稱</code>、<code>估計值</code>、<code>下限</code>、<code>上限</code>，之後可接欄 A、欄 B、P 值。估計值也可以寫成 <code>0.78 (0.69–0.88)</code>。只有名稱的列會成為分組標題。',
-      'One estimate per line, tab-separated: <code>label</code>, <code>estimate</code>, <code>lower</code>, <code>upper</code>, optionally followed by column A, column B and P. The estimate may also be written as <code>0.78 (0.69–0.88)</code>. A line with a label only becomes a group heading.'));
+    T('每列一個估計值，欄位以 Tab 分隔：<code>名稱</code>、<code>估計值</code>、<code>下限</code>、<code>上限</code>，之後可接欄 A、欄 B、P 值、權重。估計值也可以寫成 <code>0.78 (0.69–0.88)</code>。只有名稱的列會成為分組標題。',
+      'One estimate per line, tab-separated: <code>label</code>, <code>estimate</code>, <code>lower</code>, <code>upper</code>, optionally followed by column A, column B, P and weight. The estimate may also be written as <code>0.78 (0.69–0.88)</code>. A line with a label only becomes a group heading.'));
   if (txt == null) return;
   const out = [];
   let inGroup = false;
@@ -224,7 +229,7 @@ document.getElementById('btnPaste').onclick = async () => {
     const isNum = [est, lo, hi].every((v) => RT.num(v) !== null);
     if (!isNum && c.filter(Boolean).length === 1) { out.push(row({ label: c[0], head: true })); inGroup = true; return; }
     if (!isNum) return;   // a header line from the spreadsheet
-    out.push(row({ label: c[0], est, lo, hi, c1: rest[0] || '', c2: rest[1] || '', p: rest[2] || '', ind: inGroup ? 1 : 0 }));
+    out.push(row({ label: c[0], est, lo, hi, c1: rest[0] || '', c2: rest[1] || '', p: rest[2] || '', w: rest[3] || '', ind: inGroup ? 1 : 0 }));
   });
   if (!out.length) { RT.toast(T('沒有讀到數字，請確認欄位以 Tab 分隔', 'No numbers found — check the columns are tab-separated'), 5000); return; }
   S.rows = out; syncInputs(); update();
@@ -273,6 +278,7 @@ function columns() {
   if (S.showC2) cols.push({ head: S.hC2, anchor: 'middle', text: (r) => r.c2 });
   cols.push({ plot: true, head: '' });
   if (S.showEst) cols.push({ head: S.hEst || `${S.measure} (95% CI)`, anchor: 'start', text: estText });
+  if (S.showW) cols.push({ head: S.hW, anchor: 'middle', text: (r) => r.w });
   if (S.showP) cols.push({ head: S.hP, anchor: 'middle', text: (r) => r.p });
   return cols;
 }
@@ -310,6 +316,9 @@ function build() {
   const X = (v) => ax.pos(v, plot.x, plot.w);
   const inRange = (v) => v >= ax.a - 1e-9 && v <= ax.b + 1e-9;
   const ms = Number(S.marker) || 8, ciW = Number(S.ciW) || 1.3;
+  const wMax = Math.max(0, ...rows.filter((r) => usable(r) && !r.sum).map((r) => RT.num(r.w) || 0));
+  // by weight: the largest study gets 1.8 × the set size, area scales with weight
+  const side = (r) => (S.sizeBy === 'weight' && wMax > 0 && RT.num(r.w) > 0 ? Math.max(ms * 0.35, ms * 1.8 * Math.sqrt(RT.num(r.w) / wMax)) : ms);
   rows.forEach((r, i) => {
     const top = y0 + i * rowH, yc = top + rowH / 2;
     cols.forEach((c) => {
@@ -332,7 +341,8 @@ function build() {
     const head = Math.max(4, fs * 0.55);
     if (lo < ax.a) body += RT.arrow([[xl + head + 1, yc], [xl, yc]], { color: col, sw: ciW, head });
     if (hi > ax.b) body += RT.arrow([[xh - head - 1, yc], [xh, yc]], { color: col, sw: ciW, head });
-    if (inRange(e)) body += RT.rect(X(e) - ms / 2, yc - ms / 2, ms, ms, { fill: col });
+    const sz = side(r);
+    if (inRange(e)) body += RT.rect(X(e) - sz / 2, yc - sz / 2, sz, sz, { fill: col });
   });
   const yEnd = y0 + rows.length * rowH;
   const nv = RT.num(S.nullV);
@@ -386,6 +396,10 @@ function checks() {
     if (!(v[1] <= v[0] && v[0] <= v[2])) out.push(T(`${name}的估計值不在 CI 之間（下限 ≤ 估計值 ≤ 上限）`, `${name}: the estimate is not between its limits (lower ≤ estimate ≤ upper)`));
     else if (v[1] < ax.a || v[2] > ax.b) out.push(T(`${name}的 CI 超出座標範圍，已用箭頭表示`, `${name}: the CI runs past the axis and is drawn with an arrow`));
   });
+  if (S.sizeBy === 'weight') {
+    const miss = S.rows.filter((r) => usable(r) && !r.sum && !(RT.num(r.w) > 0)).length;
+    if (miss) out.push(T(`標記大小依權重，但有 ${miss} 列沒有填權重（以固定大小畫出）`, `Markers are sized by weight, but ${miss} ${miss === 1 ? 'row has' : 'rows have'} no weight (drawn at the fixed size)`));
+  }
   return out;
 }
 
@@ -441,6 +455,14 @@ document.getElementById('btnExample').onclick = () => {
 };
 document.getElementById('btnReset').onclick = () => { S.rows = [row()]; S.title = ''; S.footnote = ''; syncInputs(); update(); RT.toast(T('已清空內容（按 ↶ 可復原）', 'Content cleared (↶ to undo)')); };
 document.getElementById('btnSaveJson').onclick = () => RT.downloadJSON(S, 'forest_plot.json');
+document.getElementById('toEvalue').onclick = () => {
+  const type = { HR: 'HR', OR: 'OR', RR: 'RR', IRR: 'RR', SMD: 'SMD' }[S.measure];
+  if (!type) { RT.toast(T(`E-value 不適用於 ${S.measure}（差值）；只支援 HR、OR、RR、IRR 與 SMD`, `E-values do not apply to ${S.measure} (a difference); HR, OR, RR, IRR and SMD only`), 6000); return; }
+  const rows = S.rows.filter(usable).map((r) => ({ label: r.label, type, est: r.est, lo: r.lo, hi: r.hi }));
+  if (!rows.length) { RT.toast(T('還沒有完整的估計值與 CI 可帶入', 'No complete estimates with CIs to send yet')); return; }
+  try { localStorage.setItem('rt:handoff-forest', JSON.stringify({ rows, at: Date.now() })); } catch (e) { /* ignore */ }
+  location.href = '../evalue/index.html?from=forest';
+};
 document.getElementById('btnLoadJson').onclick = async () => { try { S = RT.merge(DEF, await RT.pickJSON()); syncInputs(); update(); } catch (e) { RT.toast(T('讀取失敗：', 'Could not open file: ') + e.message, 6000); } };
 
 syncInputs();
