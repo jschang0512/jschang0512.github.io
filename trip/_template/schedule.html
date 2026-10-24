@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<!-- New trip: change the three places marked TRIP (the localStorage key, the page title, the h1). Everything else stays. -->
+<script>
+// TRIP: same prefix as TRIP.key in data.js
+(function(){
+  try{
+    var t = localStorage.getItem("mytrip-theme");
+    if(t !== "dark" && t !== "light"){
+      t = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+    }
+    document.documentElement.setAttribute("data-theme", t);
+  }catch(e){}
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="/trip/icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/trip/icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/trip/icons/apple-touch-icon.png">
+<meta name="robots" content="noindex, nofollow">
+<!-- TRIP -->
+<title>行程表｜城市A・城市B</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="../engine/trip.css">
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+
+<a class="home-link" href="../index.html">← 行程總覽</a>
+
+<header class="hero" id="heroHeader">
+  <div id="heroBg"></div>
+  <!-- TRIP: page title; delete the draft note once the plan is final -->
+  <h1 class="title">行程表</h1>
+  <p class="draft-note">尚未定案，僅供參考</p>
+  <p class="subtitle"><span id="subtitleType"></span><span class="type-cursor">▍</span></p>
+  <div class="header-badges">
+    <div class="countdown-wrap compact">
+      <span class="countdown-label"></span>
+      <div class="countdown" id="countdown"></div>
+    </div>
+    <div class="countdown-wrap compact forex-wrap">
+      <span class="countdown-label"></span>
+      <div class="forex-badge" id="forexBadge"></div>
+    </div>
+  </div>
+</header>
+
+<nav class="daynav" id="dayNav"></nav>
+<div class="util-bar" id="utilBar"></div>
+
+<main id="main"></main>
+
+<nav class="bottom-nav" id="bottomNav">
+  <button type="button" class="bn-btn" id="bnPrev" aria-label="上一天">
+    <span class="bn-icon">◀</span>
+  </button>
+  <button type="button" class="bn-current" id="bnCurrent">
+    <span class="bn-current-num" id="bnCurrentNum">DAY 01</span>
+    <span class="bn-current-theme" id="bnCurrentTheme">第一天</span>
+  </button>
+  <button type="button" class="bn-btn" id="bnNext" aria-label="下一天">
+    <span class="bn-icon">▶</span>
+  </button>
+  <button type="button" class="bn-btn bn-more" id="bnMore" aria-label="更多功能">
+    <span class="bn-icon">☰</span>
+  </button>
+</nav>
+
+<div class="more-sheet" id="moreSheet">
+  <div class="more-sheet-backdrop" id="moreSheetBackdrop"></div>
+  <div class="more-sheet-panel">
+    <div class="more-sheet-handle"></div>
+    <div class="more-sheet-head">
+      <button type="button" class="more-sheet-close" id="moreSheetClose" aria-label="關閉">✕</button>
+    </div>
+    <div class="more-sheet-title">日程</div>
+    <div class="more-sheet-days" id="moreSheetDays"></div>
+    <div class="more-sheet-title">更多功能</div>
+    <div class="more-sheet-grid" id="moreSheetGrid"></div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="../engine/trip-core.js"></script>
+<script src="data.js"></script>
+<script src="../engine/trip.js"></script>
+</body>
+</html>

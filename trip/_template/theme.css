@@ -1,0 +1,44 @@
+/* theme.css — this trip's colours. The engine (../engine/trip.css) only uses these variables. */
+:root{
+  --ink:#232323;
+  --ink-soft:#726E70;
+  --paper:#FFFFFB;
+  --card:#FFFFFF;
+  --line:#E7E5E9;
+  --accent:#6E86B8;
+  --accent-text:#33518A;
+  --gold:#D9A73B;
+  --btn-solid:#232323;
+  --btn-solid-fg:#FFFFFB;
+  --air:#2F6FA8;
+  --rail:#A13D2C;
+  --bus:#4C7A4A;
+  --boat:#2E6B7A;
+  --cable:#C17B4A;
+  --walk:#7A7280;
+  --car:#6B4C7A;
+  --branch2:#A65D2E;
+  --radius:14px;
+  /* tinted surfaces and the second route colour */
+  --tint:#F0F2F7; --tint-2:#EDF1FA; --tint-line:#c9d3e8; --tint-hover:#DDE5F5;
+  --util-active:#5A6FA0; --accent-rgb:110,134,184;
+  --branch:#A65D2E; --branch-dk:#D9986A;
+  --tint-2-dk:#26314A; --tint-line-dk:#3A4A6E; --tint-hover-dk:#2E3C5A;
+}
+:root[data-theme="dark"]{
+  --ink:#ECEAE7;
+  --ink-soft:#A29D9E;
+  --paper:#1C1C1C;
+  --card:#2A2A2A;
+  --line:#454545;
+  --accent:#B9C7E8;
+  --accent-text:#B9C7E8;
+  --gold:#F0C86B;
+  --rail:#D97862;
+  --bus:#82B87E;
+  --boat:#5FA8B8;
+  --cable:#D9986A;
+  --walk:#A8A0B0;
+  --car:#A87DBF;
+  --air:#7CA9D6;
+}
