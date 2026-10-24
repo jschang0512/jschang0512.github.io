@@ -155,7 +155,7 @@
         <div class="sub-h" data-en="Day 0 line, reference lines &amp; axis">Day 0 線、參考線與時間軸</div>
         <div class="grid2">
           <label class="field"><span data-en="Day 0 line colour">Day 0 線顏色</span><input type="color" data-k="d0Color" style="width:100%"></label>
-          <label class="field"><span data-en="Day 0 line width">Day 0 線寬</span><input type="number" data-k="d0W" min="0.5" max="30" step="0.5"></label>
+          <label class="field" title="Day [0, 0] 的時間窗寬度＝這條線寬" data-en-title="A Day [0, 0] window is drawn exactly this wide"><span data-en="Day 0 line width (= width of Day [0, 0] windows)">Day 0 線寬（＝Day [0, 0] 時間窗寬度）</span><input type="number" data-k="d0W" min="0.5" max="30" step="0.5"></label>
           <label class="field"><span data-en="Day 0 line style">Day 0 線型</span><select data-k="d0Dash"><option value="solid" data-en="Solid">實線</option><option value="dash" data-en="Dashed">虛線</option><option value="dot" data-en="Dotted">點線</option></select></label>
           <label class="field"><span data-en="Reference line colour">參考線顏色</span><input type="color" data-k="refColor" style="width:100%"></label>
           <label class="field" data-show="style=block|track"><span data-en="Axis colour">時間軸顏色</span><input type="color" data-k="axisColor" style="width:100%"></label>
@@ -216,7 +216,7 @@ const PALETTES = {
 };
 const THEMES = {
   schneeweiss: { zh: 'Schneeweiss / REPEAT 設計圖風格', en: 'Schneeweiss / REPEAT design-diagram style', palette: 'pastel',
-    s: { style: 'block', st: { font: 'Arial', fontSize: 16.5, lh: 1.3 }, blockW: 1000, bgOn: false, barR: 0, barBW: 0.8, barBC: '#555555', titleBold: true, winItalic: false, d0Top: true, d0Color: '#000000', d0W: 1.5, d0Dash: 'solid', axis: false, winParen: true, day0Pos: 55 } },
+    s: { style: 'block', st: { font: 'Arial', fontSize: 16.5, lh: 1.3 }, blockW: 1000, bgOn: false, barR: 0, barBW: 0.8, barBC: '#555555', titleBold: true, winItalic: false, d0Top: true, d0Color: '#9E9E9E', d0W: 8, d0Dash: 'solid', axis: false, winParen: true, day0Pos: 55 } },
   track: { zh: '單軌學術風（灰階、Arial）', en: 'Single-track academic (grayscale, Arial)', palette: 'gray',
     s: { style: 'track', st: { font: 'Arial', fontSize: 18, lh: 1.3 }, bgOn: false, barR: 0, barBW: 0.8, barBC: '#333333', titleBold: true, winItalic: false, d0Color: '#000000', d0W: 1.5, d0Dash: 'dash', axis: true, axisColor: '#333333', trackTicks: true } },
   ref: { zh: '深色色塊（灰底、Times）', en: 'Bold blocks (grey background, Times)', palette: 'bold',
@@ -760,9 +760,10 @@ function buildBlock() {
     const { s, e } = rowEnds(r);
     let xs = s === null ? left : X(s), xe = e === null ? right : X(e);
     if (xe < xs) [xs, xe] = [xe, xs];
-    if (s === 0 && e !== 0) xs = x0 - LINE / 2;
+    if (s === 0) xs = x0 - LINE / 2;
     if (e === 0) xe = x0 + LINE / 2;
-    if (xe - xs < 12) { if (xe <= x0 + LINE) xs = xe - 12; else xe = xs + 12; }
+    if (s === 0 && e === 0) { xs = x0 - LINE / 2; xe = x0 + LINE / 2; }   // a Day [0, 0] window is the Day 0 band itself
+    else if (xe - xs < 12) { if (xe <= x0 + LINE) xs = xe - 12; else xe = xs + 12; }
     const color = fillOf(colorOf(r));
     const need = natural(r);
     let inside = r.pos === 'in' || (r.pos !== 'out' && need + 2 * padX <= xe - xs);
@@ -852,7 +853,11 @@ function buildClassic() {
     const { s, e } = rowEnds(r);
     let xs = s === null ? x0 : X(s), xe = e === null ? x1 : X(e);
     if (xe < xs) [xs, xe] = [xe, xs];
-    if (xe - xs < 12) { const c = (xs + xe) / 2; xs = c - 6; xe = c + 6; }
+    const w0 = Number(S.d0W) || 1.2;
+    if (s === 0) xs = X(0) - w0 / 2;
+    if (e === 0) xe = X(0) + w0 / 2;
+    if (s === 0 && e === 0) { xs = X(0) - w0 / 2; xe = X(0) + w0 / 2; }
+    else if (xe - xs < 12) { const c = (xs + xe) / 2; xs = c - 6; xe = c + 6; }
     const win = S.showWin ? winOf(r) : '';
     const tw = win ? RT.textWidth(win, wfs, false, wi) : 0;
     let place = 'none';
@@ -895,7 +900,7 @@ function buildClassic() {
     }
   });
   const d0w = Number(S.d0W) || 1.2;
-  body += RT.line([[hx, topY], [hx, bottomY]], { color: S.d0Color, sw: d0w, dash: dashOf(d0w), dashType: S.d0Dash });
+  body = RT.line([[hx, topY], [hx, bottomY]], { color: S.d0Color, sw: d0w, dash: dashOf(d0w), dashType: S.d0Dash }) + body;   // under the bars
   body += drawRefs(X, topY + 4, bottomY, fs);
   return { W: Math.max(maxX, x1 + M), H: bottomY, body, bg: '#FFFFFF' };
 }
@@ -934,7 +939,11 @@ function buildTrack() {
     }
     let xs = s === null ? left : X(s), xe = e === null ? right : X(e);
     if (xe < xs) [xs, xe] = [xe, xs];
-    if (xe - xs < 6) { const m = (xs + xe) / 2; xs = m - 3; xe = m + 3; }
+    const w0 = Math.min(Number(S.d0W) || 1.5, 4);
+    if (s === 0) xs = X(0) - w0 / 2;
+    if (e === 0) xe = X(0) + w0 / 2;
+    if (s === 0 && e === 0) { xs = X(0) - w0 / 2; xe = X(0) + w0 / 2; }
+    else if (xe - xs < 6) { const m = (xs + xe) / 2; xs = m - 3; xe = m + 3; }
     if (r.shape === 'bracket') above.push({ type: 'bracket', r, c, xs, xe, L: label(r, c) });
     else bars.push({ r, c, xs, xe, s, e, L: label(r, c) });
   });
