@@ -77,15 +77,6 @@
         ],
         "createdAt": "2026-10-24T17:08:27.814Z",
         "reason": "Claude: flagged .card is the shared #form section rule (transparent, top border only, no side boundary) used by every toolkit tool; same false positive as forestplot/evalue/dag"
-      },
-      {
-        "rule": "cramped-padding",
-        "value": "*",
-        "files": [
-          "Research-toolkit/abstract/index.html"
-        ],
-        "createdAt": "2026-10-24T17:08:28.588Z",
-        "reason": "Claude: flagged .card is the shared #form section rule (transparent, top border only, no side boundary) used by every toolkit tool; same false positive as forestplot/evalue/dag"
       }
     ]
   }

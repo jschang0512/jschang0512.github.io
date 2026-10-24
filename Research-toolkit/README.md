@@ -14,7 +14,6 @@ Browser-based figure tools for research papers. Everything runs in the browser â
 | Treatment pathway Sankey diagram | `sankey/` |
 | Exposure definition diagram | `exposure/` |
 | Multi-panel figure composer | `panels/` |
-| Visual abstract | `abstract/` |
 | RoB 2 risk-of-bias plots and tables | `rob2/` |
 | ROBINS-I V2 risk-of-bias plots and tables | `robinsi/` |
 
