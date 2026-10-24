@@ -1,311 +1,174 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-Hant" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<script>
-(function(){
-  try{
-    var t = localStorage.getItem("trips-theme");
-    if(t !== "dark" && t !== "light"){
-      t = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
-    }
-    document.documentElement.setAttribute("data-theme", t);
-  }catch(e){}
-})();
-</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" href="/trip/icons/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/trip/icons/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="/trip/icons/apple-touch-icon.png">
 <meta name="robots" content="noindex, nofollow">
-<title>行程總覽｜Travel Log</title>
+<title>行程總覽</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --ink:#232323;
-    --ink-soft:#726E70;
-    --paper:#FFFFFB;
-    --card:#FFFFFF;
-    --line:#E7E5E9;
-    --gold:#B3A6D6;
-    --fukuoka:#E87A90;
-    --fukuoka-text:#C2445F;
-    --niigata:#6E86B8;
-    --niigata-text:#33518A;
+  /* 日系繪本風 — same palette and frames as the trip pages (engine/storybook.css) */
+  :root {
+    color-scheme: light;
+    --paper: #FFFCF6; --card: #FFFFFF; --ink: #3E3A39; --ink-soft: #66605D; --hair: #E6DCCB;
+    --coral: #F2A497; --yellow: #F6D27A; --mizu: #A8D3E6; --green: #B9DAA5; --wash: #FBF3E6;
+    --frame: 3px solid var(--ink); --r: 24px;
+    --font: "Huninn", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
   }
-  :root[data-theme="dark"]{
-    --ink:#ECEAE7;
-    --ink-soft:#A29D9E;
-    --paper:#1C1C1C;
-    --card:#2A2A2A;
-    --line:#454545;
-    --gold:#B3A6D6;
-    --fukuoka:#FEDFE1;
-    --fukuoka-text:#FEDFE1;
-    --niigata:#B9C7E8;
-    --niigata-text:#B9C7E8;
-  }
-  *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
-  body{
-    background:var(--paper);
-    color:var(--ink);
-    font-family:"Noto Sans TC","Hiragino Sans",sans-serif;
-    -webkit-font-smoothing:antialiased;
-  }
-  .theme-toggle{
-    position:fixed; top:14px; right:14px; z-index:50;
-    width:36px; height:36px;
-    display:flex; align-items:center; justify-content:center;
-    border-radius:50%;
-    background:rgba(0,0,0,0.05);
-    border:1px solid rgba(0,0,0,0.12);
-    color:var(--ink);
-    font-size:16px;
-    cursor:pointer;
-    backdrop-filter:blur(4px);
-  }
-  :root[data-theme="dark"] .theme-toggle{
-    background:rgba(255,255,255,0.1);
-    border-color:rgba(255,255,255,0.22);
-  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--paper); overflow-x: clip; }
+  body { color: var(--ink); font-family: var(--font); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+  :focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+  ::selection { background: var(--yellow); }
 
-  header.hero{
-    max-width:720px; margin:0 auto;
-    padding:56px 20px 28px;
-    text-align:left;
-    position:relative;
-    overflow:hidden;
-  }
-  #heroBg{
-    position:absolute; inset:0;
-    background:
-      radial-gradient(900px 300px at 20% -10%, rgba(232,122,144,0.14), transparent 55%),
-      radial-gradient(900px 300px at 80% -10%, rgba(110,134,184,0.14), transparent 55%),
-      linear-gradient(180deg, #FFFFFB 0%, #FAF7F6 100%);
-    z-index:0;
-  }
-  :root[data-theme="dark"] #heroBg{
-    background:
-      radial-gradient(900px 300px at 20% -10%, rgba(254,223,225,0.08), transparent 55%),
-      radial-gradient(900px 300px at 80% -10%, rgba(185,199,232,0.08), transparent 55%),
-      linear-gradient(180deg,#1C1C1C 0%, #202020 100%);
-  }
-  header.hero > *{ position:relative; z-index:1; }
-  .eyebrow{
-    letter-spacing:.3em;
-    font-size:10.5px;
-    text-transform:uppercase;
-    color:var(--ink-soft);
-    margin-bottom:14px;
-    font-family:"JetBrains Mono",monospace;
-  }
-  h1.title{
-    font-family:"Shippori Mincho",serif;
-    font-weight:700;
-    font-size:clamp(28px,7vw,42px);
-    margin:0 0 10px;
-    letter-spacing:.05em;
-  }
-  .subtitle{
-    color:var(--ink-soft);
-    font-size:14px;
-    margin:0;
-  }
+  header { max-width: 640px; margin: 0 auto; padding: 28px 16px 8px; text-align: center; }
+  .hero-art { width: 150px; margin: 0 auto 6px; }
+  .hero-art svg { display: block; width: 100%; height: auto; overflow: visible; }
+  h1 { font-weight: 400; font-size: clamp(34px, 9vw, 46px); line-height: 1.15; letter-spacing: .02em; }
+  .lead { margin-top: 6px; color: var(--ink-soft); font-size: 15px; }
 
-  main{max-width:720px; margin:0 auto; padding:8px 20px 60px;}
+  main { max-width: 640px; margin: 0 auto; padding: 16px 16px 40px; }
+  .group-label {
+    display: inline-block; margin: 26px 0 12px; padding: 2px 14px; border: 2px solid var(--ink); border-radius: 999px;
+    background: var(--green); font-size: 14px;
+  }
+  .group-label[hidden] { display: none; }
+  .trips { display: grid; gap: 16px; }
 
-  .trip-card{
-    display:block;
-    text-decoration:none;
-    color:inherit;
-    background:var(--card);
-    border:1px solid var(--line);
-    border-radius:20px;
-    padding:26px 26px 22px;
-    margin-bottom:20px;
-    box-shadow:none;
-    position:relative;
-    overflow:hidden;
-    transition:border-color .18s cubic-bezier(.16,1,.3,1);
+  .trip-card {
+    display: block; color: var(--ink); text-decoration: none; background: var(--card);
+    border: var(--frame); border-radius: var(--r); overflow: hidden;
+    transition: transform .2s ease-out, background-color .15s ease-out;
   }
-  .trip-card:hover{ border-color:var(--accent); }
-  .trip-eyebrow::before{
-    content:""; display:inline-block; width:8px; height:8px; margin-right:8px;
-    border-radius:50%; background:var(--accent); vertical-align:1px;
+  .trip-card:hover { transform: translateY(-3px); }
+  .trip-card:active { transform: translateY(1px); }
+  .trip-art { border-bottom: var(--frame); background: var(--paper); }
+  .trip-art svg { display: block; width: 100%; height: auto; }
+  .trip-body { padding: 14px 18px 16px; }
+  .trip-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { display: inline-block; padding: 1px 10px; border: 2px solid var(--ink); border-radius: 999px; font-size: 12.5px; background: var(--wash); }
+  .tag.status { background: var(--coral); }
+  .tag.draft { background: var(--yellow); }
+  .trip-title { margin-top: 8px; font-size: 26px; line-height: 1.25; }
+  .trip-dates { margin-top: 2px; font-size: 15px; }
+  .trip-route { margin-top: 2px; color: var(--ink-soft); font-size: 14px; }
+  .trip-cta {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 4px 16px;
+    border: var(--frame); border-radius: 999px; background: var(--yellow); font-size: 15px;
   }
-  .trip-card.fukuoka{ --accent:var(--fukuoka); }
-  .trip-card.niigata{ --accent:var(--niigata); }
+  .trip-card.past .trip-cta { background: var(--mizu); }
+  .trip-card.past .tag.status { background: var(--wash); }
 
-  .trip-eyebrow{
-    font-family:"JetBrains Mono",monospace;
-    font-size:11px;
-    letter-spacing:.12em;
-    text-transform:uppercase;
-    color:var(--accent-text, var(--ink-soft));
-  }
-  .trip-card.fukuoka .trip-eyebrow{ color:var(--fukuoka-text); }
-  .trip-card.niigata .trip-eyebrow{ color:var(--niigata-text); }
+  footer { text-align: center; padding: 8px 16px 32px; color: var(--ink-soft); font-size: 13px; }
 
-  .trip-title{
-    font-family:"Shippori Mincho",serif;
-    font-weight:700;
-    font-size:24px;
-    margin:6px 0 8px;
-  }
-  .trip-dates{
-    font-family:"JetBrains Mono",monospace;
-    font-size:12.5px;
-    color:var(--ink-soft);
-    margin-bottom:10px;
-  }
-  .trip-route{
-    font-size:13px;
-    color:var(--ink-soft);
-    line-height:1.6;
-    margin-bottom:16px;
-  }
-  .trip-cta{
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    font-size:13.5px;
-    font-weight:700;
-    color:var(--ink);
-  }
-  .trip-cta .arrow{ transition:transform .18s ease; }
-  .trip-card:hover .trip-cta .arrow{ transform:translateX(4px); }
-
-  /* status badge + finished trips */
-  .trip-status{
-    display:inline-block;
-    margin-left:8px;
-    padding:2px 9px;
-    border-radius:999px;
-    font-family:"Noto Sans TC",sans-serif;
-    font-size:11.5px;
-    font-weight:700;
-    letter-spacing:0;
-    text-transform:none;
-    vertical-align:1px;
-    background:color-mix(in srgb, var(--accent) 18%, transparent);
-    color:var(--ink);
-  }
-  .section-label{
-    font-family:"JetBrains Mono",monospace;
-    font-size:11px;
-    letter-spacing:.2em;
-    text-transform:uppercase;
-    color:var(--ink-soft);
-    margin:36px 4px 12px;
-  }
-  .section-label[hidden]{ display:none; }
-  .trip-card.past{ opacity:.72; box-shadow:none; }
-  .trip-card.past:hover{ opacity:1; }
-  .trip-card.past .trip-title{ font-size:20px; }
-
-  footer{
-    text-align:center;
-    padding:20px 20px 40px;
-    font-size:11px;
-    color:var(--ink-soft);
-    font-family:"JetBrains Mono",monospace;
+  /* the header art floats a little */
+  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+  @keyframes drift { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(8px); } }
+  .hero-art .plane { animation: float 3.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  .hero-art .cloud { animation: drift 8s ease-in-out infinite; }
+  .trip-art .sb-float { animation: float 4.5s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  .trip-art .sb-bob { animation: float 3.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  .trip-art .sb-drift { animation: drift 9s ease-in-out infinite; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .trip-card:hover, .trip-card:active { transform: none; }
   }
 </style>
 </head>
 <body>
 
-<button type="button" class="theme-toggle" id="themeToggle" aria-label="切換深色／淺色模式"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/></svg></button>
-
-<header class="hero">
-  <div id="heroBg"></div>
-  <h1 class="title">行程總覽</h1>
-  <p class="subtitle">點一個行程進去看每日安排</p>
+<header>
+  <div class="hero-art" aria-hidden="true">
+    <svg viewBox="0 0 150 110" xmlns="http://www.w3.org/2000/svg">
+      <g class="cloud"><path d="M8 34 C8 26 16 23 22 26 C25 19 37 18 40 26 C47 24 52 29 50 34 Z" fill="#FFFFFF" stroke="#3E3A39" stroke-width="3" stroke-linejoin="round"/></g>
+      <g class="plane">
+        <path d="M86 22 L132 14 Q142 13 140 20 L94 34 Z" fill="#A8D3E6" stroke="#3E3A39" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M108 20 L100 6 L110 6 L122 18 Z M98 30 L92 40 L100 40 L110 28 Z" fill="#F2A497" stroke="#3E3A39" stroke-width="3" stroke-linejoin="round"/>
+      </g>
+      <rect x="40" y="52" width="66" height="50" rx="12" fill="#F6D27A" stroke="#3E3A39" stroke-width="3"/>
+      <path d="M60 52 V44 Q60 38 66 38 H80 Q86 38 86 44 V52" fill="none" stroke="#3E3A39" stroke-width="3" stroke-linecap="round"/>
+      <path d="M40 74 H106" stroke="#3E3A39" stroke-width="3"/>
+      <rect x="62" y="68" width="22" height="12" rx="4" fill="#F2A497" stroke="#3E3A39" stroke-width="3"/>
+      <circle cx="52" cy="104" r="4" fill="#3E3A39"/><circle cx="94" cy="104" r="4" fill="#3E3A39"/>
+    </svg>
+  </div>
+  <h1>行程總覽</h1>
+  <p class="lead">選一趟旅行，看每天的安排</p>
 </header>
 
 <main>
-  <!-- data-start / data-end drive the order and the status badge (see script below) -->
-  <div id="upcoming">
-    <a class="trip-card niigata" href="niigata/schedule.html" data-start="2027-07-30" data-end="2027-08-09">
-      <div class="trip-eyebrow">Joetsu · 11 Days · 尚未定案</div>
-      <div class="trip-title">上越行程表（暫）</div>
-      <div class="trip-dates">2027年07月30日 – 08月09日</div>
-      <div class="trip-route">新潟・長岡花火・越後湯澤・秩父・川越・東京</div>
-      <div class="trip-cta">查看行程 <span class="arrow">→</span></div>
+  <!-- data-start / data-end drive the order and the status tag; data-art picks the illustration (engine/illustrations.js) -->
+  <div class="group-label" id="upcomingLabel">即將出發</div>
+  <div class="trips" id="upcoming">
+    <a class="trip-card" href="niigata/schedule.html" data-start="2027-07-30" data-end="2027-08-09" data-art="joetsu">
+      <div class="trip-art" aria-hidden="true"></div>
+      <div class="trip-body">
+        <div class="trip-tags"><span class="tag">11 天</span><span class="tag draft">尚未定案</span></div>
+        <div class="trip-title">上越行程表（暫）</div>
+        <div class="trip-dates">2027年07月30日 – 08月09日</div>
+        <div class="trip-route">新潟・長岡花火・越後湯澤・秩父・川越・東京</div>
+        <span class="trip-cta">查看行程 →</span>
+      </div>
     </a>
   </div>
 
-  <div class="section-label" id="pastLabel">已結束</div>
-  <div id="past">
-    <a class="trip-card fukuoka past" href="fukuoka/schedule.html" data-start="2026-08-18" data-end="2026-08-25">
-      <div class="trip-eyebrow">Kyushu · 8 Days</div>
-      <div class="trip-title">九州行程表</div>
-      <div class="trip-dates">2026年08月18日 – 08月25日</div>
-      <div class="trip-route">福岡・北九州・相島・太宰府・唐津・佐賀</div>
-      <div class="trip-cta">回顧行程 <span class="arrow">→</span></div>
+  <div class="group-label" id="pastLabel">已結束</div>
+  <div class="trips" id="past">
+    <a class="trip-card" href="fukuoka/schedule.html" data-start="2026-08-18" data-end="2026-08-25" data-art="kyushu">
+      <div class="trip-art" aria-hidden="true"></div>
+      <div class="trip-body">
+        <div class="trip-tags"><span class="tag">8 天</span></div>
+        <div class="trip-title">九州行程表</div>
+        <div class="trip-dates">2026年08月18日 – 08月25日</div>
+        <div class="trip-route">福岡・北九州・相島・太宰府・唐津・佐賀</div>
+        <span class="trip-cta">回顧行程 →</span>
+      </div>
     </a>
   </div>
 </main>
 
-<footer>jschang0512 · Travel Log</footer>
+<footer>Travel Log</footer>
 
+<script src="engine/illustrations.js"></script>
 <script>
-// Sort trips by date: upcoming / ongoing first, finished ones under 「已結束」
-(function tripStatus(){
+// Each card gets its trip's illustration; trips are sorted by date, finished ones under 「已結束」
+(function trips(){
   const DAY = 86400000;
   const now = new Date(); now.setHours(0, 0, 0, 0);
   const d = (s) => { const p = s.split("-").map(Number); return new Date(p[0], p[1] - 1, p[2]); };
   const up = document.getElementById("upcoming"), past = document.getElementById("past");
   const cards = [...document.querySelectorAll(".trip-card[data-start]")];
   cards.forEach((c) => {
+    const art = window.TRIP_ART && window.TRIP_ART[c.dataset.art];
+    if (art) c.querySelector(".trip-art").innerHTML = art;
+    else c.querySelector(".trip-art").remove();
     const start = d(c.dataset.start), end = d(c.dataset.end);
-    const eyebrow = c.querySelector(".trip-eyebrow");
+    const tag = document.createElement("span");
+    tag.className = "tag status";
     const cta = c.querySelector(".trip-cta");
-    const badge = document.createElement("span");
-    badge.className = "trip-status";
     if (end < now) {
       c.classList.add("past");
-      badge.textContent = "已結束";
-      cta.firstChild.textContent = "回顧行程 ";
+      tag.textContent = "已結束";
+      cta.textContent = "回顧行程 →";
     } else {
       c.classList.remove("past");
-      cta.firstChild.textContent = "查看行程 ";
       const days = Math.round((start - now) / DAY);
-      badge.textContent = start <= now ? "旅行中" : days === 1 ? "明天出發" : days + " 天後出發";
+      tag.textContent = start <= now ? "旅行中" : days === 1 ? "明天出發" : `${days} 天後出發`;
+      cta.textContent = "查看行程 →";
     }
-    eyebrow.appendChild(badge);
+    c.querySelector(".trip-tags").prepend(tag);
   });
   cards.filter((c) => !c.classList.contains("past"))
     .sort((a, b) => d(a.dataset.start) - d(b.dataset.start)).forEach((c) => up.appendChild(c));
   cards.filter((c) => c.classList.contains("past"))
     .sort((a, b) => d(b.dataset.end) - d(a.dataset.end)).forEach((c) => past.appendChild(c));
+  document.getElementById("upcomingLabel").hidden = !up.children.length;
   document.getElementById("pastLabel").hidden = !past.children.length;
-})();
-
-(function themeToggle(){
-  const KEY = "trips-theme";
-  const ICON_MOON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/></svg>';
-  const ICON_SUN = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
-  function getPreferred(){
-    const applied = document.documentElement.getAttribute("data-theme");
-    if(applied === "dark" || applied === "light") return applied;
-    try{
-      const saved = localStorage.getItem(KEY);
-      if(saved === "dark" || saved === "light") return saved;
-    }catch(e){}
-    return (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
-  }
-  let current = getPreferred();
-  document.documentElement.setAttribute("data-theme", current);
-  const btn = document.getElementById("themeToggle");
-  btn.innerHTML = current === "dark" ? ICON_SUN : ICON_MOON;
-  btn.addEventListener("click", ()=>{
-    current = current === "dark" ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", current);
-    btn.innerHTML = current === "dark" ? ICON_SUN : ICON_MOON;
-    try{ localStorage.setItem(KEY, current); }catch(e){}
-  });
 })();
 </script>
 </body>

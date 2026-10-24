@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-font",
+        "value": "huninn",
+        "createdAt": "2026-10-24T12:12:04.327Z",
+        "reason": "user confirmed: storybook brief for the trip pages names Google Fonts Huninn"
+      }
+    ]
+  }
+}
