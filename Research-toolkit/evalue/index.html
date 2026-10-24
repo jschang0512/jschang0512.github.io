@@ -58,6 +58,7 @@
     <div class="card">
       <p class="hint" style="margin:0" data-en="The E-value is the minimum strength of association, on the risk-ratio scale, that an unmeasured confounder would need with both the exposure and the outcome, beyond the measured covariates, to fully explain away the observed association.">E-value 是一個未測量干擾因子在已調整的變項之外，必須同時與暴露、與結果有多強的關聯（以風險比表示），才能把觀察到的關聯完全解釋掉。</p>
     </div>
+    <div class="card" id="study"></div>
     <div class="card">
       <h2><span class="step-no">1</span> <span data-en="Estimates">估計值</span></h2>
       <div id="rows"></div>
@@ -109,7 +110,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261025a"></script>
+<script src="../shared/common.js?v=20261025b"></script>
 <script>
 const T = RT.t;
 const KEY = 'evalue1';
@@ -167,6 +168,7 @@ function strongest() {
 
 /* ---------------- result sentences ---------------- */
 function sentences(r, c) {
+  const ST = RT.study.get();
   const [abbr, en, zh] = TYPES[r.type];
   const [ve, vl, vh] = [r.est, r.lo, r.hi].map(RT.num);
   const obs = `${f2(ve)}${c.lo !== null ? ` (95% CI ${f2(vl)}–${f2(vh)})` : ''}`;
@@ -175,8 +177,8 @@ function sentences(r, c) {
   const targetZh = c.t === 1 ? '虛無值' : `風險比 ${f2(c.t)}`;
   const conv = c.converted ? (r.type === 'SMD' ? `, approximated as a risk ratio of ${f2(c.rr)},` : `, approximated as a risk ratio of ${f2(c.rr)} because the outcome was common,`) : '';
   const convZh = c.converted ? (r.type === 'SMD' ? `（換算為約略風險比 ${f2(c.rr)}）` : `（因結果常見，換算為約略風險比 ${f2(c.rr)}）`) : '';
-  let enS = `The observed ${en} of ${obs}${conv} could be explained away by an unmeasured confounder associated with both the exposure and the outcome by a risk ratio of ${f2(c.point)}-fold each, above and beyond the measured covariates, but weaker confounding could not do so.`;
-  let zhS = `觀察到的 ${abbr} 為 ${obsZh}${convZh}。若要把這個結果完全解釋掉，未測量干擾因子必須在已調整的變項之外，同時與暴露及結果有至少 ${f2(c.point)} 倍的風險比關聯；較弱的干擾無法做到。`;
+  let enS = `The observed ${en} of ${obs}${conv} could be explained away by an unmeasured confounder associated with both ${ST.exposure || 'the exposure'} and ${ST.outcome || 'the outcome'} by a risk ratio of ${f2(c.point)}-fold each, above and beyond the measured covariates, but weaker confounding could not do so.`;
+  let zhS = `觀察到的 ${abbr} 為 ${obsZh}${convZh}。若要把這個結果完全解釋掉，未測量干擾因子必須在已調整的變項之外，同時與${ST.exposure || '暴露'}及${ST.outcome || '結果'}有至少 ${f2(c.point)} 倍的風險比關聯；較弱的干擾無法做到。`;
   if (c.point <= 1.0001) {
     enS = `The observed ${en} of ${obs}${conv} shows no association, so there is nothing for unmeasured confounding to explain away (E-value = 1).`;
     zhS = `觀察到的 ${abbr} 為 ${obsZh}${convZh}，沒有關聯，因此不需要以未測量干擾解釋（E-value = 1）。`;
@@ -207,6 +209,7 @@ function sentences(r, c) {
 const form = document.getElementById('form');
 document.getElementById('styleFields').innerHTML = RT.styleFieldsHTML(['font', 'fontSize', 'textColor']);
 document.getElementById('refs').innerHTML = RT.refsHTML(REFS);
+RT.studyCard(document.getElementById('study'), ['exposure', 'outcome'], { onChange: () => update() });
 function syncInputs() { renderRows(); renderBench(); RT.syncForm(form, S); }
 RT.bindForm(form, () => S, (k) => { if (k === 'sel') S.sel = Number(S.sel) || 0; update(); });
 function renderRows() {

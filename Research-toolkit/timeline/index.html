@@ -187,7 +187,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261025a"></script>
+<script src="../shared/common.js?v=20261025b"></script>
 <script>
 const T = RT.t;
 const KEY = 'timeline5';
@@ -1140,6 +1140,28 @@ document.getElementById('btnLoadJson').onclick = async () => { try { S = RT.merg
 syncInputs();
 render();
 hist.push();
+// exposure rules sent from the Exposure Definition Diagram
+(() => {
+  if (new URLSearchParams(location.search).get('from') !== 'exposure') return;
+  let h = null;
+  try { h = JSON.parse(localStorage.getItem('rt:handoff-exposure') || 'null'); localStorage.removeItem('rt:handoff-exposure'); } catch (e) { /* ignore */ }
+  history.replaceState(null, '', location.pathname);
+  if (!h) return;
+  const G = Math.round(Number(h.grace) || 0);
+  const drugs = [h.exposure, h.comparator].filter(Boolean).join(' vs ');
+  const rule = `${drugs ? drugs + '. ' : ''}Continuous use while the next dispensing falls within the days' supply${G ? ` plus a ${G}-day grace period` : ''}${h.stockpile ? '; overlapping supply carried forward (stockpiling)' : ''}${h.censorSwitch ? '; a switch ends exposure' : ''}.`;
+  let expo = S.rows.find((r) => r.kind === 'expo');
+  if (!expo) {
+    expo = row({ kind: 'expo', label: 'Exposure assessment window', s: '0', e: '0' });
+    const at = S.rows.findIndex((r) => r.kind === 'fu');
+    S.rows.splice(at < 0 ? S.rows.length : at, 0, expo);
+  }
+  expo.details = rule;
+  // an as-treated window that ends at discontinuation picks up the grace period
+  S.rows.filter((r) => r.kind === 'fu' && /discontinuation/i.test(r.win || '')).forEach((r) => { r.win = r.win.replace(/discontinuation(\s*\+\s*\d+)?/i, h.endRule === 'grace' && G ? `discontinuation + ${G}` : 'discontinuation'); });
+  syncInputs(); update();
+  RT.toast(T('已把暴露規則寫入「暴露評估」列（按 ↶ 可復原）', 'Exposure rules written into the exposure assessment row (↶ to undo)'), 6000);
+})();
 </script>
 </body>
 </html>

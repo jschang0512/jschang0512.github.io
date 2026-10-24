@@ -95,7 +95,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261025a"></script>
+<script src="../shared/common.js?v=20261025b"></script>
 <script>
 const T = RT.t;
 const KEY = 'sankey1';
@@ -316,6 +316,8 @@ function render() {
   exporter.setIssues(msgs.filter((m) => !/相加|added/.test(m)).length);
   exporter.refresh();
   RT.save(KEY, S);
+  const m = model(), names = m.order.filter((d) => d !== m.stop);
+  if (names.length && JSON.stringify(RT.study.get().drugs || []) !== JSON.stringify(names)) RT.study.set({ drugs: names });
 }
 const update = RT.debounce(() => { render(); hist.push(); }, 80);
 

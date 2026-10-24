@@ -62,6 +62,7 @@
     <div class="card">
       <p class="hint" style="margin:0" data-en="Drag the variables in the preview to place them. Mark one exposure and one outcome, and tick the variables you adjust for: the panel under the preview then lists back-door paths that are still open and the minimal sets that would close them.">在預覽圖上直接拖曳變項排版。標記一個暴露、一個結果，勾選你調整的變項，預覽下方就會列出仍未阻斷的後門路徑，以及能阻斷它們的最小調整集合。</p>
     </div>
+    <div class="card" id="study"></div>
     <div class="card">
       <h2><span class="step-no">1</span> <span data-en="Variables">變項</span></h2>
       <div id="nodes"></div>
@@ -102,7 +103,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261025a"></script>
+<script src="../shared/common.js?v=20261025b"></script>
 <script>
 const T = RT.t;
 const KEY = 'dag1';
@@ -133,6 +134,19 @@ let S = RT.load(KEY, DEF);
 const form = document.getElementById('form');
 document.getElementById('styleFields').innerHTML = RT.styleFieldsHTML(['font', 'fontSize', 'textColor']);
 document.getElementById('refs').innerHTML = RT.refsHTML(REFS);
+const studyCtl = RT.studyCard(document.getElementById('study'), ['exposure', 'outcome'], {
+  applyLabel: T('套用到 DAG 的暴露與結果', 'Use for the DAG’s exposure and outcome'),
+  apply: (s) => {
+    [['exposure', s.exposure, 110], ['outcome', s.outcome, (Number(S.W) || 760) - 110]].forEach(([role, label, x]) => {
+      if (!label) return;
+      const n = S.nodes.find((v) => v.role === role);
+      if (n) n.label = label; else S.nodes.push(node({ label, role, x, y: (Number(S.H) || 440) / 2 }));
+    });
+    syncInputs(); update();
+  },
+});
+// naming the exposure or outcome variable here updates the shared study details
+const shareRole = (n) => { if ((n.role === 'exposure' || n.role === 'outcome') && n.label.trim()) { RT.study.set({ [n.role]: n.label.trim() }); studyCtl.refresh(); } };
 function syncInputs() { RT.syncForm(form, S); renderNodes(); renderEdges(); }
 RT.bindForm(form, () => S, () => update());
 const byId = (id) => S.nodes.find((n) => n.id === id);
@@ -157,6 +171,7 @@ function renderNodes() {
       inp.oninput = () => {
         n[f] = inp.type === 'checkbox' ? inp.checked : inp.type === 'number' ? (RT.num(inp.value) ?? n[f]) : inp.value;
         if (f === 'label') fillEdgeSelects();
+        if (f === 'label' || f === 'role') shareRole(n);
         if (f === 'role' && n.role === 'unmeasured') { n.adj = false; el.querySelector('[data-f="adj"]').checked = false; }
         update();
       };

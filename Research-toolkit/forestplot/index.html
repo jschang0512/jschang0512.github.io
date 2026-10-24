@@ -52,6 +52,7 @@
     <div class="card">
       <p class="note-box" style="margin:0" data-en="&lt;b&gt;Plotting only, no calculations.&lt;/b&gt; Estimates, 95% CIs, P values and summary rows are drawn exactly as you enter them. The tool does not pool estimates, compute confidence intervals or test heterogeneity — run the analysis in statistical software (e.g. R, Stata, SAS) first, then enter the results."><b>只繪圖，不做運算。</b>估計值、95% CI、P 值與彙總列都照你輸入的數字畫出；本工具不會合併效果量、計算信賴區間或檢定異質性。請先用統計軟體（例如 R、Stata、SAS）分析，再把結果填入。</p>
     </div>
+    <div class="card" id="study"></div>
     <div class="card">
       <h2><span class="step-no">1</span> <span data-en="Rows">資料列</span></h2>
       <p class="hint" data-en="One row per estimate. A group heading row has a label only; a summary row is drawn as a diamond.">每個估計值一列。分組標題列只填名稱；彙總列（例如 Overall）以菱形呈現。</p>
@@ -95,6 +96,11 @@
         <label class="check"><input type="checkbox" data-k="showEst"> <span data-en="Estimate (CI)">估計值（CI）</span></label><input data-k="hEst" placeholder="HR (95% CI)" aria-label="Estimate column heading">
         <label class="check"><input type="checkbox" data-k="showW"> <span data-en="Weight">權重</span></label><textarea rows="2" data-k="hW" aria-label="Weight column heading"></textarea>
         <label class="check"><input type="checkbox" data-k="showP"> <span data-en="P value">P 值</span></label><textarea rows="2" data-k="hP" aria-label="P value column heading"></textarea>
+        <label class="check"><input type="checkbox" data-k="showEv"> <span data-en="E-value">E-value</span></label><textarea rows="2" data-k="hEv" aria-label="E-value column heading"></textarea>
+      </div>
+      <div data-show="showEv">
+        <p class="hint" data-en="E-value for the estimate, with the E-value for the confidence interval in brackets (VanderWeele &amp; Ding 2017). Calculated by the tool from the numbers in each row.">估計值的 E-value，括號內為信賴區間的 E-value（VanderWeele &amp; Ding 2017），由本工具依每列的數字計算。</p>
+        <label class="check"><input type="checkbox" data-k="evCommon"> <span data-en="Common outcome (≥ 15%): convert OR / HR to approximate risk ratios first">結果常見（≥ 15%）：OR／HR 先換算為約略風險比</span></label>
       </div>
     </div>
 
@@ -127,7 +133,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261025a"></script>
+<script src="../shared/common.js?v=20261025b"></script>
 <script>
 const T = RT.t;
 const KEY = 'forest1';
@@ -137,7 +143,7 @@ const row = (o = {}) => ({ label: '', ind: 0, head: false, sum: false, c1: '', c
 const DEF = {
   title: '', footnote: '', measure: 'HR', scale: 'log', nullV: 1, xmin: '', xmax: '', ticks: '', dec: 2, axisLabel: '',
   favL: 'Favours treatment', favR: 'Favours control',
-  hLabel: 'Subgroup', showC1: true, hC1: 'Treatment\nevents/N', showC2: true, hC2: 'Control\nevents/N', showEst: true, hEst: '', showP: false, hP: 'P for\ninteraction', showW: false, hW: 'Weight\n(%)', sizeBy: 'fixed',
+  hLabel: 'Subgroup', showC1: true, hC1: 'Treatment\nevents/N', showC2: true, hC2: 'Control\nevents/N', showEst: true, hEst: '', showP: false, hP: 'P for\ninteraction', showW: false, hW: 'Weight\n(%)', sizeBy: 'fixed', showEv: false, hEv: 'E-value\n(CI)', evCommon: false,
   rows: [row()], plotW: 280, rowSp: 1.9, marker: 8, ciW: 1.3, color: '#000000', sumColor: '#000000', refDash: true,
   st: { ...RT.STYLE_DEF, fontSize: 12 },
 };
@@ -152,6 +158,16 @@ let S = RT.load(KEY, DEF);
 const form = document.getElementById('form');
 document.getElementById('styleFields').innerHTML = RT.styleFieldsHTML(['font', 'fontSize', 'textColor']);
 document.getElementById('refs').innerHTML = RT.refsHTML(REFS);
+RT.studyCard(document.getElementById('study'), ['exposure', 'comparator', 'outcome'], {
+  applyLabel: T('套用到欄位標題與無效線說明', 'Use for column headings and the labels beside the line'),
+  apply: (s) => {
+    if (!s.exposure && !s.comparator) { RT.toast(T('請先填暴露與比較組', 'Fill in the exposure and comparator first')); return; }
+    if (s.exposure) { S.hC1 = `${s.exposure}\nevents/N`; S.favL = `Favours ${s.exposure}`; }
+    if (s.comparator) { S.hC2 = `${s.comparator}\nevents/N`; S.favR = `Favours ${s.comparator}`; }
+    syncInputs(); update();
+    RT.toast(T('已套用（按 ↶ 可復原）', 'Applied (↶ to undo)'));
+  },
+});
 function syncInputs() { RT.syncForm(form, S); renderRows(); }
 RT.bindForm(form, () => S, (k) => {
   if (k === 'measure') { [S.scale, S.nullV] = MEAS[S.measure] || ['log', 1]; RT.syncForm(form, S); }
@@ -269,6 +285,18 @@ function axis(vals) {
 const vals = (r) => [RT.num(r.est), RT.num(r.lo), RT.num(r.hi)];
 const usable = (r) => !r.head && vals(r).every((v) => v !== null) && (S.scale !== 'log' || vals(r).every((v) => v > 0));
 
+// E-value of a row (VanderWeele & Ding 2017): estimate, then the confidence limit nearer the null
+function evText(r) {
+  if (r.head || !usable(r) || !['HR', 'OR', 'RR', 'IRR', 'SMD'].includes(S.measure)) return '';
+  const toRR = (v) => (S.measure === 'SMD' ? Math.exp(0.91 * v)
+    : S.measure === 'OR' && S.evCommon ? Math.sqrt(v)
+      : S.measure === 'HR' && S.evCommon ? (1 - 0.5 ** Math.sqrt(v)) / (1 - 0.5 ** Math.sqrt(1 / v)) : v);
+  const [e, lo, hi] = vals(r).map(toRR);
+  const ev = (x) => { const q = x < 1 ? 1 / x : x; return q + Math.sqrt(q * (q - 1)); };
+  const ci = e >= 1 ? (lo <= 1 ? 1 : ev(lo)) : (hi >= 1 ? 1 : ev(hi));
+  return `${ev(e).toFixed(2)} (${ci.toFixed(2)})`;
+}
+
 /* ---------------- figure ---------------- */
 function columns() {
   const dec = Math.max(0, Math.min(4, Number(S.dec) || 0));
@@ -281,6 +309,7 @@ function columns() {
   if (S.showEst) cols.push({ head: S.hEst || `${S.measure} (95% CI)`, anchor: 'start', text: estText });
   if (S.showW) cols.push({ head: S.hW, anchor: 'middle', text: (r) => r.w });
   if (S.showP) cols.push({ head: S.hP, anchor: 'middle', text: (r) => r.p });
+  if (S.showEv) cols.push({ head: S.hEv, anchor: 'middle', text: evText });
   return cols;
 }
 function build() {
@@ -449,7 +478,7 @@ document.getElementById('btnUndo').onclick = hist.undo;
 document.getElementById('btnRedo').onclick = hist.redo;
 document.getElementById('btnExample').onclick = () => {
   S.rows = structuredClone(EX_ROWS);
-  Object.assign(S, { measure: 'HR', scale: 'log', nullV: 1, xmin: '', xmax: '', ticks: '', showP: true, hLabel: 'Subgroup', hC1: 'SGLT2i\nevents/N', hC2: 'DPP-4i\nevents/N', favL: 'Favours SGLT2i', favR: 'Favours DPP-4i',
+  Object.assign(S, { measure: 'HR', scale: 'log', nullV: 1, sizeBy: 'fixed', showW: false, xmin: '', xmax: '', ticks: '', showP: true, hLabel: 'Subgroup', hC1: 'SGLT2i\nevents/N', hC2: 'DPP-4i\nevents/N', favL: 'Favours SGLT2i', favR: 'Favours DPP-4i',
     footnote: 'HR, hazard ratio; CI, confidence interval; eGFR, estimated glomerular filtration rate. P values are for interaction.' });
   syncInputs(); update();
   RT.toast(T('已載入範例（虛構研究，僅供示範；按 ↶ 可復原）', 'Example loaded (a fictional study, for illustration; ↶ to undo)'));

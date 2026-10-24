@@ -1171,6 +1171,38 @@
     libs: 'Libraries: <a href="https://mozilla.github.io/pdf.js/" target="_blank" rel="noopener">pdf.js</a>, <a href="https://github.com/VolodymyrBaydalka/docxjs" target="_blank" rel="noopener">docx-preview</a>, <a href="https://html2canvas.hertzen.com/" target="_blank" rel="noopener">html2canvas</a>, <a href="https://stuk.github.io/jszip/" target="_blank" rel="noopener">JSZip</a>, <a href="https://github.com/parallax/jsPDF" target="_blank" rel="noopener">jsPDF</a>, <a href="https://github.com/yWorks/svg2pdf.js" target="_blank" rel="noopener">svg2pdf.js</a>, <a href="https://github.com/photopea/UTIF.js" target="_blank" rel="noopener">UTIF.js</a>. Word shapes follow ECMA-376 Office Open XML (DrawingML / WordprocessingML).',
   };
 
+  /* ---------- study details shared by every tool (this browser only) ---------- */
+  RT.STUDY_FIELDS = {
+    exposure: ['暴露（治療組）', 'Exposure'], comparator: ['比較組', 'Comparator'], outcome: ['結果', 'Outcome'],
+  };
+  RT.study = {
+    get() { try { return JSON.parse(localStorage.getItem('rt:study') || '{}') || {}; } catch (e) { return {}; } },
+    set(patch) { const s = { ...RT.study.get(), ...patch }; try { localStorage.setItem('rt:study', JSON.stringify(s)); } catch (e) { /* ignore */ } return s; },
+  };
+  /**
+   * A small card with the shared fields. Typing saves at once, so the other tools see it.
+   * opts: {apply(study), applyLabel, applyHint, onChange(study), suggest: [names for a datalist]}
+   */
+  RT.studyCard = (host, fields, opts = {}) => {
+    const id = 'study-' + Math.random().toString(36).slice(2, 7);
+    host.innerHTML = `<h2>${RT.t('研究資訊', 'Study details')} <span class="pill">${RT.t('所有工具共用', 'Shared by all tools')}</span></h2>
+      <p class="hint">${RT.t('在任一工具填寫，其他工具都會讀到（只存在這個瀏覽器）。', 'Fill these in once; the other tools read them too (stored in this browser only).')}</p>
+      <div class="grid${fields.length > 2 ? '3' : '2'} study-grid">${fields.map((k) => `<label class="field"><span>${RT.t(...RT.STUDY_FIELDS[k])}</span><input data-study="${k}" list="${id}"></label>`).join('')}</div>
+      <datalist id="${id}"></datalist>
+      ${opts.apply ? `<div class="btns"><button type="button" class="small study-apply">${RT.esc(opts.applyLabel || RT.t('套用到圖上', 'Apply to the figure'))}</button>${opts.applyHint ? `<span class="hint" style="margin:0">${opts.applyHint}</span>` : ''}</div>` : ''}`;
+    const refresh = () => {
+      const s = RT.study.get();
+      host.querySelectorAll('[data-study]').forEach((el) => { if (document.activeElement !== el) el.value = s[el.dataset.study] || ''; });
+      host.querySelector('datalist').innerHTML = [...new Set([...(opts.suggest ? opts.suggest() : []), ...(s.drugs || [])])].map((d) => `<option value="${RT.esc(d)}">`).join('');
+    };
+    host.querySelectorAll('[data-study]').forEach((el) => (el.oninput = () => { const s = RT.study.set({ [el.dataset.study]: el.value.trim() }); if (opts.onChange) opts.onChange(s); }));
+    const ap = host.querySelector('.study-apply');
+    if (ap) ap.onclick = () => opts.apply(RT.study.get());
+    window.addEventListener('storage', (e) => { if (e.key === 'rt:study') { refresh(); if (opts.onChange) opts.onChange(RT.study.get()); } });
+    refresh();
+    return { refresh };
+  };
+
   // auto-init page chrome (script is loaded at the end of <body>)
   RT.initPage();
 })();

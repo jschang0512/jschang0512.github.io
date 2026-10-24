@@ -45,6 +45,7 @@
     <div class="card">
       <p class="hint" style="margin:0" data-en="Draw a few illustrative patients to show readers how your exposure definition works. Enter each dispensing as day, days’ supply and drug; the tool applies the grace period and stockpiling rule and marks gaps, discontinuation and switching.">用幾位示範病人說明你的暴露定義。每筆領藥輸入「第幾天、給藥天數、藥名」，工具會套用 grace period 與 stockpiling 規則，標出空窗、停藥與換藥。</p>
     </div>
+    <div class="card" id="study"></div>
     <div class="card">
       <h2><span class="step-no">1</span> <span data-en="Exposure rules">暴露規則</span></h2>
       <div class="grid2">
@@ -55,6 +56,7 @@
       </div>
       <label class="check"><input type="checkbox" data-k="stockpile"> <span data-en="Stockpiling: an early refill starts after the current supply runs out">Stockpiling：提早領藥時，新的藥量接在目前的藥用完之後</span></label>
       <label class="check"><input type="checkbox" data-k="censorSwitch"> <span data-en="A switch to another drug ends the current episode at the switch">換成另一種藥時，原本的暴露期間在換藥當天結束</span></label>
+      <button type="button" class="small" id="toTimeline" style="margin-top:6px" data-en="Write these rules into the Study Design Timeline →">把這些規則帶入研究設計時間軸 →</button>
     </div>
     <div class="card">
       <h2><span class="step-no">2</span> <span data-en="Illustrative patients">示範病人</span></h2>
@@ -98,7 +100,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261025a"></script>
+<script src="../shared/common.js?v=20261025b"></script>
 <script>
 const T = RT.t;
 const KEY = 'exposure1';
@@ -165,6 +167,27 @@ function episodes(list) {
 const form = document.getElementById('form');
 document.getElementById('styleFields').innerHTML = RT.styleFieldsHTML(['font', 'fontSize', 'textColor']);
 document.getElementById('refs').innerHTML = RT.refsHTML(REFS);
+const drugsInUse = () => [...new Set(S.pts.flatMap((p) => parseDisp(p.disp).list.map((d) => d.drug)))];
+RT.studyCard(document.getElementById('study'), ['exposure', 'comparator'], {
+  applyLabel: T('把藥名套用到示範病人', 'Use these names for the illustrative patients'),
+  applyHint: T('第一種藥換成暴露、第二種換成比較組', 'The first drug becomes the exposure, the second the comparator'),
+  suggest: drugsInUse,
+  apply: (s) => {
+    const old = drugsInUse(), map = {};
+    if (old[0] && s.exposure) map[old[0]] = s.exposure;
+    if (old[1] && s.comparator) map[old[1]] = s.comparator;
+    if (!Object.keys(map).length) { RT.toast(T('請先填暴露（與比較組）', 'Fill in the exposure (and comparator) first')); return; }
+    S.pts.forEach((p) => { p.disp = String(p.disp).split('\n').map((line) => { const c = line.split(','); if (c.length >= 3 && map[c[2].trim()]) c[2] = ' ' + map[c[2].trim()]; return c.join(','); }).join('\n'); p.label = Object.entries(map).reduce((l, [a, b]) => l.split(a).join(b), p.label); });
+    syncInputs(); update();
+    RT.toast(T('已套用（按 ↶ 可復原）', 'Applied (↶ to undo)'));
+  },
+});
+document.getElementById('toTimeline').onclick = () => {
+  const st = RT.study.get(), d = drugsInUse();
+  const data = { grace: Math.max(0, RT.num(S.grace) ?? 0), endRule: S.endRule, stockpile: !!S.stockpile, censorSwitch: !!S.censorSwitch, exposure: st.exposure || d[0] || '', comparator: st.comparator || d[1] || '', at: Date.now() };
+  try { localStorage.setItem('rt:handoff-exposure', JSON.stringify(data)); } catch (e) { /* ignore */ }
+  location.href = '../timeline/index.html?from=exposure';
+};
 function syncInputs() { RT.syncForm(form, S); renderPts(); }
 RT.bindForm(form, () => S, () => update());
 function renderPts() {
