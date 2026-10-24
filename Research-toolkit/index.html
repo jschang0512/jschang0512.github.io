@@ -52,6 +52,7 @@
   .group-label { margin: 0; font-family: var(--font-display); font-size: clamp(22px, 1.4vw + 16px, 26px); line-height: 1.2; }
   .group-desc { margin: 4px 0 10px; color: var(--muted); font-size: 13.5px; }
   .pill.tutorial { background: var(--accent-weak); color: var(--accent); border-color: transparent; }
+  .pill.section { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--border); }
   .below { max-width: 1080px; margin: 0 auto; padding: 0 20px; display: flex; flex-direction: column; gap: 12px; }
   .note { color: var(--muted); font-size: 12.5px; }
   @media (max-width: 760px) {
@@ -64,48 +65,48 @@
 <header class="topbar"></header>
 <section class="hero">
   <h1>Research Toolkit</h1>
-  <p data-en="Figure tools for research papers. Everything runs in your browser — files are never uploaded to a server.">研究論文圖表小工具。所有處理都在你的瀏覽器中完成，檔案不會上傳到任何伺服器。</p>
+  <p data-en="Figure tools for research papers. Everything runs in your browser — files are never uploaded. Unless noted, every figure exports as PNG, TIFF, JPG, PDF, SVG and editable Word shapes.">研究論文圖表小工具。所有處理都在你的瀏覽器中完成，檔案不會上傳。除另有註明，每張圖都能匯出 PNG、TIFF、JPG、PDF、SVG 與可編輯的 Word 圖形。</p>
 </section>
 
 <main class="tools">
   <section class="group">
   <h2 class="group-label" data-en="Real-world evidence (RWE)">真實世界研究（RWE）</h2>
-  <p class="group-desc" data-en="Observational studies, from design and causal assumptions to patient selection and sensitivity analysis.">觀察性研究從設計、因果假設、病人選取到敏感度分析。</p>
+  <p class="group-desc" data-en="Observational studies: design, causal assumptions, exposure definitions and sensitivity analysis.">觀察性研究的設計、因果假設、暴露定義與敏感度分析。</p>
   <a class="tile" href="dag/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="2.5" width="6" height="4" rx="1"/><rect x="2" y="16" width="6" height="4" rx="1"/><rect x="16" y="16" width="6" height="4" rx="1"/><path d="M10.5 6.5 6 16M13.5 6.5 18 16M8 18h8"/></svg></div>
     <h2>Causal Diagram (DAG)</h2>
-    <p data-en="Directed acyclic graph with drag-to-place variables: exposure, outcome, confounders, mediators, colliders and unmeasured variables; lists open back-door paths and minimal sufficient adjustment sets.&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG or editable Word shapes&lt;/span&gt;">因果圖（有向無環圖）：拖曳排版暴露、結果、干擾、中介、碰撞與未測量變項，自動列出仍未阻斷的後門路徑與最小充分調整集合。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG，或可編輯的 Word 圖形</span></p>
-    <div class="tags"><span class="pill" data-en="Back-door check">後門路徑檢查</span><span class="pill" data-en="Adjustment sets">調整集合</span></div>
+    <p data-en="Causal assumptions as a directed acyclic graph. Drag to lay it out; it lists open back-door paths and minimal adjustment sets and drafts a methods paragraph.">因果假設的有向無環圖。拖曳排版，自動列出未阻斷的後門路徑、最小調整集合，並產生 methods 段落描述。</p>
+    <div class="tags"><span class="pill" data-en="Back-door criterion">後門準則</span><span class="pill section">Methods</span></div>
   </a>
   <a class="tile" href="timeline/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20" stroke-dasharray="2 2"/><rect x="3" y="5" width="8" height="3" rx="1"/><rect x="5" y="11" width="6" height="3" rx="1"/><path d="M13 17h8l-2-2M21 17l-2 2"/></svg></div>
     <h2>Study Design Timeline</h2>
-    <p data-en="Study design diagram centred on Day 0: exclusion, covariate, exposure and follow-up windows, in block or classic layout.&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG or editable Word shapes&lt;/span&gt;">研究設計時間軸（study design diagram）：以 Day 0 為中心標示排除、共變項、暴露評估與追蹤期間，區塊式或經典版面。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG，或可編輯的 Word 圖形</span></p>
-    <div class="tags"><span class="pill">Design diagram</span><span class="pill">Day 0</span></div>
+    <p data-en="Study design diagram centred on Day 0: exclusion, covariate, exposure and follow-up windows.">以 Day 0 為中心的研究設計圖，標出排除、共變項、暴露評估與追蹤期間。</p>
+    <div class="tags"><span class="pill">Schneeweiss 2019</span><span class="pill section">Methods</span></div>
   </a>
   <a class="tile" href="cohortflow/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="10" height="4" rx="1"/><rect x="6" y="10" width="10" height="4" rx="1"/><rect x="2" y="18" width="8" height="4" rx="1"/><rect x="14" y="18" width="8" height="4" rx="1"/><path d="M11 6v4M11 14v2H6v2M11 16h7v2"/></svg></div>
     <h2>Cohort Patient Selection</h2>
-    <p data-en="Patient selection flowchart for cohort studies: step-by-step exclusions, automatic remaining n, final groups (exposed / comparator).&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG or editable Word shapes&lt;/span&gt;">世代研究病人選取流程圖：逐步排除條件、自動計算剩餘人數，最後分組（暴露／對照）。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG，或可編輯的 Word 圖形</span></p>
-    <div class="tags"><span class="pill">STROBE</span><span class="pill" data-en="Auto n">自動計算 n</span></div>
+    <p data-en="Patient selection flowchart: step-by-step exclusions with the remaining n calculated, ending in exposed and comparator groups.">病人選取流程圖：逐步排除並自動計算剩餘人數，最後分成暴露組與對照組。</p>
+    <div class="tags"><span class="pill">STROBE</span><span class="pill section">Results</span></div>
   </a>
   <a class="tile" href="exposure/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h6M11 7h5M3 13h10M3 19h18"/><path d="M19 4v6" stroke-width="2.4"/><circle cx="16" cy="13" r="1.6"/></svg></div>
     <h2>Exposure Definition Diagram</h2>
-    <p data-en="Illustrative patients showing how dispensings become exposure: days’ supply, grace period, gaps, stockpiling, discontinuation and switching, computed from the rules you set.&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG or editable Word shapes&lt;/span&gt;">以幾位示範病人說明暴露如何定義：給藥天數、grace period、空窗、stockpiling、停藥與換藥，依你設定的規則自動計算。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG，或可編輯的 Word 圖形</span></p>
-    <div class="tags"><span class="pill">Grace period</span><span class="pill">Methods</span></div>
+    <p data-en="Illustrative patients showing your exposure definition: exposed periods, gaps, discontinuation and switching under your grace-period and stockpiling rules.">用示範病人說明暴露定義：依你設定的 grace period 與 stockpiling 規則，畫出暴露期間、空窗、停藥與換藥。</p>
+    <div class="tags"><span class="pill">Grace period</span><span class="pill section">Methods</span></div>
   </a>
   <a class="tile" href="sankey/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="4" width="3" height="16" rx="1"/><rect x="19" y="3" width="3" height="7" rx="1"/><rect x="19" y="13" width="3" height="8" rx="1"/><path d="M5 7c7 0 7-1 14-1M5 15c7 0 7 2 14 2"/></svg></div>
     <h2>Treatment Pathway Sankey</h2>
-    <p data-en="Lines of therapy as a Sankey diagram: enter how many patients followed each pathway (first line &gt; second line &gt; …); switches and patients with no further treatment are drawn automatically.&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG or editable Word shapes&lt;/span&gt;">治療路徑 Sankey 圖：輸入各條用藥路徑的人數（第一線 &gt; 第二線 &gt; …），自動畫出轉換與未再用藥的病人。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG，或可編輯的 Word 圖形</span></p>
-    <div class="tags"><span class="pill" data-en="Drug utilisation">藥物利用</span><span class="pill">Sankey</span></div>
+    <p data-en="Treatment pathways: enter the number of patients on each pathway to draw lines of therapy, switches and discontinuation.">治療路徑圖：輸入每條用藥路徑的人數，畫出各線治療、轉換與停藥的流向。</p>
+    <div class="tags"><span class="pill" data-en="Drug utilisation">藥物利用</span><span class="pill section">Results</span></div>
   </a>
   <a class="tile" href="evalue/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M7 4c1 8 4 12 14 13"/><circle cx="10.5" cy="12.5" r="1.5"/></svg></div>
     <h2>E-value</h2>
-    <p data-en="Sensitivity analysis for unmeasured confounding: E-values for RR, OR, HR (rare or common outcome) and SMD, a sentence ready for the results section, and the E-value curve.&lt;span class=&quot;out&quot;&gt;Output: curve or results table as PNG, TIFF, PDF, SVG or Word, plus an editable Word table&lt;/span&gt;">未測量干擾的敏感度分析：計算 RR、OR、HR（罕見或常見結果）與 SMD 的 E-value，產生可放進結果段落的描述，並畫出 E-value 曲線。<span class="out">輸出：曲線圖或結果表（PNG、TIFF、PDF、SVG、Word），以及可編輯的 Word 表格</span></p>
-    <div class="tags"><span class="pill">VanderWeele &amp; Ding</span><span class="pill" data-en="Ready-made sentence">結果描述</span></div>
+    <p data-en="Sensitivity analysis for unmeasured confounding: E-values for RR, OR, HR and SMD, a results sentence to copy, and the E-value curve.&lt;span class=&quot;out&quot;&gt;Also: Word results table&lt;/span&gt;">未測量干擾的敏感度分析：算出 RR、OR、HR、SMD 的 E-value，可複製結果描述並畫出 E-value 曲線。<span class="out">另可匯出：Word 結果表</span></p>
+    <div class="tags"><span class="pill">VanderWeele &amp; Ding 2017</span><span class="pill section">Results</span></div>
   </a>
   </section>
   <section class="group">
@@ -114,48 +115,48 @@
   <a class="tile" href="prismaflow/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="8" height="5" rx="1"/><rect x="3" y="16" width="8" height="5" rx="1"/><rect x="15" y="3" width="6" height="5" rx="1"/><path d="M7 8v8M11 5.5h4"/></svg></div>
     <h2>PRISMA Flow Diagram</h2>
-    <p data-en="PRISMA 2020 study-selection flow diagram for systematic reviews, with databases / other-methods columns, live auto-calculation and consistency checks.&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG or editable Word shapes&lt;/span&gt;">依 PRISMA 2020 範本產生系統性回顧的文獻篩選流程圖，支援資料庫／其他來源雙欄、即時自動推算與數字檢查。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG，或可編輯的 Word 圖形</span></p>
-    <div class="tags"><span class="pill">PRISMA 2020</span><span class="pill" data-en="Editable Word">可編輯 Word</span></div>
+    <p data-en="Study selection flow diagram for systematic reviews, with databases and other sources side by side and counts calculated and checked.">系統性回顧的文獻篩選流程圖，資料庫與其他來源分欄，自動推算並檢查人數。</p>
+    <div class="tags"><span class="pill">PRISMA 2020</span><span class="pill section">Results</span></div>
   </a>
   <a class="tile" href="rob2/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="7" r="2.5"/><circle cx="12" cy="7" r="2.5"/><circle cx="18" cy="7" r="2.5"/><circle cx="6" cy="16" r="2.5"/><circle cx="12" cy="16" r="2.5"/><circle cx="18" cy="16" r="2.5"/></svg></div>
     <h2>RoB 2</h2>
-    <p data-en="Risk of bias in randomised trials: domain judgements with support, automatic overall judgement, traffic-light and summary plots.&lt;span class=&quot;out&quot;&gt;Output: figure (PNG, TIFF, PDF, SVG, Word) plus Word table and CSV&lt;/span&gt;">隨機對照試驗偏誤風險：各 domain 判斷與理由、自動整體判斷、紅綠燈圖與摘要長條圖。<span class="out">輸出：圖（PNG、TIFF、PDF、SVG、Word），以及 Word 表格、CSV</span></p>
-    <div class="tags"><span class="pill">Cochrane RoB 2</span><span class="pill">robvis-style</span></div>
+    <p data-en="Risk of bias in randomised trials: record domain judgements, get the overall judgement, and draw traffic-light and summary plots.&lt;span class=&quot;out&quot;&gt;Also: Word table, CSV&lt;/span&gt;">隨機試驗的偏誤風險：記錄各 domain 判斷，自動得出整體判斷，畫紅綠燈圖與摘要圖。<span class="out">另可匯出：Word 表格、CSV</span></p>
+    <div class="tags"><span class="pill">Cochrane RoB 2</span><span class="pill section">Results</span></div>
   </a>
   <a class="tile" href="robinsi/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="5" cy="12" r="2.3"/><circle cx="12" cy="12" r="2.3"/><circle cx="19" cy="12" r="2.3"/><path d="M3 5h18M3 19h18"/></svg></div>
     <h2>ROBINS-I V2</h2>
-    <p data-en="Risk of bias in non-randomised studies of interventions — official V2 of 20 Nov 2025 (6 domains), with the archived Nov 2024 V2 and the 2016 V1: overall judgement, plots and tables.&lt;span class=&quot;out&quot;&gt;Output: figure (PNG, TIFF, PDF, SVG, Word) plus Word table and CSV&lt;/span&gt;">非隨機介入研究偏誤風險：官方 V2（2025-11-20，6 個 domain），另可切換 2024 封存版 V2 與 2016 V1；整體判斷、圖表與表格。<span class="out">輸出：圖（PNG、TIFF、PDF、SVG、Word），以及 Word 表格、CSV</span></p>
-    <div class="tags"><span class="pill">ROBINS-I V2</span><span class="pill">robvis-style</span></div>
+    <p data-en="Risk of bias in non-randomised studies of interventions: official V2 (20 Nov 2025), with the archived 2024 V2 and 2016 V1; traffic-light and summary plots.&lt;span class=&quot;out&quot;&gt;Also: Word table, CSV&lt;/span&gt;">非隨機介入研究的偏誤風險：官方 V2（2025-11-20），可切換 2024 封存版與 2016 V1，畫紅綠燈圖與摘要圖。<span class="out">另可匯出：Word 表格、CSV</span></p>
+    <div class="tags"><span class="pill">ROBINS-I V2</span><span class="pill section">Results</span></div>
   </a>
   <a class="tile" href="../NMA/">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="4.5" r="2.3"/><circle cx="4.5" cy="18" r="2.3"/><circle cx="19.5" cy="18" r="2.3"/><path d="M10.9 6.5 5.6 16M13.1 6.5l5.3 9.5M6.8 18h10.4"/></svg></div>
     <h2>Bayesian NMA Tutorial</h2>
-    <p data-en="Step-by-step R tutorial for Bayesian network meta-analysis with multinma: network graph, forest plot, SUCRA, node-splitting, league table, meta-regression and sensitivity analysis.">用 R 套件 multinma 做貝氏網絡統合分析的逐步教學：網絡圖、森林圖、SUCRA、node-splitting、league table、meta-regression 與敏感度分析。</p>
-    <div class="tags"><span class="pill tutorial" data-en="Tutorial">教學</span><span class="pill">multinma</span><span class="pill" data-en="R code">R 程式碼</span></div>
+    <p data-en="Step-by-step tutorial for Bayesian network meta-analysis with the R package multinma, with code you can run.">用 R 套件 multinma 做貝氏網絡統合分析的逐步教學，附可直接執行的程式碼。</p>
+    <div class="tags"><span class="pill">R · multinma</span><span class="pill tutorial" data-en="Tutorial">教學</span></div>
   </a>
   </section>
   <section class="group">
   <h2 class="group-label" data-en="For any study">通用</h2>
-  <p class="group-desc" data-en="Figure and file tools for either kind of study.">兩類研究都用得到的圖表與檔案工具。</p>
+  <p class="group-desc" data-en="Results figures and submission tidy-up for either kind of study.">兩類研究都用得到的結果圖與投稿前整理。</p>
   <a class="tile" href="forestplot/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20" stroke-dasharray="2 2"/><path d="M5 6h8M9 12h10M4 18h12"/><rect x="8" y="5" width="2" height="2"/><rect x="13" y="11" width="2" height="2"/><rect x="9" y="17" width="2" height="2"/></svg></div>
     <h2>Forest Plot</h2>
-    <p data-en="Estimates with 95% CIs for subgroup, sensitivity or meta-analyses: log or linear axis, group headings, summary diamonds, paste from Excel. Plots the numbers you enter; it does not calculate them.&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG, editable Word shapes, plus a Word table of the numbers&lt;/span&gt;">次族群、敏感度分析或統合分析的效果量與 95% CI：對數或線性座標、分組標題、彙總菱形，可直接從 Excel 貼上。只負責繪圖，不做統計運算。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG、可編輯的 Word 圖形，以及數值的 Word 表格</span></p>
-    <div class="tags"><span class="pill">HR · OR · RR</span><span class="pill" data-en="Paste from Excel">Excel 貼上</span></div>
+    <p data-en="Forest plots for subgroup, sensitivity or meta-analyses, drawn from the estimates and 95% CIs you enter; paste straight from Excel.&lt;span class=&quot;out&quot;&gt;Also: Word table of the numbers&lt;/span&gt;">次族群、敏感度分析或統合分析的森林圖。只依你輸入的估計值與 95% CI 繪圖，可從 Excel 貼上。<span class="out">另可匯出：數值的 Word 表格</span></p>
+    <div class="tags"><span class="pill">HR · OR · RR · MD</span><span class="pill section">Results</span></div>
   </a>
   <a class="tile" href="figureconvert/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="11" height="14" rx="1.5"/><path d="M14 8h5a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-2"/><path d="M6 8h5M6 11h5"/></svg></div>
     <h2>Figure DPI &amp; Format</h2>
-    <p data-en="Convert PDF / Word / images to PNG, JPG or TIFF at a set DPI — auto-trim, print width, grayscale, batch download.&lt;span class=&quot;out&quot;&gt;Output: PNG, JPG, TIFF, batch download as ZIP&lt;/span&gt;">PDF / Word / 圖片轉成指定 DPI 的 PNG、JPG、TIFF，可自動裁白邊、指定列印寬度、灰階、批次下載。<span class="out">輸出：PNG、JPG、TIFF，可批次下載 ZIP</span></p>
-    <div class="tags"><span class="pill">PDF · DOCX</span><span class="pill">300 / 600 dpi</span></div>
+    <p data-en="Convert PDF, Word or images to the DPI and format a journal asks for: trim margins, set the print width, download in batches.&lt;span class=&quot;out&quot;&gt;Output: PNG, JPG, TIFF (or a ZIP)&lt;/span&gt;">把 PDF、Word 或圖片轉成投稿要求的 DPI 與格式，可裁白邊、指定列印寬度、批次下載。<span class="out">輸出：PNG、JPG、TIFF（可打包成 ZIP）</span></p>
+    <div class="tags"><span class="pill">300 / 600 dpi</span><span class="pill section" data-en="Submission">投稿</span></div>
   </a>
   <a class="tile" href="panels/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="18" height="8" rx="1"/></svg></div>
     <h2>Multi-panel Figure</h2>
-    <p data-en="Arrange PNG, JPG or SVG figures as A, B, C panels: columns, spans, alignment and panel letters, exported at journal width and DPI, with a warning for panels whose resolution is too low.&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG or Word (embedded picture)&lt;/span&gt;">把 PNG、JPG 或 SVG 圖排成 A、B、C 面板：欄數、跨欄、對齊與面板字母，以期刊寬度與 DPI 匯出，解析度不足的面板會提醒。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG，或 Word（嵌入圖片）</span></p>
-    <div class="tags"><span class="pill">A · B · C</span><span class="pill" data-en="Journal width">期刊寬度</span></div>
+    <p data-en="Arrange figures as A, B, C panels with letters and export at journal width and DPI; panels too low in resolution are flagged.&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG, or Word with the figure embedded&lt;/span&gt;">把多張圖排成 A、B、C 面板並加上字母，以期刊寬度與 DPI 匯出；解析度不足的面板會提醒。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG，或嵌入圖片的 Word</span></p>
+    <div class="tags"><span class="pill">A · B · C</span><span class="pill section" data-en="Submission">投稿</span></div>
   </a>
   </section>
 </main>
