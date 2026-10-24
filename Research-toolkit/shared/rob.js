@@ -263,7 +263,9 @@
 
     // ---- traffic-light plot ----
     // withLegend: Domains + Judgement stacked under the grid (the "traffic light only" figure)
+    let CELLS = [];
     function traffic(y0, dx = 0, withLegend = true) {
+      CELLS = [];
       const fs = Number(S.st.fontSize) || 12.5, lh = fs * (Number(S.st.lh) || 1.3), M = 16 + dx;
       const r = Number(S.cellR) || 12, cw = 2 * r + 10, rh = 2 * r + 8;
       const doms = domains();
@@ -297,6 +299,7 @@
           const c = v ? colorOf(v) : '#FFFFFF';
           const stroke = !v ? '#C9CED6' : S.palette === 'gray' ? '#555' : '#FFFFFF';
           body += RT.circle(colX(i), y + rh / 2, r, { fill: c, stroke, sw: v ? 1.5 : 1, text: v && S.symbols ? J[v].sym : '', color: textOn(c), size: r * 1.3 });
+          CELLS.push({ si, i, cx: colX(i), cy: y + rh / 2, r });
         });
         y += rh;
       });
@@ -440,8 +443,56 @@
     const preview = document.getElementById('preview');
     const exporter = RT.exportPanel(document.getElementById('export'), () => fig, `${cfg.filePrefix}_plot`, { fontSize: { get: () => S.st.fontSize, set: (v) => { S.st.fontSize = v; syncInputs(); update(); } } });
     const hist = RT.history(() => S, (s) => { S = s; syncInputs(); render(); });
+    function decorate() {
+      const svg = preview.querySelector('svg');
+      if (!svg || S.plot === 'summary') return;
+      const doms = domains(), g = RT.svgEl('g', { class: 'edit-ui' });
+      CELLS.forEach((c) => {
+        const st = S.studies[c.si];
+        if (!st) return;
+        const ov = c.i === doms.length, v = ov ? effOverall(st) : st.j[doms[c.i].code];
+        const what = ov ? 'Overall' : doms[c.i].code;
+        const now = v ? J[v].label : T('未判斷', 'not judged');
+        g.appendChild(RT.svgEl('circle', { cx: c.cx, cy: c.cy, r: c.r + 3, fill: 'transparent', 'data-hit': '', 'data-cell': `${c.si},${c.i}`, tabindex: 0, role: 'button',
+          'aria-label': T(`${studyLabel(st)}，${what}：${now}（點一下切換）`, `${studyLabel(st)}, ${what}: ${now} (click to change)`) }));
+      });
+      svg.appendChild(g);
+    }
+    // Low → Some concerns → High … → not judged; Overall: Auto → each judgement
+    function cycleCell(si, i, back) {
+      const st = S.studies[si], doms = domains();
+      if (!st) return;
+      if (i === doms.length) {
+        const opts = ['auto', ...cfg.judgments.filter((j) => inVariant(j) && (!j.optional || S.allowNI)).sort((a, b) => a.rank - b.rank).map((j) => j.v)];
+        const k = opts.indexOf(st.overall || 'auto');
+        st.overall = opts[(k + (back ? opts.length - 1 : 1)) % opts.length];
+      } else {
+        const code = doms[i].code;
+        const opts = ['', ...allowed(code).slice().sort((a, b) => a.rank - b.rank).map((j) => j.v)];
+        const k = Math.max(0, opts.indexOf(st.j[code] || ''));
+        const nv = opts[(k + (back ? opts.length - 1 : 1)) % opts.length];
+        if (nv) st.j[code] = nv; else delete st.j[code];
+      }
+      renderGrid();
+      render();
+      preview.querySelector(`[data-cell="${si},${i}"]`)?.focus({ preventScroll: true });
+      hist.push();
+    }
+    preview.addEventListener('click', (e) => {
+      const c = e.target.closest && e.target.closest('[data-cell]');
+      if (!c) return;
+      const [si, i] = c.dataset.cell.split(',').map(Number);
+      cycleCell(si, i, e.shiftKey);
+    });
+    preview.addEventListener('keydown', (e) => {
+      const c = e.target.closest && e.target.closest('[data-cell]');
+      if (!c || (e.key !== 'Enter' && e.key !== ' ')) return;
+      e.preventDefault();
+      const [si, i] = c.dataset.cell.split(',').map(Number);
+      cycleCell(si, i, e.shiftKey);
+    });
     function render() {
-      try { fig = build(); preview.innerHTML = fig.svg; }
+      try { fig = build(); preview.innerHTML = fig.svg; decorate(); }
       catch (e) { console.error(e); preview.innerHTML = `<div class="msg">⚠ ${RT.esc(e.message)}</div>`; }
       exporter.refresh();
       const doms = domains(), msgs = [];
