@@ -8,7 +8,6 @@ Browser-based figure tools for research papers. Everything runs in the browser â
 | Cohort patient-selection flowchart | `cohortflow/` |
 | Cohort study timeline (study design diagram) | `timeline/` |
 | Figure DPI & format converter | `figureconvert/` |
-| Target trial specification table | `tte/` |
 | Forest plot | `forestplot/` |
 | E-value calculator (unmeasured confounding) | `evalue/` |
 | Causal diagram (DAG) with back-door path check | `dag/` |

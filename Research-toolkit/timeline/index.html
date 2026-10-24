@@ -1140,26 +1140,6 @@ document.getElementById('btnLoadJson').onclick = async () => { try { S = RT.merg
 syncInputs();
 render();
 hist.push();
-(() => {
-  if (new URLSearchParams(location.search).get('from') !== 'tte') return;
-  let h = null;
-  try { h = JSON.parse(localStorage.getItem('rt:handoff-tte') || 'null'); localStorage.removeItem('rt:handoff-tte'); } catch (e) { /* ignore */ }
-  history.replaceState(null, '', location.pathname);
-  if (!h) return;
-  const d = (v, def) => (String(v ?? '').trim() === '' ? def : String(Math.round(Number(v))));
-  const look = d(h.look, '365'), wash = d(h.wash, '365'), grace = d(h.grace, '30'), fu = String(h.fu ?? '').trim() === '' ? '' : d(h.fu, '');
-  loadTemplate(S, 'tte');
-  const byKind = (k) => S.rows.find((r) => r.kind === k);
-  const elig = byKind('incl'), w = byKind('wash'), cov = byKind('cov'), gp = byKind('expo'), f = byKind('fu');
-  if (elig) { elig.s = '-' + look; if (h.elig) elig.details = h.elig; }
-  if (w) { w.s = '-' + wash; w.e = '-1'; if (wash === '0') S.rows.splice(S.rows.indexOf(w), 1); }
-  if (cov) cov.s = '-' + look;
-  if (gp) { gp.e = grace; if (grace === '0') S.rows.splice(S.rows.indexOf(gp), 1); }
-  if (f) { f.e = fu; if (h.fuText) f.details = h.fuText; }
-  S.refLines = grace === '0' ? [] : [{ t: grace, label: 'End of grace period' }];
-  syncInputs(); update();
-  RT.toast(T('已依 Target Trial 規格表的時間設定產生時間軸（按 ↶ 可回到原本的圖）', 'Diagram made from the target trial table’s time settings (↶ returns to your previous diagram)'), 6000);
-})();
 </script>
 </body>
 </html>
