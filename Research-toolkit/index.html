@@ -48,7 +48,9 @@
   .tile p .out { display: block; margin-top: 4px; font-size: 12.5px; color: var(--text); }
   .tile .tags { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
   .group-label { font-size: 14px; font-weight: 700; color: var(--text); margin: 24px 0 6px; }
-  .group-label:first-child { margin-top: 0; }
+  .group + .group { margin-top: 44px; }
+  .group-label { margin: 0; font-family: var(--font-display); font-size: clamp(22px, 1.4vw + 16px, 26px); line-height: 1.2; }
+  .group-desc { margin: 4px 0 10px; color: var(--muted); font-size: 13.5px; }
   .pill.tutorial { background: var(--accent-weak); color: var(--accent); border-color: transparent; }
   .below { max-width: 1080px; margin: 0 auto; padding: 0 20px; display: flex; flex-direction: column; gap: 12px; }
   .note { color: var(--muted); font-size: 12.5px; }
@@ -66,18 +68,20 @@
 </section>
 
 <main class="tools">
-  <h2 class="group-label" data-en="Online tools">線上工具</h2>
-  <a class="tile" href="prismaflow/index.html">
-    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="8" height="5" rx="1"/><rect x="3" y="16" width="8" height="5" rx="1"/><rect x="15" y="3" width="6" height="5" rx="1"/><path d="M7 8v8M11 5.5h4"/></svg></div>
-    <h2>PRISMA Flow Diagram</h2>
-    <p data-en="PRISMA 2020 study-selection flow diagram for systematic reviews, with databases / other-methods columns, live auto-calculation and consistency checks.&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG or editable Word shapes&lt;/span&gt;">依 PRISMA 2020 範本產生系統性回顧的文獻篩選流程圖，支援資料庫／其他來源雙欄、即時自動推算與數字檢查。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG，或可編輯的 Word 圖形</span></p>
-    <div class="tags"><span class="pill">PRISMA 2020</span><span class="pill" data-en="Editable Word">可編輯 Word</span></div>
+  <section class="group">
+  <h2 class="group-label" data-en="Real-world evidence (RWE)">真實世界研究（RWE）</h2>
+  <p class="group-desc" data-en="Observational studies, from design and causal assumptions to patient selection and sensitivity analysis.">觀察性研究從設計、因果假設、病人選取到敏感度分析。</p>
+  <a class="tile" href="tte/index.html">
+    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M3 9h18M9 4v16M15 9v11"/></svg></div>
+    <h2>Target Trial Specification</h2>
+    <p data-en="Protocol table for target trial emulation: eligibility, strategies, assignment, time zero, outcome, causal contrasts, analysis — target trial vs emulation.&lt;span class=&quot;out&quot;&gt;Output: editable Word table, or PNG, TIFF, PDF, SVG&lt;/span&gt;">目標試驗模擬規格表：eligibility、treatment strategies、assignment、time zero、outcome、causal contrast、analysis，並列 target trial 與模擬方式。<span class="out">輸出：可編輯的 Word 表格，或 PNG、TIFF、PDF、SVG</span></p>
+    <div class="tags"><span class="pill">TTE</span><span class="pill" data-en="Word table">Word 表格</span></div>
   </a>
-  <a class="tile" href="cohortflow/index.html">
-    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="10" height="4" rx="1"/><rect x="6" y="10" width="10" height="4" rx="1"/><rect x="2" y="18" width="8" height="4" rx="1"/><rect x="14" y="18" width="8" height="4" rx="1"/><path d="M11 6v4M11 14v2H6v2M11 16h7v2"/></svg></div>
-    <h2>Cohort Patient Selection</h2>
-    <p data-en="Patient selection flowchart for cohort studies: step-by-step exclusions, automatic remaining n, final groups (exposed / comparator).&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG or editable Word shapes&lt;/span&gt;">世代研究病人選取流程圖：逐步排除條件、自動計算剩餘人數，最後分組（暴露／對照）。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG，或可編輯的 Word 圖形</span></p>
-    <div class="tags"><span class="pill">STROBE</span><span class="pill" data-en="Auto n">自動計算 n</span></div>
+  <a class="tile" href="dag/index.html">
+    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="2.5" width="6" height="4" rx="1"/><rect x="2" y="16" width="6" height="4" rx="1"/><rect x="16" y="16" width="6" height="4" rx="1"/><path d="M10.5 6.5 6 16M13.5 6.5 18 16M8 18h8"/></svg></div>
+    <h2>Causal Diagram (DAG)</h2>
+    <p data-en="Directed acyclic graph with drag-to-place variables: exposure, outcome, confounders, mediators, colliders and unmeasured variables; lists open back-door paths and minimal sufficient adjustment sets.&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG or editable Word shapes&lt;/span&gt;">因果圖（有向無環圖）：拖曳排版暴露、結果、干擾、中介、碰撞與未測量變項，自動列出仍未阻斷的後門路徑與最小充分調整集合。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG，或可編輯的 Word 圖形</span></p>
+    <div class="tags"><span class="pill" data-en="Back-door check">後門路徑檢查</span><span class="pill" data-en="Adjustment sets">調整集合</span></div>
   </a>
   <a class="tile" href="timeline/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20" stroke-dasharray="2 2"/><rect x="3" y="5" width="8" height="3" rx="1"/><rect x="5" y="11" width="6" height="3" rx="1"/><path d="M13 17h8l-2-2M21 17l-2 2"/></svg></div>
@@ -85,23 +89,11 @@
     <p data-en="Study design diagram centred on Day 0: exclusion, covariate, exposure and follow-up windows, in block or classic layout.&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG or editable Word shapes&lt;/span&gt;">研究設計時間軸（study design diagram）：以 Day 0 為中心標示排除、共變項、暴露評估與追蹤期間，區塊式或經典版面。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG，或可編輯的 Word 圖形</span></p>
     <div class="tags"><span class="pill">Design diagram</span><span class="pill">Day 0</span></div>
   </a>
-  <a class="tile" href="figureconvert/index.html">
-    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="11" height="14" rx="1.5"/><path d="M14 8h5a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-2"/><path d="M6 8h5M6 11h5"/></svg></div>
-    <h2>Figure DPI &amp; Format</h2>
-    <p data-en="Convert PDF / Word / images to PNG, JPG or TIFF at a set DPI — auto-trim, print width, grayscale, batch download.&lt;span class=&quot;out&quot;&gt;Output: PNG, JPG, TIFF, batch download as ZIP&lt;/span&gt;">PDF / Word / 圖片轉成指定 DPI 的 PNG、JPG、TIFF，可自動裁白邊、指定列印寬度、灰階、批次下載。<span class="out">輸出：PNG、JPG、TIFF，可批次下載 ZIP</span></p>
-    <div class="tags"><span class="pill">PDF · DOCX</span><span class="pill">300 / 600 dpi</span></div>
-  </a>
-  <a class="tile" href="tte/index.html">
-    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M3 9h18M9 4v16M15 9v11"/></svg></div>
-    <h2>Target Trial Specification</h2>
-    <p data-en="Protocol table for target trial emulation: eligibility, strategies, assignment, time zero, outcome, causal contrasts, analysis — target trial vs emulation.&lt;span class=&quot;out&quot;&gt;Output: editable Word table, or PNG, TIFF, PDF, SVG&lt;/span&gt;">目標試驗模擬規格表：eligibility、treatment strategies、assignment、time zero、outcome、causal contrast、analysis，並列 target trial 與模擬方式。<span class="out">輸出：可編輯的 Word 表格，或 PNG、TIFF、PDF、SVG</span></p>
-    <div class="tags"><span class="pill">TTE</span><span class="pill" data-en="Word table">Word 表格</span></div>
-  </a>
-  <a class="tile" href="forestplot/index.html">
-    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20" stroke-dasharray="2 2"/><path d="M5 6h8M9 12h10M4 18h12"/><rect x="8" y="5" width="2" height="2"/><rect x="13" y="11" width="2" height="2"/><rect x="9" y="17" width="2" height="2"/></svg></div>
-    <h2>Forest Plot</h2>
-    <p data-en="Estimates with 95% CIs for subgroup, sensitivity or meta-analyses: log or linear axis, group headings, summary diamonds, paste from Excel.&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG, editable Word shapes, plus a Word table of the numbers&lt;/span&gt;">次族群、敏感度分析或統合分析的效果量與 95% CI：對數或線性座標、分組標題、彙總菱形，可直接從 Excel 貼上。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG、可編輯的 Word 圖形，以及數值的 Word 表格</span></p>
-    <div class="tags"><span class="pill">HR · OR · RR</span><span class="pill" data-en="Paste from Excel">Excel 貼上</span></div>
+  <a class="tile" href="cohortflow/index.html">
+    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="10" height="4" rx="1"/><rect x="6" y="10" width="10" height="4" rx="1"/><rect x="2" y="18" width="8" height="4" rx="1"/><rect x="14" y="18" width="8" height="4" rx="1"/><path d="M11 6v4M11 14v2H6v2M11 16h7v2"/></svg></div>
+    <h2>Cohort Patient Selection</h2>
+    <p data-en="Patient selection flowchart for cohort studies: step-by-step exclusions, automatic remaining n, final groups (exposed / comparator).&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG or editable Word shapes&lt;/span&gt;">世代研究病人選取流程圖：逐步排除條件、自動計算剩餘人數，最後分組（暴露／對照）。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG，或可編輯的 Word 圖形</span></p>
+    <div class="tags"><span class="pill">STROBE</span><span class="pill" data-en="Auto n">自動計算 n</span></div>
   </a>
   <a class="tile" href="evalue/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M7 4c1 8 4 12 14 13"/><circle cx="10.5" cy="12.5" r="1.5"/></svg></div>
@@ -109,11 +101,15 @@
     <p data-en="Sensitivity analysis for unmeasured confounding: E-values for RR, OR, HR (rare or common outcome) and SMD, a sentence ready for the results section, and the E-value curve.&lt;span class=&quot;out&quot;&gt;Output: curve or results table as PNG, TIFF, PDF, SVG or Word, plus an editable Word table&lt;/span&gt;">未測量干擾的敏感度分析：計算 RR、OR、HR（罕見或常見結果）與 SMD 的 E-value，產生可放進結果段落的描述，並畫出 E-value 曲線。<span class="out">輸出：曲線圖或結果表（PNG、TIFF、PDF、SVG、Word），以及可編輯的 Word 表格</span></p>
     <div class="tags"><span class="pill">VanderWeele &amp; Ding</span><span class="pill" data-en="Ready-made sentence">結果描述</span></div>
   </a>
-  <a class="tile" href="dag/index.html">
-    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="2.5" width="6" height="4" rx="1"/><rect x="2" y="16" width="6" height="4" rx="1"/><rect x="16" y="16" width="6" height="4" rx="1"/><path d="M10.5 6.5 6 16M13.5 6.5 18 16M8 18h8"/></svg></div>
-    <h2>Causal Diagram (DAG)</h2>
-    <p data-en="Directed acyclic graph with drag-to-place variables: exposure, outcome, confounders, mediators, colliders and unmeasured variables; lists open back-door paths and minimal sufficient adjustment sets.&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG or editable Word shapes&lt;/span&gt;">因果圖（有向無環圖）：拖曳排版暴露、結果、干擾、中介、碰撞與未測量變項，自動列出仍未阻斷的後門路徑與最小充分調整集合。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG，或可編輯的 Word 圖形</span></p>
-    <div class="tags"><span class="pill" data-en="Back-door check">後門路徑檢查</span><span class="pill" data-en="Adjustment sets">調整集合</span></div>
+  </section>
+  <section class="group">
+  <h2 class="group-label" data-en="Systematic reviews and meta-analysis">系統性回顧與統合分析</h2>
+  <p class="group-desc" data-en="Study selection, risk-of-bias assessment, and a network meta-analysis tutorial.">文獻篩選、偏誤風險評估，以及網絡統合分析教學。</p>
+  <a class="tile" href="prismaflow/index.html">
+    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="8" height="5" rx="1"/><rect x="3" y="16" width="8" height="5" rx="1"/><rect x="15" y="3" width="6" height="5" rx="1"/><path d="M7 8v8M11 5.5h4"/></svg></div>
+    <h2>PRISMA Flow Diagram</h2>
+    <p data-en="PRISMA 2020 study-selection flow diagram for systematic reviews, with databases / other-methods columns, live auto-calculation and consistency checks.&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG or editable Word shapes&lt;/span&gt;">依 PRISMA 2020 範本產生系統性回顧的文獻篩選流程圖，支援資料庫／其他來源雙欄、即時自動推算與數字檢查。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG，或可編輯的 Word 圖形</span></p>
+    <div class="tags"><span class="pill">PRISMA 2020</span><span class="pill" data-en="Editable Word">可編輯 Word</span></div>
   </a>
   <a class="tile" href="rob2/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="7" r="2.5"/><circle cx="12" cy="7" r="2.5"/><circle cx="18" cy="7" r="2.5"/><circle cx="6" cy="16" r="2.5"/><circle cx="12" cy="16" r="2.5"/><circle cx="18" cy="16" r="2.5"/></svg></div>
@@ -127,13 +123,29 @@
     <p data-en="Risk of bias in non-randomised studies of interventions — official V2 of 20 Nov 2025 (6 domains), with the archived Nov 2024 V2 and the 2016 V1: overall judgement, plots and tables.&lt;span class=&quot;out&quot;&gt;Output: figure (PNG, TIFF, PDF, SVG, Word) plus Word table and CSV&lt;/span&gt;">非隨機介入研究偏誤風險：官方 V2（2025-11-20，6 個 domain），另可切換 2024 封存版 V2 與 2016 V1；整體判斷、圖表與表格。<span class="out">輸出：圖（PNG、TIFF、PDF、SVG、Word），以及 Word 表格、CSV</span></p>
     <div class="tags"><span class="pill">ROBINS-I V2</span><span class="pill">robvis-style</span></div>
   </a>
-  <h2 class="group-label" data-en="Tutorials">教學</h2>
   <a class="tile" href="../NMA/">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="4.5" r="2.3"/><circle cx="4.5" cy="18" r="2.3"/><circle cx="19.5" cy="18" r="2.3"/><path d="M10.9 6.5 5.6 16M13.1 6.5l5.3 9.5M6.8 18h10.4"/></svg></div>
     <h2>Bayesian NMA Tutorial</h2>
     <p data-en="Step-by-step R tutorial for Bayesian network meta-analysis with multinma: network graph, forest plot, SUCRA, node-splitting, league table, meta-regression and sensitivity analysis.">用 R 套件 multinma 做貝氏網絡統合分析的逐步教學：網絡圖、森林圖、SUCRA、node-splitting、league table、meta-regression 與敏感度分析。</p>
     <div class="tags"><span class="pill tutorial" data-en="Tutorial">教學</span><span class="pill">multinma</span><span class="pill" data-en="R code">R 程式碼</span></div>
   </a>
+  </section>
+  <section class="group">
+  <h2 class="group-label" data-en="For any study">通用</h2>
+  <p class="group-desc" data-en="Figure and file tools for either kind of study.">兩類研究都用得到的圖表與檔案工具。</p>
+  <a class="tile" href="forestplot/index.html">
+    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20" stroke-dasharray="2 2"/><path d="M5 6h8M9 12h10M4 18h12"/><rect x="8" y="5" width="2" height="2"/><rect x="13" y="11" width="2" height="2"/><rect x="9" y="17" width="2" height="2"/></svg></div>
+    <h2>Forest Plot</h2>
+    <p data-en="Estimates with 95% CIs for subgroup, sensitivity or meta-analyses: log or linear axis, group headings, summary diamonds, paste from Excel.&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG, editable Word shapes, plus a Word table of the numbers&lt;/span&gt;">次族群、敏感度分析或統合分析的效果量與 95% CI：對數或線性座標、分組標題、彙總菱形，可直接從 Excel 貼上。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG、可編輯的 Word 圖形，以及數值的 Word 表格</span></p>
+    <div class="tags"><span class="pill">HR · OR · RR</span><span class="pill" data-en="Paste from Excel">Excel 貼上</span></div>
+  </a>
+  <a class="tile" href="figureconvert/index.html">
+    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="11" height="14" rx="1.5"/><path d="M14 8h5a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-2"/><path d="M6 8h5M6 11h5"/></svg></div>
+    <h2>Figure DPI &amp; Format</h2>
+    <p data-en="Convert PDF / Word / images to PNG, JPG or TIFF at a set DPI — auto-trim, print width, grayscale, batch download.&lt;span class=&quot;out&quot;&gt;Output: PNG, JPG, TIFF, batch download as ZIP&lt;/span&gt;">PDF / Word / 圖片轉成指定 DPI 的 PNG、JPG、TIFF，可自動裁白邊、指定列印寬度、灰階、批次下載。<span class="out">輸出：PNG、JPG、TIFF，可批次下載 ZIP</span></p>
+    <div class="tags"><span class="pill">PDF · DOCX</span><span class="pill">300 / 600 dpi</span></div>
+  </a>
+  </section>
 </main>
 
 <div class="below">
