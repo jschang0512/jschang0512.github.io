@@ -49,7 +49,8 @@
       <label class="nrow"><span>Databases</span><input class="n" data-k="databases" data-d="databases" inputmode="numeric"></label>
       <label class="field"><span data-en="Per-database counts (optional, one per line, e.g. <code>PubMed: 523</code>) — Databases total is summed automatically">各資料庫明細（選填，每行一個，例：<code>PubMed: 523</code>）— 會自動加總成 Databases</span>
         <textarea data-k="dbDetail" rows="3" placeholder="PubMed: 523&#10;Embase: 811&#10;Cochrane Library: 97"></textarea></label>
-      <label class="nrow"><span>Registers</span><input class="n" data-k="registers" inputmode="numeric"></label>
+      <label class="check"><input type="checkbox" data-k="registersOn"> <span data-en="Registers were searched (e.g. ClinicalTrials.gov, WHO ICTRP)">有搜尋 registers（例如 ClinicalTrials.gov、WHO ICTRP）</span></label>
+      <label class="nrow" data-show="registersOn"><span>Registers</span><input class="n" data-k="registers" inputmode="numeric"></label>
       <div class="sub-h">Records removed before screening:</div>
       <label class="nrow"><span>Duplicate records removed</span><input class="n" data-k="dup" inputmode="numeric"></label>
       <label class="nrow"><span>Marked as ineligible by automation tools</span><input class="n" data-k="autoTools" inputmode="numeric"></label>
@@ -168,7 +169,7 @@ const THEMES = {
 const R3 = () => [{ t: 'Reason 1', n: '' }, { t: 'Reason 2', n: '' }, { t: 'Reason 3', n: '' }];
 const DEF = {
   autoFill: true,
-  databases: '', dbDetail: '', registers: '', dup: '', autoTools: '', otherRemoved: '',
+  databases: '', dbDetail: '', registersOn: true, registers: '', dup: '', autoTools: '', otherRemoved: '',
   screened: '', excluded: '', sought: '', notRetrieved: '', assessed: '',
   reasons: R3(), studies: '', reports: '',
   other: false,
@@ -261,7 +262,7 @@ function compute() {
   const det = parseDetail(S.dbDetail);
   D.databases = det.length && det.every((d) => d.n !== null) ? RT.sum(det.map((d) => d.n)) : null;
   eff('databases');
-  E.registers = g('registers');
+  E.registers = S.registersOn ? g('registers') : null;
   const ident = E.databases !== null || E.registers !== null ? z(E.databases) + z(E.registers) : null;
   D.screened = ident !== null ? ident - z(g('dup')) - z(g('autoTools')) - z(g('otherRemoved')) : null;
   eff('screened');
@@ -350,7 +351,9 @@ function build({ E }) {
   let y = M;
   if (S.headers) {
     const hdrW = 2 * bw + gx;
-    const hDb = RT.box([{ text: L.hdrDb, bold: S.hdrBold }], hdrW, { ...bo, fill: S.c.hdrDb });
+    // without registers the default heading drops 'and registers'; a heading the user rewrote is kept
+    const hdrDb = !S.registersOn && L.hdrDb === LABELS.hdrDb ? 'Identification of new studies via databases' : L.hdrDb;
+    const hDb = RT.box([{ text: hdrDb, bold: S.hdrBold }], hdrW, { ...bo, fill: S.c.hdrDb });
     const hO = S.other ? RT.box([{ text: L.hdrOther, bold: S.hdrBold }], hdrW, { ...bo, fill: S.c.hdrOther }) : null;
     const hh = Math.max(hDb.h, hO ? hO.h : 0);
     body += RT.drawBox(hDb, xDbL, M, hh);
@@ -363,7 +366,7 @@ function build({ E }) {
     {
       L: [{ text: L.identified.replace(/:$/, '') + (S.tplNotes ? '*:' : ':') }, { text: `${L.databases} ${nt(val('databases'))}`, indent: ind },
         ...det.map((d) => ({ text: d.n !== null ? `${d.name} ${nt(d.n)}` : d.name, indent: ind * 2, size: fs - 1 })),
-        show(S.registers) ? { text: `${L.registers} ${nt(S.registers)}`, indent: ind } : null],
+        S.registersOn && show(S.registers) ? { text: `${L.registers} ${nt(S.registers)}`, indent: ind } : null],
       R: [{ text: L.removed }, { text: `${L.dup} ${nt(S.dup)}`, indent: ind },
         show(S.autoTools) ? { text: `${L.autoTools} ${nt(S.autoTools)}`, indent: ind } : null,
         show(S.otherRemoved) ? { text: `${L.otherRemoved} ${nt(S.otherRemoved)}`, indent: ind } : null],
@@ -414,7 +417,7 @@ function build({ E }) {
     body += RT.vlabel(M, pos[4].y, pw, pos[4].h, L.phaseInc, po);
   }
   const notes = [];
-  if (S.tplNotes) notes.push({ text: '*Consider, if feasible to do so, reporting the number of records identified from each database or register searched (rather than the total number across all databases/registers).' }, { text: '**If automation tools were used, indicate how many records were excluded by a human and how many were excluded by automation tools.' });
+  if (S.tplNotes) notes.push({ text: S.registersOn ? '*Consider, if feasible to do so, reporting the number of records identified from each database or register searched (rather than the total number across all databases/registers).' : '*Consider, if feasible to do so, reporting the number of records identified from each database searched (rather than the total number across all databases).' }, { text: '**If automation tools were used, indicate how many records were excluded by a human and how many were excluded by automation tools.' });
   if (S.footnote && S.footnote.trim()) notes.push({ text: S.footnote });
   if (S.srcLine) notes.push({ text: 'From: Page MJ, McKenzie JE, Bossuyt PM, Boutron I, Hoffmann TC, Mulrow CD, et al. The PRISMA 2020 statement: an updated guideline for reporting systematic reviews. BMJ 2021;372:n71. doi: 10.1136/bmj.n71. For more information, visit: http://www.prisma-statement.org/', gap: notes.length ? fs * 0.35 : 0 });
   if (notes.length) {
