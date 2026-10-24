@@ -201,23 +201,23 @@ dialog.driver-card::backdrop { background: rgba(62, 58, 57, .45); }
 .wx-icon .sb-ic, .wx-p-icon .sb-ic { width: 1.6em; height: 1.6em; }
 .gate-q .sb-ic, .flight-pax .sb-ic, .food-pin .sb-ic { margin-right: 4px; }
 
-/* transit legs: a coloured tag says how you travel */
-.transit .leg { font-size: 14px !important; }
-.transit .stop, .stop-link { color: var(--sb-ink) !important; border-bottom-color: var(--sb-hair) !important; }
-.transit .time { display: inline-block; padding: 1px 9px; border: 2px solid var(--sb-ink); border-radius: 999px; background: var(--sb-yellow); color: var(--sb-ink) !important; font-size: 15px !important; }
-.transit .mid { width: auto !important; min-width: 96px; padding: 0 14px; height: auto !important; overflow: visible !important; display: flex !important; justify-content: center; align-items: center; }
+/* transit legs read like a timetable: time over station on each side, the mode tag is the only pill */
+.transit .leg { font-size: 14px !important; align-items: end !important; max-width: 520px; }
+.transit .stop { display: flex !important; flex-direction: column-reverse; align-items: flex-start; gap: 0; min-width: 0; color: var(--sb-ink) !important; }
+.transit .stop.right { align-items: flex-end; text-align: right; }
+.stop-link { color: var(--sb-ink-soft) !important; border-bottom: 0 !important; text-decoration: underline; text-decoration-color: var(--sb-hair); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.transit .time { display: block; padding: 0; border: 0; background: none; color: var(--sb-ink) !important; font-size: 20px !important; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.transit .mid { width: auto !important; min-width: 80px; padding: 0 10px; height: auto !important; overflow: visible !important; display: flex !important; justify-content: center; align-items: center; align-self: center; }
 .transit .mid::before { height: 2px !important; background: repeating-linear-gradient(90deg, var(--sb-ink) 0 4px, transparent 4px 9px) !important; }
 .mode-tag {
   position: relative; z-index: 1; display: inline-block; padding: 1px 10px; border: 2px solid var(--sb-ink); border-radius: 999px;
   background: var(--mc, var(--sb-wash)); color: var(--sb-ink); font-size: 12.5px; white-space: nowrap;
 }
-.chip {
-  border: 2px solid var(--sb-ink) !important; border-radius: 999px !important; background: var(--sb-wash) !important;
-  color: var(--sb-ink) !important; font-size: 12px !important; padding: 1px 9px !important;
-}
-.chip.line-tag { background: var(--mc, var(--sb-wash)) !important; }
-.chip.price { background: var(--sb-yellow) !important; }
-.chip.transfer { background: var(--sb-mizu) !important; }
+/* line, platform and fare: one quiet line of text */
+.transit .meta { display: flex !important; flex-wrap: wrap; align-items: center; gap: 0 !important; margin-top: 4px !important; }
+.transit .meta .chip { border: 0 !important; border-radius: 0 !important; background: none !important; padding: 0 !important; color: var(--sb-ink-soft) !important; font-size: 13px !important; }
+.transit .meta .chip + .chip::before { content: '・'; }
+.transit .meta .chip.line-tag::before { content: ''; display: inline-block; width: 9px; height: 9px; margin-right: 5px; border: 2px solid var(--sb-ink); border-radius: 50%; background: var(--mc); vertical-align: 0; }
 
 /* ---------- flights ---------- */
 .flight-day-head { align-items: center; }
@@ -302,6 +302,7 @@ dialog.driver-card::backdrop { background: rgba(62, 58, 57, .45); }
   .day-head .dtitle { font-size: 21px !important; }
   .flight-time, .flight-no { font-size: 20px !important; }
   .transit .leg { font-size: 13px !important; }
+  .transit .time { font-size: 18px !important; }
 }
 
 /* weather: the city name sits inside its frame, and no card inside the card */
