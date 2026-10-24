@@ -18,7 +18,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../shared/style.css?v=20261025a">
+<link rel="stylesheet" href="../shared/style.css?v=20261025b">
 <style>
   .trow3 { display: grid; grid-template-columns: 90px 90px minmax(0, 1fr); gap: 6px; align-items: end; margin-top: 6px; }
   .trow4 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, .9fr) 34px 34px; gap: 6px; align-items: end; margin-top: 6px; }
@@ -187,7 +187,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261025c"></script>
+<script src="../shared/common.js?v=20261025d"></script>
 <script>
 const T = RT.t;
 const KEY = 'timeline5';
@@ -675,6 +675,8 @@ const colorOf = (r) => r.color || (PALETTES[S.palette] || PALETTES.bold).c[r.kin
 const fillOf = (c) => (S.gray ? toGray(c) : c);
 const dashOf = (sw, style = S.d0Dash) => (style === 'dash' ? `${Math.max(4, sw * 3)} ${Math.max(3, sw * 2)}` : style === 'dot' ? `${Math.max(1, sw)} ${Math.max(2.5, sw * 1.8)}` : '');
 const refs = () => (S.refLines || []).map((rf) => ({ t: N(rf.t), label: rf.label || '' })).filter((rf) => rf.t !== null);
+// filled in by the layout that drew the preview: its day→x scale and each window's bar
+let TL = { X: null, bars: [] };
 function makeF(vals) {
   const uniq = [...new Set(vals)].sort((a, b) => a - b);
   if (S.scale === 'linear') return (t) => t;
@@ -724,6 +726,7 @@ function buildBlock() {
   if (negRaw < posRaw * 0.05) negMax = Math.max(negMax, Math.abs(F(posRaw * 0.25)));
   const reserveL = openL ? 0.15 * (x0 - left) : 0, reserveR = openR ? 0.3 * (right - x0) : 0;
   const X = (t) => (t < 0 ? x0 - (Math.abs(F(t)) / negMax) * (x0 - left - reserveL) : t > 0 ? x0 + (F(t) / posMax) * (right - x0 - reserveR) : x0);
+  TL = { X, bars: [] };
 
   const runW = (runs) => runs.reduce((a, r) => a + RT.textWidth(r.t, r.size, r.bold, r.italic), 0);
   const winStr = (r) => { let w = winOf(r); if (S.winParen && !/^\(/.test(w)) w = `(${NB}${w}${NB})`; return w; };
@@ -791,6 +794,7 @@ function buildBlock() {
     }
     const h = Math.max(L.height + 2 * padY, fs * 2);
     R.push({ xs, xe, y, h, color, L, tx });
+    TL.bars.push({ i: S.rows.indexOf(r), xs, xe, y, h, s, e });
     y += h + gapY;
   });
   y -= gapY;
@@ -834,6 +838,7 @@ function buildClassic() {
   if (fmax === fmin) { fmin -= 1; fmax += 1; }
   const padL = openL ? 56 : 10, padR = openR ? 64 : 10;
   const X = (t) => x0 + padL + ((F(t) - fmin) / (fmax - fmin)) * (PW - padL - padR);
+  TL = { X, bars: [] };
 
   RT.beginScene();
   let body = '';
@@ -879,6 +884,7 @@ function buildClassic() {
   R0.forEach((r) => {
     body += RT.drawBox(r.lb, M, r.y + (r.rh - r.lb.h) / 2);
     const by = r.y + (r.rh - (BH + (r.place === 'below' ? wfs * 1.4 + 4 : 0))) / 2, bm = by + BH / 2, bb = by + BH;
+    TL.bars.push({ i: R0.indexOf(r), xs: r.xs, xe: r.xe, y: by, h: BH, s: r.s, e: r.e });
     if (r.s !== null && r.e !== null) {
       body += RT.rect(r.xs, by, r.xe - r.xs, BH, { fill: r.color, radius: Math.min(Number(S.barR) || 0, BH / 2, (r.xe - r.xs) / 2), stroke: bw > 0 ? S.barBC : 'none', sw: bw });
     } else {
@@ -916,6 +922,7 @@ function buildTrack() {
   if (fmax === fmin) { fmin -= 1; fmax += 1; }
   const padL = openL ? 44 : 18, padR = openR ? 44 : 18;
   const X = (t) => left + padL + ((F(t) - fmin) / (fmax - fmin)) * (right - left - padL - padR);
+  TL = { X, bars: [] };
   const runW = (runs) => runs.reduce((a, r) => a + RT.textWidth(r.t, r.size, r.bold, r.italic), 0);
   const titleCol = (r, c) => r.tcolor || (lum(c) < 0.75 ? c : dark);
   /** centred label: title / window / details */
@@ -946,6 +953,7 @@ function buildTrack() {
     else if (xe - xs < 6) { const m = (xs + xe) / 2; xs = m - 3; xe = m + 3; }
     if (r.shape === 'bracket') above.push({ type: 'bracket', r, c, xs, xe, L: label(r, c) });
     else bars.push({ r, c, xs, xe, s, e, L: label(r, c) });
+    if (r.shape !== 'bracket') TL.bars.push({ i: S.rows.indexOf(r), xs, xe, y: null, h: null, s, e });
   });
   // above the track: brackets first (outer), then events; greedy levels
   const upLv = [], upH = [];
@@ -964,6 +972,7 @@ function buildTrack() {
   const lvTop = [];
   for (let i = upH.length - 1; i >= 0; i--) { lvTop[i] = y; y += upH[i] || 0; }
   const trackTop = y + 6, trackBot = trackTop + BH, trackMid = trackTop + BH / 2;
+  TL.bars.forEach((b) => { b.y = trackTop; b.h = BH; });
   // ticks
   const tickVals = [...new Set([0, ...vals, ...above.filter((a) => a.type === 'event').map((a) => ep(a.r.s).n).filter((v) => v !== null)])].sort((a, b) => a - b);
   const tickH = S.trackTicks ? sfs * 1.3 + 6 : 4;
@@ -1118,10 +1127,86 @@ let fig;
 const preview = document.getElementById('preview');
 const exporter = RT.exportPanel(document.getElementById('export'), () => fig, 'study_timeline', { fontSize: { get: () => S.st.fontSize, set: (v) => { S.st.fontSize = v; syncInputs(); update(); } } });
 const hist = RT.history(() => S, (s) => { S = s; syncInputs(); render(); });
+// the day under an x position: the scale is monotone, so a bisection finds it
+// (while dragging, the scale from the start of the drag is used: the axis rescales as values change)
+function dayAt(x) {
+  const X = (tlDrag && tlDrag.X) || TL.X;
+  let lo = -1e6, hi = 1e6;
+  for (let k = 0; k < 60; k++) { const mid = (lo + hi) / 2; if (X(mid) < x) lo = mid; else hi = mid; }
+  return Math.round((lo + hi) / 2);
+}
+const withDay = (raw, t) => (ep(raw).label && ep(raw).n !== null ? String(raw).replace(/^\s*-?\d+(?:\.\d+)?/, String(t)) : String(t));
+let tlDrag = null;
+function decorate() {
+  const svg = preview.querySelector('svg');
+  if (!svg || !TL.X) return;
+  const g = RT.svgEl('g', { class: 'edit-ui' });
+  TL.bars.forEach((b) => {
+    [['s', b.s, b.xs], ['e', b.e, b.xe]].forEach(([end, v, x]) => {
+      if (v === null) return;   // an open end has no day to drag
+      g.appendChild(RT.svgEl('rect', { x: x - 5, y: b.y, width: 10, height: b.h, fill: 'transparent', class: 'resize', 'data-row': b.i, 'data-end': end,
+        role: 'slider', tabindex: 0, 'aria-label': T(`${S.rows[b.i]?.label || '時間窗'}：${end === 's' ? '開始' : '結束'}於 ${v}`, `${S.rows[b.i]?.label || 'Window'}: ${end === 's' ? 'starts' : 'ends'} at ${v}`) }));
+    });
+  });
+  if (tlDrag) {
+    const t = `${unitOne()} ${fmtT(tlDrag.t)}`, w = RT.textWidth(t, 13) + 12;
+    g.appendChild(RT.svgEl('rect', { x: tlDrag.x - w / 2, y: tlDrag.y - 26, width: w, height: 20, rx: 4, fill: '#222' }));
+    const tx = RT.svgEl('text', { x: tlDrag.x, y: tlDrag.y - 12, 'text-anchor': 'middle', 'font-size': 13, fill: '#fff' });
+    tx.textContent = t; g.appendChild(tx);
+  }
+  svg.appendChild(g);
+}
+const redraw = () => { fig = build(); preview.innerHTML = fig.svg; decorate(); };
+preview.addEventListener('pointerdown', (e) => {
+  const h = e.target.closest && e.target.closest('[data-end]');
+  if (!h) return;
+  const i = Number(h.dataset.row), end = h.dataset.end, b = TL.bars.find((x) => x.i === i);
+  tlDrag = { i, end, y: b ? b.y : 0, x: Number(h.getAttribute('x')) + 5, t: rowEnds(S.rows[i])[end], X: TL.X };
+  preview.setPointerCapture(e.pointerId);
+  e.preventDefault();
+});
+preview.addEventListener('pointermove', (e) => {
+  if (!tlDrag) return;
+  const [px] = RT.figPoint(preview, fig, e), r = S.rows[tlDrag.i];
+  let t = dayAt(px);
+  // a window cannot end before it starts
+  const other = rowEnds(r)[tlDrag.end === 's' ? 'e' : 's'];
+  if (other !== null && r.shape !== 'event') t = tlDrag.end === 's' ? Math.min(t, other) : Math.max(t, other);
+  if (t === tlDrag.t) return;
+  tlDrag.t = t;
+  r[tlDrag.end] = withDay(r[tlDrag.end], t);
+  if (r.shape === 'event') r.e = r.s;
+  redraw();
+  const b = TL.bars.find((x) => x.i === tlDrag.i);
+  if (b) { tlDrag.x = tlDrag.end === 's' ? b.xs : b.xe; tlDrag.y = b.y; preview.querySelector('.edit-ui')?.remove(); decorate(); }
+});
+const endTl = () => { if (!tlDrag) return; tlDrag = null; syncInputs(); update(); };
+preview.addEventListener('pointerup', endTl);
+preview.addEventListener('pointercancel', endTl);
+// keyboard: arrow keys move the focused end by one day (Shift: 10)
+preview.addEventListener('keydown', (e) => {
+  const h = e.target.closest && e.target.closest('[data-end]');
+  const d = { ArrowLeft: -1, ArrowRight: 1, ArrowDown: -1, ArrowUp: 1 }[e.key];
+  if (!h || !d) return;
+  e.preventDefault();
+  const i = Number(h.dataset.row), end = h.dataset.end, r = S.rows[i];
+  let t = rowEnds(r)[end] + d * (e.shiftKey ? 10 : 1);
+  const other = rowEnds(r)[end === 's' ? 'e' : 's'];
+  if (other !== null && r.shape !== 'event') t = end === 's' ? Math.min(t, other) : Math.max(t, other);
+  r[end] = withDay(r[end], t);
+  if (r.shape === 'event') r.e = r.s;
+  redraw();
+  preview.querySelector(`[data-row="${i}"][data-end="${end}"]`)?.focus({ preventScroll: true });
+  syncInputs(); update();
+});
+
 function render() {
   try {
+    const keep = preview.contains(document.activeElement) && document.activeElement.dataset && document.activeElement.dataset.end ? [document.activeElement.dataset.row, document.activeElement.dataset.end] : null;
     fig = build();
     preview.innerHTML = fig.svg;
+    decorate();
+    if (keep) preview.querySelector(`[data-row="${keep[0]}"][data-end="${keep[1]}"]`)?.focus({ preventScroll: true });
   } catch (e) {
     console.error(e);
     preview.innerHTML = `<div class="msg">⚠ ${RT.esc(e.message)}</div>`;

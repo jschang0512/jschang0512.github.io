@@ -1203,6 +1203,26 @@
     return { refresh };
   };
 
+  /* ---------- direct editing in the preview ---------- */
+  /** pointer position in figure units (works at fit-width and actual size) */
+  RT.figPoint = (host, fig, e) => {
+    const svg = host.querySelector('svg');
+    if (!svg || !fig) return [0, 0];
+    const r = svg.getBoundingClientRect();
+    return [((e.clientX - r.left) / r.width) * fig.w, ((e.clientY - r.top) / r.height) * fig.h];
+  };
+  RT.svgEl = (tag, attrs = {}) => { const el = document.createElementNS('http://www.w3.org/2000/svg', tag); Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v)); return el; };
+  /** bring a form field into view, select it and flash it briefly */
+  RT.focusField = (el) => {
+    if (!el) return;
+    let d = el.closest('details');
+    while (d) { d.open = true; d = d.parentElement && d.parentElement.closest('details'); }
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.focus({ preventScroll: true });
+    if (el.select) el.select();
+    el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash');
+  };
+
   // auto-init page chrome (script is loaded at the end of <body>)
   RT.initPage();
 })();

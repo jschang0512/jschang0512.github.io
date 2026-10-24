@@ -251,3 +251,10 @@ dialog.modal::backdrop { background: var(--scrim); }
   button:active, .btn:active { transform: none; }
 }
 summary .step-no { margin-inline: 2px 6px; }
+
+/* a field reached by clicking the figure flashes once */
+.flash { animation: rt-flash 1.2s var(--ease-out); }
+@keyframes rt-flash { 0%, 40% { box-shadow: 0 0 0 3px var(--accent); } 100% { box-shadow: 0 0 0 3px transparent; } }
+/* preview overlays for direct editing */
+.paper .edit-ui [data-hit] { cursor: pointer; }
+.paper .edit-ui .resize { cursor: ew-resize; }
