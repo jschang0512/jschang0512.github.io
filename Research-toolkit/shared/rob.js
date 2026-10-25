@@ -513,8 +513,8 @@
     document.getElementById('btnRedo').onclick = hist.redo;
     document.getElementById('btnExample').onclick = () => { S.studies = structuredClone(cfg.exampleStudies); open.clear(); syncInputs(); update(); RT.toast(T('已載入範例（虛構研究與判斷，僅供示範；按 ↶ 可復原）', 'Example loaded (fictional studies and judgements; ↶ to undo)')); };
     document.getElementById('btnReset').onclick = () => { S.studies = []; open.clear(); syncInputs(); update(); RT.toast(T('已清空（按 ↶ 可復原）', 'Cleared (↶ to undo)')); };
-    document.getElementById('btnSaveJson').onclick = () => RT.downloadJSON(S, `${cfg.filePrefix}.json`);
-    document.getElementById('btnLoadJson').onclick = async () => { try { S = RT.merge(DEF, await RT.pickJSON()); syncInputs(); update(); } catch (e) { RT.toast(T('讀取失敗：', 'Could not open file: ') + e.message, 6000); } };
+    RT.currentState = () => S;   // the project buttons save the whole toolkit (common.js)
+    RT.applyState = (o) => { S = RT.merge(DEF, o); syncInputs(); update(); };
     syncInputs();
     render();
     hist.push();

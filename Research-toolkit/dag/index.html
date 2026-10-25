@@ -115,7 +115,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261025d"></script>
+<script src="../shared/common.js?v=20261025f"></script>
 <script>
 const T = RT.t;
 const KEY = 'dag1';
@@ -639,8 +639,9 @@ document.getElementById('btnExample').onclick = () => {
   RT.toast(T('已載入範例（虛構研究，僅供示範；按 ↶ 可復原）', 'Example loaded (a fictional study, for illustration; ↶ to undo)'));
 };
 document.getElementById('btnReset').onclick = () => { S.nodes = []; S.edges = []; S.title = ''; S.footnote = ''; syncInputs(); update(); RT.toast(T('已清空內容（按 ↶ 可復原）', 'Content cleared (↶ to undo)')); };
-document.getElementById('btnSaveJson').onclick = () => RT.downloadJSON(S, 'dag.json');
-document.getElementById('btnLoadJson').onclick = async () => { try { S = RT.merge(DEF, await RT.pickJSON()); syncInputs(); update(); } catch (e) { RT.toast(T('讀取失敗：', 'Could not open file: ') + e.message, 6000); } };
+// the project buttons save and import the whole toolkit (shared/common.js); this tool supplies its state
+RT.currentState = () => S;
+RT.applyState = (o) => { S = RT.merge(DEF, o); syncInputs(); update(); };
 
 syncInputs();
 render();

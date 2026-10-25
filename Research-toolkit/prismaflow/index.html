@@ -153,7 +153,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261025d"></script>
+<script src="../shared/common.js?v=20261025f"></script>
 <script>
 const T = RT.t;
 const KEY = 'prisma3';
@@ -485,8 +485,9 @@ document.getElementById('btnUndo').onclick = hist.undo;
 document.getElementById('btnRedo').onclick = hist.redo;
 document.getElementById('btnExample').onclick = () => { S = RT.merge(S, structuredClone(EXAMPLE)); ['reasons', 'oSources', 'oReasons'].forEach((k) => (S[k] = structuredClone(EXAMPLE[k]))); syncInputs(); update(); RT.toast(T('已載入範例（虛構數據，僅供示範）', 'Example loaded (fictional numbers, for illustration only)')); };
 document.getElementById('btnReset').onclick = () => { const keep = { st: S.st, c: S.c, L: S.L, boxW: S.boxW }; S = RT.merge(DEF, keep); syncInputs(); update(); RT.toast(T('已清空數字與清單，外觀設定保留（按 ↶ 可復原）', 'Numbers and lists cleared, appearance kept (↶ to undo)')); };
-document.getElementById('btnSaveJson').onclick = () => RT.downloadJSON(S, 'prisma_flow.json');
-document.getElementById('btnLoadJson').onclick = async () => { try { S = RT.merge(DEF, await RT.pickJSON()); syncInputs(); update(); } catch (e) { RT.toast(T('讀取失敗：', 'Could not open file: ') + e.message, 6000); } };
+// the project buttons save and import the whole toolkit (shared/common.js); this tool supplies its state
+RT.currentState = () => S;
+RT.applyState = (o) => { S = RT.merge(DEF, o); syncInputs(); update(); };
 
 syncInputs();
 render();

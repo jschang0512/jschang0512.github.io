@@ -1200,8 +1200,68 @@
     if (ap) ap.onclick = () => opts.apply(RT.study.get());
     window.addEventListener('storage', (e) => { if (e.key === 'rt:study') { refresh(); if (opts.onChange) opts.onChange(RT.study.get()); } });
     refresh();
+    (RT._studyCards = RT._studyCards || []).push(refresh);
     return { refresh };
   };
+
+  /* ---------- images kept in this browser (IndexedDB), e.g. multi-panel figures ---------- */
+  RT.imageStore = (() => {
+    const open = () => new Promise((res, rej) => { const r = indexedDB.open('rt-images', 1); r.onupgradeneeded = () => r.result.createObjectStore('img'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+    const run = async (mode, fn) => { const db = await open(); return new Promise((res, rej) => { const t = db.transaction('img', mode); fn(t.objectStore('img')); t.oncomplete = () => res(); t.onerror = () => rej(t.error); }); };
+    return {
+      put: (k, v) => run('readwrite', (st) => st.put(v, k)).catch(() => {}),
+      del: (k) => run('readwrite', (st) => st.delete(k)).catch(() => {}),
+      all: async () => {
+        try {
+          const db = await open();
+          return await new Promise((res, rej) => { const out = {}; const c = db.transaction('img').objectStore('img').openCursor(); c.onsuccess = () => { const cur = c.result; if (cur) { out[cur.key] = cur.value; cur.continue(); } else res(out); }; c.onerror = () => rej(c.error); });
+        } catch (e) { return {}; }
+      },
+    };
+  })();
+
+  /* ---------- project file: the whole toolkit in one file ---------- */
+  // each tool reports its storage key (its first RT.load), its live state and how to apply a loaded one
+  const loadOne = RT.load;
+  RT.load = (key, def) => { if (key !== 'export' && !RT.toolKey) RT.toolKey = key; return loadOne(key, def); };
+  // not project content: the language, one-off hand-offs, and tools that were removed (tte, abstract)
+  const NOT_PROJECT = /^rt:(lang$|handoff-|tte1$|abstract1$)/;
+  RT.saveProject = async () => {
+    const data = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || !k.startsWith('rt:') || NOT_PROJECT.test(k)) continue;
+      try { data[k.slice(3)] = JSON.parse(localStorage.getItem(k)); } catch (e) { /* skip */ }
+    }
+    if (RT.toolKey && RT.currentState) data[RT.toolKey] = structuredClone(RT.currentState());   // a snapshot of the open tool
+    const images = await RT.imageStore.all();
+    const d = new Date(), stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+    RT.downloadJSON({ app: 'Research Toolkit', version: RT.VERSION, savedAt: d.toISOString(), data, images }, `research_toolkit_project_${stamp}.json`);
+    RT.toast(RT.t(`已儲存整個工具組的內容（${Object.keys(data).length} 項）`, `Saved the whole toolkit (${Object.keys(data).length} items)`));
+  };
+  RT.importProject = async () => {
+    let obj;
+    try { obj = await RT.pickJSON(); } catch (e) { RT.toast(RT.t('讀取失敗：', 'Could not open file: ') + e.message, 6000); return; }
+    if (obj && obj.app === 'Research Toolkit' && obj.data) {
+      const n = Object.keys(obj.data).length;
+      if (!confirm(RT.t(`匯入會以這個檔案取代所有工具目前的內容（共 ${n} 項），確定嗎？`, `Importing replaces the current content of every tool with this file (${n} items). Continue?`))) return;
+      Object.entries(obj.data).forEach(([k, v]) => RT.save(k, v));
+      for (const [k, v] of Object.entries(obj.images || {})) await RT.imageStore.put(k, v);
+      (RT._studyCards || []).forEach((f) => f());
+      if (RT.toolKey && obj.data[RT.toolKey] && RT.applyState) await RT.applyState(obj.data[RT.toolKey], obj.images || null);
+      RT.toast(RT.t(`已匯入整個工具組（${n} 項）。其他工具打開時會顯示匯入的內容。`, `Whole toolkit imported (${n} items). Other tools show it when you open them.`), 5000);
+    } else if (obj && typeof obj === 'object' && RT.applyState) {
+      // a file saved from a single tool with an earlier version
+      for (const [k, v] of Object.entries(obj.images || {})) await RT.imageStore.put(k, v);
+      await RT.applyState(obj, obj.images || null);
+      RT.toast(RT.t('已匯入（單一工具的舊版專案檔，只還原此工具）', 'Imported (an older single-tool file; only this tool was restored)'), 5000);
+    }
+  };
+  document.addEventListener('DOMContentLoaded', () => {
+    const s = document.getElementById('btnSaveJson'), l = document.getElementById('btnLoadJson');
+    if (s) { s.onclick = RT.saveProject; s.title = RT.t('下載整個工具組（所有工具）的內容，之後可匯入或傳給共同作者', 'Download the content of every tool in one file, to import later or share with co-authors'); }
+    if (l) { l.onclick = RT.importProject; l.title = RT.t('匯入整個工具組的專案檔（也可開啟單一工具的舊版檔案）', 'Import a whole-toolkit project file (older single-tool files also open)'); }
+  });
 
   /* ---------- direct editing in the preview ---------- */
   /** pointer position in figure units (works at fit-width and actual size) */

@@ -133,7 +133,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261025d"></script>
+<script src="../shared/common.js?v=20261025f"></script>
 <script>
 const T = RT.t;
 const KEY = 'forest1';
@@ -484,7 +484,8 @@ document.getElementById('btnExample').onclick = () => {
   RT.toast(T('已載入範例（虛構研究，僅供示範；按 ↶ 可復原）', 'Example loaded (a fictional study, for illustration; ↶ to undo)'));
 };
 document.getElementById('btnReset').onclick = () => { S.rows = [row()]; S.title = ''; S.footnote = ''; syncInputs(); update(); RT.toast(T('已清空內容（按 ↶ 可復原）', 'Content cleared (↶ to undo)')); };
-document.getElementById('btnSaveJson').onclick = () => RT.downloadJSON(S, 'forest_plot.json');
+// the project buttons save and import the whole toolkit (shared/common.js); this tool supplies its state
+RT.currentState = () => S;
 document.getElementById('toEvalue').onclick = () => {
   const type = { HR: 'HR', OR: 'OR', RR: 'RR', IRR: 'RR', SMD: 'SMD' }[S.measure];
   if (!type) { RT.toast(T(`E-value 不適用於 ${S.measure}（差值）；只支援 HR、OR、RR、IRR 與 SMD`, `E-values do not apply to ${S.measure} (a difference); HR, OR, RR, IRR and SMD only`), 6000); return; }
@@ -499,7 +500,7 @@ document.getElementById('toEvalue').onclick = () => {
   try { localStorage.setItem('rt:handoff-forest', JSON.stringify({ rows, at: Date.now() })); } catch (e) { /* ignore */ }
   location.href = '../evalue/index.html?from=forest';
 };
-document.getElementById('btnLoadJson').onclick = async () => { try { S = RT.merge(DEF, await RT.pickJSON()); syncInputs(); update(); } catch (e) { RT.toast(T('讀取失敗：', 'Could not open file: ') + e.message, 6000); } };
+RT.applyState = (o) => { S = RT.merge(DEF, o); syncInputs(); update(); };
 
 syncInputs();
 render();

@@ -187,7 +187,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261025d"></script>
+<script src="../shared/common.js?v=20261025f"></script>
 <script>
 const T = RT.t;
 const KEY = 'timeline5';
@@ -1219,8 +1219,9 @@ const update = RT.debounce(() => { render(); hist.push(); }, 60);
 
 document.getElementById('btnUndo').onclick = hist.undo;
 document.getElementById('btnRedo').onclick = hist.redo;
-document.getElementById('btnSaveJson').onclick = () => RT.downloadJSON(S, 'study_timeline.json');
-document.getElementById('btnLoadJson').onclick = async () => { try { S = RT.merge(DEF, await RT.pickJSON()); syncInputs(); update(); } catch (e) { RT.toast(T('讀取失敗：', 'Could not open file: ') + e.message, 6000); } };
+// the project buttons save and import the whole toolkit (shared/common.js); this tool supplies its state
+RT.currentState = () => S;
+RT.applyState = (o) => { S = RT.merge(DEF, o); syncInputs(); update(); };
 
 syncInputs();
 render();

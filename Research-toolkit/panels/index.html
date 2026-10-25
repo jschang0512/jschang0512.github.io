@@ -40,7 +40,7 @@
   <div class="btns">
     <button class="small" id="btnUndo" title="復原 (Ctrl+Z)" data-en-title="Undo (Ctrl+Z)">↶</button>
     <button class="small" id="btnRedo" title="重做 (Ctrl+Y)" data-en-title="Redo (Ctrl+Y)">↷</button>
-    <button class="small" id="btnSaveJson" title="下載 .json（包含圖片），之後可再開啟或傳給共同作者" data-en-title="Download a .json file (images included) to reopen later or share" data-en="Save project">儲存專案</button>
+    <button class="small" id="btnSaveJson" title="下載整個工具組（含圖片）的內容" data-en-title="Download every tool’s content, images included" data-en="Save project">儲存專案</button>
     <button class="small" id="btnLoadJson" title="匯入先前儲存的 .json 專案檔，還原所有輸入" data-en-title="Import a previously saved .json project file" data-en="Import project">匯入專案</button>
     <button class="small" id="btnReset" data-en="Clear">清空</button>
   </div>
@@ -91,13 +91,13 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261025d"></script>
+<script src="../shared/common.js?v=20261025f"></script>
 <script>
 const T = RT.t;
 const KEY = 'panels1';
 const DEF = { panels: [], cols: 2, gap: 24, fit: 'width', valign: 'top', lab: 'A', labPos: 'outside', labBold: true, st: { ...RT.STYLE_DEF, fontSize: 34 } };
 let S = RT.load(KEY, DEF);
-// the images themselves are too large for browser storage: keep them in memory, save only the layout
+// the images live in the browser's image store (IndexedDB), the layout in localStorage
 const SRC = new Map();
 const REFS = [RT.REFS.artwork, RT.REFS.tiff, RT.REFS.png, RT.REFS.libs];
 
@@ -113,6 +113,7 @@ async function addFiles(files) {
     if (!wh) { failed.push(f.name); continue; }
     const id = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     SRC.set(id, src);
+    RT.imageStore.put(id, src);
     added.push({ id, name: f.name, w: wh[0], h: wh[1], span: 1 });
   }
   S.panels.push(...added);
@@ -158,7 +159,7 @@ function renderPanels() {
       const a = e.target.dataset.a;
       if (a === 'up' && i > 0) [S.panels[i - 1], S.panels[i]] = [S.panels[i], S.panels[i - 1]];
       else if (a === 'down' && i < S.panels.length - 1) [S.panels[i + 1], S.panels[i]] = [S.panels[i], S.panels[i + 1]];
-      else if (a === 'del') { SRC.delete(p.id); S.panels.splice(i, 1); }
+      else if (a === 'del') { SRC.delete(p.id); RT.imageStore.del(p.id); S.panels.splice(i, 1); }
       else return;
       renderPanels(); update();
     };
@@ -254,7 +255,7 @@ function render() {
   } catch (e) { console.error(e); preview.innerHTML = `<div class="msg">⚠ ${RT.esc(e.message)}</div>`; }
   const msgs = [];
   const missing = S.panels.filter((p) => !SRC.has(p.id)).length;
-  if (missing) msgs.push(T(`有 ${missing} 張圖片沒有載入（重新整理後圖片不會保留，只保留排版）。請重新加入，或用「匯入專案」開啟含圖片的專案檔。`, `${missing} image(s) not loaded (images are not kept after a reload, only the layout). Add them again, or import a project file, which includes the images.`));
+  if (missing) msgs.push(T(`有 ${missing} 張圖片沒有載入（可能已清除瀏覽器資料）。請重新加入，或用「匯入專案」開啟含圖片的專案檔。`, `${missing} image(s) not loaded (browser data may have been cleared). Add them again, or import a project file, which includes the images.`));
   // effective resolution of each panel at the chosen print width
   const dpi = Number(document.querySelector('.ex-dpi')?.value) || 300, wcm = Number(document.querySelector('.ex-width')?.value) || 0;
   if (wcm > 0 && S.panels.length && fig) {
@@ -278,17 +279,20 @@ const update = RT.debounce(() => { render(); hist.push(); }, 80);
 
 document.getElementById('btnUndo').onclick = hist.undo;
 document.getElementById('btnRedo').onclick = hist.redo;
-document.getElementById('btnReset').onclick = () => { S.panels = []; SRC.clear(); syncInputs(); update(); RT.toast(T('已清空面板', 'Panels cleared')); };
-// the project file carries the images, so it can be reopened elsewhere
-document.getElementById('btnSaveJson').onclick = () => RT.downloadJSON({ ...S, images: Object.fromEntries(S.panels.filter((p) => SRC.has(p.id)).map((p) => [p.id, SRC.get(p.id)])) }, 'figure_panels.json');
-document.getElementById('btnLoadJson').onclick = async () => {
-  try {
-    const j = await RT.pickJSON();
-    Object.entries(j.images || {}).forEach(([id, src]) => SRC.set(id, src));
-    delete j.images;
-    S = RT.merge(DEF, j); syncInputs(); update();
-  } catch (e) { RT.toast(T('讀取失敗：', 'Could not open file: ') + e.message, 6000); }
+document.getElementById('btnReset').onclick = () => { S.panels.forEach((p) => RT.imageStore.del(p.id)); S.panels = []; SRC.clear(); syncInputs(); update(); RT.toast(T('已清空面板', 'Panels cleared')); };
+// project buttons save the whole toolkit (common.js); images travel with it from the image store
+RT.currentState = () => S;
+RT.applyState = (o, images) => {
+  Object.entries(images || {}).forEach(([id, src]) => SRC.set(id, src));
+  const j = { ...o }; delete j.images;
+  S = RT.merge(DEF, j); syncInputs(); update();
 };
+// images saved in an earlier visit come back from the image store
+RT.imageStore.all().then((all) => {
+  let n = 0;
+  S.panels.forEach((p) => { if (!SRC.has(p.id) && all[p.id]) { SRC.set(p.id, all[p.id]); n++; } });
+  if (n) { renderPanels(); render(); }
+});
 
 syncInputs();
 render();
