@@ -67,8 +67,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Fonts load without blocking first paint; Japanese fonts are added only when 日本語 is selected (see loadJaFonts) -->
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@350;400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-<noscript><link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@350;400;700&display=swap" rel="stylesheet"></noscript>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@800&family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@350;400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@800&family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@350;400;700&display=swap" rel="stylesheet"></noscript>
 <style>
   /* Azulejo, professional: tin-glaze white and cobalt only. Tile pattern lives in two places — the arch behind the
    * cut-out portrait and one quatrefoil frieze under the header (echoed in the sign-off). Everything else is serif
@@ -91,7 +91,6 @@
     --band-muted:  oklch(86% 0.045 262);
     --band-line:   oklch(55% 0.150 264);
     --band-hover:  oklch(43% 0.175 266);
-    --portrait:    oklch(34% 0.165 266);   /* shadows of the cobalt-painted portrait */
     --focus:       oklch(46% 0.200 266);
     --scrim:       oklch(97.5% 0.008 95 / 0.94);
 
@@ -102,7 +101,6 @@
 
     --text-sm: 0.8125rem; --text-base: 1rem; --text-md: 1.25rem; --text-xl: 1.75rem;
     --text-2xl: clamp(2rem, 2.4vw + 1.2rem, 3.25rem);
-    --text-display: clamp(2.6rem, 5vw + 1rem, 5.5rem);
 
     --space-3xs: 0.125rem; --space-2xs: 0.25rem; --space-xs: 0.5rem; --space-sm: 0.75rem;
     --space-md: 1rem; --space-lg: 1.5rem; --space-xl: 2.5rem; --space-2xl: 4rem; --space-3xl: 6rem;
@@ -112,7 +110,7 @@
     --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
     --dur-micro: 120ms; --dur-short: 220ms; --dur-long: 420ms; --dur-focal: 900ms;
 
-    --z-raised: 10; --z-sticky: 200; --z-toast: 500;
+    --z-sticky: 200; --z-toast: 500;
     --radius-sm: 4px; --radius-plaque: 6px;
     --frieze-h: 22px;
 
@@ -166,8 +164,6 @@
   html[data-lang="zh"] .zh, html[data-lang="en"] .en, html[data-lang="ja"] .ja { display: inline; }
 
   .panel + .panel { border-top: 1px solid var(--wash); }
-  .frieze { display: block; height: var(--frieze-h); background: linear-gradient(90deg, var(--line) 50%, var(--wash) 50%) 0 0 / 200% 100%;
-    -webkit-mask: var(--m-frieze) repeat-x center / auto 100%; mask: var(--m-frieze) repeat-x center / auto 100%; }
 
   /* ---------- Bar ---------- */
   .bar { display: flex; align-items: center; gap: var(--space-lg); padding-block: var(--space-lg); }
@@ -215,9 +211,10 @@
   .medallion::before { content: ""; position: absolute; inset: 0; background: var(--band-line); -webkit-mask: var(--m-tile) center / 58px 58px; mask: var(--m-tile) center / 58px 58px; }
   .stage img { position: absolute; z-index: 2; left: 50%; bottom: 0; width: 112%; height: auto; aspect-ratio: 1; transform: translateX(-50%); object-fit: contain; object-position: bottom; }
   /* Role words: one line under the credentials */
-  .role-words { list-style: none; display: flex; flex-wrap: wrap; gap: var(--space-2xs) 0; margin-top: var(--space-xs); }
+  /* every word carries a leading dot; the list is pulled left and clipped, so a dot that starts a wrapped line is hidden */
+  .role-words { list-style: none; display: flex; flex-wrap: wrap; gap: var(--space-2xs) 0; margin: var(--space-xs) 0 0 -1.1em; overflow: hidden; }
   .role-words li { font-family: var(--font-serif); font-weight: 900; font-size: var(--text-base); line-height: 1.4; color: var(--line); }
-  .role-words li + li::before { content: "·"; margin-inline: 0.55em; color: var(--wash); }
+  .role-words li::before { content: "·"; display: inline-block; width: 1.1em; text-align: center; color: var(--wash); }
   .tag { display: inline-flex; align-items: center; font-size: var(--text-sm); font-weight: 700; color: var(--line); }
   /* cartouche: a scrolled oval frame around the badge */
   .tag.lead { padding: var(--space-2xs) var(--space-md); border-radius: 999px; border: 1px solid var(--line); line-height: 1.4; }
@@ -364,7 +361,6 @@
   .progress { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: var(--z-toast); pointer-events: none; transform-origin: 0 50%; transform: scaleX(0); background: var(--line); }
   @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   @keyframes set-type { from { clip-path: inset(0 0 100% 0); transform: translateY(0.3em); } to { clip-path: inset(0 0 -0.2em 0); transform: none; } }
-  @keyframes kiln { from { background-position: 100% 0; } to { background-position: 0 0; } }
   @keyframes raise { from { clip-path: circle(0% at 50% 50%); } to { clip-path: circle(50% at 50% 50%); } }
   @keyframes step-in { from { opacity: 0; transform: translate(-50%, 6%); } to { opacity: 1; transform: translate(-50%, 0); } }
   .is-ready .hero-main > * { animation: rise var(--dur-long) var(--ease-out) both; }
@@ -408,11 +404,11 @@
     .hero-main { display: flex; flex-direction: column; align-items: center; padding: var(--space-lg) 0 0; max-width: 40rem; }
     .hero-main .cta { order: 1; margin-top: var(--space-md); } .hero-main .pitch { order: 2; } .hero .creds { order: 3; text-align: center; }
     .hero .cta, .role-words { justify-content: center; }
+    .role-words { margin-left: 0; gap: var(--space-2xs) var(--space-md); }
+    .role-words li::before { content: none; }
   }
   @media (max-width: 420px) {
-    .role-words { gap: var(--space-2xs) var(--space-md); }
     .role-words li { word-break: keep-all; font-size: var(--text-sm); }
-    .role-words li + li::before { content: none; }
   }
   @media (max-width: 900px) {
     .bar { flex-wrap: wrap; row-gap: var(--space-sm); }
