@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-24T16:41:20.611Z",
+  "generatedAt": "2026-10-25T07:47:07.309Z",
   "title": "Design System: 張家菘 · Chia-Sung Chang",
   "extensions": {
     "colorMeta": {
@@ -227,6 +227,36 @@
           "oklch(72% 0.010 145)",
           "oklch(86% 0.005 145)",
           "oklch(95% 0.004 145)"
+        ]
+      },
+      "band": {
+        "role": "primary",
+        "displayName": "Forest Band",
+        "canonical": "oklch(35% 0.060 155)",
+        "tonalRamp": [
+          "oklch(15% 0.015 155)",
+          "oklch(25% 0.022 155)",
+          "oklch(35% 0.037 155)",
+          "oklch(45% 0.052 155)",
+          "oklch(58% 0.060 155)",
+          "oklch(72% 0.042 155)",
+          "oklch(86% 0.021 155)",
+          "oklch(95% 0.015 155)"
+        ]
+      },
+      "band-ink": {
+        "role": "neutral",
+        "displayName": "Band Ink",
+        "canonical": "oklch(97% 0.010 145)",
+        "tonalRamp": [
+          "oklch(15% 0.015 155)",
+          "oklch(25% 0.022 155)",
+          "oklch(35% 0.037 155)",
+          "oklch(45% 0.052 155)",
+          "oklch(58% 0.060 155)",
+          "oklch(72% 0.042 155)",
+          "oklch(86% 0.021 155)",
+          "oklch(95% 0.015 155)"
         ]
       }
     },

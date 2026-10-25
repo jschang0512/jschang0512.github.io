@@ -22,7 +22,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Noto+Serif+TC:wght@700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="shared/style.css?v=20261025b">
+<link rel="stylesheet" href="shared/style.css?v=20261025c">
 <style>
   /* Hallmark · macrostructure: Index-First · theme: Cobalt · genre: modern-minimal
    * nav: N9 · footer: Ft2 · 加料: none · tone: 實用 · 推斷: 受眾=做研究的同儕 用途=找到並打開工具
@@ -30,46 +30,84 @@
    */
   :root { --font-display: "Fraunces", "Noto Serif TC", ui-serif, Georgia, serif; }
   html, body { overflow-x: clip; }
-  .topbar { justify-content: flex-end; background: transparent; border-bottom: 0; position: static; }
-  .hero { max-width: 1080px; margin: 0 auto; padding: 8px 20px 4px; }
-  .hero h1 { font-family: var(--font-display); font-size: clamp(2.25rem, 3vw + 1rem, 3.25rem); font-weight: 700; line-height: 1.1; overflow-wrap: anywhere; }
-  .hero p { color: var(--muted); margin: 12px 0 0; max-width: 62ch; text-wrap: pretty; }
+  .topbar { justify-content: flex-end; background: var(--band); border-bottom: 0; position: static; }
+  .topbar .lang-toggle { background: transparent; border-color: var(--on-accent-rule); color: var(--band-ink); }
+  .topbar .lang-toggle:hover { border-color: var(--band-ink); color: var(--band-ink); }
+  .topbar .lang-toggle:focus-visible, .hero :focus-visible { outline-color: var(--band-ink); }
+  /* Hero: the one Cobalt field on the page; the index below stays quiet */
+  .hero-band { background: var(--band); color: var(--band-ink); }
+  .hero { max-width: 1080px; margin: 0 auto; padding: 24px 20px 64px; }
+  .hero h1 { font-family: var(--font-display); font-size: clamp(3.25rem, 7vw + 1rem, 6rem); font-weight: 700; line-height: 0.95; letter-spacing: -0.03em; overflow-wrap: anywhere; text-wrap: balance; font-variation-settings: "opsz" 144; }
+  .hero p { color: var(--on-accent-muted); font-size: clamp(15px, 0.5vw + 13px, 17px); margin: 20px 0 0; max-width: 60ch; text-wrap: pretty; }
+  .hero .jump { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
+  .hero .jump a { display: inline-flex; align-items: center; height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--on-accent-rule); color: var(--band-ink); text-decoration: none; font-weight: 700; font-size: 13.5px; white-space: nowrap; transition: background-color .2s var(--ease-out), border-color .2s var(--ease-out), color .2s var(--ease-out); }
+  .hero .jump a:hover { background: var(--band-ink); border-color: var(--band-ink); color: var(--band); }
+  .hero .jump a:active { background: var(--on-accent-rule); }
   /* Tools as an index: one ruled row per tool */
-  .tools { max-width: 1080px; margin: 0 auto; padding: 28px 20px 32px; display: grid; grid-template-columns: minmax(0, 1fr); }
+  .tools { max-width: 1080px; margin: 0 auto; padding: 48px 20px 40px; display: grid; grid-template-columns: minmax(0, 1fr); }
   .tile {
     display: grid; grid-template-columns: minmax(0, 17rem) minmax(0, 1fr) auto; column-gap: 24px; row-gap: 6px; align-items: baseline;
-    padding: 16px 0; border-top: 1px solid var(--border); color: var(--text); text-decoration: none;
+    padding: 18px 12px; margin-inline: -12px; border-top: 1px solid var(--border); color: var(--text); text-decoration: none;
+    background: linear-gradient(var(--accent-weak), var(--accent-weak)) no-repeat 0 0 / 0 100%;
+    transition: background-size .32s var(--ease-out);
   }
+  .tile:hover, .tile:focus-visible { background-size: 100% 100%; }
+  .tile:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .tile:active { background-color: var(--accent-weak); }
   .tile .ico { display: none; }
-  .tile h2 { font-family: var(--font-display); font-size: 19px; font-weight: 700; line-height: 1.3; transition: color .12s cubic-bezier(.16,1,.3,1); }
-  .tile h2::after { content: "\00a0→"; color: var(--accent); }
+  .tile h2 { font-family: var(--font-display); font-size: clamp(19px, 0.6vw + 16px, 22px); font-weight: 700; line-height: 1.25; letter-spacing: -0.005em; transition: color .15s var(--ease-out); }
+  .tile h2::after { content: "→"; display: inline-block; margin-left: .3em; color: var(--accent); transition: transform .25s var(--ease-out); }
   .tile:hover h2 { color: var(--accent); }
+  .tile:hover h2::after { transform: translateX(5px); }
   .tile p { margin: 0; color: var(--muted); font-size: 14px; max-width: 62ch; text-wrap: pretty; }
   .tile p .out { display: block; margin-top: 4px; font-size: 12.5px; color: var(--text); }
   .tile .tags { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
-  .group-label { font-size: 14px; font-weight: 700; color: var(--text); margin: 24px 0 6px; }
-  .group + .group { margin-top: 44px; }
-  .group-label { margin: 0; font-family: var(--font-display); font-size: clamp(22px, 1.4vw + 16px, 26px); line-height: 1.2; }
-  .group-desc { margin: 4px 0 10px; color: var(--muted); font-size: 13.5px; }
+  .group { scroll-margin-top: 16px; }
+  .group + .group { margin-top: 72px; }
+  .group-label { position: relative; margin: 0; padding-top: 20px; font-family: var(--font-display); font-size: clamp(30px, 2.4vw + 18px, 44px); font-weight: 700; line-height: 1.05; letter-spacing: -0.02em; text-wrap: balance; }
+  .group-label::before { content: ""; position: absolute; top: 0; left: 0; width: 56px; height: 4px; background: var(--accent); }
+  .group-desc { margin: 8px 0 18px; color: var(--muted); font-size: 15px; max-width: 60ch; }
+  /* Entrance: the title is set first, then the index arrives row by row (CSS only, already-visible end state) */
+  @keyframes rt-set { from { clip-path: inset(0 0 100% 0); transform: translateY(.3em); } to { clip-path: inset(0 0 -.2em 0); transform: none; } }
+  @keyframes rt-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  .hero h1 { animation: rt-set .76s var(--ease-out) .05s both; }
+  .hero p, .hero .jump { animation: rt-in .5s var(--ease-out) .25s both; }
+  .group-label::before { transform-origin: 0 50%; animation: rt-rule .7s var(--ease-out) .35s both; }
+  @keyframes rt-rule { from { transform: scaleX(0); } to { transform: none; } }
+  .group:first-child .tile { animation: rt-in .45s var(--ease-out) both; }
+  .group:first-child .tile:nth-of-type(1) { animation-delay: .32s; }
+  .group:first-child .tile:nth-of-type(2) { animation-delay: .37s; }
+  .group:first-child .tile:nth-of-type(3) { animation-delay: .42s; }
+  .group:first-child .tile:nth-of-type(n+4) { animation-delay: .47s; }
+  @media (prefers-reduced-motion: reduce) {
+    .hero h1, .hero p, .hero .jump, .group:first-child .tile { animation: rt-fade .15s linear both !important; clip-path: none; }
+    .group-label::before { animation: none; }
+    .tile h2::after { transition: none; }
+    @keyframes rt-fade { from { opacity: 0; } to { opacity: 1; } }
+  }
   .pill.tutorial { background: var(--accent-weak); color: var(--accent); border-color: transparent; }
   .pill.section { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--border); }
   .below { max-width: 1080px; margin: 0 auto; padding: 0 20px; display: flex; flex-direction: column; gap: 12px; }
   .note { color: var(--muted); font-size: 12.5px; }
   @media (max-width: 760px) {
-    .tile { grid-template-columns: minmax(0, 1fr); }
+    .hero { padding: 16px 16px 44px; }
+    .tools { padding: 36px 16px 32px; }
+    .group + .group { margin-top: 56px; }
+    .tile { grid-template-columns: minmax(0, 1fr); padding: 16px 8px; margin-inline: -8px; }
     .tile .tags { justify-content: flex-start; }
   }
 </style>
 </head>
 <body>
 <header class="topbar"></header>
-<section class="hero">
+<div class="hero-band"><section class="hero">
   <h1>Research Toolkit</h1>
   <p data-en="Figure tools for research papers. Everything runs in your browser — files are never uploaded. Unless noted, every figure exports as PNG, TIFF, JPG, PDF, SVG and editable Word shapes.">研究論文圖表小工具。所有處理都在你的瀏覽器中完成，檔案不會上傳。除另有註明，每張圖都能匯出 PNG、TIFF、JPG、PDF、SVG 與可編輯的 Word 圖形。</p>
-</section>
+  <nav class="jump"><a href="#g-rwe" data-en="Real-world evidence">真實世界研究</a><a href="#g-sr" data-en="Systematic reviews">系統性回顧</a><a href="#g-any" data-en="For any study">通用</a></nav>
+</section></div>
 
 <main class="tools">
-  <section class="group">
+  <section class="group" id="g-rwe">
   <h2 class="group-label" data-en="Real-world evidence (RWE)">真實世界研究（RWE）</h2>
   <p class="group-desc" data-en="Observational studies: design, causal assumptions, exposure definitions and sensitivity analysis.">觀察性研究的設計、因果假設、暴露定義與敏感度分析。</p>
   <a class="tile" href="dag/index.html">
@@ -109,7 +147,7 @@
     <div class="tags"><span class="pill">VanderWeele &amp; Ding 2017</span><span class="pill section">Results</span></div>
   </a>
   </section>
-  <section class="group">
+  <section class="group" id="g-sr">
   <h2 class="group-label" data-en="Systematic reviews and meta-analysis">系統性回顧與統合分析</h2>
   <p class="group-desc" data-en="Study selection, risk-of-bias assessment, and a network meta-analysis tutorial.">文獻篩選、偏誤風險評估，以及網絡統合分析教學。</p>
   <a class="tile" href="prismaflow/index.html">
@@ -137,7 +175,7 @@
     <div class="tags"><span class="pill">R · multinma</span><span class="pill tutorial" data-en="Tutorial">教學</span></div>
   </a>
   </section>
-  <section class="group">
+  <section class="group" id="g-any">
   <h2 class="group-label" data-en="For any study">通用</h2>
   <p class="group-desc" data-en="Results figures and submission tidy-up for either kind of study.">兩類研究都用得到的結果圖與投稿前整理。</p>
   <a class="tile" href="forestplot/index.html">

@@ -17,18 +17,22 @@ colors:
   review: "oklch(45% 0.090 75)"
   review-bg: "oklch(93% 0.040 85)"
   photo: "oklch(88% 0.014 145)"
+  band: "oklch(35% 0.060 155)"
+  band-ink: "oklch(97% 0.010 145)"
+  on-forest-muted: "oklch(86% 0.030 150)"
+  on-forest-rule: "oklch(48% 0.050 155)"
 typography:
   display:
     fontFamily: "Fraunces, Noto Serif TC, Noto Serif JP, ui-serif, Georgia, serif"
-    fontSize: "clamp(2.75rem, 4.5vw + 1rem, 4.5rem)"
+    fontSize: "clamp(3.25rem, 6vw + 1rem, 6rem)"
     fontWeight: 700
-    lineHeight: 1.05
-    letterSpacing: "-0.005em"
+    lineHeight: 0.98
+    letterSpacing: "-0.022em"
   headline:
     fontFamily: "Fraunces, Noto Serif TC, Noto Serif JP, ui-serif, Georgia, serif"
-    fontSize: "1.9531rem"
+    fontSize: "clamp(2.25rem, 2.6vw + 1.25rem, 3.25rem)"
     fontWeight: 700
-    lineHeight: 1.2
+    lineHeight: 1.05
   title:
     fontFamily: "Noto Sans TC, Noto Sans JP, PingFang TC, Microsoft JhengHei, system-ui, sans-serif"
     fontSize: "1.25rem"
@@ -124,7 +128,7 @@ splitbill 是獨立的公開工具，維持現狀，不受本系統約束。
 - 以細線分組，盡量不用卡片；不用卡片包卡片，也不用粗的彩色側邊條。
 - 展示字用 Fraunces；中文標題落到 Noto Serif TC，內文一律用 Noto Sans TC。
 - 每頁都有深淺兩種模式，並且用同一組 token 名稱互換。
-- 工作工具精準而克制；生活工具溫和而親切。
+- 工作工具精準而大膽：大字級、成塊的主題色、一個有份量的進場；生活工具溫和而親切。
 
 ## Colors
 
@@ -151,12 +155,17 @@ CV 這一套是「森林與銅」：深森林綠負責權威感，銅色只負�
 - **Bark**（muted）：說明文字、次要資訊。
 - **Ink**（ink）：主文字。
 
-深色模式色相不變，只調明度：紙張落在 L 17–23%，墨落在 L 94%，森林綠和銅色各自提亮到 L 84% 與 L 74%。
+- **Forest Band**（band / band-ink，加上 on-forest-muted / -rule / -hover）：CV 的「工具與教學」區塊和頁尾聯絡區整塊鋪森林綠，文字用 band-ink。
+- **Cobalt Band**（Toolkit 的 band / band-ink / on-accent-muted / -rule）：Toolkit 首頁的頂列與 hero。
+
+深色模式色相不變，只調明度：紙張落在 L 17–23%，墨落在 L 94%，森林綠和銅色各自提亮到 L 84% 與 L 74%。色帶（band）例外：深色模式不跟著提亮，而是壓到 L 29–37% 的深森林綠／深鈷藍，配淺色字，避免在深色頁面上出現一大塊亮面。
 
 ### Named Rules
 **The One Copper Rule.** 銅色只標記「可以按」或「時間點」，一個畫面裡的面積不超過約 5%。標題永遠用森林綠，不用銅色。
 
 **The Room Color Rule.** 每一區只用自己那一區的主題色。Toolkit 不出現森林綠，CV 不出現鈷藍。跨區共用的只有字體、形狀和分隔語言。
+
+**The Bold Field Rule.** 每頁可以有一到兩個「整塊主題色」的區域，用來標出頁面的高點：CV 是工具區與頁尾，Toolkit 首頁是 hero。色帶裡不再放第二種強調色，連結與按鈕改用 band-ink 反白。其餘區塊維持紙底與細線，讓色帶讀得出來。
 
 **The Tinted Neutral Rule.** 中性色一律帶該區的色相：CV 偏綠，Toolkit 偏藍。不用零彩度的灰。
 
@@ -168,13 +177,13 @@ CV 這一套是「森林與銅」：深森林綠負責權威感，銅色只負�
 **Character:** Fraunces 粗體帶一點期刊刊頭的分量，Noto Sans TC 讓中英日三語的內文穩定好讀。只有這兩個家族，數字用 tabular-nums 對齊，不另外引入等寬字體當標籤。
 
 ### Hierarchy
-- **Display**：只用在 CV 的姓名和 404 的「404」。
-- **Headline**：區塊標題（研究方向、學經歷、學術著作…），森林綠。
+- **Display**：CV 的姓名（clamp 3.25–6rem，行高 0.98，字距 -0.022em；中日文行高 1.08）、Toolkit 首頁的「Research Toolkit」（最大 6rem）和 404 的「404」。
+- **Headline**：區塊標題（研究方向、學經歷、學術著作…），森林綠，clamp 2.25–3.25rem，上方一條 4px × 4.5rem 的主題色短粗線。Toolkit 首頁的分類標題同樣處理（30–44px，鈷藍短線）。
 - **Title**：副標、大段導言、出版編號。
 - **Body**：內文，段落最寬約 60–65ch。
 - **Label**：導覽、日期、標籤、膠囊，粗體小字，不轉大寫也不加字距。
 
-工具頁的英文模式把內文換成 Noto Sans，讓引號等拉丁標點不會被 Noto Sans TC 排成全形。工具頁沿用同一對字體，但密度較高：內文 14px、行高 1.5。工具名稱用 Fraunces 19px，表單區塊標題用 Noto Sans TC 15px 粗體。
+工具頁的英文模式把內文換成 Noto Sans，讓引號等拉丁標點不會被 Noto Sans TC 排成全形。工具頁沿用同一對字體，但密度較高：內文 14px、行高 1.5。工具頁頂列的工具名用 Fraunces 26px（手機 22px），表單區塊標題 18px 粗體，步驟編號 Fraunces 22px 鈷藍。標題一律 `text-wrap: balance`，段落 `text-wrap: pretty`。
 
 ### Named Rules
 **The Upright Heading Rule.** 標題與展示字一律正體，不用斜體，也不把標題裡的某個字轉成斜體來強調。
@@ -225,7 +234,7 @@ CV 這一套是「森林與銅」：深森林綠負責權威感，銅色只負�
 ## Components
 
 ### Buttons
-精準而克制：只換顏色，不跳動、不放大。
+精準：狀態主要換顏色，不放大；只有方向性的「→」可以在 hover 時往前推 4–5px。
 - **Shape**：膠囊（999px），高 44px，左右各 1.5rem。
 - **Primary**：銅色底、copper-ink 字，粗體。一個畫面只有一個，例如 CV 的「聯絡我」。
 - **Hover / Focus**：hover 時底色換成森林綠、字換成紙色，過渡 120ms，使用 ease-out。焦點框是 2px 銅色外框、外推 2px，而且要瞬間出現，不做進場動畫。
@@ -237,7 +246,7 @@ CV 這一套是「森林與銅」：深森林綠負責權威感，銅色只負�
 - **State**：狀態膠囊依語意上色，例如「審查中」用赭色。工具首頁的標籤用該區淡主題底配主題色字。
 
 ### Cards / Containers
-- **Corner Style**：學術頁幾乎不用卡片；聯絡區是用 2px 森林綠上邊線收尾的區塊，不是卡片。
+- **Corner Style**：學術頁幾乎不用卡片；聯絡區與工具區是 4px 圓角的森林綠色帶（見 The Bold Field Rule）。
 - **Background**：生活工具（行程、調劑台）的卡片底色比紙張略亮。
 - **Shadow Strategy**：見 Elevation & Depth 的 Ambient Card。
 - **Border**：1px，顏色用 rule。有語意的卡片（危險、要調整）把整圈 1px 邊框換成語意色，不用粗側邊條。
@@ -250,18 +259,19 @@ CV 這一套是「森林與銅」：深森林綠負責權威感，銅色只負�
 
 ### Navigation
 - **CV**：齊左的純文字連結，小字，muted 色；hover 時換成墨色並出現銅色底線。右側是分享、深色模式、語言切換這些膠囊控制項，語言切換的選中狀態用墨色邊框加粗體。
-- **工具頁**：頂列是「← 工具首頁」文字連結、Fraunces 工具名，以及右側的按鈕列；手機上按鈕列改成可以橫向滑動，不換行。
+- **工具頁**：頂列最上緣一條 4px 鈷藍線，接著是「← 工具首頁」文字連結、Fraunces 工具名，以及右側的按鈕列；手機上按鈕列改成可以橫向滑動，不換行。
+- **Toolkit 首頁**：鈷藍 hero 內有三個分類跳轉膠囊（真實世界研究／系統性回顧／通用），hover 時反白。
 
 ### Timeline Row
 CV 最有辨識度的元件：日期欄（7.5rem，銅色粗體 tabular-nums）配上內容欄（標題、單位、說明），每列之間用 1px 細線分隔。學經歷、獎項、時間相關的清單都用這個形式。
 
 ### Tool Index Row
-Toolkit 首頁的一行：Fraunces 工具名後面接主題色的「→」（用不斷行空白黏在名稱上），中間是 muted 說明，右側是主題色標籤。列與列之間用細線分隔，不用圖示方塊。
+Toolkit 首頁的一行：Fraunces 工具名後面接主題色的「→」，中間是 muted 說明，右側是主題色標籤。列與列之間用細線分隔，不用圖示方塊。hover 時淡鈷藍底由左往右鋪滿整列（background-size 過渡 320ms），「→」往前推 5px。
 
 ### Named Rules
 **The Storybook Exception.** 行程頁依使用者指定的繪本風：3px 墨灰粗框、大圓角、平塗、Huninn 單一字型、只用淺色、插圖輕微動態與換日彈跳（皆支援減少動態效果）。這一區不套用全站的細線分隔與 Fraunces 規則。
 
-**The Two Temperaments Rule.** 工作工具（CV、Toolkit、NMA）精準而克制：細邊框、膠囊按鈕、狀態只換顏色。生活工具（行程、調劑台、書籤）溫和而親切：圓角可以放寬到 12–14px、底色更柔和，也可以用輕微的陰影，但仍然不用漸層和 emoji 圖示。
+**The Two Temperaments Rule.** 工作工具（CV、Toolkit、NMA）精準而大膽：細邊框、膠囊按鈕、大字級標題、成塊的主題色帶；狀態仍以換色為主。生活工具（行程、調劑台、書籤）溫和而親切：圓角可以放寬到 12–14px、底色更柔和，也可以用輕微的陰影，但仍然不用漸層和 emoji 圖示。
 
 ## Do's and Don'ts
 
@@ -271,6 +281,7 @@ Toolkit 首頁的一行：Fraunces 工具名後面接主題色的「→」（用
 - **Do** 用細線（1px，rule 色）分組。分隔線比卡片優先。
 - **Do** 數字（日期、編號、統計）用 tabular-nums。
 - **Do** 過渡效果明確寫出屬性（color、border-color、background-color），使用 ease-out，時間 120–220ms，並且支援 prefers-reduced-motion。
+- **Do** 每頁只有一個進場主秀：大標題像鉛字從版面拉出（clip-path 由下往上揭開＋上移 0.3em，約 760ms，ease-out），CV 的照片接著由下往上揭開；區塊標題上方的短粗線在捲到時由左畫出。Toolkit 首頁第一組工具列依序進場，總延遲不超過 0.5 秒。工具頁的選單由按鈕處展開、toast 由下浮起、details 展開時內容淡入。減少動態效果時全部改成 150ms 內的淡入，不位移、不裁切。
 
 ### Don't:
 - **Don't** 在標題上用漸層文字，或用漸層膠囊按鈕。
