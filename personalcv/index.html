@@ -196,7 +196,7 @@
    * Desktop: text left, portrait centre, role words right; the portrait stands on the band's bottom edge.
    * Narrow: one centred column — text, role words as a single line, then the portrait closing the band. */
   .hero-band { --seam: 120px; background-color: var(--glaze-2); background-image: repeating-linear-gradient(90deg, transparent 0 calc(var(--seam) - 1px), var(--grout) calc(var(--seam) - 1px) var(--seam)); background-position: center top; }
-  .hero { --name: clamp(5rem, 8vw + 1rem, 10rem); position: relative; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); grid-template-areas: ". name" "main stage"; align-items: end; column-gap: var(--space-xl); padding-top: var(--space-xl); }
+  .hero { --name: clamp(5rem, 8vw + 1rem, 10rem); position: relative; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); grid-template-areas: "main name" "main stage"; align-items: end; column-gap: var(--space-xl); padding-top: var(--space-xl); }
   html[data-lang="en"] .hero { --name: clamp(2.8rem, 3.6vw + 0.8rem, 4.6rem); }
   /* layers, back to front: medallion · name · portrait */
   .hero h1 { grid-area: name; justify-self: center; position: relative; z-index: 1; min-width: 0; margin: 0; text-align: center; font-family: var(--font-display); font-size: var(--name); font-weight: 800; line-height: 0.98; letter-spacing: 0.01em; color: var(--line); white-space: nowrap; }
@@ -206,7 +206,7 @@
   .hero .cta { gap: var(--space-xs); }
   .hero .cta .btn { height: 40px; padding-inline: var(--space-sm); font-size: var(--text-sm); }
   .hero .cta .btn.icon { width: 40px; padding-inline: 0; }
-  .hero-main { grid-area: main; position: relative; z-index: 2; min-width: 0; align-self: center; padding: var(--space-xl) 0 var(--space-2xl); }
+  .hero-main { grid-area: main; position: relative; z-index: 2; min-width: 0; align-self: center; padding-block: var(--space-xl) var(--space-3xl); }
   .hero-main .tags { display: none; }
   .hero .creds { margin-top: var(--space-md); padding-block: var(--space-sm); font-size: var(--text-sm); line-height: 1.5; }
   /* Stage: the cut-out portrait in front of a tiled cobalt medallion */
@@ -325,6 +325,12 @@
    * Publications: the quiet numbered list. Awards: tinted plaques in a grid. */
   #about .card.big p { font-family: var(--font-serif); font-size: clamp(1.15rem, 0.5vw + 1rem, 1.4rem); font-weight: 700; line-height: 1.8; max-width: 38em; }
   #about .card.big strong { font-weight: 900; }
+  /* cadence: research opens with air; the education band is its own field; publications and awards close up as one run of outputs */
+  #about { padding-top: var(--space-3xl); }
+  #cv { padding-block: var(--space-3xl); }
+  #publications { padding-bottom: var(--space-xl); }
+  #honors { padding-top: var(--space-xl); }
+  #honors .sec-head { margin-bottom: var(--space-lg); }
   #cv { position: relative; background: var(--glaze-2); box-shadow: 0 0 0 100vmax var(--glaze-2); clip-path: inset(0 -100vmax); }
   #cv, #cv + .panel { border-top: 0; }
   #cv .col > div { --rail: calc(7.5rem + var(--space-xl) / 2); position: relative; padding-top: var(--space-xs); }
@@ -431,6 +437,10 @@
     .row { grid-template-columns: minmax(0, 1fr); }
     .row > *, .row .d { grid-column: 1; }
     .row .d { grid-row: auto; padding-top: 0; }
+    #about { padding-top: var(--space-2xl); }
+    #cv { padding-block: var(--space-2xl); }
+    #publications { padding-bottom: var(--space-lg); }
+    #honors { padding-top: var(--space-lg); }
     #cv .col > div::before { left: 5px; }
     #cv .row { padding-left: var(--space-lg); }
     #cv .row::before { left: 0; top: calc(var(--space-sm) + 0.3rem); }
