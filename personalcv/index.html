@@ -320,6 +320,23 @@
   .latest-card .pills { margin-top: var(--space-sm); }
   .more-link { display: inline-block; margin-top: var(--space-lg); font-weight: 700; color: var(--line); border-bottom: 1px solid var(--line); }
 
+  /* ---------- Section rhythm: each chapter gets its own density, no tile pattern ----------
+   * Research: a large serif lead. Education & experience: a full-bleed glaze band with a timeline rail.
+   * Publications: the quiet numbered list. Awards: tinted plaques in a grid. */
+  #about .card.big p { font-family: var(--font-serif); font-size: clamp(1.15rem, 0.5vw + 1rem, 1.4rem); font-weight: 700; line-height: 1.8; max-width: 38em; }
+  #about .card.big strong { font-weight: 900; }
+  #cv { position: relative; background: var(--glaze-2); box-shadow: 0 0 0 100vmax var(--glaze-2); clip-path: inset(0 -100vmax); }
+  #cv, #cv + .panel { border-top: 0; }
+  #cv .col > div { --rail: calc(7.5rem + var(--space-xl) / 2); position: relative; padding-top: var(--space-xs); }
+  #cv .col > div::before { content: ""; position: absolute; top: var(--space-md); bottom: var(--space-md); left: calc(var(--rail) - 1px); width: 2px; background: var(--wash); }
+  #cv .row { position: relative; column-gap: var(--space-xl); border-top: 0; padding-block: var(--space-sm) var(--space-md); }
+  #cv .row::before { content: ""; position: absolute; top: calc(var(--space-sm) + 0.45rem); left: calc(var(--rail) - 6px); width: 12px; height: 12px; border-radius: 50%; background: var(--glaze-2); border: 2px solid var(--line); }
+  #cv .row:first-child::before { background: var(--line); }
+  #cv .row .seal { background: var(--glaze); }
+  .honors { gap: var(--space-md); }
+  .honor { border-top: 0; padding: var(--space-lg); border-radius: var(--radius-plaque); background: var(--tint); }
+  .honor .ic { background: var(--glaze); }
+
   /* ---------- Closing: one cobalt panel ---------- */
   .closing.container { margin-block: 0 var(--space-xl); }
   .closing-card { position: relative; border-radius: var(--radius-plaque); background: var(--band); color: var(--band-ink); padding: var(--space-2xl) var(--space-xl) var(--space-lg); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-lg) var(--space-2xl); align-items: end; }
@@ -414,6 +431,10 @@
     .row { grid-template-columns: minmax(0, 1fr); }
     .row > *, .row .d { grid-column: 1; }
     .row .d { grid-row: auto; padding-top: 0; }
+    #cv .col > div::before { left: 5px; }
+    #cv .row { padding-left: var(--space-lg); }
+    #cv .row::before { left: 0; top: calc(var(--space-sm) + 0.3rem); }
+    .honor { padding: var(--space-md); }
     .pub { grid-template-columns: 2.5rem minmax(0, 1fr); gap: var(--space-2xs) var(--space-md); }
     .pub .no { width: 2.5rem; font-size: var(--text-base); grid-row: 1 / span 2; }
     .pub .status { justify-self: start; grid-column: 2; }
@@ -438,6 +459,7 @@
     .hero-band { background: none; padding-bottom: 0; }
     .closing .mail { border-bottom: 0; }
       .tools, .closing-card { background: none; color: inherit; }
+    #cv { background: none; box-shadow: none; }
     section, .pub, .honor { break-inside: avoid; }
   }
 </style>
