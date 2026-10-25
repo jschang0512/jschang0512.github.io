@@ -60,7 +60,7 @@
     </div>
     <div class="card">
       <h2><span class="step-no">2</span> <span data-en="Illustrative patients">示範病人</span></h2>
-      <p class="hint" data-en="One dispensing per line: day, days’ supply, drug — e.g. &lt;code&gt;0, 30, Drug A&lt;/code&gt;.">每行一筆領藥：第幾天、給藥天數、藥名，例如 <code>0, 30, Drug A</code>。</p>
+      <p class="hint" data-en="One dispensing per line: day, days’ supply, drug — e.g. &lt;code&gt;0, 30, Drug A&lt;/code&gt;. In the preview you can drag a supply bar to move it, or drag its right end to change the days’ supply.">每行一筆領藥：第幾天、給藥天數、藥名，例如 <code>0, 30, Drug A</code>。也可以在預覽中左右拖曳給藥長條改領藥日，拖右端改給藥天數。</p>
       <div id="pts"></div>
       <button class="small" id="addPt" data-en="+ Add patient">＋ 新增病人</button>
     </div>
@@ -127,7 +127,7 @@ function parseDisp(txt) {
     const c = line.split(/[,，\t;]/).map((x) => x.trim());
     const d = RT.num(c[0]), s = RT.num(c[1]);
     if (d === null || !(s > 0)) { bad.push(i + 1); return; }
-    out.push({ d, s, drug: c[2] || 'Drug A' });
+    out.push({ d, s, drug: c[2] || 'Drug A', line: i });
   });
   return { list: out.sort((a, b) => a.d - b.d), bad };
 }
@@ -155,7 +155,7 @@ function episodes(list) {
     const prevEnd = ep && ep.drug === x.drug ? ep.supplyEnd : x.d;
     const start = S.stockpile ? Math.max(x.d, prevEnd) : x.d;
     const end = start + x.s;
-    bars.push({ from: start, to: end, d: x.d, drug: x.drug, shifted: start > x.d });
+    bars.push({ from: start, to: end, d: x.d, drug: x.drug, shifted: start > x.d, src: x });
     if (!ep) ep = { drug: x.drug, start: x.d, supplyEnd: end };
     else { ep.supplyEnd = Math.max(ep.supplyEnd, end); if (x.drug !== ep.drug) ep.drug = x.drug; }
   });
@@ -217,7 +217,7 @@ function build() {
   const st = RT.applyStyle(S.st);
   const fs = Number(st.fontSize) || 12.5, ink = st.textColor || '#000000';
   const W = Number(S.W) || 900, M = 16, LW = Number(S.labelW) || 230;
-  const data = S.pts.map((p) => ({ p, ...parseDisp(p.disp) })).filter((x) => x.list.length).map((x) => ({ ...x, e: episodes(x.list) }));
+  const data = S.pts.map((p, pi) => ({ p, pi, ...parseDisp(p.disp) })).filter((x) => x.list.length).map((x) => ({ ...x, e: episodes(x.list) }));
   const drugs = [...new Set(data.flatMap((x) => x.list.map((d) => d.drug)))];
   const colorOf = (d) => DRUG_COLORS[drugs.indexOf(d) % DRUG_COLORS.length];
   const tint = (hex, a) => { const n = parseInt(hex.slice(1), 16); return '#' + [n >> 16, (n >> 8) & 255, n & 255].map((v) => Math.round(v * a + 255 * (1 - a)).toString(16).padStart(2, '0')).join('').toUpperCase(); };
@@ -229,6 +229,7 @@ function build() {
   if (S.title) { body += RT.rich([{ runs: [{ t: S.title, bold: true, size: fs * 1.1, color: ink }] }], M, y, { lh: fs * 1.5 }); y += fs * 1.9; }
   const x0 = M + LW, x1 = W - M - fs * 2;
   const X = (d) => x0 + (Math.min(d, axMax) / axMax) * (x1 - x0);
+  BARS = []; SCALE = { x0, x1, axMax };
   const barH = fs * 1.05, epH = fs * 0.45, laneH = fs * 5.4;
   data.forEach((x, i) => {
     const top = y + i * laneH, by = top + fs * 1.2, ey = by + barH + fs * 0.45;
@@ -237,6 +238,7 @@ function build() {
     body += RT.line([[x0, ey + epH / 2], [x1, ey + epH / 2]], { color: '#D9D9D9', sw: 1 });
     // days' supply as dispensed (stockpiled supply starts where the previous one ends)
     x.e.bars.forEach((b) => {
+      BARS.push({ pi: x.pi, line: b.src.line, d: b.d, s: b.src.s, drug: b.drug, x: X(b.from), w: Math.max(1, X(b.to) - X(b.from)), y: by, h: barH });
       const c = colorOf(b.drug);
       body += RT.rect(X(b.from), by, Math.max(1, X(b.to) - X(b.from)), barH, { fill: tint(c, 0.35), stroke: c, sw: 0.8 });
       // dispensing date: a small tick above the bar
@@ -313,6 +315,69 @@ const exporter = RT.exportPanel(document.getElementById('export'), () => fig, 'e
   fontSize: { get: () => S.st.fontSize, set: (v) => { S.st.fontSize = v; syncInputs(); update(); } },
 });
 const hist = RT.history(() => S, (s) => { S = s; syncInputs(); render(); });
+/* ---- drag a supply bar: the body moves the dispensing day, the right end sets the days' supply ---- */
+let BARS = [], SCALE = null, eDrag = null;
+function decorate() {
+  const svg = preview.querySelector('svg');
+  if (!svg) return;
+  const g = RT.svgEl('g', { class: 'edit-ui' });
+  BARS.forEach((b, k) => {
+    g.appendChild(RT.svgEl('rect', { x: b.x, y: b.y - 4, width: b.w, height: b.h + 8, fill: 'transparent', 'data-bar': k, tabindex: 0, role: 'slider', style: 'cursor:grab',
+      'aria-label': T(`領藥：第 ${b.d} 天，${b.s} 天份，${b.drug}（左右拖曳改領藥日；方向鍵移動，Shift＋方向鍵改天數）`, `Dispensing: day ${b.d}, ${b.s} days, ${b.drug} (drag to move; arrow keys move, Shift+arrows change the supply)`) }));
+    g.appendChild(RT.svgEl('rect', { x: b.x + b.w - 5, y: b.y - 4, width: 10, height: b.h + 8, fill: 'transparent', class: 'resize', 'data-supply': k }));
+  });
+  if (eDrag) {
+    const t = eDrag.mode === 'move' ? T(`第 ${eDrag.d} 天`, `Day ${eDrag.d}`) : T(`${eDrag.s} 天份`, `${eDrag.s} days`);
+    const w = RT.textWidth(t, 13) + 14;
+    g.appendChild(RT.svgEl('rect', { x: eDrag.tx - w / 2, y: eDrag.ty - 28, width: w, height: 20, rx: 4, fill: '#222' }));
+    const tx = RT.svgEl('text', { x: eDrag.tx, y: eDrag.ty - 14, 'text-anchor': 'middle', 'font-size': 13, fill: '#fff' }); tx.textContent = t; g.appendChild(tx);
+  }
+  svg.appendChild(g);
+}
+// rewrite one line of a patient's dispensings
+function setLine(pi, line, d, sup) {
+  const lines = String(S.pts[pi].disp).split('\n');
+  const c = lines[line].split(/[,，\t;]/).map((x) => x.trim());
+  lines[line] = [d, sup, c[2] || 'Drug A'].join(', ');
+  S.pts[pi].disp = lines.join('\n');
+}
+const redrawE = () => { fig = build(); preview.innerHTML = fig.svg; decorate(); };
+preview.addEventListener('pointerdown', (e) => {
+  const sp = e.target.closest && e.target.closest('[data-supply]'), bar = e.target.closest && e.target.closest('[data-bar]');
+  if (!sp && !bar) return;
+  const b = BARS[Number((sp || bar).dataset[sp ? 'supply' : 'bar'])];
+  const [px] = RT.figPoint(preview, fig, e);
+  // the scale is held for the whole drag: the axis may grow as days change
+  eDrag = { mode: sp ? 'supply' : 'move', pi: b.pi, line: b.line, d: b.d, s: b.s, d0: b.d, s0: b.s, px0: px, perDay: (SCALE.x1 - SCALE.x0) / SCALE.axMax, tx: px, ty: b.y };
+  preview.setPointerCapture(e.pointerId);
+  e.preventDefault();
+});
+preview.addEventListener('pointermove', (e) => {
+  if (!eDrag) return;
+  const [px] = RT.figPoint(preview, fig, e), delta = Math.round((px - eDrag.px0) / eDrag.perDay);
+  const d = eDrag.mode === 'move' ? Math.max(0, eDrag.d0 + delta) : eDrag.d0, sup = eDrag.mode === 'supply' ? Math.max(1, eDrag.s0 + delta) : eDrag.s0;
+  if (d === eDrag.d && sup === eDrag.s) return;
+  eDrag.d = d; eDrag.s = sup; eDrag.tx = px;
+  setLine(eDrag.pi, eDrag.line, d, sup);
+  redrawE();
+});
+const endE = () => { if (!eDrag) return; eDrag = null; renderPts(); update(); };
+preview.addEventListener('pointerup', endE);
+preview.addEventListener('pointercancel', endE);
+preview.addEventListener('keydown', (e) => {
+  const bar = e.target.closest && e.target.closest('[data-bar]');
+  const dd = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1 }[e.key];
+  if (!bar || !dd) return;
+  e.preventDefault();
+  const b = BARS[Number(bar.dataset.bar)];
+  if (e.shiftKey) setLine(b.pi, b.line, b.d, Math.max(1, b.s + dd)); else setLine(b.pi, b.line, Math.max(0, b.d + dd), b.s);
+  redrawE();
+  // focus the same dispensing again (its index can change when days are re-sorted)
+  const k = BARS.findIndex((x) => x.pi === b.pi && x.line === b.line);
+  preview.querySelector(`[data-bar="${k}"]`)?.focus({ preventScroll: true });
+  renderPts(); update();
+});
+
 function render() {
   const msgs = [];
   S.pts.forEach((p, i) => {
@@ -323,7 +388,10 @@ function render() {
   });
   try {
     fig = build();
+    const keep = preview.contains(document.activeElement) && document.activeElement.dataset && document.activeElement.dataset.bar !== undefined ? BARS[Number(document.activeElement.dataset.bar)] : null;
     preview.innerHTML = S.pts.some((p) => parseDisp(p.disp).list.length) ? fig.svg : `<p class="hint" style="align-self:center">${T('輸入領藥紀錄，或按「範例」。', 'Enter dispensings, or press “Example”.')}</p>`;
+    decorate();
+    if (keep) { const k = BARS.findIndex((x) => x.pi === keep.pi && x.line === keep.line); preview.querySelector(`[data-bar="${k}"]`)?.focus({ preventScroll: true }); }
   } catch (e) { console.error(e); preview.innerHTML = `<div class="msg">⚠ ${RT.esc(e.message)}</div>`; }
   document.getElementById('msgs').innerHTML = msgs.map((m) => `<div class="msg">⚠ ${RT.esc(m)}</div>`).join('');
   exporter.setIssues(msgs.length);
