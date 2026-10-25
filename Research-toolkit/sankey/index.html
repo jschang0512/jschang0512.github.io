@@ -78,7 +78,7 @@
           <label class="field"><span data-en="Gap between treatments (px)">用藥間距 (px)</span><input type="number" data-k="gap" min="0" max="60" step="1"></label>
           <label class="field"><span data-en="Flow opacity">流向透明度</span><input type="number" data-k="alpha" min="0.1" max="1" step="0.05"></label>
         </div>
-        <label class="check"><input type="checkbox" data-k="sortBySize"> <span data-en="Order treatments by size (otherwise by first appearance)">依人數排序用藥（否則依出現順序）</span></label>
+        <label class="check"><input type="checkbox" data-k="sortBySize"> <span data-en="Order treatments by size (otherwise by first appearance, or the order you dragged them into)">依人數排序用藥（否則依出現順序，或你在預覽中拖曳的順序）</span></label>
         <p class="sub-h" data-en="Colours (same treatment, same colour in every line)">顏色（同一用藥在每一線同色）</p>
         <div class="colors" id="colors"></div>
         <label class="field" style="margin-top:8px"><span data-en="Title (optional)">圖標題（選填）</span><input data-k="title"></label>
@@ -105,7 +105,7 @@ const STOP_COLOR = '#B5B5B5';
 const prow = (o = {}) => ({ path: '', n: '', ...o });
 const DEF = {
   rows: [prow()], stages: 'First line, Second line, Third line', show: 'both', pctOf: 'line', showStop: true, stopLabel: 'No further treatment',
-  W: 900, H: 460, nodeW: 16, gap: 14, alpha: 0.45, sortBySize: true, colors: {}, title: '', footnote: '',
+  W: 900, H: 460, nodeW: 16, gap: 14, alpha: 0.45, sortBySize: true, manual: [], colors: {}, title: '', footnote: '',
   st: { ...RT.STYLE_DEF, fontSize: 13 },
 };
 const REFS = [
@@ -212,6 +212,7 @@ function build() {
   const nodeW = Number(S.nodeW) || 16, gap = Number(S.gap) ?? 14, alpha = Math.min(1, Math.max(0.1, Number(S.alpha) || 0.45));
   const titles = String(S.stages || '').split(/[,，]/).map((s) => s.trim());
   RT.beginScene();
+  NODES = [];
   let body = '', top = M;
   if (S.title) { body += RT.rich([{ runs: [{ t: S.title, bold: true, size: fs * 1.1, color: ink }] }], M, top, { lh: fs * 1.5 }); top += fs * 1.9; }
   top += fs * 1.8;   // line titles
@@ -233,8 +234,9 @@ function build() {
   const scale = (H - gap * Math.max(0, maxNodes - 1)) / Math.max(1, m.total);
   const nodes = m.cols.map((col, k) => {
     let list = [...col].map(([d, v]) => ({ d, v }));
+    const rank = (d) => { const i = (S.manual || []).indexOf(d); return i < 0 ? 1000 + m.order.indexOf(d) : i; };
     if (S.sortBySize) list.sort((a, b) => b.v - a.v);
-    else list.sort((a, b) => m.order.indexOf(a.d) - m.order.indexOf(b.d));
+    else list.sort((a, b) => rank(a.d) - rank(b.d));
     list = list.filter((n) => n.d !== m.stop).concat(list.filter((n) => n.d === m.stop));   // "no further treatment" sits at the bottom
     let y = top;
     list.forEach((n) => { n.y = y; n.h = Math.max(1, n.v * scale); n.k = k; n.out = n.y; n.in = n.y; y += n.h + gap; });
@@ -263,6 +265,7 @@ function build() {
   }
   nodes.forEach((list, k) => list.forEach((n) => {
     body += RT.rect(colX(k), n.y, nodeW, n.h, { fill: colorOf(n.d, m) });
+    NODES.push({ d: n.d, k, x: colX(k), y: n.y, w: nodeW, h: n.h, stop: n.d === m.stop });
     const first = k === 0 && m.depth > 1, last = k === m.depth - 1 && m.depth > 1;
     const tx = first ? colX(k) - 6 : colX(k) + nodeW + 6;
     const t = label(n.d, n.v, k);
@@ -306,10 +309,94 @@ const exporter = RT.exportPanel(document.getElementById('export'), () => fig, 't
   fontSize: { get: () => S.st.fontSize, set: (v) => { S.st.fontSize = v; syncInputs(); update(); } },
 });
 const hist = RT.history(() => S, (s) => { S = s; syncInputs(); render(); });
+/* ---- preview: drag a treatment up or down to reorder; click it to change its colour ---- */
+let NODES = [], sDrag = null;
+function decorate() {
+  const svg = preview.querySelector('svg');
+  if (!svg) return;
+  const g = RT.svgEl('g', { class: 'edit-ui' });
+  NODES.forEach((n, k) => {
+    if (n.stop) return;
+    g.appendChild(RT.svgEl('rect', { x: n.x - 6, y: n.y, width: n.w + 12, height: Math.max(n.h, 8), fill: 'transparent', 'data-node': k, tabindex: 0, role: 'button', style: 'cursor:grab',
+      'aria-label': T(`${n.d}：上下拖曳調整順序，點一下換顏色；方向鍵上下移動`, `${n.d}: drag up or down to reorder, click to change its colour; arrow keys move it`) }));
+  });
+  if (sDrag && sDrag.moved && sDrag.lineY !== null) {
+    const n = NODES[sDrag.k];
+    g.appendChild(RT.svgEl('line', { x1: n.x - 14, x2: n.x + n.w + 14, y1: sDrag.lineY, y2: sDrag.lineY, stroke: '#3b5bdb', 'stroke-width': 3 }));
+  }
+  svg.appendChild(g);
+}
+// the order every line follows, with one treatment moved before another
+function reorder(name, before) {
+  const m = model(), cur = [...new Set([...(S.manual || []), ...NODES.filter((n) => !n.stop).sort((a, b) => a.k - b.k || a.y - b.y).map((n) => n.d), ...m.order])].filter((d) => d !== m.stop);
+  const list = cur.filter((d) => d !== name);
+  const at = before === null ? list.length : list.indexOf(before);
+  list.splice(at < 0 ? list.length : at, 0, name);
+  S.manual = list; S.sortBySize = false;
+}
+let colorInput = null;
+function pickColor(name) {
+  colorInput = colorInput || Object.assign(document.createElement('input'), { type: 'color' });
+  colorInput.value = colorOf(name, model());
+  colorInput.oninput = () => { S.colors[name] = colorInput.value.toUpperCase(); renderColors(); update(); };
+  colorInput.click();
+}
+preview.addEventListener('pointerdown', (e) => {
+  const el = e.target.closest && e.target.closest('[data-node]');
+  if (!el) return;
+  const [, py] = RT.figPoint(preview, fig, e);
+  sDrag = { k: Number(el.dataset.node), y0: py, moved: false, before: undefined, lineY: null };
+  preview.setPointerCapture(e.pointerId);
+  e.preventDefault();
+});
+preview.addEventListener('pointermove', (e) => {
+  if (!sDrag) return;
+  const [, py] = RT.figPoint(preview, fig, e);
+  if (!sDrag.moved && Math.abs(py - sDrag.y0) < 5) return;
+  sDrag.moved = true;
+  const n = NODES[sDrag.k];
+  const col = NODES.filter((x) => x.k === n.k && !x.stop && x !== n).sort((a, b) => a.y - b.y);
+  const next = col.find((x) => py < x.y + x.h / 2);
+  sDrag.before = next ? next.d : null;
+  sDrag.lineY = next ? next.y - 4 : (col.length ? col[col.length - 1].y + col[col.length - 1].h + 4 : n.y);
+  preview.querySelector('.edit-ui')?.remove(); decorate();
+});
+const endS = () => {
+  if (!sDrag) return;
+  const d = sDrag; sDrag = null;
+  const n = NODES[d.k];
+  if (!d.moved) { preview.querySelector('.edit-ui')?.remove(); decorate(); pickColor(n.d); return; }
+  if (d.before !== undefined && d.before !== n.d) { reorder(n.d, d.before); syncInputs(); }
+  update();
+};
+preview.addEventListener('pointerup', endS);
+preview.addEventListener('pointercancel', endS);
+preview.addEventListener('keydown', (e) => {
+  const el = e.target.closest && e.target.closest('[data-node]');
+  if (!el) return;
+  const n = NODES[Number(el.dataset.node)];
+  if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickColor(n.d); return; }
+  const dir = { ArrowUp: -1, ArrowDown: 1 }[e.key];
+  if (!dir) return;
+  e.preventDefault();
+  const col = NODES.filter((x) => x.k === n.k && !x.stop).sort((a, b) => a.y - b.y), i = col.indexOf(n);
+  const j = i + dir;
+  if (j < 0 || j >= col.length) return;
+  reorder(n.d, dir < 0 ? col[j].d : (col[j + 1] ? col[j + 1].d : null));
+  syncInputs();
+  fig = build(); preview.innerHTML = fig.svg; decorate();
+  const k = NODES.findIndex((x) => x.k === n.k && x.d === n.d);
+  preview.querySelector(`[data-node="${k}"]`)?.focus({ preventScroll: true });
+  update();
+});
+
 function render() {
   try {
+    const keep = preview.contains(document.activeElement) && document.activeElement.dataset && document.activeElement.dataset.node !== undefined ? NODES[Number(document.activeElement.dataset.node)] : null;
     fig = build();
     preview.innerHTML = model().depth ? fig.svg : `<p class="hint" style="align-self:center">${T('輸入路徑與人數，或按「範例」。', 'Enter pathways and counts, or press “Example”.')}</p>`;
+    if (model().depth) decorate();
+    if (keep) { const k = NODES.findIndex((x) => x.k === keep.k && x.d === keep.d); preview.querySelector(`[data-node="${k}"]`)?.focus({ preventScroll: true }); }
   } catch (e) { console.error(e); preview.innerHTML = `<div class="msg">⚠ ${RT.esc(e.message)}</div>`; }
   const msgs = checks();
   document.getElementById('msgs').innerHTML = msgs.map((m) => `<div class="msg">⚠ ${RT.esc(m)}</div>`).join('');
@@ -330,7 +417,7 @@ document.getElementById('btnExample').onclick = () => {
     ['Metformin > GLP-1 RA > Insulin', 90], ['Metformin > GLP-1 RA', 260], ['Metformin', 1400],
     ['Sulfonylurea > DPP-4i', 220], ['Sulfonylurea > Insulin', 130], ['Sulfonylurea', 380],
   ].map(([path, n]) => prow({ path, n: String(n) }));
-  Object.assign(S, { stages: 'First line, Second line, Third line', colors: {}, title: '', footnote: 'Numbers are patients; percentages are of patients in each line. SGLT2i, sodium–glucose cotransporter 2 inhibitor; DPP-4i, dipeptidyl peptidase 4 inhibitor; GLP-1 RA, glucagon-like peptide 1 receptor agonist.' });
+  Object.assign(S, { stages: 'First line, Second line, Third line', colors: {}, manual: [], sortBySize: true, title: '', footnote: 'Numbers are patients; percentages are of patients in each line. SGLT2i, sodium–glucose cotransporter 2 inhibitor; DPP-4i, dipeptidyl peptidase 4 inhibitor; GLP-1 RA, glucagon-like peptide 1 receptor agonist.' });
   syncInputs(); update();
   RT.toast(T('已載入範例（虛構資料，僅供示範；按 ↶ 可復原）', 'Example loaded (fictional data, for illustration; ↶ to undo)'));
 };
