@@ -52,6 +52,7 @@
       <h2><span class="step-no">1</span> <span data-en="Panels">面板圖片</span></h2>
       <label class="drop" id="drop">
         <span data-en="Drop PNG, JPG or SVG files here, or click to choose">把 PNG、JPG 或 SVG 拖到這裡，或點一下選擇檔案</span>
+        <span class="hint" style="margin:0" data-en="In the preview, drag a panel onto another to move it there, or drag its right edge to change its width.">在預覽中把面板拖到另一個面板上，即可移到該位置；拖右緣可改寬度。</span>
         <span class="hint" style="margin:0" data-en="PDF or Word figures: convert them first with Figure DPI &amp; Format.">PDF 或 Word 中的圖，請先用「圖檔 DPI 轉換」轉成圖片。</span>
         <input type="file" id="file" accept="image/png,image/jpeg,image/svg+xml,.svg" multiple hidden>
       </label>
@@ -169,6 +170,7 @@ function renderPanels() {
 
 /* ---------------- figure ---------------- */
 const W = 1600;   // figure units; the print width is set at export
+let BOXES = [], pDrag = null;
 function build() {
   const st = RT.applyStyle(S.st);
   const fs = Number(st.fontSize) || 22, ink = st.textColor || '#000000';
@@ -185,6 +187,7 @@ function build() {
   });
   if (row.length) rows.push(row);
   RT.beginScene();
+  BOXES = [];
   let body = '', y = 0;
   rows.forEach((r) => {
     // width of each slot, then the image size inside it
@@ -204,6 +207,7 @@ function build() {
     r.forEach((c) => {
       const off = S.valign === 'middle' ? (rh - c.ih) / 2 : S.valign === 'bottom' ? rh - c.ih : 0;
       const iy = y + labH + off, src = SRC.get(c.p.id);
+      BOXES.push({ i: c.i, x: c.x, y: iy, w: c.iw, h: c.ih, slotX: c.x, cw, gap, cols });
       body += src
         ? `<image x="${RT.f(c.x)}" y="${RT.f(iy)}" width="${RT.f(c.iw)}" height="${RT.f(c.ih)}" preserveAspectRatio="none" href="${src}"/>`
         : RT.rect(c.x, iy, c.iw, c.ih, { fill: '#F2F2F2', stroke: '#BBBBBB', sw: 1 });
@@ -248,10 +252,82 @@ const exporter = RT.exportPanel(document.getElementById('export'), () => fig, 'f
   fontSize: { get: () => S.st.fontSize, set: (v) => { S.st.fontSize = v; syncInputs(); update(); } },
 });
 const hist = RT.history(() => S, (s) => { S = s; syncInputs(); render(); });
+// overlay: drag a panel onto another to reorder; drag its right edge to change the span
+function decorate() {
+  const svg = preview.querySelector('svg');
+  if (!svg) return;
+  const g = RT.svgEl('g', { class: 'edit-ui' });
+  BOXES.forEach((b) => {
+    const target = pDrag && pDrag.mode === 'move' && pDrag.over === b.i && pDrag.over !== pDrag.i;
+    g.appendChild(RT.svgEl('rect', { x: b.x, y: b.y, width: b.w, height: b.h, fill: pDrag && pDrag.i === b.i ? 'rgba(59,91,219,.08)' : 'transparent',
+      stroke: target ? '#3b5bdb' : 'none', 'stroke-width': 8, 'data-hit': '', 'data-panel': b.i, tabindex: 0, role: 'button', style: 'cursor:grab',
+      'aria-label': T(`面板 ${letter(b.i) || b.i + 1}：拖曳換位置，拖右緣改寬度；方向鍵換位置，Shift＋方向鍵改寬度`, `Panel ${letter(b.i) || b.i + 1}: drag to reorder, drag its right edge to resize; arrow keys reorder, Shift+arrows resize`) }));
+    g.appendChild(RT.svgEl('rect', { x: b.x + b.w - 14, y: b.y, width: 28, height: b.h, fill: 'transparent', class: 'resize', 'data-span': b.i }));
+  });
+  if (pDrag && pDrag.mode === 'span') {
+    const b = BOXES.find((x) => x.i === pDrag.i);
+    if (b) {
+      const t = T(`${pDrag.span} 欄`, `${pDrag.span} col`), w = RT.textWidth(t, 28) + 24;
+      g.appendChild(RT.svgEl('rect', { x: b.x + b.w - w - 8, y: b.y + 8, width: w, height: 40, rx: 6, fill: '#222' }));
+      const tx = RT.svgEl('text', { x: b.x + b.w - w / 2 - 8, y: b.y + 36, 'text-anchor': 'middle', 'font-size': 28, fill: '#fff' }); tx.textContent = t; g.appendChild(tx);
+    }
+  }
+  svg.appendChild(g);
+}
+const movePanel = (from, to) => { if (to < 0 || to >= S.panels.length || from === to) return; const [p] = S.panels.splice(from, 1); S.panels.splice(to, 0, p); };
+const redrawPanels = () => { fig = build(); preview.innerHTML = fig.svg; decorate(); };
+preview.addEventListener('pointerdown', (e) => {
+  const sp = e.target.closest && e.target.closest('[data-span]'), pn = e.target.closest && e.target.closest('[data-panel]');
+  if (!sp && !pn) return;
+  const i = Number((sp || pn).dataset[sp ? 'span' : 'panel']);
+  pDrag = sp ? { mode: 'span', i, span: S.panels[i].span || 1 } : { mode: 'move', i, over: i };
+  preview.setPointerCapture(e.pointerId);
+  e.preventDefault();
+});
+preview.addEventListener('pointermove', (e) => {
+  if (!pDrag) return;
+  const [px, py] = RT.figPoint(preview, fig, e);
+  if (pDrag.mode === 'span') {
+    const b = BOXES.find((x) => x.i === pDrag.i);
+    if (!b) return;
+    const span = Math.max(1, Math.min(b.cols, Math.round((px - b.slotX + b.gap) / (b.cw + b.gap))));
+    if (span === pDrag.span) return;
+    pDrag.span = span; S.panels[pDrag.i].span = span;
+    redrawPanels();
+  } else {
+    const hit = BOXES.find((b) => px >= b.x && px <= b.x + b.w && py >= b.y && py <= b.y + b.h);
+    const over = hit ? hit.i : pDrag.over;
+    if (over !== pDrag.over) { pDrag.over = over; preview.querySelector('.edit-ui')?.remove(); decorate(); }
+  }
+});
+const endPanelDrag = () => {
+  if (!pDrag) return;
+  const d = pDrag; pDrag = null;
+  if (d.mode === 'move') movePanel(d.i, d.over);
+  renderPanels(); update();
+};
+preview.addEventListener('pointerup', endPanelDrag);
+preview.addEventListener('pointercancel', endPanelDrag);
+preview.addEventListener('keydown', (e) => {
+  const pn = e.target.closest && e.target.closest('[data-panel]');
+  const d = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 }[e.key];
+  if (!pn || !d) return;
+  e.preventDefault();
+  let i = Number(pn.dataset.panel);
+  if (e.shiftKey) { const cols = Math.max(1, Math.min(6, Number(S.cols) || 2)); S.panels[i].span = Math.max(1, Math.min(cols, (S.panels[i].span || 1) + d)); }
+  else { movePanel(i, i + d); i = Math.max(0, Math.min(S.panels.length - 1, i + d)); }
+  redrawPanels();
+  preview.querySelector(`[data-panel="${i}"]`)?.focus({ preventScroll: true });
+  renderPanels(); update();
+});
+
 function render() {
   try {
+    const keep = preview.contains(document.activeElement) && document.activeElement.dataset ? document.activeElement.dataset.panel : undefined;
     fig = build();
     preview.innerHTML = S.panels.length ? fig.svg : `<p class="hint" style="align-self:center">${T('加入圖片後在這裡預覽。', 'Add images to preview the figure here.')}</p>`;
+    if (S.panels.length) decorate();
+    if (keep !== undefined) preview.querySelector(`[data-panel="${keep}"]`)?.focus({ preventScroll: true });
   } catch (e) { console.error(e); preview.innerHTML = `<div class="msg">⚠ ${RT.esc(e.message)}</div>`; }
   const msgs = [];
   const missing = S.panels.filter((p) => !SRC.has(p.id)).length;
