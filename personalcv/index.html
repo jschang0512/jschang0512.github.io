@@ -197,19 +197,21 @@
    * Narrow: one centred column — text, role words as a single line, then the portrait closing the band. */
   .hero-band { --seam: 120px; background-color: var(--glaze-2); background-image: repeating-linear-gradient(90deg, transparent 0 calc(var(--seam) - 1px), var(--grout) calc(var(--seam) - 1px) var(--seam)); background-position: center top; }
   .hero { --name: clamp(5rem, 8vw + 1rem, 10rem); position: relative; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); grid-template-areas: ". name" "main stage"; align-items: end; column-gap: var(--space-xl); padding-top: var(--space-xl); }
-  html[data-lang="en"] .hero { --name: clamp(2.4rem, 3.4vw + 0.6rem, 3.9rem); }
+  html[data-lang="en"] .hero { --name: clamp(2.8rem, 3.6vw + 0.8rem, 4.6rem); }
   /* layers, back to front: medallion · name · portrait */
-  .hero h1 { grid-area: name; justify-self: center; position: relative; z-index: 1; margin: 0; white-space: nowrap; text-align: center; font-size: var(--name) !important; line-height: 1; }
-  html[data-lang="zh"] .hero h1, html[data-lang="ja"] .hero h1 { letter-spacing: 0.14em; margin-right: -0.14em; }
+  .hero h1 { grid-area: name; justify-self: center; position: relative; z-index: 1; min-width: 0; margin: 0; text-align: center; font-family: var(--font-display); font-size: var(--name); font-weight: 800; line-height: 0.98; letter-spacing: 0.01em; color: var(--line); white-space: nowrap; }
+  html[data-lang="zh"] .hero h1, html[data-lang="ja"] .hero h1 { font-weight: 900; letter-spacing: 0.14em; margin-right: -0.14em; line-height: 1; }
+  /* the romanised name is long: stack it into cover lines (CHIA-SUNG / (BRUCE) / CHANG) inside the portrait column */
+  html[data-lang="en"] .hero h1 { white-space: normal; max-width: 100%; text-wrap: balance; hyphens: none; }
   .hero .cta { gap: var(--space-xs); }
   .hero .cta .btn { height: 40px; padding-inline: var(--space-sm); font-size: var(--text-sm); }
   .hero .cta .btn.icon { width: 40px; padding-inline: 0; }
   .hero-main { grid-area: main; position: relative; z-index: 2; min-width: 0; align-self: center; padding: var(--space-xl) 0 var(--space-2xl); }
-  .hero-main .tags { margin-bottom: var(--space-xs); }
-  .hero .creds { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .hero-main .tags { display: none; }
+  .hero .creds { margin-top: var(--space-md); padding-block: var(--space-sm); font-size: var(--text-sm); line-height: 1.5; }
   /* Stage: the cut-out portrait in front of a tiled cobalt medallion */
   .stage { grid-area: stage; justify-self: center; position: relative; width: min(100%, 470px); aspect-ratio: 1 / 1.08; min-height: 320px; margin-top: calc(var(--name) * -0.55); }
-  .medallion { position: absolute; z-index: 0; left: 50%; bottom: 10%; width: 78%; aspect-ratio: 1; transform: translateX(-50%); border-radius: 50%; background: var(--band); overflow: hidden; box-shadow: 0 0 0 10px var(--glaze-2), 0 0 0 11px var(--line); }
+  .medallion { position: absolute; z-index: 0; left: 50%; bottom: 7%; width: 86%; aspect-ratio: 1; transform: translateX(-50%); border-radius: 50%; background: var(--band); overflow: hidden; box-shadow: 0 0 0 10px var(--glaze-2), 0 0 0 11px var(--line); }
   .medallion::before { content: ""; position: absolute; inset: 0; background: var(--band-line); -webkit-mask: var(--m-tile) center / 58px 58px; mask: var(--m-tile) center / 58px 58px; }
   .stage img { position: absolute; z-index: 2; left: 50%; bottom: 0; width: 112%; height: auto; aspect-ratio: 1; transform: translateX(-50%); object-fit: contain; object-position: bottom; }
   /* Role words: one line under the credentials */
@@ -219,9 +221,7 @@
   .tag { display: inline-flex; align-items: center; font-size: var(--text-sm); font-weight: 700; color: var(--line); }
   /* cartouche: a scrolled oval frame around the badge */
   .tag.lead { padding: var(--space-2xs) var(--space-md); border-radius: 999px; border: 1px solid var(--line); line-height: 1.4; }
-  .hero h1 { font-family: var(--font-display); font-size: clamp(2.4rem, 4vw + 1rem, 4.5rem); font-weight: 800; line-height: 1.02; letter-spacing: 0.01em; margin-top: var(--space-md); color: var(--line); overflow-wrap: anywhere; min-width: 0; }
-  html[data-lang="zh"] .hero h1, html[data-lang="ja"] .hero h1 { font-weight: 900; letter-spacing: 0.04em; line-height: 1.1; }
-  .hero .sub { margin-top: var(--space-sm); font-family: var(--font-serif); font-size: var(--text-md); font-weight: 700; color: var(--ink); }
+  .hero .sub { margin-top: 0; font-family: var(--font-serif); font-size: var(--text-md); font-weight: 700; color: var(--ink); }
   .creds { list-style: none; margin-top: var(--space-lg); padding-block: var(--space-sm); border-block: 1px solid var(--wash); display: grid; gap: var(--space-2xs); color: var(--muted); }
   .creds b { color: var(--ink); font-weight: 700; margin-right: var(--space-xs); }
   .hero .pitch { margin-top: var(--space-md); max-width: 56ch; color: var(--muted); }
@@ -340,7 +340,7 @@
   /* ---------- Motion: the name rises out of the wash; the arch is raised, then the portrait steps in ---------- */
   .progress { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: var(--z-toast); pointer-events: none; transform-origin: 0 50%; transform: scaleX(0); background: var(--line); }
   @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-  @keyframes set-type { from { clip-path: inset(0 0 100% 0); transform: translateY(0.3em); color: var(--wash); } 60% { color: var(--wash); } to { clip-path: inset(0 0 -0.2em 0); transform: none; } }
+  @keyframes set-type { from { clip-path: inset(0 0 100% 0); transform: translateY(0.3em); } to { clip-path: inset(0 0 -0.2em 0); transform: none; } }
   @keyframes kiln { from { background-position: 100% 0; } to { background-position: 0 0; } }
   @keyframes raise { from { clip-path: circle(0% at 50% 50%); } to { clip-path: circle(50% at 50% 50%); } }
   @keyframes step-in { from { opacity: 0; transform: translate(-50%, 6%); } to { opacity: 1; transform: translate(-50%, 0); } }
@@ -380,13 +380,15 @@
     .hero { --name: clamp(3.6rem, 13vw, 7rem); grid-template-columns: minmax(0, 1fr); grid-template-areas: "name" "stage" "main"; justify-items: center; text-align: center; padding-top: var(--space-md); padding-bottom: var(--space-xl); }
     html[data-lang="en"] .hero { --name: clamp(2rem, 7vw, 3.4rem); }
     html[data-lang="en"] .hero h1 { white-space: normal; max-width: 12em; }
-    .stage { width: min(100%, 24rem); aspect-ratio: 1 / 1; min-height: 0; margin-top: calc(var(--name) * -0.4); border-bottom: 1px solid var(--line); }
+    .stage { width: min(100%, 21rem); aspect-ratio: 1 / 1; min-height: 0; margin-top: calc(var(--name) * -0.7); border-bottom: 1px solid var(--line); }
     .stage img { width: 100%; }
     .hero-main { display: flex; flex-direction: column; align-items: center; padding: var(--space-lg) 0 0; max-width: 40rem; }
+    .hero-main .cta { order: 1; margin-top: var(--space-md); } .hero-main .pitch { order: 2; } .hero .creds { order: 3; text-align: center; }
     .hero .cta, .role-words { justify-content: center; }
   }
   @media (max-width: 420px) {
-    .role-words { display: grid; grid-template-columns: repeat(2, auto); justify-content: center; gap: var(--space-2xs) var(--space-lg); }
+    .role-words { gap: var(--space-2xs) var(--space-md); }
+    .role-words li { word-break: keep-all; font-size: var(--text-sm); }
     .role-words li + li::before { content: none; }
   }
   @media (max-width: 900px) {
@@ -425,6 +427,8 @@
     .controls { gap: var(--space-2xs); }
   }
   @media (pointer: coarse) {
+    .hero .cta .btn { height: 44px; } .hero .cta .btn.icon { width: 44px; }
+    .bar nav a { padding-block: var(--space-sm); }
     .ctl, .langs button { height: 44px; min-width: 44px; }
   }
 
@@ -491,8 +495,8 @@
       <p class="pitch" id="hero-pitch">{% include cv-tr.html v=cv.profile.pitch md=true %}</p>
       <div class="cta">
         <a class="btn primary" id="btn-email" href="mailto:{{ cv.profile.email }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg><span class="zh">寄信聯絡</span><span class="en">Email me</span><span class="ja">メールで連絡</span></a>
-        <a class="btn" id="link-orcid" href="{{ cv.profile.orcid }}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zM7.369 4.378c.525 0 .947.431.947.947s-.422.947-.947.947a.95.95 0 0 1-.947-.947c0-.516.422-.947.947-.947zm-.722 3.038h1.444v10.041H6.647V7.416zm3.562 0h3.9c3.712 0 5.344 2.653 5.344 5.025 0 2.578-2.016 5.016-5.325 5.016h-3.919V7.416zm1.444 1.303v7.444h2.297c3.272 0 4.022-2.484 4.022-3.722 0-2.016-1.294-3.722-4.097-3.722h-2.222z"/></svg>ORCID</a>
-        <a class="btn" id="link-linkedin" href="{{ cv.profile.linkedin }}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.64a1.64 1.64 0 1 0 0 3.28 1.64 1.64 0 0 0 0-3.28z"/></svg>LinkedIn</a>
+        <a class="btn" id="link-orcid" href="{{ cv.profile.orcid }}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zM7.369 4.378c.525 0 .947.431.947.947s-.422.947-.947.947a.95.95 0 0 1-.947-.947c0-.516.422-.947.947-.947zm-.722 3.038h1.444v10.041H6.647V7.416zm3.562 0h3.9c3.712 0 5.344 2.653 5.344 5.025 0 2.578-2.016 5.016-5.325 5.016h-3.919V7.416zm1.444 1.303v7.444h2.297c3.272 0 4.022-2.484 4.022-3.722 0-2.016-1.294-3.722-4.097-3.722h-2.222z"/></svg>ORCID</a>
+        <a class="btn" id="link-linkedin" href="{{ cv.profile.linkedin }}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.64a1.64 1.64 0 1 0 0 3.28 1.64 1.64 0 0 0 0-3.28z"/></svg>LinkedIn</a>
       </div>
     </div>
     <div class="stage">
@@ -586,7 +590,7 @@
   <div class="closing-card">
     <div>
       <blockquote id="footer-quote">{% include cv-tr.html v=cv.footer.quote %}</blockquote>
-      <p class="note"><span class="zh">研究合作、Research Toolkit 的使用意見或錯誤回報，都歡迎來信：</span><span class="en">Write for research collaboration, or for feedback and bug reports on the Research Toolkit:</span><span class="ja">共同研究のご相談や、Research Toolkit へのご意見・不具合報告はこちらへ：</span><a class="mail" id="footer-mail" href="mailto:{{ cv.profile.email }}">{{ cv.profile.email }}</a></p>
+      <p class="note"><span class="zh">研究合作、Research Toolkit 的使用意見或錯誤回報，都歡迎來信：</span><span class="en">Write for research collaboration, or for feedback and bug reports on the Research Toolkit:</span><span class="ja">共同研究のご相談や、Research Toolkit へのご意見・不具合報告はこちらへ：</span> <a class="mail" id="footer-mail" href="mailto:{{ cv.profile.email }}">{{ cv.profile.email }}</a></p>
     </div>
     <a class="btn primary" id="footer-email" href="mailto:{{ cv.profile.email }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg><span class="zh">寄信聯絡</span><span class="en">Email me</span><span class="ja">メールで連絡</span></a>
     <div class="meta">
