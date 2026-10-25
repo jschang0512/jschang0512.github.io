@@ -378,21 +378,6 @@
           "oklch(86% 0.021 266)",
           "oklch(95% 0.015 266)"
         ]
-      },
-      "az-amber": {
-        "role": "tertiary",
-        "displayName": "Capsule Amber",
-        "canonical": "oklch(80% 0.140 72)",
-        "tonalRamp": [
-          "oklch(15% 0.015 266)",
-          "oklch(25% 0.022 266)",
-          "oklch(35% 0.037 266)",
-          "oklch(45% 0.052 266)",
-          "oklch(58% 0.060 266)",
-          "oklch(72% 0.042 266)",
-          "oklch(86% 0.021 266)",
-          "oklch(95% 0.015 266)"
-        ]
       }
     },
     "typographyMeta": {
