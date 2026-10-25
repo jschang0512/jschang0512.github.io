@@ -87,6 +87,13 @@ content:
               media: images
               path: personalcv/media/profile
               extensions: [jpg, jpeg, png, webp, gif, svg]
+          - name: photoCutout
+            label: "去背大頭照（透明背景 PNG，顯示在 CV 首屏）"
+            type: image
+            options:
+              media: images
+              path: personalcv/media/profile
+              extensions: [png, webp]
           - name: email
             label: "Email（按「聯絡我」會複製）"
             type: string

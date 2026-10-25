@@ -13,9 +13,9 @@ Content comes from _data/cv.json and is re-rendered by the page script; all IDs 
 
 ## Direction contract
 FORM: azulejo station hall (challenger, chosen by the user) · seed:9b8af2b7a308f05a
-THESIS: The CV is a tiled hall you walk in order — each life chapter is a framed tile panel. Refuses the journal-paper CV of hairlines and a serif name on cream.
-OWN-WORLD: Tin-glaze milk white and cobalt only, painted line and wash; mustard lives solely in frame corners. Grout seams grid the ground and run straight through the portrait. Roman capitals for display, set in cartouches; quatrefoil friezes are the section breaks; plaques with double rules are the buttons.
+THESIS: Blue and personal, not a journal paper: tin-glaze white and cobalt, roman capitals, one cobalt arch holding the cut-out portrait. Refined from the full azulejo hall after the user found it too ornate.
+OWN-WORLD: Tin-glaze white ground, cobalt for headings, rules and filled buttons; cobalt bands for tools and the sign-off. The only ornament is the arch.
 STORY: Name and portrait first, framed as the hall's opening panel; then research, education and experience, publications, honours, contact.
-FIRST VIEWPORT: A framed hero panel: huge capitals name, cartouche badge, contact plaques, cobalt-painted portrait crossed by grout seams, mustard rosettes at the corners.
-SIGNATURE: The portrait is laid tile by tile on load; each frieze fills with cobalt like glaze in the kiln as its section arrives.
-RISK: Ornament can crowd dense text — friezes stay in borders, reading areas stay plain glaze.
+FIRST VIEWPORT: Huge capitals name and contact buttons on the left; the cut-out portrait standing in a cobalt arch on the right.
+SIGNATURE: The arch rises from the baseline and the portrait steps into it.
+RISK: With the ornament gone, scale and cobalt fields must carry the personality.

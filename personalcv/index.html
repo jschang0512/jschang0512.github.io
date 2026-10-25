@@ -70,8 +70,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@350;400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <noscript><link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@350;400;700&display=swap" rel="stylesheet"></noscript>
 <style>
-  /* Azulejo hall: tin-glaze white and cobalt, grout seams on the ground, quatrefoil friezes as section breaks,
-   * mustard only in frame corners, roman capitals for display. Content is rendered from content.json. */
+  /* Cobalt arch: tin-glaze white and cobalt, roman capitals for display, the cut-out portrait standing in a cobalt arch.
+   * Ornament is kept to the arch; sections are separated by a single rule. Content is rendered from content.json. */
   :root {
     /* ── Colour: glaze, cobalt, one mustard (frames only) ── */
     --glaze:       oklch(97.5% 0.008 95);
@@ -79,7 +79,7 @@
     --grout:       oklch(90% 0.018 255);
     --ink:         oklch(25% 0.075 266);
     --muted:       oklch(44% 0.070 266);
-    --line:        oklch(38% 0.170 266);   /* the painting: headings, friezes, rules */
+    --line:        oklch(38% 0.170 266);   /* headings, rules, the arch */
     --fill:        oklch(38% 0.170 266);   /* plaque fill */
     --fill-hover:  oklch(46% 0.190 266);
     --fill-ink:    oklch(98% 0.006 95);
@@ -107,20 +107,14 @@
     --space-3xs: 0.125rem; --space-2xs: 0.25rem; --space-xs: 0.5rem; --space-sm: 0.75rem;
     --space-md: 1rem; --space-lg: 1.5rem; --space-xl: 2.5rem; --space-2xl: 4rem; --space-3xl: 6rem;
 
-    --tile: 96px;
-    --frieze-h: 24px;
 
     --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
     --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-    --dur-micro: 120ms; --dur-short: 220ms; --dur-long: 420ms; --dur-kiln: 900ms;
+    --dur-micro: 120ms; --dur-short: 220ms; --dur-long: 420ms; --dur-focal: 900ms;
 
     --z-raised: 10; --z-sticky: 200; --z-toast: 500;
     --radius-sm: 4px; --radius-plaque: 6px;
 
-    /* Painted motifs, used as masks so their colour always comes from the tokens above */
-    --m-frieze: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 24' width='32' height='24'%3E%3Cpath d='M0 1.5h32M0 22.5h32' stroke='black' stroke-width='1.5'/%3E%3Cpath d='M16 5c2.6 3 2.6 4.5 0 7-2.6-2.5-2.6-4 0-7zm0 14c2.6-3 2.6-4.5 0-7-2.6 2.5-2.6 4 0 7zM9 12c3-2.6 4.5-2.6 7 0-2.5 2.6-4 2.6-7 0zm14 0c-3-2.6-4.5-2.6-7 0 2.5 2.6 4 2.6 7 0z'/%3E%3Ccircle cx='0' cy='12' r='2.6'/%3E%3Ccircle cx='32' cy='12' r='2.6'/%3E%3Cpath d='M3 5.5q5 0 6 6.5M29 5.5q-5 0-6 6.5M3 18.5q5 0 6-6.5M29 18.5q-5 0-6-6.5' fill='none' stroke='black' stroke-width='1.1'/%3E%3C/svg%3E");
-    --m-rosette: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cg%3E%3Cpath d='M16 1.5c3.4 4.6 3.4 8 0 12.5-3.4-4.5-3.4-7.9 0-12.5z'/%3E%3Cpath d='M16 1.5c3.4 4.6 3.4 8 0 12.5-3.4-4.5-3.4-7.9 0-12.5z' transform='rotate(45 16 16)'/%3E%3Cpath d='M16 1.5c3.4 4.6 3.4 8 0 12.5-3.4-4.5-3.4-7.9 0-12.5z' transform='rotate(90 16 16)'/%3E%3Cpath d='M16 1.5c3.4 4.6 3.4 8 0 12.5-3.4-4.5-3.4-7.9 0-12.5z' transform='rotate(135 16 16)'/%3E%3Cpath d='M16 1.5c3.4 4.6 3.4 8 0 12.5-3.4-4.5-3.4-7.9 0-12.5z' transform='rotate(180 16 16)'/%3E%3Cpath d='M16 1.5c3.4 4.6 3.4 8 0 12.5-3.4-4.5-3.4-7.9 0-12.5z' transform='rotate(225 16 16)'/%3E%3Cpath d='M16 1.5c3.4 4.6 3.4 8 0 12.5-3.4-4.5-3.4-7.9 0-12.5z' transform='rotate(270 16 16)'/%3E%3Cpath d='M16 1.5c3.4 4.6 3.4 8 0 12.5-3.4-4.5-3.4-7.9 0-12.5z' transform='rotate(315 16 16)'/%3E%3C/g%3E%3Ccircle cx='16' cy='16' r='3'/%3E%3C/svg%3E");
-    --m-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64' width='64' height='64'%3E%3Cpath d='M0 .5h64M.5 0v64' stroke='black'/%3E%3Cpath d='M0 16a16 16 0 0 0 16-16M48 0a16 16 0 0 0 16 16M64 48a16 16 0 0 0-16 16M16 64A16 16 0 0 0 0 48' fill='none' stroke='black' stroke-width='1.6'/%3E%3Cpath d='M32 21c3.2 4.2 3.2 6.6 0 10.5-3.2-3.9-3.2-6.3 0-10.5zm0 22c3.2-4.2 3.2-6.6 0-10.5-3.2 3.9-3.2 6.3 0 10.5zM21 32c4.2-3.2 6.6-3.2 10.5 0-3.9 3.2-6.3 3.2-10.5 0zm22 0c-4.2-3.2-6.6-3.2-10.5 0 3.9 3.2 6.3 3.2 10.5 0z'/%3E%3C/svg%3E");
   }
   html[data-theme="dark"] {
     --glaze:       oklch(20% 0.055 266);
@@ -149,11 +143,7 @@
   body {
     color: var(--ink); font-family: var(--font-body); font-size: var(--text-base); line-height: 1.65;
     -webkit-font-smoothing: antialiased;
-    /* the hall's ground: glaze with grout seams */
     background-color: var(--glaze);
-    background-image: linear-gradient(var(--grout) 1px, transparent 1px), linear-gradient(90deg, var(--grout) 1px, transparent 1px);
-    background-size: var(--tile) var(--tile);
-    background-position: center top;
   }
   html[data-theme="dark"] body { font-weight: 350; }
   a { color: inherit; text-decoration: none; }
@@ -170,26 +160,14 @@
   .zh, .en, .ja { display: none; }
   html[data-lang="zh"] .zh, html[data-lang="en"] .en, html[data-lang="ja"] .ja { display: inline; }
 
-  /* ---------- Painted pieces ---------- */
-  .frieze, .panel::before, .panel::after {
-    display: block; height: var(--frieze-h);
-    -webkit-mask: var(--m-frieze) repeat-x center / auto 100%; mask: var(--m-frieze) repeat-x center / auto 100%;
-    background: linear-gradient(90deg, var(--line) 50%, var(--wash) 50%) 0 0 / 200% 100%;
-  }
-  .rosette { position: absolute; width: 40px; height: 40px; z-index: 1; background: var(--mustard); -webkit-mask: var(--m-rosette) center / contain no-repeat; mask: var(--m-rosette) center / contain no-repeat; }
-  .r-tl { top: -6px; left: -6px; } .r-tr { top: -6px; right: -6px; } .r-bl { bottom: -6px; left: -6px; } .r-br { bottom: -6px; right: -6px; }
-
-  /* A panel: plain glaze to read on, double rules at the sides, friezes top and bottom */
-  .panel { position: relative; background: var(--glaze); border-inline: 4px double var(--line); }
-  .panel::before, .panel::after { content: ""; position: absolute; left: 0; right: 0; }
-  .panel::before { top: 0; } .panel::after { bottom: 0; }
+  .panel + .panel { border-top: 1px solid var(--wash); }
 
   /* ---------- Bar ---------- */
   .bar { display: flex; align-items: center; gap: var(--space-lg); padding-block: var(--space-lg); }
-  .bar nav { display: flex; align-items: center; gap: var(--space-2xs); font-size: var(--text-sm); }
-  .bar nav a { color: var(--ink); font-weight: 700; white-space: nowrap; padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm); background: var(--glaze); box-shadow: inset 0 0 0 1px var(--grout); transition: color var(--dur-micro) var(--ease-out), background-color var(--dur-micro) var(--ease-out), box-shadow var(--dur-micro) var(--ease-out); }
-  .bar nav a:hover { color: var(--line); box-shadow: inset 0 0 0 1px var(--line); }
-  .bar nav a:active { background: var(--tint); }
+  .bar nav { display: flex; align-items: center; gap: var(--space-xs); font-size: var(--text-sm); }
+  .bar nav a { color: var(--muted); font-weight: 700; white-space: nowrap; padding: var(--space-xs) var(--space-sm); border-bottom: 2px solid transparent; transition: color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out); }
+  .bar nav a:hover { color: var(--line); border-bottom-color: var(--line); }
+  .bar nav a:active { color: var(--ink); }
   .controls { margin-left: auto; display: flex; align-items: center; gap: var(--space-xs); }
   .ctl, .langs button {
     display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2xs);
@@ -207,12 +185,12 @@
   html[data-theme="dark"] .icon-moon { display: none; }
 
   /* ---------- Hero: the hall's opening panel ---------- */
-  .hero { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: var(--space-2xl); align-items: center; padding: calc(var(--frieze-h) + var(--space-xl)) var(--space-xl) calc(var(--frieze-h) + var(--space-2xl)); }
+  .hero { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: var(--space-2xl); align-items: end; padding-block: var(--space-xl) var(--space-3xl); }
   .hero-main { min-width: 0; }
   .tags { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
   .tag { display: inline-flex; align-items: center; font-size: var(--text-sm); font-weight: 700; color: var(--line); }
   /* cartouche: a scrolled oval frame around the badge */
-  .tag.lead { padding: var(--space-2xs) var(--space-md); border-radius: 999px; border: 3px double var(--line); line-height: 1.4; }
+  .tag.lead { padding: var(--space-2xs) var(--space-md); border-radius: 999px; border: 1px solid var(--line); line-height: 1.4; }
   .hero h1 { font-family: var(--font-display); font-size: var(--text-display); font-weight: 800; line-height: 1.02; letter-spacing: 0.01em; margin-top: var(--space-md); color: var(--line); overflow-wrap: anywhere; min-width: 0; }
   html[data-lang="zh"] .hero h1, html[data-lang="ja"] .hero h1 { font-weight: 900; letter-spacing: 0.04em; line-height: 1.1; }
   .hero .sub { margin-top: var(--space-sm); font-family: var(--font-serif); font-size: var(--text-md); font-weight: 700; color: var(--ink); max-width: 40ch; }
@@ -226,40 +204,28 @@
   .btn {
     display: inline-flex; align-items: center; gap: var(--space-xs); height: 44px; padding-inline: var(--space-lg);
     border-radius: var(--radius-plaque); border: 1px solid var(--line); background: var(--glaze);
-    box-shadow: inset 0 0 0 3px var(--glaze), inset 0 0 0 4px var(--wash);
     font-weight: 700; color: var(--line); white-space: nowrap;
-    transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), box-shadow var(--dur-micro) var(--ease-out);
+    transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out);
   }
   .btn svg { width: 15px; height: 15px; fill: currentColor; }
   .btn.icon { width: 44px; padding-inline: 0; justify-content: center; }
-  .btn:hover { background: var(--tint); box-shadow: inset 0 0 0 3px var(--tint), inset 0 0 0 4px var(--line); }
+  .btn:hover { background: var(--tint); }
   .btn:active { background: var(--wash); }
-  .btn.primary { background: var(--fill); border-color: var(--fill); color: var(--fill-ink); box-shadow: inset 0 0 0 3px var(--fill), inset 0 0 0 4px var(--fill-ink); }
-  .btn.primary:hover { background: var(--fill-hover); border-color: var(--fill-hover); box-shadow: inset 0 0 0 3px var(--fill-hover), inset 0 0 0 4px var(--fill-ink); }
+  .btn.primary { background: var(--fill); border-color: var(--fill); color: var(--fill-ink); }
+  .btn.primary:hover { background: var(--fill-hover); border-color: var(--fill-hover); }
 
-  /* Portrait painted in cobalt; grout seams run straight through it */
-  .photo-card { position: relative; justify-self: end; width: 100%; max-width: 380px; border: 4px double var(--line); padding: 6px; background: var(--glaze); }
-  .photo-card .paint { position: relative; display: block; background: var(--portrait); overflow: hidden; }
-  .photo-card img { display: block; width: 100%; aspect-ratio: 4 / 5; object-fit: cover; object-position: center 20%; filter: grayscale(1) contrast(1.35) brightness(0.92); mix-blend-mode: screen; color: var(--band-ink); }
-  .photo-card .paint::after { content: ""; position: absolute; inset: 0; pointer-events: none;
-    background-image: linear-gradient(oklch(97.5% 0.008 95 / 0.4) 1px, transparent 1px), linear-gradient(90deg, oklch(97.5% 0.008 95 / 0.4) 1px, transparent 1px);
-    background-size: 25% 20%; }
-  .laying { position: absolute; inset: 0; display: grid; grid-template-columns: repeat(4, 1fr); grid-template-rows: repeat(5, 1fr); z-index: 1; pointer-events: none; }
-  .laying span { background: var(--glaze); box-shadow: inset 0 0 0 1px var(--grout); animation: lay 300ms var(--ease-out) both; animation-delay: calc(240ms + var(--i) * 42ms); }
-  @keyframes lay { to { opacity: 0; transform: scale(0.9); } }
+  /* Portrait: the cut-out stands in a cobalt arch */
+  .photo-card { position: relative; justify-self: end; width: 100%; max-width: 360px; aspect-ratio: 4 / 5; }
+  .photo-card .paint { position: absolute; inset: 0; border-radius: 999px 999px 0 0; background: var(--band); overflow: hidden; }
+  .photo-card img { position: absolute; left: 50%; bottom: 0; width: 112%; max-width: none; transform: translateX(-50%); aspect-ratio: 1; object-fit: contain; object-position: bottom; color: var(--band-ink); }
 
   /* ---------- Sections: framed narrative panels ---------- */
-  main.container { display: block; margin-top: var(--space-2xl); }
-  main.container > section { padding: calc(var(--frieze-h) + var(--space-xl)) var(--space-xl) var(--space-2xl); scroll-margin-top: 64px; }
-  main.container > section + section { margin-top: 0; border-top: 0; }
-  main.container > section::after { display: none; }
+  main.container { display: block; border-top: 1px solid var(--wash); }
+  main.container > section { padding-block: var(--space-2xl) var(--space-3xl); scroll-margin-top: 64px; }
   .sec-head { margin-bottom: var(--space-xl); max-width: 65ch; }
   .sec-head h2 { font-family: var(--font-display); font-size: var(--text-2xl); font-weight: 800; line-height: 1.08; letter-spacing: 0.01em; color: var(--line); }
   html[data-lang="zh"] .sec-head h2, html[data-lang="ja"] .sec-head h2 { font-weight: 900; letter-spacing: 0.05em; }
   .sec-head p { margin-top: var(--space-xs); font-family: var(--font-serif); font-size: var(--text-md); color: var(--muted); }
-  /* the frieze fills with cobalt like glaze in the kiln when its section arrives */
-  .panel::before { transition: background-position var(--dur-kiln) var(--ease-out); }
-  main section.panel:has(.sec-head.reveal:not(.in))::before { background-position: 100% 0; }
 
   .about { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: var(--space-2xl); }
   .card.big p { max-width: 62ch; font-size: var(--text-md); line-height: 1.75; color: var(--ink); }
@@ -270,7 +236,7 @@
   .pill { font-size: var(--text-sm); color: var(--line); background: var(--tint); border-radius: var(--radius-sm); padding: var(--space-2xs) var(--space-sm); line-height: 1.4; box-shadow: inset 0 0 0 1px var(--wash); }
 
   /* Tools: an inverted panel, white painting on cobalt */
-  .tools { position: relative; margin-top: var(--space-2xl); padding: var(--space-xl); background: var(--band); color: var(--band-ink); box-shadow: inset 0 0 0 6px var(--band), inset 0 0 0 7px var(--band-line); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: var(--space-lg) var(--space-2xl); }
+  .tools { position: relative; margin-top: var(--space-2xl); padding: var(--space-xl); border-radius: var(--radius-plaque); background: var(--band); color: var(--band-ink); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: var(--space-lg) var(--space-2xl); }
   .tools h3 { font-family: var(--font-display); font-size: var(--text-xl); font-weight: 800; line-height: 1.15; letter-spacing: 0.02em; }
   .tools .note { margin-top: var(--space-xs); max-width: 44ch; font-size: var(--text-sm); color: var(--band-muted); }
   .tool-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-md); }
@@ -291,13 +257,13 @@
   .row .t { font-size: var(--text-md); font-weight: 700; line-height: 1.35; color: var(--ink); }
   .row .s { color: var(--muted); }
   .row .n { font-size: var(--text-sm); color: var(--muted); }
-  .row .seal { justify-self: start; margin-top: var(--space-2xs); font-size: var(--text-sm); color: var(--line); padding: var(--space-2xs) var(--space-sm); border-radius: 999px; border: 3px double var(--wash); line-height: 1.4; }
+  .row .seal { justify-self: start; margin-top: var(--space-2xs); font-size: var(--text-sm); color: var(--line); padding: var(--space-2xs) var(--space-sm); border-radius: 999px; border: 1px solid var(--wash); line-height: 1.4; }
 
   /* Publications: each number set on its own cobalt tile */
   .pubs { display: grid; }
   .pub { display: grid; grid-template-columns: 3.25rem minmax(0, 1fr) auto; gap: var(--space-md) var(--space-lg); align-items: start; padding-block: var(--space-lg); border-top: 1px solid var(--wash); }
   .pub:first-child { border-top: 0; padding-top: 0; }
-  .pub .no { display: grid; place-items: center; width: 3.25rem; aspect-ratio: 1; background: var(--fill); color: var(--fill-ink); box-shadow: inset 0 0 0 3px var(--fill), inset 0 0 0 4px var(--fill-ink); font-family: var(--font-display); font-size: var(--text-md); font-weight: 800; font-variant-numeric: tabular-nums lining-nums; }
+  .pub .no { display: grid; place-items: center; width: 3.25rem; aspect-ratio: 1; background: var(--fill); color: var(--fill-ink); border-radius: var(--radius-sm); font-family: var(--font-display); font-size: var(--text-md); font-weight: 800; font-variant-numeric: tabular-nums lining-nums; }
   .pub .pt { font-weight: 700; line-height: 1.5; color: var(--ink); max-width: 72ch; }
   .pub .pt a { text-decoration: underline; text-decoration-color: var(--wash); text-underline-offset: 3px; text-decoration-thickness: 1px; transition: text-decoration-color var(--dur-micro) var(--ease-out); }
   .pub .pt a:hover { text-decoration-color: var(--line); }
@@ -314,7 +280,7 @@
   .honors { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--space-2xl); }
   .honor { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr); column-gap: var(--space-sm); align-content: start; padding-block: var(--space-md); border-top: 1px solid var(--wash); }
   .honor > * { grid-column: 2; }
-  .honor .ic { grid-column: 1; grid-row: 1 / span 3; display: grid; place-items: center; width: 2.25rem; aspect-ratio: 1; border: 3px double var(--line); color: var(--line); }
+  .honor .ic { grid-column: 1; grid-row: 1 / span 3; display: grid; place-items: center; width: 2.25rem; aspect-ratio: 1; border-radius: var(--radius-sm); background: var(--tint); color: var(--line); }
   .honor .ic svg { width: 16px; height: 16px; fill: currentColor; }
   .honor .k { font-size: var(--text-sm); font-weight: 700; color: var(--line); }
   .honor h3 { font-size: var(--text-base); font-weight: 700; line-height: 1.45; margin-top: var(--space-3xs); color: var(--ink); }
@@ -330,16 +296,14 @@
   .latest-card .pills { margin-top: var(--space-sm); }
   .more-link { display: inline-block; margin-top: var(--space-lg); font-weight: 700; color: var(--line); border-bottom: 1px solid var(--line); }
 
-  /* ---------- Closing: a cobalt panel set in a tiled surround ---------- */
-  .closing.container { position: relative; width: calc(100% - 2 * var(--space-lg)); max-width: calc(1120px - 2 * var(--space-lg)); margin-block: var(--space-2xl) var(--space-xl); padding: var(--space-lg); background: var(--band); }
-  .closing.container::before { content: ""; position: absolute; inset: 0; background: var(--band-line); -webkit-mask: var(--m-tile) 0 0 / 48px 48px; mask: var(--m-tile) 0 0 / 48px 48px; }
-  .closing .rosette { width: 44px; height: 44px; }
-  .closing-card { position: relative; background: var(--band); color: var(--band-ink); box-shadow: 0 0 0 1px var(--band-line); padding: var(--space-2xl) var(--space-xl) var(--space-lg); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-lg) var(--space-2xl); align-items: end; }
+  /* ---------- Closing: one cobalt panel ---------- */
+  .closing.container { margin-block: 0 var(--space-xl); }
+  .closing-card { position: relative; border-radius: var(--radius-plaque); background: var(--band); color: var(--band-ink); padding: var(--space-2xl) var(--space-xl) var(--space-lg); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-lg) var(--space-2xl); align-items: end; }
   .closing .note { margin-top: var(--space-md); font-size: var(--text-sm); color: var(--band-muted); max-width: 56ch; }
   .closing .mail { margin-left: 0.25em; color: var(--band-ink); font-weight: 700; border-bottom: 1px solid currentColor; }
   .closing blockquote { font-family: var(--font-serif); font-size: var(--text-xl); font-weight: 700; line-height: 1.4; max-width: 30ch; }
-  .closing .btn.primary { background: var(--band-ink); border-color: var(--band-ink); color: var(--band); box-shadow: inset 0 0 0 3px var(--band-ink), inset 0 0 0 4px var(--band); }
-  .closing .btn.primary:hover { background: var(--band-muted); border-color: var(--band-muted); box-shadow: inset 0 0 0 3px var(--band-muted), inset 0 0 0 4px var(--band); }
+  .closing .btn.primary { background: var(--band-ink); border-color: var(--band-ink); color: var(--band); }
+  .closing .btn.primary:hover { background: var(--band-muted); border-color: var(--band-muted); }
   .closing :focus-visible { outline-color: var(--band-ink); }
   .closing .meta { grid-column: 1 / -1; display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--space-xs); padding-top: var(--space-md); border-top: 1px solid var(--band-line); font-size: var(--text-sm); color: var(--band-muted); }
 
@@ -348,24 +312,23 @@
   .load-error { margin-top: var(--space-lg); padding: var(--space-md) var(--space-lg); border-radius: var(--radius-sm); box-shadow: inset 0 0 0 1px var(--line); background: var(--tint); color: var(--line); font-weight: 700; }
   [hidden] { display: none !important; }
 
-  /* ---------- Motion: the opening panel is painted, its portrait laid tile by tile ---------- */
+  /* ---------- Motion: the name rises out of the wash; the arch is raised, then the portrait steps in ---------- */
   .progress { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: var(--z-toast); pointer-events: none; transform-origin: 0 50%; transform: scaleX(0); background: var(--line); }
   @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   @keyframes set-type { from { clip-path: inset(0 0 100% 0); transform: translateY(0.3em); color: var(--wash); } 60% { color: var(--wash); } to { clip-path: inset(0 0 -0.2em 0); transform: none; } }
-  @keyframes kiln { from { background-position: 100% 0; } to { background-position: 0 0; } }
-  @keyframes bloom { from { opacity: 0; transform: rotate(-60deg) scale(0.4); } to { opacity: 1; transform: none; } }
+  @keyframes raise { from { clip-path: inset(100% 0 0 0 round 999px 999px 0 0); } to { clip-path: inset(0 round 999px 999px 0 0); } }
+  @keyframes step-in { from { opacity: 0; transform: translate(-50%, 6%); } to { opacity: 1; transform: translate(-50%, 0); } }
   .is-ready .hero-main > * { animation: rise var(--dur-long) var(--ease-out) both; }
-  .is-ready .hero-main > :nth-child(2) { animation: set-type var(--dur-kiln) var(--ease-out) 60ms both; }
+  .is-ready .hero-main > :nth-child(2) { animation: set-type var(--dur-focal) var(--ease-out) 60ms both; }
   .is-ready .hero-main > :nth-child(3) { animation-delay: 160ms; }
   .is-ready .hero-main > :nth-child(4) { animation-delay: 220ms; }
   .is-ready .hero-main > :nth-child(n+5) { animation-delay: 280ms; }
-  .is-ready .hero.panel::before, .is-ready .hero.panel::after { animation: kiln var(--dur-kiln) var(--ease-out) both; }
-  .is-ready .hero.panel::after { animation-delay: 120ms; }
-  .is-ready .hero .rosette { animation: bloom 600ms var(--ease-out) 500ms both; }
+  .is-ready .photo-card .paint { animation: raise var(--dur-focal) var(--ease-out) 120ms both; }
+  .is-ready .photo-card img { animation: step-in 700ms var(--ease-out) 520ms both; }
   .reveal { opacity: 0; transform: translateY(10px); transition: opacity var(--dur-long) var(--ease-out), transform var(--dur-long) var(--ease-out); transition-delay: var(--d, 0s); }
   .reveal.in { opacity: 1; transform: none; }
 
-  .sticky-nav { position: fixed; top: 0; left: 0; right: 0; z-index: var(--z-sticky); background: var(--scrim); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-bottom: 4px double var(--line); transform: translateY(-110%); transition: transform var(--dur-short) var(--ease-out); }
+  .sticky-nav { position: fixed; top: 0; left: 0; right: 0; z-index: var(--z-sticky); background: var(--scrim); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-bottom: 1px solid var(--wash); transform: translateY(-110%); transition: transform var(--dur-short) var(--ease-out); }
   .sticky-nav.show { transform: none; }
   .sticky-nav .inner { max-width: 1120px; margin-inline: auto; padding-inline: var(--space-lg); display: flex; gap: var(--space-lg); overflow-x: auto; scrollbar-width: none; white-space: nowrap; font-size: var(--text-sm); font-weight: 700; color: var(--muted); }
   .sticky-nav .inner::-webkit-scrollbar { display: none; }
@@ -378,10 +341,11 @@
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     *, *::before, *::after { animation-duration: 150ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; transition-duration: 150ms !important; }
-    .is-ready .hero-main > *, .reveal, .reveal.in, .is-ready .hero .rosette { transform: none !important; }
+    .is-ready .hero-main > *, .reveal, .reveal.in { transform: none !important; }
     .is-ready .hero-main > :nth-child(2) { animation-name: rise !important; clip-path: none !important; }
-    .is-ready .hero.panel::before, .is-ready .hero.panel::after { animation: none !important; }
-    .laying, .progress { display: none; }
+    .is-ready .photo-card .paint { animation: none !important; }
+    .is-ready .photo-card img { animation-name: rise !important; transform: translateX(-50%) !important; }
+    .progress { display: none; }
   }
 
   /* ---------- Responsive: 900 / 640 / 360 ---------- */
@@ -397,17 +361,11 @@
     .latest { grid-template-columns: minmax(0, 1fr); }
   }
   @media (max-width: 640px) {
-    :root { --frieze-h: 18px; --tile: 64px; }
     .container { padding-inline: var(--space-md); }
     .ctl .lbl-share { display: none; }
     .ctl, .langs button { padding-inline: var(--space-xs); }
-    .hero { grid-template-columns: minmax(0, 1fr); gap: var(--space-lg); padding: calc(var(--frieze-h) + var(--space-lg)) var(--space-md) calc(var(--frieze-h) + var(--space-xl)); }
-    .rosette { width: 30px; height: 30px; }
-    .photo-card { order: -1; justify-self: start; width: 10rem; padding: 4px; }
-    .photo-card img { aspect-ratio: 1; }
-    .photo-card .paint::after { background-size: 25% 25%; }
-    .laying { grid-template-rows: repeat(4, 1fr); }
-    .laying span:nth-child(n+17) { display: none; }
+    .hero { grid-template-columns: minmax(0, 1fr); gap: var(--space-lg); padding-block: var(--space-md) var(--space-2xl); }
+    .photo-card { order: -1; justify-self: start; width: 11rem; }
     .hero .sub { font-size: var(--text-base); }
     .cta .btn { flex: 1 1 auto; justify-content: center; padding-inline: var(--space-md); }
     .cta .btn.icon { flex: 0 0 44px; }
@@ -415,8 +373,7 @@
     .hero-main .cta { order: 1; }
     .hero-main .creds { order: 2; }
     .hero-main .pitch { order: 3; }
-    main.container > section { padding: calc(var(--frieze-h) + var(--space-lg)) var(--space-md) var(--space-xl); }
-    .panel { border-inline-width: 3px; }
+    main.container > section { padding-block: var(--space-xl) var(--space-2xl); }
     .card.big p { font-size: var(--text-base); }
     .tools { padding: var(--space-lg) var(--space-md); }
     .row { grid-template-columns: minmax(0, 1fr); }
@@ -425,7 +382,6 @@
     .pub { grid-template-columns: 2.5rem minmax(0, 1fr); gap: var(--space-2xs) var(--space-md); }
     .pub .no { width: 2.5rem; font-size: var(--text-base); grid-row: 1 / span 2; }
     .pub .status { justify-self: start; grid-column: 2; }
-    .closing.container { width: calc(100% - 2 * var(--space-md)); padding: var(--space-md); }
     .closing-card { grid-template-columns: minmax(0, 1fr); align-items: start; padding: var(--space-xl) var(--space-md) var(--space-md); }
     .closing blockquote { font-size: var(--text-md); }
     .closing .meta { flex-direction: column; }
@@ -441,10 +397,9 @@
 
   @media print {
     body { background: none; }
-    .bar, .cta, .sticky-nav, .progress, .skip, .closing .btn, .rosette, .laying { display: none !important; }
+    .bar, .cta, .sticky-nav, .progress, .skip, .closing .btn { display: none !important; }
     .closing .mail { border-bottom: 0; }
-    .tools, .closing.container, .closing-card { background: none; color: inherit; box-shadow: none; }
-    .closing.container::before { display: none; }
+    .tools, .closing-card { background: none; color: inherit; }
     section, .pub, .honor { break-inside: avoid; }
   }
 </style>
@@ -464,7 +419,7 @@
       {%- for pair in nav_ids -%}{%- assign kv = pair | split: ":" -%}{%- assign nav_key = kv | first -%}{%- assign nav_id = kv | last -%}{%- assign nav_sec = cv.sections[nav_key] -%}
       <a href="#{{ nav_id }}">{% include cv-tr.html v=nav_sec.nav %}</a>
       {%- endfor -%}
-      {%- if site.posts.size > 0 %}<a href="blog/" class="nav-blog">{% include cv-tr.html v=cv.sections.blog.nav %}</a>{% endif -%}
+      <a href="blog/" class="nav-blog">{% include cv-tr.html v=cv.sections.blog.nav %}</a>
       {%- if cv.profile.toolkit %}<a href="{{ cv.profile.toolkit }}" class="nav-ext"><span class="zh">小工具</span><span class="en">Toolkit</span><span class="ja">ツール</span></a>{% endif -%}
     </nav>
     <div class="controls">
@@ -485,7 +440,6 @@
   </div>
 
   <div class="hero panel">
-    <span class="rosette r-tl" aria-hidden="true"></span><span class="rosette r-tr" aria-hidden="true"></span><span class="rosette r-bl" aria-hidden="true"></span><span class="rosette r-br" aria-hidden="true"></span>
     <div class="hero-main">
       <div class="tags"><span class="tag lead" id="hero-badge">{% include cv-tr.html v=cv.profile.badge %}</span></div>
       <h1 id="hero-name">{% include cv-tr.html v=cv.profile.name %}</h1>
@@ -502,7 +456,7 @@
         <a class="btn" id="link-linkedin" href="{{ cv.profile.linkedin }}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.64a1.64 1.64 0 1 0 0 3.28 1.64 1.64 0 0 0 0-3.28z"/></svg>LinkedIn</a>
       </div>
     </div>
-    <div class="photo-card"><span class="paint"><img id="hero-photo" src="{{ cv.profile.photo }}" alt="Chia-Sung (Bruce) Chang"></span></div>
+    <div class="photo-card"><span class="paint"><img id="hero-photo" src="{{ cv.profile.photoCutout | default: cv.profile.photo }}" alt="Chia-Sung (Bruce) Chang" width="760" height="760" fetchpriority="high"></span></div>
   </div>
 </header>
 
@@ -583,11 +537,9 @@
     <div class="latest" id="latest-posts"></div>
     <a class="more-link" href="blog/"><span class="zh">所有文章 →</span><span class="en">All posts →</span><span class="ja">記事一覧 →</span></a>
   </section>
-  <span class="frieze main-end" aria-hidden="true"></span>
 </main>
 
 <footer class="closing container">
-  <span class="rosette r-tl" aria-hidden="true"></span><span class="rosette r-tr" aria-hidden="true"></span><span class="rosette r-bl" aria-hidden="true"></span><span class="rosette r-br" aria-hidden="true"></span>
   <div class="closing-card">
     <div>
       <blockquote id="footer-quote">{% include cv-tr.html v=cv.footer.quote %}</blockquote>
@@ -704,7 +656,7 @@
     $('hero-creds').innerHTML = [list(c.experience)[0], list(c.education)[0]].filter(Boolean).map(function(it){
       return '<li><b>' + tr(it.institution) + '</b>' + tr(it.title) + '</li>';
     }).join('');
-    if(p.photo){ $('hero-photo').src = localPath(p.photo); }
+    if(p.photoCutout || p.photo){ $('hero-photo').src = localPath(p.photoCutout || p.photo); }
     var mail = has(p.email) ? 'mailto:' + p.email : '';
     ['btn-email', 'footer-email', 'footer-mail'].forEach(function(id){ $(id).hidden = !mail; if(mail){ $(id).href = mail; } });
     $('footer-mail').textContent = p.email || '';
@@ -766,8 +718,7 @@
   // Latest blog posts (posts.json is generated by Jekyll on GitHub Pages)
   function renderLatest(posts){
     posts = list(posts);
-    // No posts yet: hide the Blog links in both navs (the section itself stays hidden)
-    document.querySelectorAll('.nav-blog').forEach(function(a){ a.hidden = !posts.length; });
+    // No posts yet: the Blog link stays (the blog page says so); only the latest-posts section stays hidden
     if(!posts.length) return;
     $('latest-posts').innerHTML = posts.map(function(p){
       var tags = list(p.tags).map(function(t){ return '<span class="pill">' + esc(t) + '</span>'; }).join('');
@@ -894,23 +845,7 @@
     check();
   }
 
-  // Lay the portrait: a glaze grid over it lifts tile by tile, along the diagonal
-  function layPortrait(){
-    var paint = document.querySelector('.photo-card .paint');
-    if(!paint || REDUCE_MOTION) return;
-    var html = '';
-    for(var r = 0; r < 5; r++) for(var c = 0; c < 4; c++) html += '<span style="--i:' + (r + c) + '"></span>';
-    var lay = document.createElement('div');
-    lay.className = 'laying';
-    lay.setAttribute('aria-hidden', 'true');
-    lay.innerHTML = html;
-    paint.appendChild(lay);
-    lay.lastChild.addEventListener('animationend', function(){ lay.remove(); });
-    setTimeout(function(){ if(lay.parentNode) lay.remove(); }, 2000);
-  }
-
   function initMotion(){
-    layPortrait();
     revealAll('.sec-head', false);
     revealAll('.about > .card, .stack > .card, .col > h3', true);
     revealAll('.row', true);
