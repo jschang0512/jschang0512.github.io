@@ -364,10 +364,10 @@
           "oklch(95% 0.015 266)"
         ]
       },
-      "az-mustard": {
-        "role": "tertiary",
-        "displayName": "Frame Mustard",
-        "canonical": "oklch(79% 0.150 82)",
+      "az-night": {
+        "role": "neutral",
+        "displayName": "Night Glaze",
+        "canonical": "oklch(20% 0.055 266)",
         "tonalRamp": [
           "oklch(15% 0.015 266)",
           "oklch(25% 0.022 266)",
@@ -379,10 +379,10 @@
           "oklch(95% 0.015 266)"
         ]
       },
-      "az-night": {
-        "role": "neutral",
-        "displayName": "Night Glaze",
-        "canonical": "oklch(20% 0.055 266)",
+      "az-amber": {
+        "role": "tertiary",
+        "displayName": "Capsule Amber",
+        "canonical": "oklch(80% 0.140 72)",
         "tonalRamp": [
           "oklch(15% 0.015 266)",
           "oklch(25% 0.022 266)",

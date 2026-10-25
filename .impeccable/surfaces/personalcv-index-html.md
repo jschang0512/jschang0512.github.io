@@ -14,7 +14,7 @@ Content comes from _data/cv.json and is re-rendered by the page script; all IDs 
 ## Direction contract
 FORM: azulejo station hall (challenger, chosen by the user) · seed:9b8af2b7a308f05a
 THESIS: Blue and personal, not a journal paper: tin-glaze white and cobalt, roman capitals, one cobalt arch holding the cut-out portrait. Refined from the full azulejo hall after the user found it too ornate.
-OWN-WORLD: Tin-glaze white ground, cobalt for headings, rules and filled buttons; cobalt bands for tools and the sign-off. The only ornament is the arch.
+OWN-WORLD: Tin-glaze white and cobalt with one capsule amber. Motifs come only from the field, one place each: a two-tone capsule badge (pharmacy), Kaplan–Meier curves inside the arch (pharmacoepidemiology), a pooled-estimate diamond before each heading and a forest-plot glyph in the sign-off (meta-analysis).
 STORY: Name and portrait first, framed as the hall's opening panel; then research, education and experience, publications, honours, contact.
 FIRST VIEWPORT: Huge capitals name and contact buttons on the left; the cut-out portrait standing in a cobalt arch on the right.
 SIGNATURE: The arch rises from the baseline and the portrait steps into it.
