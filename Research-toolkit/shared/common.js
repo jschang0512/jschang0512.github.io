@@ -1272,6 +1272,29 @@
     return [((e.clientX - r.left) / r.width) * fig.w, ((e.clientY - r.top) / r.height) * fig.h];
   };
   RT.svgEl = (tag, attrs = {}) => { const el = document.createElementNS('http://www.w3.org/2000/svg', tag); Object.entries(attrs).forEach(([k, v]) => el.setAttribute(k, v)); return el; };
+  /**
+   * Click a box in the preview to jump to its form field. hits: [{x, y, w, h, find: () => element}],
+   * in figure units, shifted by (dx, dy) when the figure body is translated.
+   */
+  RT.fieldHits = (host, hits, dx = 0, dy = 0) => {
+    const svg = host.querySelector('svg');
+    if (!svg) return;
+    host._hits = hits;
+    const g = RT.svgEl('g', { class: 'edit-ui field-ui', transform: `translate(${dx},${dy})` });
+    hits.forEach((h, i) => {
+      const r = RT.svgEl('rect', { x: h.x, y: h.y, width: h.w, height: h.h, fill: 'transparent', 'data-hit': '', 'data-field': i });
+      const t = RT.svgEl('title'); t.textContent = RT.t('點一下編輯這一格', 'Click to edit this box'); r.appendChild(t);
+      g.appendChild(r);
+    });
+    svg.insertBefore(g, svg.querySelector('.edit-ui:not(.field-ui)'));
+    if (host._fieldBound) return;
+    host._fieldBound = true;
+    host.addEventListener('click', (e) => {
+      const r = e.target.closest && e.target.closest('[data-field]');
+      const h = r && host._hits[Number(r.dataset.field)];
+      if (h) RT.focusField(h.find());
+    });
+  };
   /** bring a form field into view, select it and flash it briefly */
   RT.focusField = (el) => {
     if (!el) return;

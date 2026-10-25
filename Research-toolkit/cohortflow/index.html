@@ -108,7 +108,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261025f"></script>
+<script src="../shared/common.js?v=20261025g"></script>
 <script>
 const T = RT.t;
 const KEY = 'cohort3';
@@ -345,7 +345,22 @@ function computeGroups() {
 }
 
 /* ---------------- drawing ---------------- */
+// boxes drawn in the preview and the form field each one maps to
+let HITS = [], HIT_OFF = [0, 0];
+const stepBlk = (i) => document.querySelectorAll('#steps > .block')[i];
+const grpBlk = (i) => document.querySelectorAll('#groups > .block')[i];
+const F = {
+  start: () => document.querySelector('[data-k="start.text"]'),
+  step: (i) => stepBlk(i)?.querySelector('[data-f="text"]'),
+  stepEx: (i) => stepBlk(i)?.querySelector('.rs input') || stepBlk(i)?.querySelector('[data-f="exTitle"]'),
+  note: (i) => stepBlk(i)?.querySelector('[data-f="note"]'),
+  grp: (i, lv) => grpBlk(i)?.querySelectorAll(':scope > .bx > .list-row textarea')[lv],
+  grpEx: (i, lv) => { const e = grpBlk(i)?.querySelectorAll(':scope > .bx > .grp-ex')[lv - 1]; return e?.querySelector('.grp-rs input') || e?.querySelector('[data-g="exTitle"]'); },
+  sub: (i, j, lv) => grpBlk(i)?.querySelectorAll('.sub-blk')[j]?.querySelectorAll('.sbx > .list-row textarea')[lv],
+};
+const hit = (b, x, y, h, find) => HITS.push({ x, y, w: b.w, h: h ?? b.h, find });
 function build(calc) {
+  HITS = [];
   const st = RT.applyStyle(S.st);
   const fs = Number(st.fontSize) || 13, W = Number(S.boxW) || 280, EW = Number(S.exW) || 280, GW = Number(S.groupW) || 220;
   const nt = (v) => RT.nText(v, { style: S.nStyle, comma: S.comma });
@@ -367,6 +382,7 @@ function build(calc) {
   let minX = -W / 2, maxX = W / 2, y = 0;
   const b0 = RT.box(mainItems(S.start.text, S.start.n), W, mainO);
   body += RT.drawBox(b0, -W / 2, y);
+  hit(b0, -W / 2, y, null, F.start);
   y += b0.h;
 
   S.steps.forEach((stp, i) => {
@@ -401,11 +417,13 @@ function build(calc) {
         const ex0 = -W / 2 - hgap - EW;
         body += RT.arrow([[0, my], [ex0 + EW, my]], ao);
         body += RT.drawBox(ex, ex0, my - ex.h / 2);
+        hit(ex, ex0, my - ex.h / 2, null, () => F.stepEx(i));
         minX = Math.min(minX, ex0);
       } else {
         const ex0 = W / 2 + hgap;
         body += RT.arrow([[0, my], [ex0, my]], ao);
         body += RT.drawBox(ex, ex0, my - ex.h / 2);
+        hit(ex, ex0, my - ex.h / 2, null, () => F.stepEx(i));
         maxX = Math.max(maxX, ex0 + EW);
       }
     }
@@ -417,10 +435,12 @@ function build(calc) {
       const at = stp.noteAt || 'top', inset = Math.round(fs * 0.35);
       const ny = at === 'middle' ? my - noteBox.h / 2 : at === 'bottom' ? y + gap - noteBox.h - inset : y + inset;
       body += RT.drawBox(noteBox, nx, ny);
+      hit(noteBox, nx, ny, null, () => F.note(i));
       if (onLeft) minX = Math.min(minX, nx); else maxX = Math.max(maxX, nx + noteBox.w);
     }
     y += gap;
     body += RT.drawBox(nb, -W / 2, y);
+    hit(nb, -W / 2, y, null, () => F.step(i));
     y += nb.h;
   });
 
@@ -481,16 +501,18 @@ function build(calc) {
             const ex0 = xs[i] - hgap - e.w;
             body += RT.arrow([[cx, my], [ex0 + e.w, my]], ao);
             body += RT.drawBox(e, ex0, my - e.h / 2);
+            hit(e, ex0, my - e.h / 2, null, () => F.grpEx(i, lv));
             minX = Math.min(minX, ex0);
           } else {
             const ex0 = xs[i] + GW + hgap;
             body += RT.arrow([[cx, my], [ex0, my]], ao);
             body += RT.drawBox(e, ex0, my - e.h / 2);
+            hit(e, ex0, my - e.h / 2, null, () => F.grpEx(i, lv));
             maxX = Math.max(maxX, ex0 + e.w);
           }
         });
       }
-      boxes.forEach((b, i) => { if (b) { body += RT.drawBox(b, xs[i], y, h); lastBottom[i] = y + h; } });
+      boxes.forEach((b, i) => { if (b) { body += RT.drawBox(b, xs[i], y, h); lastBottom[i] = y + h; const l = lv; hit(b, xs[i], y, h, () => F.grp(i, l)); } });
       y += h + baseGap;
       gapAbove = baseGap;
     }
@@ -514,7 +536,7 @@ function build(calc) {
         const row = G.flatMap((g, i) => subsOf(g).map((x, j) => (x.boxes[lv] ? { i, j, b: RT.box(mainItems(x.boxes[lv].text, x.boxes[lv].n), SW, grpO) } : null))).filter(Boolean);
         const h = Math.max(...row.map((r) => r.b.h));
         if (lv > 0) row.forEach((r) => { const c = subX(r.i, r.j) + SW / 2; body += RT.arrow([[c, sy - baseGap], [c, sy]], ao); });
-        row.forEach((r) => { body += RT.drawBox(r.b, subX(r.i, r.j), sy, h); });
+        row.forEach((r) => { body += RT.drawBox(r.b, subX(r.i, r.j), sy, h); const l = lv; hit(r.b, subX(r.i, r.j), sy, h, () => F.sub(r.i, r.j, l)); });
         sy += h + baseGap;
       }
       y = sy - baseGap;
@@ -531,6 +553,7 @@ function build(calc) {
     foot = RT.drawBox(fb, M, y + M + fs);
     y += fs + fb.h;
   }
+  HIT_OFF = [M - minX, M];
   return RT.figure(width, y + 2 * M, `<g transform="translate(${RT.f(M - minX)},${M})">${body}</g>` + foot);
 }
 
@@ -594,7 +617,7 @@ const exporter = RT.exportPanel(document.getElementById('export'), () => fig, 'c
 const hist = RT.history(() => S, (s) => { S = s; syncInputs(); render(); });
 function render() {
   const calc = computeN();
-  try { fig = build(calc); preview.innerHTML = fig.svg; }
+  try { fig = build(calc); preview.innerHTML = fig.svg; RT.fieldHits(preview, HITS, ...HIT_OFF); }
   catch (e) { console.error(e); preview.innerHTML = `<div class="msg">⚠ ${RT.esc(e.message)}</div>`; }
   exporter.setIssues(checks(calc));
   exporter.refresh();

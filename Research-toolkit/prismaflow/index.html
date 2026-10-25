@@ -153,7 +153,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261025f"></script>
+<script src="../shared/common.js?v=20261025g"></script>
 <script>
 const T = RT.t;
 const KEY = 'prisma3';
@@ -345,7 +345,19 @@ document.getElementById('btnFill').onclick = () => {
 };
 
 /* ---------------- drawing ---------------- */
+// boxes in the preview and the form field each one maps to
+let HITS = [];
+const fld = (k) => () => document.querySelector(`[data-k="${k}"]`);
+const first = (id) => () => document.querySelector(`#${id} input`);
+const FIELDS = [
+  { L: fld('databases'), R: fld('dup'), OL: first('oSources') },
+  { L: fld('screened'), R: fld('excluded') },
+  { L: fld('sought'), R: fld('notRetrieved'), OL: fld('oSought'), OR: fld('oNotRetrieved') },
+  { L: fld('assessed'), R: first('reasons'), OL: fld('oAssessed'), OR: first('oReasons') },
+  { L: fld('studies') },
+];
 function build({ E }) {
+  HITS = [];
   const st = RT.applyStyle(S.st), L = S.L;
   const fs = Number(st.fontSize) || 13, bw = Number(S.boxW) || 280;
   const nt = (v) => RT.nText(v ?? '', { style: S.nStyle, comma: S.comma });
@@ -372,6 +384,8 @@ function build({ E }) {
     const hh = Math.max(hDb.h, hO ? hO.h : 0);
     body += RT.drawBox(hDb, xDbL, M, hh);
     if (hO) body += RT.drawBox(hO, xOL, M, hh);
+    HITS.push({ x: xDbL, y: M, w: hDb.w, h: hh, find: fld('L.hdrDb') });
+    if (hO) HITS.push({ x: xOL, y: M, w: hO.w, h: hh, find: fld('L.hdrOther') });
     y = M + hh + gy * 0.8;
   }
   const det = parseDetail(S.dbDetail);
@@ -402,12 +416,12 @@ function build({ E }) {
     { L: [{ text: L.studies }, { text: nt(val('studies')) }, { text: L.reports, gap: fs * 0.5 }, { text: nt(val('reports')) }] },
   ];
   const pos = [];
-  rows.forEach((r) => {
+  rows.forEach((r, ri) => {
     const mk = (items, a) => (items ? RT.box(items, bw, a === 'left' ? boL : bo) : null);
     const b = { L: mk(r.L, r.La), R: mk(r.R, r.Ra), OL: mk(r.OL, r.OLa), OR: mk(r.OR, r.ORa) };
     const h = Math.max(...Object.values(b).filter(Boolean).map((x) => x.h), fs * 3.4);
     pos.push({ y, h });
-    for (const [k, x] of [['L', xDbL], ['R', xDbR], ['OL', xOL], ['OR', xOR]]) if (b[k]) body += RT.drawBox(b[k], x, y, h);
+    for (const [k, x] of [['L', xDbL], ['R', xDbR], ['OL', xOL], ['OR', xOR]]) if (b[k]) { body += RT.drawBox(b[k], x, y, h); if (FIELDS[ri][k]) HITS.push({ x, y, w: bw, h, find: FIELDS[ri][k] }); }
     y += h + gy;
   });
   y -= gy;
@@ -437,7 +451,7 @@ function build({ E }) {
     const sy = incBottom + gy * (subs.length === 1 ? 1 : 1.4);
     const x0 = subs.length === 1 ? xDbL + (bw - sw) / 2 : xDbL;
     const centres = bxs.map((b, k) => x0 + k * (sw + gx) + sw / 2);
-    bxs.forEach((b, k) => { body += RT.drawBox(b, x0 + k * (sw + gx), sy, sh); });
+    bxs.forEach((b, k) => { body += RT.drawBox(b, x0 + k * (sw + gx), sy, sh); HITS.push({ x: x0 + k * (sw + gx), y: sy, w: sw, h: sh, find: () => document.querySelectorAll('#subs .list-row input')[k * 2] }); });
     if (subs.length === 1) body += RT.arrow([[cxL, incBottom], [cxL, sy]], ao);
     else {
       const by = incBottom + (sy - incBottom) / 2;
@@ -473,7 +487,7 @@ const exporter = RT.exportPanel(document.getElementById('export'), () => fig, 'P
 const hist = RT.history(() => S, (s) => { S = s; syncInputs(); render(); });
 function render() {
   const calc = compute();
-  try { fig = build(calc); preview.innerHTML = fig.svg; }
+  try { fig = build(calc); preview.innerHTML = fig.svg; RT.fieldHits(preview, HITS); }
   catch (e) { console.error(e); preview.innerHTML = `<div class="msg">⚠ ${RT.esc(e.message)}</div>`; }
   exporter.setIssues(checks(calc));
   exporter.refresh();
