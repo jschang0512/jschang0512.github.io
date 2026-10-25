@@ -21,7 +21,36 @@ colors:
   band-ink: "oklch(97% 0.010 145)"
   on-forest-muted: "oklch(86% 0.030 150)"
   on-forest-rule: "oklch(48% 0.050 155)"
+  az-glaze: "oklch(97.5% 0.008 95)"
+  az-glaze-2: "oklch(94.5% 0.014 255)"
+  az-grout: "oklch(90% 0.018 255)"
+  az-ink: "oklch(25% 0.075 266)"
+  az-muted: "oklch(44% 0.070 266)"
+  az-cobalt: "oklch(38% 0.170 266)"
+  az-cobalt-hover: "oklch(46% 0.190 266)"
+  az-wash: "oklch(80% 0.075 262)"
+  az-tint: "oklch(93% 0.032 262)"
+  az-band: "oklch(36% 0.160 266)"
+  az-band-muted: "oklch(86% 0.045 262)"
+  az-band-line: "oklch(55% 0.150 264)"
+  az-band-hover: "oklch(43% 0.175 266)"
+  az-mustard: "oklch(79% 0.150 82)"
+  az-portrait: "oklch(34% 0.165 266)"
+  az-night: "oklch(20% 0.055 266)"
+  az-night-line: "oklch(80% 0.090 262)"
+  az-night-fill: "oklch(82% 0.085 262)"
 typography:
+  display-cv:
+    fontFamily: "Cinzel, Noto Serif TC, Noto Serif JP, ui-serif, Georgia, serif"
+    fontSize: "clamp(2.6rem, 5vw + 1rem, 5.5rem)"
+    fontWeight: 800
+    lineHeight: 1.02
+    letterSpacing: "0.01em"
+  headline-cv:
+    fontFamily: "Cinzel, Noto Serif TC, Noto Serif JP, ui-serif, Georgia, serif"
+    fontSize: "clamp(2rem, 2.4vw + 1.2rem, 3.25rem)"
+    fontWeight: 800
+    lineHeight: 1.08
   display:
     fontFamily: "Fraunces, Noto Serif TC, Noto Serif JP, ui-serif, Georgia, serif"
     fontSize: "clamp(3.25rem, 6vw + 1rem, 6rem)"
@@ -114,7 +143,8 @@ components:
 
 | 區域 | 主題 | 用途 | 主題色 |
 | --- | --- | --- | --- |
-| CV、blog、404 | **學術期刊**（Garden） | 閱讀、建立可信度 | 森林綠＋銅色（本檔 token 即此套） |
+| CV | **藍瓷磚大廳**（Azulejo） | 建立可信度並聯絡，帶個人風格 | 錫釉白＋鈷藍，芥末黃只在框角（token 前綴 `az-`） |
+| blog、404 | **學術期刊**（Garden） | 閱讀 | 森林綠＋銅色（無前綴的 token） |
 | Research Toolkit | **精密工作台**（Cobalt） | 操作：填資料、匯出論文圖表 | 鈷藍 |
 | NMA 教學 | **教科書** | 逐步閱讀並照做 | 藍色、程式碼底色 |
 | 行程頁 | **日系繪本**（Storybook） | 旅途中在手機上查看 | 和紙白 #FFFCF6、3px 墨灰 #3E3A39 粗框、大圓角、平塗；珊瑚粉／山吹黃／水色／若竹綠；Huninn 字型；只用淺色；每趟一張手繪 SVG 插圖（`trip/engine/storybook.css`、`illustrations.js`） |
@@ -160,10 +190,21 @@ CV 這一套是「森林與銅」：深森林綠負責權威感，銅色只負�
 
 深色模式色相不變，只調明度：紙張落在 L 17–23%，墨落在 L 94%，森林綠和銅色各自提亮到 L 84% 與 L 74%。色帶（band）例外：深色模式不跟著提亮，而是壓到 L 29–37% 的深森林綠／深鈷藍，配淺色字，避免在深色頁面上出現一大塊亮面。
 
+### CV：藍瓷磚大廳（Azulejo）
+CV 依使用者指定改成藍色系、不再是期刊格式。整頁像一座貼滿葡式藍瓷磚的車站大廳，人生的每一章是一幅框起來的磁磚畫：
+- **地面**：錫釉白（az-glaze）上畫著 96px 的磁磚接縫（az-grout；手機 64px）。
+- **畫面**：鈷藍（az-cobalt）負責標題、花紋、邊框與實心按鈕；淡鈷（az-wash）是細線與未上色的花紋；az-tint 是膠囊底。
+- **反白色帶**：「工具與教學」與頁尾是鈷藍色帶（az-band），上面用白字；頁尾外圈鋪一圈磁磚花紋（az-band-line）。
+- **芥末黃**（az-mustard）：只出現在框角的八瓣花飾，不用在文字或按鈕上。
+- **深色模式**：地面變成夜色鈷藍（az-night），畫面改用淺鈷（az-night-line / az-night-fill），色帶仍是深鈷藍。
+- **肖像**：照片轉成鈷藍雙色（灰階＋screen 疊在 az-portrait 上），磁磚接縫直接穿過照片。
+
 ### Named Rules
+**The Mustard Corner Rule.** CV 的芥末黃只能出現在框角的花飾。其他強調一律用鈷藍的深淺與填色變化。
+
 **The One Copper Rule.** 銅色只標記「可以按」或「時間點」，一個畫面裡的面積不超過約 5%。標題永遠用森林綠，不用銅色。
 
-**The Room Color Rule.** 每一區只用自己那一區的主題色。Toolkit 不出現森林綠，CV 不出現鈷藍。跨區共用的只有字體、形狀和分隔語言。
+**The Room Color Rule.** 每一區只用自己那一區的主題色。Toolkit 不出現森林綠；blog 與 404 不出現鈷藍。CV 與 Toolkit 都是藍，但語言不同：CV 是彩繪磁磚的鈷藍（色相 266，配錫釉白與花紋），Toolkit 是儀器般的平塗鈷藍（色相 260，細線與面板）。
 
 **The Bold Field Rule.** 每頁可以有一到兩個「整塊主題色」的區域，用來標出頁面的高點：CV 是工具區與頁尾，Toolkit 首頁是 hero。色帶裡不再放第二種強調色，連結與按鈕改用 band-ink 反白。其餘區塊維持紙底與細線，讓色帶讀得出來。
 
@@ -185,6 +226,8 @@ CV 這一套是「森林與銅」：深森林綠負責權威感，銅色只負�
 
 工具頁的英文模式把內文換成 Noto Sans，讓引號等拉丁標點不會被 Noto Sans TC 排成全形。工具頁沿用同一對字體，但密度較高：內文 14px、行高 1.5。工具頁頂列的工具名用 Fraunces 26px（手機 22px），表單區塊標題 18px 粗體，步驟編號 Fraunces 22px 鈷藍。標題一律 `text-wrap: balance`，段落 `text-wrap: pretty`。
 
+CV 的展示字改用 **Cinzel**（羅馬碑文大寫，像磁磚畫框裡的題字），中文落到 Noto Serif TC 900、日文落到 Noto Serif JP 900；引言、副標用 Noto Serif TC；內文仍是 Noto Sans TC。Fraunces 只留在 blog、404 與 Toolkit。
+
 ### Named Rules
 **The Upright Heading Rule.** 標題與展示字一律正體，不用斜體，也不把標題裡的某個字轉成斜體來強調。
 
@@ -192,10 +235,10 @@ CV 這一套是「森林與銅」：深森林綠負責權威感，銅色只負�
 
 ## Layout
 
-- **學術期刊（CV、blog）**：長文件式版面，內容寬 1120px，左右留白 1.5rem。
-  - Hero 是左文右照的兩欄（1.55fr : 1fr），≤900px 時收成單欄。
-  - 區塊之間用細線分隔，每節開頭只放一個 Fraunces 標題。
-  - 時間軸是「日期欄 7.5rem＋內容」的兩欄，≤640px 時日期移到內容上方。
+- **藍瓷磚大廳（CV）**：內容寬 1120px。Hero 是一幅框起來的開場磁磚畫：上下兩條四瓣花紋飾帶、左右雙線、四角芥末花飾；裡面左文右照（1.5fr : 1fr），≤640px 時照片移到上方。
+  - 每個區塊都是一幅磁磚畫（`.panel`）：錫釉白底方便閱讀，左右雙線，上方一條花紋飾帶當分隔；最後一條飾帶收尾。
+  - 時間軸是「日期欄 7.5rem＋內容」的兩欄，≤640px 時日期移到內容上方。出版編號放在一塊鈷藍小磁磚上。
+- **學術期刊（blog）**：長文件式版面，區塊之間用細線分隔，每節開頭只放一個 Fraunces 標題。
 - **精密工作台（Toolkit）**：
   - 首頁是索引清單，一行一個工具：名稱、說明、標籤三欄，≤760px 時堆疊。
   - 工具頁左邊是表單欄（340–460px，RoB 工具放寬到 600px），右邊是固定在畫面上的預覽欄，≤960px 時改成單欄。
@@ -232,6 +275,9 @@ CV 這一套是「森林與銅」：深森林綠負責權威感，銅色只負�
 邊框一律 1px，不同狀態之間不改變粗細。分組優先用細線，不用整圈的框。
 
 ## Components
+
+### Plaques（CV 按鈕）
+CV 的按鈕是長方形的「牌匾」：6px 圓角、1px 鈷藍外框，內側再畫一條細線（inset box-shadow 3px 底色＋1px 線）。主要按鈕整塊鈷藍、內線是白色。語言切換、分享等控制項是 4px 圓角的小磁磚，選中時填滿鈷藍。
 
 ### Buttons
 精準：狀態主要換顏色，不放大；只有方向性的「→」可以在 hover 時往前推 4–5px。
@@ -281,7 +327,8 @@ Toolkit 首頁的一行：Fraunces 工具名後面接主題色的「→」，中
 - **Do** 用細線（1px，rule 色）分組。分隔線比卡片優先。
 - **Do** 數字（日期、編號、統計）用 tabular-nums。
 - **Do** 過渡效果明確寫出屬性（color、border-color、background-color），使用 ease-out，時間 120–220ms，並且支援 prefers-reduced-motion。
-- **Do** 每頁只有一個進場主秀：大標題像鉛字從版面拉出（clip-path 由下往上揭開＋上移 0.3em，約 760ms，ease-out），CV 的照片接著由下往上揭開；區塊標題上方的短粗線在捲到時由左畫出。Toolkit 首頁第一組工具列依序進場，總延遲不超過 0.5 秒。工具頁的選單由按鈕處展開、toast 由下浮起、details 展開時內容淡入。減少動態效果時全部改成 150ms 內的淡入，不位移、不裁切。
+- **Do** CV 的進場主秀：飾帶由淡鈷「燒」成鈷藍（background-position 過渡 900ms），姓名由下往上揭開並從淡鈷變深，肖像上的白色磁磚沿對角線一片片掀開（20 片，每片間隔 42ms），框角花飾最後綻開。捲到每個區塊時，它的飾帶也會這樣上色。減少動態效果時不鋪磁磚、不燒飾帶，只做 150ms 淡入。
+- **Do** 其他頁每頁只有一個進場主秀：大標題像鉛字從版面拉出（clip-path 由下往上揭開＋上移 0.3em，約 760ms，ease-out），CV 的照片接著由下往上揭開；區塊標題上方的短粗線在捲到時由左畫出。Toolkit 首頁第一組工具列依序進場，總延遲不超過 0.5 秒。工具頁的選單由按鈕處展開、toast 由下浮起、details 展開時內容淡入。減少動態效果時全部改成 150ms 內的淡入，不位移、不裁切。
 
 ### Don't:
 - **Don't** 在標題上用漸層文字，或用漸層膠囊按鈕。

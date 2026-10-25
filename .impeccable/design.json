@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-25T07:47:07.309Z",
+  "generatedAt": "2026-10-25T08:31:44.961Z",
   "title": "Design System: 張家菘 · Chia-Sung Chang",
   "extensions": {
     "colorMeta": {
@@ -257,6 +257,141 @@
           "oklch(72% 0.042 155)",
           "oklch(86% 0.021 155)",
           "oklch(95% 0.015 155)"
+        ]
+      },
+      "az-glaze": {
+        "role": "neutral",
+        "displayName": "Tin Glaze",
+        "canonical": "oklch(97.5% 0.008 95)",
+        "tonalRamp": [
+          "oklch(15% 0.015 266)",
+          "oklch(25% 0.022 266)",
+          "oklch(35% 0.037 266)",
+          "oklch(45% 0.052 266)",
+          "oklch(58% 0.060 266)",
+          "oklch(72% 0.042 266)",
+          "oklch(86% 0.021 266)",
+          "oklch(95% 0.015 266)"
+        ]
+      },
+      "az-grout": {
+        "role": "neutral",
+        "displayName": "Grout",
+        "canonical": "oklch(90% 0.018 255)",
+        "tonalRamp": [
+          "oklch(15% 0.015 266)",
+          "oklch(25% 0.022 266)",
+          "oklch(35% 0.037 266)",
+          "oklch(45% 0.052 266)",
+          "oklch(58% 0.060 266)",
+          "oklch(72% 0.042 266)",
+          "oklch(86% 0.021 266)",
+          "oklch(95% 0.015 266)"
+        ]
+      },
+      "az-ink": {
+        "role": "neutral",
+        "displayName": "Cobalt Ink",
+        "canonical": "oklch(25% 0.075 266)",
+        "tonalRamp": [
+          "oklch(15% 0.015 266)",
+          "oklch(25% 0.022 266)",
+          "oklch(35% 0.037 266)",
+          "oklch(45% 0.052 266)",
+          "oklch(58% 0.060 266)",
+          "oklch(72% 0.042 266)",
+          "oklch(86% 0.021 266)",
+          "oklch(95% 0.015 266)"
+        ]
+      },
+      "az-cobalt": {
+        "role": "primary",
+        "displayName": "Azulejo Cobalt",
+        "canonical": "oklch(38% 0.170 266)",
+        "tonalRamp": [
+          "oklch(15% 0.015 266)",
+          "oklch(25% 0.022 266)",
+          "oklch(35% 0.037 266)",
+          "oklch(45% 0.052 266)",
+          "oklch(58% 0.060 266)",
+          "oklch(72% 0.042 266)",
+          "oklch(86% 0.021 266)",
+          "oklch(95% 0.015 266)"
+        ]
+      },
+      "az-wash": {
+        "role": "primary",
+        "displayName": "Cobalt Wash",
+        "canonical": "oklch(80% 0.075 262)",
+        "tonalRamp": [
+          "oklch(15% 0.015 266)",
+          "oklch(25% 0.022 266)",
+          "oklch(35% 0.037 266)",
+          "oklch(45% 0.052 266)",
+          "oklch(58% 0.060 266)",
+          "oklch(72% 0.042 266)",
+          "oklch(86% 0.021 266)",
+          "oklch(95% 0.015 266)"
+        ]
+      },
+      "az-tint": {
+        "role": "neutral",
+        "displayName": "Cobalt Tint",
+        "canonical": "oklch(93% 0.032 262)",
+        "tonalRamp": [
+          "oklch(15% 0.015 266)",
+          "oklch(25% 0.022 266)",
+          "oklch(35% 0.037 266)",
+          "oklch(45% 0.052 266)",
+          "oklch(58% 0.060 266)",
+          "oklch(72% 0.042 266)",
+          "oklch(86% 0.021 266)",
+          "oklch(95% 0.015 266)"
+        ]
+      },
+      "az-band": {
+        "role": "primary",
+        "displayName": "Cobalt Band",
+        "canonical": "oklch(36% 0.160 266)",
+        "tonalRamp": [
+          "oklch(15% 0.015 266)",
+          "oklch(25% 0.022 266)",
+          "oklch(35% 0.037 266)",
+          "oklch(45% 0.052 266)",
+          "oklch(58% 0.060 266)",
+          "oklch(72% 0.042 266)",
+          "oklch(86% 0.021 266)",
+          "oklch(95% 0.015 266)"
+        ]
+      },
+      "az-mustard": {
+        "role": "tertiary",
+        "displayName": "Frame Mustard",
+        "canonical": "oklch(79% 0.150 82)",
+        "tonalRamp": [
+          "oklch(15% 0.015 266)",
+          "oklch(25% 0.022 266)",
+          "oklch(35% 0.037 266)",
+          "oklch(45% 0.052 266)",
+          "oklch(58% 0.060 266)",
+          "oklch(72% 0.042 266)",
+          "oklch(86% 0.021 266)",
+          "oklch(95% 0.015 266)"
+        ]
+      },
+      "az-night": {
+        "role": "neutral",
+        "displayName": "Night Glaze",
+        "canonical": "oklch(20% 0.055 266)",
+        "tonalRamp": [
+          "oklch(15% 0.015 266)",
+          "oklch(25% 0.022 266)",
+          "oklch(35% 0.037 266)",
+          "oklch(45% 0.052 266)",
+          "oklch(58% 0.060 266)",
+          "oklch(72% 0.042 266)",
+          "oklch(86% 0.021 266)",
+          "oklch(95% 0.015 266)"
         ]
       }
     },
