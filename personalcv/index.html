@@ -192,18 +192,42 @@
   html[data-theme="dark"] .icon-moon { display: none; }
 
   /* ---------- Hero: the hall's opening panel ---------- */
-  .hero { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: var(--space-2xl); align-items: end; padding-block: var(--space-xl) var(--space-3xl); }
-  .hero-main { min-width: 0; }
+  /* Hero band: a pale glaze field with vertical grout seams; the hero is centred on it */
+  .hero-band { --seam: 120px; background-color: var(--glaze-2); background-image: repeating-linear-gradient(90deg, transparent 0 calc(var(--seam) - 1px), var(--grout) calc(var(--seam) - 1px) var(--seam)); background-position: center top; }
+  .hero { display: flex; flex-direction: column; align-items: center; text-align: center; padding-top: var(--space-xl); }
+  .hero-main { min-width: 0; max-width: 46rem; display: flex; flex-direction: column; align-items: center; }
+  .hero .creds { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .hero .cta { justify-content: center; }
+  /* Stage: the cut-out portrait in front of a tiled cobalt medallion, role words around it */
+  .stage { position: relative; width: min(100%, 1040px); height: clamp(330px, 40vw, 500px); margin-top: var(--space-xl); }
+  .medallion { position: absolute; left: 50%; bottom: 9%; width: clamp(230px, 30vw, 370px); aspect-ratio: 1; transform: translateX(-50%); border-radius: 50%; background: var(--band); overflow: hidden; box-shadow: 0 0 0 10px var(--glaze-2), 0 0 0 11px var(--line); }
+  .medallion::before { content: ""; position: absolute; inset: 0; background: var(--band-line); -webkit-mask: var(--m-tile) center / 58px 58px; mask: var(--m-tile) center / 58px 58px; }
+  .stage img { position: absolute; z-index: 1; left: 50%; bottom: 0; width: clamp(280px, 38vw, 470px); height: auto; aspect-ratio: 1; transform: translateX(-50%); object-fit: contain; object-position: bottom; }
+  .role-words { position: absolute; inset: 0; list-style: none; z-index: 2; pointer-events: none; }
+  .role-words li { position: absolute; font-family: var(--font-serif); font-weight: 900; font-size: clamp(1.25rem, 1.2vw + 0.8rem, 1.9rem); line-height: 1.1; color: var(--line); white-space: nowrap; }
+  html[data-lang="en"] .role-words li { font-size: clamp(1.05rem, 0.9vw + 0.75rem, 1.5rem); }
+  .role-words li:nth-child(1) { left: 6%; top: 22%; }
+  .role-words li:nth-child(2) { right: 4%; top: 14%; }
+  .role-words li:nth-child(3) { left: 2%; top: 60%; }
+  .role-words li:nth-child(4) { right: 7%; top: 54%; }
+  /* Entry cards overlap the band's bottom edge */
+  .roles { position: relative; z-index: 3; margin-top: -5.5rem; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-lg); }
+  .role-card { display: flex; flex-direction: column; align-items: center; text-align: center; padding: var(--space-xl) var(--space-lg); background: var(--glaze); border: 1px solid var(--wash); border-radius: var(--radius-plaque); box-shadow: 0 12px 28px oklch(30% 0.080 266 / 0.08); transition: border-color var(--dur-short) var(--ease-out); }
+  .role-card:hover { border-color: var(--line); }
+  .role-card svg { width: 40px; height: 40px; fill: none; stroke: var(--line); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+  .role-card h3 { margin-top: var(--space-md); font-family: var(--font-serif); font-size: var(--text-md); font-weight: 900; color: var(--ink); }
+  .role-card p { margin-top: var(--space-xs); font-size: var(--text-sm); color: var(--muted); max-width: 30ch; }
+  .role-card:active { background: var(--tint); }
   .tags { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
   .tag { display: inline-flex; align-items: center; font-size: var(--text-sm); font-weight: 700; color: var(--line); }
   /* cartouche: a scrolled oval frame around the badge */
   .tag.lead { padding: var(--space-2xs) var(--space-md); border-radius: 999px; border: 1px solid var(--line); line-height: 1.4; }
-  .hero h1 { font-family: var(--font-display); font-size: var(--text-display); font-weight: 800; line-height: 1.02; letter-spacing: 0.01em; margin-top: var(--space-md); color: var(--line); overflow-wrap: anywhere; min-width: 0; }
+  .hero h1 { font-family: var(--font-display); font-size: clamp(2.4rem, 4vw + 1rem, 4.5rem); font-weight: 800; line-height: 1.02; letter-spacing: 0.01em; margin-top: var(--space-md); color: var(--line); overflow-wrap: anywhere; min-width: 0; }
   html[data-lang="zh"] .hero h1, html[data-lang="ja"] .hero h1 { font-weight: 900; letter-spacing: 0.04em; line-height: 1.1; }
-  .hero .sub { margin-top: var(--space-sm); font-family: var(--font-serif); font-size: var(--text-md); font-weight: 700; color: var(--ink); max-width: 40ch; }
+  .hero .sub { margin-top: var(--space-sm); font-family: var(--font-serif); font-size: var(--text-md); font-weight: 700; color: var(--ink); }
   .creds { list-style: none; margin-top: var(--space-lg); padding-block: var(--space-sm); border-block: 1px solid var(--wash); display: grid; gap: var(--space-2xs); color: var(--muted); }
   .creds b { color: var(--ink); font-weight: 700; margin-right: var(--space-xs); }
-  .hero .pitch { margin-top: var(--space-lg); max-width: 60ch; color: var(--muted); }
+  .hero .pitch { margin-top: var(--space-md); max-width: 56ch; color: var(--muted); }
   .hero .pitch strong { color: var(--line); font-weight: 700; }
   .cta { margin-top: var(--space-lg); display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); }
 
@@ -221,15 +245,9 @@
   .btn.primary { background: var(--fill); border-color: var(--fill); color: var(--fill-ink); }
   .btn.primary:hover { background: var(--fill-hover); border-color: var(--fill-hover); }
 
-  /* Portrait: the cut-out stands in a cobalt arch */
-  .photo-card { position: relative; justify-self: end; width: 100%; max-width: 360px; aspect-ratio: 4 / 5; }
-  .photo-card::before { content: ""; position: absolute; inset: -10px -10px 0; border: 1px solid var(--line); border-bottom: 0; border-radius: 999px 999px 0 0; }
-  .photo-card .paint { position: absolute; inset: 0; border-radius: 999px 999px 0 0; background: var(--band); overflow: hidden; }
-  .photo-card .paint::before { content: ""; position: absolute; inset: 0; background: var(--band-line); -webkit-mask: var(--m-tile) center top / 64px 64px; mask: var(--m-tile) center top / 64px 64px; }
-  .photo-card img { position: absolute; left: 50%; bottom: 0; width: 112%; max-width: none; transform: translateX(-50%); aspect-ratio: 1; object-fit: contain; object-position: bottom; color: var(--band-ink); }
 
   /* ---------- Sections: framed narrative panels ---------- */
-  main.container { display: block; }
+  main.container { display: block; margin-top: var(--space-xl); }
   main.container > section { padding-block: var(--space-2xl) var(--space-3xl); scroll-margin-top: 64px; }
   .sec-head { margin-bottom: var(--space-xl); max-width: 65ch; }
   .sec-head h2 { font-family: var(--font-serif); font-size: var(--text-2xl); font-weight: 900; line-height: 1.15; letter-spacing: 0.01em; color: var(--line); }
@@ -327,16 +345,18 @@
   @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
   @keyframes set-type { from { clip-path: inset(0 0 100% 0); transform: translateY(0.3em); color: var(--wash); } 60% { color: var(--wash); } to { clip-path: inset(0 0 -0.2em 0); transform: none; } }
   @keyframes kiln { from { background-position: 100% 0; } to { background-position: 0 0; } }
-  @keyframes raise { from { clip-path: inset(100% 0 0 0 round 999px 999px 0 0); } to { clip-path: inset(0 round 999px 999px 0 0); } }
+  @keyframes raise { from { clip-path: circle(0% at 50% 50%); } to { clip-path: circle(50% at 50% 50%); } }
   @keyframes step-in { from { opacity: 0; transform: translate(-50%, 6%); } to { opacity: 1; transform: translate(-50%, 0); } }
   .is-ready .hero-main > * { animation: rise var(--dur-long) var(--ease-out) both; }
   .is-ready .hero-main > :nth-child(2) { animation: set-type var(--dur-focal) var(--ease-out) 60ms both; }
   .is-ready .hero-main > :nth-child(3) { animation-delay: 160ms; }
   .is-ready .hero-main > :nth-child(4) { animation-delay: 220ms; }
   .is-ready .hero-main > :nth-child(n+5) { animation-delay: 280ms; }
-  .is-ready .photo-card .paint { animation: raise var(--dur-focal) var(--ease-out) 120ms both; }
-  .is-ready .photo-card img { animation: step-in 700ms var(--ease-out) 520ms both; }
-  .is-ready .hero-frieze { animation: kiln var(--dur-focal) var(--ease-out) 300ms both; }
+  .is-ready .medallion { animation: raise var(--dur-focal) var(--ease-out) 160ms both; }
+  .is-ready .stage img { animation: step-in 700ms var(--ease-out) 480ms both; }
+  .is-ready .role-words li { animation: rise var(--dur-long) var(--ease-out) both; }
+  .is-ready .role-words li:nth-child(1) { animation-delay: 760ms; } .is-ready .role-words li:nth-child(2) { animation-delay: 840ms; }
+  .is-ready .role-words li:nth-child(3) { animation-delay: 920ms; } .is-ready .role-words li:nth-child(4) { animation-delay: 1000ms; }
   .reveal { opacity: 0; transform: translateY(10px); transition: opacity var(--dur-long) var(--ease-out), transform var(--dur-long) var(--ease-out); transition-delay: var(--d, 0s); }
   .reveal.in { opacity: 1; transform: none; }
 
@@ -355,9 +375,8 @@
     *, *::before, *::after { animation-duration: 150ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; transition-duration: 150ms !important; }
     .is-ready .hero-main > *, .reveal, .reveal.in { transform: none !important; }
     .is-ready .hero-main > :nth-child(2) { animation-name: rise !important; clip-path: none !important; }
-    .is-ready .photo-card .paint { animation: none !important; }
-    .is-ready .photo-card img { animation-name: rise !important; transform: translateX(-50%) !important; }
-    .is-ready .hero-frieze { animation: none !important; }
+    .is-ready .medallion { animation: none !important; }
+    .is-ready .stage img { animation-name: rise !important; transform: translateX(-50%) !important; }
     .progress { display: none; }
   }
 
@@ -369,7 +388,9 @@
     .bar nav a { flex-shrink: 0; }
     .bar nav.has-more { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 3rem), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 3rem), transparent); }
     .tools, .tool-links { grid-template-columns: minmax(0, 1fr); }
-    .hero { grid-template-columns: minmax(0, 1fr) minmax(0, 0.6fr); gap: var(--space-xl); }
+    .roles { grid-template-columns: minmax(0, 1fr); max-width: 32rem; }
+    .role-words li:nth-child(1) { left: 0; } .role-words li:nth-child(3) { left: 0; }
+    .role-words li:nth-child(2) { right: 0; } .role-words li:nth-child(4) { right: 0; }
     .about, .two, .honors { grid-template-columns: minmax(0, 1fr); }
     .latest { grid-template-columns: minmax(0, 1fr); }
   }
@@ -377,15 +398,17 @@
     .container { padding-inline: var(--space-md); }
     .ctl .lbl-share { display: none; }
     .ctl, .langs button { padding-inline: var(--space-xs); }
-    .hero { grid-template-columns: minmax(0, 1fr); gap: var(--space-lg); padding-block: var(--space-md) var(--space-2xl); }
-    .photo-card { order: -1; justify-self: start; width: 11rem; }
+    .hero { padding-top: var(--space-md); }
+    .stage { margin-top: var(--space-lg); }
+    .stage { height: 300px; }
+    .medallion { width: 210px; bottom: 6%; }
+    .stage img { width: 270px; }
+    .role-words { position: static; display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-xs); margin-top: var(--space-lg); }
+    .role-words li, html[data-lang="en"] .role-words li { position: static; font-size: var(--text-sm); padding: var(--space-2xs) var(--space-sm); border: 1px solid var(--wash); border-radius: 999px; background: var(--glaze); }
+    .roles { grid-template-columns: minmax(0, 1fr); margin-top: -2.5rem; gap: var(--space-md); }
     .hero .sub { font-size: var(--text-base); }
     .cta .btn { flex: 1 1 auto; justify-content: center; padding-inline: var(--space-md); }
     .cta .btn.icon { flex: 0 0 44px; }
-    .hero-main { display: flex; flex-direction: column; }
-    .hero-main .cta { order: 1; }
-    .hero-main .creds { order: 2; }
-    .hero-main .pitch { order: 3; }
     main.container > section { padding-block: var(--space-xl) var(--space-2xl); }
     .card.big p { font-size: var(--text-base); }
     .tools { padding: var(--space-lg) var(--space-md); }
@@ -410,7 +433,8 @@
 
   @media print {
     body { background: none; }
-    .bar, .cta, .sticky-nav, .progress, .skip, .closing .btn { display: none !important; }
+    .bar, .cta, .sticky-nav, .progress, .skip, .closing .btn, .stage, .roles { display: none !important; }
+    .hero-band { background: none; padding-bottom: 0; }
     .closing .mail { border-bottom: 0; }
       .tools, .closing-card { background: none; color: inherit; }
     section, .pub, .honor { break-inside: avoid; }
@@ -424,7 +448,7 @@
 <div class="progress" id="progress" aria-hidden="true"></div>
 <nav class="sticky-nav" id="sticky-nav" aria-label="Sections (compact)" inert><div class="inner"></div></nav>
 
-<header class="container">
+<header class="hero-band"><div class="container">
   <div class="bar">
     {%- comment -%} Everything below is pre-rendered from _data/cv.json for search engines and link previews; the script re-renders it on load. {%- endcomment -%}
     <nav id="nav" aria-label="Sections">
@@ -452,7 +476,7 @@
     </div>
   </div>
 
-  <div class="hero panel">
+  <div class="hero">
     <div class="hero-main">
       <div class="tags"><span class="tag lead" id="hero-badge">{% include cv-tr.html v=cv.profile.badge %}</span></div>
       <h1 id="hero-name">{% include cv-tr.html v=cv.profile.name %}</h1>
@@ -469,10 +493,37 @@
         <a class="btn" id="link-linkedin" href="{{ cv.profile.linkedin }}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.64a1.64 1.64 0 1 0 0 3.28 1.64 1.64 0 0 0 0-3.28z"/></svg>LinkedIn</a>
       </div>
     </div>
-    <div class="photo-card"><span class="paint"><img id="hero-photo" src="{{ cv.profile.photoCutout | default: cv.profile.photo }}" alt="Chia-Sung (Bruce) Chang" width="760" height="760" fetchpriority="high"></span></div>
+    <div class="stage">
+      <span class="medallion" aria-hidden="true"></span>
+      <img id="hero-photo" src="{{ cv.profile.photoCutout | default: cv.profile.photo }}" alt="Chia-Sung (Bruce) Chang" width="760" height="760" fetchpriority="high">
+      <ul class="role-words" aria-label="Roles">
+        <li><span class="zh">藥師</span><span class="en">Pharmacist</span><span class="ja">薬剤師</span></li>
+        <li><span class="zh">藥物流行病學</span><span class="en">Pharmacoepidemiology</span><span class="ja">薬剤疫学</span></li>
+        <li><span class="zh">實證統合</span><span class="en">Evidence Synthesis</span><span class="ja">エビデンス統合</span></li>
+        <li><span class="zh">真實世界證據</span><span class="en">Real-World Evidence</span><span class="ja">リアルワールドエビデンス</span></li>
+      </ul>
+    </div>
   </div>
-  <span class="frieze hero-frieze" aria-hidden="true"></span>
+</div>
 </header>
+
+<div class="roles container">
+  <a class="role-card" href="#cv">
+    <svg viewBox="0 0 40 40" aria-hidden="true"><rect x="7" y="15" width="26" height="11" rx="5.5" transform="rotate(-35 20 20.5)"/><path d="M15.5 12.8l7.6 10.9"/></svg>
+    <h3><span class="zh">藥師</span><span class="en">Pharmacist</span><span class="ja">薬剤師</span></h3>
+    <p><span class="zh">臺北醫學大學附設醫院藥劑部兼任藥師，臺北醫學大學臨床醫學研究所碩士生。</span><span class="en">Part-time registered pharmacist at Taipei Medical University Hospital; M.Sc. candidate in Clinical Medicine at Taipei Medical University.</span><span class="ja">台北医学大学附属病院薬剤部の非常勤薬剤師、台北医学大学臨床医学研究所修士課程在籍。</span></p>
+  </a>
+  <a class="role-card" href="#about">
+    <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 6v28" stroke-dasharray="2 3"/><path d="M9 12h14M14 20h16M8 28h11"/><path d="M16 34l4-3 4 3-4 3z"/></svg>
+    <h3><span class="zh">研究</span><span class="en">Research</span><span class="ja">研究</span></h3>
+    <p><span class="zh">真實世界證據與實證統合：系統性回顧與統合分析、貝氏網絡統合分析、目標試驗模擬。</span><span class="en">Real-world evidence and evidence synthesis: systematic review and meta-analysis, Bayesian network meta-analysis, target trial emulation.</span><span class="ja">リアルワールドエビデンスとエビデンス統合：システマティックレビュー・メタアナリシス、ベイズ・ネットワークメタアナリシス、ターゲット・トライアル・エミュレーション。</span></p>
+  </a>
+  <a class="role-card" href="{{ cv.profile.toolkit | default: '/Research-toolkit/' }}">
+    <svg viewBox="0 0 40 40" aria-hidden="true"><rect x="7" y="7" width="11" height="11" rx="2"/><rect x="22" y="7" width="11" height="11" rx="2"/><rect x="7" y="22" width="26" height="11" rx="2"/></svg>
+    <h3><span class="zh">研究工具</span><span class="en">Research Toolkit</span><span class="ja">研究ツール</span></h3>
+    <p><span class="zh">給研究者用的論文圖表工具：全部在瀏覽器中執行，資料不會上傳。</span><span class="en">Figure and table tools for researchers. Everything runs in the browser and nothing is uploaded.</span><span class="ja">研究者向けの論文図表ツール。すべてブラウザ内で動作し、データはアップロードされません。</span></p>
+  </a>
+</div>
 
 <main class="container" id="main" tabindex="-1">
 

@@ -14,8 +14,8 @@ Content comes from _data/cv.json and is re-rendered by the page script; all IDs 
 ## Direction contract
 FORM: azulejo station hall (challenger, chosen by the user) · seed:9b8af2b7a308f05a
 THESIS: Azulejo kept, but professional: tin-glaze white and cobalt, serif headings on plain glaze, tile pattern confined to the portrait arch and one frieze.
-OWN-WORLD: Two colours only. A tiled cobalt arch with an outer painted line holds the cut-out portrait; one quatrefoil frieze divides the header from the body and is echoed atop the cobalt sign-off. Cinzel for the name alone; Noto Serif TC headings.
+OWN-WORLD: Two colours only. Centred hero on a pale glaze band with vertical grout seams; the cut-out portrait stands before a round tiled cobalt medallion ringed by a painted line, four role words floating around it; three entry cards overlap the band edge. Frieze only atop the cobalt sign-off and under the blog header. Cinzel for the name alone; Noto Serif TC headings.
 STORY: Name and portrait first, framed as the hall's opening panel; then research, education and experience, publications, honours, contact.
-FIRST VIEWPORT: Huge capitals name and contact buttons on the left; the cut-out portrait standing in a cobalt arch on the right.
-SIGNATURE: The tiled arch rises, the portrait steps in, the frieze fires from wash to cobalt.
+FIRST VIEWPORT: Centred badge, name, one-line pitch and contact buttons; below, the portrait before its tiled medallion with role words around (layout after the user-supplied reference).
+SIGNATURE: The medallion opens from its centre, the portrait steps in, the role words arrive one by one.
 RISK: Tile pattern behind the portrait must stay low-contrast so the face leads.
