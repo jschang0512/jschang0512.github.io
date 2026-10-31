@@ -6,11 +6,11 @@
     </linearGradient>
   </defs>
   <style>
-    .a{stop-color:#5B4A94}
-    .b{stop-color:#C77DC8}
+    .a{stop-color:#636AB1}
+    .b{stop-color:#9298D2}
     @media (prefers-color-scheme: dark){
-      .a{stop-color:#E4D6FA}
-      .b{stop-color:#9B7FE0}
+      .a{stop-color:#AEB3E4}
+      .b{stop-color:#636AB1}
     }
   </style>
   <path fill="url(#g)" d="M256,238 L118.5,138.1 A170,170 0 0,1 393.5,138.1 Z"/>
