@@ -99,6 +99,23 @@
   // 這裡只保留「使用者自己填的個人 Key」這條路徑，沒填的話交給後端代打。
   try { localStorage.removeItem("sb_cached_sys_gemini_key"); } catch(e){}
 
+// 點菜單的手寫劃記換成數量：正字一筆一筆累加（一=1、T/丅=2、下=3、止=4、正=5），
+  // 也接受單純數字、打勾、圈選。AI 只負責照抄記號，數量在這裡算，不靠模型自己數——
+  // 實測模型常把「T」算成 1。看不懂的記號回傳 null，交回模型給的 qty。
+  function tallyQtyFromMark(mark){
+    const s = String(mark || "").replace(/\s/g, "");
+    if(!s) return null;
+    if(/^\d+$/.test(s)) return Number(s) || null;
+    const strokes = { "一": 1, "-": 1, "—": 1, "–": 1, "ー": 1, "_": 1, "✓": 1, "✔": 1, "○": 1, "〇": 1, "O": 1, "V": 1, "v": 1,
+      "丅": 2, "T": 2, "丁": 2, "下": 3, "止": 4, "正": 5 };
+    let n = 0;
+    for(const ch of s){
+      if(!(ch in strokes)) return null;
+      n += strokes[ch];
+    }
+    return n || null;
+  }
+
   function getPersonalGeminiKey(){
     return (localStorage.getItem("splitbill_gemini_api_key") || "").trim();
   }
@@ -123,6 +140,7 @@
     const prompt = `You are an expert multilingual receipt & invoice OCR parsing AI. Analyze the image carefully.
 Extract all receipt details and output in STRICT JSON format (no markdown, no backticks, only valid raw JSON):
 {
+  "docType": "receipt | tally_sheet | total_only (see rule 7)",
   "storeName": "Natural Traditional Chinese store name with branch, district, station or location if printed on the receipt (e.g. '星巴克 淺草雷門店 (Starbucks)', '唐吉訶德 澀谷本店 (ドン・キホーテ)', '一蘭拉麵 淺草店', '鼎泰豐 101店')",
   "currencyCode": "Detected 3-letter currency code (e.g. 'JPY', 'TWD', 'KRW', 'USD', 'EUR', 'THB', 'VND', 'SGD', 'HKD', 'CNY', 'GBP', 'AUD')",
   "date": "Receipt date in YYYY-MM-DD format if found, otherwise empty string",
@@ -132,11 +150,14 @@ Extract all receipt details and output in STRICT JSON format (no markdown, no ba
   "tax": 0,
   "discount": 0,
   "totalAmount": 0,
+  "writtenTotal": 0,
   "items": [
     {
       "name": "Natural, recognizable Traditional Chinese Name (Original Foreign Name)",
       "price": 0,
-      "qty": 1
+      "qty": 1,
+      "mark": "tally sheets only: the handwritten mark exactly as written, otherwise empty string",
+      "uncertain": false
     }
   ]
 }
@@ -173,7 +194,21 @@ CRITICAL TRANSLATION & NAMING GUIDELINES:
    - 'デザート' -> '甜點'
 4. FORMAT: Always use '通俗自然中文名稱 (原文)' for foreign items. If the receipt is already in Chinese, just output the Chinese name directly.
 5. NUMBERS: 'price' must be the UNIT price for a single item (NOT the line total). If the receipt only shows a line total and a quantity, divide: price = printed_line_total / qty. 'totalAmount', 'subtotal', 'serviceCharge', 'tax', 'discount' must be clean numbers without symbols.
-6. QUANTITY: Read the actual quantity printed on the receipt for each line (look for patterns like 'x3', '×3', '3個', '3個入', a standalone number column, etc.) and put it in 'qty'. Default to 1 only if no quantity is shown or the line is clearly a single unit. Do NOT guess a quantity that wasn't printed.`;
+6. QUANTITY: Read the actual quantity printed on the receipt for each line (look for patterns like 'x3', '×3', '3個', '3個入', a standalone number column, etc.) and put it in 'qty'. Default to 1 only if no quantity is shown or the line is clearly a single unit. Do NOT guess a quantity that wasn't printed. (Handwritten tally sheets follow rule 8 instead.)
+7. DOCUMENT TYPE: First decide "docType":
+   - "receipt": a printed receipt / invoice that lists what was bought (the default).
+   - "tally_sheet": a printed order sheet or menu (點菜單) listing many dishes with unit prices, where the customer marked quantities BY HAND in a quantity (數量) column — 正-character tally strokes, digits, ticks or circles. Very common in Taiwanese restaurants.
+   - "total_only": a slip that shows only a total without line items (card slip, handwritten receipt, 領収書). Put the total in totalAmount and leave items empty.
+8. TALLY SHEET RULES (only when docType is "tally_sheet"):
+   a. Output ONLY rows that carry a handwritten mark. Unmarked rows were NOT ordered — never output the whole menu.
+   b. Count 正-character tally strokes; every stroke is 1. The character is built up stroke by stroke: 一 = 1, 丅 or a T shape = 2, 下 = 3, 止 (正 missing its bottom stroke) = 4, 正 = 5. Several characters add up (正正一 = 11). A T shape is TWO strokes (one horizontal + one vertical), never 1. A lone horizontal dash (一 / - / —) = 1. A handwritten digit = that number. A tick (✓) or circle = 1 unless a number is written with it.
+   c. Marks are written loosely: they may sit a little above or below the row, cross a grid line, or touch the section's header line. Assign each mark to the row whose quantity cell it is vertically closest to, within the SAME column block; a mark touching a header line belongs to the first row under that header.
+   d. price = the printed unit price of the marked row. When a dish has variant sub-rows (大/小, 乾/湯, 中碗/大碗), the marked sub-row decides the variant and price; name it like '排骨飯（大）'.
+   e. When row labels sit under a group label printed to their left (e.g. group '蚵仔' with rows '油麵', '米粉'), combine them: '蚵仔油麵'. Keep printed prefixes such as '乾' ('乾油麵').
+   f. IGNORE handwriting that is not a quantity: table numbers (內用桌號 / 桌號 / 外帶 boxes), phone numbers, addresses, opening hours, notes.
+   g. qty = the counted marks. Set totalAmount = sum of price × qty. If a total is handwritten on the sheet, put it in "writtenTotal" (otherwise 0).
+   h. For every item add "mark": exactly what is written, using only these characters for tally strokes: 一 丅 下 止 正 (write a T shape as 丅), or the digits as written (e.g. '丅', '正一', '2', '一'), and "uncertain": true when the mark is faint, sits between two rows, or its stroke count is unclear (otherwise false).
+   i. storeName comes from the sheet's header; date and time are usually absent (empty strings).`;
 
     // 1. 支援 OpenRouter (sk-or-...)
     if(activeKey.startsWith("sk-or-")){
@@ -1293,6 +1328,22 @@ CRITICAL TRANSLATION & NAMING GUIDELINES:
             throw new Error("empty recognition result");
           }
 
+          // 點菜單劃記：單上通常沒有印總額，總額交給品項小計自己算（改數量時會跟著變）；
+          // 有手寫總額的話之後拿來比對。
+          const isTally = parsed.docType === "tally_sheet";
+          if(isTally){
+            (parsed.items || []).forEach(it => {
+              const q = tallyQtyFromMark(it.mark);
+              if(q) it.qty = q;
+            });
+            parsed.writtenTotal = Number(parsed.writtenTotal) || 0;
+            parsed.totalAmount = 0;
+            parsed.subtotal = 0;
+            parsed.serviceCharge = 0;
+            parsed.tax = 0;
+            parsed.discount = 0;
+          }
+
           currentReceiptData = parsed;
 
           // 自動偵測幣別並切換下拉選單
@@ -1309,7 +1360,7 @@ CRITICAL TRANSLATION & NAMING GUIDELINES:
           // （price 是單價，要乘上數量才是這一行真正的小計，不能直接加總單價）
           const itemsSum = (parsed.items || []).reduce((acc, it) => acc + (Number(it.price || it.amount || it.total || 0) * Number(it.qty || 1)), 0);
           const parsedTotal = Number(parsed.totalAmount) || 0;
-          if(parsedTotal > 0 && Math.abs(itemsSum - parsedTotal) <= 1){
+          if(isTally || (parsedTotal > 0 && Math.abs(itemsSum - parsedTotal) <= 1)){
             taxType = "inclusive";
           } else {
             taxType = (parsed.serviceCharge || parsed.tax) ? "exclusive" : "inclusive";
@@ -1345,6 +1396,8 @@ CRITICAL TRANSLATION & NAMING GUIDELINES:
               name: rawName || t("currency.itemFallback", {n: idx + 1}),
               price: Number(it.price || it.amount || it.total || 0),
               qty: Number(it.qty || 1),
+              mark: isTally ? String(it.mark || "").trim() : "",
+              uncertain: isTally && it.uncertain === true,
               claimedMemberIds: [],
               memberQty: {},
               qtyMode: false
@@ -1369,6 +1422,10 @@ CRITICAL TRANSLATION & NAMING GUIDELINES:
           finishAiProgress();
           await new Promise(r => setTimeout(r, 260));
           showScreen("claim");
+          if(isTally && parsed.writtenTotal > 0 && Math.abs(parsed.writtenTotal - roundAmt(itemsSum)) > 1){
+            const sym = getReceiptSymbol();
+            sbAlert(t("currency.tallyTotalMismatch", { written: sym + deps.formatAmt(parsed.writtenTotal), calculated: sym + deps.formatAmt(roundAmt(itemsSum)) }), t("currency.tallyTotalMismatchTitle"));
+          }
         } catch(err){
           stopAiProgress();
           console.error("AI 辨識收據失敗：", err);
@@ -1569,6 +1626,7 @@ CRITICAL TRANSLATION & NAMING GUIDELINES:
                 <span class="ai-item-tag-num">${idx + 1}</span>
                 <input type="text" class="ai-receipt-item-name" value="${escapeHtml(item.name || '')}" placeholder="${t("currency.itemNameTranslatedPlaceholder")}" data-id="${item.id}">
               </div>
+              ${item.mark ? `<div class="ai-item-mark${item.uncertain ? " is-uncertain" : ""}" data-id="${item.id}">${escapeHtml(t(item.uncertain ? "currency.tallyMarkUncertain" : "currency.tallyMark", { mark: item.mark }))}</div>` : ""}
               <!-- 「單價」「個」文字標籤讓 price 欄位的意思很明確是單價，不是
                    這一行的小計，跟前面「279 x3 會被誤會成一共279」的疑慮
                    徹底切開；整列靠右對齊。 -->
@@ -1653,6 +1711,12 @@ CRITICAL TRANSLATION & NAMING GUIDELINES:
             if(!it) return;
             const newQty = Math.max(1, Number(e.target.value) || 1);
             it.qty = newQty;
+            // 自己改過數量就算確認過了，拿掉「請確認」的提醒
+            if(it.uncertain){
+              it.uncertain = false;
+              const markEl = e.target.closest(".ai-receipt-item-card")?.querySelector(".ai-item-mark");
+              if(markEl){ markEl.classList.remove("is-uncertain"); markEl.textContent = t("currency.tallyMark", { mark: it.mark }); }
+            }
             const lineTotal = (Number(it.price) || 0) * (Number(it.qty) || 1);
             const card = e.target.closest(".ai-receipt-item-card");
             if(card){
