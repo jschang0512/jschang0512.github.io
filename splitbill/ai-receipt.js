@@ -878,8 +878,9 @@ CRITICAL TRANSLATION & NAMING GUIDELINES:
       editingAiExpenseId = null;
       editingAiExpenseOriginal = null;
       currentReceiptImageBase64 = null;
+      // 預設保留原圖（2026-11）：每次重新打開都回到勾選狀態，不想留的人自己取消
       const keepImageChk = document.getElementById("aiReceiptKeepImageChk");
-      if(keepImageChk) keepImageChk.checked = false;
+      if(keepImageChk) keepImageChk.checked = true;
       setupViewReceiptImageButton(null);
       if(aiDirectSaveBtn) aiDirectSaveBtn.textContent = t("currency.aiDirectSave");
     }
