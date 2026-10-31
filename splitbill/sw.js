@@ -7,6 +7,7 @@
 // ============================================================
 
 importScripts("version.js");
+importScripts("notif-text.js");
 const CACHE_NAME = "splitbill-v" + APP_VERSION;
 
 const APP_SHELL = [
@@ -23,6 +24,7 @@ const APP_SHELL = [
   "theme.css",
   "theme.js",
   "shared-ui.js",
+  "notif-text.js",
   "app-banner.js",
   "app.js",
   "version.js",
@@ -157,18 +159,23 @@ function splitbillReadLangFromDB(){
   });
 }
 
+// 後端（notify-push / send-reminder）2026-10 起會多帶 kind + params，文字交給 notif-text.js
+// 依使用者語言組；沒帶的舊格式照 title/body 顯示。帶了 tag 的話，同一筆帳的新推播會取代舊的。
 self.addEventListener("push", (event) => {
   let data = {};
   try{ data = event.data ? event.data.json() : {}; }catch(e){}
 
   event.waitUntil((async () => {
-    const title = data.title || SW_FALLBACK_TITLES[await splitbillReadLangFromDB()] || SW_FALLBACK_TITLES["zh-Hant"];
+    const lang = await splitbillReadLangFromDB();
+    const local = data.kind && data.params ? splitbillNotifText(data.kind, data.params, lang) : null;
+    const title = (local && local.title) || data.title || SW_FALLBACK_TITLES[lang] || SW_FALLBACK_TITLES["zh-Hant"];
     const options = {
-      body: data.body || "",
+      body: (local && local.body) || data.body || "",
       icon: "icon.svg",
       badge: "icon.svg",
       data: { url: data.url || "./" }
     };
+    if(data.tag){ options.tag = data.tag; options.renotify = true; }
     await self.registration.showNotification(title, options);
   })());
 });

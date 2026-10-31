@@ -654,44 +654,13 @@
     notifyBtn.addEventListener("click", toggleNotify);
   }
 
-  function isRelevantToMe(table, row){
-    if(!row || !myMember) return false;
-    if(table === "expenses"){
-      return (row.payers || []).some(p => p.member_id === myMember.id) ||
-             (row.shares || []).some(s => s.member_id === myMember.id);
-    }
-    if(table === "repayments"){
-      return row.from_member === myMember.id || row.to_member === myMember.id;
-    }
-    return false;
-  }
-
   function notifyRelevantChange(table, payload){
-    const row = (payload.new && Object.keys(payload.new).length) ? payload.new : payload.old;
-    if(!isRelevantToMe(table, row)) return;
-    if(payload.eventType === "DELETE") return; // 刪除先不通知，避免太吵
-
-    // 1. 如果是操作者本人自己的動作，不發送遠端即時廣播通知給自己（避免與本地成功彈窗重疊跳出雙重通知）
-    if(myMember && (row.created_by === myMember.id || (table === "repayments" && row.from_member === myMember.id))){
-      return;
-    }
-
-    const actor = memberById[row.created_by] || t("summary.someone");
-    let title, body;
-    if(table === "expenses"){
-      title = payload.eventType === "INSERT" ? t("summary.notifExpenseNew") : t("summary.notifExpenseUpdate");
-      let cleanDesc = (row.description || "")
-        .replace(/<!--[\s\S]*?-->/gi, "")
-        .replace(/<!--AI_RECEIPT_DATA:[\s\S]*?-->/gi, "")
-        .replace(/AI_RECEIPT_DATA:[\s\S]*/gi, "")
-        .replace(/\s*\[xcur[:_][^\]]+\]/gi, "")
-        .trim();
-      cleanDesc = cleanDesc.split("\n")[0].replace(/\(AI自動拆單\)/g, "").trim() || t("summary.notifExpenseItemFallback");
-      body = t("summary.notifExpenseBody", {actor, desc: cleanDesc, amount: SYM + formatAmt(row.amount)});
-    } else {
-      title = payload.eventType === "INSERT" ? t("summary.notifRepayNew") : t("summary.notifRepayUpdate");
-      body = t("summary.notifRepayBody", {from: memberById[row.from_member] || "?", to: memberById[row.to_member] || "?", amount: SYM + formatAmt(row.amount)});
-    }
+    if(!myMember || payload.eventType === "DELETE") return; // 刪除先不通知，避免太吵
+    // 跟我無關、我自己記的、或只改了不重要的欄位（例如補收據照片）都不提示；
+    // 文字跟通知清單、推播共用 notif-text.js，寫出「我」分攤多少、要付給誰。
+    const res = splitbillNotifParams(table, payload.eventType, payload.new, payload.old, myMember.id, (id) => memberById[id]);
+    if(!res) return;
+    const { title, body } = splitbillNotifText(res.kind, res.params, getLang());
 
     showToast(title, body);
     shakeNotifyBtn();
@@ -2864,32 +2833,7 @@
         continue;
       }
 
-      const { title: tmplTitle } = splitExpenseTitleAndNote(tmpl.description || "", "");
-      const curObj = CURRENCIES.find(c => c.code === tmpl.currency);
-      const notifTitle = t("notif.recurringGeneratedTitle");
-      const notifBody = t("notif.recurringGeneratedBody", {
-        title: tmplTitle || tmpl.description,
-        amount: (curObj ? curObj.symbol : tmpl.currency) + formatAmt(tmpl.amount)
-      });
-      // notifications 的 RLS 不允許直接幫「其他成員」insert（跟 members/expenses
-      // 一樣，任何人都不能代寫別人的資料列）——跟催款提醒（send_debt_reminder）
-      // 同一套做法，改叫一支 SECURITY DEFINER RPC，在資料庫端確認呼叫者真的是
-      // 這個群組的成員後，才幫忙寫通知。只通知「這筆週期性支出實際牽涉到的人」
-      // （付款人＋分攤人），不相干的其他群組成員不會收到——沒道理讓一個跟這筆
-      // 帳完全沒關係的人也收到通知。
-      const involvedMemberIds = Array.from(new Set([
-        ...(tmpl.payers || []).map(p => p.member_id),
-        ...(tmpl.shares || []).map(s => s.member_id)
-      ]));
-      const { error: notifErr } = await sb.rpc("notify_recurring_generated", {
-        p_group_id: tmpl.group_id,
-        p_member_ids: involvedMemberIds,
-        p_title: notifTitle,
-        p_body: notifBody,
-        p_related_table: "expenses",
-        p_related_id: insertedExp.id
-      });
-      if(notifErr) console.warn("寫入週期性支出通知失敗（可能尚未執行 scripts/recurring_expenses_notify_fn.sql）：", notifErr);
+      // 通知由資料庫 trigger（notify_expense_or_repayment）在 insert 時統一寫入，這裡不再另外送，避免重複。
 
       if(tmpl.currency === CURRENCY){
         generatedForThisCurrency.push({ expense: insertedExp, template: tmpl });
@@ -2918,7 +2862,7 @@
     }
 
     // filter 一定要帶 group_id，不然即時同步會把「所有群組」的異動都廣播過來，
-    // 雖然畫面上會被 isRelevantToMe() 擋掉不顯示，但資料還是會傳到瀏覽器裡，
+    // 雖然畫面上會被 splitbillNotifParams() 擋掉不顯示，但資料還是會傳到瀏覽器裡，
     // 等於別的群組的支出內容在網路層/記憶體裡洩漏出來，不是真的隔離。
     // 幣別的篩選改成在收到資料後自己判斷（Realtime 的 filter 一次只能帶一個欄位）。
     sb.channel("splitbill-" + CURRENCY)

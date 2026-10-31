@@ -621,11 +621,22 @@ async function initNotificationBell(sb, myMember){
     }
   }
 
+  // 新通知（2026-10 起）帶 params：文字交給 notif-text.js 依目前語言組。
+  // 沒有 params 的舊通知照資料庫存的 title/body 顯示，只把「TWD 1250」這種寫法換成「NT$1,250」。
+  function notifText(n){
+    const txt = splitbillNotifText(n.type, n.params, getLang());
+    if(txt) return txt;
+    const body = String(n.body || "").replace(/\b([A-Z]{3}) (-?\d+(?:\.\d+)?)\b/g, (m, code, num) => splitbillNotifMoney(num, code));
+    return { title: String(n.title || "").replace(/^\p{Extended_Pictographic}\s*/u, ""), body };
+  }
+  const NOTIF_KIND = { expenses_insert: "add", expenses_update: "edit", recurring_generated: "repeat",
+    repayments_insert: "repay", repayments_update: "repay", debt_reminder: "remind" };
+
   async function loadList(){
     listEl.innerHTML = `<p class="filter-hint">${t("common.loading")}</p>`;
     const { data, error } = await sb
       .from("notifications")
-      .select("id,type,title,body,is_read,created_at,related_table,related_id")
+      .select("id,type,title,body,params,is_read,created_at,related_table,related_id")
       .eq("member_id", myMember.id)
       .order("created_at", { ascending: false })
       .limit(30);
@@ -638,16 +649,16 @@ async function initNotificationBell(sb, myMember){
       listEl.innerHTML = `<p class="filter-hint">${t("shared.noNotifications")}</p>`;
       return;
     }
-    listEl.innerHTML = data.map(n => `
-      <div class="notif-item${n.is_read ? "" : " unread"}${n.related_table && n.related_id ? " notif-item-linked" : ""}" data-id="${n.id}" data-related-table="${n.related_table || ""}" data-related-id="${n.related_id || ""}">
+    listEl.innerHTML = data.map(n => { const txt = notifText(n); return `
+      <div class="notif-item notif-kind-${NOTIF_KIND[n.type] || "other"}${n.is_read ? "" : " unread"}${n.related_table && n.related_id ? " notif-item-linked" : ""}" data-id="${n.id}" data-related-table="${n.related_table || ""}" data-related-id="${n.related_id || ""}">
         <div class="notif-item-main">
-          <div class="notif-item-title">${n.is_read ? "" : '<span class="notif-unread-dot"></span>'}${escapeHtml(n.title)}</div>
-          <div class="notif-item-body">${escapeHtml(n.body)}</div>
+          <div class="notif-item-title">${n.is_read ? "" : '<span class="notif-unread-dot"></span>'}${escapeHtml(txt.title)}</div>
+          <div class="notif-item-body">${escapeHtml(txt.body)}</div>
           <div class="notif-item-time">${notifTimeAgo(n.created_at)}</div>
         </div>
         <button type="button" class="notif-item-del" data-id="${n.id}" title="${t("shared.deleteNotifTitle")}" aria-label="${t("settings.delete")}">✕</button>
       </div>
-    `).join("");
+    `; }).join("");
     listEl.querySelectorAll(".notif-item-main").forEach(el=>{
       el.addEventListener("click", async ()=>{
         const item = el.closest(".notif-item");

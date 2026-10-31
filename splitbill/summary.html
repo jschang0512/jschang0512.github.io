@@ -26,15 +26,16 @@
 <meta name="apple-mobile-web-app-title" content="Splitbill">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=885">
-<link rel="stylesheet" href="shared.css?v=885">
+<link rel="stylesheet" href="theme.css?v=886">
+<link rel="stylesheet" href="shared.css?v=886">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="i18n.js?v=885"></script>
-<script src="currencies.js?v=885"></script>
-<script src="version.js?v=885"></script>
-<script src="shared-ui.js?v=885"></script>
-<script src="theme.js?v=885" defer></script>
-<script src="app-banner.js?v=885" defer></script>
+<script src="i18n.js?v=886"></script>
+<script src="currencies.js?v=886"></script>
+<script src="version.js?v=886"></script>
+<script src="notif-text.js?v=886"></script>
+<script src="shared-ui.js?v=886"></script>
+<script src="theme.js?v=886" defer></script>
+<script src="app-banner.js?v=886" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -826,45 +827,13 @@ renderNavLinks();
     notifyBtn.addEventListener("click", toggleNotify);
   }
 
-  function isRelevantToMe(table, row){
-    if(!row || !myMember) return false;
-    if(table === "expenses"){
-      return (row.payers || []).some(p => p.member_id === myMember.id) ||
-             (row.shares || []).some(s => s.member_id === myMember.id);
-    }
-    if(table === "repayments"){
-      return row.from_member === myMember.id || row.to_member === myMember.id;
-    }
-    return false;
-  }
-
   function notifyRelevantChange(table, payload){
-    const row = (payload.new && Object.keys(payload.new).length) ? payload.new : payload.old;
-    if(!isRelevantToMe(table, row)) return;
-    if(payload.eventType === "DELETE") return; // 刪除先不通知，避免太吵
-
-    // 1. 如果是操作者本人自己的動作，不發送遠端即時廣播通知給自己（避免雙重通知）
-    if(myMember && (row.created_by === myMember.id || (table === "repayments" && row.from_member === myMember.id))){
-      return;
-    }
-
-    const sym = currencyMeta(row.currency).symbol;
-    const actor = memberById[row.created_by] || t("summary.someone");
-    let title, body;
-    if(table === "expenses"){
-      title = payload.eventType === "INSERT" ? t("summary.notifExpenseNew") : t("summary.notifExpenseUpdate");
-      let cleanDesc = (row.description || "")
-        .replace(/<!--[\s\S]*?-->/gi, "")
-        .replace(/<!--AI_RECEIPT_DATA:[\s\S]*?-->/gi, "")
-        .replace(/AI_RECEIPT_DATA:[\s\S]*/gi, "")
-        .replace(/\s*\[xcur[:_][^\]]+\]/gi, "")
-        .trim();
-      cleanDesc = cleanDesc.split("\n")[0].replace(/\(AI自動拆單\)/g, "").trim() || t("summary.notifExpenseItemFallback");
-      body = t("summary.notifExpenseBody", {actor, desc: cleanDesc, amount: sym + formatAmt(row.amount)});
-    } else {
-      title = payload.eventType === "INSERT" ? t("summary.notifRepayNew") : t("summary.notifRepayUpdate");
-      body = t("summary.notifRepayBody", {from: memberById[row.from_member] || "?", to: memberById[row.to_member] || "?", amount: sym + formatAmt(row.amount)});
-    }
+    if(!myMember || payload.eventType === "DELETE") return; // 刪除先不通知，避免太吵
+    // 跟我無關、我自己記的、或只改了不重要的欄位（例如補收據照片）都不提示；
+    // 文字跟通知清單、推播共用 notif-text.js，寫出「我」分攤多少、要付給誰。
+    const res = splitbillNotifParams(table, payload.eventType, payload.new, payload.old, myMember.id, (id) => memberById[id]);
+    if(!res) return;
+    const { title, body } = splitbillNotifText(res.kind, res.params, getLang());
 
     showToast(title, body);
 
@@ -1407,7 +1376,7 @@ renderNavLinks();
     }
 
     // filter 一定要帶 group_id，不然即時同步會把「所有群組」的異動都廣播過來，
-    // 雖然畫面上會被 isRelevantToMe() 擋掉不顯示，但資料還是會傳到瀏覽器裡，
+    // 雖然畫面上會被 splitbillNotifParams() 擋掉不顯示，但資料還是會傳到瀏覽器裡，
     // 等於別的群組的支出內容在網路層/記憶體裡洩漏出來，不是真的隔離。
     sb.channel("splitbill-overview")
       .on("postgres_changes", { event: "*", schema: "public", table: "expenses", filter: `group_id=eq.${myMember.group_id}` }, (payload)=>{

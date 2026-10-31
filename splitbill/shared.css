@@ -12762,3 +12762,19 @@ html body table.debt-matrix:empty{
 @media (prefers-reduced-motion: reduce){
   html body .filter-hint[data-i18n="common.loading"], html body table.debt-matrix:empty, html body .skeleton{ animation:none; }
 }
+
+/* 通知清單：每種通知一個線條圖示（2026-10） */
+.notif-item::before{
+  content:""; flex:none; width:16px; height:16px; margin-top:1px;
+  background-color:var(--ink-soft);
+  -webkit-mask:var(--ico, var(--ico-bell)) center / contain no-repeat; mask:var(--ico, var(--ico-bell)) center / contain no-repeat;
+}
+.notif-item.unread::before{ background-color:var(--btn-primary); }
+.notif-kind-add{ --ico:var(--ico-receipt); }
+.notif-kind-edit{ --ico:var(--ico-pencil); }
+.notif-kind-repeat{ --ico:var(--ico-repeat); }
+.notif-kind-repay{ --ico:var(--ico-swap); }
+.notif-kind-remind{ --ico:var(--ico-bell); }
+.notif-item-body{ white-space:pre-line; }
+.notif-item-main{ text-align:left; }
+.notif-item .notif-unread-dot{ display:none; } /* 未讀改由圖示的顏色表示 */
