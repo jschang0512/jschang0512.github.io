@@ -20,21 +20,21 @@
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#7A6B9E">
+<meta name="theme-color" content="#F4F5F7">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Splitbill">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=883">
-<link rel="stylesheet" href="shared.css?v=883">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css?v=884">
+<link rel="stylesheet" href="shared.css?v=884">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="i18n.js?v=883"></script>
-<script src="currencies.js?v=883"></script>
-<script src="version.js?v=883"></script>
-<script src="shared-ui.js?v=883"></script>
-<script src="theme.js?v=883" defer></script>
-<script src="app-banner.js?v=883" defer></script>
+<script src="i18n.js?v=884"></script>
+<script src="currencies.js?v=884"></script>
+<script src="version.js?v=884"></script>
+<script src="shared-ui.js?v=884"></script>
+<script src="theme.js?v=884" defer></script>
+<script src="app-banner.js?v=884" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -64,11 +64,8 @@ if("serviceWorker" in navigator){
   if(!hasSplashed){
     splashEl.classList.add("pwa-splash-visible");
     sessionStorage.setItem("sb_splashed_in_session", "1");
-  } else {
-    splashTimer = setTimeout(()=>{
-      if(splashEl) splashEl.classList.add("pwa-splash-visible");
-    }, 300);
   }
+  // 換頁時不再蓋上整頁 splash：畫面骨架與讀取中的灰色佔位會直接顯示。
 
   window.hidePwaSplash = function(){
     if(splashTimer) clearTimeout(splashTimer);
@@ -91,13 +88,9 @@ if("serviceWorker" in navigator){
 <div class="wrap">
 
   <div class="app-header">
-    <div class="location-weather-row">
-      <div class="location-weather-badge hidden" id="locationCard">
-        <span id="locationText"></span>
-      </div>
-      <div class="location-weather-badge hidden" id="weatherCard">
-        <span id="weatherText"></span>
-      </div>
+    <div class="header-utility-row">
+      <div id="notificationBellContainer"></div>
+      <button class="btn secondary small" id="logoutBtn" data-i18n="common.logout">登出</button>
     </div>
     <div class="title-row">
       <svg class="app-logo" viewBox="0 0 512 512" aria-hidden="true">
@@ -111,7 +104,7 @@ if("serviceWorker" in navigator){
   </div>
 
   <div id="configWarning" class="card hidden">
-    <h2 data-i18n="configWarning.title">⚠️ 尚未設定 Supabase</h2>
+    <h2 data-i18n="configWarning.title">尚未設定 Supabase</h2>
     <p class="config-warning-text">
       打開這個檔案，把最下面 <code>&lt;script&gt;</code> 區塊裡的
       <code>SUPABASE_URL</code> 跟 <code>SUPABASE_ANON_KEY</code>
@@ -126,26 +119,23 @@ if("serviceWorker" in navigator){
         <span id="whoamiText"><b id="whoamiName"></b></span>
       </div>
       <div class="topbar-actions">
-        <div id="notificationBellContainer"></div>
-        <button type="button" class="icon-btn" id="openAchievementsModalBtn" data-i18n-title="currency.achievementsTitle" title="成就榜" aria-label="成就榜">🎖️</button>
         <a class="icon-btn" id="settingsBtn" href="settings.html" data-i18n-title="common.settings" title="設定" aria-label="設定">⚙️</a>
-        <button class="btn secondary small" id="logoutBtn" data-i18n="common.logout">登出</button>
       </div>
     </div>
 
     <div class="offline-banner hidden" id="offlineBanner">
-      <span class="offline-banner-text" data-i18n="shared.offlineBannerText">📴 目前離線，部分功能可能無法使用</span>
+      <span class="offline-banner-text" data-i18n="shared.offlineBannerText">目前離線，部分功能可能無法使用</span>
     </div>
 
     <div class="card email-reminder hidden" id="emailReminderCard">
-      <span class="email-reminder-text" data-i18n="currency.emailReminder">⚠️ 你還沒設定電子信箱，忘記密碼會沒辦法用</span>
+      <span class="email-reminder-text" data-i18n="currency.emailReminder">你還沒設定電子信箱，忘記密碼會沒辦法用</span>
       <button type="button" class="link-btn" id="emailReminderBtn" data-i18n="currency.goToSettings">去設定</button>
     </div>
 
     <div class="summary-grid-2">
       <!-- 1. 我的餘額：只顯示有交易紀錄過的幣別 -->
       <div class="card">
-        <h2 data-i18n="summary.myAmtTitle">💰 我的款項</h2>
+        <h2 data-i18n="summary.myAmtTitle">我的款項</h2>
         <div id="myAmtList">
           <div class="my-mini-balance"><span class="skeleton skeleton-name"></span><span class="skeleton skeleton-mybalance"></span></div>
           <div class="my-mini-balance"><span class="skeleton skeleton-name"></span><span class="skeleton skeleton-mybalance"></span></div>
@@ -155,7 +145,7 @@ if("serviceWorker" in navigator){
       <!-- 2. 淨餘額比較：長條圖，取代原本的文字總表 (在群組留言之上) -->
       <div class="card">
         <div class="chart-title-row">
-          <h2 data-i18n="summary.balanceCompareTitle">📊 淨餘額比較</h2>
+          <h2 data-i18n="summary.balanceCompareTitle">淨餘額比較</h2>
           <div class="chart-gran-select" id="balanceCurrencySelect">
             <button type="button" class="chart-gran-btn" id="balanceCurrencyBtn">
               <span id="balanceCurrencyText"></span>
@@ -173,20 +163,20 @@ if("serviceWorker" in navigator){
     <!-- 🔁 本月週期性支出總覽：純粹用 recurring_expenses 現有資料算出來，不用等
          自動記錄跑過才看得到，一打開總覽就知道每個月固定要繳多少、最近哪幾筆快到期 -->
     <div class="card hidden" id="recurringOverviewCard">
-      <h2 data-i18n="summary.recurringOverviewTitle">🔁 週期性支出總覽</h2>
+      <h2 data-i18n="summary.recurringOverviewTitle">週期性支出總覽</h2>
       <div id="recurringOverviewTotals" class="recurring-overview-totals"></div>
       <div id="recurringOverviewUpcoming" class="recurring-overview-upcoming"></div>
     </div>
 
     <!-- 3. 群組留言：只有同一個群組的人看得到，只能刪自己寫的 -->
         <div class="card">
-          <h2 data-i18n="summary.feedbackTitle">💬 群組留言</h2>
+          <h2 data-i18n="summary.feedbackTitle">群組留言</h2>
           <textarea id="feedbackInput" data-i18n-placeholder="summary.feedbackPlaceholder" placeholder="想跟這個群組的大家說什麼都可以打在這裡…" rows="3"></textarea>
           <button class="btn secondary small" id="feedbackSubmitBtn" data-i18n="summary.feedbackSubmit">送出</button>
           <div class="msg" id="feedbackMsg"></div>
 
           <button type="button" class="filter-toggle-head" id="feedbackToggleHead">
-            <span data-i18n="summary.feedbackViewToggle">💭 查看留言</span>
+            <span data-i18n="summary.feedbackViewToggle">查看留言</span>
             <span class="chevron">▾</span>
           </button>
           <div class="filter-body" id="feedbackBody">
@@ -200,6 +190,7 @@ if("serviceWorker" in navigator){
       <span class="quick-exp-fab-text" data-i18n="summary.quickExpFabText">記一筆</span>
     </button>
 
+    <div class="footer-location"><div class="location-weather-badge hidden" id="locationCard"><span id="locationText"></span></div></div>
     <div class="app-footer" id="appFooter"></div>
   </div><!-- /appScreen -->
 </div><!-- /wrap -->
@@ -232,13 +223,13 @@ if("serviceWorker" in navigator){
         <div class="exp-form-section-head">
           <span class="exp-form-section-icon">🍽️</span>
           <span class="exp-form-section-title" data-i18n="currency.contentSectionTitle">支出內容</span>
-          <button type="button" class="btn-ai-receipt quick-exp-ai-receipt-btn exp-form-section-action" id="quickExpAiReceiptBtn" data-i18n-title="currency.aiReceiptBtnTitle" title="拍照或上傳發票/收據自動辨識品項與拆單" data-i18n="currency.aiReceiptBtn">📷 AI 拆單</button>
+          <button type="button" class="btn-ai-receipt quick-exp-ai-receipt-btn exp-form-section-action" id="quickExpAiReceiptBtn" data-i18n-title="currency.aiReceiptBtnTitle" title="拍照或上傳發票/收據自動辨識品項與拆單" data-i18n="currency.aiReceiptBtn">AI 拆單</button>
         </div>
 
         <!-- 幣別智慧推薦與手動切換 -->
         <div class="quick-field-label-row">
           <label for="quickExpCurrencySelect" data-i18n="summary.currencyLabel">幣別</label>
-          <span class="quick-cur-auto-badge" id="quickCurAutoBadge" data-i18n="summary.currencyAutoBadge">🌍 依時區自動推薦</span>
+          <span class="quick-cur-auto-badge" id="quickCurAutoBadge" data-i18n="summary.currencyAutoBadge">依時區自動推薦</span>
         </div>
         <div class="select-wrap">
           <select id="quickExpCurrencySelect" class="quick-exp-currency-select"></select>
@@ -281,7 +272,7 @@ if("serviceWorker" in navigator){
             <button type="button" class="split-mode-btn" id="quickTaxHasYesBtn" data-tax-has="yes" data-i18n="currency.taxYes">有，要另外加</button>
           </div>
           <div class="exp-addons-body hidden" id="quickTaxBody">
-            <div class="exp-addons-hint" data-i18n="currency.taxHint">💡 若有餐廳服務費、消費稅或附加稅額，在此填入金額並選擇分配方式。系統會自動計算各成員最終應付金額。</div>
+            <div class="exp-addons-hint" data-i18n="currency.taxHint">若有餐廳服務費、消費稅或附加稅額，在此填入金額並選擇分配方式。系統會自動計算各成員最終應付金額。</div>
             <label class="exp-addon-label" data-i18n="currency.taxAmountLabel">服務費 / 稅額金額</label>
             <div class="input-calc-wrap exp-addon-calc-wrap">
               <input type="number" id="quickTaxAmount" data-i18n-placeholder="summary.taxAmountPlaceholder" placeholder="例如 85" min="0" step="1">
@@ -332,7 +323,7 @@ if("serviceWorker" in navigator){
         <div class="checks" id="quickExpParticipants"></div>
         <button type="button" class="link-btn" id="quickToggleAllParticipants" data-i18n="currency.deselectAll">取消全選</button>
 
-        <div class="exp-ratio-hint hidden" id="quickRatioHint" data-i18n="currency.ratioHint">💡 填每個人的「份數」就好，不用加總到 100（例如房間比例 2:1:1、食量默契 3:2:1），沒填或填 0 代表這個人不參與分攤。</div>
+        <div class="exp-ratio-hint hidden" id="quickRatioHint" data-i18n="currency.ratioHint">填每個人的「份數」就好，不用加總到 100（例如房間比例 2:1:1、食量默契 3:2:1），沒填或填 0 代表這個人不參與分攤。</div>
         <div class="amt-grid hidden" id="quickSharesRatio"></div>
 
         <!-- 個人自付/額外消費：跟上面「怎麼分攤」的勾選名單是分開的，
@@ -343,15 +334,15 @@ if("serviceWorker" in navigator){
             <span data-i18n="currency.addonsToggle">有人另外加點或自己買了什麼嗎？</span>
           </button>
           <div class="exp-addons-body hidden" id="quickAddonsBody">
-            <div class="exp-addons-hint" data-i18n="currency.addonsHint">💡 先設定誰有個人專屬消費（如個人加點、自購用品、私人支出等），系統會自動先扣除這些金額，剩下的部分才由其餘人平分。</div>
-            <div class="exp-addons-tax-warn hidden" id="quickAddonsTaxWarn" data-i18n="currency.addonsTaxWarn">⚠️ 下面請填「未稅」金額——服務費/稅會由系統依你選的方式自動計算。</div>
+            <div class="exp-addons-hint" data-i18n="currency.addonsHint">先設定誰有個人專屬消費（如個人加點、自購用品、私人支出等），系統會自動先扣除這些金額，剩下的部分才由其餘人平分。</div>
+            <div class="exp-addons-tax-warn hidden" id="quickAddonsTaxWarn" data-i18n="currency.addonsTaxWarn">下面請填「未稅」金額——服務費/稅會由系統依你選的方式自動計算。</div>
             <div class="filter-type-toggle" id="quickAddonModeToggle">
               <button type="button" class="split-mode-btn exp-addon-mode-btn active" data-addon-mode="custom" data-i18n="currency.addonModeCustom">每人自訂金額</button>
               <button type="button" class="split-mode-btn exp-addon-mode-btn" data-addon-mode="shared" data-i18n="currency.addonModeShared">新增共同品項</button>
             </div>
             <div class="amt-grid" id="quickAddonsList"></div>
             <div class="exp-shared-addons hidden" id="quickSharedAddonsWrap">
-              <div class="exp-shared-addon-hint" data-i18n="currency.sharedAddonHint">💡 適合「大家一起買、但不是每個人都有份」的情況（例如點了一輪酒，有一兩位不喝）：填入品項總價，再勾選要分攤的人，系統會平分給勾到的人。</div>
+              <div class="exp-shared-addon-hint" data-i18n="currency.sharedAddonHint">適合「大家一起買、但不是每個人都有份」的情況（例如點了一輪酒，有一兩位不喝）：填入品項總價，再勾選要分攤的人，系統會平分給勾到的人。</div>
               <div id="quickSharedAddonsList"></div>
               <button type="button" class="link-btn exp-shared-addon-add" id="quickSharedAddonAddBtn" data-i18n="currency.addSharedAddon">+ 新增共同品項</button>
             </div>
@@ -360,7 +351,7 @@ if("serviceWorker" in navigator){
           <div class="exp-addons-preview hidden" id="quickAddonsPreview"></div>
         </div>
 
-        <div class="exp-addons-tax-warn hidden" id="quickSharesTaxWarn" data-i18n="currency.addonsTaxWarn">⚠️ 下面請填「未稅」金額——服務費/稅會由系統依你選的方式自動計算。</div>
+        <div class="exp-addons-tax-warn hidden" id="quickSharesTaxWarn" data-i18n="currency.addonsTaxWarn">下面請填「未稅」金額——服務費/稅會由系統依你選的方式自動計算。</div>
         <div class="amt-grid hidden" id="quickSharesCustom"></div>
         <div class="sum-check" id="quickShareSumCheck"></div>
       </div>
@@ -421,25 +412,12 @@ if("serviceWorker" in navigator){
   </div>
 </div>
 
-<!-- 🎖️ 成就榜彈窗 (iOS 原生 Bottom Sheet) -->
-<div id="achievementsModal" class="calc-modal sb-bottom-sheet hidden">
-  <div class="calc-card achievements-modal-card">
-    <div class="sb-drag-handle"></div>
-    <div class="calc-header">
-      <h3 data-i18n="currency.achievementsTitle">🎖️ 成就榜</h3>
-      <button type="button" class="calc-close" id="achievementsCloseBtn" data-i18n-title="common.close" aria-label="關閉">✕</button>
-    </div>
-    <div class="achievements-list-scroll" id="achievementsListScroll">
-      <!-- 動態載入成就清單 -->
-    </div>
-  </div>
-</div>
 
 <div id="memberProfileModal" class="calc-modal sb-bottom-sheet hidden">
   <div class="calc-card member-profile-modal-card">
     <div class="sb-drag-handle"></div>
     <div class="calc-header">
-      <h3 data-i18n="currency.memberProfileTitle">👤 成員資料</h3>
+      <h3 data-i18n="currency.memberProfileTitle">成員資料</h3>
       <button type="button" class="calc-close" id="memberProfileCloseBtn" data-i18n-title="common.close" aria-label="關閉">✕</button>
     </div>
     <div class="member-profile-body">
@@ -447,7 +425,6 @@ if("serviceWorker" in navigator){
       <div class="member-profile-name" id="memberProfileName"></div>
       <div class="member-profile-relation hidden" id="memberProfileRelation"></div>
       <div class="member-profile-payment-info hidden" id="memberProfilePaymentInfo"></div>
-      <div class="member-profile-badges" id="memberProfileBadges"></div>
     </div>
   </div>
 </div>
@@ -1275,7 +1252,6 @@ renderNavLinks();
       if(typeof initOfflineBanner === "function") initOfflineBanner();
 
       window.memberRows = memberRows;
-      initAchievementsModal();
       initQuickExpenseModal();
 
       // 同時並行讀取餘額、支出與還款紀錄（大幅縮短載入時間）
@@ -1471,75 +1447,6 @@ renderNavLinks();
         }
       }
     });
-  }
-
-  // ============================================================
-  // 🎖️ 成就榜管理 (Achievements Wall Management)
-  // ============================================================
-  function initAchievementsModal(){
-    const openBtn = document.getElementById("openAchievementsModalBtn");
-    const modal = document.getElementById("achievementsModal");
-    const closeBtn = document.getElementById("achievementsCloseBtn");
-    const listScroll = document.getElementById("achievementsListScroll");
-
-    if(!modal) return;
-
-    function renderAchievementsWall(){
-      if(!listScroll) return;
-      const badges = window.BADGES_CATALOG || [];
-      const expList = window.cachedExpenses || [];
-      const repList = window.cachedRepayments || [];
-      const members = (memberRows && memberRows.length) ? memberRows : (MEMBERS || []);
-
-      const html = badges.map(b => {
-        const unlockedHolders = members.filter(m => {
-          try { return b.check(m, expList, repList, members); } catch(e){ return false; }
-        });
-
-        const isUnlocked = unlockedHolders.length > 0;
-        const holdersHtml = isUnlocked
-          ? unlockedHolders.map(m => `
-              <span class="achievement-holder-chip">
-                ${renderAvatarHTML(m, "avatar-xs")}
-                <span>${escapeHtml(m.name || t("common.memberFallback"))}</span>
-              </span>
-            `).join("")
-          : `<span class="achievement-desc" style="color:var(--ink-soft);font-style:italic;">${t("summary.achievementLocked")}</span>`;
-
-        return `
-          <div class="achievement-card ${isUnlocked ? 'unlocked' : ''}">
-            <div class="achievement-icon-wrap">${b.icon}</div>
-            <div class="achievement-info-col">
-              <div class="achievement-name">${escapeHtml(b.name)}</div>
-              <div class="achievement-desc">${escapeHtml(b.desc)}</div>
-              <div class="achievement-holders">${holdersHtml}</div>
-            </div>
-          </div>
-        `;
-      }).join("");
-
-      listScroll.innerHTML = html;
-    }
-
-    function openModal(){
-      renderAchievementsWall();
-      modal.classList.remove("hidden");
-      modal.classList.add("show");
-    }
-
-    function closeModal(){
-      modal.classList.remove("show");
-      setTimeout(()=> modal.classList.add("hidden"), 200);
-    }
-
-    if(openBtn) openBtn.addEventListener("click", openModal);
-    if(closeBtn) closeBtn.addEventListener("click", closeModal);
-    if(modal){
-      modal.addEventListener("click", (e) => {
-        if(e.target === modal) closeModal();
-      });
-    }
-    window.openAchievementsModal = openModal;
   }
 
   // ============================================================

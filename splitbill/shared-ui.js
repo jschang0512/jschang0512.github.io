@@ -386,7 +386,7 @@ function showToast(title, body, actionLabel, actionFn){
 // 👤 成員個人資料彈窗（點浮動小卡片本身觸發，見上面 initFloatingAvatarTooltip）
 // 不用另外寫一套 initXXX(deps) 在每個頁面手動呼叫初始化——直接讀
 // window.cachedExpenses/cachedRepayments/allGroupExpenses/allGroupRepayments/
-// memberRows/myMember 這些頁面本來就會設定好的全域變數，跟 getMemberBadges()
+// memberRows/myMember 這些頁面本來就會設定好的全域變數，跟其他共用函式
 // 自己讀取全域變數的既有寫法一致。currency.html、summary.html 只要各自
 // 有 #memberProfileModal 這個彈窗骨架就會動，不用額外接線。
 // ============================================================
@@ -509,14 +509,6 @@ async function showMemberProfileModal(memberId){
     } else {
       paymentInfoEl.classList.add("hidden");
     }
-  }
-
-  const badgesEl = document.getElementById("memberProfileBadges");
-  if(badgesEl){
-    const badges = window.getMemberBadges ? window.getMemberBadges(memberId, expenses, repayments, memberRows) : [];
-    badgesEl.innerHTML = badges.length > 0
-      ? badges.map(b => `<span class="sb-afc-badge-chip" title="${escapeHtml(b.desc)}">${b.icon} ${escapeHtml(b.name)}</span>`).join("")
-      : `<span class="filter-hint">${t("shared.noBadgesUnlocked")}</span>`;
   }
 
   modal.classList.remove("hidden");
@@ -881,11 +873,7 @@ async function initLocationWeatherWidget(onDetected){
   if(!countryCode) return null;
 
   renderLocationBadge(composeLocationLabel(city, district));
-  let weather = null;
-  if(lat !== undefined && lon !== undefined){
-    weather = await fetchOpenMeteoWeather(lat, lon);
-    renderWeatherBadge(weather);
-  }
+  const weather = null; // 天氣徽章已移除（2026-10），不再查 Open-Meteo
 
   const info = { lat, lon, countryCode, city, district, countryName };
   try {
@@ -897,3 +885,80 @@ async function initLocationWeatherWidget(onDetected){
 }
 window.initLocationWeatherWidget = initLocationWeatherWidget;
 window.initNotificationBell = initNotificationBell;
+
+// ============================================================
+// 💹 金額跳動：餘額數字從舊值滾到新值（記一筆、還款、即時同步之後）。
+// 純顯示效果——只在畫面已經寫好新數字之後，暫時把那段數字文字從舊值補間
+// 到新值，結束時一定停在原本寫進去的文字，不讀也不改任何資料。
+// 使用者開啟「減少動態效果」時完全不跑。
+// ============================================================
+(function initAmountTween(){
+  if(typeof window === "undefined" || !window.MutationObserver) return;
+  if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const SEL = ".my-balance-amt, .my-mini-balance .amt";
+  const NUM_RE = /-?\d[\d,]*(?:\.\d+)?/;
+  const lastValue = new Map();   // key -> number last shown
+  const running = new WeakSet();
+
+  function keyOf(el){
+    if(el.id) return "#" + el.id;
+    const box = el.closest(".my-mini-balance");
+    const label = box ? (box.textContent || "").replace(NUM_RE, "").replace(/\s+/g, "").slice(0, 24) : "";
+    return "mini:" + label;
+  }
+  function numberNode(el){
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    let n;
+    while((n = walker.nextNode())){ if(NUM_RE.test(n.nodeValue)) return n; }
+    return null;
+  }
+  function tween(node, from, to, finalText, match){
+    const decimals = (match.split(".")[1] || "").length;
+    const fmt = (v) => v.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    const t0 = performance.now(), dur = 480;
+    running.add(node);
+    function step(now){
+      if(!node.isConnected || document.hidden){ node.nodeValue = finalText; running.delete(node); return; }
+      const p = Math.min(1, (now - t0) / dur);
+      const e = 1 - Math.pow(1 - p, 3);
+      if(p < 1){
+        node.nodeValue = finalText.replace(NUM_RE, fmt(from + (to - from) * e));
+        requestAnimationFrame(step);
+      } else {
+        node.nodeValue = finalText;
+        running.delete(node);
+      }
+    }
+    requestAnimationFrame(step);
+  }
+  function check(el){
+    const node = numberNode(el);
+    if(!node || running.has(node)) return;
+    const text = node.nodeValue;
+    const match = text.match(NUM_RE)[0];
+    const value = parseFloat(match.replace(/,/g, ""));
+    if(!isFinite(value)) return;
+    const key = keyOf(el);
+    const prev = lastValue.get(key);
+    lastValue.set(key, value);
+    if(prev === undefined || prev === value || document.hidden) return;
+    tween(node, prev, value, text, match);
+  }
+  let queued = false;
+  const pending = new Set();
+  const observer = new MutationObserver((records) => {
+    for(const r of records){
+      const target = r.target.nodeType === 3 ? r.target.parentElement : r.target;
+      if(!target) continue;
+      const hit = target.closest ? target.closest(SEL) : null;
+      if(hit) pending.add(hit);
+      if(target.querySelectorAll) target.querySelectorAll(SEL).forEach(el => pending.add(el));
+    }
+    if(!queued && pending.size){
+      queued = true;
+      setTimeout(() => { queued = false; pending.forEach(check); pending.clear(); }, 0);
+    }
+  });
+  function start(){ observer.observe(document.body, { childList: true, subtree: true, characterData: true }); document.querySelectorAll(SEL).forEach(check); }
+  if(document.body) start(); else document.addEventListener("DOMContentLoaded", start);
+})();

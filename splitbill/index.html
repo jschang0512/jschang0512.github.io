@@ -67,7 +67,7 @@
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#7A6B9E">
+<meta name="theme-color" content="#F4F5F7">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Splitbill">
@@ -98,17 +98,17 @@
 }
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=883">
-<link rel="stylesheet" href="shared.css?v=883">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css?v=884">
+<link rel="stylesheet" href="shared.css?v=884">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad&render=explicit" async defer></script>
-<script src="i18n.js?v=883"></script>
-<script src="currencies.js?v=883"></script>
-<script src="version.js?v=883"></script>
-<script src="shared-ui.js?v=883"></script>
-<script src="theme.js?v=883" defer></script>
-<script src="app-banner.js?v=883" defer></script>
+<script src="i18n.js?v=884"></script>
+<script src="currencies.js?v=884"></script>
+<script src="version.js?v=884"></script>
+<script src="shared-ui.js?v=884"></script>
+<script src="theme.js?v=884" defer></script>
+<script src="app-banner.js?v=884" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -147,11 +147,8 @@ if("serviceWorker" in navigator){
   if(!hasSplashed){
     splashEl.classList.add("pwa-splash-visible");
     sessionStorage.setItem("sb_splashed_in_session", "1");
-  } else {
-    splashTimer = setTimeout(()=>{
-      if(splashEl) splashEl.classList.add("pwa-splash-visible");
-    }, 300);
   }
+  // 換頁時不再蓋上整頁 splash：畫面骨架與讀取中的灰色佔位會直接顯示。
 
   window.hidePwaSplash = function(){
     if(splashTimer) clearTimeout(splashTimer);

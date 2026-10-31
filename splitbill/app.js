@@ -831,16 +831,6 @@
 
     window.memberRows = memberRows;
     initFilterMultiSelects(memberRows);
-    // 成就榜已經拆成獨立的 ES module（achievements.js），用動態 import 載入、
-    // 不用靜態 <script> 標籤，也不用等載入順序——呼叫到才抓檔案。getState()
-    // 每次都重新讀一次目前的值，不是傳當下的快照，才不會使用者點開成就榜
-    // 時看到剛登入那一刻的舊資料。
-    import("./achievements.js?v=" + APP_VERSION).then(m => {
-      m.initAchievementsModal({
-        sb,
-        getState: () => ({ myMember, MEMBERS, memberRows, cachedExpenses, cachedRepayments, chartExpensesCache })
-      });
-    }).catch(e => console.error("載入成就榜模組失敗：", e));
 
     // 新增支出／還款的付款人・分攤人・還款人下拉/勾選清單，只列出「還在群組裡」的人——
     // 已退出/帳號已銷毀的人不該被選成新支出的付款人。編輯舊紀錄時如果剛好牽涉到
@@ -4162,7 +4152,7 @@
   }
 
   function fireConfetti(){
-    const colors = ["#C2445F","#7A6B9E","#2F8F4E","#F5C2CE"];
+    const colors = ["#BC4B55","#636AB1","#3D8454","#E4E4EA"];
     const container = document.createElement("div");
     container.className = "sb-confetti";
     for(let i=0;i<26;i++){
@@ -5703,7 +5693,7 @@ function getSettlementTheme(){
     headerText: "#48484A",
     cellBg: "#FFFFFF",
     selfBg: "#FAF9FA",
-    selfText: "rgba(122,107,158,0.35)",
+    selfText: "rgba(99,106,177,0.35)",
     accent: "#544388",
     footerText: "#726196"
   };
@@ -5859,7 +5849,7 @@ function renderSettlementImageCanvas(){
         ctx.fillStyle = heat.bg;
         ctx.fillRect(colX(c), y, cellColW, dataRowH);
         ctx.fillStyle = heat.fg;
-        ctx.font = `${heat.fontWeight} 11px 'JetBrains Mono', monospace`;
+        ctx.font = `${heat.fontWeight} 11px 'Noto Sans TC', sans-serif`;
         ctx.fillText(settlementCanvasTruncate(ctx, formatAmt(amt), cellColW - 10), cx, cy + 1);
       } else {
         ctx.fillStyle = T.cellBg;
@@ -5870,7 +5860,7 @@ function renderSettlementImageCanvas(){
     ctx.fillStyle = T.headerBg;
     ctx.fillRect(totalColX, y, totalColW, dataRowH);
     ctx.fillStyle = T.headerText;
-    ctx.font = "700 11.5px 'JetBrains Mono', monospace";
+    ctx.font = "700 11.5px 'Noto Sans TC', sans-serif";
     ctx.fillText(rowTotal > 0.05 ? formatAmt(rowTotal) : "0", totalColX + totalColW / 2, cy + 1);
   });
 
@@ -5887,7 +5877,7 @@ function renderSettlementImageCanvas(){
       if(creditorId === debtorId) return;
       colTotal += (owed[creditorId] && owed[creditorId][debtorId]) || 0;
     });
-    ctx.font = "700 11px 'JetBrains Mono', monospace";
+    ctx.font = "700 11px 'Noto Sans TC', sans-serif";
     ctx.fillText(colTotal > 0.05 ? formatAmt(colTotal) : "0", colX(c) + cellColW / 2, footY + footRowH / 2 + 1);
   });
 
