@@ -120,7 +120,13 @@ CRITICAL TRANSLATION & NAMING GUIDELINES:
    f. IGNORE handwriting that is not a quantity: table numbers (內用桌號 / 桌號 / 外帶 boxes), phone numbers, addresses, opening hours, notes.
    g. qty = the counted marks. Set totalAmount = sum of price × qty. If a total is handwritten on the sheet, put it in "writtenTotal" (otherwise 0).
    h. For every item add "mark": exactly what is written, using only these characters for tally strokes: 一 丅 下 止 正 (write a T shape as 丅), or the digits as written (e.g. '丅', '正一', '2', '一'), and "uncertain": true when the mark is faint, sits between two rows, or its stroke count is unclear (otherwise false).
-   i. storeName comes from the sheet's header; date and time are usually absent (empty strings).`;
+   i. storeName comes from the sheet's header; date and time are usually absent (empty strings).
+9. APP SCREENSHOTS: When the image is a phone screenshot of an app order or trip (food delivery such as Uber Eats / foodpanda, shopping apps, ride-hailing such as Uber / Grab / taxi apps, booking confirmations), treat it as docType "receipt" and:
+   a. Ignore phone and app chrome: status bar clock and battery, navigation bars, buttons, maps, ads, ratings, "order again" or recommended items.
+   b. items = the ordered products with their unit price and quantity (lines like '2x' or '×2' are quantities). For a ride, use a single item such as 'Uber 車資 (pickup → drop-off)' with the fare.
+   c. Delivery fee, service fee, small-order fee, platform fee, bag fee and tips go into serviceCharge (sum them). Coupons, promotions, membership discounts and vouchers go into discount as a positive number.
+   d. totalAmount = the final amount actually charged (the 'Total' / '合計' / '實付金額' line), after fees and discounts.
+   e. storeName = the restaurant / shop / service name (e.g. '麥當勞 信義店 (Uber Eats)'); date and time = the order or trip time if shown.`;
 
 const CANDIDATE_MODELS = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-flash-latest"];
 // openrouter/free 每次隨機分配免費模型，有些會回傳空殼——空殼時多抽幾次免費的；

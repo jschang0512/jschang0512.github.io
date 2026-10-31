@@ -26,17 +26,17 @@
 <meta name="apple-mobile-web-app-title" content="Splitbill">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=892">
-<link rel="stylesheet" href="shared.css?v=892">
+<link rel="stylesheet" href="theme.css?v=893">
+<link rel="stylesheet" href="shared.css?v=893">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
-<script src="i18n.js?v=892"></script>
-<script src="currencies.js?v=892"></script>
-<script src="version.js?v=892"></script>
-<script src="notif-text.js?v=892"></script>
-<script src="shared-ui.js?v=892"></script>
-<script src="theme.js?v=892" defer></script>
-<script src="app-banner.js?v=892" defer></script>
+<script src="i18n.js?v=893"></script>
+<script src="currencies.js?v=893"></script>
+<script src="version.js?v=893"></script>
+<script src="notif-text.js?v=893"></script>
+<script src="shared-ui.js?v=893"></script>
+<script src="theme.js?v=893" defer></script>
+<script src="app-banner.js?v=893" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -402,10 +402,11 @@ if("serviceWorker" in navigator){
           <div class="settings-changelog-wrap settings-changelog-wrap-mt">
             <div class="settings-changelog-header" id="settingsChangelogHeader">✨ v642 最新更新項目：</div>
             <ul class="settings-changelog settings-changelog-list">
-              <li data-i18n="settings.changelog1">「支出」「記一筆」「AI 拆單」三個記帳表單改成一步一步填寫，一次只需要處理一個區塊</li>
-              <li data-i18n="settings.changelog2">「有另外加服務費或稅嗎」改成清楚的「有／沒有」按鈕，不用再猜要不要點開</li>
-              <li data-i18n="settings.changelog3">修正歷史紀錄「✎ 編輯匯率」按鈕點了沒反應的問題</li>
-              <li data-i18n="settings.changelog4">簡化進階篩選，整合重複的篩選項目</li>
+              <li data-i18n="settings.changelog1">AI 拆單可直接讀取台灣電子發票的 QR code，品項與金額照發票，不經 AI</li>
+              <li data-i18n="settings.changelog2">AI 拆單支援手寫劃記的點菜單（正字自動換算份數）和外送、叫車 App 的訂單截圖</li>
+              <li data-i18n="settings.changelog3">通知改寫：直接寫出你分攤多少、要付給誰、改了什麼，並依你的語言顯示；只補收據照片不再通知</li>
+              <li data-i18n="settings.changelog4">「我的款項」上方會提示未讀通知；AI 拆單預設保留收據原圖</li>
+              <li data-i18n="settings.changelog5">全新簡潔介面：線條圖示、更清楚的紅綠色與統一的藍色 logo</li>
             </ul>
           </div>
         </div>

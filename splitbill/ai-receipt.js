@@ -129,6 +129,40 @@
     return hasItems || receiptNum(p.totalAmount) > 0;
   }
 
+// 電子發票 QR 讀到的內容轉成跟 AI 回傳一樣的結構：負數品項（折價券、折讓）算成折扣，
+  // 非整數數量（秤重商品）併成一行，右邊 QR 沒讀到時差額列成「其他品項」，總額永遠照發票。
+  function eInvoiceToReceipt(inv){
+    const items = [];
+    let discount = 0;
+    for(const it of inv.items){
+      if(it.price < 0){ discount += Math.abs(it.price * it.qty); continue; }
+      if(Number.isInteger(it.qty) && it.qty > 0) items.push({ name: it.name, price: it.price, qty: it.qty });
+      else items.push({ name: it.name + " ×" + it.qty, price: Math.round(it.price * it.qty * 100) / 100, qty: 1 });
+    }
+    const itemsSum = items.reduce((acc, it) => acc + it.price * it.qty, 0);
+    const missing = Math.round((inv.totalAmount + discount - itemsSum) * 100) / 100;
+    let partial = false;
+    if(!items.length){
+      items.push({ name: t("currency.einvoiceTotalItem"), price: inv.totalAmount, qty: 1 });
+    } else if(missing > 0.5){
+      items.push({ name: t("currency.einvoiceOtherItems"), price: missing, qty: 1 });
+      partial = true;
+    }
+    return {
+      docType: "einvoice",
+      storeName: t("currency.einvoiceStoreName", { id: inv.sellerId }),
+      currencyCode: "TWD",
+      date: inv.date,
+      time: "",
+      subtotal: 0, serviceCharge: 0, tax: 0,
+      discount,
+      totalAmount: inv.totalAmount,
+      items,
+      invoiceNumber: inv.invoiceNumber,
+      einvoicePartial: partial
+    };
+  }
+
   function getPersonalGeminiKey(){
     return (localStorage.getItem("splitbill_gemini_api_key") || "").trim();
   }
@@ -221,7 +255,13 @@ CRITICAL TRANSLATION & NAMING GUIDELINES:
    f. IGNORE handwriting that is not a quantity: table numbers (內用桌號 / 桌號 / 外帶 boxes), phone numbers, addresses, opening hours, notes.
    g. qty = the counted marks. Set totalAmount = sum of price × qty. If a total is handwritten on the sheet, put it in "writtenTotal" (otherwise 0).
    h. For every item add "mark": exactly what is written, using only these characters for tally strokes: 一 丅 下 止 正 (write a T shape as 丅), or the digits as written (e.g. '丅', '正一', '2', '一'), and "uncertain": true when the mark is faint, sits between two rows, or its stroke count is unclear (otherwise false).
-   i. storeName comes from the sheet's header; date and time are usually absent (empty strings).`;
+   i. storeName comes from the sheet's header; date and time are usually absent (empty strings).
+9. APP SCREENSHOTS: When the image is a phone screenshot of an app order or trip (food delivery such as Uber Eats / foodpanda, shopping apps, ride-hailing such as Uber / Grab / taxi apps, booking confirmations), treat it as docType "receipt" and:
+   a. Ignore phone and app chrome: status bar clock and battery, navigation bars, buttons, maps, ads, ratings, "order again" or recommended items.
+   b. items = the ordered products with their unit price and quantity (lines like '2x' or '×2' are quantities). For a ride, use a single item such as 'Uber 車資 (pickup → drop-off)' with the fare.
+   c. Delivery fee, service fee, small-order fee, platform fee, bag fee and tips go into serviceCharge (sum them). Coupons, promotions, membership discounts and vouchers go into discount as a positive number.
+   d. totalAmount = the final amount actually charged (the 'Total' / '合計' / '實付金額' line), after fees and discounts.
+   e. storeName = the restaurant / shop / service name (e.g. '麥當勞 信義店 (Uber Eats)'); date and time = the order or trip time if shown.`;
 
     // 1. 支援 OpenRouter (sk-or-...)
     if(activeKey.startsWith("sk-or-")){
@@ -1340,7 +1380,15 @@ CRITICAL TRANSLATION & NAMING GUIDELINES:
           const pureBase64 = base64Data.split(",")[1];
           currentReceiptImageBase64 = pureBase64;
 
-          const parsed = await parseReceiptWithGemini(pureBase64, "image/jpeg", key, deps.sb);
+          // 台灣電子發票：照片裡讀得到 QR code 就直接照發票（準確、免費、不送 AI），讀不到才交給 AI
+          let einvoice = null;
+          try {
+            await import("./einvoice.js?v=" + (typeof APP_VERSION !== "undefined" ? APP_VERSION : ""));
+            einvoice = await self.splitbillReadEInvoice(offCanvas);
+          } catch(e){
+            console.warn("電子發票模組載入失敗，改用 AI：", e);
+          }
+          const parsed = einvoice ? eInvoiceToReceipt(einvoice) : await parseReceiptWithGemini(pureBase64, "image/jpeg", key, deps.sb);
 
           // 品質檢查：AI 沒有丟出例外不代表真的辨識到東西——照片太模糊、
           // 拍到跟收據無關的畫面時，常常會回傳「有結構但是空的」JSON
@@ -1515,6 +1563,23 @@ CRITICAL TRANSLATION & NAMING GUIDELINES:
 
       const activeMembers = (deps.getState().MEMBERS || []).filter(m => deps.showLeftMembers || !m.left_at);
       const curSym = getReceiptSymbol();
+
+      // 0. 資料來源提示：電子發票 QR 讀到的明細，金額直接照發票
+      let sourceNoteEl = document.getElementById("aiSourceNote");
+      if(currentReceiptData.docType === "einvoice"){
+        if(!sourceNoteEl && itemsListEl && itemsListEl.parentNode){
+          sourceNoteEl = document.createElement("div");
+          sourceNoteEl.id = "aiSourceNote";
+          sourceNoteEl.className = "ai-source-note";
+          itemsListEl.parentNode.insertBefore(sourceNoteEl, itemsListEl);
+        }
+        if(sourceNoteEl){
+          sourceNoteEl.textContent = t(currentReceiptData.einvoicePartial ? "currency.einvoiceNotePartial" : "currency.einvoiceNote", { no: currentReceiptData.invoiceNumber || "" });
+          sourceNoteEl.hidden = false;
+        }
+      } else if(sourceNoteEl){
+        sourceNoteEl.hidden = true;
+      }
 
       // 1. 可編輯店家名稱
       if(storeInputEl){
