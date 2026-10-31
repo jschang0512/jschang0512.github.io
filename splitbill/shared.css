@@ -1393,7 +1393,7 @@ button.dd-btn {
   color:#FFFFFF !important;
 }
 :root[data-theme="dark"] .split-mode-btn.active{
-  background:linear-gradient(135deg, #8A7AB5, #67539B) !important;
+  background:var(--btn-primary) !important;
   color:#FFFFFF !important;
   border:1px solid rgba(255, 255, 255, 0.25) !important;
   box-shadow:0 4px 14px rgba(0, 0, 0, 0.45) !important;
@@ -4023,7 +4023,7 @@ button.dd-btn {
   box-shadow:0 4px 14px rgba(122,107,158,.3);
 }
 .btn-repay-direct:hover{
-  background:linear-gradient(135deg, #8B7BB0, #6C5AA6);
+  background:var(--btn-primary);
   box-shadow:0 6px 20px rgba(122,107,158,.45);
   transform:translateY(-1px);
 }
@@ -4155,7 +4155,7 @@ button.dd-btn {
   justify-content:center;
   padding:6px 12px;
   border-radius:10px;
-  background:linear-gradient(135deg, var(--btn-primary), #63528A);
+  background:var(--btn-primary);
   color:#fff !important;
   font-size:11.5px;
   font-weight:700;
@@ -12610,10 +12610,10 @@ html body .app-install-banner{ background:var(--card); border:1px solid var(--ca
 /* balance banners keep their meaning (owed / owing / settled) as flat solids, not gradients */
 html body .my-balance, html body .my-balance.zero{ background:#3B3A47; }
 html body .my-balance.pos, html body .my-mini-balance.pos{ background:#1D8446; }
-html body .my-balance.neg, html body .my-mini-balance.neg{ background:#C4364F; }
+html body .my-balance.neg, html body .my-mini-balance.neg{ background:#BC4B55; }
 :root[data-theme="dark"] body .my-balance, :root[data-theme="dark"] body .my-balance.zero{ background:#2E2D38; }
 :root[data-theme="dark"] body .my-balance.pos, :root[data-theme="dark"] body .my-mini-balance.pos{ background:#1F7442; }
-:root[data-theme="dark"] body .my-balance.neg, :root[data-theme="dark"] body .my-mini-balance.neg{ background:#AE2E46; }
+:root[data-theme="dark"] body .my-balance.neg, :root[data-theme="dark"] body .my-mini-balance.neg{ background:#A8464F; }
 
 /* login card shares the app's panel radius */
 html body .login-card{ border-radius:16px; }

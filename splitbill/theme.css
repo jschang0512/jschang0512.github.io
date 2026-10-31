@@ -20,18 +20,18 @@
   --accent:#D9536D;
   --accent-text:#B3354F;
   --positive-text:#1D8446;
-  --negative-text:#C4364F;
+  --negative-text:#BC4B55;
   --input-bg:#FFFFFF;
-  --btn-primary:#5A4BB5;
+  --btn-primary:#636AB1;
   --btn-primary-fg:#FFFFFF;
-  --gold:#5A4BB5;
+  --gold:#636AB1;
   --btn-solid:#1C1B22;
   --btn-solid-fg:#FFFFFF;
-  --logo-1:#5A4BB5;
-  --logo-2:rgba(90, 75, 181, 0.76);
-  --logo-3:rgba(90, 75, 181, 0.52);
-  --logo-grad-a:#5A4BB5;
-  --logo-grad-b:#8E7FE0;
+  --logo-1:#636AB1;
+  --logo-2:rgba(99, 106, 177, 0.76);
+  --logo-3:rgba(99, 106, 177, 0.52);
+  --logo-grad-a:#636AB1;
+  --logo-grad-b:#9298D2;
   --hero-fg:#1C1B22;
   --hero-fg-soft:#5E5D6A;
   --glass-shadow:0 1px 2px rgba(24, 22, 36, 0.04);
@@ -39,7 +39,7 @@
   --glow-b:transparent;
   --glow-c:transparent;
   --font-ui:"Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
-  --tint:#F1F0FA;
+  --tint:#EFF0F8;
 }
 
 :root[data-theme="dark"]{
@@ -58,25 +58,25 @@
   --accent:#F07B92;
   --accent-text:#F590A4;
   --positive-text:#55C47F;
-  --negative-text:#F2788D;
+  --negative-text:#E8868F;
   --input-bg:#15151A;
-  --btn-primary:#6E5FD8;
+  --btn-primary:#636AB1;
   --btn-primary-fg:#FFFFFF;
-  --gold:#A99DF2;
+  --gold:#AEB3E4;
   --btn-solid:#33323D;
   --btn-solid-fg:#F2F2F5;
-  --logo-1:#A99DF2;
-  --logo-2:rgba(169, 157, 242, 0.8);
-  --logo-3:rgba(169, 157, 242, 0.6);
-  --logo-grad-a:#6E5FD8;
-  --logo-grad-b:#A99DF2;
+  --logo-1:#AEB3E4;
+  --logo-2:rgba(174, 179, 228, 0.8);
+  --logo-3:rgba(174, 179, 228, 0.6);
+  --logo-grad-a:#636AB1;
+  --logo-grad-b:#AEB3E4;
   --hero-fg:#F2F2F5;
   --hero-fg-soft:#A6A5B1;
   --glass-shadow:none;
   --glow-a:transparent;
   --glow-b:transparent;
   --glow-c:transparent;
-  --tint:#24223A;
+  --tint:#22253A;
 }
 
 *{box-sizing:border-box;}
