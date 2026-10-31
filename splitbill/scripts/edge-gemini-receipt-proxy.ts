@@ -123,12 +123,28 @@ CRITICAL TRANSLATION & NAMING GUIDELINES:
    i. storeName comes from the sheet's header; date and time are usually absent (empty strings).`;
 
 const CANDIDATE_MODELS = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-flash-latest"];
+// openrouter/free 每次隨機分配免費模型，有些會回傳空殼——空殼時多抽幾次免費的；
+// 因為空殼而重試時不升級到付費的 openrouter/auto（auto 只在免費模型都連不上時才用）。
 const OPENROUTER_MODELS = [
   "google/gemma-4-31b-it:free",
   "google/gemma-4-26b-a4b-it:free",
   "openrouter/free",
+  "openrouter/free",
+  "openrouter/free",
   "openrouter/auto",
 ];
+
+function receiptNum(v: unknown): number {
+  if (typeof v === "number") return isFinite(v) ? v : 0;
+  const n = Number(String(v ?? "").replace(/[^0-9.\-]/g, ""));
+  return isFinite(n) ? n : 0;
+}
+
+// 至少要有一個有價格的品項或一個總額，才算辨識到東西
+function isUsableReceipt(p: Record<string, unknown>): boolean {
+  const items = Array.isArray(p?.items) ? (p.items as Record<string, unknown>[]) : [];
+  return items.some((it) => receiptNum(it?.price ?? it?.amount ?? it?.total) > 0) || receiptNum(p?.totalAmount) > 0;
+}
 
 // base64 圖片上限（約略對應原圖 8MB 左右），擋濫用/異常大檔案，避免
 // 有心人拿這支當免費影像轉發服務亂打。
@@ -141,7 +157,11 @@ function parseJsonReply(rawText: string): Record<string, unknown> {
 
 async function callOpenRouter(pureBase64: string, mimeType: string): Promise<Record<string, unknown>> {
   let lastErr: Error | null = null;
+  let lastEmpty: Record<string, unknown> | null = null;
+  const started = Date.now();
   for (const model of OPENROUTER_MODELS) {
+    // 空殼重試有時間上限：免費模型一次可能要一分鐘，Edge Function 有執行時間上限
+    if (lastEmpty && (model === "openrouter/auto" || Date.now() - started > 90_000)) break;
     try {
       const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
@@ -171,12 +191,16 @@ async function callOpenRouter(pureBase64: string, mimeType: string): Promise<Rec
         continue;
       }
       const data = await res.json();
-      return parseJsonReply(data?.choices?.[0]?.message?.content);
+      const parsed = parseJsonReply(data?.choices?.[0]?.message?.content);
+      if (isUsableReceipt(parsed)) return parsed;
+      console.error(`[gemini-receipt-proxy] openrouter model=${model} (${data?.model || "?"}) returned no items/total:`, JSON.stringify(parsed).slice(0, 300));
+      lastEmpty = parsed;
     } catch (e) {
       console.error(`[gemini-receipt-proxy] openrouter model=${model} threw:`, e);
       lastErr = e as Error;
     }
   }
+  if (lastEmpty) return lastEmpty;
   throw lastErr || new Error("OpenRouter AI 辨識失敗，請稍候重試。");
 }
 

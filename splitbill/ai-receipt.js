@@ -116,6 +116,19 @@
     return n || null;
   }
 
+// AI 回傳的金額有時會帶符號或文字（"NT$100"、"100元"），統一抽出數字。
+  function receiptNum(v){
+    if(typeof v === "number") return isFinite(v) ? v : 0;
+    const n = Number(String(v == null ? "" : v).replace(/[^0-9.\-]/g, ""));
+    return isFinite(n) ? n : 0;
+  }
+  // 至少要有一個有價格的品項或一個總額，才算辨識到東西
+  function isUsableReceipt(p){
+    if(!p || typeof p !== "object") return false;
+    const hasItems = Array.isArray(p.items) && p.items.some(it => receiptNum(it && (it.price || it.amount || it.total)) > 0);
+    return hasItems || receiptNum(p.totalAmount) > 0;
+  }
+
   function getPersonalGeminiKey(){
     return (localStorage.getItem("splitbill_gemini_api_key") || "").trim();
   }
@@ -215,14 +228,23 @@ CRITICAL TRANSLATION & NAMING GUIDELINES:
       // 優先試免費模型（:free 後綴，OpenRouter 保證不收費），openrouter/auto
       // 是會依實際路由到的模型正常計費的付費選項，只留在最後當保底
       // fallback（前面免費的都失敗、例如當天免費額度用完時才會用到）。
+      // openrouter/free 每次會隨機分配一個免費模型，有些能力不足、會回傳空殼，
+      // 所以空殼時再抽幾次免費的；因為空殼而重試時不會升級到付費的 openrouter/auto，
+      // auto 仍只在免費模型都連不上（限流、錯誤）時才用。
       const orModels = [
         "google/gemma-4-31b-it:free",
         "google/gemma-4-26b-a4b-it:free",
         "openrouter/free",
+        "openrouter/free",
+        "openrouter/free",
         "openrouter/auto"
       ];
       let lastOrErr = null;
+      let lastEmpty = null;
+      const started = Date.now();
       for(const om of orModels){
+        // 空殼重試最多約 90 秒，免費模型一次可能就要一分鐘，不讓使用者等太久
+        if(lastEmpty && (om === "openrouter/auto" || Date.now() - started > 90000)) break;
         try {
           const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
@@ -253,11 +275,14 @@ CRITICAL TRANSLATION & NAMING GUIDELINES:
           const data = await res.json();
           const rawText = data?.choices?.[0]?.message?.content || "{}";
           const cleaned = rawText.replace(/\`\`\`json/gi, "").replace(/\`\`\`/g, "").trim();
-          return JSON.parse(cleaned);
+          const parsed = JSON.parse(cleaned);
+          if(isUsableReceipt(parsed)) return parsed;
+          lastEmpty = parsed;
         } catch(e){
           lastOrErr = e;
         }
       }
+      if(lastEmpty) return lastEmpty;
       throw lastOrErr || new Error(t("currency.openRouterFailed"));
     }
 
@@ -1322,10 +1347,16 @@ CRITICAL TRANSLATION & NAMING GUIDELINES:
           // 辨識成功、直接把使用者帶進一個空空如也的拆單畫面。這裡明確
           // 判定「完全沒有任何可用的品項或金額」為辨識失敗，回到拍照畫面
           // 讓使用者重拍或改用手動記帳，不要讓他們走進死胡同才發現。
-          const hasUsableItems = Array.isArray(parsed.items) && parsed.items.some(it => Number(it.price || it.amount || it.total || 0) > 0);
-          const hasUsableTotal = Number(parsed.totalAmount) > 0;
-          if(!hasUsableItems && !hasUsableTotal){
-            throw new Error("empty recognition result");
+          (parsed.items || []).forEach(it => {
+            if(!it) return;
+            it.price = receiptNum(it.price || it.amount || it.total);
+            it.qty = receiptNum(it.qty) || 1;
+          });
+          parsed.totalAmount = receiptNum(parsed.totalAmount);
+          if(!isUsableReceipt(parsed)){
+            const emptyErr = new Error(t("currency.aiRecognitionEmpty"));
+            emptyErr.isEmptyResult = true;
+            throw emptyErr;
           }
 
           // 點菜單劃記：單上通常沒有印總額，總額交給品項小計自己算（改數量時會跟著變）；
@@ -1429,7 +1460,7 @@ CRITICAL TRANSLATION & NAMING GUIDELINES:
         } catch(err){
           stopAiProgress();
           console.error("AI 辨識收據失敗：", err);
-          await sbAlert(t("currency.aiRecognitionFailedDetail", {error: err.message || t("currency.unknownError")}), t("currency.aiRecognitionFailedTitle"));
+          await sbAlert(err.isEmptyResult ? err.message : t("currency.aiRecognitionFailedDetail", {error: err.message || t("currency.unknownError")}), t("currency.aiRecognitionFailedTitle"));
           showScreen("crop");
         }
       });
