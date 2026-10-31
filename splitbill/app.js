@@ -4152,7 +4152,7 @@
   }
 
   function fireConfetti(){
-    const colors = ["#BC4B55","#636AB1","#3D8454","#E4E4EA"];
+    const colors = ["#C63B47","#636AB1","#238744","#E4E4EA"];
     const container = document.createElement("div");
     container.className = "sb-confetti";
     for(let i=0;i<26;i++){

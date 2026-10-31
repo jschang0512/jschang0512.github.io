@@ -12481,11 +12481,11 @@ html body .app-install-banner{ background:var(--card); border:1px solid var(--ca
 
 /* balance banners keep their meaning (owed / owing / settled) as flat solids, not gradients */
 html body .my-balance, html body .my-balance.zero{ background:#3B3A47; }
-html body .my-balance.pos, html body .my-mini-balance.pos{ background:#3D8454; }
-html body .my-balance.neg, html body .my-mini-balance.neg{ background:#BC4B55; }
+html body .my-balance.pos, html body .my-mini-balance.pos{ background:#238744; }
+html body .my-balance.neg, html body .my-mini-balance.neg{ background:#C63B47; }
 :root[data-theme="dark"] body .my-balance, :root[data-theme="dark"] body .my-balance.zero{ background:#2E2D38; }
-:root[data-theme="dark"] body .my-balance.pos, :root[data-theme="dark"] body .my-mini-balance.pos{ background:#3C7753; }
-:root[data-theme="dark"] body .my-balance.neg, :root[data-theme="dark"] body .my-mini-balance.neg{ background:#A8464F; }
+:root[data-theme="dark"] body .my-balance.pos, :root[data-theme="dark"] body .my-mini-balance.pos{ background:#21763C; }
+:root[data-theme="dark"] body .my-balance.neg, :root[data-theme="dark"] body .my-mini-balance.neg{ background:#A8353E; }
 
 /* login card shares the app's panel radius */
 html body .login-card{ border-radius:16px; }
