@@ -619,6 +619,31 @@ async function initNotificationBell(sb, myMember){
       badge.textContent = n > 99 ? "99+" : String(n);
       badge.classList.toggle("hidden", n === 0);
     }
+    renderUnreadAlert(n);
+  }
+
+  // 「我的款項」上方的未讀提示：幣別頁放在餘額橫幅前，總覽頁放在「我的款項」卡片標題前。
+  // 點一下捲回頂端、打開通知面板；沒有未讀就整條拿掉。
+  function renderUnreadAlert(n){
+    const balance = document.getElementById("myBalance");
+    const amtTitle = document.querySelector('#myAmtList')?.closest(".card")?.querySelector("h2");
+    const anchor = balance || amtTitle;
+    if(!anchor) return;
+    let el = document.getElementById("unreadNotifAlert");
+    if(!n){ if(el) el.remove(); return; }
+    if(!el){
+      el = document.createElement("button");
+      el.type = "button";
+      el.id = "unreadNotifAlert";
+      el.className = "unread-notif-alert";
+      el.addEventListener("click", (e)=>{
+        e.stopPropagation(); // 不然冒泡到 document 的「點外面就關面板」會馬上又關掉
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        if(bellBtn && panel.classList.contains("hidden")) bellBtn.click();
+      });
+      anchor.parentNode.insertBefore(el, anchor);
+    }
+    el.textContent = n === 1 ? t("shared.unreadNotifAlertOne") : t("shared.unreadNotifAlert", { n: n > 99 ? "99+" : n });
   }
 
   // 新通知（2026-10 起）帶 params：文字交給 notif-text.js 依目前語言組。
