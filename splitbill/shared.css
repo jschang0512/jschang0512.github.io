@@ -12609,10 +12609,10 @@ html body .app-install-banner{ background:var(--card); border:1px solid var(--ca
 
 /* balance banners keep their meaning (owed / owing / settled) as flat solids, not gradients */
 html body .my-balance, html body .my-balance.zero{ background:#3B3A47; }
-html body .my-balance.pos, html body .my-mini-balance.pos{ background:#1D8446; }
+html body .my-balance.pos, html body .my-mini-balance.pos{ background:#3D8454; }
 html body .my-balance.neg, html body .my-mini-balance.neg{ background:#BC4B55; }
 :root[data-theme="dark"] body .my-balance, :root[data-theme="dark"] body .my-balance.zero{ background:#2E2D38; }
-:root[data-theme="dark"] body .my-balance.pos, :root[data-theme="dark"] body .my-mini-balance.pos{ background:#1F7442; }
+:root[data-theme="dark"] body .my-balance.pos, :root[data-theme="dark"] body .my-mini-balance.pos{ background:#3C7753; }
 :root[data-theme="dark"] body .my-balance.neg, :root[data-theme="dark"] body .my-mini-balance.neg{ background:#A8464F; }
 
 /* login card shares the app's panel radius */
