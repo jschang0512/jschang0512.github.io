@@ -77,7 +77,7 @@
   46%{ opacity:.32; transform:scale(.95); }
 }
 .pwa-splash-title{
-  font-family:"Shippori Mincho",serif;
+  font-family:var(--font-ui);
   font-size:16px;
   font-weight:700;
   color:var(--ink);
@@ -249,7 +249,7 @@ body::after{
   text-align:center;
   margin-top:28px;
   padding-bottom:12px;
-  font-family:"Shippori Mincho", "Noto Serif TC", "Songti TC", Georgia, serif;
+  font-family:var(--font-ui);
   font-size:12px;
   font-weight:600;
   letter-spacing:0.18em;
@@ -291,7 +291,7 @@ body::after{
   margin-bottom:8px;
 }
 .app-header h1{
-  font-family:"Shippori Mincho",serif;
+  font-family:var(--font-ui);
   font-size:35px;
   margin:0;
   color:var(--ink);
@@ -492,7 +492,7 @@ body::after{
 }
 .card.card-wide{ padding:18px 12px; }
 .card h2{
-  font-family:"Shippori Mincho",serif;
+  font-family:var(--font-ui);
   font-size:18px;
   font-weight:700;
   letter-spacing:.01em;
@@ -1027,8 +1027,6 @@ label.settings-row:hover{ background:color-mix(in srgb, var(--line) 30%, transpa
   text-transform:uppercase;
   color:var(--accent-text);
   margin:0 0 var(--sp-3);
-  padding-left:10px;
-  border-left:3px solid var(--accent-text);
 }
 .settings-tab-panel label{ font-weight:600; font-size:12px; }
 
@@ -1873,7 +1871,7 @@ button.dd-btn {
 }
 .login-form-panel .app-header h1{
   color:var(--ink);
-  font-family:"Shippori Mincho",serif;
+  font-family:var(--font-ui);
   font-size:32px;
   font-weight:700;
   letter-spacing:.02em;
@@ -2740,7 +2738,7 @@ button.dd-btn {
   background:none;
   border:none;
   padding:0;
-  font-family:"Shippori Mincho",serif;
+  font-family:var(--font-ui);
   font-size:16px;
   font-weight:700;
   color:var(--ink);
@@ -3320,7 +3318,7 @@ button.dd-btn {
   display:flex;
   align-items:center;
   gap:9px;
-  font-family:"Shippori Mincho",serif;
+  font-family:var(--font-ui);
   font-size:18px;
   font-weight:700;
   color:var(--ink);
@@ -4019,7 +4017,7 @@ button.dd-btn {
 }
 
 .btn-repay-direct{
-  background:linear-gradient(135deg, #7A6B9E, #5B4A94);
+  background:var(--btn-primary);
   color:#FFFFFF !important;
   border:none;
   box-shadow:0 4px 14px rgba(122,107,158,.3);
@@ -4117,7 +4115,7 @@ button.dd-btn {
   flex:0 0 40px;
   height:40px;
   border-radius:12px;
-  background:linear-gradient(135deg, #7A6B9E, #513F7A);
+  background:var(--btn-primary);
   display:flex;
   align-items:center;
   justify-content:center;
@@ -4830,7 +4828,7 @@ button.dd-btn {
   text-transform:uppercase;
   font-family:"Noto Sans TC",sans-serif;
   font-weight:700;
-  background:linear-gradient(135deg, #7A6B9E, #A093C2);
+  background:var(--btn-primary);
 }
 .sb-avatar.avatar-xs{ width:20px; height:20px; font-size:10px; border-width:1px; }
 .sb-avatar.avatar-sm{ width:26px; height:26px; font-size:11px; border-width:1.2px; }
@@ -6138,7 +6136,7 @@ button.dd-btn {
   margin-bottom:12px;
 }
 .btn-ai-receipt{
-  background:linear-gradient(135deg, #7A6B9E, #5B4D80);
+  background:var(--btn-primary);
   color:#FFFFFF;
   border:none;
   border-radius:999px;
@@ -6808,10 +6806,12 @@ button.dd-btn {
   position: relative;
 }
 .ai-receipt-item-card.is-unclaimed{
-  border-left: 4px solid #FFA726;
+  border-color: #F0B45A;
+  background: color-mix(in srgb, #FFA726 7%, var(--card));
 }
 .ai-receipt-item-card.is-claimed{
-  border-left: 4px solid var(--btn-primary);
+  border-color: var(--btn-primary);
+  background: color-mix(in srgb, var(--btn-primary) 6%, var(--card));
 }
 .ai-receipt-item-card:hover,
 .ai-receipt-item-card:focus-within{
@@ -7717,7 +7717,7 @@ input:focus, select:focus, textarea:focus {
 .twd-settle-rate-input { flex: 1; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 14px; }
 .twd-settle-rate-fetch-btn { white-space: nowrap; margin: 0; padding: 8px 12px; }
 .twd-settle-actions-wrap { margin-top: 6px; display: flex; flex-direction: column; gap: 8px; }
-.twd-settle-direct-clear-btn { background: linear-gradient(135deg, #7A6B9E, #513F7A) !important; }
+.twd-settle-direct-clear-btn { background: var(--btn-primary) !important; }
 .ai-file-input-hidden { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; top: 0; left: 0; }
 .ai-source-btn { cursor: pointer; display: inline-flex; align-items: center; justify-content: center; margin: 0; }
 .ai-crop-confirm-wrap { margin-top: 12px; }
@@ -9490,7 +9490,7 @@ body.dark-mode .sb-search-match {
   align-items: center;
   gap: 8px;
   padding: 12px 20px 12px 16px;
-  background: linear-gradient(135deg, #7A6B9E 0%, #5B4D80 100%);
+  background: var(--btn-primary);
   color: #FFFFFF;
   border: 1.5px solid rgba(255, 255, 255, 0.22);
   border-radius: 999px;
@@ -12544,3 +12544,76 @@ span.is-positive { color: var(--positive-text); }
 
 .pl-holding-dividend-hint { font-size: 11.5px; color: var(--ink-soft); background: var(--input-bg); border-radius: 8px; padding: 7px 10px; cursor: pointer; }
 .pl-holding-dividend-hint:hover { color: var(--accent-text); }
+
+/* ============================================================
+   Clean redesign layer (2026-10)
+   Flat canvas, opaque panels with one hairline border, nested panels
+   without their own shadow, sans headings, one violet for actions.
+   Pure presentation: no selector here changes what a control does.
+   ============================================================ */
+button, input, select, textarea{ font-family:inherit; }
+html, body{ background:var(--bg-canvas); }
+body{ color:var(--ink); font-family:var(--font-ui); }
+h1, h2, h3, h4{ font-family:var(--font-ui); letter-spacing:0; }
+
+/* panels: one border, a barely-there shadow, consistent radius */
+html body .card{
+  background:var(--card);
+  border:1px solid var(--card-border);
+  border-radius:16px;
+  box-shadow:var(--glass-shadow);
+}
+html body .card > h2, html body .card h2:first-child{
+  font-size:17px; font-weight:700; color:var(--ink);
+}
+
+/* nested panels sit flat inside their card */
+html body .settings-group,
+html body .settings-avatar-card,
+html body .exp-form-section{
+  border:1px solid var(--card-nested-border);
+  border-radius:12px;
+  box-shadow:none;
+}
+html body .settings-group.settings-group-danger{
+  border-color:color-mix(in srgb, var(--negative-text) 35%, transparent);
+  background:color-mix(in srgb, var(--negative-text) 5%, var(--card));
+}
+.settings-section-title{ letter-spacing:.02em; }
+
+/* controls */
+html body .btn-wide{ border:1px solid var(--card-border); border-radius:10px; box-shadow:none; }
+html body input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+html body select,
+html body textarea{
+  border:1px solid var(--card-border);
+  border-radius:10px;
+  background-color:var(--input-bg);
+  box-shadow:none;
+}
+html body input:focus-visible, html body select:focus-visible, html body textarea:focus-visible{
+  outline:2px solid var(--btn-primary);
+  outline-offset:1px;
+  border-color:var(--btn-primary);
+}
+html body .app-tabs{ border:1px solid var(--card-border); box-shadow:none; }
+
+/* balance callout: a hairline, not a 3px frame */
+html body .my-balance{ border-width:1px; }
+
+/* floating install banner: opaque, quiet */
+html body .app-install-banner{ background:var(--card); border:1px solid var(--card-border); box-shadow:var(--menu-shadow); }
+
+/* AI receipt items keep their claimed / unclaimed state as a full border + tint */
+.ai-receipt-item-card{ border-width:1px; }
+
+/* balance banners keep their meaning (owed / owing / settled) as flat solids, not gradients */
+html body .my-balance, html body .my-balance.zero{ background:#3B3A47; }
+html body .my-balance.pos, html body .my-mini-balance.pos{ background:#1D8446; }
+html body .my-balance.neg, html body .my-mini-balance.neg{ background:#C4364F; }
+:root[data-theme="dark"] body .my-balance, :root[data-theme="dark"] body .my-balance.zero{ background:#2E2D38; }
+:root[data-theme="dark"] body .my-balance.pos, :root[data-theme="dark"] body .my-mini-balance.pos{ background:#1F7442; }
+:root[data-theme="dark"] body .my-balance.neg, :root[data-theme="dark"] body .my-mini-balance.neg{ background:#AE2E46; }
+
+/* login card shares the app's panel radius */
+html body .login-card{ border-radius:16px; }

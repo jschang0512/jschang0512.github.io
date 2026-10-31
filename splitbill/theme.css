@@ -1,74 +1,82 @@
 /* ============================================================
-   theme.css — Ergonomic Eye-Comfort Frosted Glass Tokens
+   theme.css — Clean tokens (2026-10 redesign)
+   Flat neutral canvas, opaque white panels with hairline borders,
+   one violet for actions, green/red only for money owed or settled.
+   Token names are unchanged so every page and script keeps working.
    ============================================================ */
 :root{
-  --bg-canvas:radial-gradient(130% 90% at 50% 0%, #F9F7FB 0%, #EFEBF4 45%, #E6E0EC 100%);
-  --ink:#26222E;
-  --ink-soft:#686074;
+  --bg-canvas:#F4F5F7;
+  --ink:#1C1B22;
+  --ink-soft:#5E5D6A;
   --paper:#FFFFFF;
-  --card:rgba(255, 255, 255, 0.76);
-  --card-border:rgba(255, 255, 255, 0.95);
-  --card-nested-border:rgba(122, 107, 158, 0.2);
-  --card-nested-shadow:0 4px 14px rgba(110, 95, 145, 0.08), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --card:#FFFFFF;
+  --card-border:#E4E4EA;
+  --card-nested-border:#E9E9EF;
+  --card-nested-shadow:none;
   --menu-bg:#FFFFFF;
-  --menu-border:rgba(122, 107, 158, 0.22);
-  --menu-shadow:0 18px 45px rgba(70, 55, 105, 0.16), 0 2px 6px rgba(0, 0, 0, 0.05);
-  --line:rgba(122, 107, 158, 0.15);
-  --accent:#E07289;
-  --accent-text:#B83A55;
-  --positive-text:#248A46;
-  --negative-text:#C53A54;
+  --menu-border:#E1E1E8;
+  --menu-shadow:0 12px 32px rgba(24, 22, 36, 0.12), 0 2px 6px rgba(24, 22, 36, 0.06);
+  --line:#ECECF1;
+  --accent:#D9536D;
+  --accent-text:#B3354F;
+  --positive-text:#1D8446;
+  --negative-text:#C4364F;
   --input-bg:#FFFFFF;
-  --btn-primary:#726196;
+  --btn-primary:#5A4BB5;
   --btn-primary-fg:#FFFFFF;
-  --gold:#8476A8;
-  --btn-solid:#26222B;
-  --btn-solid-fg:#FFFFFB;
-  --logo-1:#726196;
-  --logo-2:rgba(114,97,150,.78);
-  --logo-3:rgba(114,97,150,.56);
-  --logo-grad-a:#544388;
-  --logo-grad-b:#BE71BE;
-  --hero-fg:#26222E;
-  --hero-fg-soft:#686074;
-  --glass-shadow:0 18px 42px rgba(110, 95, 145, 0.09), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px 0 rgba(110, 95, 145, 0.03);
-  --glow-a:rgba(168, 120, 245, 0.32);
-  --glow-b:rgba(245, 130, 185, 0.28);
-  --glow-c:rgba(90, 215, 215, 0.22);
+  --gold:#5A4BB5;
+  --btn-solid:#1C1B22;
+  --btn-solid-fg:#FFFFFF;
+  --logo-1:#5A4BB5;
+  --logo-2:rgba(90, 75, 181, 0.76);
+  --logo-3:rgba(90, 75, 181, 0.52);
+  --logo-grad-a:#5A4BB5;
+  --logo-grad-b:#8E7FE0;
+  --hero-fg:#1C1B22;
+  --hero-fg-soft:#5E5D6A;
+  --glass-shadow:0 1px 2px rgba(24, 22, 36, 0.04);
+  --glow-a:transparent;
+  --glow-b:transparent;
+  --glow-c:transparent;
+  --font-ui:"Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --tint:#F1F0FA;
 }
 
 :root[data-theme="dark"]{
-  --bg-canvas:radial-gradient(130% 90% at 50% 0%, #201E26 0%, #17161C 55%, #121116 100%);
-  --ink:#F6F5F8;
-  --ink-soft:#A9A7B3;
-  --paper:#2B2933;
-  --card:rgba(40, 38, 48, 0.82);
-  --card-border:rgba(255, 255, 255, 0.1);
-  --card-nested-border:rgba(255, 255, 255, 0.08);
-  --card-nested-shadow:0 4px 16px rgba(0, 0, 0, 0.4);
-  --menu-bg:#2B2933;
-  --menu-border:rgba(255, 255, 255, 0.14);
-  --menu-shadow:0 22px 55px rgba(0, 0, 0, 0.6), 0 3px 10px rgba(0, 0, 0, 0.3);
-  --line:rgba(255, 255, 255, 0.09);
-  --accent:#C6B7FE;
-  --accent-text:#C6B7FE;
-  --positive-text:#5ECC83;
-  --negative-text:#F5738B;
-  --input-bg:#1A1920;
-  --btn-primary:#7E6DA2;
+  --bg-canvas:#111115;
+  --ink:#F2F2F5;
+  --ink-soft:#A6A5B1;
+  --paper:#1B1B21;
+  --card:#1B1B21;
+  --card-border:#2B2B34;
+  --card-nested-border:#2B2B34;
+  --card-nested-shadow:none;
+  --menu-bg:#212128;
+  --menu-border:#32323C;
+  --menu-shadow:0 18px 44px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.3);
+  --line:#2A2A32;
+  --accent:#F07B92;
+  --accent-text:#F590A4;
+  --positive-text:#55C47F;
+  --negative-text:#F2788D;
+  --input-bg:#15151A;
+  --btn-primary:#6E5FD8;
   --btn-primary-fg:#FFFFFF;
-  --gold:#C6B7FE;
-  --logo-1:#C6B7FE;
-  --logo-2:rgba(198, 183, 254, 0.82);
-  --logo-3:rgba(198, 183, 254, 0.64);
-  --logo-grad-a:#8873C2;
-  --logo-grad-b:#5A4589;
-  --hero-fg:#F6F5F8;
-  --hero-fg-soft:rgba(246, 245, 248, 0.72);
-  --glass-shadow:0 18px 42px rgba(0, 0, 0, 0.4), inset 0 1px 1px 0 rgba(255, 255, 255, 0.09);
-  --glow-a:rgba(136, 115, 194, 0.12);
-  --glow-b:rgba(198, 183, 254, 0.08);
+  --gold:#A99DF2;
+  --btn-solid:#33323D;
+  --btn-solid-fg:#F2F2F5;
+  --logo-1:#A99DF2;
+  --logo-2:rgba(169, 157, 242, 0.8);
+  --logo-3:rgba(169, 157, 242, 0.6);
+  --logo-grad-a:#6E5FD8;
+  --logo-grad-b:#A99DF2;
+  --hero-fg:#F2F2F5;
+  --hero-fg-soft:#A6A5B1;
+  --glass-shadow:none;
+  --glow-a:transparent;
+  --glow-b:transparent;
   --glow-c:transparent;
+  --tint:#24223A;
 }
 
 *{box-sizing:border-box;}
