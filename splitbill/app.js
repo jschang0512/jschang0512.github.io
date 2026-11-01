@@ -526,7 +526,9 @@
     const nav = document.createElement("nav");
     nav.className = "sb-bottom-nav";
     nav.setAttribute("aria-label", t("currency.sectionNavLabel"));
-    nav.innerHTML = appTabs.map(tab => `<button type="button" data-tab="${tab.dataset.tab}"><span class="sb-nav-ico">${sbIcon(NAV_ICON[tab.dataset.tab] || "list")}</span><span>${escapeHtml(tab.textContent.trim())}</span></button>`).join("");
+    const curMeta = CURRENCIES.find(c => c.code === CURRENCY);
+    nav.innerHTML = `<button type="button" class="sb-nav-currency" aria-haspopup="dialog"><span class="sb-nav-ico">${currencyFlagImgHTML(CURRENCY) || sbIcon("globe")}</span><span>${escapeHtml(curMeta ? curMeta.label : CURRENCY)} ▾</span></button>`
+      + appTabs.map(tab => `<button type="button" data-tab="${tab.dataset.tab}"><span class="sb-nav-ico">${sbIcon(NAV_ICON[tab.dataset.tab] || "list")}</span><span>${escapeHtml(tab.textContent.trim())}</span></button>`).join("");
     document.body.appendChild(nav);
     document.body.classList.add("has-bottom-nav");
     const syncNav = () => {
@@ -550,6 +552,69 @@
       }
     });
     appTabs.forEach(tab => tab.addEventListener("click", syncNav));
+
+    // 幣別切換面板：從底部滑出，第一項是「總覽」，接著是要顯示的幣別；
+    // 換到別的幣別時停在目前的分頁（在「支出」切到臺幣，就直接是臺幣的支出表單）
+    const currentTabParam = () => {
+      const active = document.querySelector("#mainAppTabs .app-tab.active");
+      return active && active.dataset.tab !== "summary" ? "&tab=" + encodeURIComponent(active.dataset.tab) : "";
+    };
+    let sheet = null;
+    const closeSheet = () => {
+      if(!sheet) return;
+      sheet.classList.remove("open");
+      const s0 = sheet; sheet = null;
+      setTimeout(() => s0.remove(), 260);
+      const opener = nav.querySelector(".sb-nav-currency");
+      if(opener) opener.focus({ preventScroll: true });
+    };
+    const openSheet = () => {
+      if(sheet) return;
+      let shown = null;
+      try { shown = JSON.parse(localStorage.getItem("splitbill-shown-currencies") || "null"); } catch(e){}
+      shown = shown || ["TWD"];
+      const list = CURRENCIES.filter(c => shown.includes(c.code) || c.code === CURRENCY);
+      const tabParam = currentTabParam();
+      sheet = document.createElement("div");
+      sheet.className = "sb-sheet-backdrop";
+      sheet.innerHTML = `
+        <div class="sb-sheet" role="dialog" aria-modal="true" aria-label="${escapeHtml(t("currency.switchCurrencyTitle"))}">
+          <div class="sb-sheet-handle" aria-hidden="true"></div>
+          <div class="sb-sheet-title">${escapeHtml(t("currency.switchCurrencyTitle"))}</div>
+          <a class="sb-sheet-item" href="summary.html"><span class="sb-sheet-item-ico">${sbIcon("grid")}</span><span class="sb-sheet-item-label">${escapeHtml(t("common.overview"))}</span></a>
+          <div class="sb-sheet-sep" aria-hidden="true"></div>
+          ${list.map(c => `<a class="sb-sheet-item${c.code === CURRENCY ? " is-current" : ""}" href="currency.html?c=${c.code}${tabParam}"${c.code === CURRENCY ? ' aria-current="page"' : ""}>
+              <span class="sb-sheet-item-ico">${currencyFlagImgHTML(c.code) || sbIcon("globe")}</span>
+              <span class="sb-sheet-item-label">${escapeHtml(c.label)}</span>
+              <span class="sb-sheet-item-code">${c.code}</span>
+              ${c.code === CURRENCY ? sbIcon("check") : ""}
+            </a>`).join("")}
+        </div>`;
+      document.body.appendChild(sheet);
+      requestAnimationFrame(() => sheet && sheet.classList.add("open"));
+      sheet.addEventListener("click", (e) => {
+        if(e.target === sheet){ closeSheet(); return; }
+        const cur = e.target.closest(".sb-sheet-item.is-current");
+        if(cur){ e.preventDefault(); closeSheet(); }
+      });
+      const first = sheet.querySelector(".sb-sheet-item");
+      if(first) first.focus({ preventScroll: true });
+    };
+    nav.querySelector(".sb-nav-currency").addEventListener("click", openSheet);
+    document.addEventListener("keydown", (e) => { if(e.key === "Escape") closeSheet(); });
+
+    // 頂部的幣別按鈕也保留目前分頁
+    const navLinksEl = document.getElementById("navLinks");
+    if(navLinksEl){
+      navLinksEl.addEventListener("click", (e) => {
+        const a = e.target.closest('a[href^="currency.html?c="]');
+        const tabParam = currentTabParam();
+        if(!a || !tabParam || a.classList.contains("current")) return;
+        e.preventDefault();
+        location.href = a.getAttribute("href") + tabParam;
+      });
+    }
+
     // 鍵盤打開時收起導覽列，不擋住輸入中的表單
     const isTyping = (el) => el && (el.tagName === "TEXTAREA" || el.isContentEditable || (el.tagName === "INPUT" && !/^(checkbox|radio|button|submit|range|color|file)$/i.test(el.type)));
     document.addEventListener("focusin", (e)=>{ if(isTyping(e.target)) document.body.classList.add("kb-open"); });

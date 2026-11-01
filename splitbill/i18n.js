@@ -1119,6 +1119,8 @@ const I18N = {
     "currency.tab.summary": "總表",
 
     "currency.sectionNavLabel": "帳務分頁",
+
+    "currency.switchCurrencyTitle": "切換幣別",
     "currency.tab.expense": "支出",
     "currency.tab.repay": "還款",
     "currency.tab.history": "紀錄",
@@ -2451,6 +2453,8 @@ const I18N = {
     "currency.tab.summary": "総表",
 
     "currency.sectionNavLabel": "帳簿のセクション",
+
+    "currency.switchCurrencyTitle": "通貨を切り替え",
     "currency.tab.expense": "支出",
     "currency.tab.repay": "返済",
     "currency.tab.history": "履歴",
@@ -3783,6 +3787,8 @@ const I18N = {
     "currency.tab.summary": "Summary",
 
     "currency.sectionNavLabel": "Ledger sections",
+
+    "currency.switchCurrencyTitle": "Switch currency",
     "currency.tab.expense": "Expense",
     "currency.tab.repay": "Repay",
     "currency.tab.history": "History",
