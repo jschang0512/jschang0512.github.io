@@ -5656,13 +5656,6 @@ function getSettlementImageColors(dark){
   };
 }
 
-// 兩個 "#rrggbb" 色碼依比例混色（t=1 全取 a），canvas 沒有 color-mix() 可用
-function settlementMixHex(a, b, t){
-  const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
-  const A = p(a), B = p(b);
-  return "rgb(" + A.map((v, i) => Math.round(v * t + B[i] * (1 - t))).join(",") + ")";
-}
-
 // 「債權人」／「債務人」直排文字：每個字各自置中、由上往下疊，不是把整串字
 // 橫著轉 90 度（那樣字會變成橫躺、要側著頭看）。
 function drawSettlementVerticalLabel(ctx, text, cx, zoneTop, zoneH, font){
@@ -5677,44 +5670,62 @@ function drawSettlementVerticalLabel(ctx, text, cx, zoneTop, zoneH, font){
   ctx.restore();
 }
 
-// 匯出「我的」債務關係表：交叉表的格子結構跟網頁 #debtMatrix 一樣（債權人 ×
-// 債務人 + 應收款／應付款），但只填跟登入者有關的格子——「我」那一列是別人
-// 欠我（綠），「我」那一欄是我欠別人（紅）；其他人之間的帳留空淡化，應收／
-// 應付合計也只算跟我有關的部分。上方三格摘要，下方列出要還給我的款項。
+// HSL → RGB（canvas fillStyle 沒辦法解析 CSS 的 var()，要跟卡片底色混合
+// 就得自己把 hsl() 換算成實際的 rgb 數字再手動內插）。
+function hslToRgb255(h, s, l){
+  s /= 100; l /= 100;
+  const k = n => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
+}
+// 熱圖格子在 canvas 上要用的實際顏色：跟網頁版同一套 debtHeatParams()，
+// 只是把 color-mix() 換成手動內插出來的 rgb() 字串；cardHex 對應網頁上
+// .matrix-cell 的 var(--card)。
+function debtHeatCanvasColors(amount, maxDebtAmount, isDark, cardHex){
+  const p = debtHeatParams(amount, maxDebtAmount, isDark);
+  const hueRgb = hslToRgb255(p.hue, 82, p.bgLightness);
+  const cardRgb = [1, 3, 5].map(i => parseInt(cardHex.slice(i, i + 2), 16));
+  const t = p.bgPct / 100;
+  const mixed = [0, 1, 2].map(i => Math.round(hueRgb[i] * t + cardRgb[i] * (1 - t)));
+  return { bg: `rgb(${mixed.join(",")})`, fg: p.fg, fontWeight: p.fontWeight };
+}
+
+// 匯出「與我相關」的債務關係表：跟網頁上按下「與我相關」後的表格一樣——
+// 只留下我自己，以及跟我之間有欠款往來的人；這些人彼此之間的金額照樣顯示，
+// 熱圖顏色也跟網頁同一套公式。表格下方列出要還給我的款項。
 function renderSettlementImageCanvas(){
   const owed = buildDebtMatrix(cachedExpenses, cachedRepayments);
-  const { ids } = computeDebtMatrixIds(owed);
+  const { allIds } = computeDebtMatrixIds(owed);
+  const myId = myMember && myMember.id;
+  const amtOf = (creditor, debtor) => {
+    const v = (creditor !== debtor && owed[creditor] && owed[creditor][debtor]) || 0;
+    return v > 0.05 ? v : 0;
+  };
+  // 同 computeDebtMatrixIds 的「只看跟我相關」規則，但不管網頁上那顆按鈕目前開或關
+  const ids = myId
+    ? allIds.filter(id => id === myId || amtOf(myId, id) || amtOf(id, myId))
+    : allIds;
   const n = ids.length;
   const dark = isSettlementDarkTheme();
   const C = getSettlementImageColors(dark);
   const FONT = "'Noto Sans TC', sans-serif";
 
-  const myId = myMember && myMember.id;
+  let maxDebtAmount = 0;
+  ids.forEach(c => ids.forEach(d => { const v = amtOf(c, d); if(v > maxDebtAmount) maxDebtAmount = v; }));
+
   const myName = (myId && memberById[myId]) || "?";
-  const amtOf = (creditor, debtor) => {
-    const v = (creditor !== debtor && owed[creditor] && owed[creditor][debtor]) || 0;
-    return v > 0.05 ? v : 0;
-  };
-  const mine = (creditor, debtor) => creditor === myId || debtor === myId;
-  let maxMine = 0, totalOwesMe = 0, totalIOwe = 0;
-  ids.forEach(c => ids.forEach(d => {
-    if(!mine(c, d)) return;
-    const v = amtOf(c, d);
-    if(v > maxMine) maxMine = v;
-    if(c === myId) totalOwesMe += v; else totalIOwe += v;
-  }));
-  const totalNet = totalOwesMe - totalIOwe;
   const owedToMe = ids
     .filter(d => d !== myId)
     .map(d => ({ from: d, amt: amtOf(myId, d) }))
     .filter(x => x.amt)
     .sort((a, b) => b.amt - a.amt);
+  const totalOwesMe = owedToMe.reduce((s, x) => s + x.amt, 0);
 
   const groupName = (myMember && myMember.groups && myMember.groups.name) || t("currency.groupNameFallback");
   const canvasLocaleMap = { "zh-Hant": "zh-TW", ja: "ja-JP", en: "en-US" };
   const nowStr = new Date().toLocaleString(canvasLocaleMap[getLang()] || "zh-TW", { year: "numeric", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
   const money = v => `${SYM}${formatAmt(Math.abs(v))}`;
-  const signed = v => (v > 0.05 ? "+" : v < -0.05 ? "−" : "") + money(v);
 
   // ---------- 尺寸 ----------
   const PAD = 24;
@@ -5725,13 +5736,11 @@ function renderSettlementImageCanvas(){
   const W = Math.max(tableW + PAD * 2, 440);
   const innerW = W - PAD * 2;
   const headerH = 104;
-  const statsH = 76;
-  const gap = 16;
   const listHeadH = 34;
   const listRowH = 42;
   const listH = listHeadH + Math.max(owedToMe.length, 1) * listRowH;
-  const tableY = headerH + statsH + gap;
-  const listY = tableY + tableH + gap + 8;
+  const tableY = headerH;
+  const listY = tableY + tableH + 24;
   const H = listY + listH + PAD;
 
   // 至少 3 倍解析度：圖會被傳到聊天軟體再放大看，2 倍在手機上字會糊
@@ -5748,12 +5757,6 @@ function renderSettlementImageCanvas(){
   ctx.fillStyle = C.brand;
   ctx.fillRect(0, 0, W, 4);
 
-  const card = (x, y, w, h) => {
-    settlementCanvasRoundRect(ctx, x, y, w, h, 14);
-    ctx.fillStyle = C.card; ctx.fill();
-    ctx.strokeStyle = C.border; ctx.lineWidth = 1; ctx.stroke();
-  };
-
   // ---------- 標題 ----------
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
@@ -5767,37 +5770,12 @@ function renderSettlementImageCanvas(){
   ctx.font = `500 13px ${FONT}`;
   ctx.fillText(settlementCanvasTruncate(ctx, t("currency.settlementImageSubtitle", {group: groupName, currency: CURRENCY_LABEL, code: CURRENCY, time: nowStr}), innerW), PAD, 84);
 
-  // ---------- 三格摘要：別人欠我／我欠別人／淨額 ----------
-  const statsY = headerH;
-  card(PAD, statsY, innerW, statsH);
-  const stats = [
-    { label: t("currency.settlementImageOwesMeTotal"), value: money(totalOwesMe), color: totalOwesMe ? C.positive : C.muted },
-    { label: t("currency.settlementImageIOweTotal"), value: money(totalIOwe), color: totalIOwe ? C.negative : C.muted },
-    { label: t("currency.settlementImageNetTotal"), value: signed(totalNet), color: totalNet > 0.05 ? C.positive : totalNet < -0.05 ? C.negative : C.muted }
-  ];
-  const statW = innerW / 3;
-  stats.forEach((s, i) => {
-    const x = PAD + statW * i;
-    if(i > 0){
-      ctx.strokeStyle = C.line;
-      ctx.beginPath(); ctx.moveTo(x + 0.5, statsY + 16); ctx.lineTo(x + 0.5, statsY + statsH - 16); ctx.stroke();
-    }
-    ctx.textAlign = "center";
-    ctx.fillStyle = C.muted;
-    ctx.font = `500 12px ${FONT}`;
-    ctx.fillText(settlementCanvasTruncate(ctx, s.label, statW - 16), x + statW / 2, statsY + 28);
-    ctx.fillStyle = s.color;
-    ctx.font = `700 17px ${FONT}`;
-    ctx.fillText(settlementCanvasTruncate(ctx, s.value, statW - 12), x + statW / 2, statsY + 54);
-  });
-
-  // ---------- 債務關係表（只填跟我有關的格子） ----------
+  // ---------- 債務關係表（同網頁 .debt-matrix） ----------
   const tableX = (W - tableW) / 2;
   const colX = i => tableX + labelColW + nameColW + i * cellColW;
   const rowY = i => tableY + headerRowH * 2 + i * dataRowH;
   const totalColX = tableX + labelColW + nameColW + cellColW * n;
   const footY = rowY(n);
-  const myIdx = ids.indexOf(myId);
 
   ctx.save();
   settlementCanvasRoundRect(ctx, tableX, tableY, tableW, tableH, 12);
@@ -5810,12 +5788,6 @@ function renderSettlementImageCanvas(){
   ctx.fillRect(tableX, tableY + headerRowH * 2, labelColW + nameColW, dataRowH * n);
   ctx.fillRect(totalColX, tableY + headerRowH * 2, totalColW, dataRowH * n);
   ctx.fillRect(tableX, footY, tableW, footRowH);
-  // 「我」那一列、那一欄的表頭用品牌色標出來，一眼找到自己
-  if(myIdx >= 0){
-    ctx.fillStyle = settlementMixHex(C.brand, C.tint, 0.18);
-    ctx.fillRect(tableX + labelColW, rowY(myIdx), nameColW, dataRowH);
-    ctx.fillRect(colX(myIdx), tableY + headerRowH, cellColW, headerRowH);
-  }
 
   ctx.textBaseline = "middle";
   ctx.textAlign = "center";
@@ -5825,10 +5797,9 @@ function renderSettlementImageCanvas(){
   ctx.fillText(t("currency.receivableHeader"), totalColX + totalColW / 2, tableY + headerRowH);
   drawSettlementVerticalLabel(ctx, t("currency.creditorHeader"), tableX + labelColW / 2, tableY + headerRowH * 2, dataRowH * n, `700 11px ${FONT}`);
 
+  ctx.fillStyle = C.ink;
+  ctx.font = `700 12px ${FONT}`;
   ids.forEach((id, i) => {
-    const isMe = id === myId;
-    ctx.fillStyle = isMe ? C.brand : C.ink;
-    ctx.font = `700 12px ${FONT}`;
     const name = truncateNameChars(memberById[id] || "?", 5);
     ctx.fillText(name, colX(i) + cellColW / 2, tableY + headerRowH * 1.5 + 1);
     ctx.fillText(name, tableX + labelColW + nameColW / 2, rowY(i) + dataRowH / 2 + 1);
@@ -5847,37 +5818,29 @@ function renderSettlementImageCanvas(){
         ctx.fillText("－", cx, cy + 1);
         return;
       }
-      if(!mine(c, d)){ // 別人之間的帳：不顯示，鋪灰底讓我那一列／欄跳出來
-        ctx.fillStyle = C.canvas;
-        ctx.fillRect(x, y, cellColW, dataRowH);
-        return;
-      }
       const v = amtOf(c, d);
       if(!v) return;
       rowTotal += v;
-      // 越大的金額底色越深；別人欠我用綠、我欠別人用紅
-      const hex = c === myId ? C.positive : C.negative;
-      const ratio = maxMine > 0 ? v / maxMine : 0;
-      ctx.fillStyle = settlementMixHex(hex, C.card, 0.12 + ratio * 0.22);
+      const heat = debtHeatCanvasColors(v, maxDebtAmount, dark, C.card);
+      ctx.fillStyle = heat.bg;
       ctx.fillRect(x, y, cellColW, dataRowH);
-      ctx.fillStyle = c === myId ? C.positive : C.negative;
-      ctx.font = `${ratio > 0.5 ? 700 : 600} 12px ${FONT}`;
+      ctx.fillStyle = heat.fg;
+      ctx.font = `${heat.fontWeight} 12px ${FONT}`;
       ctx.fillText(settlementCanvasTruncate(ctx, formatAmt(v), cellColW - 8), cx, cy + 1);
     });
-    ctx.fillStyle = rowTotal ? C.ink : C.faint;
+    ctx.fillStyle = C.ink;
     ctx.font = `700 12px ${FONT}`;
-    ctx.fillText(rowTotal ? formatAmt(rowTotal) : "—", totalColX + totalColW / 2, cy + 1);
+    ctx.fillText(rowTotal ? formatAmt(rowTotal) : "0", totalColX + totalColW / 2, cy + 1);
   });
 
   ctx.fillStyle = C.muted;
   ctx.font = `700 11px ${FONT}`;
   ctx.fillText(t("currency.payableFooter"), tableX + (labelColW + nameColW) / 2, footY + footRowH / 2 + 1);
+  ctx.fillStyle = C.ink;
+  ctx.font = `700 12px ${FONT}`;
   ids.forEach((d, k) => {
-    let colTotal = 0;
-    ids.forEach(c => { if(mine(c, d)) colTotal += amtOf(c, d); });
-    ctx.fillStyle = colTotal ? C.ink : C.faint;
-    ctx.font = `700 12px ${FONT}`;
-    ctx.fillText(colTotal ? formatAmt(colTotal) : "—", colX(k) + cellColW / 2, footY + footRowH / 2 + 1);
+    const colTotal = ids.reduce((s, c) => s + amtOf(c, d), 0);
+    ctx.fillText(colTotal ? formatAmt(colTotal) : "0", colX(k) + cellColW / 2, footY + footRowH / 2 + 1);
   });
 
   // 格線：合併儲存格（債務人、債權人、應收款、應付款、左上角）內部不畫線
@@ -5900,6 +5863,7 @@ function renderSettlementImageCanvas(){
   ctx.restore();
   settlementCanvasRoundRect(ctx, tableX + 0.5, tableY + 0.5, tableW - 1, tableH - 1, 12);
   ctx.strokeStyle = C.border;
+  ctx.lineWidth = 1;
   ctx.stroke();
 
   // ---------- 要還給我的款項 ----------
@@ -5919,7 +5883,9 @@ function renderSettlementImageCanvas(){
   ctx.fillText(settlementCanvasTruncate(ctx, t("currency.settlementImageTransfers", {name: myName}), innerW - totalW), PAD, listY + listHeadH / 2 - 4);
 
   const panelY = listY + listHeadH;
-  card(PAD, panelY, innerW, Math.max(owedToMe.length, 1) * listRowH);
+  settlementCanvasRoundRect(ctx, PAD, panelY, innerW, Math.max(owedToMe.length, 1) * listRowH, 14);
+  ctx.fillStyle = C.card; ctx.fill();
+  ctx.strokeStyle = C.border; ctx.lineWidth = 1; ctx.stroke();
   if(!owedToMe.length){
     ctx.textAlign = "center";
     ctx.fillStyle = C.muted;
