@@ -372,6 +372,11 @@ const I18N = {
     "currency.unknownError": "未知錯誤",
     "currency.calcSharedLabel": "共同支出",
     "currency.calcTaxLabel": "稅/服務費",
+    "currency.calcAddonLabel": "自付",
+    "currency.calcCustomLabel": "自訂",
+    "currency.calcServiceLabel": "服務費",
+    "currency.calcEvenSplit": "全員平分",
+    "currency.calcRatioLabel": "比例{n}份",
     "currency.expenseDetailFallback": "支出明細",
     "currency.toggleCalcTitle": "展開/收合計算機算式",
     "currency.calcFormulaTitle": "計算機算式：{calc}",
@@ -615,6 +620,7 @@ const I18N = {
     "recovery.saveSuccess": "密碼已設定！正在為你登入…",
 
     "configWarning.title": "尚未設定 Supabase",
+    "configWarning.text": "打開這個檔案，把最下面 <code>&lt;script&gt;</code> 區塊裡的 <code>SUPABASE_URL</code> 跟 <code>SUPABASE_ANON_KEY</code> 換成你自己 Supabase 專案的值，存檔後重新整理即可。",
 
     "msg.captchaNotReady": "安全驗證還沒完成，請稍等一下（或往下滑看看有沒有出現驗證小工具）再試一次",
     "msg.accountAlreadyLinked": "這個帳號已經連結到另一個 Splitbill 帳號了，要先去那邊解除連結（或銷毀那個帳號）才能連過來這裡",
@@ -1716,6 +1722,11 @@ const I18N = {
     "currency.unknownError": "不明なエラー",
     "currency.calcSharedLabel": "共同支出",
     "currency.calcTaxLabel": "税/サービス料",
+    "currency.calcAddonLabel": "自己負担",
+    "currency.calcCustomLabel": "指定額",
+    "currency.calcServiceLabel": "サービス料",
+    "currency.calcEvenSplit": "全員で均等割り",
+    "currency.calcRatioLabel": "{n}口分",
     "currency.expenseDetailFallback": "支出詳細",
     "currency.toggleCalcTitle": "計算式の表示/折りたたみ",
     "currency.calcFormulaTitle": "計算式：{calc}",
@@ -1959,6 +1970,7 @@ const I18N = {
     "recovery.saveSuccess": "パスワードを設定しました！ログインしています…",
 
     "configWarning.title": "Supabase が未設定です",
+    "configWarning.text": "このファイルを開き、一番下の <code>&lt;script&gt;</code> ブロックにある <code>SUPABASE_URL</code> と <code>SUPABASE_ANON_KEY</code> をご自身の Supabase プロジェクトの値に書き換えて保存し、ページを再読み込みしてください。",
 
     "msg.captchaNotReady": "セキュリティ確認がまだ完了していません。少し待つか、下に確認ウィジェットが表示されているか確認してからもう一度お試しください",
     "msg.accountAlreadyLinked": "このアカウントは既に別の Splitbill アカウントに連携されています。先にそちらで連携解除（またはアカウント削除）してから連携してください",
@@ -3060,6 +3072,11 @@ const I18N = {
     "currency.unknownError": "Unknown error",
     "currency.calcSharedLabel": "Shared expense",
     "currency.calcTaxLabel": "Tax/Service fee",
+    "currency.calcAddonLabel": "Own items",
+    "currency.calcCustomLabel": "Custom",
+    "currency.calcServiceLabel": "Service fee",
+    "currency.calcEvenSplit": "Split evenly",
+    "currency.calcRatioLabel": "{n} shares",
     "currency.expenseDetailFallback": "Expense Detail",
     "currency.toggleCalcTitle": "Expand/collapse formula",
     "currency.calcFormulaTitle": "Formula: {calc}",
@@ -3303,6 +3320,7 @@ const I18N = {
     "recovery.saveSuccess": "Password set! Logging you in…",
 
     "configWarning.title": "Supabase not configured yet",
+    "configWarning.text": "Open this file and replace <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> in the <code>&lt;script&gt;</code> block at the bottom with your own Supabase project values, then save and reload.",
 
     "msg.captchaNotReady": "Security check isn't done yet — wait a moment (or scroll down to see if a verification widget appeared) and try again",
     "msg.accountAlreadyLinked": "This account is already linked to another Splitbill account. Unlink it there (or delete that account) before linking here",
@@ -4115,7 +4133,13 @@ function t(key, vars){
 function applyI18n(root){
   const scope = root || document;
   if(!scope.querySelectorAll) return;
-  scope.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.dataset.i18n); });
+  // 標籤裡如果還包著按鈕（例如設定頁欄位名稱旁的「i」說明鈕），只換掉文字節點，
+  // 不能用 textContent 整個覆寫，不然按鈕會被一起清掉
+  scope.querySelectorAll("[data-i18n]").forEach(el => {
+    if(!el.firstElementChild){ el.textContent = t(el.dataset.i18n); return; }
+    const txt = [...el.childNodes].find(n => n.nodeType === 3 && n.nodeValue.trim());
+    if(txt) txt.nodeValue = t(el.dataset.i18n); else el.insertBefore(document.createTextNode(t(el.dataset.i18n)), el.firstChild);
+  });
   scope.querySelectorAll("[data-i18n-placeholder]").forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder); });
   scope.querySelectorAll("[data-i18n-title]").forEach(el => {
     el.title = t(el.dataset.i18nTitle);

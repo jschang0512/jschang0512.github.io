@@ -29,18 +29,18 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=909">
-<link rel="stylesheet" href="shared.css?v=909">
+<link rel="stylesheet" href="theme.css?v=910">
+<link rel="stylesheet" href="shared.css?v=910">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
-<script src="i18n.js?v=909"></script>
-<script src="currencies.js?v=909"></script>
-<script src="motion.js?v=909"></script>
-<script src="version.js?v=909"></script>
-<script src="notif-text.js?v=909"></script>
-<script src="shared-ui.js?v=909"></script>
-<script src="theme.js?v=909" defer></script>
-<script src="app-banner.js?v=909" defer></script>
+<script src="i18n.js?v=910"></script>
+<script src="currencies.js?v=910"></script>
+<script src="motion.js?v=910"></script>
+<script src="version.js?v=910"></script>
+<script src="notif-text.js?v=910"></script>
+<script src="shared-ui.js?v=910"></script>
+<script src="theme.js?v=910" defer></script>
+<script src="app-banner.js?v=910" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -115,7 +115,7 @@ if("serviceWorker" in navigator){
 
   <div id="configWarning" class="card hidden">
     <h2 data-i18n="configWarning.title">尚未設定 Supabase</h2>
-    <p class="config-warning-text">
+    <p class="config-warning-text" data-i18n-html="configWarning.text">
       打開這個檔案，把最下面 <code>&lt;script&gt;</code> 區塊裡的
       <code>SUPABASE_URL</code> 跟 <code>SUPABASE_ANON_KEY</code>
       換成你自己 Supabase 專案的值，存檔後重新整理即可。
@@ -173,7 +173,7 @@ if("serviceWorker" in navigator){
           </div>
           <div class="msg" id="avatarMsg"></div>
 
-          <label data-i18n="login.usernameLabel">登入帳號<button type="button" class="info-btn" data-info-for="infoAccountName" aria-label="說明"><span class="info-btn-i">i</span></button></label>
+          <label data-i18n="login.usernameLabel">登入帳號<button type="button" class="info-btn" data-info-for="infoAccountName" data-i18n-title="common.info" title="說明" aria-label="說明"><span class="info-btn-i">i</span></button></label>
           <p class="settings-hint hidden" id="infoAccountName" data-i18n="settings.usernameInfo">全站唯一，不能跟別人重複；登入頁可以直接打這個名稱登入，不用記信箱。改了會同步套用到你所有群組的預設顯示名稱——除非某個群組另外設定了暱稱，那個群組會繼續顯示暱稱，不受這裡影響。可以是中文、英文、數字、底線，2~20 個字。</p>
           <div class="settings-field-row">
             <input type="text" id="settingsName" data-i18n-placeholder="settings.usernamePlaceholder" placeholder="例如 小菘、chiasung" maxlength="20">
@@ -181,7 +181,7 @@ if("serviceWorker" in navigator){
           </div>
           <div class="msg" id="nameMsg"></div>
 
-          <label data-i18n="login.emailLabel">電子信箱<button type="button" class="info-btn" data-info-for="infoEmail" aria-label="說明"><span class="info-btn-i">i</span></button></label>
+          <label data-i18n="login.emailLabel">電子信箱<button type="button" class="info-btn" data-info-for="infoEmail" data-i18n-title="common.info" title="說明" aria-label="說明"><span class="info-btn-i">i</span></button></label>
           <p class="settings-hint hidden" id="infoEmail" data-i18n="settings.emailInfo">填了才能用忘記密碼救回帳號。</p>
           <div class="settings-field-row">
             <input type="email" id="settingsEmail" data-i18n-placeholder="login.emailPlaceholder" placeholder="例如 you@gmail.com">
@@ -217,7 +217,7 @@ if("serviceWorker" in navigator){
           </div>
           <p class="settings-hint hidden" id="pwChangeLockedHint" data-i18n="settings.pwChangeLockedHint">請先在上面設定並確認信箱，才能在這裡修改密碼——不然以後忘記密碼會沒辦法用忘記密碼功能救回帳號。</p>
 
-          <label data-i18n="settings.linkIdentityLabel">連結其他登入方式<button type="button" class="info-btn" data-info-for="infoLinkIdentity" aria-label="說明"><span class="info-btn-i">i</span></button></label>
+          <label data-i18n="settings.linkIdentityLabel">連結其他登入方式<button type="button" class="info-btn" data-info-for="infoLinkIdentity" data-i18n-title="common.info" title="說明" aria-label="說明"><span class="info-btn-i">i</span></button></label>
           <p class="settings-hint hidden" id="infoLinkIdentity" data-i18n="settings.linkIdentityInfo">把不同信箱的 Google/Discord 帳號連結到這個帳號，以後不管用哪一種方式登入，都是同一個帳號、同一批群組資料。建議現在就先連結起來，之後才不會因為信箱不一樣，不小心用 Google/Discord 登入又建立出一個新帳號。</p>
           <div class="settings-row">
             <span>Google</span>
@@ -246,14 +246,14 @@ if("serviceWorker" in navigator){
         <div class="settings-group">
           <div class="settings-section-title" data-i18n="settings.thisGroupTitle">這個群組</div>
 
-          <label data-i18n="settings.currentGroupLabel">目前所在的群組<button type="button" class="info-btn" data-info-for="infoGroupSelect" aria-label="說明"><span class="info-btn-i">i</span></button></label>
+          <label data-i18n="settings.currentGroupLabel">目前所在的群組<button type="button" class="info-btn" data-info-for="infoGroupSelect" data-i18n-title="common.info" title="說明" aria-label="說明"><span class="info-btn-i">i</span></button></label>
           <p class="settings-hint hidden" id="infoGroupSelect" data-i18n="settings.currentGroupInfo">切換群組後頁面會重新整理，只會看到那個群組的資料。</p>
           <div class="settings-field-row">
             <select id="settingsGroupSelect"></select>
           </div>
           <div class="msg" id="settingsGroupMsg"></div>
 
-          <label data-i18n="settings.nicknameLabel">在這個群組顯示的暱稱<button type="button" class="info-btn" data-info-for="infoNickname" aria-label="說明"><span class="info-btn-i">i</span></button></label>
+          <label data-i18n="settings.nicknameLabel">在這個群組顯示的暱稱<button type="button" class="info-btn" data-info-for="infoNickname" data-i18n-title="common.info" title="說明" aria-label="說明"><span class="info-btn-i">i</span></button></label>
           <p class="settings-hint hidden" id="infoNickname" data-i18n="settings.nicknameInfo">只影響這個群組看到的名字，不影響「帳號」分頁的登入帳號、也不影響你在其他群組的名字。留空表示不特別設定，跟著登入帳號走。</p>
           <div class="settings-field-row">
             <input type="text" id="settingsNickname" data-i18n-placeholder="settings.nicknamePlaceholder" placeholder="這個群組看到的名字">
@@ -261,7 +261,7 @@ if("serviceWorker" in navigator){
           </div>
           <div class="msg" id="nicknameMsg"></div>
 
-          <label data-i18n="settings.groupNameLabel">目前的群組名稱<button type="button" class="info-btn" data-info-for="infoGroupName" aria-label="說明"><span class="info-btn-i">i</span></button></label>
+          <label data-i18n="settings.groupNameLabel">目前的群組名稱<button type="button" class="info-btn" data-info-for="infoGroupName" data-i18n-title="common.info" title="說明" aria-label="說明"><span class="info-btn-i">i</span></button></label>
           <p class="settings-hint hidden" id="infoGroupName" data-i18n="settings.groupNameInfo">任何成員都可以改，不限建立者。</p>
           <div class="settings-field-row">
             <input type="text" id="settingsGroupName" data-i18n-placeholder="groupChoice.groupNameLabel" placeholder="群組名稱">
@@ -288,7 +288,7 @@ if("serviceWorker" in navigator){
           <div class="msg" id="copyInviteCodeMsg"></div>
           <button type="button" class="btn-wide" id="qrModalOpenBtn" data-i18n="settings.showQrCode">顯示 QR Code</button>
 
-          <label data-i18n="settings.joinByCodeLabel">用邀請碼加入<button type="button" class="info-btn" data-info-for="infoJoinGroup" aria-label="說明"><span class="info-btn-i">i</span></button></label>
+          <label data-i18n="settings.joinByCodeLabel">用邀請碼加入<button type="button" class="info-btn" data-info-for="infoJoinGroup" data-i18n-title="common.info" title="說明" aria-label="說明"><span class="info-btn-i">i</span></button></label>
           <p class="settings-hint hidden" id="infoJoinGroup" data-i18n="settings.joinByCodeInfo">會用「帳號」分頁設定的姓名加入，加入後自動切換過去，之後可以隨時用上面的下拉選單換回來，或是在這個群組另外設定暱稱。</p>
           <div class="settings-field-row">
             <input type="text" id="settingsJoinCode" data-i18n-placeholder="settings.inviteCodePlaceholder" placeholder="邀請碼">
@@ -329,7 +329,7 @@ if("serviceWorker" in navigator){
         <div class="settings-group">
           <div class="settings-section-title" data-i18n="settings.displayContentTitle">顯示內容</div>
 
-          <label data-i18n="settings.currencyLabel">顯示幣別<button type="button" class="info-btn" data-info-for="infoCurrency" aria-label="說明"><span class="info-btn-i">i</span></button></label>
+          <label data-i18n="settings.currencyLabel">顯示幣別<button type="button" class="info-btn" data-info-for="infoCurrency" data-i18n-title="common.info" title="說明" aria-label="說明"><span class="info-btn-i">i</span></button></label>
           <p class="settings-hint hidden" id="infoCurrency" data-i18n="settings.currencyInfo">勾選的幣別才會出現在首頁的導覽列、總表、我的款項；取消勾選不會刪除紀錄。</p>
           <button type="button" class="btn-wide" id="currencyModalOpenBtn">
             <span id="currencyToggleSummary" data-i18n="settings.selectDisplayCurrencies">選擇要顯示的幣別</span>
@@ -338,7 +338,7 @@ if("serviceWorker" in navigator){
           <div class="settings-row settings-row-mt">
             <span class="settings-item-label-wrap">
               <span data-i18n="settings.showLeftMembersLabel">顯示已退出／已銷毀成員</span>
-              <button type="button" class="info-btn" data-info-for="infoShowLeft" aria-label="說明"><span class="info-btn-i">i</span></button>
+              <button type="button" class="info-btn" data-info-for="infoShowLeft" data-i18n-title="common.info" title="說明" aria-label="說明"><span class="info-btn-i">i</span></button>
             </span>
             <label class="switch-toggle" for="showLeftMembersToggle">
               <input type="checkbox" id="showLeftMembersToggle">
@@ -542,7 +542,7 @@ if("serviceWorker" in navigator){
     </div>
     <label data-i18n="groupChoice.groupNameLabel">群組名稱</label>
     <input type="text" id="settingsCreateGroupName" data-i18n-placeholder="groupChoice.groupNamePlaceholder" placeholder="例如：日本旅遊團">
-    <label data-i18n="settings.creationCodeLabel">建團授權碼<button type="button" class="info-btn" data-info-for="infoCreateGroup" aria-label="說明"><span class="info-btn-i">i</span></button></label>
+    <label data-i18n="settings.creationCodeLabel">建團授權碼<button type="button" class="info-btn" data-info-for="infoCreateGroup" data-i18n-title="common.info" title="說明" aria-label="說明"><span class="info-btn-i">i</span></button></label>
     <p class="settings-hint hidden" id="infoCreateGroup" data-i18n="settings.creationCodeInfo">避免帳號被拿去亂開群組，需要跟開發者索取授權碼才能建立新群組。建立後會自動切換過去，之後可以隨時用上面的下拉選單換回來。</p>
     <input type="text" id="settingsCreateGroupCode" data-i18n-placeholder="groupChoice.creationCodePlaceholder" placeholder="跟開發者索取">
     <button class="btn-wide" id="settingsCreateGroupBtn" data-i18n="common.create">建立</button>

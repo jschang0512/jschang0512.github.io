@@ -528,7 +528,7 @@
     nav.setAttribute("aria-label", t("currency.sectionNavLabel"));
     const curMeta = CURRENCIES.find(c => c.code === CURRENCY);
     // 幣別切換放最右邊，大拇指最好按
-    nav.innerHTML = appTabs.map(tab => `<button type="button" data-tab="${tab.dataset.tab}"><span class="sb-nav-ico">${sbIcon(NAV_ICON[tab.dataset.tab] || "list")}</span><span>${escapeHtml(tab.textContent.trim())}</span></button>`).join("")
+    nav.innerHTML = appTabs.map(tab => `<button type="button" data-tab="${tab.dataset.tab}"><span class="sb-nav-ico">${sbIcon(NAV_ICON[tab.dataset.tab] || "list")}</span><span>${escapeHtml(tab.dataset.i18n ? t(tab.dataset.i18n) : tab.textContent.trim())}</span></button>`).join("")
       + `<button type="button" class="sb-nav-currency" aria-haspopup="dialog"><span class="sb-nav-ico">${currencyFlagImgHTML(CURRENCY) || sbIcon("globe")}</span><span>${escapeHtml(curMeta ? curMeta.label : CURRENCY)} ▾</span></button>`;
     document.body.appendChild(nav);
     document.body.classList.add("has-bottom-nav");
@@ -6226,8 +6226,14 @@ async function copyToClipboard(text){
 // 「自付」本來就夠白話不用改。純粹換字，算式還是同一條字串，不拆成好幾行。
 function relabelCalcText(calc){
   return String(calc || "")
+    .replace(/全員平分/g, t("currency.calcEvenSplit"))
+    .replace(/比例(\d+(?:\.\d+)?)份/g, (m, n) => t("currency.calcRatioLabel", {n}))
     .replace(/平分/g, t("currency.calcSharedLabel"))
-    .replace(/稅額/g, t("currency.calcTaxLabel"));
+    .replace(/稅額/g, t("currency.calcTaxLabel"))
+    .replace(/服務費/g, t("currency.calcServiceLabel"))
+    .replace(/自付/g, t("currency.calcAddonLabel"))
+    .replace(/自訂/g, t("currency.calcCustomLabel"))
+    .replace(/([A-Za-z])(\d)/g, "$1 $2");
 }
 function showExpenseDebtDetail(e){
   const modal = document.getElementById("expenseDebtModal");

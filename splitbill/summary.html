@@ -29,17 +29,17 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=909">
-<link rel="stylesheet" href="shared.css?v=909">
+<link rel="stylesheet" href="theme.css?v=910">
+<link rel="stylesheet" href="shared.css?v=910">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
-<script src="i18n.js?v=909"></script>
-<script src="currencies.js?v=909"></script>
-<script src="motion.js?v=909"></script>
-<script src="version.js?v=909"></script>
-<script src="notif-text.js?v=909"></script>
-<script src="shared-ui.js?v=909"></script>
-<script src="theme.js?v=909" defer></script>
-<script src="app-banner.js?v=909" defer></script>
+<script src="i18n.js?v=910"></script>
+<script src="currencies.js?v=910"></script>
+<script src="motion.js?v=910"></script>
+<script src="version.js?v=910"></script>
+<script src="notif-text.js?v=910"></script>
+<script src="shared-ui.js?v=910"></script>
+<script src="theme.js?v=910" defer></script>
+<script src="app-banner.js?v=910" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -110,7 +110,7 @@ if("serviceWorker" in navigator){
 
   <div id="configWarning" class="card hidden">
     <h2 data-i18n="configWarning.title">尚未設定 Supabase</h2>
-    <p class="config-warning-text">
+    <p class="config-warning-text" data-i18n-html="configWarning.text">
       打開這個檔案，把最下面 <code>&lt;script&gt;</code> 區塊裡的
       <code>SUPABASE_URL</code> 跟 <code>SUPABASE_ANON_KEY</code>
       換成你自己 Supabase 專案的值，存檔後重新整理即可。
@@ -263,7 +263,7 @@ if("serviceWorker" in navigator){
         </div>
 
         <!-- 金額 -->
-        <label id="quickExpAmountLabel">支出總金額 (已含稅/免稅)</label>
+        <label id="quickExpAmountLabel" data-i18n="summary.amountLabelInclusive">支出總金額 (已含稅/免稅)</label>
         <div class="input-calc-wrap">
           <input type="number" id="quickExpAmount" data-i18n-placeholder="currency.amountPlaceholder" placeholder="例如 850" min="0" step="1">
           <button type="button" class="amt-row-calc-btn input-calc-btn" id="quickExpAmountCalcBtn" data-i18n-title="common.calculator" title="小計算機"><span class="sb-ico" style="--ico:var(--ico-calc)" aria-hidden="true"></span></button>
