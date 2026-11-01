@@ -5768,20 +5768,19 @@ function renderSettlementImageCanvas(){
   const dataRowH = 34;
   const footRowH = 32;
   const cardHeaderH = 100;
-  const cardFooterH = 48;
+  const cardFooterH = PAD;
 
-  // 表格下方的「還款明細」：收到圖的人多半只想知道「我要付多少給誰」，
-  // 不用自己去交叉表裡對行列。資料跟表格同一份 owed，付款人照欠款總額
-  // 由大到小、同一人的項目照金額由大到小（分享出去的圖不分誰是登入者）。
-  const byFrom = {};
-  ids.forEach(c => ids.forEach(d => {
-    const amt = (c !== d && owed[c] && owed[c][d]) || 0;
-    if(amt > 0.05) (byFrom[d] = byFrom[d] || []).push({ from: d, to: c, amt });
-  }));
-  const fromTotal = id => byFrom[id].reduce((s, x) => s + x.amt, 0);
-  const transfers = Object.keys(byFrom)
-    .sort((a, b) => fromTotal(b) - fromTotal(a))
-    .flatMap(id => byFrom[id].sort((a, b) => b.amt - a.amt));
+  // 表格下方只列「別人要還我的」：這張圖是登入者拿去跟大家催款用的，
+  // 列出每個人欠我多少，收到的人不用自己去交叉表裡對行列。
+  // 資料跟表格同一份 owed（owed[債權人][債務人]），照金額由大到小。
+  const myId = myMember && myMember.id;
+  const myName = (myId && memberById[myId]) || "?";
+  const transfers = ids
+    .filter(d => d !== myId)
+    .map(d => ({ from: d, amt: (myId && owed[myId] && owed[myId][d]) || 0 }))
+    .filter(x => x.amt > 0.05)
+    .sort((a, b) => b.amt - a.amt);
+  const owedTotal = transfers.reduce((s, x) => s + x.amt, 0);
   const listGap = 28;
   const listHeadH = 30;
   const listRowH = 40;
@@ -5991,20 +5990,23 @@ function renderSettlementImageCanvas(){
   ctx.stroke();
   ctx.restore();
 
-  // ---------- 還款明細：一列一筆「誰 → 誰　金額」 ----------
+  // ---------- 要還給我的款項：一列一人「名字　金額」 ----------
   const listX = PAD, listW = W - PAD * 2;
   const listY = tableY + tableH + listGap;
   ctx.textBaseline = "middle";
+  let totalText = "";
+  if(transfers.length){
+    ctx.textAlign = "right";
+    ctx.fillStyle = T.accent;
+    ctx.font = "700 13px 'Noto Sans TC', sans-serif";
+    totalText = t("currency.settlementImageOwedTotal", {amount: `${SYM}${formatAmt(owedTotal)}`});
+    ctx.fillText(totalText, listX + listW, listY + listHeadH / 2 - 4);
+  }
   ctx.textAlign = "left";
   ctx.fillStyle = inkText;
   ctx.font = "700 14px 'Noto Sans TC', sans-serif";
-  ctx.fillText(t("currency.settlementImageTransfers"), listX, listY + listHeadH / 2 - 4);
-  if(transfers.length){
-    ctx.textAlign = "right";
-    ctx.fillStyle = mutedText;
-    ctx.font = "500 12px 'Noto Sans TC', sans-serif";
-    ctx.fillText(t("currency.settlementImageTransferCount", {count: transfers.length}), listX + listW, listY + listHeadH / 2 - 4);
-  }
+  const totalW = totalText ? ctx.measureText(totalText).width + 16 : 0;
+  ctx.fillText(settlementCanvasTruncate(ctx, t("currency.settlementImageTransfers", {name: myName}), listW - totalW), listX, listY + listHeadH / 2 - 4);
 
   const panelY = listY + listHeadH;
   const panelH = Math.max(transfers.length, 1) * listRowH;
@@ -6021,7 +6023,7 @@ function renderSettlementImageCanvas(){
     ctx.textAlign = "center";
     ctx.fillStyle = mutedText;
     ctx.font = "500 13px 'Noto Sans TC', sans-serif";
-    ctx.fillText(settlementCanvasTruncate(ctx, t("currency.allSettledNoTransfer"), listW - 24), listX + listW / 2, panelY + listRowH / 2);
+    ctx.fillText(settlementCanvasTruncate(ctx, t("currency.settlementImageNobodyOwes", {name: myName}), listW - 24), listX + listW / 2, panelY + listRowH / 2);
   }
   transfers.forEach((tr, i) => {
     const y = panelY + i * listRowH;
@@ -6035,7 +6037,6 @@ function renderSettlementImageCanvas(){
     ctx.font = "700 14px 'Noto Sans TC', sans-serif";
     const amtText = `${SYM}${formatAmt(tr.amt)}`;
     const amtW = ctx.measureText(amtText).width;
-    const nameMax = (listW - 28 - amtW - 16 - 30) / 2;
     ctx.textAlign = "right";
     ctx.fillStyle = T.accent;
     ctx.fillText(amtText, listX + listW - 14, cy + 1);
@@ -6043,28 +6044,10 @@ function renderSettlementImageCanvas(){
     ctx.textAlign = "left";
     ctx.fillStyle = inkText;
     ctx.font = "600 14px 'Noto Sans TC', sans-serif";
-    const fromName = settlementCanvasTruncate(ctx, memberById[tr.from] || "?", nameMax);
-    let x = listX + 14;
-    ctx.fillText(fromName, x, cy + 1);
-    x += ctx.measureText(fromName).width + 9;
-    // 箭頭用線條畫，不用「→」字元：各語言字型的箭頭粗細、基線都不一樣
-    ctx.strokeStyle = mutedText;
-    ctx.lineWidth = 1.5;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-    ctx.beginPath();
-    ctx.moveTo(x, cy); ctx.lineTo(x + 12, cy);
-    ctx.moveTo(x + 8, cy - 4); ctx.lineTo(x + 12, cy); ctx.lineTo(x + 8, cy + 4);
-    ctx.stroke();
-    x += 21;
-    ctx.fillText(settlementCanvasTruncate(ctx, memberById[tr.to] || "?", nameMax), x, cy + 1);
+    ctx.fillText(settlementCanvasTruncate(ctx, memberById[tr.from] || "?", listW - 28 - amtW - 16), listX + 14, cy + 1);
   });
 
   ctx.textBaseline = "alphabetic";
-  ctx.textAlign = "center";
-  ctx.fillStyle = T.footerText;
-  ctx.font = "600 12px 'Noto Sans TC', sans-serif";
-  ctx.fillText(t("currency.generatedBySplitbill"), W / 2, H - cardFooterH / 2 + 4);
   ctx.textAlign = "left";
 
   return canvas;
