@@ -12840,3 +12840,118 @@ html body table.debt-matrix:empty{
 }
 .dd-option .sb-ico, .dd-btn-text .sb-ico{ margin-right:.45em; opacity:.85; }
 .debt-empty-icon .sb-ico{ width:28px; height:28px; opacity:.55; }
+
+/* ============================================================
+   動態與裝飾（2026-11）：每個動畫對應一個操作、只播一次；
+   放在檔案最後，蓋過前面「安靜動態」那層的 animation:none。
+   ============================================================ */
+:root{ --ease-out:cubic-bezier(.16, 1, .3, 1); --ease-in-out:cubic-bezier(.65, 0, .35, 1); }
+
+/* 分頁切換改由 motion.js 依方向滑入，這裡不再另外淡入 */
+html body .app-panel.active{ animation:none; }
+
+/* 按壓回饋：主要按鈕、圖示按鈕、下拉、分頁、頭像 */
+html body :is(.btn, .icon-btn, .dd-btn, .dd-option, .app-tab, .main-app-tabs button, .ai-avatar-bubble, .quick-exp-fab, .notif-item-main, .unread-notif-alert){
+  transition-property:scale, background-color, border-color, color, opacity;
+  transition-duration:.12s;
+  transition-timing-function:var(--ease-out);
+}
+html body :is(.btn, .icon-btn, .dd-btn, .dd-option, .app-tab, .main-app-tabs button, .quick-exp-fab, .unread-notif-alert):not(:disabled):active{ scale:.97; }
+html body .ai-avatar-bubble:active{ scale:.92; }
+
+/* 剛存檔的那一列：淡淡亮一下再退掉 */
+@keyframes sbRowNew{
+  0%{ background-color:color-mix(in srgb, var(--btn-primary) 22%, transparent); }
+  100%{ background-color:transparent; }
+}
+html body .sb-row-new{ animation:sbRowNew 1.6s var(--ease-in-out) both; border-radius:12px; }
+
+/* AI 拆單進度條：平滑前進，全部認領完變綠 */
+html body .ai-claim-progress-bar-fill{ transition:width .4s var(--ease-out), background-color .3s ease-out; }
+html body .ai-claim-progress-bar-fill.is-complete{ background:var(--positive-text); }
+
+/* 結清：打勾從左到右畫出來（取代原本的 🎉） */
+@keyframes sbCheckDraw{ from{ clip-path:inset(0 100% 0 0); } to{ clip-path:inset(0 0 0 0); } }
+html body .my-balance.zero .my-balance-amt{ display:inline-flex; align-items:center; gap:10px; }
+html body .my-balance.zero .my-balance-amt::before,
+html body .my-mini-balance.all-settled-card::before{
+  content:""; flex:none; width:26px; height:26px;
+  background-color:currentColor;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 12.5l5 5L20 6.5'/%3E%3C/svg%3E") center / contain no-repeat; mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 12.5l5 5L20 6.5'/%3E%3C/svg%3E") center / contain no-repeat;
+  animation:sbCheckDraw .55s var(--ease-out) .1s both;
+}
+html body .my-mini-balance.all-settled-card::before{ width:18px; height:18px; color:var(--positive-text); }
+
+/* 新通知：未讀提示從上方滑入 */
+@keyframes sbSlideDown{ from{ opacity:0; transform:translateY(-6px); } to{ opacity:1; transform:none; } }
+html body .unread-notif-alert{ animation:sbSlideDown .28s var(--ease-out) both; }
+
+/* 彈出視窗：背景淡入，卡片沿用既有的滑入 */
+html body .calc-modal.show, html body .calc-modal.open{ animation:sbQuickFade .2s ease-out; }
+
+/* logo 組合：三塊扇形從外面滑進來，只在登入頁與啟動畫面開啟時播一次 */
+@keyframes sbPieceTop{ from{ opacity:0; transform:translate(0, -70px); } to{ opacity:1; transform:none; } }
+@keyframes sbPieceRight{ from{ opacity:0; transform:translate(62px, 36px); } to{ opacity:1; transform:none; } }
+@keyframes sbPieceLeft{ from{ opacity:0; transform:translate(-62px, 36px); } to{ opacity:1; transform:none; } }
+html body .login-form-panel .app-header .app-logo .s1,
+html body .pwa-splash-logo .s1{ animation:sbPieceTop .6s var(--ease-out) .05s both; }
+html body .login-form-panel .app-header .app-logo .s2,
+html body .pwa-splash-logo .s2{ animation:sbPieceRight .6s var(--ease-out) .15s both; }
+html body .login-form-panel .app-header .app-logo .s3,
+html body .pwa-splash-logo .s3{ animation:sbPieceLeft .6s var(--ease-out) .25s both; }
+/* 啟動畫面若還在載入，組合完才接原本的載入脈動 */
+html body .pwa-splash-logo .s1{ animation:sbPieceTop .6s var(--ease-out) .05s both, pwaSplashSlice 1.1s ease-in-out 1s infinite backwards; }
+html body .pwa-splash-logo .s2{ animation:sbPieceRight .6s var(--ease-out) .15s both, pwaSplashSlice 1.1s ease-in-out 1.36s infinite backwards; }
+html body .pwa-splash-logo .s3{ animation:sbPieceLeft .6s var(--ease-out) .25s both, pwaSplashSlice 1.1s ease-in-out 1.72s infinite backwards; }
+
+/* 餘額橫幅：右側一個很淡、放大的 logo 浮水印 */
+html body .my-balance::after{
+  display:block !important;
+  content:""; position:absolute; right:-34px; top:50%; width:132px; height:132px;
+  transform:translateY(-50%) rotate(-8deg);
+  background-color:#fff; opacity:.09; pointer-events:none;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath d='M256,238 L118.5,138.1 A170,170 0 0,1 393.5,138.1 Z'/%3E%3Cpath d='M271.6,265 L426.9,195.9 A170,170 0 0,1 289.4,434.1 Z'/%3E%3Cpath d='M240.4,265 L222.6,434.1 A170,170 0 0,1 85.1,195.9 Z'/%3E%3C/svg%3E") center / contain no-repeat; mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cpath d='M256,238 L118.5,138.1 A170,170 0 0,1 393.5,138.1 Z'/%3E%3Cpath d='M271.6,265 L426.9,195.9 A170,170 0 0,1 289.4,434.1 Z'/%3E%3Cpath d='M240.4,265 L222.6,434.1 A170,170 0 0,1 85.1,195.9 Z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+html body .my-balance > *{ position:relative; z-index:1; }
+
+/* 類別專屬色：圖示配淡淡的同色底（--cat 由 JS 帶入該類別的顏色） */
+html body .exp-cat-badge[style*="--cat"]{
+  color:color-mix(in srgb, var(--cat) 82%, #000);
+  background:color-mix(in srgb, var(--cat) 13%, var(--card));
+  border-color:color-mix(in srgb, var(--cat) 28%, var(--card));
+}
+:root[data-theme="dark"] body .exp-cat-badge[style*="--cat"]{
+  color:color-mix(in srgb, var(--cat) 60%, #fff);
+  background:color-mix(in srgb, var(--cat) 20%, var(--card));
+  border-color:color-mix(in srgb, var(--cat) 36%, var(--card));
+}
+html body .ledger-timeline-node.is-expense[style*="--cat"]{
+  border-color:var(--cat);
+  color:color-mix(in srgb, var(--cat) 82%, #000);
+  background:color-mix(in srgb, var(--cat) 14%, var(--card));
+}
+:root[data-theme="dark"] body .ledger-timeline-node.is-expense[style*="--cat"]{ color:color-mix(in srgb, var(--cat) 60%, #fff); }
+
+/* 空白狀態：虛線卡片＋線條圖示的小插圖 */
+html body .debt-empty-icon{
+  position:relative; width:72px; height:72px; margin:4px auto 12px;
+  border-radius:20px; border:1.5px dashed color-mix(in srgb, var(--ink-soft) 40%, transparent);
+  background:color-mix(in srgb, var(--btn-primary) 7%, var(--card));
+  color:var(--btn-primary); font-size:0;
+}
+html body .debt-empty-icon .sb-ico{ width:30px; height:30px; opacity:.8; }
+html body .debt-empty-icon::before,
+html body .debt-empty-icon::after{
+  content:""; position:absolute; border-radius:50%; background:var(--btn-primary);
+}
+html body .debt-empty-icon::before{ width:8px; height:8px; top:-4px; right:10px; opacity:.35; }
+html body .debt-empty-icon::after{ width:5px; height:5px; bottom:8px; left:-3px; opacity:.22; }
+
+@media (prefers-reduced-motion: reduce){
+  html body .sb-row-new, html body .unread-notif-alert,
+  html body .my-balance.zero .my-balance-amt::before, html body .my-mini-balance.all-settled-card::before,
+  html body .login-form-panel .app-header .app-logo :is(.s1, .s2, .s3),
+  html body .pwa-splash-logo :is(.s1, .s2, .s3), html body .calc-modal.show{ animation:none; }
+  html body :is(.btn, .icon-btn, .dd-btn, .dd-option, .app-tab, .main-app-tabs button, .quick-exp-fab, .unread-notif-alert, .ai-avatar-bubble):active{ scale:none; }
+  html body .ai-claim-progress-bar-fill{ transition:none; }
+}

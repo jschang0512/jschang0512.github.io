@@ -3772,8 +3772,11 @@
   async function deleteRowsWithUndo(table, rows, refreshFn, label){
     const list = Array.isArray(rows) ? rows : [rows];
     const ids = list.map(r => r.id);
+    // 那一列先收合（跟刪除請求同時進行），失敗的話重畫把它找回來
+    const collapsing = window.sbCollapseRows ? window.sbCollapseRows(ids) : Promise.resolve();
     const { error } = await sb.from(table).delete().in("id", ids);
-    if(error){ await sbAlert(t("currency.deleteFailed") + error.message, t("settings.errorTitle")); return; }
+    await collapsing;
+    if(error){ await sbAlert(t("currency.deleteFailed") + error.message, t("settings.errorTitle")); await refreshFn(); return; }
     await refreshFn();
     showToast(t("currency.deletedToastTitle"), label || "", t("currency.undoLabel"), async ()=>{
       const { error: restoreErr } = await sb.from(table).insert(list);
@@ -3839,7 +3842,7 @@
         const highlightedNote = highlightSearchMatch(firstLineNote.length > 40 ? firstLineNote.slice(0, 38) + "…" : firstLineNote, searchKw);
         const highlightedAmt = highlightSearchMatch(formatAmt(e.amount), searchKw);
         return `<div class="exp-item" data-id="${e.id}" title="${t("currency.clickToViewDebtDetail")}">
-          <div class="exp-cat-badge exp-cat-${catMeta.type}" title="${catMeta.name}">${icon}</div>
+          <div class="exp-cat-badge exp-cat-${catMeta.type}" title="${catMeta.name}"${catMeta.color ? ` style="--cat:${catMeta.color}"` : ""}>${icon}</div>
           <div class="exp-main">
             <div class="exp-desc">${highlightedTitle}${isAiSplit ? `<span class="ai-split-badge" style="font-size:11px;font-weight:700;padding:1px 6px;border-radius:6px;background:color-mix(in srgb, var(--btn-primary) 14%, var(--paper));color:var(--btn-primary);margin-left:5px;">${t("currency.aiSplitBadge")}</span>` : ""}${isXcur ? `<span class="xcur-badge">${t("currency.xcurBadge")}</span>` : ""}${isRecurringGenerated ? `<span class="recurring-badge">${t("currency.recurringBadge")}</span>` : ""}</div>
             <div class="exp-meta">
@@ -7109,7 +7112,7 @@ function showPairDetail(
 
       return `
         <div class="ledger-row-wrap ${rowWrapClass(ev)}" data-id="${e.id}">
-          <div class="ledger-timeline-node is-expense" title="${t("currency.expenseIconTitle", {icon: catMeta.name || ""})}">${catMeta.icon || sbIcon("receipt")}</div>
+          <div class="ledger-timeline-node is-expense"${catMeta.color ? ` style="--cat:${catMeta.color}"` : ""} title="${t("currency.expenseIconTitle", {icon: catMeta.name || ""})}">${catMeta.icon || sbIcon("receipt")}</div>
           <div class="ledger-row ledger-row-open-expense" data-id="${e.id}">
             <div class="ledger-row-header">
               <div class="ledger-row-name">

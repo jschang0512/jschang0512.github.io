@@ -25,6 +25,7 @@ const APP_SHELL = [
   "theme.js",
   "shared-ui.js",
   "notif-text.js",
+  "motion.js",
   "app-banner.js",
   "app.js",
   "version.js",

@@ -718,6 +718,7 @@ async function initNotificationBell(sb, myMember){
         e.stopPropagation();
         const item = btn.closest(".notif-item");
         const wasUnread = item.classList.contains("unread");
+        if(window.sbCollapseEl) await window.sbCollapseEl(item);
         item.remove();
         await sb.from("notifications").delete().eq("id", btn.dataset.id);
         if(wasUnread) refreshBadge();

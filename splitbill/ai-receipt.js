@@ -2163,7 +2163,10 @@ CRITICAL TRANSLATION & NAMING GUIDELINES:
       const progressStatusEl = document.getElementById("aiClaimProgressStatus");
       
       if(progressStatsEl) progressStatsEl.textContent = t("currency.claimProgressStats", {claimed: claimedItemsCount, total: totalItemsCount, pct: claimPercent});
-      if(progressFillEl) progressFillEl.style.width = `${claimPercent}%`;
+      if(progressFillEl){
+        progressFillEl.style.width = `${claimPercent}%`;
+        progressFillEl.classList.toggle("is-complete", totalItemsCount > 0 && unclaimedCount === 0);
+      }
       if(progressStatusEl){
         if(totalItemsCount === 0){
           progressStatusEl.textContent = t("currency.noItemsYet");
