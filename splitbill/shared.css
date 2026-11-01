@@ -9759,3 +9759,6 @@ html body *:not(.calc-modal):not(.modal):not(.sb-dialog-backdrop){ -webkit-backd
 html body .sb-theme-btn{ display:inline-grid; place-items:center; color:var(--ink); }
 html body .sb-theme-btn .sb-ico{ width:18px; height:18px; }
 html body .theme-toggle .sb-ico{ width:18px; height:18px; }
+
+/* 電腦版名字列保留設定入口；手機版改由底部導覽的「設定」進入 */
+@media (max-width:767px){ html body #settingsBtn{ display:none !important; } }
