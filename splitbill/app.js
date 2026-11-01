@@ -959,6 +959,8 @@
       // 拿到的永遠是「呼叫當下」最新的那份）。
       getCachedExpenses: () => cachedExpenses
     };
+    // 支出資料先開始抓，跟 AI 拆單模組的下載同時進行（以前要等模組載完才開始抓資料）
+    const expensesReady = refreshExpenses();
     const aiReceiptModule = await import("./ai-receipt.js?v=" + APP_VERSION);
     aiReceiptModule.setupAiReceiptModal(aiReceiptDeps);
 
@@ -992,7 +994,7 @@
     const repayDateInp = document.getElementById("repayDate");
     if(repayDateInp) repayDateInp.value = new Date().toISOString().slice(0,10);
 
-    await refreshExpenses();
+    await expensesReady;
     generateDueRecurringExpenses();
     subscribeRealtime();
     ensurePushSubscribed();

@@ -99,12 +99,34 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 先試網路拿最新版本，若網路超過 2.5 秒沒反應（例如 DNS/Cloudflare 切換中）
-  // 或離線失敗，立即退回快取，避免使用者畫面卡住乾等幾十秒。
+  // 帶版本號的檔案（app.js?v=903…）內容永遠不會在同一個網址下改變，直接用快取，
+  // 換頁時不必每次重新下載幾百 KB；版本號一換就是新網址，自然會抓新的。
+  // 圖示等靜態圖片同理。
+  const isVersioned = url.searchParams.has("v");
+  const isStaticImage = /\.(png|svg|ico|webp|jpg|jpeg)$/i.test(url.pathname);
+  if(isVersioned || isStaticImage){
+    // 先回快取（快），同時在背景用 ETag 驗證一次並更新快取——萬一部署當下 CDN
+    // 還給了舊內容，下一次開啟就會自動修正，不會卡在錯的版本。
+    event.respondWith(caches.match(req).then((hit) => {
+      const network = fetch(req, { cache: "no-cache" }).then((response) => {
+        if(response && response.ok){
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+        }
+        return response;
+      }).catch(() => hit);
+      if(hit){ event.waitUntil(network); return hit; }
+      return network;
+    }));
+    return;
+  }
+
+  // 頁面與其他沒帶版本號的檔案：先問網路（"no-cache" 會用 ETag 驗證，沒變就只回 304，
+  // 很便宜），若網路超過 2.5 秒沒反應或離線，立即退回快取，避免畫面卡住乾等。
   const fetchWithTimeout = (request, timeoutMs = 2500) => {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
-    return fetch(request, { cache: "reload", signal: controller.signal })
+    return fetch(request, { cache: "no-cache", signal: controller.signal })
       .finally(() => clearTimeout(timer));
   };
 
