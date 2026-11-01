@@ -23,6 +23,8 @@
   }
 
   let current = getPreferred();
+  // 淺色時顯示月亮（點了變深色）、深色時顯示太陽
+  const themeIcon = () => '<span class="sb-ico" style="--ico:var(--ico-' + (current === "dark" ? "sun" : "moon") + ')" aria-hidden="true"></span>';
   document.documentElement.setAttribute("data-theme", current);
 
   function applyToggle(){
@@ -33,7 +35,7 @@
     // 變數，切換深淺模式不會自動跟著換，這裡另外發一個事件讓 app.js
     // 有機會重畫一次。
     window.dispatchEvent(new CustomEvent("splitbill-theme-change", { detail: { theme: current } }));
-    document.querySelectorAll(".theme-toggle").forEach(b => { b.textContent = current === "dark" ? "☀️" : "🌙"; });
+    document.querySelectorAll(".theme-toggle").forEach(b => { b.innerHTML = themeIcon(); });
   }
 
   // 設定頁的「深色模式」那一列直接呼叫這個做實際切換，不用找/模擬
@@ -48,7 +50,7 @@
     btn.type = "button";
     btn.className = "theme-toggle";
     btn.setAttribute("aria-label", (typeof window.t === "function") ? window.t("shared.themeToggleAria") : "切換深色／淺色模式");
-    btn.textContent = current === "dark" ? "☀️" : "🌙";
+    btn.innerHTML = themeIcon();
     btn.addEventListener("click", applyToggle);
     // 掛進 .wrap（跟 .lang-switcher 同一個容器）而不是直接掛在 body 下面——
     // .theme-toggle 是 position:absolute，定位基準是「最近的

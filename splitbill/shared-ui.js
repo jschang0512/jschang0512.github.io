@@ -1030,6 +1030,7 @@ function sbOpenCurrencySheet(opener, current, tabParam){
   shown = shown || ["TWD"];
   const list = CURRENCIES.filter(c => shown.includes(c.code) || c.code === current);
   const onHome = current === "SUMMARY";
+  const onSettings = current === "SETTINGS";
   const title = escapeHtml(t("currency.switchCurrencyTitle"));
   const el = document.createElement("div");
   el.className = "sb-sheet-backdrop";
@@ -1038,6 +1039,7 @@ function sbOpenCurrencySheet(opener, current, tabParam){
       <div class="sb-sheet-handle" aria-hidden="true"></div>
       <div class="sb-sheet-title">${title}</div>
       <a class="sb-sheet-item${onHome ? " is-current" : ""}" href="summary.html"${onHome ? ' aria-current="page"' : ""}><span class="sb-sheet-item-ico">${sbIcon("grid")}</span><span class="sb-sheet-item-label">${escapeHtml(t("common.overview"))}</span>${onHome ? sbIcon("check") : ""}</a>
+      <a class="sb-sheet-item${onSettings ? " is-current" : ""}" href="settings.html"${onSettings ? ' aria-current="page"' : ""}><span class="sb-sheet-item-ico">${sbIcon("gear")}</span><span class="sb-sheet-item-label">${escapeHtml(t("common.settings"))}</span>${onSettings ? sbIcon("check") : ""}</a>
       <div class="sb-sheet-sep" aria-hidden="true"></div>
       ${list.map(c => `<a class="sb-sheet-item${c.code === current ? " is-current" : ""}" href="currency.html?c=${c.code}${tabParam || ""}"${c.code === current ? ' aria-current="page"' : ""}>
           <span class="sb-sheet-item-ico">${currencyFlagImgHTML(c.code) || sbIcon("globe")}</span>
@@ -1093,7 +1095,7 @@ function sbBuildPageNav(){
     const k = b.dataset.nav;
     if(k === "home"){ if(current === "SUMMARY") window.scrollTo({ top: 0, behavior: "smooth" }); else location.href = "summary.html"; }
     else if(k === "settings"){ if(current === "SETTINGS") window.scrollTo({ top: 0, behavior: "smooth" }); else location.href = "settings.html"; }
-    else if(k === "currency"){ sbOpenCurrencySheet(b, current === "SUMMARY" ? "SUMMARY" : null, ""); }
+    else if(k === "currency"){ sbOpenCurrencySheet(b, current, ""); }
     else if(k === "quick"){
       const fab = document.getElementById("openQuickExpenseBtn");
       if(fab) fab.click(); else location.href = "summary.html?quick=1";
@@ -1103,3 +1105,18 @@ function sbBuildPageNav(){
 }
 if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", sbBuildPageNav);
 else sbBuildPageNav();
+
+
+// 名字那一列的深淺色切換（2026-11，取代原本的設定按鈕）：淺色時顯示月亮、深色時顯示太陽；
+// 跟設定頁「深色模式」那一列、其他頁的角落按鈕同步
+function sbSyncThemeButtons(){
+  const dark = (window.splitbillGetTheme ? window.splitbillGetTheme() : document.documentElement.getAttribute("data-theme")) === "dark";
+  document.querySelectorAll(".sb-theme-btn .sb-ico, #settingsThemeBtn .sb-ico, #themeRowIcon .sb-ico").forEach(ic => ic.style.setProperty("--ico", "var(--ico-" + (dark ? "sun" : "moon") + ")"));
+}
+document.addEventListener("click", (e) => {
+  const b = e.target.closest && e.target.closest(".sb-theme-btn");
+  if(!b || typeof window.splitbillToggleTheme !== "function") return;
+  window.splitbillToggleTheme();
+});
+window.addEventListener("splitbill-theme-change", sbSyncThemeButtons);
+if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", sbSyncThemeButtons); else sbSyncThemeButtons();
