@@ -26,16 +26,16 @@
 <meta name="apple-mobile-web-app-title" content="Splitbill">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=893">
-<link rel="stylesheet" href="shared.css?v=893">
+<link rel="stylesheet" href="theme.css?v=894">
+<link rel="stylesheet" href="shared.css?v=894">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="i18n.js?v=893"></script>
-<script src="currencies.js?v=893"></script>
-<script src="version.js?v=893"></script>
-<script src="notif-text.js?v=893"></script>
-<script src="shared-ui.js?v=893"></script>
-<script src="theme.js?v=893" defer></script>
-<script src="app-banner.js?v=893" defer></script>
+<script src="i18n.js?v=894"></script>
+<script src="currencies.js?v=894"></script>
+<script src="version.js?v=894"></script>
+<script src="notif-text.js?v=894"></script>
+<script src="shared-ui.js?v=894"></script>
+<script src="theme.js?v=894" defer></script>
+<script src="app-banner.js?v=894" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -120,7 +120,7 @@ if("serviceWorker" in navigator){
         <span id="whoamiText"><b id="whoamiName"></b></span>
       </div>
       <div class="topbar-actions">
-        <a class="icon-btn" id="settingsBtn" href="settings.html" data-i18n-title="common.settings" title="設定" aria-label="設定">⚙️</a>
+        <a class="icon-btn" id="settingsBtn" href="settings.html" data-i18n-title="common.settings" title="設定" aria-label="設定"><span class="sb-ico" style="--ico:var(--ico-gear)" aria-hidden="true"></span></a>
       </div>
     </div>
 
@@ -187,7 +187,7 @@ if("serviceWorker" in navigator){
 
     <!-- ⚡ 浮動快速記帳按鈕 -->
     <button type="button" class="quick-exp-fab" id="openQuickExpenseBtn" data-i18n-title="summary.quickExpFab" title="一鍵快速記帳" aria-label="一鍵快速記帳">
-      <span class="quick-exp-fab-icon">⚡</span>
+      <span class="quick-exp-fab-icon"><span class="sb-ico" style="--ico:var(--ico-zap)" aria-hidden="true"></span></span>
       <span class="quick-exp-fab-text" data-i18n="summary.quickExpFabText">記一筆</span>
     </button>
 
@@ -202,7 +202,7 @@ if("serviceWorker" in navigator){
     <div class="sb-drag-handle" id="quickExpDragHandle"></div>
     <div class="calc-header">
       <div class="quick-exp-modal-title">
-        <span class="quick-exp-modal-title-icon">⚡</span>
+        <span class="quick-exp-modal-title-icon"><span class="sb-ico" style="--ico:var(--ico-zap)" aria-hidden="true"></span></span>
         <span class="quick-exp-modal-title-text" data-i18n="summary.quickExpModalTitle">快速記帳</span>
       </div>
       <button type="button" class="calc-close" id="quickExpenseCloseBtn" data-i18n-title="common.close" aria-label="關閉">✕</button>
@@ -222,7 +222,7 @@ if("serviceWorker" in navigator){
 
       <div class="exp-form-section sec-content">
         <div class="exp-form-section-head">
-          <span class="exp-form-section-icon">🍽️</span>
+          <span class="exp-form-section-icon"><span class="sb-ico" style="--ico:var(--ico-receipt)" aria-hidden="true"></span></span>
           <span class="exp-form-section-title" data-i18n="currency.contentSectionTitle">支出內容</span>
           <button type="button" class="btn-ai-receipt quick-exp-ai-receipt-btn exp-form-section-action" id="quickExpAiReceiptBtn" data-i18n-title="currency.aiReceiptBtnTitle" title="拍照或上傳發票/收據自動辨識品項與拆單" data-i18n="currency.aiReceiptBtn">AI 拆單</button>
         </div>
@@ -243,17 +243,17 @@ if("serviceWorker" in navigator){
         <label for="quickExpCategorySelect" data-i18n="currency.categoryLabel">類別 (自動辨識 / 可手動選擇)</label>
         <div class="select-wrap exp-category-select-wrap">
           <select id="quickExpCategorySelect" class="exp-category-select">
-            <option value="general" data-i18n="cat.general">🧾 一般支出</option>
-            <option value="food" selected data-i18n="cat.food">🍜 美食餐飲</option>
-            <option value="drink" data-i18n="cat.drink">☕ 飲料甜點</option>
-            <option value="transit" data-i18n="cat.transit">🚄 大眾交通</option>
-            <option value="car" data-i18n="cat.car">🚗 租車用油</option>
-            <option value="flight" data-i18n="cat.flight">✈️ 機票航班</option>
-            <option value="hotel" data-i18n="cat.hotel">🏨 住宿溫泉</option>
-            <option value="ticket" data-i18n="cat.ticket">🎟️ 門票娛樂</option>
-            <option value="shopping" data-i18n="cat.shopping">🛍️ 購物藥妝</option>
-            <option value="medical" data-i18n="cat.medical">💊 醫療藥品</option>
-            <option value="network" data-i18n="cat.network">📶 網卡通訊</option>
+            <option value="general" data-i18n="cat.general">一般支出</option>
+            <option value="food" selected data-i18n="cat.food">美食餐飲</option>
+            <option value="drink" data-i18n="cat.drink">飲料甜點</option>
+            <option value="transit" data-i18n="cat.transit">大眾交通</option>
+            <option value="car" data-i18n="cat.car">租車用油</option>
+            <option value="flight" data-i18n="cat.flight">機票航班</option>
+            <option value="hotel" data-i18n="cat.hotel">住宿溫泉</option>
+            <option value="ticket" data-i18n="cat.ticket">門票娛樂</option>
+            <option value="shopping" data-i18n="cat.shopping">購物藥妝</option>
+            <option value="medical" data-i18n="cat.medical">醫療藥品</option>
+            <option value="network" data-i18n="cat.network">網卡通訊</option>
           </select>
         </div>
 
@@ -261,7 +261,7 @@ if("serviceWorker" in navigator){
         <label id="quickExpAmountLabel">支出總金額 (已含稅/免稅)</label>
         <div class="input-calc-wrap">
           <input type="number" id="quickExpAmount" data-i18n-placeholder="currency.amountPlaceholder" placeholder="例如 850" min="0" step="1">
-          <button type="button" class="amt-row-calc-btn input-calc-btn" id="quickExpAmountCalcBtn" data-i18n-title="common.calculator" title="小計算機">🧮</button>
+          <button type="button" class="amt-row-calc-btn input-calc-btn" id="quickExpAmountCalcBtn" data-i18n-title="common.calculator" title="小計算機"><span class="sb-ico" style="--ico:var(--ico-calc)" aria-hidden="true"></span></button>
         </div>
 
         <!-- 服務費 / 稅：預設「沒有」，大部分時候金額已含稅、不用理它。摘要卡片
@@ -277,7 +277,7 @@ if("serviceWorker" in navigator){
             <label class="exp-addon-label" data-i18n="currency.taxAmountLabel">服務費 / 稅額金額</label>
             <div class="input-calc-wrap exp-addon-calc-wrap">
               <input type="number" id="quickTaxAmount" data-i18n-placeholder="summary.taxAmountPlaceholder" placeholder="例如 85" min="0" step="1">
-              <button type="button" class="amt-row-calc-btn input-calc-btn" id="quickTaxCalcBtn" data-i18n-title="common.calculator" title="小計算機">🧮</button>
+              <button type="button" class="amt-row-calc-btn input-calc-btn" id="quickTaxCalcBtn" data-i18n-title="common.calculator" title="小計算機"><span class="sb-ico" style="--ico:var(--ico-calc)" aria-hidden="true"></span></button>
             </div>
             <label class="exp-tax-label" data-i18n="currency.taxSplitModeLabel">分配方式</label>
             <div class="ai-tax-split-toggle exp-tax-split-wrap">
@@ -291,7 +291,7 @@ if("serviceWorker" in navigator){
 
       <div class="exp-form-section sec-payer hidden">
         <div class="exp-form-section-head">
-          <span class="exp-form-section-icon">💰</span>
+          <span class="exp-form-section-icon"><span class="sb-ico" style="--ico:var(--ico-wallet)" aria-hidden="true"></span></span>
           <span class="exp-form-section-title" data-i18n="currency.payerSectionTitle">誰付的錢</span>
         </div>
 
@@ -309,7 +309,7 @@ if("serviceWorker" in navigator){
 
       <div class="exp-form-section sec-split hidden">
         <div class="exp-form-section-head">
-          <span class="exp-form-section-icon">🤝</span>
+          <span class="exp-form-section-icon"><span class="sb-ico" style="--ico:var(--ico-users)" aria-hidden="true"></span></span>
           <span class="exp-form-section-title" data-i18n="currency.splitSectionTitle">怎麼分攤</span>
         </div>
 
@@ -359,7 +359,7 @@ if("serviceWorker" in navigator){
 
       <div class="exp-form-section sec-note hidden">
         <div class="exp-form-section-head">
-          <span class="exp-form-section-icon">🗒️</span>
+          <span class="exp-form-section-icon"><span class="sb-ico" style="--ico:var(--ico-pencil)" aria-hidden="true"></span></span>
           <span class="exp-form-section-title" data-i18n="currency.noteDateSectionTitle">備註與日期</span>
         </div>
 
@@ -509,7 +509,7 @@ renderNavLinks();
       const input = btn.closest(".pw-input-wrap").querySelector("input");
       const show = input.type === "password";
       input.type = show ? "text" : "password";
-      btn.textContent = show ? "🙈" : "👁️";
+      btn.innerHTML = sbIcon(show ? "eyeoff" : "eye");
       btn.setAttribute("aria-label", show ? t("login.hidePassword") : t("login.showPassword"));
     });
   });
@@ -740,7 +740,7 @@ renderNavLinks();
     notifyBtn.classList.remove("hidden");
     notifyBtn.disabled = false;
     if(Notification.permission === "denied"){
-      notifyBtn.textContent = "🔕";
+      notifyBtn.innerHTML = sbIcon("belloff");
       notifyBtn.title = t("summary.notifyBlockedTitle");
       notifyBtn.classList.remove("active");
       if(notifyHint) notifyHint.textContent = NOTIFY_HINT_BLOCKED_FN();
@@ -751,13 +751,13 @@ renderNavLinks();
       const reg = await navigator.serviceWorker.getRegistration();
       const sub = reg ? await reg.pushManager.getSubscription() : null;
       if(sub){
-        notifyBtn.textContent = "🔔";
+        notifyBtn.innerHTML = sbIcon("bell");
         notifyBtn.title = t("summary.notifyOnTitle");
         notifyBtn.classList.add("active");
         return;
       }
     }
-    notifyBtn.textContent = "🔔";
+    notifyBtn.innerHTML = sbIcon("bell");
     notifyBtn.title = t("summary.notifyOffTitle");
     notifyBtn.classList.remove("active");
   }
@@ -1336,7 +1336,7 @@ renderNavLinks();
             const curObj = CURRENCIES.find(c => c.code === tmpl.currency);
             const sym = curObj ? curObj.symbol : tmpl.currency;
             return `<div class="recurring-overview-upcoming-row">
-              <span class="recurring-overview-upcoming-desc">🔁 ${escapeHtml(tmpl.description || "")}</span>
+              <span class="recurring-overview-upcoming-desc"><span class="sb-ico" style="--ico:var(--ico-repeat)" aria-hidden="true"></span> ${escapeHtml(tmpl.description || "")}</span>
               <span class="recurring-overview-upcoming-meta">${sym}${formatAmt(tmpl.amount)} · ${formatRelativeDueDate(tmpl.next_due_date, todayStr)}</span>
             </div>`;
           }).join("");
@@ -1837,7 +1837,7 @@ renderNavLinks();
       const payersGrid = document.getElementById("quickExpPayers");
       if(payersGrid){
         payersGrid.innerHTML = activeList.map(m =>
-          `<div class="amt-row">${renderAvatarHTML(m, "avatar-xs")}<span class="amt-row-name">${escapeHtml(m.name||t("common.memberFallback"))}</span><input type="number" class="amt-row-input" data-member="${m.id}" placeholder="0" min="0" step="1"><button type="button" class="amt-row-calc-btn" title="${t("common.calculator")}">🧮</button></div>`
+          `<div class="amt-row">${renderAvatarHTML(m, "avatar-xs")}<span class="amt-row-name">${escapeHtml(m.name||t("common.memberFallback"))}</span><input type="number" class="amt-row-input" data-member="${m.id}" placeholder="0" min="0" step="1"><button type="button" class="amt-row-calc-btn" title="${t("common.calculator")}"><span class="sb-ico" style="--ico:var(--ico-calc)" aria-hidden="true"></span></button></div>`
         ).join("");
         payersGrid.querySelectorAll(".amt-row-input").forEach(inp => {
           inp.addEventListener("input", ()=>{ delete inp.dataset.calc; updateQuickPayerSumCheck(); });
@@ -1864,7 +1864,7 @@ renderNavLinks();
       // 自訂分攤列
       if(quickSharesCustom){
         quickSharesCustom.innerHTML = activeList.map(m =>
-          `<div class="amt-row">${renderAvatarHTML(m, "avatar-xs")}<span class="amt-row-name">${escapeHtml(m.name||t("common.memberFallback"))}</span><input type="number" class="amt-row-input quick-share-inp" data-member="${m.id}" placeholder="0" min="0" step="1"><button type="button" class="amt-row-calc-btn" title="${t("common.calculator")}">🧮</button></div>`
+          `<div class="amt-row">${renderAvatarHTML(m, "avatar-xs")}<span class="amt-row-name">${escapeHtml(m.name||t("common.memberFallback"))}</span><input type="number" class="amt-row-input quick-share-inp" data-member="${m.id}" placeholder="0" min="0" step="1"><button type="button" class="amt-row-calc-btn" title="${t("common.calculator")}"><span class="sb-ico" style="--ico:var(--ico-calc)" aria-hidden="true"></span></button></div>`
         ).join("");
         quickSharesCustom.querySelectorAll(".quick-share-inp").forEach(inp => {
           inp.addEventListener("input", ()=>{ delete inp.dataset.calc; updateQuickShareSumCheck(); });
@@ -1910,7 +1910,7 @@ renderNavLinks();
       addonsList.querySelectorAll(".quick-addon-inp").forEach(inp => { existingValues[inp.dataset.member] = inp.value; });
 
       addonsList.innerHTML = checked.map(mId => `
-        <div class="amt-row">${renderAvatarHTML({ id: mId, name: quickMemberName(mId) }, "avatar-xs")}<span class="amt-row-name">${escapeHtml(quickMemberName(mId))}</span><input type="number" class="amt-row-input quick-addon-inp" data-member="${mId}" placeholder="0" min="0" step="1" value="${existingValues[mId] || ''}"><button type="button" class="amt-row-calc-btn" title="${t("common.calculator")}">🧮</button></div>
+        <div class="amt-row">${renderAvatarHTML({ id: mId, name: quickMemberName(mId) }, "avatar-xs")}<span class="amt-row-name">${escapeHtml(quickMemberName(mId))}</span><input type="number" class="amt-row-input quick-addon-inp" data-member="${mId}" placeholder="0" min="0" step="1" value="${existingValues[mId] || ''}"><button type="button" class="amt-row-calc-btn" title="${t("common.calculator")}"><span class="sb-ico" style="--ico:var(--ico-calc)" aria-hidden="true"></span></button></div>
       `).join("");
 
       addonsList.querySelectorAll(".quick-addon-inp").forEach(inp => {
@@ -1963,7 +1963,7 @@ renderNavLinks();
               </div>
               <div class="input-calc-wrap exp-shared-addon-price-wrap">
                 <input type="number" class="exp-shared-addon-price" placeholder="${t("summary.sharedAddonPricePlaceholder")}" min="0" step="1" value="${item.price || ""}">
-                <button type="button" class="amt-row-calc-btn input-calc-btn exp-shared-addon-calc-btn" title="${t("common.calculator")}">🧮</button>
+                <button type="button" class="amt-row-calc-btn input-calc-btn exp-shared-addon-calc-btn" title="${t("common.calculator")}"><span class="sb-ico" style="--ico:var(--ico-calc)" aria-hidden="true"></span></button>
               </div>
               <div class="exp-shared-addon-members">
                 ${checked.map(pid => `
@@ -2416,7 +2416,7 @@ renderNavLinks();
             desc: itemTitle || t("summary.quickAddDefaultDesc"),
             amount: totalAmount,
             symbol: sym,
-            categoryIcon: catMeta.icon || "🧾",
+            categoryIcon: catMeta.icon || sbIcon("receipt"),
             payerName: payerName,
             splitCount: (shares || []).length,
             targetListEl: document.getElementById("allCurrenciesList") || document.querySelector(".currency-card")

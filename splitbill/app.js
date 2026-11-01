@@ -145,7 +145,7 @@
       const input = btn.closest(".pw-input-wrap").querySelector("input");
       const show = input.type === "password";
       input.type = show ? "text" : "password";
-      btn.textContent = show ? "🙈" : "👁️";
+      btn.innerHTML = sbIcon(show ? "eyeoff" : "eye");
       btn.setAttribute("aria-label", show ? t("login.hidePassword") : t("login.showPassword"));
     });
   });
@@ -565,7 +565,7 @@
     notifyBtn.classList.remove("hidden");
     notifyBtn.disabled = false;
     if(Notification.permission === "denied"){
-      notifyBtn.textContent = "🔕";
+      notifyBtn.innerHTML = sbIcon("belloff");
       notifyBtn.title = t("summary.notifyBlockedTitle");
       notifyBtn.classList.remove("active");
       if(notifyHint) notifyHint.textContent = NOTIFY_HINT_BLOCKED_FN();
@@ -576,13 +576,13 @@
       const reg = await navigator.serviceWorker.getRegistration();
       const sub = reg ? await reg.pushManager.getSubscription() : null;
       if(sub){
-        notifyBtn.textContent = "🔔";
+        notifyBtn.innerHTML = sbIcon("bell");
         notifyBtn.title = t("summary.notifyOnTitle");
         notifyBtn.classList.add("active");
         return;
       }
     }
-    notifyBtn.textContent = "🔔";
+    notifyBtn.innerHTML = sbIcon("bell");
     notifyBtn.title = t("summary.notifyOffTitle");
     notifyBtn.classList.remove("active");
   }
@@ -1027,7 +1027,7 @@
           ${renderAvatarHTML({ id: mId, name: name }, "avatar-xs")}
           <span class="amt-row-name">${escapeHtml(name)}</span>
           <input type="number" class="amt-row-input exp-addon-input" data-member="${mId}" placeholder="${t("currency.personalAddonPlaceholder")}" min="0" step="1" value="${val}" ${calc ? `data-calc="${escapeHtml(calc)}"` : ''}>
-          <button type="button" class="amt-row-calc-btn${calc ? ' has-calc' : ''}" title="${t("common.calculator")}">🧮</button>
+          <button type="button" class="amt-row-calc-btn${calc ? ' has-calc' : ''}" title="${t("common.calculator")}"><span class="sb-ico" style="--ico:var(--ico-calc)" aria-hidden="true"></span></button>
         </div>
       `;
     }).join("");
@@ -1078,7 +1078,7 @@
             </div>
             <div class="input-calc-wrap exp-shared-addon-price-wrap">
               <input type="number" class="exp-shared-addon-price" placeholder="${t("summary.sharedAddonPricePlaceholder")}" min="0" step="1" value="${item.price || ""}">
-              <button type="button" class="amt-row-calc-btn input-calc-btn exp-shared-addon-calc-btn" title="${t("common.calculator")}">🧮</button>
+              <button type="button" class="amt-row-calc-btn input-calc-btn exp-shared-addon-calc-btn" title="${t("common.calculator")}"><span class="sb-ico" style="--ico:var(--ico-calc)" aria-hidden="true"></span></button>
             </div>
             <div class="exp-shared-addon-members">
               ${participants.map(pid => `
@@ -1449,7 +1449,7 @@
         ${renderAvatarHTML(m, "avatar-xs")}
         <span class="amt-row-name">${escapeHtml(m.name)}</span>
         <input type="number" class="amt-row-input" data-member="${m.id}" placeholder="0" min="0" step="1">
-        <button type="button" class="amt-row-calc-btn" title="${t("common.calculator")}">🧮</button>
+        <button type="button" class="amt-row-calc-btn" title="${t("common.calculator")}"><span class="sb-ico" style="--ico:var(--ico-calc)" aria-hidden="true"></span></button>
       </div>`;
   }
   // 依比例分攤：填的是份數，不是金額，所以沒有小計算機按鈕，右邊加個
@@ -1496,7 +1496,7 @@
         ${renderAvatarHTML({ id: memberId, name: memberById[memberId] }, "avatar-xs")}
         <span class="amt-row-name">${escapeHtml(memberById[memberId] || "?")}</span>
         <input type="number" class="amt-row-input" data-member="${memberId}" placeholder="0" min="0" step="1">
-        <button type="button" class="amt-row-calc-btn" title="${t("common.calculator")}">🧮</button>`;
+        <button type="button" class="amt-row-calc-btn" title="${t("common.calculator")}"><span class="sb-ico" style="--ico:var(--ico-calc)" aria-hidden="true"></span></button>`;
     wrapEl.appendChild(div);
     const inp = div.querySelector(".amt-row-input");
     inp.addEventListener("input", ()=>{ clearRowCalc(inp); updatePayerSumCheck(); updateShareSumCheck(); });
@@ -2007,7 +2007,7 @@
           desc: itemTitle || t("currency.newExpenseDefaultDesc"),
           amount: amount,
           symbol: SYM || "$",
-          categoryIcon: catMeta.icon || "🧾",
+          categoryIcon: catMeta.icon || sbIcon("receipt"),
           payerName: payerName,
           splitCount: (shares || []).length,
           targetListEl: document.getElementById("expenseList") || document.getElementById("tabExpenses")
@@ -3040,8 +3040,8 @@
     // 的情況就好，不用自己再手動截字串。
     const categoryOptions = Object.keys(CATEGORY_MAP || {}).filter(k => k !== "xcur").map(k => ({
       value: k,
-      label: `${CATEGORY_MAP[k].icon} ${CATEGORY_MAP[k].name}`,
-      shortLabel: `${CATEGORY_MAP[k].icon} ${CATEGORY_MAP[k].name}`
+      label: CATEGORY_MAP[k].name,
+      shortLabel: CATEGORY_MAP[k].name
     }));
 
     setupMultiSelectDropdown({
@@ -3495,7 +3495,7 @@
   function renderReceiptGalleryEmpty(){
     const grid = document.getElementById("receiptGalleryGrid");
     const loadMoreBtn = document.getElementById("receiptGalleryLoadMoreBtn");
-    if(grid) grid.innerHTML = emptyStateHTML("📷", t("currency.receiptGalleryEmpty"), t("currency.receiptGalleryEmptyDesc"));
+    if(grid) grid.innerHTML = emptyStateHTML(sbIcon("camera"), t("currency.receiptGalleryEmpty"), t("currency.receiptGalleryEmptyDesc"));
     if(loadMoreBtn) loadMoreBtn.classList.add("hidden");
   }
 
@@ -3510,7 +3510,7 @@
       const thumb = document.createElement("div");
       thumb.className = "receipt-gallery-thumb";
       thumb.dataset.expenseId = e.id;
-      thumb.innerHTML = `<span class="receipt-gallery-thumb-loading">⏳</span>`;
+      thumb.innerHTML = `<span class="receipt-gallery-thumb-loading"><span class="sb-ico" style="--ico:var(--ico-clock)" aria-hidden="true"></span></span>`;
       thumb.addEventListener("click", () => openReceiptLightbox(e.id));
       grid.appendChild(thumb);
     });
@@ -3536,7 +3536,7 @@
         }
       } catch(err){
         console.error("載入收據縮圖失敗：", err);
-        if(thumb) thumb.innerHTML = `<span class="receipt-gallery-thumb-loading" style="animation:none;opacity:.35;">🚫</span>`;
+        if(thumb) thumb.innerHTML = `<span class="receipt-gallery-thumb-loading" style="animation:none;opacity:.35;"><span class="sb-ico" style="--ico:var(--ico-ban)" aria-hidden="true"></span></span>`;
       }
     }));
   }
@@ -3791,8 +3791,8 @@
     lastFilteredExpenses = expenses;
     if(!expenses.length){
       el.innerHTML = cachedExpenses.length
-        ? emptyStateHTML("🔍", t("currency.noFilterMatchTitle"), t("currency.noFilterMatchDesc"))
-        : emptyStateHTML("🧾", t("currency.noExpensesTitle"), t("currency.noExpensesDesc"));
+        ? emptyStateHTML(sbIcon("search"), t("currency.noFilterMatchTitle"), t("currency.noFilterMatchDesc"))
+        : emptyStateHTML(sbIcon("receipt"), t("currency.noExpensesTitle"), t("currency.noExpensesDesc"));
       return;
     }
     const totalPages = Math.ceil(expenses.length / historyPageSize);
@@ -3828,7 +3828,7 @@
         const xcurId = isXcur ? (extractXcurId(e.description) || extractXcurId(e.note)) : null;
         const isRecurringGenerated = isRecurringGeneratedStr(e.description) || isRecurringGeneratedStr(e.note);
         const isAiSplit = Boolean((e.description && (e.description.includes("<!--AI_RECEIPT_DATA:") || e.description.includes("(AI自動拆單)") || e.description.includes("📋 品項明細"))) || (e.note && e.note.includes("<!--AI_RECEIPT_DATA:")));
-        const catMeta = (window.getCategoryMeta && window.getCategoryMeta(title || e.description, e.note, e.category)) || { icon: "🧾", type: "general", name: t("currency.categoryGeneralFallback") };
+        const catMeta = (window.getCategoryMeta && window.getCategoryMeta(title || e.description, e.note, e.category)) || { icon: sbIcon("receipt"), type: "general", name: t("currency.categoryGeneralFallback") };
         const icon = catMeta.icon;
         const payerNames = (e.payers || []).map(p => highlightSearchMatch(memberById[p.member_id] || "?", searchKw)).join("、");
         const shareNames = (e.shares || []).map(s => highlightSearchMatch(memberById[s.member_id] || "?", searchKw)).join("、");
@@ -3859,7 +3859,7 @@
       return `
         <div class="exp-date-group">
           <div class="exp-date-group-header">
-            <div class="exp-date-group-title">📅 ${dateTitle}</div>
+            <div class="exp-date-group-title"><span class="sb-ico" style="--ico:var(--ico-calendar)" aria-hidden="true"></span> ${dateTitle}</div>
             <div class="exp-date-group-badge">
               <span class="badge-count">${t("common.countUnit", {count: g.items.length})}</span>
               <span class="badge-sep">·</span>
@@ -3945,8 +3945,8 @@
     lastFilteredRepayments = repayments;
     if(!repayments.length){
       el.innerHTML = cachedRepayments.length
-        ? emptyStateHTML("🔍", t("currency.noFilterMatchTitle"), t("currency.noFilterMatchDesc"))
-        : emptyStateHTML("💸", t("currency.noRepaymentsTitle"), t("currency.noRepaymentsDesc"));
+        ? emptyStateHTML(sbIcon("search"), t("currency.noFilterMatchTitle"), t("currency.noFilterMatchDesc"))
+        : emptyStateHTML(sbIcon("wallet"), t("currency.noRepaymentsTitle"), t("currency.noRepaymentsDesc"));
       return;
     }
     const units = groupRepayments(repayments);
@@ -3983,7 +3983,7 @@
           const isXcur = isXcurStr(a.offset_group) || isXcurStr(a.note);
           const xcurId = isXcur ? (a.offset_group || extractXcurId(a.note)) : null;
           return `<div class="exp-item">
-            <div class="exp-cat-badge" style="background:color-mix(in srgb, #5C7CFA 12%, var(--card));">🔄</div>
+            <div class="exp-cat-badge" style="background:color-mix(in srgb, #5C7CFA 12%, var(--card));"><span class="sb-ico" style="--ico:var(--ico-swap)" aria-hidden="true"></span></div>
             <div class="exp-main">
               <div class="exp-desc">${highlightSearchMatch(memberById[a.from_member] || "?", searchKw)} ↔ ${highlightSearchMatch(memberById[a.to_member] || "?", searchKw)} ${t("currency.mutualOffset")}${isXcur ? `<span class="xcur-badge">${t("currency.convertedToTwd")}</span>` : ""}</div>
               <div class="exp-meta">${t("currency.recordTimePrefix")}${a.payment_date}${formatTime(a.created_at, a.payment_date) ? " " + formatTime(a.created_at, a.payment_date) : ""}（${highlightSearchMatch(memberById[a.created_by] || "?", searchKw)}）</div>
@@ -4000,7 +4000,7 @@
         const xcurId = isXcur ? (r.offset_group || extractXcurId(r.note)) : null;
         const cleanNote = cleanXcurText(r.note);
         return `<div class="exp-item">
-          <div class="exp-cat-badge" style="background:color-mix(in srgb, #40C057 12%, var(--card));">💸</div>
+          <div class="exp-cat-badge" style="background:color-mix(in srgb, #40C057 12%, var(--card));"><span class="sb-ico" style="--ico:var(--ico-wallet)" aria-hidden="true"></span></div>
           <div class="exp-main">
             <div class="exp-desc">${t("currency.repayFromTo", {from: highlightSearchMatch(memberById[r.from_member] || "?", searchKw), to: highlightSearchMatch(memberById[r.to_member] || "?", searchKw)})}${isXcur ? `<span class="xcur-badge">${t("currency.convertedToTwd")}</span>` : ""}</div>
             <div class="exp-meta">${t("currency.recordTimePrefix")}${r.payment_date}${formatTime(r.created_at, r.payment_date) ? " " + formatTime(r.created_at, r.payment_date) : ""}（${highlightSearchMatch(memberById[r.created_by] || "?", searchKw)}）${cleanNote ? " ・ " + highlightSearchMatch(cleanNote, searchKw) : ""}</div>
@@ -4015,7 +4015,7 @@
       return `
         <div class="exp-date-group">
           <div class="exp-date-group-header">
-            <div class="exp-date-group-title">📅 ${dateTitle}</div>
+            <div class="exp-date-group-title"><span class="sb-ico" style="--ico:var(--ico-calendar)" aria-hidden="true"></span> ${dateTitle}</div>
             <div class="exp-date-group-badge">
               <span class="badge-count">${t("common.countUnit", {count: g.units.length})}</span>
               <span class="badge-sep">·</span>
@@ -4566,7 +4566,7 @@
     let totalAmt = 0;
 
     filteredExp.forEach(e => {
-      const meta = (window.getCategoryMeta && window.getCategoryMeta(e.description, e.note, e.category)) || { icon: "🧾", name: t("currency.generalExpenseFallback"), type: "general", color: "#868E96" };
+      const meta = (window.getCategoryMeta && window.getCategoryMeta(e.description, e.note, e.category)) || { icon: sbIcon("receipt"), name: t("currency.generalExpenseFallback"), type: "general", color: "#868E96" };
       let amt = 0;
       if(donutScope === "my"){
         const myShare = (e.shares || []).find(s => s.member_id === myId);
@@ -4611,7 +4611,7 @@
       const strokeDashoffset = (-accumulatedPct * circumference).toFixed(2);
       accumulatedPct += pct;
 
-      return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${cat.color}" stroke-width="${strokeWidth}" stroke-dasharray="${strokeDasharray}" stroke-dashoffset="${strokeDashoffset}" class="donut-slice" data-type="${cat.type}" data-name="${escapeHtml(cat.name)}" data-icon="${cat.icon}" data-color="${cat.color}" data-amt="${formatAmt(cat.amount)}" data-pct="${(pct * 100).toFixed(1)}" data-count="${cat.count}" style="--slice-glow:${cat.color}; animation-delay:${idx * 0.05}s;"></circle>`;
+      return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${cat.color}" stroke-width="${strokeWidth}" stroke-dasharray="${strokeDasharray}" stroke-dashoffset="${strokeDashoffset}" class="donut-slice" data-type="${cat.type}" data-name="${escapeHtml(cat.name)}" data-color="${cat.color}" data-amt="${formatAmt(cat.amount)}" data-pct="${(pct * 100).toFixed(1)}" data-count="${cat.count}" style="--slice-glow:${cat.color}; animation-delay:${idx * 0.05}s;"></circle>`;
     }).join("");
 
     const legendHtml = catList.map(cat => {
@@ -4732,14 +4732,14 @@
     const iconEl = document.getElementById("catModalIcon");
     const nameEl = document.getElementById("catModalName");
     const subEl = document.getElementById("catModalSub");
-    if(iconEl) iconEl.textContent = catIcon || "🧾";
+    if(iconEl) iconEl.innerHTML = catIcon || sbIcon("receipt");
     if(nameEl) nameEl.textContent = catName || t("currency.categoryExpenseFallback");
     if(subEl) subEl.textContent = t("currency.categoryModalSubtitle", {scope: isMyScope ? t("currency.myExpenseScope") : t("currency.groupExpenseScope"), count: matchingExpenses.length, total: SYM+formatAmt(catTotal)});
 
     const listEl = document.getElementById("catModalList");
     if(listEl){
       if(!matchingExpenses.length){
-        listEl.innerHTML = emptyStateHTML("📭", t("currency.noExpensesShort"), t("currency.categoryNoExpensesDesc"));
+        listEl.innerHTML = emptyStateHTML(sbIcon("inbox"), t("currency.noExpensesShort"), t("currency.categoryNoExpensesDesc"));
       } else {
         listEl.innerHTML = matchingExpenses.map(e => {
           const { title, note } = splitExpenseTitleAndNote(e.description, e.note);
@@ -4773,7 +4773,7 @@
             <div class="cat-exp-card" data-id="${e.id}">
               <div class="cat-exp-card-top">
                 <div class="cat-exp-info-col">
-                  <div class="cat-exp-date"><span class="cat-exp-date-icon">📅</span> ${dateStr}</div>
+                  <div class="cat-exp-date"><span class="cat-exp-date-icon"><span class="sb-ico" style="--ico:var(--ico-calendar)" aria-hidden="true"></span></span> ${dateStr}</div>
                   <div class="cat-exp-title">${escapeHtml(title)}</div>
                 </div>
                 <div class="cat-exp-amt-col">
@@ -6154,7 +6154,7 @@ function showExpenseDebtDetail(e){
   const cleanBodyText = note || "";
 
   const icon = getCategoryIcon(title || e.description || "", e.category);
-  if(iconEl) iconEl.textContent = icon;
+  if(iconEl) iconEl.innerHTML = icon;
   if(titleName){
     const isRecurringGenerated = isRecurringGeneratedStr(e.description) || isRecurringGeneratedStr(e.note);
     titleName.innerHTML = escapeHtml(cleanTitle) + (isRecurringGenerated ? `<span class="recurring-badge">${t("currency.recurringBadge")}</span>` : "");
@@ -6398,7 +6398,7 @@ function showExpenseDebtDetail(e){
   body.innerHTML = `
     <div class="exp-debt-info-card">
       <div class="exp-debt-info-top">
-        <span class="exp-debt-info-date">📅 ${escapeHtml(e.expense_date || "")}${formatTime(e.created_at, e.expense_date) ? " " + formatTime(e.created_at, e.expense_date) : ""}（${escapeHtml(memberById[e.created_by] || "?")}）</span>
+        <span class="exp-debt-info-date"><span class="sb-ico" style="--ico:var(--ico-calendar)" aria-hidden="true"></span> ${escapeHtml(e.expense_date || "")}${formatTime(e.created_at, e.expense_date) ? " " + formatTime(e.created_at, e.expense_date) : ""}（${escapeHtml(memberById[e.created_by] || "?")}）</span>
         <span class="exp-debt-info-total">${SYM}${formatAmt(e.amount)}</span>
       </div>
       <div class="exp-debt-info-list">
@@ -7014,7 +7014,7 @@ function showPairDetail(
       <!-- 頂部列：左邊大標題，右邊獨立關閉按鈕 -->
       <div class="debt-detail-top-bar">
         <div class="debt-detail-title-main">
-          <span class="debt-detail-title-icon">📊</span>
+          <span class="debt-detail-title-icon"><span class="sb-ico" style="--ico:var(--ico-chart)" aria-hidden="true"></span></span>
           <span>${t("currency.debtDetailTitle")}</span>
         </div>
         <button type="button" id="matrixDetailClose" class="debt-detail-close" aria-label="${t("common.close")}">✕</button>
@@ -7068,7 +7068,7 @@ function showPairDetail(
       <!-- 往來紀錄主體 -->
       <div class="debt-detail-section">
         <div class="debt-section-title">
-          <span class="debt-section-icon">${olderCyclePage > 0 ? '📜' : '📋'}</span>
+          <span class="debt-section-icon">${sbIcon(olderCyclePage > 0 ? "clock" : "list")}</span>
           <span>${olderCyclePage > 0 ? t("currency.settledRecordsTitle") : t("currency.transactionHistoryTitle")}</span>
           <span class="debt-section-count">${t("common.countUnit", {count: olderCyclePage > 0 ? olderEvents.length : visibleEvents.length})}</span>
           <button type="button" class="ledger-sort-toggle-btn" id="matrixLedgerSortBtn" title="${t("currency.toggleSortDirection")}" aria-label="${t("currency.toggleSortDirection")}">
@@ -7105,11 +7105,11 @@ function showPairDetail(
       const isAiSplit = Boolean(e.description && (e.description.includes("<!--AI_RECEIPT_DATA:") || e.description.includes("(AI自動拆單)") || e.description.includes("📋 品項明細")));
       const isExpXcur = isXcurStr(e.description);
       const expXcurId = isExpXcur ? extractXcurId(e.description) : null;
-      const catMeta = (window.getCategoryMeta && window.getCategoryMeta(firstLine, e.note, e.category)) || { icon: "🧾" };
+      const catMeta = (window.getCategoryMeta && window.getCategoryMeta(firstLine, e.note, e.category)) || { icon: sbIcon("receipt") };
 
       return `
         <div class="ledger-row-wrap ${rowWrapClass(ev)}" data-id="${e.id}">
-          <div class="ledger-timeline-node is-expense" title="${t("currency.expenseIconTitle", {icon: catMeta.icon || '🧾'})}">${catMeta.icon || "🧾"}</div>
+          <div class="ledger-timeline-node is-expense" title="${t("currency.expenseIconTitle", {icon: catMeta.name || ""})}">${catMeta.icon || sbIcon("receipt")}</div>
           <div class="ledger-row ledger-row-open-expense" data-id="${e.id}">
             <div class="ledger-row-header">
               <div class="ledger-row-name">
@@ -7149,7 +7149,7 @@ function showPairDetail(
     const repXcurId = isRepXcur ? (r.offset_group || extractXcurId(r.note)) : null;
     return `
       <div class="ledger-row-wrap ${rowWrapClass(ev)}" data-id="${r.id}">
-        <div class="ledger-timeline-node is-repay" title="${t("currency.repaymentIconTitle")}">💸</div>
+        <div class="ledger-timeline-node is-repay" title="${t("currency.repaymentIconTitle")}"><span class="sb-ico" style="--ico:var(--ico-wallet)" aria-hidden="true"></span></div>
         <div class="ledger-row" onclick="if(!event.target.closest('button')){this.closest('.ledger-row-wrap').classList.toggle('is-expanded')}">
           <div class="ledger-row-header">
             <div class="ledger-row-name">
@@ -7204,7 +7204,7 @@ function showPairDetail(
     // 是從對方那邊的多還／溢付轉過來的，不是憑空冒出來的錯誤。
     html += `
       <div class="debt-empty-state">
-        <div class="debt-empty-icon">💸</div>
+        <div class="debt-empty-icon"><span class="sb-ico" style="--ico:var(--ico-wallet)" aria-hidden="true"></span></div>
         <div class="debt-empty-title">
           ${t("currency.pendingSettleAmount", {amount: SYM+formatAmt(remainingDebt)})}
         </div>

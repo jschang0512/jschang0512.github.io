@@ -36,7 +36,7 @@
     if(isAndroid){
       banner.innerHTML = `
         <div class="app-install-top">
-          <div class="app-install-icon">🤖</div>
+          <div class="app-install-icon"><span class="sb-ico" style="--ico:var(--ico-smartphone)" aria-hidden="true"></span></div>
           <div class="app-install-content">
             <div class="app-install-title">
               <span>${tt("banner.androidTitle")}</span>
@@ -51,7 +51,7 @@
     } else if(isIOS){
       banner.innerHTML = `
         <div class="app-install-top">
-          <div class="app-install-icon">🍎</div>
+          <div class="app-install-icon"><span class="sb-ico" style="--ico:var(--ico-smartphone)" aria-hidden="true"></span></div>
           <div class="app-install-content">
             <div class="app-install-title">
               <span>${tt("banner.iosTitle")}</span>

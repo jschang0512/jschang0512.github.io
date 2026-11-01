@@ -239,6 +239,12 @@ async function migrateLegacyBase64Avatar(sb, currentUser, myMember){
 // 這些既有邏輯完全不用改；每次選項或值有變動，呼叫 enhanceSelect(選到的
 // select) 讓畫面上顯示的按鈕/選單重新同步一次即可（第一次呼叫時才會真的
 // 建立包裝）。----------
+// 類別下拉：選項前面放該類別的線條圖示（其他下拉維持純文字）
+function ddOptionHTML(selectEl, o){
+  const meta = (typeof CATEGORY_MAP !== "undefined" && /categor/i.test(selectEl.id || "")) ? CATEGORY_MAP[o.value] : null;
+  return (meta && meta.icon ? meta.icon : "") + escapeHtml(o.textContent);
+}
+
 function enhanceSelect(selectEl){
   if(!selectEl) return;
   if(!selectEl._ddSync){
@@ -272,7 +278,7 @@ function enhanceSelect(selectEl){
         const optBtn = document.createElement("button");
         optBtn.type = "button";
         optBtn.className = "dd-option" + (o.selected ? " active" : "");
-        optBtn.textContent = o.textContent;
+        optBtn.innerHTML = ddOptionHTML(selectEl, o);
         optBtn.disabled = o.disabled;
         optBtn.addEventListener("click", ()=>{
           selectEl.selectedIndex = i;
@@ -283,7 +289,7 @@ function enhanceSelect(selectEl){
         menu.appendChild(optBtn);
       });
       const cur = selectEl.selectedOptions[0];
-      textEl.textContent = cur ? cur.textContent : "";
+      textEl.innerHTML = cur ? ddOptionHTML(selectEl, cur) : "";
       btn.classList.toggle("disabled", !!selectEl.disabled);
       closeMenu();
     };
@@ -485,7 +491,7 @@ async function showMemberProfileModal(memberId){
         accounts.map((acc, idx) => {
           const label = window.formatBankLabel ? window.formatBankLabel(acc.bankCode, acc.bankName) : (acc.bankName || "");
           const valueText = acc.account ? `${label} ${acc.account}` : label;
-          const copyBtn = acc.account ? `<button type="button" class="member-profile-payment-copy" data-account="${escapeHtml(acc.account)}" title="${t("shared.copyAccountTitle")}">📋</button>` : "";
+          const copyBtn = acc.account ? `<button type="button" class="member-profile-payment-copy" data-account="${escapeHtml(acc.account)}" title="${t("shared.copyAccountTitle")}"><span class="sb-ico" style="--ico:var(--ico-list)" aria-hidden="true"></span></button>` : "";
           return `
           <div class="member-profile-payment-row">
             <span class="member-profile-payment-index">${idx + 1}</span>
@@ -502,7 +508,7 @@ async function showMemberProfileModal(memberId){
           try {
             await navigator.clipboard.writeText(num);
             btn.textContent = "✓";
-            setTimeout(()=>{ btn.textContent = "📋"; }, 1200);
+            setTimeout(()=>{ btn.innerHTML = sbIcon("list"); }, 1200);
           } catch(e){}
         });
       });
@@ -569,7 +575,7 @@ async function initNotificationBell(sb, myMember){
   container.innerHTML = `
     <div class="notif-bell-wrap" id="notifBellWrap">
       <button type="button" class="icon-btn notif-bell-btn" id="notifBellBtn" title="${t("shared.notifLabel")}" aria-label="${t("shared.notifLabel")}">
-        🔔<span class="notif-badge hidden" id="notifBadge">0</span>
+        <span class="notif-badge hidden" id="notifBadge">0</span>
       </button>
       <div class="notif-panel hidden" id="notifPanel">
         <div class="notif-panel-head">

@@ -95,6 +95,12 @@ const COUNTRY_INFO = {
 // 國家，另外顯示提示文字；查不到資料的幣別（理論上不會發生，上面
 // COUNTRY_INFO 涵蓋了 CURRENCIES 全部 26 種幣別，這裡防禦一下避免漏填時
 // 整頁報錯）就靜默不彈窗。
+// 線條圖示（2026-11 取代 emoji）。name 對應 shared.css 的 --ico-<name>。
+function sbIcon(name){
+  return '<span class="sb-ico" style="--ico:var(--ico-' + name + ')" aria-hidden="true"></span>';
+}
+window.sbIcon = sbIcon;
+
 function countryInfoCellHTML(icon, label, value){
   const esc = (typeof escapeHtml === "function") ? escapeHtml : (s => s);
   return `
@@ -123,14 +129,14 @@ function showCountryInfoDialog(currencyCode){
   const tippingLabel = t("country.tipping." + info.tipping) + (info.tippingNote ? `（${info.tippingNote}）` : "");
   const paymentLabel = t("country.payment." + info.payment);
   const cellsHtml = [
-    countryInfoCellHTML("🗣️", t("country.language"), info.language[lang] || info.language["zh-Hant"]),
-    countryInfoCellHTML("🏛️", t("country.capital"), info.capital[lang] || info.capital["zh-Hant"]),
-    countryInfoCellHTML("☎️", t("country.dialCode"), info.dialCode),
-    countryInfoCellHTML("🚗", t("country.drivingSide"), sideLabel),
-    countryInfoCellHTML("💰", t("country.tippingLabel"), tippingLabel),
-    countryInfoCellHTML("💳", t("country.paymentLabel"), paymentLabel),
-    countryInfoCellHTML("🔌", t("country.plugVoltage"), info.plugVoltage),
-    countryInfoCellHTML("🆘", t("country.emergency"), info.emergency)
+    countryInfoCellHTML(sbIcon("message"), t("country.language"), info.language[lang] || info.language["zh-Hant"]),
+    countryInfoCellHTML(sbIcon("landmark"), t("country.capital"), info.capital[lang] || info.capital["zh-Hant"]),
+    countryInfoCellHTML(sbIcon("phone"), t("country.dialCode"), info.dialCode),
+    countryInfoCellHTML(sbIcon("car"), t("country.drivingSide"), sideLabel),
+    countryInfoCellHTML(sbIcon("wallet"), t("country.tippingLabel"), tippingLabel),
+    countryInfoCellHTML(sbIcon("card"), t("country.paymentLabel"), paymentLabel),
+    countryInfoCellHTML(sbIcon("plug"), t("country.plugVoltage"), info.plugVoltage),
+    countryInfoCellHTML(sbIcon("lifebuoy"), t("country.emergency"), info.emergency)
   ].join("");
   showSbDialog({ title: c.label, html: `<div class="country-info-grid">${cellsHtml}</div>`, confirmText: null });
 }
@@ -362,18 +368,18 @@ function categoryDisplayName(key, fallback){
   return (typeof t === "function") ? t("catName." + key) : fallback;
 }
 const CATEGORY_MAP = {
-  general: { icon: "🧾", get name(){ return categoryDisplayName("general", "一般支出"); }, type: "general", color: "#868E96" },
-  food: { icon: "🍜", get name(){ return categoryDisplayName("food", "美食餐飲"); }, type: "food", color: "#F76707" },
-  drink: { icon: "☕", get name(){ return categoryDisplayName("drink", "飲料甜點"); }, type: "drink", color: "#F59F00" },
-  transit: { icon: "🚄", get name(){ return categoryDisplayName("transit", "大眾交通"); }, type: "transit", color: "#1C7ED6" },
-  car: { icon: "🚗", get name(){ return categoryDisplayName("car", "租車用油"); }, type: "car", color: "#0CA678" },
-  flight: { icon: "✈️", get name(){ return categoryDisplayName("flight", "機票航班"); }, type: "flight", color: "#1098AD" },
-  hotel: { icon: "🏨", get name(){ return categoryDisplayName("hotel", "住宿溫泉"); }, type: "hotel", color: "#7048E8" },
-  ticket: { icon: "🎟️", get name(){ return categoryDisplayName("ticket", "門票娛樂"); }, type: "ticket", color: "#F59F00" },
-  shopping: { icon: "🛍️", get name(){ return categoryDisplayName("shopping", "購物藥妝"); }, type: "shopping", color: "#E64980" },
-  medical: { icon: "💊", get name(){ return categoryDisplayName("medical", "醫療藥品"); }, type: "medical", color: "#FA5252" },
-  network: { icon: "📶", get name(){ return categoryDisplayName("network", "網卡通訊"); }, type: "network", color: "#40C057" },
-  xcur: { icon: "💱", get name(){ return categoryDisplayName("xcur", "跨幣轉移"); }, type: "xcur", color: "#5C7CFA" }
+  general: { icon: sbIcon("receipt"), get name(){ return categoryDisplayName("general", "一般支出"); }, type: "general", color: "#868E96" },
+  food: { icon: sbIcon("utensils"), get name(){ return categoryDisplayName("food", "美食餐飲"); }, type: "food", color: "#F76707" },
+  drink: { icon: sbIcon("coffee"), get name(){ return categoryDisplayName("drink", "飲料甜點"); }, type: "drink", color: "#F59F00" },
+  transit: { icon: sbIcon("train"), get name(){ return categoryDisplayName("transit", "大眾交通"); }, type: "transit", color: "#1C7ED6" },
+  car: { icon: sbIcon("car"), get name(){ return categoryDisplayName("car", "租車用油"); }, type: "car", color: "#0CA678" },
+  flight: { icon: sbIcon("plane"), get name(){ return categoryDisplayName("flight", "機票航班"); }, type: "flight", color: "#1098AD" },
+  hotel: { icon: sbIcon("bed"), get name(){ return categoryDisplayName("hotel", "住宿溫泉"); }, type: "hotel", color: "#7048E8" },
+  ticket: { icon: sbIcon("ticket"), get name(){ return categoryDisplayName("ticket", "門票娛樂"); }, type: "ticket", color: "#F59F00" },
+  shopping: { icon: sbIcon("bag"), get name(){ return categoryDisplayName("shopping", "購物藥妝"); }, type: "shopping", color: "#E64980" },
+  medical: { icon: sbIcon("pill"), get name(){ return categoryDisplayName("medical", "醫療藥品"); }, type: "medical", color: "#FA5252" },
+  network: { icon: sbIcon("wifi"), get name(){ return categoryDisplayName("network", "網卡通訊"); }, type: "network", color: "#40C057" },
+  xcur: { icon: sbIcon("swap"), get name(){ return categoryDisplayName("xcur", "跨幣轉移"); }, type: "xcur", color: "#5C7CFA" }
 };
 window.CATEGORY_MAP = CATEGORY_MAP;
 
@@ -948,7 +954,7 @@ function triggerReceiptFlyAnimation(opts = {}){
     desc = t("receipt.itemFallback"),
     amount = 0,
     symbol = "$",
-    categoryIcon = "🧾",
+    categoryIcon = sbIcon("receipt"),
     payerName = t("common.memberFallback"),
     splitCount = 1,
     targetListEl = null,

@@ -26,17 +26,17 @@
 <meta name="apple-mobile-web-app-title" content="Splitbill">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=893">
-<link rel="stylesheet" href="shared.css?v=893">
+<link rel="stylesheet" href="theme.css?v=894">
+<link rel="stylesheet" href="shared.css?v=894">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
-<script src="i18n.js?v=893"></script>
-<script src="currencies.js?v=893"></script>
-<script src="version.js?v=893"></script>
-<script src="notif-text.js?v=893"></script>
-<script src="shared-ui.js?v=893"></script>
-<script src="theme.js?v=893" defer></script>
-<script src="app-banner.js?v=893" defer></script>
+<script src="i18n.js?v=894"></script>
+<script src="currencies.js?v=894"></script>
+<script src="version.js?v=894"></script>
+<script src="notif-text.js?v=894"></script>
+<script src="shared-ui.js?v=894"></script>
+<script src="theme.js?v=894" defer></script>
+<script src="app-banner.js?v=894" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -148,7 +148,7 @@ if("serviceWorker" in navigator){
             <div class="settings-avatar-badge-wrap">
               <div class="settings-avatar-preview" id="settingsAvatarPreview" data-i18n-title="settings.avatarPreviewTitle" title="點擊查看大圖"></div>
               <button type="button" class="avatar-zoom-badge hidden" id="avatarZoomBtn" data-i18n-title="settings.avatarViewPhoto" title="查看大頭貼相片" aria-label="查看相片">
-                🔍
+                <span class="sb-ico" style="--ico:var(--ico-search)" aria-hidden="true"></span>
               </button>
             </div>
             <div class="settings-avatar-info">
@@ -161,7 +161,7 @@ if("serviceWorker" in navigator){
                   ✕ 移除
                 </button>
               </div>
-              <p class="settings-avatar-hint" data-i18n="settings.avatarHint">點擊頭像或 🔍 放大鏡查看照片，支援相機與相簿裁切</p>
+              <p class="settings-avatar-hint" data-i18n="settings.avatarHint">點擊頭像或 放大鏡查看照片，支援相機與相簿裁切</p>
             </div>
           </div>
           <div class="msg" id="avatarMsg"></div>
@@ -208,7 +208,7 @@ if("serviceWorker" in navigator){
           <div id="pwChangeSection">
             <button type="button" class="btn-wide" id="pwChangeModalOpenBtn" data-i18n="settings.resetPassword">重設密碼</button>
           </div>
-          <p class="settings-hint hidden" id="pwChangeLockedHint" data-i18n="settings.pwChangeLockedHint">🔒 請先在上面設定並確認信箱，才能在這裡修改密碼——不然以後忘記密碼會沒辦法用忘記密碼功能救回帳號。</p>
+          <p class="settings-hint hidden" id="pwChangeLockedHint" data-i18n="settings.pwChangeLockedHint">請先在上面設定並確認信箱，才能在這裡修改密碼——不然以後忘記密碼會沒辦法用忘記密碼功能救回帳號。</p>
 
           <label data-i18n="settings.linkIdentityLabel">連結其他登入方式<button type="button" class="info-btn" data-info-for="infoLinkIdentity" aria-label="說明"><span class="info-btn-i">i</span></button></label>
           <p class="settings-hint hidden" id="infoLinkIdentity" data-i18n="settings.linkIdentityInfo">把不同信箱的 Google/Discord 帳號連結到這個帳號，以後不管用哪一種方式登入，都是同一個帳號、同一批群組資料。建議現在就先連結起來，之後才不會因為信箱不一樣，不小心用 Google/Discord 登入又建立出一個新帳號。</p>
@@ -267,7 +267,7 @@ if("serviceWorker" in navigator){
           <div class="settings-section-title" data-i18n="settings.recurringSectionTitle">週期性支出</div>
           <button type="button" class="btn-wide" id="recurringTemplateAddBtn" data-i18n="settings.recurringAddBtn">新增週期性支出</button>
           <div id="recurringTemplatesList"></div>
-          <p class="settings-hint" id="recurringTemplatesEmpty" data-i18n="settings.recurringEmpty">目前沒有設定週期性支出，點上面的「➕ 新增週期性支出」就可以建立</p>
+          <p class="settings-hint" id="recurringTemplatesEmpty" data-i18n="settings.recurringEmpty">目前沒有設定週期性支出，點上面的「新增週期性支出」就可以建立</p>
         </div>
 
         <div class="settings-group">
@@ -346,33 +346,33 @@ if("serviceWorker" in navigator){
 
           <div class="settings-row settings-row-clickable" id="notifyRow">
             <div class="settings-row-lead">
-              <span class="settings-row-icon">🔔</span>
+              <span class="settings-row-icon"><span class="sb-ico" style="--ico:var(--ico-bell)" aria-hidden="true"></span></span>
               <div>
                 <div class="settings-row-title" data-i18n="settings.changeNotifyTitle">異動通知</div>
                 <div class="settings-hint settings-row-hint" id="notifyHint" data-i18n="settings.changeNotifyHint">有相關支出或還款異動就通知你</div>
               </div>
             </div>
-            <button class="icon-btn" id="notifyBtn" data-i18n-title="settings.notifyTitleOn" title="開啟通知" aria-label="通知">🔔</button>
+            <button class="icon-btn" id="notifyBtn" data-i18n-title="settings.notifyTitleOn" title="開啟通知" aria-label="通知"><span class="sb-ico" style="--ico:var(--ico-bell)" aria-hidden="true"></span></button>
           </div>
 
           <div class="settings-divider settings-divider-compact"></div>
 
           <div class="settings-row settings-row-clickable" id="themeRow">
             <div class="settings-row-lead">
-              <span class="settings-row-icon" id="themeRowIcon">🌙</span>
+              <span class="settings-row-icon" id="themeRowIcon"><span class="sb-ico" style="--ico:var(--ico-moon)" aria-hidden="true"></span></span>
               <div>
                 <div class="settings-row-title" data-i18n="settings.darkModeTitle">深色模式</div>
                 <div class="settings-hint settings-row-hint" data-i18n="settings.darkModeHint">切換深色與淺色視覺主題</div>
               </div>
             </div>
-            <button class="icon-btn" id="settingsThemeBtn" data-i18n-title="settings.toggleThemeAria" aria-label="切換深色淺色模式">🌙</button>
+            <button class="icon-btn" id="settingsThemeBtn" data-i18n-title="settings.toggleThemeAria" aria-label="切換深色淺色模式"><span class="sb-ico" style="--ico:var(--ico-moon)" aria-hidden="true"></span></button>
           </div>
 
           <div class="settings-divider settings-divider-compact"></div>
 
           <div class="settings-row-lang">
             <div class="settings-row-lead">
-              <span class="settings-row-icon">🌐</span>
+              <span class="settings-row-icon"><span class="sb-ico" style="--ico:var(--ico-globe)" aria-hidden="true"></span></span>
               <div>
                 <div class="settings-row-title" data-i18n="settings.languageTitle">顯示語言</div>
                 <div class="settings-hint settings-row-hint" data-i18n="settings.languageHint">切換整個 App 的顯示語言</div>
@@ -400,7 +400,7 @@ if("serviceWorker" in navigator){
             <span class="version-badge" id="settingsVerNum"></span>
           </div>
           <div class="settings-changelog-wrap settings-changelog-wrap-mt">
-            <div class="settings-changelog-header" id="settingsChangelogHeader">✨ v642 最新更新項目：</div>
+            <div class="settings-changelog-header" id="settingsChangelogHeader">v642 最新更新項目：</div>
             <ul class="settings-changelog settings-changelog-list">
               <li data-i18n="settings.changelog1">AI 拆單可直接讀取台灣電子發票的 QR code，品項與金額照發票，不經 AI</li>
               <li data-i18n="settings.changelog2">AI 拆單支援手寫劃記的點菜單（正字自動換算份數）和外送、叫車 App 的訂單截圖</li>
@@ -445,17 +445,17 @@ if("serviceWorker" in navigator){
     <label data-i18n="currency.categoryLabel">類別 (自動辨識 / 可手動選擇)</label>
     <div class="select-wrap">
       <select id="recurTmplCategory">
-        <option value="general" data-i18n="cat.general">🧾 一般支出</option>
-        <option value="food" data-i18n="cat.food">🍜 美食餐飲</option>
-        <option value="drink" data-i18n="cat.drink">☕ 飲料甜點</option>
-        <option value="transit" data-i18n="cat.transit">🚄 大眾交通</option>
-        <option value="car" data-i18n="cat.car">🚗 租車用油</option>
-        <option value="flight" data-i18n="cat.flight">✈️ 機票航班</option>
-        <option value="hotel" data-i18n="cat.hotel">🏨 住宿溫泉</option>
-        <option value="ticket" data-i18n="cat.ticket">🎟️ 門票娛樂</option>
-        <option value="shopping" data-i18n="cat.shopping">🛍️ 購物藥妝</option>
-        <option value="medical" data-i18n="cat.medical">💊 醫療藥品</option>
-        <option value="network" data-i18n="cat.network">📶 網卡通訊</option>
+        <option value="general" data-i18n="cat.general">一般支出</option>
+        <option value="food" data-i18n="cat.food">美食餐飲</option>
+        <option value="drink" data-i18n="cat.drink">飲料甜點</option>
+        <option value="transit" data-i18n="cat.transit">大眾交通</option>
+        <option value="car" data-i18n="cat.car">租車用油</option>
+        <option value="flight" data-i18n="cat.flight">機票航班</option>
+        <option value="hotel" data-i18n="cat.hotel">住宿溫泉</option>
+        <option value="ticket" data-i18n="cat.ticket">門票娛樂</option>
+        <option value="shopping" data-i18n="cat.shopping">購物藥妝</option>
+        <option value="medical" data-i18n="cat.medical">醫療藥品</option>
+        <option value="network" data-i18n="cat.network">網卡通訊</option>
       </select>
     </div>
 
@@ -503,11 +503,11 @@ if("serviceWorker" in navigator){
     <label data-i18n="settings.newPasswordLabel">新密碼（至少 6 碼）</label>
     <div class="pw-input-wrap">
       <input type="password" id="newPassword" data-i18n-placeholder="settings.newPasswordPlaceholder" placeholder="留空表示不變更">
-      <button type="button" class="pw-toggle-btn" data-i18n-title="login.showPassword" aria-label="顯示密碼">👁️</button>
+      <button type="button" class="pw-toggle-btn" data-i18n-title="login.showPassword" aria-label="顯示密碼"><span class="sb-ico" style="--ico:var(--ico-eye)" aria-hidden="true"></span></button>
     </div>
     <div class="pw-input-wrap">
       <input type="password" id="newPasswordConfirm" data-i18n-placeholder="recovery.confirmPlaceholder" placeholder="再輸入一次新密碼">
-      <button type="button" class="pw-toggle-btn" data-i18n-title="login.showPassword" aria-label="顯示密碼">👁️</button>
+      <button type="button" class="pw-toggle-btn" data-i18n-title="login.showPassword" aria-label="顯示密碼"><span class="sb-ico" style="--ico:var(--ico-eye)" aria-hidden="true"></span></button>
     </div>
     <button class="btn-wide" id="savePwBtn" data-i18n="common.save">儲存</button>
     <div class="msg" id="pwMsg"></div>
@@ -654,7 +654,7 @@ if(backBtn){
       const input = btn.closest(".pw-input-wrap").querySelector("input");
       const show = input.type === "password";
       input.type = show ? "text" : "password";
-      btn.textContent = show ? "🙈" : "👁️";
+      btn.innerHTML = sbIcon(show ? "eyeoff" : "eye");
       btn.setAttribute("aria-label", show ? t("login.hidePassword") : t("login.showPassword"));
     });
   });
@@ -827,7 +827,7 @@ if(backBtn){
       const canEdit = isRecurringTemplateParty(tmpl, myId);
       return `<div class="settings-row recurring-tmpl-row${tmpl.active ? "" : " inactive"}" data-id="${tmpl.id}">
         <div class="settings-row-lead">
-          <span class="settings-row-icon">🔁</span>
+          <span class="settings-row-icon"><span class="sb-ico" style="--ico:var(--ico-repeat)" aria-hidden="true"></span></span>
           <div>
             <div class="settings-row-title">${escapeHtml(tmpl.description || "")}・${sym}${Number(tmpl.amount).toLocaleString()}</div>
             <div class="settings-hint settings-row-hint">${intervalLabel} · ${t("settings.recurringNextDue", { date: tmpl.next_due_date })}</div>
@@ -1901,7 +1901,7 @@ if(backBtn){
         try {
           await navigator.clipboard.writeText(num);
           copyBtn.textContent = "✓";
-          setTimeout(()=>{ copyBtn.textContent = "📋"; }, 1200);
+          setTimeout(()=>{ copyBtn.innerHTML = sbIcon("list"); }, 1200);
         } catch(e){}
       });
     }
@@ -1924,7 +1924,7 @@ if(backBtn){
         ${bankPopoverHtml(initialCode)}
       </div>
       <input type="text" class="payment-account-num" placeholder="${isWalletCode(initialCode) ? t("settings.accountPlaceholderOptional") : t("settings.accountPlaceholder")}" value="${escapeHtml((acc && acc.account) || "")}">
-      <button type="button" class="payment-account-copy" title="${t("settings.copyAccount")}" aria-label="${t("settings.copyAccount")}">📋</button>
+      <button type="button" class="payment-account-copy" title="${t("settings.copyAccount")}" aria-label="${t("settings.copyAccount")}"><span class="sb-ico" style="--ico:var(--ico-list)" aria-hidden="true"></span></button>
       <button type="button" class="payment-account-del" title="${t("settings.deleteThisAccount")}" aria-label="${t("settings.delete")}">✕</button>
     `;
     wrap.appendChild(row);
@@ -2081,8 +2081,8 @@ if(backBtn){
 
   function syncSettingsThemeIcon(){
     const isDark = document.documentElement.getAttribute("data-theme") === "dark";
-    if(settingsThemeBtn) settingsThemeBtn.textContent = isDark ? "☀️" : "🌙";
-    if(themeRowIcon) themeRowIcon.textContent = isDark ? "☀️" : "🌙";
+    if(settingsThemeBtn) settingsThemeBtn.innerHTML = sbIcon(isDark ? "sun" : "moon");
+    if(themeRowIcon) themeRowIcon.innerHTML = sbIcon(isDark ? "sun" : "moon");
   }
   if(settingsThemeBtn){
     syncSettingsThemeIcon();
@@ -2186,7 +2186,7 @@ if(backBtn){
       try{
         const perm = await window.Capacitor.Plugins.PushNotifications.checkPermissions();
         if(perm.receive === "denied"){
-          notifyBtn.textContent = "🔕";
+          notifyBtn.innerHTML = sbIcon("belloff");
           notifyBtn.title = t("settings.notifyTitleSystemBlocked");
           notifyBtn.classList.remove("active");
           if(notifyHint) notifyHint.textContent = getNotifyHintBlocked();
@@ -2194,12 +2194,12 @@ if(backBtn){
         }
         if(notifyHint) notifyHint.textContent = getNotifyHintDefault();
         if(perm.receive === "granted"){
-          notifyBtn.textContent = "🔔";
+          notifyBtn.innerHTML = sbIcon("bell");
           notifyBtn.title = t("settings.notifyTitleOn");
           notifyBtn.classList.add("active");
           return;
         }
-        notifyBtn.textContent = "🔔";
+        notifyBtn.innerHTML = sbIcon("bell");
         notifyBtn.title = t("settings.notifyTitleClickToEnable");
         notifyBtn.classList.remove("active");
         return;
@@ -2210,7 +2210,7 @@ if(backBtn){
 
     // Web Fallback
     if(typeof Notification !== "undefined" && Notification.permission === "denied"){
-      notifyBtn.textContent = "🔕";
+      notifyBtn.innerHTML = sbIcon("belloff");
       notifyBtn.title = t("settings.notifyTitleBrowserBlocked");
       notifyBtn.classList.remove("active");
       if(notifyHint) notifyHint.textContent = getNotifyHintBlocked();
@@ -2221,13 +2221,13 @@ if(backBtn){
       const reg = "serviceWorker" in navigator ? await navigator.serviceWorker.getRegistration() : null;
       const sub = reg ? await reg.pushManager.getSubscription() : null;
       if(sub){
-        notifyBtn.textContent = "🔔";
+        notifyBtn.innerHTML = sbIcon("bell");
         notifyBtn.title = t("settings.notifyTitleOnClickOff");
         notifyBtn.classList.add("active");
         return;
       }
     }
-    notifyBtn.textContent = "🔔";
+    notifyBtn.innerHTML = sbIcon("bell");
     notifyBtn.title = t("settings.notifyTitleClickToEnable");
     notifyBtn.classList.remove("active");
   }

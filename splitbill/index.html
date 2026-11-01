@@ -99,17 +99,17 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=893">
-<link rel="stylesheet" href="shared.css?v=893">
+<link rel="stylesheet" href="theme.css?v=894">
+<link rel="stylesheet" href="shared.css?v=894">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad&render=explicit" async defer></script>
-<script src="i18n.js?v=893"></script>
-<script src="currencies.js?v=893"></script>
-<script src="version.js?v=893"></script>
-<script src="notif-text.js?v=893"></script>
-<script src="shared-ui.js?v=893"></script>
-<script src="theme.js?v=893" defer></script>
-<script src="app-banner.js?v=893" defer></script>
+<script src="i18n.js?v=894"></script>
+<script src="currencies.js?v=894"></script>
+<script src="version.js?v=894"></script>
+<script src="notif-text.js?v=894"></script>
+<script src="shared-ui.js?v=894"></script>
+<script src="theme.js?v=894" defer></script>
+<script src="app-banner.js?v=894" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -180,7 +180,7 @@ if("serviceWorker" in navigator){
 
 
   <div id="configWarning" class="card hidden">
-    <h2 data-i18n="configWarning.title">⚠️ 尚未設定 Supabase</h2>
+    <h2 data-i18n="configWarning.title">尚未設定 Supabase</h2>
     <p class="config-warning-text">
       打開這個檔案，把最下面 <code>&lt;script&gt;</code> 區塊裡的
       <code>SUPABASE_URL</code> 跟 <code>SUPABASE_ANON_KEY</code>
@@ -216,12 +216,12 @@ if("serviceWorker" in navigator){
         <label data-i18n="login.passwordLabel">密碼</label>
         <div class="pw-input-wrap">
           <input type="password" id="authPassword" data-i18n-placeholder="login.passwordPlaceholder" placeholder="至少 6 碼">
-          <button type="button" class="pw-toggle-btn" data-i18n-title="login.showPassword" aria-label="顯示密碼">👁️</button>
+          <button type="button" class="pw-toggle-btn" data-i18n-title="login.showPassword" aria-label="顯示密碼"><span class="sb-ico" style="--ico:var(--ico-eye)" aria-hidden="true"></span></button>
         </div>
         <label id="authPasswordConfirmLabel" class="hidden" data-i18n="login.passwordConfirmLabel">再輸入一次密碼</label>
         <div class="pw-input-wrap">
           <input type="password" id="authPasswordConfirm" class="hidden" data-i18n-placeholder="login.passwordConfirmPlaceholder" placeholder="再輸入一次密碼">
-          <button type="button" class="pw-toggle-btn hidden" data-i18n-title="login.showPassword" aria-label="顯示密碼">👁️</button>
+          <button type="button" class="pw-toggle-btn hidden" data-i18n-title="login.showPassword" aria-label="顯示密碼"><span class="sb-ico" style="--ico:var(--ico-eye)" aria-hidden="true"></span></button>
         </div>
         <button class="btn" id="authSubmitBtn" data-i18n="common.login">登入</button>
         <button type="button" class="link-btn" id="authForgotPwBtn" data-i18n="login.forgotPassword">忘記密碼？</button>
@@ -253,7 +253,7 @@ if("serviceWorker" in navigator){
     <div class="login-page-footer">
       <div class="login-apk-wrap">
         <a href="https://github.com/jschang0512/splitbill/releases/latest/download/splitbill.apk" class="login-apk-download-link" id="loginApkDownloadLink">
-          <span data-i18n="nav.downloadApk">🤖 下載 Android APP</span>
+          <span data-i18n="nav.downloadApk">下載 Android APP</span>
         </a>
       </div>
       <a href="about.html" data-i18n="nav.about">關於系統</a>　·　<a href="privacy.html" data-i18n="nav.privacy">隱私權政策</a>　·　<a href="terms.html" data-i18n="nav.terms">服務條款</a>
@@ -275,9 +275,9 @@ if("serviceWorker" in navigator){
       </div>
     </div>
     <div class="login-card">
-      <h2 data-i18n="groupChoice.title">👋 選擇你的群組</h2>
-      <p class="settings-hint" data-i18n="groupChoice.hint1">你的帳號還沒有加入任何群組，選一個開始吧。這個群組的暱稱預設會用你註冊時填的姓名，之後可以在⚙️設定裡個別改。</p>
-      <p class="settings-hint" data-i18n="groupChoice.hint2">⚠️ 如果你已經有 Splitbill 帳號，卻看到這個畫面，代表這個信箱還沒連結到你原本的帳號——請按下面「登出」，改用原本的方式登入，再到⚙️設定裡把這個帳號連結上去。</p>
+      <h2 data-i18n="groupChoice.title">選擇你的群組</h2>
+      <p class="settings-hint" data-i18n="groupChoice.hint1">你的帳號還沒有加入任何群組，選一個開始吧。這個群組的暱稱預設會用你註冊時填的姓名，之後可以在設定裡個別改。</p>
+      <p class="settings-hint" data-i18n="groupChoice.hint2">如果你已經有 Splitbill 帳號，卻看到這個畫面，代表這個信箱還沒連結到你原本的帳號——請按下面「登出」，改用原本的方式登入，再到設定裡把這個帳號連結上去。</p>
 
       <div id="groupChoiceUsernameWrap" class="hidden">
         <label data-i18n="login.usernameLabel">登入帳號</label>
@@ -325,19 +325,19 @@ if("serviceWorker" in navigator){
       </div>
     </div>
     <div class="login-card">
-      <h2 data-i18n="oauthConfirm.title">👋 建立新帳號</h2>
+      <h2 data-i18n="oauthConfirm.title">建立新帳號</h2>
       <p class="settings-hint" id="oauthConfirmCreatingText"></p>
-      <p class="settings-hint" data-i18n="oauthConfirm.warning">⚠️ 如果你已經有 Splitbill 帳號，進入這個畫面代表你還沒連結這個 Google/Discord 帳號——請按下面「登出」，改用原本的方式登入，再到⚙️設定裡把這個 Google/Discord 帳號連結上去。</p>
+      <p class="settings-hint" data-i18n="oauthConfirm.warning">如果你已經有 Splitbill 帳號，進入這個畫面代表你還沒連結這個 Google/Discord 帳號——請按下面「登出」，改用原本的方式登入，再到設定裡把這個 Google/Discord 帳號連結上去。</p>
       <label data-i18n="login.usernameLabel">登入帳號</label>
       <input type="text" id="oauthConfirmName" data-i18n-placeholder="login.usernamePlaceholder" placeholder="中文、英文、數字、底線，2~20 個字" maxlength="20">
       <label data-i18n="oauthConfirm.setPasswordLabel">設定一組密碼（以後也可以直接用密碼登入）</label>
       <div class="pw-input-wrap">
         <input type="password" id="oauthConfirmPassword" data-i18n-placeholder="login.passwordPlaceholder" placeholder="至少 6 碼">
-        <button type="button" class="pw-toggle-btn" data-i18n-title="login.showPassword" aria-label="顯示密碼">👁️</button>
+        <button type="button" class="pw-toggle-btn" data-i18n-title="login.showPassword" aria-label="顯示密碼"><span class="sb-ico" style="--ico:var(--ico-eye)" aria-hidden="true"></span></button>
       </div>
       <div class="pw-input-wrap">
         <input type="password" id="oauthConfirmPasswordConfirm" data-i18n-placeholder="login.passwordConfirmPlaceholder" placeholder="再輸入一次密碼">
-        <button type="button" class="pw-toggle-btn" data-i18n-title="login.showPassword" aria-label="顯示密碼">👁️</button>
+        <button type="button" class="pw-toggle-btn" data-i18n-title="login.showPassword" aria-label="顯示密碼"><span class="sb-ico" style="--ico:var(--ico-eye)" aria-hidden="true"></span></button>
       </div>
       <button class="btn" id="oauthConfirmContinueBtn" data-i18n="oauthConfirm.continueBtn">繼續，這是我的新帳號</button>
       <button type="button" class="link-btn" id="oauthConfirmLogoutBtn" data-i18n="oauthConfirm.cancelBtn">取消註冊</button>
@@ -349,18 +349,18 @@ if("serviceWorker" in navigator){
   <div class="calc-modal" id="recoveryModal">
     <div class="settings-card card">
       <div class="calc-header">
-        <span class="calc-header-name" data-i18n="recovery.title">🔑 設定新密碼</span>
+        <span class="calc-header-name" data-i18n="recovery.title">設定新密碼</span>
       </div>
       <p class="settings-hint" data-i18n="recovery.hint">你點了忘記密碼寄來的連結，在這裡設定一個新密碼就完成了。</p>
       <label data-i18n="recovery.newPasswordLabel">新密碼（至少 6 碼）</label>
       <div class="pw-input-wrap">
         <input type="password" id="recoveryPassword" data-i18n-placeholder="recovery.newPasswordPlaceholder" placeholder="輸入新密碼">
-        <button type="button" class="pw-toggle-btn" data-i18n-title="login.showPassword" aria-label="顯示密碼">👁️</button>
+        <button type="button" class="pw-toggle-btn" data-i18n-title="login.showPassword" aria-label="顯示密碼"><span class="sb-ico" style="--ico:var(--ico-eye)" aria-hidden="true"></span></button>
       </div>
       <label data-i18n="recovery.confirmLabel">確認新密碼</label>
       <div class="pw-input-wrap">
         <input type="password" id="recoveryPasswordConfirm" data-i18n-placeholder="recovery.confirmPlaceholder" placeholder="再輸入一次新密碼">
-        <button type="button" class="pw-toggle-btn" data-i18n-title="login.showPassword" aria-label="顯示密碼">👁️</button>
+        <button type="button" class="pw-toggle-btn" data-i18n-title="login.showPassword" aria-label="顯示密碼"><span class="sb-ico" style="--ico:var(--ico-eye)" aria-hidden="true"></span></button>
       </div>
       <button class="btn secondary small" id="recoverySaveBtn" data-i18n="recovery.saveBtn">儲存新密碼</button>
       <div class="msg" id="recoveryMsg"></div>
@@ -579,7 +579,7 @@ function removeFlashGuard(){
       const input = btn.closest(".pw-input-wrap").querySelector("input");
       const show = input.type === "password";
       input.type = show ? "text" : "password";
-      btn.textContent = show ? "🙈" : "👁️";
+      btn.innerHTML = sbIcon(show ? "eyeoff" : "eye");
       btn.setAttribute("aria-label", show ? t("login.hidePassword") : t("login.showPassword"));
     });
   });

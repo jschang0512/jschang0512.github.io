@@ -26,15 +26,15 @@
 <meta name="apple-mobile-web-app-title" content="Splitbill">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=893">
-<link rel="stylesheet" href="shared.css?v=893">
+<link rel="stylesheet" href="theme.css?v=894">
+<link rel="stylesheet" href="shared.css?v=894">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="i18n.js?v=893"></script>
-<script src="currencies.js?v=893"></script>
-<script src="version.js?v=893"></script>
-<script src="notif-text.js?v=893"></script>
-<script src="shared-ui.js?v=893"></script>
-<script src="theme.js?v=893" defer></script>
+<script src="i18n.js?v=894"></script>
+<script src="currencies.js?v=894"></script>
+<script src="version.js?v=894"></script>
+<script src="notif-text.js?v=894"></script>
+<script src="shared-ui.js?v=894"></script>
+<script src="theme.js?v=894" defer></script>
 <script src="app-banner.js" defer></script>
 <script>
 if("serviceWorker" in navigator){
@@ -125,7 +125,7 @@ if("serviceWorker" in navigator){
         <span id="whoamiText"><b id="whoamiName"></b></span>
       </div>
       <div class="topbar-actions">
-        <a class="icon-btn" id="settingsBtn" href="settings.html" data-i18n-title="common.settings" title="設定" aria-label="設定">⚙️</a>
+        <a class="icon-btn" id="settingsBtn" href="settings.html" data-i18n-title="common.settings" title="設定" aria-label="設定"><span class="sb-ico" style="--ico:var(--ico-gear)" aria-hidden="true"></span></a>
       </div>
     </div>
 
@@ -237,7 +237,7 @@ if("serviceWorker" in navigator){
             <span data-i18n="currency.exportSettlement">匯出圖片</span>
           </button>
         </div>
-        <p class="filter-hint summary-hint" data-i18n="currency.matrixHint">💡 點擊儲存格可查看詳細借貸紀錄，餘數由系統自動分攤分配</p>
+        <p class="filter-hint summary-hint" data-i18n="currency.matrixHint">點擊儲存格可查看詳細借貸紀錄，餘數由系統自動分攤分配</p>
         <div class="matrix-scroll">
           <table class="debt-matrix" id="debtMatrix"></table>
         </div>
@@ -272,7 +272,7 @@ if("serviceWorker" in navigator){
 
         <div class="exp-form-section sec-content">
           <div class="exp-form-section-head">
-            <span class="exp-form-section-icon">🍽️</span>
+            <span class="exp-form-section-icon"><span class="sb-ico" style="--ico:var(--ico-receipt)" aria-hidden="true"></span></span>
             <span class="exp-form-section-title" data-i18n="currency.contentSectionTitle">支出內容</span>
             <button type="button" class="btn-ai-receipt exp-form-section-action" id="aiReceiptBtn" data-i18n-title="currency.aiReceiptBtnTitle" title="拍照或上傳發票/收據自動辨識品項與拆單" data-i18n="currency.aiReceiptBtn">AI 拆單</button>
           </div>
@@ -281,27 +281,27 @@ if("serviceWorker" in navigator){
           <input type="text" id="expDesc" data-i18n-placeholder="currency.itemNamePlaceholder" placeholder="例如 晚餐、淺草雷門 星巴克">
 
           <!-- 支出類別下拉式選單 -->
-          <label for="expCategorySelect" data-i18n="currency.categoryLabel">類別 (自動辨識 / 可手動選擇)<span class="category-learned-hint hidden" id="expCategoryLearnedHint" data-i18n="currency.categoryLearnedHint">🧠 已套用學習</span></label>
+          <label for="expCategorySelect" data-i18n="currency.categoryLabel">類別 (自動辨識 / 可手動選擇)<span class="category-learned-hint hidden" id="expCategoryLearnedHint" data-i18n="currency.categoryLearnedHint">已套用學習</span></label>
           <div class="select-wrap exp-category-select-wrap">
             <select id="expCategorySelect" class="exp-category-select">
-              <option value="general" data-i18n="cat.general">🧾 一般支出</option>
-              <option value="food" data-i18n="cat.food">🍜 美食餐飲</option>
-              <option value="drink" data-i18n="cat.drink">☕ 飲料甜點</option>
-              <option value="transit" data-i18n="cat.transit">🚄 大眾交通</option>
-              <option value="car" data-i18n="cat.car">🚗 租車用油</option>
-              <option value="flight" data-i18n="cat.flight">✈️ 機票航班</option>
-              <option value="hotel" data-i18n="cat.hotel">🏨 住宿溫泉</option>
-              <option value="ticket" data-i18n="cat.ticket">🎟️ 門票娛樂</option>
-              <option value="shopping" data-i18n="cat.shopping">🛍️ 購物藥妝</option>
-              <option value="medical" data-i18n="cat.medical">💊 醫療藥品</option>
-              <option value="network" data-i18n="cat.network">📶 網卡通訊</option>
+              <option value="general" data-i18n="cat.general">一般支出</option>
+              <option value="food" data-i18n="cat.food">美食餐飲</option>
+              <option value="drink" data-i18n="cat.drink">飲料甜點</option>
+              <option value="transit" data-i18n="cat.transit">大眾交通</option>
+              <option value="car" data-i18n="cat.car">租車用油</option>
+              <option value="flight" data-i18n="cat.flight">機票航班</option>
+              <option value="hotel" data-i18n="cat.hotel">住宿溫泉</option>
+              <option value="ticket" data-i18n="cat.ticket">門票娛樂</option>
+              <option value="shopping" data-i18n="cat.shopping">購物藥妝</option>
+              <option value="medical" data-i18n="cat.medical">醫療藥品</option>
+              <option value="network" data-i18n="cat.network">網卡通訊</option>
             </select>
           </div>
 
           <label id="expAmountLabel">支出總金額 (已含稅/免稅)</label>
           <div class="input-calc-wrap">
             <input type="number" id="expAmount" data-i18n-placeholder="currency.amountPlaceholder" placeholder="例如 850" min="0" step="1">
-            <button type="button" class="amt-row-calc-btn input-calc-btn" id="expAmountCalcBtn" data-i18n-title="common.calculator" title="小計算機">🧮</button>
+            <button type="button" class="amt-row-calc-btn input-calc-btn" id="expAmountCalcBtn" data-i18n-title="common.calculator" title="小計算機"><span class="sb-ico" style="--ico:var(--ico-calc)" aria-hidden="true"></span></button>
           </div>
 
           <!-- 服務費 / 稅：預設「沒有」，大部分時候金額已含稅、不用理它。摘要卡片
@@ -318,7 +318,7 @@ if("serviceWorker" in navigator){
               <label class="exp-addon-label" data-i18n="currency.taxAmountLabel">服務費 / 稅額金額</label>
               <div class="input-calc-wrap exp-addon-calc-wrap">
                 <input type="number" id="expTaxAmount" data-i18n-placeholder="currency.taxAmountPlaceholder" placeholder="例如 85" min="0" step="1">
-                <button type="button" class="amt-row-calc-btn input-calc-btn" id="expTaxCalcBtn" data-i18n-title="common.calculator" title="小計算機">🧮</button>
+                <button type="button" class="amt-row-calc-btn input-calc-btn" id="expTaxCalcBtn" data-i18n-title="common.calculator" title="小計算機"><span class="sb-ico" style="--ico:var(--ico-calc)" aria-hidden="true"></span></button>
               </div>
 
               <label class="exp-tax-label" data-i18n="currency.taxSplitModeLabel">分配方式</label>
@@ -333,7 +333,7 @@ if("serviceWorker" in navigator){
 
         <div class="exp-form-section sec-payer hidden">
           <div class="exp-form-section-head">
-            <span class="exp-form-section-icon">💰</span>
+            <span class="exp-form-section-icon"><span class="sb-ico" style="--ico:var(--ico-wallet)" aria-hidden="true"></span></span>
             <span class="exp-form-section-title" data-i18n="currency.payerSectionTitle">誰付的錢</span>
           </div>
 
@@ -351,7 +351,7 @@ if("serviceWorker" in navigator){
 
         <div class="exp-form-section sec-split hidden">
           <div class="exp-form-section-head">
-            <span class="exp-form-section-icon">🤝</span>
+            <span class="exp-form-section-icon"><span class="sb-ico" style="--ico:var(--ico-users)" aria-hidden="true"></span></span>
             <span class="exp-form-section-title" data-i18n="currency.splitSectionTitle">怎麼分攤</span>
           </div>
 
@@ -401,7 +401,7 @@ if("serviceWorker" in navigator){
 
         <div class="exp-form-section sec-note hidden">
           <div class="exp-form-section-head">
-            <span class="exp-form-section-icon">🗒️</span>
+            <span class="exp-form-section-icon"><span class="sb-ico" style="--ico:var(--ico-pencil)" aria-hidden="true"></span></span>
             <span class="exp-form-section-title" data-i18n="currency.noteDateSectionTitle">備註與日期</span>
           </div>
 
@@ -465,7 +465,7 @@ if("serviceWorker" in navigator){
         <div class="history-quick-filter-bar" id="historyQuickFilterBar">
           <div class="history-search-row">
             <div class="history-live-search-wrap">
-              <span class="search-icon">🔍</span>
+              <span class="search-icon"><span class="sb-ico" style="--ico:var(--ico-search)" aria-hidden="true"></span></span>
               <input type="text" class="search-inp" id="historyLiveSearch" data-i18n-placeholder="currency.searchPlaceholder" placeholder="搜尋項目、店家、備註、金額或成員...">
               <button type="button" class="search-clear-btn hidden" id="historyLiveSearchClear" data-i18n-title="currency.clearSearch" aria-label="清除搜尋">✕</button>
             </div>
@@ -698,7 +698,7 @@ if("serviceWorker" in navigator){
       <img id="settlementImgPreview" data-i18n-placeholder="currency.settlementImgAlt" alt="結算圖片" class="settlement-img-preview">
     </div>
     <div class="settlement-img-tip-box">
-      <span class="settlement-img-tip-icon">💡</span>
+      <span class="settlement-img-tip-icon"><span class="sb-ico" style="--ico:var(--ico-bulb)" aria-hidden="true"></span></span>
       <span data-i18n-html="currency.settlementImgTip">手機可直接<b>「長按圖片」</b>選擇<b>「儲存影像」</b>存入相簿</span>
     </div>
     <div class="settlement-img-actions">
@@ -770,7 +770,7 @@ if("serviceWorker" in navigator){
   <div class="calc-card card exp-debt-modal-card">
     <div class="calc-header">
       <div class="exp-debt-modal-title" id="expDebtModalTitle">
-        <span class="exp-debt-modal-icon" id="expDebtModalIcon">📋</span>
+        <span class="exp-debt-modal-icon" id="expDebtModalIcon"><span class="sb-ico" style="--ico:var(--ico-list)" aria-hidden="true"></span></span>
         <span id="expDebtModalName" data-i18n="currency.expDebtDefaultTitle">項目債務明細</span>
       </div>
       <div class="settings-item-label-wrap">
@@ -789,7 +789,7 @@ if("serviceWorker" in navigator){
   <div class="calc-card card category-modal-card">
     <div class="calc-header">
       <div class="category-detail-modal-title" id="catModalTitleWrap">
-        <span class="cat-modal-icon" id="catModalIcon">🍜</span>
+        <span class="cat-modal-icon" id="catModalIcon"><span class="sb-ico" style="--ico:var(--ico-utensils)" aria-hidden="true"></span></span>
         <div class="cat-modal-title-col">
           <span class="cat-modal-name" id="catModalName">美食餐飲</span>
           <span class="cat-modal-sub" id="catModalSub">共 0 筆 · $0</span>
@@ -807,7 +807,7 @@ if("serviceWorker" in navigator){
   <div class="calc-card card ai-receipt-modal-card">
     <div class="calc-header">
       <div class="ai-receipt-modal-title">
-        <span class="ai-receipt-modal-icon">📷</span>
+        <span class="ai-receipt-modal-icon"><span class="sb-ico" style="--ico:var(--ico-camera)" aria-hidden="true"></span></span>
         <span data-i18n="currency.aiModalTitle">AI 收據照片自動拆單</span>
       </div>
       <button type="button" class="calc-close" id="aiReceiptModalCloseBtn">✕</button>
@@ -816,7 +816,7 @@ if("serviceWorker" in navigator){
     <!-- 步驟 1：上傳 / 拍照（選擇相機或相簿） -->
     <div class="ai-receipt-screen" id="aiReceiptUploadScreen">
       <div class="ai-receipt-dropzone" id="aiReceiptDropzone">
-        <div class="ai-receipt-drop-icon">🧾</div>
+        <div class="ai-receipt-drop-icon"><span class="sb-ico" style="--ico:var(--ico-receipt)" aria-hidden="true"></span></div>
         <div class="ai-receipt-drop-text" data-i18n="currency.aiSelectSource">選擇發票/收據照片來源</div>
         <div class="ai-receipt-drop-subtext" data-i18n="currency.aiSourceHint">支援相機即時拍攝、手機相簿、或直接貼上截圖 (Ctrl+V)</div>
 
@@ -828,10 +828,10 @@ if("serviceWorker" in navigator){
         <!-- 雙按鈕：拍照 vs 相簿（完美置中，採用原生 label 觸發 + JS 雙重保障） -->
         <div class="ai-source-buttons-row">
           <label for="aiReceiptCameraInput" class="btn ai-source-btn" id="aiReceiptCameraBtn">
-            <span>📸</span> <span data-i18n="currency.aiOpenCamera">開啟相機</span>
+            <span><span class="sb-ico" style="--ico:var(--ico-camera)" aria-hidden="true"></span></span> <span data-i18n="currency.aiOpenCamera">開啟相機</span>
           </label>
           <label for="aiReceiptGalleryInput" class="btn secondary ai-source-btn" id="aiReceiptGalleryBtn">
-            <span>🖼️</span> <span data-i18n="currency.aiChooseGallery">選擇相簿</span>
+            <span><span class="sb-ico" style="--ico:var(--ico-image)" aria-hidden="true"></span></span> <span data-i18n="currency.aiChooseGallery">選擇相簿</span>
           </label>
         </div>
       </div>
@@ -908,17 +908,17 @@ if("serviceWorker" in navigator){
           <label for="aiCategorySelect" class="ai-tax-label" style="font-size:12.5px;color:var(--ink);font-weight:600;" data-i18n="currency.aiCategoryLabel">類別:</label>
           <div class="select-wrap ai-category-select-wrap">
             <select id="aiCategorySelect" class="ai-category-select">
-              <option value="general" data-i18n="cat.general">🧾 一般支出</option>
-              <option value="food" selected data-i18n="cat.food">🍜 美食餐飲</option>
-              <option value="drink" data-i18n="cat.drink">☕ 飲料甜點</option>
-              <option value="transit" data-i18n="cat.transit">🚄 大眾交通</option>
-              <option value="car" data-i18n="cat.car">🚗 租車用油</option>
-              <option value="flight" data-i18n="cat.flight">✈️ 機票航班</option>
-              <option value="hotel" data-i18n="cat.hotel">🏨 住宿溫泉</option>
-              <option value="ticket" data-i18n="cat.ticket">🎟️ 門票娛樂</option>
-              <option value="shopping" data-i18n="cat.shopping">🛍️ 購物藥妝</option>
-              <option value="medical" data-i18n="cat.medical">💊 醫療藥品</option>
-              <option value="network" data-i18n="cat.network">📶 網卡通訊</option>
+              <option value="general" data-i18n="cat.general">一般支出</option>
+              <option value="food" selected data-i18n="cat.food">美食餐飲</option>
+              <option value="drink" data-i18n="cat.drink">飲料甜點</option>
+              <option value="transit" data-i18n="cat.transit">大眾交通</option>
+              <option value="car" data-i18n="cat.car">租車用油</option>
+              <option value="flight" data-i18n="cat.flight">機票航班</option>
+              <option value="hotel" data-i18n="cat.hotel">住宿溫泉</option>
+              <option value="ticket" data-i18n="cat.ticket">門票娛樂</option>
+              <option value="shopping" data-i18n="cat.shopping">購物藥妝</option>
+              <option value="medical" data-i18n="cat.medical">醫療藥品</option>
+              <option value="network" data-i18n="cat.network">網卡通訊</option>
             </select>
           </div>
         </div>
@@ -1163,6 +1163,6 @@ window.renderNavLinks = function(){
 };
 window.renderNavLinks();
 </script>
-<script src="app.js?v=893"></script>
+<script src="app.js?v=894"></script>
 </body>
 </html>
