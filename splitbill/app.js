@@ -5617,25 +5617,6 @@ function settlementCanvasTruncate(ctx, text, maxWidth){
   return "…";
 }
 
-// 「債權人」／「債務人」直排文字：每個字各自置中、由上往下疊，不是把整串字
-// 橫著轉 90 度（那樣字會變成橫躺、要側著頭看）。cx 是這一欄的水平中心，
-// zoneTop/zoneH 是這個字要置中擺放的那個區塊的上緣與高度。
-function drawSettlementVerticalLabel(ctx, text, cx, zoneTop, zoneH, font){
-  ctx.save();
-  ctx.font = font;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  const chars = text.split("");
-  const lineH = 16;
-  const totalH = chars.length * lineH;
-  let y = zoneTop + zoneH / 2 - totalH / 2 + lineH / 2;
-  chars.forEach(ch => {
-    ctx.fillText(ch, cx, y);
-    y += lineH;
-  });
-  ctx.restore();
-}
-
 // 匯出圖片要不要用暗色卡片，跟著目前實際套用的深色/淺色模式走（theme.js
 // 設在 <html data-theme="dark|light">），不要固定死用某一種，不然淺色模式
 // 底下產生出來的圖片顏色會跟使用者當下看到的畫面不一致。
@@ -5646,9 +5627,7 @@ function isSettlementDarkTheme(){
   return !!(window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
 }
 
-// 債務關係表熱圖顏色公式：網頁版（debtHeatStyle）跟匯出圖片
-// （renderSettlementImageCanvas）共用同一份參數計算，只有輸出格式不同
-// （CSS color-mix 字串 vs. canvas 算好的 rgb() 字串），顏色才會永遠一致。
+// 債務關係表熱圖顏色公式（網頁版 debtHeatStyle 用）
 function debtHeatParams(amount, maxDebtAmount, isDark){
   const ratio = maxDebtAmount > 0 ? Math.min(1, amount / maxDebtAmount) : 0;
   const hue = 345; // 玫瑰紅，跟 app 既有「欠款=紅」的色系一致
@@ -5662,71 +5641,18 @@ function debtHeatParams(amount, maxDebtAmount, isDark){
   };
 }
 
-// HSL → RGB（canvas fillStyle 沒辦法解析 CSS 的 var()，要跟卡片底色混合
-// 就得自己把 hsl() 換算成實際的 rgb 數字再手動內插）。
-function hslToRgb255(h, s, l){
-  s /= 100; l /= 100;
-  const k = n => (n + h / 30) % 12;
-  const a = s * Math.min(l, 1 - l);
-  const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
-  return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
-}
-// 解析 getSettlementTheme() 裡的 "#rrggbb" 或 "rgba(r,g,b,a)" 色碼，取出 rgb。
-function parseThemeColorToRgb(str){
-  if(str[0] === "#"){
-    return [parseInt(str.slice(1,3),16), parseInt(str.slice(3,5),16), parseInt(str.slice(5,7),16)];
-  }
-  const m = str.match(/rgba?\(([^)]+)\)/);
-  if(m){
-    const parts = m[1].split(",").map(s => parseFloat(s.trim()));
-    return [parts[0], parts[1], parts[2]];
-  }
-  return [0, 0, 0];
-}
-// 熱圖格子在 canvas 上要用的實際顏色：跟網頁版同一套 debtHeatParams()，
-// 只是把 color-mix() 換成手動內插出來的 rgb() 字串。cardRgbStr 對應網頁上
-// .matrix-cell 的 var(--card)，用 getSettlementTheme() 的 cellBg 當基準色。
-function debtHeatCanvasColors(amount, maxDebtAmount, isDark, cardRgbStr){
-  const p = debtHeatParams(amount, maxDebtAmount, isDark);
-  const hueRgb = hslToRgb255(p.hue, 82, p.bgLightness);
-  const cardRgb = parseThemeColorToRgb(cardRgbStr);
-  const t = p.bgPct / 100;
-  const mixed = [0,1,2].map(i => Math.round(hueRgb[i] * t + cardRgb[i] * (1 - t)));
-  return { bg: `rgb(${mixed[0]}, ${mixed[1]}, ${mixed[2]})`, fg: p.fg, fontWeight: p.fontWeight };
-}
-
-// 這裡的顏色是直接照抄 shared.css 裡 .debt-matrix 實際在用的色碼（包含
-// 深色模式的 :root[data-theme="dark"] 覆寫），不是另外設計一套配色——
-// 使用者明確要求圖片的表格要跟網頁上長得一模一樣，所以格線有沒有、
-// 哪些格子有底色、底色深淺，都要跟 shared.css 對得起來，不能自己加花樣
-// （例如原本畫的交錯列底色、強調分隔線、應收款欄特殊底色，網頁上其實
-// 都沒有，這裡拿掉了）。
-function getSettlementTheme(){
-  return isSettlementDarkTheme() ? {
-    // .debt-matrix { background }
-    tableBg: "rgba(34,34,38,0.92)",
-    // .debt-matrix th/td { border-color }
-    border: "rgba(255,255,255,0.14)",
-    // thead th / matrix-corner / matrix-side-label / matrix-row-name / matrix-total / tfoot th
-    headerBg: "rgba(48,48,54,0.9)",
-    headerText: "#F5F5F7",
-    // matrix-cell（沒有欠款的空格）
-    cellBg: "rgba(38,38,42,0.6)",
-    // matrix-self（自己欠自己那格）
-    selfBg: "rgba(26,26,28,0.7)",
-    selfText: "rgba(255,255,255,0.2)",
-    accent: "#C6B7FE",
-    footerText: "#8873C2"
+// 匯出圖片的配色：對照 theme.css 的 token（--bg-canvas、--card、--card-border、
+// --line、--ink、--ink-soft、--btn-primary、--tint、--positive-text、
+// --negative-text），淺色／深色各一組，跟使用者當下看到的畫面一致。
+function getSettlementImageColors(dark){
+  return dark ? {
+    canvas: "#111115", card: "#1B1B21", border: "#2B2B34", line: "#2A2A32", tint: "#22222B",
+    ink: "#F2F2F5", muted: "#A6A5B1", faint: "#55545F", brand: "#8F95D6",
+    positive: "#6FD988", negative: "#FA8087"
   } : {
-    tableBg: "#FFFFFF",
-    border: "#E5E5EA",
-    headerBg: "#F4F4F6",
-    headerText: "#48484A",
-    cellBg: "#FFFFFF",
-    selfBg: "#FAF9FA",
-    selfText: "rgba(99,106,177,0.35)",
-    accent: "#544388",
-    footerText: "#726196"
+    canvas: "#F4F5F7", card: "#FFFFFF", border: "#E4E4EA", line: "#ECECF1", tint: "#EFF0F8",
+    ink: "#1C1B22", muted: "#5E5D6A", faint: "#C4C3CC", brand: "#636AB1",
+    positive: "#07843B", negative: "#D0283F"
   };
 }
 
@@ -5737,60 +5663,46 @@ function getSettlementTheme(){
 function renderSettlementImageCanvas(){
   const owed = buildDebtMatrix(cachedExpenses, cachedRepayments);
   const { ids } = computeDebtMatrixIds(owed);
-  const n = ids.length;
-  const T = getSettlementTheme();
   const dark = isSettlementDarkTheme();
+  const C = getSettlementImageColors(dark);
 
-  // 熱圖跟網頁版 debtHeatStyle 共用同一套 debtHeatParams()，這裡一樣要先
-  // 找出整張表最大的金額，顏色才會算出跟網頁上一致的比例。
-  let maxDebtAmount = 0;
-  ids.forEach(c => {
-    ids.forEach(d => {
-      if(c === d) return;
-      const amt = (owed[c] && owed[c][d]) || 0;
-      if(amt > maxDebtAmount) maxDebtAmount = amt;
-    });
-  });
+  // 只畫跟登入者有關的部分：交叉表裡「我」那一列（別人欠我）跟那一欄（我欠別人）。
+  // owed[債權人][債務人]。每個人一列：欠我、我欠、淨額（正數＝對方該給我）。
+  const myId = myMember && myMember.id;
+  const myName = (myId && memberById[myId]) || "?";
+  const rows = ids
+    .filter(id => id !== myId)
+    .map(id => {
+      const owesMe = (myId && owed[myId] && owed[myId][id]) || 0;
+      const iOwe = (myId && owed[id] && owed[id][myId]) || 0;
+      return { id, owesMe: owesMe > 0.05 ? owesMe : 0, iOwe: iOwe > 0.05 ? iOwe : 0 };
+    })
+    .filter(r => r.owesMe || r.iOwe)
+    .map(r => ({ ...r, net: r.owesMe - r.iOwe }))
+    .sort((a, b) => b.net - a.net);
+  const totalOwesMe = rows.reduce((s, r) => s + r.owesMe, 0);
+  const totalIOwe = rows.reduce((s, r) => s + r.iOwe, 0);
+  const totalNet = totalOwesMe - totalIOwe;
 
   const groupName = (myMember && myMember.groups && myMember.groups.name) || t("currency.groupNameFallback");
   const canvasLocaleMap = { "zh-Hant": "zh-TW", ja: "ja-JP", en: "en-US" };
   const nowStr = new Date().toLocaleString(canvasLocaleMap[getLang()] || "zh-TW", { year: "numeric", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
+  const money = v => `${SYM}${formatAmt(Math.abs(v))}`;
+  const signed = v => (v > 0.05 ? "+" : v < -0.05 ? "−" : "") + money(v);
+  const toneOf = v => v > 0.05 ? C.positive : v < -0.05 ? C.negative : C.muted;
+  const FONT = "'Noto Sans TC', sans-serif";
 
-  // 尺寸比照網頁 .debt-matrix 實際的緊湊程度（font-size:11.5px、
-  // padding:8px 4px、姓名欄 min/max-width 3.2em~5.2em），不要用畫布上
-  // 隨手看起來順眼的大小，不然整張表會比網頁鬆散、偏大。
+  // 版面：固定寬度，跟人數無關（只有列數會變），手機上看剛好一屏寬
+  const W = 440;
   const PAD = 24;
-  const labelColW = 22;
-  const nameColW = 64;
-  const cellColW = 58;
-  const totalColW = 70;
-  const headerRowH = 30;
-  const dataRowH = 34;
-  const footRowH = 32;
-  const cardHeaderH = 100;
-  const cardFooterH = PAD;
-
-  // 表格下方只列「別人要還我的」：這張圖是登入者拿去跟大家催款用的，
-  // 列出每個人欠我多少，收到的人不用自己去交叉表裡對行列。
-  // 資料跟表格同一份 owed（owed[債權人][債務人]），照金額由大到小。
-  const myId = myMember && myMember.id;
-  const myName = (myId && memberById[myId]) || "?";
-  const transfers = ids
-    .filter(d => d !== myId)
-    .map(d => ({ from: d, amt: (myId && owed[myId] && owed[myId][d]) || 0 }))
-    .filter(x => x.amt > 0.05)
-    .sort((a, b) => b.amt - a.amt);
-  const owedTotal = transfers.reduce((s, x) => s + x.amt, 0);
-  const listGap = 28;
-  const listHeadH = 30;
-  const listRowH = 40;
-  const listH = listHeadH + Math.max(transfers.length, 1) * listRowH;
-
-  const tableW = labelColW + nameColW + cellColW * n + totalColW;
-  const tableH = headerRowH * 2 + dataRowH * n + footRowH;
-  // 人少的時候表格很窄，標題、群組名和明細列會擠在一起，給整張圖一個最小寬度
-  const W = Math.max(tableW + PAD * 2, 420);
-  const H = cardHeaderH + tableH + listGap + listH + cardFooterH;
+  const innerW = W - PAD * 2;
+  const headerH = 104;
+  const statsH = 76;
+  const gap = 16;
+  const tableHeadH = 34;
+  const rowH = 46;
+  const tableH = tableHeadH + Math.max(rows.length, 1) * rowH;
+  const H = headerH + statsH + gap + tableH + PAD;
 
   // 至少 3 倍解析度：圖會被傳到聊天軟體再放大看，2 倍在手機上字會糊
   const dpr = Math.max(window.devicePixelRatio || 1, 3);
@@ -5800,256 +5712,128 @@ function renderSettlementImageCanvas(){
   const ctx = canvas.getContext("2d");
   ctx.scale(dpr, dpr);
 
-  // 外層背景鋪滿整張圖、不做圓角：PNG 的透明角落在 LINE 等聊天軟體裡
-  // 會變成黑色或白色的缺角（表格本體還是照網頁一樣有圓角）
-  ctx.fillStyle = dark ? "#1C1A24" : "#F6F3F9";
+  // 背景鋪滿整張圖、不做圓角：PNG 的透明角落在 LINE 等聊天軟體裡會變成缺角
+  ctx.fillStyle = C.canvas;
   ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = T.accent;
+  ctx.fillStyle = C.brand;
   ctx.fillRect(0, 0, W, 4);
 
-  const mutedText = dark ? "#A9A7B3" : "#686074";
-  const inkText = dark ? "#F5F5F7" : "#1D1B22";
-
-  // 標題區靠左對齊：品牌小字、標題、群組／幣別／時間
+  // ---------- 標題 ----------
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
-  ctx.fillStyle = T.accent;
-  ctx.font = "700 12px 'Noto Sans TC', sans-serif";
+  ctx.fillStyle = C.brand;
+  ctx.font = `700 11px ${FONT}`;
   ctx.fillText("SPLITBILL", PAD, 34);
-  ctx.fillStyle = inkText;
-  ctx.font = "700 22px 'Noto Sans TC', sans-serif";
-  ctx.fillText(t("currency.settlementImageTitle"), PAD, 62);
-  ctx.fillStyle = mutedText;
-  ctx.font = "500 13px 'Noto Sans TC', sans-serif";
-  ctx.fillText(settlementCanvasTruncate(ctx, t("currency.settlementImageSubtitle", {group: groupName, currency: CURRENCY_LABEL, code: CURRENCY, time: nowStr}), W - PAD * 2), PAD, 84);
+  ctx.fillStyle = C.ink;
+  ctx.font = `700 22px ${FONT}`;
+  ctx.fillText(settlementCanvasTruncate(ctx, t("currency.settlementImageTitle", {name: myName}), innerW), PAD, 62);
+  ctx.fillStyle = C.muted;
+  ctx.font = `500 13px ${FONT}`;
+  ctx.fillText(settlementCanvasTruncate(ctx, t("currency.settlementImageSubtitle", {group: groupName, currency: CURRENCY_LABEL, code: CURRENCY, time: nowStr}), innerW), PAD, 84);
 
-  // ---------- 表格本體（顏色跟格線都對照 shared.css 的 .debt-matrix） ----------
-  const tableX = (W - tableW) / 2, tableY = cardHeaderH;
-  const colX = i => tableX + labelColW + nameColW + i * cellColW; // 第 i 個成員欄位的左邊界
-  const rowY = i => tableY + headerRowH * 2 + i * dataRowH; // 第 i 個成員列的上邊界
-  const totalColX = tableX + labelColW + nameColW + cellColW * n;
-  const footY = rowY(n);
-
-  ctx.textBaseline = "middle";
-
-  // 表格最外圈要有圓角（呼應網頁 .matrix-scroll{border-radius:12px}），
-  // 圖片沒有外層容器可以裁圓角，改用 clip 讓表格本體（底色、每格底色）
-  // 都被裁成圓角矩形，四個角落才不會露出方形的底色，外框線另外在最後
-  // 用同一個圓角矩形路徑描邊，跟裁切範圍完全對齊。
-  const tableRadius = 10;
-  ctx.save();
-  settlementCanvasRoundRect(ctx, tableX, tableY, tableW, tableH, tableRadius);
-  ctx.clip();
-
-  // 表格底色（鋪滿整個表格範圍，之後再疊上各格子自己的底色）
-  ctx.fillStyle = T.tableBg;
-  ctx.fillRect(tableX, tableY, tableW, tableH);
-
-  // 表頭兩列（債務人／成員名字）＋ 應收款表頭：跟網頁一樣統一用 headerBg，
-  // 左上角（債權人/債務人交會處）本身也是跟其他表頭一樣的 headerBg
-  // （對應 HTML 的 .matrix-corner{background:#F4F4F6}），只是沒有外框線
-  // （.matrix-corner{border:none}），框線的部分留給下面畫格線那段處理。
-  ctx.fillStyle = T.headerBg;
-  ctx.fillRect(tableX, tableY, tableW, headerRowH * 2);
-
-  ctx.fillStyle = T.headerText;
-  // 「債務人」跟網頁一樣是水平文字（.matrix-top-label 沒有 writing-mode，
-  // 只有「債權人」.matrix-left-label 才是直排），置中寫在成員欄位上方
-  ctx.textAlign = "center";
-  ctx.font = "700 11px 'Noto Sans TC', sans-serif";
-  ctx.fillText(t("currency.debtorHeader"), tableX + labelColW + nameColW + cellColW * n / 2, tableY + headerRowH / 2 + 1);
-
-  ctx.font = "700 11.5px 'Noto Sans TC', sans-serif";
-  ids.forEach((id, i) => {
-    const name = truncateNameChars(memberById[id] || "?", 5);
-    ctx.fillText(name, colX(i) + cellColW / 2, tableY + headerRowH * 1.5 + 1);
-  });
-
-  ctx.font = "700 11px 'Noto Sans TC', sans-serif";
-  ctx.fillText(t("currency.receivableHeader"), totalColX + totalColW / 2, tableY + headerRowH);
-
-  // 左側「債權人」欄跟每一列的姓名欄一樣是 headerBg（跟 .matrix-side-label /
-  // .matrix-row-name 對應），「債權人」文字直排（由上往下）
-  ctx.fillStyle = T.headerBg;
-  ctx.fillRect(tableX, tableY + headerRowH * 2, labelColW + nameColW, dataRowH * n);
-  ctx.fillStyle = T.headerText;
-  drawSettlementVerticalLabel(ctx, t("currency.creditorHeader"), tableX + labelColW / 2, tableY + headerRowH * 2, dataRowH * n, "700 11px 'Noto Sans TC', sans-serif");
-
-  // 資料列
-  ids.forEach((creditorId, r) => {
-    const y = rowY(r);
-    const cy = y + dataRowH / 2;
-
-    ctx.fillStyle = T.headerText;
-    ctx.font = "700 11.5px 'Noto Sans TC', sans-serif";
-    ctx.fillText(truncateNameChars(memberById[creditorId] || "?", 5), tableX + labelColW + nameColW / 2, cy + 1);
-
-    let rowTotal = 0;
-    ids.forEach((debtorId, c) => {
-      const cx = colX(c) + cellColW / 2;
-      if(debtorId === creditorId){
-        ctx.fillStyle = T.selfBg;
-        ctx.fillRect(colX(c), y, cellColW, dataRowH);
-        ctx.fillStyle = T.selfText;
-        ctx.font = "500 11.5px 'Noto Sans TC', sans-serif";
-        ctx.fillText("－", cx, cy + 1);
-        return;
-      }
-      const amt = (owed[creditorId] && owed[creditorId][debtorId]) || 0;
-      if(amt > 0.05){
-        rowTotal += amt;
-        const heat = debtHeatCanvasColors(amt, maxDebtAmount, dark, T.cellBg);
-        ctx.fillStyle = heat.bg;
-        ctx.fillRect(colX(c), y, cellColW, dataRowH);
-        ctx.fillStyle = heat.fg;
-        ctx.font = `${heat.fontWeight} 11px 'Noto Sans TC', sans-serif`;
-        ctx.fillText(settlementCanvasTruncate(ctx, formatAmt(amt), cellColW - 10), cx, cy + 1);
-      } else {
-        ctx.fillStyle = T.cellBg;
-        ctx.fillRect(colX(c), y, cellColW, dataRowH);
-      }
-    });
-
-    ctx.fillStyle = T.headerBg;
-    ctx.fillRect(totalColX, y, totalColW, dataRowH);
-    ctx.fillStyle = T.headerText;
-    ctx.font = "700 11.5px 'Noto Sans TC', sans-serif";
-    ctx.fillText(rowTotal > 0.05 ? formatAmt(rowTotal) : "0", totalColX + totalColW / 2, cy + 1);
-  });
-
-  // 底部「應付款」列
-  ctx.fillStyle = T.headerBg;
-  ctx.fillRect(tableX, footY, tableW, footRowH);
-  ctx.fillStyle = T.headerText;
-  ctx.font = "700 11px 'Noto Sans TC', sans-serif";
-  ctx.fillText(t("currency.payableFooter"), tableX + labelColW + nameColW / 2, footY + footRowH / 2 + 1);
-
-  ids.forEach((debtorId, c) => {
-    let colTotal = 0;
-    ids.forEach(creditorId => {
-      if(creditorId === debtorId) return;
-      colTotal += (owed[creditorId] && owed[creditorId][debtorId]) || 0;
-    });
-    ctx.font = "700 11px 'Noto Sans TC', sans-serif";
-    ctx.fillText(colTotal > 0.05 ? formatAmt(colTotal) : "0", colX(c) + cellColW / 2, footY + footRowH / 2 + 1);
-  });
-
-  // ---------- 格線：網頁上左上角本身（matrix-corner）雖然 border:none，
-  // 但外層還有 .matrix-scroll 包一層 border，所以最外圈（最上、最左）視覺上
-  // 還是有線；圖片沒有那層外框容器，所以最外圈的線一樣要畫出來，只有真正
-  // 「共用同一個儲存格」的內部才不畫線：
-  //   ・債務人（colspan=n）：內部（成員欄之間）不畫線，但左右兩側邊界要畫
-  //   ・債權人（rowspan=n）：內部（列與列之間）不畫線，但上下兩側邊界要畫
-  //   ・應付款（colspan=2，跟 label／name 欄合併）：內部（label／name 中間）不畫線
-  // ----------------------------------------------------------
-  ctx.strokeStyle = T.border;
-  ctx.lineWidth = 1;
-  // 直線：label／name／n 個成員欄／應收款，共 n+3 欄，中間需要 n+2 條分隔線
-  // （最左、最右兩條外圈線改由下面的圓角矩形描邊負責，這裡不重複畫）。
-  for(let c = 1; c <= n + 2; c++){
-    const x = c === 1 ? tableX + labelColW
-      : c <= n + 1 ? colX(c - 2)
-      : totalColX;
-    let yStart = tableY;
-    let yEnd = tableY + tableH;
-    if(c === 1){
-      // label／name 欄中間：表頭範圍（matrix-corner）跟表尾範圍（應付款
-      // colspan=2）都是合併儲存格，只有中間的資料列才有這條分隔線
-      yStart = tableY + headerRowH * 2;
-      yEnd = footY;
-    } else if(c >= 3 && c <= n + 1){
-      // 債務人（colspan=n）內部：成員欄跟成員欄中間，只跳過債務人那一列
-      yStart = tableY + headerRowH;
-    }
-    ctx.beginPath(); ctx.moveTo(x + 0.5, yStart); ctx.lineTo(x + 0.5, yEnd); ctx.stroke();
-  }
-  // 橫線：header×2／n 個資料列／應付款，共 n+3 列，中間需要 n+2 條分隔線
-  // （最上、最下兩條外圈線一樣改由圓角矩形描邊負責）。
-  for(let r = 1; r <= n + 2; r++){
-    const y = r === 1 ? tableY + headerRowH
-      : r <= n + 1 ? rowY(r - 2)
-      : footY;
-    let xStart = tableX;
-    let xEnd = tableX + tableW;
-    if(r === 1){
-      // 「債務人」「應收款」表頭都是 rowspan=2，這條內部分隔線只在成員
-      // 欄位之間畫，不能穿過應收款那一格
-      xStart = tableX + labelColW + nameColW;
-      xEnd = totalColX;
-    } else if(r >= 3 && r <= n + 1){
-      xStart = tableX + labelColW; // 「債權人」欄是 rowspan=成員數，內部不分線
-    }
-    ctx.beginPath(); ctx.moveTo(xStart, y + 0.5); ctx.lineTo(xEnd, y + 0.5); ctx.stroke();
-  }
-
-  ctx.restore(); // 解除圓角裁切，外圈線要畫在裁切範圍外緣，不能被裁掉半條線寬
-  ctx.save();
-  settlementCanvasRoundRect(ctx, tableX + 0.5, tableY + 0.5, tableW - 1, tableH - 1, tableRadius);
-  ctx.strokeStyle = T.border;
-  ctx.lineWidth = 1;
-  ctx.stroke();
-  ctx.restore();
-
-  // ---------- 要還給我的款項：一列一人「名字　金額」 ----------
-  const listX = PAD, listW = W - PAD * 2;
-  const listY = tableY + tableH + listGap;
-  ctx.textBaseline = "middle";
-  let totalText = "";
-  if(transfers.length){
-    ctx.textAlign = "right";
-    ctx.fillStyle = T.accent;
-    ctx.font = "700 13px 'Noto Sans TC', sans-serif";
-    totalText = t("currency.settlementImageOwedTotal", {amount: `${SYM}${formatAmt(owedTotal)}`});
-    ctx.fillText(totalText, listX + listW, listY + listHeadH / 2 - 4);
-  }
-  ctx.textAlign = "left";
-  ctx.fillStyle = inkText;
-  ctx.font = "700 14px 'Noto Sans TC', sans-serif";
-  const totalW = totalText ? ctx.measureText(totalText).width + 16 : 0;
-  ctx.fillText(settlementCanvasTruncate(ctx, t("currency.settlementImageTransfers", {name: myName}), listW - totalW), listX, listY + listHeadH / 2 - 4);
-
-  const panelY = listY + listHeadH;
-  const panelH = Math.max(transfers.length, 1) * listRowH;
-  ctx.save();
-  settlementCanvasRoundRect(ctx, listX, panelY, listW, panelH, 10);
-  ctx.fillStyle = T.tableBg;
+  // ---------- 三格摘要：別人欠我／我欠別人／淨額 ----------
+  const statsY = headerH;
+  const stats = [
+    { label: t("currency.settlementImageOwesMeTotal"), value: money(totalOwesMe), color: totalOwesMe ? C.positive : C.muted },
+    { label: t("currency.settlementImageIOweTotal"), value: money(totalIOwe), color: totalIOwe ? C.negative : C.muted },
+    { label: t("currency.settlementImageNetTotal"), value: signed(totalNet), color: toneOf(totalNet) }
+  ];
+  settlementCanvasRoundRect(ctx, PAD, statsY, innerW, statsH, 14);
+  ctx.fillStyle = C.card;
   ctx.fill();
-  ctx.strokeStyle = T.border;
+  ctx.strokeStyle = C.border;
   ctx.lineWidth = 1;
   ctx.stroke();
-  ctx.restore();
-
-  if(!transfers.length){
-    ctx.textAlign = "center";
-    ctx.fillStyle = mutedText;
-    ctx.font = "500 13px 'Noto Sans TC', sans-serif";
-    ctx.fillText(settlementCanvasTruncate(ctx, t("currency.settlementImageNobodyOwes", {name: myName}), listW - 24), listX + listW / 2, panelY + listRowH / 2);
-  }
-  transfers.forEach((tr, i) => {
-    const y = panelY + i * listRowH;
-    const cy = y + listRowH / 2;
+  const statW = innerW / 3;
+  stats.forEach((s, i) => {
+    const x = PAD + statW * i;
     if(i > 0){
-      ctx.strokeStyle = T.border;
-      ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(listX + 14, y + 0.5); ctx.lineTo(listX + listW - 14, y + 0.5); ctx.stroke();
+      ctx.strokeStyle = C.line;
+      ctx.beginPath(); ctx.moveTo(x + 0.5, statsY + 16); ctx.lineTo(x + 0.5, statsY + statsH - 16); ctx.stroke();
     }
-    // 金額先量寬度，名字再依剩下的空間截斷，長名字才不會壓到金額
-    ctx.font = "700 14px 'Noto Sans TC', sans-serif";
-    const amtText = `${SYM}${formatAmt(tr.amt)}`;
-    const amtW = ctx.measureText(amtText).width;
-    ctx.textAlign = "right";
-    ctx.fillStyle = T.accent;
-    ctx.fillText(amtText, listX + listW - 14, cy + 1);
+    ctx.textAlign = "center";
+    ctx.fillStyle = C.muted;
+    ctx.font = `500 12px ${FONT}`;
+    ctx.fillText(settlementCanvasTruncate(ctx, s.label, statW - 16), x + statW / 2, statsY + 28);
+    ctx.fillStyle = s.color;
+    ctx.font = `700 17px ${FONT}`;
+    ctx.fillText(settlementCanvasTruncate(ctx, s.value, statW - 12), x + statW / 2, statsY + 54);
+  });
+
+  // ---------- 明細表：成員｜欠我｜我欠｜淨額 ----------
+  const tableY = statsY + statsH + gap;
+  settlementCanvasRoundRect(ctx, PAD, tableY, innerW, tableH, 14);
+  ctx.fillStyle = C.card;
+  ctx.fill();
+  ctx.save();
+  ctx.clip();
+  ctx.fillStyle = C.tint;
+  ctx.fillRect(PAD, tableY, innerW, tableHeadH);
+  ctx.restore();
+  settlementCanvasRoundRect(ctx, PAD + 0.5, tableY + 0.5, innerW - 1, tableH - 1, 14);
+  ctx.strokeStyle = C.border;
+  ctx.stroke();
+
+  const numColW = 84;
+  const colRight = [PAD + innerW - 14 - numColW * 2, PAD + innerW - 14 - numColW, PAD + innerW - 14]; // 三個金額欄的右緣
+  const nameX = PAD + 14;
+  const nameMaxW = colRight[0] - numColW - nameX - 8;
+
+  ctx.textBaseline = "middle";
+  ctx.font = `600 12px ${FONT}`;
+  ctx.fillStyle = C.muted;
+  ctx.textAlign = "left";
+  ctx.fillText(t("currency.settlementImageMemberCol"), nameX, tableY + tableHeadH / 2);
+  ctx.textAlign = "right";
+  [t("currency.settlementImageOwesMeCol"), t("currency.settlementImageIOweCol"), t("currency.settlementImageNetCol")]
+    .forEach((label, i) => ctx.fillText(settlementCanvasTruncate(ctx, label, numColW - 6), colRight[i], tableY + tableHeadH / 2));
+
+  if(!rows.length){
+    ctx.textAlign = "center";
+    ctx.fillStyle = C.muted;
+    ctx.font = `500 13px ${FONT}`;
+    ctx.fillText(settlementCanvasTruncate(ctx, t("currency.settlementImageNothing"), innerW - 24), W / 2, tableY + tableHeadH + rowH / 2);
+  }
+  rows.forEach((r, i) => {
+    const y = tableY + tableHeadH + i * rowH;
+    const cy = y + rowH / 2;
+    if(i > 0){
+      ctx.strokeStyle = C.line;
+      ctx.beginPath(); ctx.moveTo(PAD + 14, y + 0.5); ctx.lineTo(PAD + innerW - 14, y + 0.5); ctx.stroke();
+    }
+    const name = memberById[r.id] || "?";
+    // 頭像：跟網頁上同一個名字的頭像同色（getAvatarColor 的漸層），中間放第一個字
+    const av = 26, avX = nameX, avY = cy - av / 2;
+    const stops = (getAvatarColor(name).match(/#[0-9A-Fa-f]{6}/g) || [C.brand, C.brand]);
+    const grad = ctx.createLinearGradient(avX, avY, avX + av, avY + av);
+    grad.addColorStop(0, stops[0]); grad.addColorStop(1, stops[1] || stops[0]);
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(avX + av / 2, cy, av / 2, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#FFFFFF";
+    ctx.textAlign = "center";
+    ctx.font = `700 12px ${FONT}`;
+    ctx.fillText(Array.from(name)[0] || "?", avX + av / 2, cy + 1);
 
     ctx.textAlign = "left";
-    ctx.fillStyle = inkText;
-    ctx.font = "600 14px 'Noto Sans TC', sans-serif";
-    ctx.fillText(settlementCanvasTruncate(ctx, memberById[tr.from] || "?", listW - 28 - amtW - 16), listX + 14, cy + 1);
+    ctx.fillStyle = C.ink;
+    ctx.font = `600 14px ${FONT}`;
+    ctx.fillText(settlementCanvasTruncate(ctx, name, nameMaxW - av - 10), avX + av + 10, cy + 1);
+
+    ctx.textAlign = "right";
+    const cells = [
+      { v: r.owesMe, text: r.owesMe ? money(r.owesMe) : "—", color: r.owesMe ? C.positive : C.faint, weight: 600 },
+      { v: r.iOwe, text: r.iOwe ? money(r.iOwe) : "—", color: r.iOwe ? C.negative : C.faint, weight: 600 },
+      { v: r.net, text: Math.abs(r.net) > 0.05 ? signed(r.net) : "0", color: toneOf(r.net), weight: 700 }
+    ];
+    cells.forEach((c, k) => {
+      ctx.fillStyle = c.color;
+      ctx.font = `${c.weight} 13.5px ${FONT}`;
+      ctx.fillText(settlementCanvasTruncate(ctx, c.text, numColW - 6), colRight[k], cy + 1);
+    });
   });
 
   ctx.textBaseline = "alphabetic";
   ctx.textAlign = "left";
-
   return canvas;
 }
 
