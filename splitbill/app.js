@@ -519,6 +519,44 @@
     moveTabIndicator(document.querySelector(".app-tab.active"));
   });
 
+  // 手機版底部導覽列：照著既有的 .app-tab 產生，點了就觸發對應分頁（切換邏輯只有一份）
+  const appTabs = Array.from(document.querySelectorAll("#mainAppTabs .app-tab"));
+  if(appTabs.length){
+    const NAV_ICON = { summary: "chart", expense: "receipt", repay: "swap", history: "list" };
+    const nav = document.createElement("nav");
+    nav.className = "sb-bottom-nav";
+    nav.setAttribute("aria-label", t("currency.sectionNavLabel"));
+    nav.innerHTML = appTabs.map(tab => `<button type="button" data-tab="${tab.dataset.tab}"><span class="sb-nav-ico">${sbIcon(NAV_ICON[tab.dataset.tab] || "list")}</span><span>${escapeHtml(tab.textContent.trim())}</span></button>`).join("");
+    document.body.appendChild(nav);
+    document.body.classList.add("has-bottom-nav");
+    const syncNav = () => {
+      const active = document.querySelector("#mainAppTabs .app-tab.active");
+      nav.querySelectorAll("button").forEach(b => {
+        const on = !!active && b.dataset.tab === active.dataset.tab;
+        b.classList.toggle("active", on);
+        if(on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+      });
+    };
+    nav.addEventListener("click", (e)=>{
+      const b = e.target.closest("button[data-tab]");
+      if(!b) return;
+      const tab = document.querySelector(`#mainAppTabs .app-tab[data-tab="${b.dataset.tab}"]`);
+      if(tab) tab.click();
+      // 已經往下捲過頭的話，回到這個分頁的開頭
+      const panel = document.querySelector(".app-panel.active");
+      if(panel){
+        const top = panel.getBoundingClientRect().top + window.scrollY - 12;
+        if(window.scrollY > top) window.scrollTo({ top, behavior: "auto" });
+      }
+    });
+    appTabs.forEach(tab => tab.addEventListener("click", syncNav));
+    // 鍵盤打開時收起導覽列，不擋住輸入中的表單
+    const isTyping = (el) => el && (el.tagName === "TEXTAREA" || el.isContentEditable || (el.tagName === "INPUT" && !/^(checkbox|radio|button|submit|range|color|file)$/i.test(el.type)));
+    document.addEventListener("focusin", (e)=>{ if(isTyping(e.target)) document.body.classList.add("kb-open"); });
+    document.addEventListener("focusout", ()=>{ setTimeout(()=>{ if(!isTyping(document.activeElement)) document.body.classList.remove("kb-open"); }, 80); });
+    syncNav();
+  }
+
   // 浮動「記一筆」：切到「支出」分頁、捲到表單、游標放進第一欄；已經在「支出」分頁時收起來
   const addExpenseFab = document.getElementById("currencyAddExpenseFab");
   if(addExpenseFab){
@@ -4643,7 +4681,7 @@
     const legendHtml = catList.map(cat => {
       const pct = ((cat.amount / totalAmt) * 100).toFixed(1);
       return `
-        <div class="donut-legend-item" data-type="${cat.type}" data-name="${escapeHtml(cat.name)}" data-icon="${cat.icon}" data-color="${cat.color}" data-amt="${formatAmt(cat.amount)}" data-pct="${pct}" data-count="${cat.count}">
+        <div class="donut-legend-item" data-type="${cat.type}" data-name="${escapeHtml(cat.name)}" data-color="${cat.color}" data-amt="${formatAmt(cat.amount)}" data-pct="${pct}" data-count="${cat.count}">
           <div class="donut-legend-left">
             <span class="donut-legend-dot" style="background:${cat.color};"></span>
             <span class="donut-legend-icon">${cat.icon}</span>

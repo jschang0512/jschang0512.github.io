@@ -13009,3 +13009,70 @@ html body .quick-exp-fab:hover{ transform:none; }
 @media (prefers-reduced-motion: reduce){
   .sb-app-banner, html body .quick-exp-fab{ transition:opacity .15s linear; }
 }
+
+/* ============================================================
+   效能、手機版頂部精簡、底部導覽列（2026-11）
+   ============================================================ */
+/* 卡片、選單都已經是不透明底色，模糊效果看不到卻讓每次捲動都重算；只留給彈窗背景 */
+html body *:not(.calc-modal):not(.modal):not(.sb-dialog-backdrop){ -webkit-backdrop-filter:none !important; backdrop-filter:none !important; }
+
+/* 換頁時淡入淡出，不再白一下（支援的瀏覽器才會生效） */
+@view-transition{ navigation:auto; }
+::view-transition-group(root){ animation-duration:.18s; }
+@media (prefers-reduced-motion: reduce){ ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*){ animation:none !important; } }
+
+.sb-bottom-nav{ display:none; }
+
+@media (max-width: 767px){
+  /* 頂部：鈴鐺、標題、登出併成一行 */
+  html body .app-header:has(> .header-utility-row){
+    display:grid; grid-template-columns:auto minmax(0, 1fr) auto; align-items:center;
+    column-gap:8px; row-gap:10px; margin-bottom:12px;
+  }
+  html body .app-header > .header-utility-row{ display:contents; }
+  html body .app-header > .header-utility-row > #notificationBellContainer{ grid-column:1; grid-row:1; }
+  html body .app-header > .header-utility-row > :is(#logoutBtn, #backBtn){ grid-column:3; grid-row:1; }
+  html body .app-header:has(> .header-utility-row) > .title-row{ grid-column:2; grid-row:1; justify-content:center; margin:0; gap:8px; min-width:0; }
+  html body .app-header:has(> .header-utility-row) > .title-row h1{ font-size:20px !important; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  html body .app-header:has(> .header-utility-row) > .title-row .app-logo{ width:22px; height:22px; flex:none; }
+  html body .app-header:has(> .header-utility-row) > :is(#navLinks, .nav-links){ grid-column:1 / -1; margin:0; }
+  html body .app-header:has(> .header-utility-row) > #exchangeRateHint{ grid-column:1 / -1; margin:0 auto; }
+  html body #appScreen > .topbar{ margin-bottom:10px; }
+  html body #unreadNotifAlert{ margin-bottom:10px; }
+  html body .my-balance{ margin-bottom:12px; }
+
+  /* 底部導覽列（幣別頁的 總表／支出／還款／紀錄） */
+  body.has-bottom-nav{ padding-bottom:calc(78px + env(safe-area-inset-bottom, 0px)); }
+  body.has-bottom-nav .main-app-tabs{ display:none !important; }
+  body.has-bottom-nav #currencyAddExpenseFab{ display:none !important; }
+  .sb-bottom-nav{
+    position:fixed; left:0; right:0; bottom:0; z-index:90;
+    display:grid; grid-template-columns:repeat(4, minmax(0, 1fr));
+    padding:6px 6px calc(6px + env(safe-area-inset-bottom, 0px));
+    background:var(--card); border-top:1px solid var(--card-border);
+    box-shadow:0 -4px 16px rgba(24, 22, 36, .06);
+    view-transition-name:sb-bottom-nav;
+    transition:translate .22s var(--ease-out, ease-out);
+  }
+  :root[data-theme="dark"] .sb-bottom-nav{ box-shadow:0 -4px 18px rgba(0, 0, 0, .35); }
+  body.kb-open .sb-bottom-nav{ translate:0 110%; }
+  .sb-bottom-nav button{
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+    min-height:52px; padding:4px 0; border:0; background:none; cursor:pointer;
+    color:var(--ink-soft); font:600 11.5px/1.2 var(--font-ui);
+    -webkit-tap-highlight-color:transparent;
+  }
+  .sb-nav-ico{
+    display:grid; place-items:center; width:56px; height:30px; border-radius:999px;
+    transition:background-color .2s ease-out, scale .12s var(--ease-out, ease-out);
+  }
+  .sb-nav-ico .sb-ico{ width:21px; height:21px; }
+  .sb-bottom-nav button:active .sb-nav-ico{ scale:.92; }
+  .sb-bottom-nav button.active{ color:var(--btn-primary); }
+  :root[data-theme="dark"] .sb-bottom-nav button.active{ color:var(--gold); }
+  .sb-bottom-nav button.active .sb-nav-ico{ background:color-mix(in srgb, var(--btn-primary) 16%, transparent); }
+  .sb-bottom-nav button:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:-2px; border-radius:12px; }
+}
+@media (max-width: 767px) and (prefers-reduced-motion: reduce){
+  .sb-bottom-nav, .sb-nav-ico{ transition:none; }
+}

@@ -52,6 +52,7 @@
   const seen = new Set();
   let lastBadge = null;
   function onDomChange(){
+    watchBadge();
     const rows = document.querySelectorAll(ROW);
     const fresh = Date.now() - lastWrite < 8000;
     rows.forEach(r => {
@@ -71,10 +72,22 @@
     }
   }
   let pending = null;
-  new MutationObserver(() => {
+  const schedule = () => {
     if(pending) return;
-    pending = setTimeout(() => { pending = null; onDomChange(); }, 40);
-  }).observe(document.documentElement, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ["class"] });
+    pending = setTimeout(() => { pending = null; onDomChange(); }, 60);
+  };
+  // 只看「有節點新增」（列表重畫、鈴鐺出現）；不再監看每個 class / 文字變動，捲動與數字動畫時才不會一直被叫醒
+  new MutationObserver((records) => {
+    for(const r of records){ if(r.addedNodes.length){ schedule(); return; } }
+  }).observe(document.body || document.documentElement, { childList: true, subtree: true });
+  let badgeWatched = null;
+  const watchBadge = () => {
+    const badge = document.getElementById("notifBadge");
+    if(!badge || badge === badgeWatched) return;
+    badgeWatched = badge;
+    new MutationObserver(schedule).observe(badge, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+  };
+
 
   // 3：回傳 Promise，動畫播完才 resolve（刪除流程會一起等資料庫回應）
   window.sbCollapseRows = function(ids){
