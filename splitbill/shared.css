@@ -13120,3 +13120,8 @@ html body *:not(.calc-modal):not(.modal):not(.sb-dialog-backdrop){ -webkit-backd
 @media (prefers-reduced-motion: reduce){
   .sb-sheet-backdrop, .sb-sheet{ transition:none; }
 }
+
+/* 手機版幣別頁：切換幣別與回總覽都在底部導覽列，頂部那排幣別按鈕就不重複顯示 */
+@media (max-width: 767px){
+  body.has-bottom-nav .app-header #navLinks{ display:none !important; }
+}
