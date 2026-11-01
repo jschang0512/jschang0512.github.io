@@ -5754,7 +5754,7 @@ function renderSettlementImageCanvas(){
 
   const groupName = (myMember && myMember.groups && myMember.groups.name) || t("currency.groupNameFallback");
   const canvasLocaleMap = { "zh-Hant": "zh-TW", ja: "ja-JP", en: "en-US" };
-  const nowStr = new Date().toLocaleString(canvasLocaleMap[getLang()] || "zh-TW", { hour12: false });
+  const nowStr = new Date().toLocaleString(canvasLocaleMap[getLang()] || "zh-TW", { year: "numeric", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
 
   // 尺寸比照網頁 .debt-matrix 實際的緊湊程度（font-size:11.5px、
   // padding:8px 4px、姓名欄 min/max-width 3.2em~5.2em），不要用畫布上
@@ -5767,42 +5767,65 @@ function renderSettlementImageCanvas(){
   const headerRowH = 30;
   const dataRowH = 34;
   const footRowH = 32;
-  const cardHeaderH = 122;
-  const cardFooterH = 44;
+  const cardHeaderH = 100;
+  const cardFooterH = 48;
+
+  // 表格下方的「還款明細」：收到圖的人多半只想知道「我要付多少給誰」，
+  // 不用自己去交叉表裡對行列。資料跟表格同一份 owed，付款人照欠款總額
+  // 由大到小、同一人的項目照金額由大到小（分享出去的圖不分誰是登入者）。
+  const byFrom = {};
+  ids.forEach(c => ids.forEach(d => {
+    const amt = (c !== d && owed[c] && owed[c][d]) || 0;
+    if(amt > 0.05) (byFrom[d] = byFrom[d] || []).push({ from: d, to: c, amt });
+  }));
+  const fromTotal = id => byFrom[id].reduce((s, x) => s + x.amt, 0);
+  const transfers = Object.keys(byFrom)
+    .sort((a, b) => fromTotal(b) - fromTotal(a))
+    .flatMap(id => byFrom[id].sort((a, b) => b.amt - a.amt));
+  const listGap = 28;
+  const listHeadH = 30;
+  const listRowH = 40;
+  const listH = listHeadH + Math.max(transfers.length, 1) * listRowH;
 
   const tableW = labelColW + nameColW + cellColW * n + totalColW;
   const tableH = headerRowH * 2 + dataRowH * n + footRowH;
-  const W = tableW + PAD * 2;
-  const H = cardHeaderH + tableH + cardFooterH;
+  // 人少的時候表格很窄，標題、群組名和明細列會擠在一起，給整張圖一個最小寬度
+  const W = Math.max(tableW + PAD * 2, 420);
+  const H = cardHeaderH + tableH + listGap + listH + cardFooterH;
 
-  const dpr = Math.max(window.devicePixelRatio || 1, 2);
+  // 至少 3 倍解析度：圖會被傳到聊天軟體再放大看，2 倍在手機上字會糊
+  const dpr = Math.max(window.devicePixelRatio || 1, 3);
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(W * dpr);
   canvas.height = Math.round(H * dpr);
   const ctx = canvas.getContext("2d");
   ctx.scale(dpr, dpr);
 
-  // 外層卡片背景（標題／頁尾這些「圖片外框」維持自己設計的品牌風格，
-  // 使用者這次要求的是「表格本體」要跟網頁一致，不含外框）
-  const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
-  if(dark){ bgGrad.addColorStop(0, "#232030"); bgGrad.addColorStop(1, "#17151E"); }
-  else { bgGrad.addColorStop(0, "#F9F7FB"); bgGrad.addColorStop(1, "#ECE6F2"); }
-  ctx.fillStyle = bgGrad;
-  settlementCanvasRoundRect(ctx, 0, 0, W, H, 24);
-  ctx.fill();
-
-  // 標題／副標置中
-  ctx.textAlign = "center";
+  // 外層背景鋪滿整張圖、不做圓角：PNG 的透明角落在 LINE 等聊天軟體裡
+  // 會變成黑色或白色的缺角（表格本體還是照網頁一樣有圓角）
+  ctx.fillStyle = dark ? "#1C1A24" : "#F6F3F9";
+  ctx.fillRect(0, 0, W, H);
   ctx.fillStyle = T.accent;
-  ctx.font = "700 24px 'Noto Sans TC', sans-serif";
-  ctx.fillText(t("currency.settlementImageTitle"), W / 2, 42);
+  ctx.fillRect(0, 0, W, 4);
 
-  ctx.fillStyle = dark ? "#A9A7B3" : "#686074";
-  ctx.font = "500 14px 'Noto Sans TC', sans-serif";
-  ctx.fillText(t("currency.settlementImageSubtitle", {group: groupName, currency: CURRENCY_LABEL, code: CURRENCY, time: nowStr}), W / 2, 68);
+  const mutedText = dark ? "#A9A7B3" : "#686074";
+  const inkText = dark ? "#F5F5F7" : "#1D1B22";
+
+  // 標題區靠左對齊：品牌小字、標題、群組／幣別／時間
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = T.accent;
+  ctx.font = "700 12px 'Noto Sans TC', sans-serif";
+  ctx.fillText("SPLITBILL", PAD, 34);
+  ctx.fillStyle = inkText;
+  ctx.font = "700 22px 'Noto Sans TC', sans-serif";
+  ctx.fillText(t("currency.settlementImageTitle"), PAD, 62);
+  ctx.fillStyle = mutedText;
+  ctx.font = "500 13px 'Noto Sans TC', sans-serif";
+  ctx.fillText(settlementCanvasTruncate(ctx, t("currency.settlementImageSubtitle", {group: groupName, currency: CURRENCY_LABEL, code: CURRENCY, time: nowStr}), W - PAD * 2), PAD, 84);
 
   // ---------- 表格本體（顏色跟格線都對照 shared.css 的 .debt-matrix） ----------
-  const tableX = PAD, tableY = cardHeaderH;
+  const tableX = (W - tableW) / 2, tableY = cardHeaderH;
   const colX = i => tableX + labelColW + nameColW + i * cellColW; // 第 i 個成員欄位的左邊界
   const rowY = i => tableY + headerRowH * 2 + i * dataRowH; // 第 i 個成員列的上邊界
   const totalColX = tableX + labelColW + nameColW + cellColW * n;
@@ -5967,6 +5990,75 @@ function renderSettlementImageCanvas(){
   ctx.lineWidth = 1;
   ctx.stroke();
   ctx.restore();
+
+  // ---------- 還款明細：一列一筆「誰 → 誰　金額」 ----------
+  const listX = PAD, listW = W - PAD * 2;
+  const listY = tableY + tableH + listGap;
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "left";
+  ctx.fillStyle = inkText;
+  ctx.font = "700 14px 'Noto Sans TC', sans-serif";
+  ctx.fillText(t("currency.settlementImageTransfers"), listX, listY + listHeadH / 2 - 4);
+  if(transfers.length){
+    ctx.textAlign = "right";
+    ctx.fillStyle = mutedText;
+    ctx.font = "500 12px 'Noto Sans TC', sans-serif";
+    ctx.fillText(t("currency.settlementImageTransferCount", {count: transfers.length}), listX + listW, listY + listHeadH / 2 - 4);
+  }
+
+  const panelY = listY + listHeadH;
+  const panelH = Math.max(transfers.length, 1) * listRowH;
+  ctx.save();
+  settlementCanvasRoundRect(ctx, listX, panelY, listW, panelH, 10);
+  ctx.fillStyle = T.tableBg;
+  ctx.fill();
+  ctx.strokeStyle = T.border;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.restore();
+
+  if(!transfers.length){
+    ctx.textAlign = "center";
+    ctx.fillStyle = mutedText;
+    ctx.font = "500 13px 'Noto Sans TC', sans-serif";
+    ctx.fillText(settlementCanvasTruncate(ctx, t("currency.allSettledNoTransfer"), listW - 24), listX + listW / 2, panelY + listRowH / 2);
+  }
+  transfers.forEach((tr, i) => {
+    const y = panelY + i * listRowH;
+    const cy = y + listRowH / 2;
+    if(i > 0){
+      ctx.strokeStyle = T.border;
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(listX + 14, y + 0.5); ctx.lineTo(listX + listW - 14, y + 0.5); ctx.stroke();
+    }
+    // 金額先量寬度，名字再依剩下的空間截斷，長名字才不會壓到金額
+    ctx.font = "700 14px 'Noto Sans TC', sans-serif";
+    const amtText = `${SYM}${formatAmt(tr.amt)}`;
+    const amtW = ctx.measureText(amtText).width;
+    const nameMax = (listW - 28 - amtW - 16 - 30) / 2;
+    ctx.textAlign = "right";
+    ctx.fillStyle = T.accent;
+    ctx.fillText(amtText, listX + listW - 14, cy + 1);
+
+    ctx.textAlign = "left";
+    ctx.fillStyle = inkText;
+    ctx.font = "600 14px 'Noto Sans TC', sans-serif";
+    const fromName = settlementCanvasTruncate(ctx, memberById[tr.from] || "?", nameMax);
+    let x = listX + 14;
+    ctx.fillText(fromName, x, cy + 1);
+    x += ctx.measureText(fromName).width + 9;
+    // 箭頭用線條畫，不用「→」字元：各語言字型的箭頭粗細、基線都不一樣
+    ctx.strokeStyle = mutedText;
+    ctx.lineWidth = 1.5;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    ctx.moveTo(x, cy); ctx.lineTo(x + 12, cy);
+    ctx.moveTo(x + 8, cy - 4); ctx.lineTo(x + 12, cy); ctx.lineTo(x + 8, cy + 4);
+    ctx.stroke();
+    x += 21;
+    ctx.fillText(settlementCanvasTruncate(ctx, memberById[tr.to] || "?", nameMax), x, cy + 1);
+  });
 
   ctx.textBaseline = "alphabetic";
   ctx.textAlign = "center";
