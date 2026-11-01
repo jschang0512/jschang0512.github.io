@@ -1080,10 +1080,11 @@ function sbBuildPageNav(){
   const nav = document.createElement("nav");
   nav.className = "sb-bottom-nav is-page-nav";
   nav.setAttribute("aria-label", t("nav.mainLabel"));
+  // 幣別切換放最右邊，大拇指最好按
   nav.innerHTML = item("home", "grid", t("common.overview"), current === "SUMMARY")
-    + `<button type="button" data-nav="currency" aria-haspopup="dialog"><span class="sb-nav-ico">${sbIcon("globe")}</span><span>${escapeHtml(t("nav.currencies"))} ▾</span></button>`
     + item("quick", "zap", t("summary.quickExpFabText"), false)
-    + item("settings", "gear", t("common.settings"), current === "SETTINGS");
+    + item("settings", "gear", t("common.settings"), current === "SETTINGS")
+    + `<button type="button" data-nav="currency" aria-haspopup="dialog"><span class="sb-nav-ico">${sbIcon("globe")}</span><span>${escapeHtml(t("nav.currencies"))} ▾</span></button>`;
   document.body.appendChild(nav);
   document.body.classList.add("has-bottom-nav");
   nav.addEventListener("click", (e) => {

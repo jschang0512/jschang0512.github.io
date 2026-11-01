@@ -527,8 +527,9 @@
     nav.className = "sb-bottom-nav";
     nav.setAttribute("aria-label", t("currency.sectionNavLabel"));
     const curMeta = CURRENCIES.find(c => c.code === CURRENCY);
-    nav.innerHTML = `<button type="button" class="sb-nav-currency" aria-haspopup="dialog"><span class="sb-nav-ico">${currencyFlagImgHTML(CURRENCY) || sbIcon("globe")}</span><span>${escapeHtml(curMeta ? curMeta.label : CURRENCY)} ▾</span></button>`
-      + appTabs.map(tab => `<button type="button" data-tab="${tab.dataset.tab}"><span class="sb-nav-ico">${sbIcon(NAV_ICON[tab.dataset.tab] || "list")}</span><span>${escapeHtml(tab.textContent.trim())}</span></button>`).join("");
+    // 幣別切換放最右邊，大拇指最好按
+    nav.innerHTML = appTabs.map(tab => `<button type="button" data-tab="${tab.dataset.tab}"><span class="sb-nav-ico">${sbIcon(NAV_ICON[tab.dataset.tab] || "list")}</span><span>${escapeHtml(tab.textContent.trim())}</span></button>`).join("")
+      + `<button type="button" class="sb-nav-currency" aria-haspopup="dialog"><span class="sb-nav-ico">${currencyFlagImgHTML(CURRENCY) || sbIcon("globe")}</span><span>${escapeHtml(curMeta ? curMeta.label : CURRENCY)} ▾</span></button>`;
     document.body.appendChild(nav);
     document.body.classList.add("has-bottom-nav");
     const syncNav = () => {
