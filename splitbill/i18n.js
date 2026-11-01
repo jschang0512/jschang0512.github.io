@@ -1053,7 +1053,7 @@ const I18N = {
 
     "banner.androidTitle": "下載 Android APP",
     "banner.recommended": "推薦",
-    "banner.androidDesc": "支援背景即時推播通知與原生全螢幕體驗",
+    "banner.androidDesc": "背景推播通知、全螢幕操作",
     "banner.downloadApk": "下載 APK",
     "banner.iosTitle": "加到 iPhone 主畫面",
     "banner.iosDesc": "點擊 Safari 底部分享 ➔「加入主畫面」，享有全螢幕 App 體驗與通知！",
@@ -2383,7 +2383,7 @@ const I18N = {
 
     "banner.androidTitle": "Androidアプリ",
     "banner.recommended": "おすすめ",
-    "banner.androidDesc": "バックグラウンド通知とネイティブ全画面表示に対応",
+    "banner.androidDesc": "バックグラウンド通知・全画面表示",
     "banner.downloadApk": "APKをダウンロード",
     "banner.iosTitle": "ホーム画面に追加",
     "banner.iosDesc": "Safari下部の共有ボタン ➔「ホーム画面に追加」をタップすると、全画面アプリ体験と通知が使えます！",
@@ -3713,7 +3713,7 @@ const I18N = {
 
     "banner.androidTitle": "Android App",
     "banner.recommended": "Recommended",
-    "banner.androidDesc": "Get background push notifications and a native full-screen experience",
+    "banner.androidDesc": "Background alerts, full screen",
     "banner.downloadApk": "Download APK",
     "banner.iosTitle": "Add to Home Screen",
     "banner.iosDesc": "Tap the Share button in Safari ➔ \"Add to Home Screen\" for a full-screen app experience with notifications!",

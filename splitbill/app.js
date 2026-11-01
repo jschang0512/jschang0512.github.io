@@ -519,6 +519,29 @@
     moveTabIndicator(document.querySelector(".app-tab.active"));
   });
 
+  // 浮動「記一筆」：切到「支出」分頁、捲到表單、游標放進第一欄；已經在「支出」分頁時收起來
+  const addExpenseFab = document.getElementById("currencyAddExpenseFab");
+  if(addExpenseFab){
+    const syncAddFab = () => {
+      const active = document.querySelector(".app-tab.active");
+      addExpenseFab.classList.toggle("is-hidden", !!active && active.dataset.tab === "expense");
+    };
+    addExpenseFab.addEventListener("click", ()=>{
+      const expTab = document.querySelector('.app-tab[data-tab="expense"]');
+      if(expTab) expTab.click();
+      const panel = document.getElementById("panelExpense");
+      const tabsBar = document.getElementById("mainAppTabs");
+      if(panel){
+        const offset = (tabsBar ? tabsBar.offsetHeight : 0) + 20;
+        const smooth = !(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+        window.scrollTo({ top: panel.getBoundingClientRect().top + window.scrollY - offset, behavior: smooth ? "smooth" : "auto" });
+      }
+      setTimeout(()=>{ const f = document.getElementById("expDesc"); if(f) f.focus({ preventScroll: true }); }, 380);
+    });
+    document.querySelectorAll(".app-tab").forEach(tab => tab.addEventListener("click", syncAddFab));
+    syncAddFab();
+  }
+
   // 「進階篩選」原本是卡片內展開/收合的區塊，改成彈出視窗，觸發按鈕
   // 移到「與我相關」旁邊的小 chip，篩選邏輯/欄位本身完全沒變，只是
   // 換了個地方顯示。
