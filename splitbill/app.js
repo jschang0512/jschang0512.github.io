@@ -5648,11 +5648,13 @@ function getSettlementImageColors(dark){
   return dark ? {
     canvas: "#111115", card: "#1B1B21", border: "#2B2B34", line: "#2A2A32", tint: "#22222B",
     ink: "#F2F2F5", muted: "#A6A5B1", faint: "#55545F", brand: "#8F95D6",
-    positive: "#6FD988", negative: "#FA8087"
+    positive: "#6FD988", negative: "#FA8087",
+    positiveFill: "#2FA35A", negativeFill: "#D9465B", otherCell: "#202027", otherText: "#5C5B66"
   } : {
     canvas: "#F4F5F7", card: "#FFFFFF", border: "#E4E4EA", line: "#ECECF1", tint: "#EFF0F8",
     ink: "#1C1B22", muted: "#5E5D6A", faint: "#C4C3CC", brand: "#636AB1",
-    positive: "#07843B", negative: "#D0283F"
+    positive: "#07843B", negative: "#D0283F",
+    positiveFill: "#12924A", negativeFill: "#D9324A", otherCell: "#F0F0F3", otherText: "#A6A5B0"
   };
 }
 
@@ -5670,30 +5672,17 @@ function drawSettlementVerticalLabel(ctx, text, cx, zoneTop, zoneH, font){
   ctx.restore();
 }
 
-// HSL → RGB（canvas fillStyle 沒辦法解析 CSS 的 var()，要跟卡片底色混合
-// 就得自己把 hsl() 換算成實際的 rgb 數字再手動內插）。
-function hslToRgb255(h, s, l){
-  s /= 100; l /= 100;
-  const k = n => (n + h / 30) % 12;
-  const a = s * Math.min(l, 1 - l);
-  const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
-  return [Math.round(f(0) * 255), Math.round(f(8) * 255), Math.round(f(4) * 255)];
-}
-// 熱圖格子在 canvas 上要用的實際顏色：跟網頁版同一套 debtHeatParams()，
-// 只是把 color-mix() 換成手動內插出來的 rgb() 字串；cardHex 對應網頁上
-// .matrix-cell 的 var(--card)。
-function debtHeatCanvasColors(amount, maxDebtAmount, isDark, cardHex){
-  const p = debtHeatParams(amount, maxDebtAmount, isDark);
-  const hueRgb = hslToRgb255(p.hue, 82, p.bgLightness);
-  const cardRgb = [1, 3, 5].map(i => parseInt(cardHex.slice(i, i + 2), 16));
-  const t = p.bgPct / 100;
-  const mixed = [0, 1, 2].map(i => Math.round(hueRgb[i] * t + cardRgb[i] * (1 - t)));
-  return { bg: `rgb(${mixed.join(",")})`, fg: p.fg, fontWeight: p.fontWeight };
+// 兩個 "#rrggbb" 色碼依比例混色（t=1 全取 a），canvas 沒有 color-mix() 可用
+function settlementMixHex(a, b, t){
+  const p = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  const A = p(a), B = p(b);
+  return "rgb(" + A.map((v, i) => Math.round(v * t + B[i] * (1 - t))).join(",") + ")";
 }
 
 // 匯出「與我相關」的債務關係表：跟網頁上按下「與我相關」後的表格一樣——
-// 只留下我自己，以及跟我之間有欠款往來的人；這些人彼此之間的金額照樣顯示，
-// 熱圖顏色也跟網頁同一套公式。表格下方列出要還給我的款項。
+// 只留下我自己，以及跟我之間有欠款往來的人；這些人彼此之間的金額照樣顯示（淺灰）。
+// 跟我有關的格子：別人欠我綠、我欠別人紅，依金額深淺。
+// 表格下方列出要還給我的款項。
 function renderSettlementImageCanvas(){
   const owed = buildDebtMatrix(cachedExpenses, cachedRepayments);
   const { allIds } = computeDebtMatrixIds(owed);
@@ -5711,8 +5700,8 @@ function renderSettlementImageCanvas(){
   const C = getSettlementImageColors(dark);
   const FONT = "'Noto Sans TC', sans-serif";
 
-  let maxDebtAmount = 0;
-  ids.forEach(c => ids.forEach(d => { const v = amtOf(c, d); if(v > maxDebtAmount) maxDebtAmount = v; }));
+  let maxMineAmount = 0;
+  ids.forEach(id => { maxMineAmount = Math.max(maxMineAmount, amtOf(myId, id), amtOf(id, myId)); });
 
   const myName = (myId && memberById[myId]) || "?";
   const owedToMe = ids
@@ -5819,13 +5808,28 @@ function renderSettlementImageCanvas(){
         return;
       }
       const v = amtOf(c, d);
+      const isMine = c === myId || d === myId;
+      // 跟我無關的格子（別人之間的帳）：整格淺灰，金額也用灰字
+      if(!isMine){
+        ctx.fillStyle = C.otherCell;
+        ctx.fillRect(x, y, cellColW, dataRowH);
+      }
       if(!v) return;
       rowTotal += v;
-      const heat = debtHeatCanvasColors(v, maxDebtAmount, dark, C.card);
-      ctx.fillStyle = heat.bg;
+      if(!isMine){
+        ctx.fillStyle = C.otherText;
+        ctx.font = `500 12px ${FONT}`;
+        ctx.fillText(settlementCanvasTruncate(ctx, formatAmt(v), cellColW - 8), cx, cy + 1);
+        return;
+      }
+      // 別人欠我＝綠、我欠別人＝紅，金額越大顏色越深（以跟我有關的格子裡最大的一筆為基準）
+      const ratio = maxMineAmount > 0 ? Math.min(1, v / maxMineAmount) : 0;
+      const hex = c === myId ? C.positiveFill : C.negativeFill;
+      const strong = ratio > 0.45;
+      ctx.fillStyle = settlementMixHex(hex, C.card, 0.18 + ratio * 0.72);
       ctx.fillRect(x, y, cellColW, dataRowH);
-      ctx.fillStyle = heat.fg;
-      ctx.font = `${heat.fontWeight} 12px ${FONT}`;
+      ctx.fillStyle = strong ? "#FFFFFF" : (c === myId ? C.positive : C.negative);
+      ctx.font = `${strong ? 700 : 600} 12px ${FONT}`;
       ctx.fillText(settlementCanvasTruncate(ctx, formatAmt(v), cellColW - 8), cx, cy + 1);
     });
     ctx.fillStyle = C.ink;
