@@ -1005,3 +1005,100 @@ window.initNotificationBell = initNotificationBell;
   function start(){ observer.observe(document.body, { childList: true, subtree: true, characterData: true }); document.querySelectorAll(SEL).forEach(check); }
   if(document.body) start(); else document.addEventListener("DOMContentLoaded", start);
 })();
+
+
+// ============================================================
+// 手機版底部導覽（2026-11）
+// ============================================================
+// 幣別面板：從底部滑出，第一項是「首頁」，接著是要顯示的幣別。
+// current：目前的幣別代碼，或 "SUMMARY"（在首頁）；tabParam：換幣別時要保留的分頁（"&tab=expense"）
+let sbSheetEl = null;
+let sbSheetOpener = null;
+function sbCloseCurrencySheet(){
+  if(!sbSheetEl) return;
+  const el = sbSheetEl;
+  sbSheetEl = null;
+  el.classList.remove("open");
+  setTimeout(() => el.remove(), 260);
+  if(sbSheetOpener) sbSheetOpener.focus({ preventScroll: true });
+}
+function sbOpenCurrencySheet(opener, current, tabParam){
+  if(sbSheetEl) return;
+  sbSheetOpener = opener || null;
+  let shown = null;
+  try { shown = JSON.parse(localStorage.getItem("splitbill-shown-currencies") || "null"); } catch(e){}
+  shown = shown || ["TWD"];
+  const list = CURRENCIES.filter(c => shown.includes(c.code) || c.code === current);
+  const onHome = current === "SUMMARY";
+  const title = escapeHtml(t("currency.switchCurrencyTitle"));
+  const el = document.createElement("div");
+  el.className = "sb-sheet-backdrop";
+  el.innerHTML = `
+    <div class="sb-sheet" role="dialog" aria-modal="true" aria-label="${title}">
+      <div class="sb-sheet-handle" aria-hidden="true"></div>
+      <div class="sb-sheet-title">${title}</div>
+      <a class="sb-sheet-item${onHome ? " is-current" : ""}" href="summary.html"${onHome ? ' aria-current="page"' : ""}><span class="sb-sheet-item-ico">${sbIcon("grid")}</span><span class="sb-sheet-item-label">${escapeHtml(t("common.overview"))}</span>${onHome ? sbIcon("check") : ""}</a>
+      <div class="sb-sheet-sep" aria-hidden="true"></div>
+      ${list.map(c => `<a class="sb-sheet-item${c.code === current ? " is-current" : ""}" href="currency.html?c=${c.code}${tabParam || ""}"${c.code === current ? ' aria-current="page"' : ""}>
+          <span class="sb-sheet-item-ico">${currencyFlagImgHTML(c.code) || sbIcon("globe")}</span>
+          <span class="sb-sheet-item-label">${escapeHtml(c.label)}</span>
+          <span class="sb-sheet-item-code">${c.code}</span>
+          ${c.code === current ? sbIcon("check") : ""}
+        </a>`).join("")}
+    </div>`;
+  document.body.appendChild(el);
+  sbSheetEl = el;
+  requestAnimationFrame(() => el.classList.add("open"));
+  el.addEventListener("click", (e) => {
+    if(e.target === el){ sbCloseCurrencySheet(); return; }
+    if(e.target.closest(".sb-sheet-item.is-current")){ e.preventDefault(); sbCloseCurrencySheet(); }
+  });
+  const first = el.querySelector(".sb-sheet-item");
+  if(first) first.focus({ preventScroll: true });
+}
+document.addEventListener("keydown", (e) => { if(e.key === "Escape") sbCloseCurrencySheet(); });
+window.sbOpenCurrencySheet = sbOpenCurrencySheet;
+
+// 鍵盤打開時收起底部導覽列，不擋住輸入中的表單
+let sbKbBound = false;
+function sbBindKeyboardHide(){
+  if(sbKbBound) return;
+  sbKbBound = true;
+  const isTyping = (el) => el && (el.tagName === "TEXTAREA" || el.isContentEditable || (el.tagName === "INPUT" && !/^(checkbox|radio|button|submit|range|color|file)$/i.test(el.type)));
+  document.addEventListener("focusin", (e) => { if(isTyping(e.target)) document.body.classList.add("kb-open"); });
+  document.addEventListener("focusout", () => { setTimeout(() => { if(!isTyping(document.activeElement)) document.body.classList.remove("kb-open"); }, 80); });
+}
+window.sbBindKeyboardHide = sbBindKeyboardHide;
+
+// 首頁與設定頁的底部導覽：首頁 · 幣別 · 記一筆 · 設定（幣別頁有自己的一列，見 app.js）
+function sbBuildPageNav(){
+  const page = (location.pathname.split("/").pop() || "").toLowerCase();
+  const current = page === "summary.html" ? "SUMMARY" : page === "settings.html" ? "SETTINGS" : null;
+  if(!current || document.querySelector(".sb-bottom-nav")) return;
+  const item = (key, icon, label, active) =>
+    `<button type="button" data-nav="${key}"${active ? ' class="active" aria-current="page"' : ""}><span class="sb-nav-ico">${sbIcon(icon)}</span><span>${escapeHtml(label)}</span></button>`;
+  const nav = document.createElement("nav");
+  nav.className = "sb-bottom-nav is-page-nav";
+  nav.setAttribute("aria-label", t("nav.mainLabel"));
+  nav.innerHTML = item("home", "grid", t("common.overview"), current === "SUMMARY")
+    + `<button type="button" data-nav="currency" aria-haspopup="dialog"><span class="sb-nav-ico">${sbIcon("globe")}</span><span>${escapeHtml(t("nav.currencies"))} ▾</span></button>`
+    + item("quick", "zap", t("summary.quickExpFabText"), false)
+    + item("settings", "gear", t("common.settings"), current === "SETTINGS");
+  document.body.appendChild(nav);
+  document.body.classList.add("has-bottom-nav");
+  nav.addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-nav]");
+    if(!b) return;
+    const k = b.dataset.nav;
+    if(k === "home"){ if(current === "SUMMARY") window.scrollTo({ top: 0, behavior: "smooth" }); else location.href = "summary.html"; }
+    else if(k === "settings"){ if(current === "SETTINGS") window.scrollTo({ top: 0, behavior: "smooth" }); else location.href = "settings.html"; }
+    else if(k === "currency"){ sbOpenCurrencySheet(b, current === "SUMMARY" ? "SUMMARY" : null, ""); }
+    else if(k === "quick"){
+      const fab = document.getElementById("openQuickExpenseBtn");
+      if(fab) fab.click(); else location.href = "summary.html?quick=1";
+    }
+  });
+  sbBindKeyboardHide();
+}
+if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", sbBuildPageNav);
+else sbBuildPageNav();

@@ -13125,3 +13125,10 @@ html body *:not(.calc-modal):not(.modal):not(.sb-dialog-backdrop){ -webkit-backd
 @media (max-width: 767px){
   body.has-bottom-nav .app-header #navLinks{ display:none !important; }
 }
+
+/* 首頁、設定頁的底部導覽（四格）；手機上浮動「記一筆」收進導覽列，App 橫幅移到導覽列上方 */
+@media (max-width: 767px){
+  .sb-bottom-nav.is-page-nav{ grid-template-columns:repeat(4, minmax(0, 1fr)); }
+  body.has-bottom-nav #openQuickExpenseBtn{ display:none !important; }
+  body.has-bottom-nav .sb-app-banner{ bottom:calc(76px + env(safe-area-inset-bottom, 0px)); }
+}

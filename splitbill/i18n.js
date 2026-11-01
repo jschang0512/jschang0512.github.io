@@ -1120,6 +1120,10 @@ const I18N = {
 
     "currency.sectionNavLabel": "帳務分頁",
 
+    "nav.mainLabel": "主要導覽",
+
+    "nav.currencies": "幣別",
+
     "currency.switchCurrencyTitle": "切換幣別",
     "currency.tab.expense": "支出",
     "currency.tab.repay": "還款",
@@ -2454,6 +2458,10 @@ const I18N = {
 
     "currency.sectionNavLabel": "帳簿のセクション",
 
+    "nav.mainLabel": "メインナビゲーション",
+
+    "nav.currencies": "通貨",
+
     "currency.switchCurrencyTitle": "通貨を切り替え",
     "currency.tab.expense": "支出",
     "currency.tab.repay": "返済",
@@ -3787,6 +3795,10 @@ const I18N = {
     "currency.tab.summary": "Summary",
 
     "currency.sectionNavLabel": "Ledger sections",
+
+    "nav.mainLabel": "Main navigation",
+
+    "nav.currencies": "Currencies",
 
     "currency.switchCurrencyTitle": "Switch currency",
     "currency.tab.expense": "Expense",

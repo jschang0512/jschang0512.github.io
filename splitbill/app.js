@@ -559,49 +559,7 @@
       const active = document.querySelector("#mainAppTabs .app-tab.active");
       return active && active.dataset.tab !== "summary" ? "&tab=" + encodeURIComponent(active.dataset.tab) : "";
     };
-    let sheet = null;
-    const closeSheet = () => {
-      if(!sheet) return;
-      sheet.classList.remove("open");
-      const s0 = sheet; sheet = null;
-      setTimeout(() => s0.remove(), 260);
-      const opener = nav.querySelector(".sb-nav-currency");
-      if(opener) opener.focus({ preventScroll: true });
-    };
-    const openSheet = () => {
-      if(sheet) return;
-      let shown = null;
-      try { shown = JSON.parse(localStorage.getItem("splitbill-shown-currencies") || "null"); } catch(e){}
-      shown = shown || ["TWD"];
-      const list = CURRENCIES.filter(c => shown.includes(c.code) || c.code === CURRENCY);
-      const tabParam = currentTabParam();
-      sheet = document.createElement("div");
-      sheet.className = "sb-sheet-backdrop";
-      sheet.innerHTML = `
-        <div class="sb-sheet" role="dialog" aria-modal="true" aria-label="${escapeHtml(t("currency.switchCurrencyTitle"))}">
-          <div class="sb-sheet-handle" aria-hidden="true"></div>
-          <div class="sb-sheet-title">${escapeHtml(t("currency.switchCurrencyTitle"))}</div>
-          <a class="sb-sheet-item" href="summary.html"><span class="sb-sheet-item-ico">${sbIcon("grid")}</span><span class="sb-sheet-item-label">${escapeHtml(t("common.overview"))}</span></a>
-          <div class="sb-sheet-sep" aria-hidden="true"></div>
-          ${list.map(c => `<a class="sb-sheet-item${c.code === CURRENCY ? " is-current" : ""}" href="currency.html?c=${c.code}${tabParam}"${c.code === CURRENCY ? ' aria-current="page"' : ""}>
-              <span class="sb-sheet-item-ico">${currencyFlagImgHTML(c.code) || sbIcon("globe")}</span>
-              <span class="sb-sheet-item-label">${escapeHtml(c.label)}</span>
-              <span class="sb-sheet-item-code">${c.code}</span>
-              ${c.code === CURRENCY ? sbIcon("check") : ""}
-            </a>`).join("")}
-        </div>`;
-      document.body.appendChild(sheet);
-      requestAnimationFrame(() => sheet && sheet.classList.add("open"));
-      sheet.addEventListener("click", (e) => {
-        if(e.target === sheet){ closeSheet(); return; }
-        const cur = e.target.closest(".sb-sheet-item.is-current");
-        if(cur){ e.preventDefault(); closeSheet(); }
-      });
-      const first = sheet.querySelector(".sb-sheet-item");
-      if(first) first.focus({ preventScroll: true });
-    };
-    nav.querySelector(".sb-nav-currency").addEventListener("click", openSheet);
-    document.addEventListener("keydown", (e) => { if(e.key === "Escape") closeSheet(); });
+    nav.querySelector(".sb-nav-currency").addEventListener("click", (e) => sbOpenCurrencySheet(e.currentTarget, CURRENCY, currentTabParam()));
 
     // 頂部的幣別按鈕也保留目前分頁
     const navLinksEl = document.getElementById("navLinks");
@@ -615,10 +573,7 @@
       });
     }
 
-    // 鍵盤打開時收起導覽列，不擋住輸入中的表單
-    const isTyping = (el) => el && (el.tagName === "TEXTAREA" || el.isContentEditable || (el.tagName === "INPUT" && !/^(checkbox|radio|button|submit|range|color|file)$/i.test(el.type)));
-    document.addEventListener("focusin", (e)=>{ if(isTyping(e.target)) document.body.classList.add("kb-open"); });
-    document.addEventListener("focusout", ()=>{ setTimeout(()=>{ if(!isTyping(document.activeElement)) document.body.classList.remove("kb-open"); }, 80); });
+    sbBindKeyboardHide();
     syncNav();
   }
 

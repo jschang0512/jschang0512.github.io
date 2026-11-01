@@ -26,17 +26,17 @@
 <meta name="apple-mobile-web-app-title" content="Splitbill">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=901">
-<link rel="stylesheet" href="shared.css?v=901">
+<link rel="stylesheet" href="theme.css?v=902">
+<link rel="stylesheet" href="shared.css?v=902">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="i18n.js?v=901"></script>
-<script src="currencies.js?v=901"></script>
-<script src="motion.js?v=901"></script>
-<script src="version.js?v=901"></script>
-<script src="notif-text.js?v=901"></script>
-<script src="shared-ui.js?v=901"></script>
-<script src="theme.js?v=901" defer></script>
-<script src="app-banner.js?v=901" defer></script>
+<script src="i18n.js?v=902"></script>
+<script src="currencies.js?v=902"></script>
+<script src="motion.js?v=902"></script>
+<script src="version.js?v=902"></script>
+<script src="notif-text.js?v=902"></script>
+<script src="shared-ui.js?v=902"></script>
+<script src="theme.js?v=902" defer></script>
+<script src="app-banner.js?v=902" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -2306,6 +2306,11 @@ renderNavLinks();
 
     fabBtn.addEventListener("click", openModal);
     if(closeBtn) closeBtn.addEventListener("click", closeModal);
+    // 從設定頁底部的「記一筆」過來（summary.html?quick=1）：直接打開快速記帳
+    if(new URLSearchParams(location.search).get("quick") === "1"){
+      history.replaceState(null, "", location.pathname);
+      setTimeout(openModal, 300);
+    }
     // 故意不加「點背景關閉」：快速記帳表單填到一半，手機上很容易不小心點到
     // 卡片外面的空白處就整筆消失，只留右上角 ✕ 這個明確的關閉方式。
 
