@@ -13035,7 +13035,7 @@ html body *:not(.calc-modal):not(.modal):not(.sb-dialog-backdrop){ -webkit-backd
   html body .app-header:has(> .header-utility-row) > .title-row{ grid-column:2; grid-row:1; justify-content:center; margin:0; gap:8px; min-width:0; }
   html body .app-header:has(> .header-utility-row) > .title-row h1{ font-size:20px !important; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   html body .app-header:has(> .header-utility-row) > .title-row .app-logo{ width:22px; height:22px; flex:none; }
-  html body .app-header:has(> .header-utility-row) > :is(#navLinks, .nav-links){ grid-column:1 / -1; margin:0; }
+  html body .app-header:has(> .header-utility-row) > :is(#navLinks, .nav-links){ grid-column:1 / -1; justify-self:center; max-width:100%; margin:0; }
   html body .app-header:has(> .header-utility-row) > #exchangeRateHint{ grid-column:1 / -1; margin:0 auto; }
   html body #appScreen > .topbar{ margin-bottom:10px; }
   html body #unreadNotifAlert{ margin-bottom:10px; }
