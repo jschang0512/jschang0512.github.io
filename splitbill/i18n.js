@@ -1166,6 +1166,10 @@ const I18N = {
     "currency.exportSettlementTitle": "匯出矩陣圖",
     "currency.exportSettlement": "匯出圖片",
     "currency.matrixHint": "點擊儲存格可查看詳細借貸紀錄，餘數由系統自動分攤分配",
+    "currency.matrixLegendOwesMe": "別人欠我",
+    "currency.matrixLegendIOwe": "我欠別人",
+    "currency.matrixLegendOther": "與我無關",
+    "currency.matrixLegendNote": "顏色越深，金額越大",
 
     "currency.expFormTitleDefault": "新增支出",
     "currency.editMode": "✎ 編輯模式",
@@ -2518,6 +2522,10 @@ const I18N = {
     "currency.exportSettlementTitle": "マトリックス画像を書き出し",
     "currency.exportSettlement": "画像を書き出し",
     "currency.matrixHint": "セルをタップすると詳細な貸し借り記録が見られます。端数はシステムが自動で分配します",
+    "currency.matrixLegendOwesMe": "受け取り",
+    "currency.matrixLegendIOwe": "支払い",
+    "currency.matrixLegendOther": "自分と無関係",
+    "currency.matrixLegendNote": "色が濃いほど金額が大きい",
 
     "currency.expFormTitleDefault": "支出を追加",
     "currency.editMode": "✎ 編集モード",
@@ -3870,6 +3878,10 @@ const I18N = {
     "currency.exportSettlementTitle": "Export the matrix as an image",
     "currency.exportSettlement": "Export Image",
     "currency.matrixHint": "Tap a cell to see detailed debt records — remainders are auto-distributed by the system",
+    "currency.matrixLegendOwesMe": "Owed to me",
+    "currency.matrixLegendIOwe": "I owe",
+    "currency.matrixLegendOther": "Not involving me",
+    "currency.matrixLegendNote": "Darker = larger amount",
 
     "currency.expFormTitleDefault": "Add Expense",
     "currency.editMode": "✎ Edit mode",

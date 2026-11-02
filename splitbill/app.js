@@ -5751,7 +5751,8 @@ function renderSettlementImageCanvas(){
   const listRowH = 42;
   const listH = listHeadH + Math.max(owedToMe.length, 1) * listRowH;
   const tableY = headerH;
-  const listY = tableY + tableH + 24;
+  const legendH = 20;
+  const listY = tableY + tableH + 12 + legendH + 20;
   const H = listY + listH + PAD;
 
   // 至少 3 倍解析度：圖會被傳到聊天軟體再放大看，2 倍在手機上字會糊
@@ -5891,6 +5892,47 @@ function renderSettlementImageCanvas(){
   ctx.strokeStyle = C.border;
   ctx.lineWidth = 1;
   ctx.stroke();
+
+  // ---------- 圖例（同網頁 .matrix-legend）：淺→深漸層色塊 + 說明，整排置中 ----------
+  const legendY = tableY + tableH + 12 + legendH / 2;
+  const legendItems = [
+    { label: t("currency.matrixLegendOwesMe"), fill: C.positiveFill },
+    { label: t("currency.matrixLegendIOwe"), fill: C.negativeFill },
+    { label: t("currency.matrixLegendOther"), fill: null }
+  ];
+  const swW = 20, swH = 11, swGap = 5, itemGap = 14;
+  ctx.font = `500 11.5px ${FONT}`;
+  ctx.textBaseline = "middle";
+  ctx.textAlign = "left";
+  const noteText = t("currency.matrixLegendNote");
+  const baseW = legendItems.reduce((s, it) => s + swW + swGap + ctx.measureText(it.label).width, 0) + itemGap * (legendItems.length - 1);
+  // 說明文字放不下（例如英文）就省略，色塊本身已經看得出深淺
+  const showNote = baseW + itemGap + ctx.measureText(noteText).width <= W - PAD * 2;
+  const itemsW = showNote ? baseW + itemGap + ctx.measureText(noteText).width : baseW;
+  let lx = Math.max(PAD, (W - itemsW) / 2);
+  legendItems.forEach(it => {
+    settlementCanvasRoundRect(ctx, lx, legendY - swH / 2, swW, swH, 3);
+    if(it.fill){
+      const g = ctx.createLinearGradient(lx, 0, lx + swW, 0);
+      g.addColorStop(0, settlementMixHex(it.fill, C.card, 0.18));
+      g.addColorStop(1, it.fill);
+      ctx.fillStyle = g;
+      ctx.fill();
+    } else {
+      ctx.fillStyle = C.otherCell;
+      ctx.fill();
+      ctx.strokeStyle = C.border;
+      ctx.stroke();
+    }
+    lx += swW + swGap;
+    ctx.fillStyle = C.muted;
+    ctx.fillText(it.label, lx, legendY + 1);
+    lx += ctx.measureText(it.label).width + itemGap;
+  });
+  if(showNote){
+    ctx.fillStyle = C.muted;
+    ctx.fillText(noteText, lx, legendY + 1);
+  }
 
   // ---------- 要還給我的款項 ----------
   ctx.textBaseline = "middle";
