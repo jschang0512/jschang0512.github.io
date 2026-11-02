@@ -5893,7 +5893,7 @@ function renderSettlementImageCanvas(){
   ctx.lineWidth = 1;
   ctx.stroke();
 
-  // ---------- 圖例（同網頁 .matrix-legend）：淺→深漸層色塊 + 說明，整排置中 ----------
+  // ---------- 圖例（同網頁 .matrix-legend）：淺→深漸層色塊，整排置中 ----------
   const legendY = tableY + tableH + 12 + legendH / 2;
   const legendItems = [
     { label: t("currency.matrixLegendOwesMe"), fill: C.positiveFill },
@@ -5904,11 +5904,7 @@ function renderSettlementImageCanvas(){
   ctx.font = `500 11.5px ${FONT}`;
   ctx.textBaseline = "middle";
   ctx.textAlign = "left";
-  const noteText = t("currency.matrixLegendNote");
-  const baseW = legendItems.reduce((s, it) => s + swW + swGap + ctx.measureText(it.label).width, 0) + itemGap * (legendItems.length - 1);
-  // 說明文字放不下（例如英文）就省略，色塊本身已經看得出深淺
-  const showNote = baseW + itemGap + ctx.measureText(noteText).width <= W - PAD * 2;
-  const itemsW = showNote ? baseW + itemGap + ctx.measureText(noteText).width : baseW;
+  const itemsW = legendItems.reduce((s, it) => s + swW + swGap + ctx.measureText(it.label).width, 0) + itemGap * (legendItems.length - 1);
   let lx = Math.max(PAD, (W - itemsW) / 2);
   legendItems.forEach(it => {
     settlementCanvasRoundRect(ctx, lx, legendY - swH / 2, swW, swH, 3);
@@ -5929,10 +5925,6 @@ function renderSettlementImageCanvas(){
     ctx.fillText(it.label, lx, legendY + 1);
     lx += ctx.measureText(it.label).width + itemGap;
   });
-  if(showNote){
-    ctx.fillStyle = C.muted;
-    ctx.fillText(noteText, lx, legendY + 1);
-  }
 
   // ---------- 要還給我的款項 ----------
   ctx.textBaseline = "middle";

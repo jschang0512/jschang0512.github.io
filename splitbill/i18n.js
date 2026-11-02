@@ -1169,7 +1169,6 @@ const I18N = {
     "currency.matrixLegendOwesMe": "別人欠我",
     "currency.matrixLegendIOwe": "我欠別人",
     "currency.matrixLegendOther": "與我無關",
-    "currency.matrixLegendNote": "顏色越深，金額越大",
 
     "currency.expFormTitleDefault": "新增支出",
     "currency.editMode": "✎ 編輯模式",
@@ -2525,7 +2524,6 @@ const I18N = {
     "currency.matrixLegendOwesMe": "受け取り",
     "currency.matrixLegendIOwe": "支払い",
     "currency.matrixLegendOther": "自分と無関係",
-    "currency.matrixLegendNote": "色が濃いほど金額が大きい",
 
     "currency.expFormTitleDefault": "支出を追加",
     "currency.editMode": "✎ 編集モード",
@@ -3881,7 +3879,6 @@ const I18N = {
     "currency.matrixLegendOwesMe": "Owed to me",
     "currency.matrixLegendIOwe": "I owe",
     "currency.matrixLegendOther": "Not involving me",
-    "currency.matrixLegendNote": "Darker = larger amount",
 
     "currency.expFormTitleDefault": "Add Expense",
     "currency.editMode": "✎ Edit mode",
