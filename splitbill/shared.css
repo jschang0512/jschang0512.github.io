@@ -9762,3 +9762,11 @@ html body .theme-toggle .sb-ico{ width:18px; height:18px; }
 
 /* 電腦版名字列保留設定入口；手機版改由底部導覽的「設定」進入 */
 @media (max-width:767px){ html body #settingsBtn{ display:none !important; } }
+
+/* 債務關係表方向色（跟匯出圖片同一套）：底色由 JS 依金額寫 inline，
+   這裡只處理 hover 框線，以及別人之間「已結清」的空格也鋪淺灰 */
+html body .debt-matrix .matrix-cell.has-debt.is-owes-me:hover{ box-shadow:inset 0 0 0 1.5px var(--positive-text); }
+html body .debt-matrix .matrix-cell.has-debt.is-i-owe:hover{ box-shadow:inset 0 0 0 1.5px var(--negative-text); }
+html body .debt-matrix .matrix-cell.has-debt.is-other:hover{ box-shadow:inset 0 0 0 1.5px var(--ink-soft); }
+html body .debt-matrix .matrix-cell.matrix-cell-settled.is-other{ background:#F0F0F3; }
+:root[data-theme="dark"] body .debt-matrix .matrix-cell.matrix-cell-settled.is-other{ background:#202027; }

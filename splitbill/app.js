@@ -5187,7 +5187,29 @@ function renderDebtMatrix(
   // 色塊深淺分開處理，數字才會一直清楚。參數算法抽到 debtHeatParams()，
   // 跟匯出圖片（renderSettlementImageCanvas）共用同一份，兩邊顏色才會
   // 永遠對得起來。
-  function debtHeatStyle(amount){
+  // 跟我有關的格子改用方向色（跟匯出圖片同一套）：別人欠我＝綠、我欠別人＝紅，
+  // 深淺以「跟我有關的格子」裡最大的一筆為基準；別人之間的帳淺灰。
+  // 沒有登入成員時（理論上不會）退回原本的玫瑰紅熱圖。
+  const meId = myMember && myMember.id;
+  let maxMineAmount = 0;
+  if(meId) ids.forEach(id => {
+    maxMineAmount = Math.max(maxMineAmount, (owed[meId] && owed[meId][id]) || 0, (owed[id] && owed[id][meId]) || 0);
+  });
+  function debtCellKind(creditorId, debtorId){
+    if(!meId) return "";
+    return creditorId === meId ? "is-owes-me" : debtorId === meId ? "is-i-owe" : "is-other";
+  }
+  function debtHeatStyle(amount, creditorId, debtorId){
+    const kind = debtCellKind(creditorId, debtorId);
+    if(kind){
+      const C = getSettlementImageColors(isSettlementDarkTheme());
+      if(kind === "is-other") return `background:${C.otherCell};color:${C.otherText};font-weight:500;`;
+      const ratio = maxMineAmount > 0 ? Math.min(1, amount / maxMineAmount) : 0;
+      const fill = kind === "is-owes-me" ? C.positiveFill : C.negativeFill;
+      const strong = ratio > 0.45;
+      return `background:color-mix(in srgb, ${fill} ${Math.round(18 + ratio * 72)}%, var(--card));` +
+        `color:${strong ? "#FFFFFF" : (kind === "is-owes-me" ? C.positive : C.negative)};font-weight:${strong ? 700 : 600};`;
+    }
     const p = debtHeatParams(amount, maxDebtAmount, isSettlementDarkTheme());
     const bg = `color-mix(in srgb, hsl(${p.hue}, 82%, ${p.bgLightness}%) ${p.bgPct.toFixed(0)}%, var(--card))`;
     return `background:${bg};color:${p.fg};font-weight:${p.fontWeight};`;
@@ -5297,8 +5319,8 @@ function renderDebtMatrix(
             rowTotal += amount;
 
             tbody +=
-              '<td class="matrix-cell has-debt"' +
-                ' style="' + debtHeatStyle(amount) + '"' +
+              '<td class="matrix-cell has-debt ' + debtCellKind(creditorId, debtorId) + '"' +
+                ' style="' + debtHeatStyle(amount, creditorId, debtorId) + '"' +
                 ' data-creditor="' +
                 creditorId +
                 '"' +
@@ -5319,7 +5341,7 @@ function renderDebtMatrix(
             // 沒有欠款不代表這兩人之間從來沒有往來——已結清的舊紀錄還是
             // 看得到，所以這格還是要能點開查看，只是不顯示數字而已。
             tbody +=
-              '<td class="matrix-cell matrix-cell-settled"' +
+              '<td class="matrix-cell matrix-cell-settled ' + debtCellKind(creditorId, debtorId) + '"' +
                 ' data-creditor="' +
                 creditorId +
                 '"' +
