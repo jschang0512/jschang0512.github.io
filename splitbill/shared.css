@@ -9789,3 +9789,6 @@ html body .sb-record-pop{ border-radius:18px; }
 
 /* 把手只支援觸控，滑鼠操作的裝置不顯示 */
 @media (hover:hover) and (pointer:fine){ html body .sb-drag-handle{ display:none; } }
+
+/* 節日場景上的頁首按鈕要有實心底，不然會透出插畫看不清楚 */
+html body.sb-has-scene .app-header :is(#logoutBtn, #backBtn, .notif-bell-btn), html body.sb-has-scene .app-header .nav-links a:not(.active){ background:var(--card) !important; color:var(--ink) !important; border:1px solid var(--card-border) !important; box-shadow:0 1px 3px rgba(16,14,30,.18); opacity:1; }
