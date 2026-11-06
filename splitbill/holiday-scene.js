@@ -138,8 +138,8 @@
 
   let observer = null;
   function placeHeight(scene){
-    const hero = document.querySelector(".sb-hero");
-    if(hero) scene.style.setProperty("--scene-h", Math.round(hero.getBoundingClientRect().bottom + window.scrollY + 26) + "px");
+    const header = document.querySelector(".app-header");
+    if(header) scene.style.setProperty("--scene-h", Math.round(header.getBoundingClientRect().bottom + window.scrollY + 48) + "px");
   }
   function onResize(){
     const scene = document.querySelector(".sb-scene");
@@ -147,7 +147,7 @@
   }
 
   window.splitbillMountHolidayScene = function(h){
-    document.querySelectorAll(".sb-scene, .sb-hero").forEach(el => el.remove());
+    document.querySelectorAll(".sb-scene").forEach(el => el.remove());
     if(observer){ observer.disconnect(); observer = null; }
     window.removeEventListener("resize", onResize);
     document.body.classList.remove("sb-has-scene");
@@ -162,12 +162,6 @@
     scene.innerHTML = (def.strip ? `<div class="sb-scene-strip" style="background-image:${LIGHTS}"></div>` : "")
       + (def.water ? `<div class="sb-scene-water" style="background-image:${WAVES},linear-gradient(#145445,#145445)"></div>` : "")
       + def.left + def.right + (def.particle ? particles(def.particle, def.count) : "");
-    const hero = document.createElement("div");
-    hero.className = "sb-hero";
-    hero.innerHTML = "<strong></strong><span></span>";
-    hero.firstElementChild.textContent = t("holiday." + h);
-    hero.lastElementChild.textContent = t("holiday." + h + "Line");
-    header.insertAdjacentElement("afterend", hero);
     document.body.classList.add("sb-has-scene");
     document.body.insertBefore(scene, document.body.firstChild);
     placeHeight(scene);

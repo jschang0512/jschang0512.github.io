@@ -88,7 +88,7 @@
   function syncGreeting(h){
     document.querySelectorAll(".sb-holiday-greet").forEach(el => el.remove());
     const row = document.querySelector(".title-row");
-    // 有場景的主畫面，問候語放在場景裡，不用這個小標
+    // 有場景的主畫面不放問候語，場景本身就夠了
     if(!h || !row || typeof window.t !== "function" || document.querySelector(".app-header > .header-utility-row")) return;
     const el = document.createElement("span");
     el.className = "sb-holiday-greet";
