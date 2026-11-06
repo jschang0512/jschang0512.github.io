@@ -12,6 +12,7 @@
   const nextBtn = document.getElementById("rcNext");
   const LOGO_PATHS = '<path class="s1" d="M256,238 L118.5,138.1 A170,170 0 0,1 393.5,138.1 Z"/><path class="s2" d="M271.6,265 L426.9,195.9 A170,170 0 0,1 289.4,434.1 Z"/><path class="s3" d="M240.4,265 L222.6,434.1 A170,170 0 0,1 85.1,195.9 Z"/>';
   const MIN_EXPENSES = 3;
+  const TRAVEL_TYPES = ["transit", "car", "flight", "hotel", "ticket"];
   const reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   function showStatus(title, text, withBack){
@@ -58,6 +59,14 @@
       rows.push(...(data || []));
       if(!data || data.length < PAGE) return rows;
     }
+  }
+
+  // 留言只是回顧的其中一張，抓不到也不該讓整頁失敗
+  async function fetchFeedback(groupId){
+    try{
+      const { data, error } = await sb.from("feedback").select("id,created_by,created_at").eq("group_id", groupId);
+      return error ? [] : (data || []);
+    }catch(e){ return []; }
   }
 
   // 一次抓齊所有幣別對臺幣的匯率。回傳 { JPY: 0.21, ... }，抓不到就是空物件。
@@ -145,8 +154,8 @@
     return best;
   }
 
-  function computeStats(rows, repayments, year, myId, memberById, conv){
-    const stats = { total:0, count:0, days:new Set(), months:Array(12).fill(0), weekdays:Array(7).fill(0), byDay:{}, titles:{}, currencies:new Set(), cats:{}, food:{}, all:{}, priciest:null, first:null, paidCount:0, paidForOthers:0, repayCount:0, repaySent:0, repayReceived:0 };
+  function computeStats(rows, repayments, feedback, year, myId, memberById, conv){
+    const stats = { total:0, count:0, days:new Set(), months:Array(12).fill(0), weekdays:Array(7).fill(0), byDay:{}, titles:{}, currencies:new Set(), cats:{}, food:{}, all:{}, priciest:null, first:null, paidCount:0, paidForOthers:0, repayCount:0, repaySent:0, repayReceived:0, repayWith:{}, travel:{}, helpers:{}, fronted:{}, lively:null, messages:0, myMessages:0, talkers:{} };
     rows.forEach(r => {
       if(!r.expense_date || !r.expense_date.startsWith(String(year))) return;
       const rate = conv.toBase[r.currency];
@@ -174,10 +183,23 @@
       cat.count += 1;
 
       const isMeal = meta.type === "food" || meta.type === "drink";
+      const isTravel = TRAVEL_TYPES.includes(meta.type);
+      const payers = (Array.isArray(r.payers) ? r.payers : []).filter(p => Number(p.amount) > 0);
+      const paidTotal = payers.reduce((sum, p) => sum + Number(p.amount), 0);
+      const myPaid = payers.filter(p => p.member_id === myId).reduce((sum, p) => sum + Number(p.amount), 0);
       shares.forEach(s => {
         if(s.member_id === myId || !(Number(s.amount) > 0) || !memberById[s.member_id]) return;
         stats.all[s.member_id] = (stats.all[s.member_id] || 0) + 1;
         if(isMeal) stats.food[s.member_id] = (stats.food[s.member_id] || 0) + 1;
+        if(isTravel) stats.travel[s.member_id] = (stats.travel[s.member_id] || 0) + 1;
+        // 多人一起付的帳，依各自付的比例算誰墊了誰的份額
+        if(myPaid > 0) stats.fronted[s.member_id] = (stats.fronted[s.member_id] || 0) + Number(s.amount) * rate * myPaid / paidTotal;
+      });
+      payers.forEach(p => {
+        if(p.member_id === myId || !memberById[p.member_id]) return;
+        const h = stats.helpers[p.member_id] || (stats.helpers[p.member_id] = { amount:0, count:0 });
+        h.amount += myShare * Number(p.amount) / paidTotal;
+        h.count += 1;
       });
 
       const title = cleanTitle(r.description) || meta.name;
@@ -188,6 +210,11 @@
       const seen = stats.titles[title] || (stats.titles[title] = { title, amount:0, count:0 });
       seen.amount += myShare;
       seen.count += 1;
+
+      const people = shares.filter(s => Number(s.amount) > 0).length;
+      if(!stats.lively || people > stats.lively.people || (people === stats.lively.people && myShare > stats.lively.myShare)){
+        stats.lively = { title, people, myShare, date: r.expense_date };
+      }
 
       const paid = (Array.isArray(r.payers) ? r.payers : []).find(p => p.member_id === myId);
       if(paid && Number(paid.amount) > 0){
@@ -203,6 +230,14 @@
       stats.repayCount += 1;
       if(p.from_member === myId) stats.repaySent += Number(p.amount) * rate;
       else stats.repayReceived += Number(p.amount) * rate;
+      const other = p.from_member === myId ? p.to_member : p.from_member;
+      if(memberById[other]) stats.repayWith[other] = (stats.repayWith[other] || 0) + 1;
+    });
+    feedback.forEach(f => {
+      if(!String(f.created_at || "").startsWith(String(year))) return;
+      stats.messages += 1;
+      if(f.created_by === myId) stats.myMessages += 1;
+      if(memberById[f.created_by]) stats.talkers[f.created_by] = (stats.talkers[f.created_by] || 0) + 1;
     });
     stats.catList = Object.values(stats.cats).sort((a, b) => b.amount - a.amount);
     stats.topDay = Object.keys(stats.byDay).sort((a, b) => stats.byDay[b].amount - stats.byDay[a].amount)[0];
@@ -220,12 +255,20 @@
     return `<svg class="rc-disk" viewBox="60 90 392 392" style="--turn:${turn}deg;${extra || ""}" aria-hidden="true">${LOGO_PATHS}</svg>`;
   }
 
+  function faceHTML(ctx, id, cls){
+    const name = ctx.memberById[id];
+    const m = ctx.member(id);
+    return m && m.avatar_url
+      ? `<span class="${cls}" style="background-image:url('${escapeHtml(m.avatar_url)}')"></span>`
+      : `<span class="${cls}" style="background:${getAvatarColor(name)}">${escapeHtml(name.slice(0, 1))}</span>`;
+  }
+
   function slideHTML(cls, turn, body, attrs){
     return `<section class="rc-slide ${cls}" ${attrs || ""}>${disk(turn)}<div class="rc-body">${body}</div></section>`;
   }
 
   function buildSlides(ctx){
-    const { stats, year, groupName, myName, base, conv, member } = ctx;
+    const { stats, year, groupName, myName, base, conv, memberById } = ctx;
     const out = [];
     const noteHTML = stats.foreign || conv.skipped
       ? `<p class="rc-note rc-rise" style="--i:3">${escapeHtml(t(conv.skipped ? "recap.noteSkipped" : "recap.noteConverted"))}</p>` : "";
@@ -275,19 +318,76 @@
     const foodTop = topOf(stats.food);
     const partner = foodTop && foodTop.count >= 3 ? { ...foodTop, meal:true } : topOf(stats.all);
     if(partner){
-      const name = ctx.memberById[partner.id];
-      const avatarUrl = member(partner.id) && member(partner.id).avatar_url;
-      const face = avatarUrl
-        ? `<span class="rc-avatar rc-rise" style="background-image:url('${escapeHtml(avatarUrl)}')"></span>`
-        : `<span class="rc-avatar rc-rise" style="background:${getAvatarColor(name)}">${escapeHtml(name.slice(0, 1))}</span>`;
+      const name = memberById[partner.id];
       out.push(slideHTML("is-plum", 300, `
-        ${face}
+        ${faceHTML(ctx, partner.id, "rc-avatar rc-rise")}
         <p class="rc-label rc-rise" style="--i:1">${escapeHtml(t(partner.meal ? "recap.partnerFoodLabel" : "recap.partnerAllLabel"))}</p>
         <p class="rc-big is-name rc-rise" style="--i:2">${escapeHtml(name)}</p>
         <p class="rc-detail rc-rise" style="--i:3">${t(partner.meal ? "recap.partnerFoodDetail" : "recap.partnerAllDetail", { count:`<b>${partner.count}</b>` })}</p>
         <p class="rc-detail rc-rise" style="--i:4">${t("recap.partnerPeople", { n:`<b>${Object.keys(stats.all).length}</b>` })}</p>
       `));
       ctx.partnerName = name;
+    }
+
+    const crew = Object.keys(stats.all).sort((a, b) => stats.all[b] - stats.all[a]).slice(0, 3);
+    if(crew.length >= 2){
+      out.push(slideHTML("is-mist", 200, `
+        <p class="rc-label rc-rise">${escapeHtml(t("recap.crewLabel"))}</p>
+        <ol class="rc-crew">${crew.map((id, i) => `<li class="rc-rise" style="--i:${i + 1}">
+          ${faceHTML(ctx, id, "rc-crew-face")}
+          <span class="rc-crew-name">${escapeHtml(memberById[id])}</span>
+          <span class="rc-crew-count">${escapeHtml(t("recap.crewCount", { count: stats.all[id] }))}</span>
+        </li>`).join("")}</ol>
+      `));
+    }
+
+    const buddy = topOf(stats.travel);
+    if(buddy && buddy.count >= 3){
+      out.push(slideHTML("is-ocean", 120, `
+        ${faceHTML(ctx, buddy.id, "rc-avatar rc-rise")}
+        <p class="rc-label rc-rise" style="--i:1">${escapeHtml(t("recap.buddyLabel"))}</p>
+        <p class="rc-big is-name rc-rise" style="--i:2">${escapeHtml(memberById[buddy.id])}</p>
+        <p class="rc-detail rc-rise" style="--i:3">${t("recap.buddyDetail", { count:`<b>${buddy.count}</b>` })}</p>
+      `));
+    }
+
+    const helperId = Object.keys(stats.helpers).sort((a, b) => stats.helpers[b].amount - stats.helpers[a].amount)[0];
+    if(helperId){
+      const helper = stats.helpers[helperId];
+      out.push(slideHTML("is-pine", 40, `
+        ${faceHTML(ctx, helperId, "rc-avatar rc-rise")}
+        <p class="rc-label rc-rise" style="--i:1">${escapeHtml(t("recap.helperLabel"))}</p>
+        <p class="rc-big is-name rc-rise" style="--i:2">${escapeHtml(memberById[helperId])}</p>
+        <p class="rc-detail rc-rise" style="--i:3">${t("recap.helperDetail", { count:`<b>${helper.count}</b>`, amount:`<b>${escapeHtml(moneyText(base, helper.amount))}</b>` })}</p>
+      `));
+    }
+
+    if(stats.paidCount > 0 && stats.paidForOthers > 0){
+      const frontedId = Object.keys(stats.fronted).sort((a, b) => stats.fronted[b] - stats.fronted[a])[0];
+      out.push(slideHTML("is-brand", 250, `
+        <p class="rc-label rc-rise">${escapeHtml(t("recap.paidLabel"))}</p>
+        <p class="rc-big rc-rise" style="--i:1">${escapeHtml(moneyText(base, stats.paidForOthers))}</p>
+        <p class="rc-detail rc-rise" style="--i:2">${t("recap.paidDetail", { count:`<b>${stats.paidCount}</b>` })}</p>
+        ${frontedId ? `<p class="rc-detail rc-rise" style="--i:3">${t("recap.frontedDetail", { name:`<b>${escapeHtml(memberById[frontedId])}</b>`, amount:`<b>${escapeHtml(moneyText(base, stats.fronted[frontedId]))}</b>` })}</p>` : ""}
+      `));
+    }
+
+    if(stats.lively.people >= 3){
+      out.push(slideHTML("is-cream", 310, `
+        <p class="rc-label rc-rise">${escapeHtml(t("recap.livelyLabel"))}</p>
+        <p class="rc-big is-name is-long rc-rise" style="--i:1">${escapeHtml(stats.lively.title)}</p>
+        <p class="rc-detail rc-rise" style="--i:2">${t("recap.livelyDetail", { date: escapeHtml(formatDate(stats.lively.date)), n:`<b>${stats.lively.people}</b>` })}</p>
+      `));
+    }
+
+    if(stats.messages > 0){
+      const talker = topOf(stats.talkers);
+      out.push(slideHTML("is-plum", 170, `
+        <p class="rc-label rc-rise">${escapeHtml(t("recap.messagesLabel"))}</p>
+        <p class="rc-big rc-rise" style="--i:1">${escapeHtml(t("recap.messagesValue", { n: stats.messages }))}</p>
+        <p class="rc-detail rc-rise" style="--i:2">${t("recap.messagesMine", { n:`<b>${stats.myMessages}</b>` })}</p>
+        ${talker ? `<p class="rc-detail rc-rise" style="--i:3">${t("recap.messagesTop", { name:`<b>${escapeHtml(memberById[talker.id])}</b>` })}</p>` : ""}
+      `));
     }
 
     const p = stats.priciest;
@@ -350,19 +450,12 @@
       `));
     }
 
-    if(stats.paidCount > 0 && stats.paidForOthers > 0){
-      out.push(slideHTML("is-pine", 250, `
-        <p class="rc-label rc-rise">${escapeHtml(t("recap.paidLabel"))}</p>
-        <p class="rc-big rc-rise" style="--i:1">${escapeHtml(moneyText(base, stats.paidForOthers))}</p>
-        <p class="rc-detail rc-rise" style="--i:2">${t("recap.paidDetail", { count:`<b>${stats.paidCount}</b>` })}</p>
-      `));
-    }
-
     if(stats.repayCount > 0){
       out.push(slideHTML("is-brand", 60, `
         <p class="rc-label rc-rise">${escapeHtml(t("recap.repayLabel"))}</p>
         <p class="rc-big rc-rise" style="--i:1">${escapeHtml(t("recap.repayValue", { n: stats.repayCount }))}</p>
         <p class="rc-detail rc-rise" style="--i:2">${t("recap.repayDetail", { sent:`<b>${escapeHtml(moneyText(base, stats.repaySent))}</b>`, received:`<b>${escapeHtml(moneyText(base, stats.repayReceived))}</b>` })}</p>
+        ${topOf(stats.repayWith) ? `<p class="rc-detail rc-rise" style="--i:3">${t("recap.repayWith", { name:`<b>${escapeHtml(memberById[topOf(stats.repayWith).id])}</b>` })}</p>` : ""}
       `));
     }
 
@@ -629,14 +722,14 @@
         location.href = "summary.html";
         return;
       }
-      const [rows, repayments] = await Promise.all([fetchAllExpenses(myMember.group_id), fetchAllRepayments(myMember.group_id)]);
+      const [rows, repayments, feedback] = await Promise.all([fetchAllExpenses(myMember.group_id), fetchAllRepayments(myMember.group_id), fetchFeedback(myMember.group_id)]);
       const conv = await buildConverter(rows.concat(repayments));
       const member = id => MEMBERS.find(m => m.id === id);
       const groupName = (myMember.groups && myMember.groups.name) || "";
 
       const statsByYear = {};
       Array.from(new Set(rows.map(r => Number((r.expense_date || "").slice(0, 4))).filter(Boolean))).forEach(y => {
-        const s = computeStats(rows, repayments, y, myMember.id, memberById, conv);
+        const s = computeStats(rows, repayments, feedback, y, myMember.id, memberById, conv);
         if(s.count >= MIN_EXPENSES) statsByYear[y] = s;
       });
       const years = Object.keys(statsByYear).map(Number).sort((a, b) => b - a);

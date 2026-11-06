@@ -80,6 +80,15 @@ html body.rc-page{ margin:0; min-height:100dvh; background:var(--rc-night-2); co
 /* 最常一起的人 */
 .rc-avatar{ width:96px; height:96px; margin-bottom:20px; border-radius:50%; display:grid; place-items:center; color:#fff; font-size:38px; font-weight:700; background-size:cover; background-position:center; }
 
+/* 分帳夥伴排行 */
+.rc-crew{ list-style:none; margin:14px 0 0; padding:0; display:grid; gap:16px; }
+.rc-crew li{ display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:14px; }
+.rc-crew-face{ width:56px; height:56px; border-radius:50%; display:grid; place-items:center; color:#fff; font-size:22px; font-weight:700; background-size:cover; background-position:center; }
+.rc-crew li:first-child .rc-crew-face{ width:72px; height:72px; font-size:28px; }
+.rc-crew-name{ font-size:24px; font-weight:900; line-height:1.25; overflow-wrap:anywhere; }
+.rc-crew li:first-child .rc-crew-name{ font-size:30px; }
+.rc-crew-count{ font-size:15px; color:var(--soft); white-space:nowrap; }
+
 /* 月份長條 */
 .rc-months{ display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:5px; align-items:end; height:190px; margin-top:28px; }
 .rc-months.is-week{ grid-template-columns:repeat(7,minmax(0,1fr)); gap:8px; }
