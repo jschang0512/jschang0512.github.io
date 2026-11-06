@@ -439,14 +439,17 @@
   });
   window.addEventListener("resize", fitBigText);
 
-  // 一月時去年才是完整的一年，預設看去年
   function defaultYear(years){
-    const now = new Date();
-    const wanted = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+    const wanted = recapYearFor(new Date());
     return years.includes(wanted) ? wanted : years[0];
   }
 
   (async function boot(){
+    // 開放期間以外直接回首頁；網址加 ?preview=1 可以提前看
+    if(!recapYearFor(new Date()) && new URLSearchParams(location.search).get("preview") !== "1"){
+      location.replace("summary.html");
+      return;
+    }
     try{
       const { data:{ session } } = await sb.auth.getSession();
       if(!session || !session.user){

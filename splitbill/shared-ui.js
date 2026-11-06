@@ -1120,3 +1120,11 @@ document.addEventListener("click", (e) => {
 });
 window.addEventListener("splitbill-theme-change", sbSyncThemeButtons);
 if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", sbSyncThemeButtons); else sbSyncThemeButtons();
+
+// 年度回顧只在跨年前後一週開放（12/24–1/7），回傳這段期間要回顧的年份，其他時間回傳 null。
+function recapYearFor(date){
+  const m = date.getMonth(), d = date.getDate();
+  if(m === 11 && d >= 24) return date.getFullYear();
+  if(m === 0 && d <= 7) return date.getFullYear() - 1;
+  return null;
+}
