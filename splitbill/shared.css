@@ -9485,7 +9485,7 @@ html body .quick-exp-fab:hover{ transform:none; }
    效能、手機版頂部精簡、底部導覽列（2026-11）
    ============================================================ */
 /* 卡片、選單都已經是不透明底色，模糊效果看不到卻讓每次捲動都重算；只留給彈窗背景 */
-html body *:not(.calc-modal):not(.modal):not(.sb-dialog-backdrop):not(.sb-record-overlay){ -webkit-backdrop-filter:none !important; backdrop-filter:none !important; }
+html body *:not(.calc-modal):not(.modal):not(.sb-dialog-backdrop):not(.sb-record-overlay):not(.sb-moment):not(.sb-sheet-backdrop){ -webkit-backdrop-filter:none !important; backdrop-filter:none !important; }
 
 /* 換頁時淡入淡出，不再白一下（支援的瀏覽器才會生效） */
 @view-transition{ navigation:auto; }
@@ -9720,7 +9720,7 @@ html body .sb-holiday-spends button{ min-height:32px; padding:0 12px; border:1px
 html body .sb-holiday-spends button:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
 
 /* 結清彩蛋 */
-html body .sb-moment{ position:fixed; inset:0; z-index:900; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; pointer-events:none; background:rgba(16,14,30,.52); animation:sbMomentFade 2.8s ease both; }
+html body .sb-moment{ position:fixed; inset:0; z-index:900; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; pointer-events:none; animation:sbMomentFade 2.8s ease both; }
 html body .sb-moment-stage{ position:relative; width:220px; height:220px; }
 html body .sb-moment-stage svg{ position:absolute; inset:0; width:100%; height:100%; animation:sbMomentLight 1.1s cubic-bezier(.16,1,.3,1) both; }
 html body .sb-moment-stage i{ position:absolute; left:50%; top:50%; width:10px; height:10px; margin:-5px; border-radius:50%; opacity:0; animation:sbMomentSpark 1.3s cubic-bezier(.16,1,.3,1) .45s both; }
@@ -9754,10 +9754,9 @@ html body .exchange-rate-hint{ width:fit-content; max-width:100%; margin-left:au
 html body .exchange-rate-hint:hover{ background:var(--card); color:var(--btn-primary); }
 
 /* 記帳／還款成功的彈出視窗 */
-html body .sb-record-overlay{ position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; padding:24px; background:rgba(16,14,30,.5); transition:opacity .18s ease; animation:sbRecordDim .2s ease both; }
+html body .sb-record-overlay{ position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; padding:24px; transition:opacity .18s ease; animation:sbBackdropIn .2s ease; }
 html body .sb-record-overlay.is-leaving{ opacity:0; }
-:root[data-theme="dark"] body .sb-record-overlay{ -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px); }
-html body .sb-record-pop{ width:min(340px, 100%); max-height:100%; overflow-y:auto; padding:24px 20px 18px; border-radius:20px; background:var(--card); color:var(--ink); text-align:center; box-shadow:0 18px 44px rgba(16,14,30,.3); animation:sbRecordPop .32s cubic-bezier(.16,1,.3,1) both; }
+html body .sb-record-pop{ width:min(340px, 100%); max-height:100%; overflow-y:auto; padding:24px 20px 18px; color:var(--ink); text-align:center; animation:sbModalSmoothPop .28s cubic-bezier(.16,1,.3,1) forwards; }
 html body .sb-record-mark{ display:grid; place-items:center; width:52px; height:52px; margin:0 auto 10px; border-radius:50%; background:var(--btn-primary); color:#FFFFFF; font-size:24px; }
 html body .sb-record-mark .sb-ico{ width:26px; height:26px; }
 html body .sb-record-pop.is-holiday .sb-record-mark{ width:92px; height:92px; background:none; }
@@ -9779,6 +9778,11 @@ html body .sb-record-actions button{ flex:1; min-height:46px; border-radius:12px
 html body .sb-record-edit{ border:1px solid var(--card-border); background:transparent; color:var(--ink); }
 html body .sb-record-ok{ border:0; background:var(--btn-primary); color:var(--btn-primary-fg); }
 html body .sb-record-actions button:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; }
-@keyframes sbRecordDim{ from{ background:transparent; } }
-@keyframes sbRecordPop{ from{ transform:scale(.9) translateY(12px); opacity:0; } to{ transform:none; opacity:1; } }
 @media (prefers-reduced-motion:reduce){ html body .sb-record-pop{ animation:none; } }
+
+/* 所有彈出視窗共用同一套背景和卡片：改這裡就全站一起變 */
+:root{ --sb-scrim:rgba(16,14,30,.5); --sb-scrim-blur:blur(3px); --sb-pop-bg:#FFFFFF; --sb-pop-border:rgba(99,106,177,.16); --sb-pop-shadow:0 24px 60px rgba(16,14,30,.24); }
+:root[data-theme="dark"]{ --sb-scrim-blur:blur(10px); --sb-pop-bg:#242428; --sb-pop-border:rgba(255,255,255,.12); --sb-pop-shadow:0 28px 70px rgba(0,0,0,.7); }
+html body .calc-modal, html body .sb-record-overlay, html body .sb-moment, html body .sb-sheet-backdrop.open{ background:var(--sb-scrim); -webkit-backdrop-filter:var(--sb-scrim-blur); backdrop-filter:var(--sb-scrim-blur); }
+html body .calc-modal .calc-card, html body .sb-record-pop, html body .sb-sheet{ background:var(--sb-pop-bg) !important; border:1px solid var(--sb-pop-border) !important; box-shadow:var(--sb-pop-shadow) !important; }
+html body .sb-record-pop{ border-radius:18px; }
