@@ -1128,3 +1128,40 @@ function recapYearFor(date){
   if(m === 0 && d <= 7) return date.getFullYear() - 1;
   return null;
 }
+
+// 底部視窗的拖曳把手：往下拉超過 90px 放開就關閉，沒拉到彈回原位。
+// 關閉時直接按視窗自己的 ✕，各視窗原本的收尾邏輯才不用寫兩份。
+(function initSheetDragHandles(){
+  let card = null, startY = 0, deltaY = 0;
+  document.addEventListener("touchstart", e => {
+    const handle = e.target.closest && e.target.closest(".sb-drag-handle");
+    if(!handle) return;
+    card = handle.closest(".calc-card");
+    startY = e.touches[0].clientY;
+    deltaY = 0;
+    if(card) card.style.transition = "none";
+  }, { passive:true });
+  document.addEventListener("touchmove", e => {
+    if(!card) return;
+    deltaY = Math.max(0, e.touches[0].clientY - startY);
+    card.style.transform = `translateY(${deltaY}px)`;
+  }, { passive:true });
+  function release(){
+    if(!card) return;
+    const c = card;
+    card = null;
+    c.style.transition = "transform 0.24s cubic-bezier(0.16, 1, 0.3, 1)";
+    if(deltaY > 90){
+      const closeBtn = c.querySelector(".calc-close");
+      c.style.transform = "translateY(100%)";
+      setTimeout(() => {
+        if(closeBtn) closeBtn.click();
+        setTimeout(() => { c.style.transform = ""; c.style.transition = ""; }, 240);
+      }, 200);
+    } else {
+      c.style.transform = "";
+    }
+  }
+  document.addEventListener("touchend", release);
+  document.addEventListener("touchcancel", release);
+})();

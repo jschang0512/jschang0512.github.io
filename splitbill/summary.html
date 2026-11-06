@@ -29,18 +29,18 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=941">
-<link rel="stylesheet" href="shared.css?v=941">
-<script src="holiday.js?v=941"></script>
+<link rel="stylesheet" href="theme.css?v=942">
+<link rel="stylesheet" href="shared.css?v=942">
+<script src="holiday.js?v=942"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
-<script src="i18n.js?v=941"></script>
-<script src="currencies.js?v=941"></script>
-<script src="motion.js?v=941"></script>
-<script src="version.js?v=941"></script>
-<script src="notif-text.js?v=941"></script>
-<script src="shared-ui.js?v=941"></script>
-<script src="theme.js?v=941" defer></script>
-<script src="app-banner.js?v=941" defer></script>
+<script src="i18n.js?v=942"></script>
+<script src="currencies.js?v=942"></script>
+<script src="motion.js?v=942"></script>
+<script src="version.js?v=942"></script>
+<script src="notif-text.js?v=942"></script>
+<script src="shared-ui.js?v=942"></script>
+<script src="theme.js?v=942" defer></script>
+<script src="app-banner.js?v=942" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -218,7 +218,7 @@ if("serviceWorker" in navigator){
 <!-- ⚡ 一鍵快速記帳彈窗 (iOS 原生 Bottom Sheet) -->
 <div id="quickExpenseModal" class="calc-modal sb-bottom-sheet hidden">
   <div class="calc-card quick-exp-modal-card">
-    <div class="sb-drag-handle" id="quickExpDragHandle"></div>
+    <div class="sb-drag-handle"></div>
     <div class="calc-header">
       <div class="quick-exp-modal-title">
         <span class="quick-exp-modal-title-icon"><span class="sb-ico" style="--ico:var(--ico-zap)" aria-hidden="true"></span></span>
@@ -1083,48 +1083,6 @@ renderNavLinks();
       });
     }
   }
-
-  // 🎛️ iOS 原生 Bottom Sheet 下拉手勢拖曳關閉 (Swipe-down to dismiss)
-  (function initBottomSheetGestures(){
-    const modal = document.getElementById("quickExpenseModal");
-    const handle = document.getElementById("quickExpDragHandle");
-    const card = modal ? modal.querySelector(".quick-exp-modal-card") : null;
-    if(!modal || !handle || !card) return;
-
-    let startY = 0;
-    let currentY = 0;
-    let isDragging = false;
-
-    handle.addEventListener("touchstart", (e) => {
-      startY = e.touches[0].clientY;
-      isDragging = true;
-      card.style.transition = "none";
-    }, { passive: true });
-
-    window.addEventListener("touchmove", (e) => {
-      if(!isDragging) return;
-      currentY = e.touches[0].clientY;
-      const deltaY = Math.max(0, currentY - startY);
-      card.style.transform = `translateY(${deltaY}px)`;
-    }, { passive: true });
-
-    window.addEventListener("touchend", () => {
-      if(!isDragging) return;
-      isDragging = false;
-      const deltaY = Math.max(0, currentY - startY);
-      card.style.transition = "transform 0.24s cubic-bezier(0.16, 1, 0.3, 1)";
-      if(deltaY > 90){
-        modal.classList.add("is-closing");
-        setTimeout(() => {
-          modal.classList.remove("is-closing");
-          modal.classList.add("hidden");
-          card.style.transform = "";
-        }, 220);
-      } else {
-        card.style.transform = "translateY(0)";
-      }
-    });
-  })();
 
   const balanceCurrencyBtn = document.getElementById("balanceCurrencyBtn");
   const balanceCurrencyMenu = document.getElementById("balanceCurrencyMenu");

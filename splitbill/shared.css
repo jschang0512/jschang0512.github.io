@@ -9786,3 +9786,6 @@ html body .sb-record-actions button:focus-visible{ outline:2px solid var(--btn-p
 html body .calc-modal, html body .sb-record-overlay, html body .sb-moment, html body .sb-sheet-backdrop.open{ background:var(--sb-scrim); -webkit-backdrop-filter:var(--sb-scrim-blur); backdrop-filter:var(--sb-scrim-blur); }
 html body .calc-modal .calc-card, html body .sb-record-pop, html body .sb-sheet{ background:var(--sb-pop-bg) !important; border:1px solid var(--sb-pop-border) !important; box-shadow:var(--sb-pop-shadow) !important; }
 html body .sb-record-pop{ border-radius:18px; }
+
+/* 把手只支援觸控，滑鼠操作的裝置不顯示 */
+@media (hover:hover) and (pointer:fine){ html body .sb-drag-handle{ display:none; } }
