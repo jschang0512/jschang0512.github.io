@@ -1,5 +1,5 @@
 // 節日主題：節日期間在 <html> 掛上 data-holiday，配色由 shared.css 底部的
-// token 覆寫，這裡只負責判斷日期、問候小標跟開場的飄落動畫。放在 <head>
+// token 覆寫，這裡負責判斷日期、問候小標，並載入頁首場景（holiday-scene.js）。放在 <head>
 // 同步載入，第一次繪製就是節日配色，不會閃一下原本的紫色。
 //
 // 開關存在 splitbill-holiday-off（設定頁「節日裝飾」）。網址加
@@ -72,7 +72,7 @@
     syncDecor();
   };
 
-  // 每個節日一個小圖：問候小標和飄落動畫共用，都是手繪 SVG，不靠 emoji。
+  // 每個節日一個小圖，放在問候小標裡，手繪 SVG，不靠 emoji。
   const GLYPHS = {
     newyear: '<path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z" fill="currentColor"/>',
     lunar: '<path d="M12 2v3" stroke="currentColor" stroke-width="1.6"/><rect x="8.5" y="4.5" width="7" height="2" rx=".6" fill="currentColor"/><ellipse cx="12" cy="12" rx="7.5" ry="5.8" fill="currentColor"/><rect x="8.5" y="17.2" width="7" height="2" rx=".6" fill="currentColor"/><path d="M12 19v3" stroke="currentColor" stroke-width="1.6"/>',
@@ -88,7 +88,8 @@
   function syncGreeting(h){
     document.querySelectorAll(".sb-holiday-greet").forEach(el => el.remove());
     const row = document.querySelector(".title-row");
-    if(!h || !row || typeof window.t !== "function") return;
+    // 有場景的主畫面，問候語放在場景裡，不用這個小標
+    if(!h || !row || typeof window.t !== "function" || document.querySelector(".app-header > .header-utility-row")) return;
     const el = document.createElement("span");
     el.className = "sb-holiday-greet";
     el.innerHTML = glyphSVG(h, 14) + "<span></span>";
@@ -96,52 +97,20 @@
     row.appendChild(el);
   }
 
-  // 頁面最上方一排淡淡的節日圖樣，跟著頁面捲走，不會擋到內容。
-  function syncBand(h){
-    document.querySelectorAll(".sb-holiday-band").forEach(el => el.remove());
-    if(!h || !document.body || document.body.classList.contains("rc-page")) return;
-    const tile = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="44"><svg x="6" y="4" width="18" height="18" viewBox="0 0 24 24">${GLYPHS[h]}</svg><svg x="38" y="22" width="14" height="14" viewBox="0 0 24 24">${GLYPHS[h]}</svg></svg>`;
-    const url = `url("data:image/svg+xml,${encodeURIComponent(tile)}")`;
-    const band = document.createElement("div");
-    band.className = "sb-holiday-band";
-    band.setAttribute("aria-hidden", "true");
-    const masks = `${url}, linear-gradient(#000 45%, transparent)`;
-    band.style.webkitMaskImage = masks;
-    band.style.maskImage = masks;
-    document.body.appendChild(band);
-  }
-
-  // 開場飄落：同一個節日每個分頁只播一次，動畫結束就把節點整個移除，
-  // 不會一直佔著畫面。減少動態的使用者完全不播。
-  function playFall(h){
-    if(!h || !document.body) return;
-    if(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const seenKey = "splitbill-holiday-fall-" + h;
-    try{
-      if(sessionStorage.getItem(seenKey)) return;
-      sessionStorage.setItem(seenKey, "1");
-    }catch(e){}
-    const layer = document.createElement("div");
-    layer.className = "sb-holiday-fall";
-    layer.setAttribute("aria-hidden", "true");
-    let html = "";
-    for(let i = 0; i < 16; i++){
-      const size = 10 + (i * 7) % 11;
-      const left = (i * 37 + 11) % 100;
-      const delay = ((i * 13) % 22) / 10;
-      const dur = 3.4 + ((i * 5) % 16) / 10;
-      const drift = ((i % 2) ? 1 : -1) * (14 + (i * 3) % 26);
-      html += `<i style="left:${left}%;animation-delay:${delay}s;animation-duration:${dur}s;--drift:${drift}px">${glyphSVG(h, size)}</i>`;
-    }
-    layer.innerHTML = html;
-    document.body.appendChild(layer);
-    setTimeout(() => layer.remove(), 7000);
+  // 場景插畫只有節日期間才需要，平常不下載
+  function syncScene(h){
+    if(window.splitbillMountHolidayScene){ window.splitbillMountHolidayScene(h); return; }
+    if(!h || document.body.classList.contains("rc-page")) return;
+    const s = document.createElement("script");
+    s.src = "holiday-scene.js?v=" + (window.APP_VERSION || (typeof APP_VERSION !== "undefined" ? APP_VERSION : ""));
+    s.onload = () => window.splitbillMountHolidayScene(document.documentElement.getAttribute("data-holiday"));
+    document.head.appendChild(s);
   }
 
   function syncDecor(){
     const h = document.documentElement.getAttribute("data-holiday");
     syncGreeting(h);
-    syncBand(h);
+    syncScene(h);
     const meta = document.querySelector('meta[name="theme-color"]');
     if(meta && document.body){
       const bg = getComputedStyle(document.body).backgroundColor;
@@ -149,11 +118,9 @@
     }
   }
 
-  const active = apply();
+  apply();
   function onReady(){
     syncDecor();
-    // 年度回顧是滿版的，不用再疊飄落動畫
-    if(!document.body.classList.contains("rc-page")) playFall(active);
   }
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", onReady);
   else onReady();

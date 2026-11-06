@@ -25,6 +25,7 @@ const APP_SHELL = [
   "theme.css",
   "theme.js",
   "holiday.js",
+  "holiday-scene.js",
   "recap.js",
   "recap.css",
   "shared-ui.js",
