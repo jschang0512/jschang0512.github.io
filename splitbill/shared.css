@@ -9768,6 +9768,12 @@ html body .sb-record-rows{ margin:16px 0 0; padding:0; border-top:1px solid var(
 html body .sb-record-rows div{ display:flex; justify-content:space-between; gap:16px; padding:9px 0; border-bottom:1px solid var(--line); font-size:14px; }
 html body .sb-record-rows dt{ flex:none; color:var(--ink-soft); }
 html body .sb-record-rows dd{ margin:0; min-width:0; font-weight:600; text-align:right; overflow-wrap:anywhere; }
+html body .sb-record-rows div.is-people{ flex-wrap:wrap; }
+html body .sb-record-people{ display:flex !important; flex-wrap:wrap; justify-content:flex-start !important; gap:6px 12px; flex-basis:100%; padding:2px 0 0 !important; border:0 !important; }
+html body .sb-record-people button{ display:flex; flex-direction:column; align-items:center; gap:3px; width:58px; min-height:44px; padding:2px 0; border:0; border-radius:10px; background:none; color:var(--ink); font:inherit; font-size:12px; cursor:pointer; }
+html body .sb-record-people button span:last-child{ max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+html body .sb-record-people button:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:1px; }
+html body #memberProfileModal{ z-index:10000; }
 html body .sb-record-actions{ display:flex; gap:10px; margin-top:16px; }
 html body .sb-record-actions button{ flex:1; min-height:46px; border-radius:12px; font:inherit; font-size:15px; font-weight:700; cursor:pointer; white-space:nowrap; }
 html body .sb-record-edit{ border:1px solid var(--card-border); background:transparent; color:var(--ink); }

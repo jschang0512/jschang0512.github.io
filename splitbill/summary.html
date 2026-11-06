@@ -29,18 +29,18 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=936">
-<link rel="stylesheet" href="shared.css?v=936">
-<script src="holiday.js?v=936"></script>
+<link rel="stylesheet" href="theme.css?v=937">
+<link rel="stylesheet" href="shared.css?v=937">
+<script src="holiday.js?v=937"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
-<script src="i18n.js?v=936"></script>
-<script src="currencies.js?v=936"></script>
-<script src="motion.js?v=936"></script>
-<script src="version.js?v=936"></script>
-<script src="notif-text.js?v=936"></script>
-<script src="shared-ui.js?v=936"></script>
-<script src="theme.js?v=936" defer></script>
-<script src="app-banner.js?v=936" defer></script>
+<script src="i18n.js?v=937"></script>
+<script src="currencies.js?v=937"></script>
+<script src="motion.js?v=937"></script>
+<script src="version.js?v=937"></script>
+<script src="notif-text.js?v=937"></script>
+<script src="shared-ui.js?v=937"></script>
+<script src="theme.js?v=937" defer></script>
+<script src="app-banner.js?v=937" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -2454,7 +2454,7 @@ renderNavLinks();
           rows: [
             { label: t("record.category"), value: catMeta.name || "" },
             { label: t("record.payer"), value: (payers || []).map(x => quickMemberName(x.member_id)).join("、") },
-            { label: t("record.split"), value: (shares || []).length > 1 ? t("receipt.splitAmong", {count: shares.length}) : t("receipt.personalOnly") },
+            { label: t("record.split"), value: (shares || []).length > 1 ? t("receipt.splitAmong", {count: shares.length}) : t("receipt.personalOnly"), people: (shares || []).map(x => (window.memberRows || []).find(m => m.id === x.member_id) || { id: x.member_id, name: quickMemberName(x.member_id) }) },
             ...(myShare ? [{ label: t("record.myShare"), value: sym + formatAmt(myShare.amount) }] : []),
             { label: t("record.date"), value: expense_date },
             ...(noteVal ? [{ label: t("record.note"), value: noteVal }] : [])

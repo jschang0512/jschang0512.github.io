@@ -2099,7 +2099,7 @@
           rows: [
             { label: t("record.category"), value: catMeta.name || "" },
             { label: t("record.payer"), value: payerNames },
-            { label: t("record.split"), value: (shares || []).length > 1 ? t("receipt.splitAmong", {count: shares.length}) : t("receipt.personalOnly") },
+            { label: t("record.split"), value: (shares || []).length > 1 ? t("receipt.splitAmong", {count: shares.length}) : t("receipt.personalOnly"), people: (shares || []).map(s => memberRows.find(m => m.id === s.member_id) || { id: s.member_id, name: memberById[s.member_id] || "?" }) },
             ...(myShare ? [{ label: t("record.myShare"), value: SYM + formatAmt(myShare.amount) }] : []),
             { label: t("record.date"), value: expense_date },
             ...(itemNote ? [{ label: t("record.note"), value: itemNote }] : [])

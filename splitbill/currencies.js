@@ -949,7 +949,7 @@ function renderAvatarHTML(memberOrName, sizeClass = "avatar-sm"){
 }
 
 // 記帳／還款成功的彈出視窗：列出這筆的內容，要按「確認」或「編輯」才關閉。
-// rows 是 [{ label, value }]；onEdit 不給就不顯示編輯按鈕。關閉時發出
+// rows 是 [{ label, value }]，要列人的話給 people（成員物件陣列）；onEdit 不給就不顯示編輯按鈕。關閉時發出
 // splitbill-record-closed，節日彩蛋會等這個視窗關了才播。
 function showRecordSuccess({ title, headline, amount, rows = [], onEdit = null, targetListEl = null }){
   const overlay = document.createElement("div");
@@ -964,7 +964,7 @@ function showRecordSuccess({ title, headline, amount, rows = [], onEdit = null, 
     <div class="sb-record-title">${escapeHtml(title)}</div>
     <div class="sb-record-headline">${escapeHtml(headline)}</div>
     <div class="sb-record-amount">${escapeHtml(amount)}</div>
-    <dl class="sb-record-rows">${rows.map(r => `<div><dt>${escapeHtml(r.label)}</dt><dd>${escapeHtml(r.value)}</dd></div>`).join("")}</dl>
+    <dl class="sb-record-rows">${rows.map(r => r.people ? `<div class="is-people"><dt>${escapeHtml(r.label)}</dt><dd>${escapeHtml(r.value)}</dd><div class="sb-record-people">${r.people.map(m => `<button type="button" data-member="${escapeHtml(m.id)}">${renderAvatarHTML(m, "avatar-md")}<span>${escapeHtml(m.name)}</span></button>`).join("")}</div></div>` : `<div><dt>${escapeHtml(r.label)}</dt><dd>${escapeHtml(r.value)}</dd></div>`).join("")}</dl>
     <div class="sb-record-actions">
       ${onEdit ? `<button type="button" class="sb-record-edit">${escapeHtml(t("common.edit"))}</button>` : ""}
       <button type="button" class="sb-record-ok">${escapeHtml(t("record.confirm"))}</button>
@@ -998,6 +998,10 @@ function showRecordSuccess({ title, headline, amount, rows = [], onEdit = null, 
     if(e.key === "Escape") confirm();
   }
   document.addEventListener("keydown", onKey);
+  // 點頭像由全站共用的頭像點擊處理開個人資料，這裡補上點名字也能開
+  pop.querySelectorAll("[data-member]").forEach(b => b.addEventListener("click", e => {
+    if(!e.target.closest(".sb-avatar") && window.showMemberProfileModal) window.showMemberProfileModal(b.dataset.member);
+  }));
   pop.querySelector(".sb-record-ok").addEventListener("click", confirm);
   const editBtn = pop.querySelector(".sb-record-edit");
   if(editBtn) editBtn.addEventListener("click", () => close(onEdit));
