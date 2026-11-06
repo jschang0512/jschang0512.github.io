@@ -195,6 +195,34 @@
         <g fill="#E46C9B"><path transform="translate(226 44) scale(.3)" d="${HEART}"/><path transform="translate(268 104) scale(.2)" d="${HEART}"/><path transform="translate(30 30) scale(.22)" d="${HEART}"/></g>`),
       right: svg("sb-scene-r", true, heart(342, 30, 1.25, 0, "#FFFFFF", "#FFD9E5") + heart(244, 14, .84, -1.6, "#FFC2D6", "#FBA7C2") + far(heart(164, 44, .58, -2.8, "#FFFFFF", "#FFD9E5")))
     },
+    lantern: {
+      status: "#33205F", particle: "star", count: 8,
+      ground: { h: 24, w: 60, img: tile(60, 24, `<path d="M0 24V12q15-12 30 0t30 0v12z" fill="#241547"/><path d="M0 12q15-12 30 0t30 0" fill="none" stroke="${GOLD}" stroke-opacity=".6" stroke-width="1.2"/>`) },
+      left: svg("sb-scene-l", false, `
+        <g transform="translate(128 152)">
+          <path d="M-22-74c-8-8 8-14 0-24M6-78c-8-8 8-14 0-24" fill="none" stroke="${CREAM}" stroke-opacity=".55" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="-30" cy="-42" r="19" fill="#FFF3EE"/><circle cx="4" cy="-46" r="20" fill="#FFC9D6"/><circle cx="34" cy="-40" r="17" fill="${CREAM}"/>
+          <circle cx="-36" cy="-48" r="4" fill="#FFFFFF"/><circle cx="-3" cy="-53" r="4" fill="#FFE3EA"/>
+          <path d="M-76-30h152c-6 30-30 46-54 46h-44c-24 0-48-16-54-46z" fill="#F7F2E6"/>
+          <path d="M0-30h76c-6 30-30 46-54 46H0z" fill="#E6DFCF"/>
+          <path d="M-78-32h156" stroke="#C8362B" stroke-width="5" stroke-linecap="round"/>
+          <path d="M-52-12q10 10 20 0t20 0 20 0 20 0 20 0" fill="none" stroke="#3E6FB0" stroke-width="2.4"/>
+        </g>`),
+      right: svg("sb-scene-r", true, lantern(344, 16, .98, 0, false) + lantern(250, 4, .72, -1.4, false) + far(lantern(168, 26, .56, -2.6, false)))
+    },
+    qixi: {
+      status: "#1E1A4F", particle: "star", count: 10,
+      ground: { h: 20, w: 120, img: tile(120, 20, `<rect y="8" width="120" height="12" fill="#2C2670"/><g fill="#F7F2E6"><circle cx="14" cy="6" r="1.6"/><circle cx="44" cy="12" r="1.2"/><circle cx="76" cy="5" r="1.8"/><circle cx="104" cy="13" r="1.3"/></g>`) },
+      left: svg("sb-scene-l", false, `
+        <path d="M30 150Q170 30 310 150" fill="none" stroke="#3B3390" stroke-width="16" stroke-linecap="round"/>
+        <path d="M30 150Q170 30 310 150" fill="none" stroke="${CREAM}" stroke-width="2" stroke-dasharray="3 12" stroke-linecap="round"/>
+        ${[[92,78,1],[138,60,1],[206,60,-1],[252,78,-1]].map(([x, y, d]) => `<g transform="translate(${x} ${y}) scale(${d} 1)"><path d="M-16 4c6-12 22-14 32-6l10-1-8 6c-2 10-14 14-24 10l-14 6 6-9z" fill="#F7F2E6"/><path d="M-6 2c-4-8-2-16 6-20 6 6 8 14 4 22z" fill="#5B55C8"/><circle cx="14" cy="-1" r="1.4" fill="#1E1A4F"/></g>`).join("")}`),
+      right: svg("sb-scene-r", true, `
+        <path d="M340 18a54 54 0 1 0 40 92 44 44 0 0 1-40-92z" fill="#F7DA8C"/>
+        <g fill="#FFC9D6"><path d="M250 44l4 12 12 4-12 4-4 12-4-12-12-4 12-4z"/></g>
+        <g fill="#BFD8FF"><path d="M196 92l3 9 9 3-9 3-3 9-3-9-9-3 9-3z"/></g>
+        <path d="M250 60L196 104" stroke="${CREAM}" stroke-opacity=".5" stroke-width="1.2" stroke-dasharray="3 5"/>`)
+    },
     newyear: {
       status: "#1B2458", particle: "star", count: 8,
       ground: { h: 34, w: 220, img: tile(220, 34, `<path d="M0 34V18h22V8h26v14h18V2h24v18h20V12h30v10h22V6h26v16h32v12z" fill="#10173F"/><g fill="${GOLD}"><rect x="28" y="14" width="4" height="4"/><rect x="38" y="20" width="4" height="4"/><rect x="72" y="8" width="4" height="4"/><rect x="82" y="16" width="4" height="4"/><rect x="72" y="24" width="4" height="4"/><rect x="118" y="18" width="4" height="4"/><rect x="130" y="24" width="4" height="4"/><rect x="168" y="12" width="4" height="4"/><rect x="180" y="20" width="4" height="4"/></g>`) },
@@ -214,6 +242,39 @@
     }
     return html;
   }
+
+  // 結清彩蛋：畫面中央出現節日主角，由暗轉亮，周圍散開幾顆平塗的小點。
+  function heartEmblem(){
+    return `<g transform="translate(100 62) scale(1.5)"><path d="${HEART}" fill="#E23D76"/><path d="M0 12c12-16 34-14 34 8 0 20-22 32-34 44z" fill="#C2285F"/></g>`;
+  }
+  const EMBLEMS = {
+    lunar: () => lantern(100, 36, 1.5, 0, true),
+    lantern: () => lantern(100, 36, 1.5, 0, false),
+    christmas: () => pine(100, 186, 158, "#1F6650", "#0E3A2D", true) + `<path d="M100 8l6 14 15 1-11 10 4 15-14-8-14 8 4-15-11-10 15-1z" fill="${GOLD}"/>`,
+    midautumn: () => `<circle cx="100" cy="100" r="76" fill="#F7DA8C"/><path d="M100 24a76 76 0 0 1 0 152 92 92 0 0 0 0-152z" fill="#EFC768"/><g fill="#E3B654"><circle cx="72" cy="80" r="14"/><circle cx="120" cy="126" r="18"/></g>`,
+    halloween: () => pumpkin(100, 112, 1.25),
+    dragonboat: () => `<g transform="translate(100 44) scale(2.4)"><path d="M0 2c8 0 24 30 24 40 0 6-48 6-48 0C-24 32-8 2 0 2z" fill="#3E9C78"/><path d="M0 2c8 0 24 30 24 40 0 3-12 4-24 4z" fill="#2F8F72"/><path d="M-18 28h36" stroke="${CREAM}" stroke-width="2.4"/></g>`,
+    valentine: heartEmblem,
+    qixi: heartEmblem,
+    newyear: () => `<g stroke-linecap="round"><g stroke="${GOLD}" stroke-width="3">${ring(100, 100, 78, 18, .42, GOLD, 3)}</g><g stroke="#F2A7C3" stroke-width="3.5">${ring(100, 100, 42, 10, .5, "#F2A7C3", 3.5)}</g><circle cx="100" cy="100" r="9" fill="${GOLD}"/></g>`
+  };
+  const SPARK_COLORS = [GOLD, "#F2A7C3", "#8FD0EC", CREAM];
+  window.splitbillHolidayCelebrate = function(){
+    const h = document.documentElement.getAttribute("data-holiday");
+    if(!h || !EMBLEMS[h] || document.querySelector(".sb-moment")) return;
+    const el = document.createElement("div");
+    el.className = "sb-moment";
+    el.setAttribute("role", "status");
+    let sparks = "";
+    for(let i = 0; i < 14; i++){
+      const a = i / 14 * Math.PI * 2, r = 130 + (i % 3) * 26;
+      sparks += `<i style="--dx:${(Math.cos(a) * r).toFixed(0)}px;--dy:${(Math.sin(a) * r).toFixed(0)}px;background:${SPARK_COLORS[i % 4]}"></i>`;
+    }
+    el.innerHTML = `<div class="sb-moment-stage">${sparks}<svg viewBox="0 0 200 200" aria-hidden="true">${EMBLEMS[h]()}</svg></div><p></p>`;
+    el.lastElementChild.textContent = t("holiday.settled");
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 2800);
+  };
 
   let observer = null;
   function placeHeight(scene){

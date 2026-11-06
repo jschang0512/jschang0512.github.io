@@ -4429,6 +4429,8 @@
 
   // 每人淨餘額改成呼叫資料庫的 member_balances() 函式算，不在前端重算，
   // 跟總覽頁共用同一份邏輯，不會有算法不一致的風險。
+  let lastMyBalanceCls = null;
+  let lastRepaymentCount = null;
   async function renderBalances(expenses, repayments, preFetchedBalances){
     const { data: balRows, error: balError } = preFetchedBalances || await sb.rpc("member_balances", { p_since: null });
     // 讀不到餘額就先不要動畫面——不然全部人會被算成 0，顯示「已結清 🎉」，
@@ -4460,6 +4462,12 @@
     if(myMember){
       const myAmt = balance[myMember.id] || 0;
       const myCls = myAmt > 0.05 ? "pos" : myAmt < -0.05 ? "neg" : "zero";
+      // 節日彩蛋：只在這次畫面更新是因為多了一筆還款、讓我從有欠款變成結清時才播
+      const justSettled = myCls === "zero" && lastMyBalanceCls && lastMyBalanceCls !== "zero"
+        && lastRepaymentCount !== null && (repayments || []).length > lastRepaymentCount;
+      if(justSettled && window.splitbillHolidayCelebrate) window.splitbillHolidayCelebrate();
+      lastMyBalanceCls = myCls;
+      lastRepaymentCount = (repayments || []).length;
       const myAbs = Math.abs(myAmt);
       const myBalanceAmtEl = document.getElementById("myBalanceAmt");
       if(myBalanceAmtEl){
