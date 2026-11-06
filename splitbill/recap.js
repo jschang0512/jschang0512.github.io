@@ -468,12 +468,12 @@
     ].filter(Boolean);
     ctx.finalRows = finalRows;
     ctx.tiles = [
-      { bg:"#4F5599", fg:"#FFFFFF", soft:"#DADCF6", label:t("recap.finalTotal"), value:moneyText(base, stats.total), sub:t("recap.totalDetail", { count:stats.count, days:stats.days.size }) },
-      { bg:"#6E1D3A", fg:"#FFFFFF", soft:"#F3CFDA", label:t("recap.priciestLabel"), value:moneyText(base, p.myShare), sub:p.title },
+      { ...SHARE_TONES.cream, label:t("recap.finalTotal"), value:moneyText(base, stats.total), sub:t("recap.totalDetail", { count:stats.count, days:stats.days.size }) },
+      { ...SHARE_TONES.indigo, label:t("recap.priciestLabel"), value:moneyText(base, p.myShare), sub:p.title },
       ctx.partnerName
-        ? { bg:"#F6EEDF", fg:"#2A2233", soft:"#6A5E55", label:t(partner.meal ? "recap.partnerFoodLabel" : "recap.partnerAllLabel"), value:ctx.partnerName, sub:t(partner.meal ? "recap.partnerFoodDetail" : "recap.partnerAllDetail", { count:partner.count }) }
-        : { bg:"#F6EEDF", fg:"#2A2233", soft:"#6A5E55", label:t("recap.avgLabel"), value:moneyText(base, perDay), sub:t("recap.avgDetail", { amount:moneyText(base, stats.total / stats.count) }) },
-      { bg:"#0E4A30", fg:"#FFFFFF", soft:"#BFE3CF", label:t("recap.monthLabel"), value:monthName(peak), sub:t("recap.monthDetail", { amount:moneyText(base, peakAmt) }) }
+        ? { ...SHARE_TONES.indigo, label:t(partner.meal ? "recap.partnerFoodLabel" : "recap.partnerAllLabel"), value:ctx.partnerName, sub:t(partner.meal ? "recap.partnerFoodDetail" : "recap.partnerAllDetail", { count:partner.count }) }
+        : { ...SHARE_TONES.indigo, label:t("recap.avgLabel"), value:moneyText(base, perDay), sub:t("recap.avgDetail", { amount:moneyText(base, stats.total / stats.count) }) },
+      { ...SHARE_TONES.rose, label:t("recap.monthLabel"), value:monthName(peak), sub:t("recap.monthDetail", { amount:moneyText(base, peakAmt) }) }
     ];
     const canShare = !!(navigator.canShare && navigator.share);
     out.push(slideHTML("is-final", 330, `
@@ -499,6 +499,13 @@
     }
     return s;
   }
+  // 分享圖只用靛藍、米白、玫瑰三個色系，類別原本的鮮豔色放在一起會太花
+  const SHARE_TONES = {
+    cream:{ bg:"#F6EEDF", fg:"#23254F", soft:"#5F5A6E" },
+    indigo:{ bg:"#343772", fg:"#F5F4FF", soft:"#C9CCF2" },
+    rose:{ bg:"#F0B8C8", fg:"#3F1630", soft:"#6B2C48" }
+  };
+  const SHARE_PIE = ["#F6EEDF", "#F0B8C8", "#9298D2", "#565A9C"];
   const FONT = '"Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif';
   function truncate(c, text, maxW){
     if(c.measureText(text).width <= maxW) return text;
@@ -576,9 +583,9 @@
     // 花費圓餅和圖例
     const pieTop = yearBase + 176, radius = 176;
     const cats = ctx.stats.catList;
-    const shown = cats.slice(0, 3).map(s => ({ name: s.meta.name, amount: s.amount, color: s.meta.color }));
+    const shown = cats.slice(0, 3).map((s, i) => ({ name: s.meta.name, amount: s.amount, color: SHARE_PIE[i] }));
     const rest = cats.slice(3).reduce((sum, s) => sum + s.amount, 0);
-    if(rest > 0) shown.push({ name: t("recap.otherCat"), amount: rest, color: "#8C8FB8" });
+    if(rest > 0) shown.push({ name: t("recap.otherCat"), amount: rest, color: SHARE_PIE[3] });
     const pieX = PAD + radius + 10, pieY = pieTop + radius + 10;
     drawYearPie(c, pieX, pieY, radius, shown);
 
