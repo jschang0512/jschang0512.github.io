@@ -489,7 +489,7 @@
     return out;
   }
 
-  // ---------- 分享圖：1080×1350，直接畫，不靠截圖 ----------
+  // ---------- 分享圖：1080×1920（手機直式），直接畫，不靠截圖 ----------
   function fitFont(c, text, weight, size, maxW){
     let s = size;
     c.font = `${weight} ${s}px ${FONT}`;
@@ -540,7 +540,7 @@
     if(document.fonts && document.fonts.load){
       await Promise.all([document.fonts.load(`900 120px ${FONT}`), document.fonts.load(`700 44px ${FONT}`), document.fonts.load(`600 30px ${FONT}`)]).catch(()=>{});
     }
-    const W = 1080, H = 1350, PAD = 64, INNER = W - PAD * 2;
+    const W = 1080, H = 1920, PAD = 84, INNER = W - PAD * 2;
     const INK = "#F5F4FF", SOFT = "#C9CCF2";
     const canvas = document.createElement("canvas");
     canvas.width = W; canvas.height = H;
@@ -550,12 +550,12 @@
     c.textBaseline = "alphabetic";
 
     c.fillStyle = SOFT;
-    c.font = `700 28px ${FONT}`;
+    c.font = `700 30px ${FONT}`;
     c.textAlign = "left";
-    c.fillText("SPLITBILL", PAD, 92);
+    c.fillText("SPLITBILL", PAD, 132);
     c.textAlign = "right";
-    c.font = `600 28px ${FONT}`;
-    c.fillText(truncate(c, ctx.groupName, INNER - 240), W - PAD, 92);
+    c.font = `600 30px ${FONT}`;
+    c.fillText(truncate(c, ctx.groupName, INNER - 260), W - PAD, 132);
     c.textAlign = "left";
 
     // 年份撐滿整個版面寬，是這張圖的主角
@@ -565,16 +565,16 @@
     yearSize = Math.floor(yearSize * INNER / c.measureText(yearText).width);
     c.font = `900 ${yearSize}px ${FONT}`;
     c.fillStyle = "#F6EEDF";
-    const yearBase = 124 + c.measureText(yearText).actualBoundingBoxAscent;
+    const yearBase = 186 + c.measureText(yearText).actualBoundingBoxAscent;
     c.fillText(yearText, PAD + c.measureText(yearText).actualBoundingBoxLeft, yearBase);
 
     const title = t("recap.coverTitle", { name: ctx.myName });
     c.fillStyle = INK;
-    fitFont(c, title, 700, 46, INNER);
-    c.fillText(title, PAD, yearBase + 74);
+    fitFont(c, title, 700, 52, INNER);
+    c.fillText(title, PAD, yearBase + 104);
 
     // 花費圓餅和圖例
-    const pieTop = yearBase + 112, radius = 132;
+    const pieTop = yearBase + 176, radius = 176;
     const cats = ctx.stats.catList;
     const shown = cats.slice(0, 3).map(s => ({ name: s.meta.name, amount: s.amount, color: s.meta.color }));
     const rest = cats.slice(3).reduce((sum, s) => sum + s.amount, 0);
@@ -582,46 +582,46 @@
     const pieX = PAD + radius + 10, pieY = pieTop + radius + 10;
     drawYearPie(c, pieX, pieY, radius, shown);
 
-    const legendX = PAD + radius * 2 + 76, rowH = 62;
+    const legendX = PAD + radius * 2 + 84, rowH = 84;
     let ly = pieY - (shown.length - 1) * rowH / 2;
     shown.forEach(s => {
       const pct = Math.round(s.amount / ctx.stats.total * 100) + "%";
       c.fillStyle = s.color;
-      roundRectPath(c, legendX, ly - 13, 26, 26, 7);
+      roundRectPath(c, legendX, ly - 14, 28, 28, 8);
       c.fill();
       c.textBaseline = "middle";
       c.fillStyle = INK;
-      c.font = `700 34px ${FONT}`;
+      c.font = `700 38px ${FONT}`;
       c.textAlign = "right";
       c.fillText(pct, W - PAD, ly + 1);
       const pctW = c.measureText(pct).width;
       c.textAlign = "left";
-      c.font = `600 32px ${FONT}`;
-      c.fillText(truncate(c, s.name, W - PAD - pctW - 24 - legendX - 44), legendX + 44, ly + 1);
+      c.font = `600 34px ${FONT}`;
+      c.fillText(truncate(c, s.name, W - PAD - pctW - 24 - legendX - 48), legendX + 48, ly + 1);
       c.textBaseline = "alphabetic";
       ly += rowH;
     });
 
     // 下方四格：跟回顧卡片同一套底色
-    const gap = 16, tileW = (INNER - gap) / 2;
-    const tilesTop = pieTop + radius * 2 + 54;
+    const gap = 24, tileW = (INNER - gap) / 2;
+    const tilesTop = pieTop + radius * 2 + 104;
     const tileH = (H - PAD - tilesTop - gap) / 2;
     ctx.tiles.forEach((tile, i) => {
       const x = PAD + (i % 2) * (tileW + gap);
       const y = tilesTop + Math.floor(i / 2) * (tileH + gap);
       c.fillStyle = tile.bg;
-      roundRectPath(c, x, y, tileW, tileH, 30);
+      roundRectPath(c, x, y, tileW, tileH, 36);
       c.fill();
-      const tx = x + 30, maxW = tileW - 60;
+      const tx = x + 40, maxW = tileW - 80;
       c.fillStyle = tile.soft;
-      c.font = `600 27px ${FONT}`;
-      c.fillText(truncate(c, tile.label, maxW), tx, y + 50);
+      c.font = `600 30px ${FONT}`;
+      c.fillText(truncate(c, tile.label, maxW), tx, y + 72);
       c.fillStyle = tile.fg;
-      fitFont(c, tile.value, 900, 56, maxW);
-      c.fillText(tile.value, tx, y + tileH / 2 + 22);
+      fitFont(c, tile.value, 900, 68, maxW);
+      c.fillText(tile.value, tx, y + tileH - 104);
       c.fillStyle = tile.soft;
-      c.font = `600 26px ${FONT}`;
-      c.fillText(truncate(c, tile.sub, maxW), tx, y + tileH - 24);
+      c.font = `600 28px ${FONT}`;
+      c.fillText(truncate(c, tile.sub, maxW), tx, y + tileH - 46);
     });
     return new Promise(resolve => canvas.toBlob(resolve, "image/png"));
   }
