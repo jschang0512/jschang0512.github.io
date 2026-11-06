@@ -9781,3 +9781,45 @@ html body .matrix-legend-swatch.is-other{ background:#F0F0F3; box-shadow:inset 0
 :root[data-theme="dark"] body .matrix-legend-swatch.is-owes-me{ background:linear-gradient(90deg, color-mix(in srgb, #2FA35A 18%, var(--card)), #2FA35A); }
 :root[data-theme="dark"] body .matrix-legend-swatch.is-i-owe{ background:linear-gradient(90deg, color-mix(in srgb, #D9465B 18%, var(--card)), #D9465B); }
 :root[data-theme="dark"] body .matrix-legend-swatch.is-other{ background:#202027; }
+
+/* ---------- 節日主題：holiday.js 掛上 data-holiday 才生效 ----------
+   只換品牌色、底色跟淡色，綠／紅仍然保留給金額，不跟著節日變。 */
+:root[data-holiday="newyear"]{ --bg-canvas:#F7F4EC; --tint:#F5EEDC; --btn-primary:#8C6A12; --gold:#8C6A12; --logo-1:#8C6A12; --logo-2:#C49A2E; --logo-3:#E3C675; --logo-grad-a:#8C6A12; --logo-grad-b:#E3C675; --holiday-glyph:#B8891F; }
+:root[data-holiday="lunar"]{ --bg-canvas:#FAF3EE; --tint:#FBE9E4; --btn-primary:#C0272D; --gold:#C0272D; --logo-1:#C0272D; --logo-2:#E0A526; --logo-3:#EE8A5A; --logo-grad-a:#C0272D; --logo-grad-b:#E0A526; --holiday-glyph:#C0272D; }
+:root[data-holiday="valentine"]{ --bg-canvas:#FAF3F6; --tint:#FBE8F0; --btn-primary:#C2366E; --gold:#C2366E; --logo-1:#C2366E; --logo-2:#E46C9B; --logo-3:#F3A9C6; --logo-grad-a:#C2366E; --logo-grad-b:#F3A9C6; --holiday-glyph:#D94C86; }
+:root[data-holiday="dragonboat"]{ --bg-canvas:#F2F6F1; --tint:#E4F2EA; --btn-primary:#2F7D5B; --gold:#2F7D5B; --logo-1:#2F7D5B; --logo-2:#6FAF7F; --logo-3:#C2A25A; --logo-grad-a:#2F7D5B; --logo-grad-b:#8CC6A0; --holiday-glyph:#2F7D5B; }
+:root[data-holiday="midautumn"]{ --bg-canvas:#F3F3F6; --tint:#ECEEF8; --btn-primary:#3B4A8C; --gold:#3B4A8C; --logo-1:#3B4A8C; --logo-2:#D9A93A; --logo-3:#8C96C8; --logo-grad-a:#3B4A8C; --logo-grad-b:#D9A93A; --holiday-glyph:#D9A93A; }
+:root[data-holiday="halloween"]{ --bg-canvas:#F8F3EC; --tint:#FBEBDD; --btn-primary:#B04A06; --gold:#B04A06; --logo-1:#B04A06; --logo-2:#6B3FA0; --logo-3:#F0A050; --logo-grad-a:#B04A06; --logo-grad-b:#6B3FA0; --holiday-glyph:#E06A12; }
+:root[data-holiday="christmas"]{ --bg-canvas:#F4F6F1; --tint:#E5F2EA; --btn-primary:#1F7A4D; --gold:#1F7A4D; --logo-1:#1F7A4D; --logo-2:#C8313A; --logo-3:#D9A93A; --logo-grad-a:#1F7A4D; --logo-grad-b:#C8313A; --holiday-glyph:#1F7A4D; }
+:root[data-theme="dark"][data-holiday="newyear"]{ --bg-canvas:#131210; --tint:#2E2816; --btn-primary:#8C6A12; --gold:#E8C468; --logo-1:#E8C468; --logo-2:#C49A2E; --logo-3:#8C6A12; --logo-grad-b:#E8C468; --holiday-glyph:#E8C468; }
+:root[data-theme="dark"][data-holiday="lunar"]{ --bg-canvas:#15100F; --tint:#33191A; --btn-primary:#B3262C; --gold:#F2B84B; --logo-1:#F2B84B; --logo-2:#E0554F; --logo-3:#B3262C; --logo-grad-a:#B3262C; --logo-grad-b:#F2B84B; --holiday-glyph:#F2B84B; }
+:root[data-theme="dark"][data-holiday="valentine"]{ --bg-canvas:#151013; --tint:#33192A; --btn-primary:#B8326A; --gold:#F49AC1; --logo-1:#F49AC1; --logo-2:#E46C9B; --logo-3:#B8326A; --logo-grad-a:#B8326A; --logo-grad-b:#F49AC1; --holiday-glyph:#F49AC1; }
+:root[data-theme="dark"][data-holiday="dragonboat"]{ --bg-canvas:#0F1412; --tint:#1A2E25; --btn-primary:#2F7D5B; --gold:#86D6AE; --logo-1:#86D6AE; --logo-2:#4FA27C; --logo-3:#C2A25A; --logo-grad-b:#86D6AE; --holiday-glyph:#86D6AE; }
+:root[data-theme="dark"][data-holiday="midautumn"]{ --bg-canvas:#10111A; --tint:#232846; --btn-primary:#3F4F96; --gold:#F0CF7A; --logo-1:#F0CF7A; --logo-2:#8C96C8; --logo-3:#3F4F96; --logo-grad-a:#3F4F96; --logo-grad-b:#F0CF7A; --holiday-glyph:#F0CF7A; }
+:root[data-theme="dark"][data-holiday="halloween"]{ --bg-canvas:#14100C; --tint:#33220F; --btn-primary:#B64D08; --gold:#F5A14F; --logo-1:#F5A14F; --logo-2:#A583D6; --logo-3:#B64D08; --logo-grad-a:#B64D08; --logo-grad-b:#A583D6; --holiday-glyph:#F5A14F; }
+:root[data-theme="dark"][data-holiday="christmas"]{ --bg-canvas:#0F1412; --tint:#1A2E24; --btn-primary:#1F7A4D; --gold:#7FD3A5; --logo-1:#7FD3A5; --logo-2:#E0555D; --logo-3:#D9A93A; --logo-grad-b:#E0555D; --holiday-glyph:#7FD3A5; }
+html body .sb-holiday-greet{ display:inline-flex; align-items:center; gap:5px; margin-left:8px; padding:3px 9px 3px 7px; border-radius:999px; background:var(--tint); color:var(--ink); font-size:12px; font-weight:600; line-height:1.4; white-space:nowrap; vertical-align:middle; }
+html body .sb-holiday-greet svg{ color:var(--holiday-glyph); flex:none; }
+html body .sb-holiday-fall{ position:fixed; inset:0; z-index:40; overflow:hidden; pointer-events:none; }
+html body .sb-holiday-fall i{ position:absolute; top:-28px; color:var(--holiday-glyph); opacity:0; animation:sbHolidayFall linear forwards; }
+@keyframes sbHolidayFall{
+  0%{ transform:translate3d(0,0,0) rotate(0deg); opacity:0; }
+  12%{ opacity:.85; }
+  80%{ opacity:.7; }
+  100%{ transform:translate3d(var(--drift),105vh,0) rotate(200deg); opacity:0; }
+}
+
+/* 首頁的年度回顧入口 */
+html body .recap-entry{ display:flex; align-items:center; gap:14px; margin-bottom:14px; padding:14px 16px; border-radius:16px; background:#23254F; color:#F5F4FF; text-decoration:none; overflow:hidden; position:relative; }
+html body .recap-entry:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+html body .recap-entry-mark{ width:42px; height:42px; flex:none; }
+html body .recap-entry-mark .s1{ fill:#9298D2; }
+html body .recap-entry-mark .s2{ fill:#F0B8C8; }
+html body .recap-entry-mark .s3{ fill:#636AB1; }
+html body .recap-entry-text{ min-width:0; flex:1; }
+html body .recap-entry-title{ font-size:16px; font-weight:700; line-height:1.35; }
+html body .recap-entry-hint{ font-size:12.5px; line-height:1.45; color:#C9CCF2; }
+html body .recap-entry-go{ flex:none; font-size:20px; color:#C9CCF2; }
+html body .recap-entry.hidden{ display:none; }
+html body .recap-entry-title, html body .recap-entry-hint{ display:block; }
+html body .sb-holiday-band{ position:absolute; top:0; left:0; right:0; height:132px; z-index:0; pointer-events:none; background:var(--holiday-glyph); opacity:.16; -webkit-mask-repeat:repeat, no-repeat; mask-repeat:repeat, no-repeat; -webkit-mask-size:64px 44px, 100% 100%; mask-size:64px 44px, 100% 100%; -webkit-mask-composite:source-in; mask-composite:intersect; }

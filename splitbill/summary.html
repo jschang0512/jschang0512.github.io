@@ -29,17 +29,18 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=919">
-<link rel="stylesheet" href="shared.css?v=919">
+<link rel="stylesheet" href="theme.css?v=920">
+<link rel="stylesheet" href="shared.css?v=920">
+<script src="holiday.js?v=920"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
-<script src="i18n.js?v=919"></script>
-<script src="currencies.js?v=919"></script>
-<script src="motion.js?v=919"></script>
-<script src="version.js?v=919"></script>
-<script src="notif-text.js?v=919"></script>
-<script src="shared-ui.js?v=919"></script>
-<script src="theme.js?v=919" defer></script>
-<script src="app-banner.js?v=919" defer></script>
+<script src="i18n.js?v=920"></script>
+<script src="currencies.js?v=920"></script>
+<script src="motion.js?v=920"></script>
+<script src="version.js?v=920"></script>
+<script src="notif-text.js?v=920"></script>
+<script src="shared-ui.js?v=920"></script>
+<script src="theme.js?v=920" defer></script>
+<script src="app-banner.js?v=920" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -137,6 +138,19 @@ if("serviceWorker" in navigator){
       <span class="email-reminder-text" data-i18n="currency.emailReminder">你還沒設定電子信箱，忘記密碼會沒辦法用</span>
       <button type="button" class="link-btn" id="emailReminderBtn" data-i18n="currency.goToSettings">去設定</button>
     </div>
+
+    <a class="recap-entry hidden" id="recapEntry" href="recap.html">
+      <svg class="recap-entry-mark" viewBox="60 90 392 392" aria-hidden="true">
+        <path class="s1" d="M256,238 L118.5,138.1 A170,170 0 0,1 393.5,138.1 Z"/>
+        <path class="s2" d="M271.6,265 L426.9,195.9 A170,170 0 0,1 289.4,434.1 Z"/>
+        <path class="s3" d="M240.4,265 L222.6,434.1 A170,170 0 0,1 85.1,195.9 Z"/>
+      </svg>
+      <span class="recap-entry-text">
+        <span class="recap-entry-title" id="recapEntryTitle"></span>
+        <span class="recap-entry-hint" data-i18n="summary.recapCardHint">花最多的類別、最貴的一筆，一張一張看</span>
+      </span>
+      <span class="recap-entry-go" aria-hidden="true">›</span>
+    </a>
 
     <div class="summary-grid-2">
       <!-- 1. 我的餘額：只顯示有交易紀錄過的幣別 -->
@@ -1247,6 +1261,8 @@ renderNavLinks();
       window.allGroupExpenses = expRes.data || [];
       window.allGroupRepayments = repRes.data || [];
 
+      renderRecapEntry();
+
       // 非核心功能在背景非同步執行
       loadFeedback().catch(e => console.error("loadFeedback error:", e));
       renderRecurringOverview().catch(e => console.error("renderRecurringOverview error:", e));
@@ -1260,6 +1276,19 @@ renderNavLinks();
         await forceLogout();
       }
     }
+  }
+
+  // 年度回顧入口：這一年至少有三筆跟我有關的帳才顯示，一月時看的是去年（跟 recap.js 同一條規則）。
+  function renderRecapEntry(){
+    const entry = document.getElementById("recapEntry");
+    if(!entry) return;
+    const now = new Date();
+    const year = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
+    const mine = (window.allGroupExpenses || []).filter(e => String(e.expense_date || "").startsWith(String(year))
+      && (e.shares || []).some(s => s.member_id === myMember.id && Number(s.amount) > 0));
+    if(mine.length < 3) return;
+    document.getElementById("recapEntryTitle").textContent = t("summary.recapCardTitle", { year });
+    entry.classList.remove("hidden");
   }
 
   // 🔁 週期性支出總覽：純粹用 recurring_expenses 現有資料算出來（依幣別加總金額、

@@ -29,18 +29,19 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=919">
-<link rel="stylesheet" href="shared.css?v=919">
+<link rel="stylesheet" href="theme.css?v=920">
+<link rel="stylesheet" href="shared.css?v=920">
+<script src="holiday.js?v=920"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
-<script src="i18n.js?v=919"></script>
-<script src="currencies.js?v=919"></script>
-<script src="motion.js?v=919"></script>
-<script src="version.js?v=919"></script>
-<script src="notif-text.js?v=919"></script>
-<script src="shared-ui.js?v=919"></script>
-<script src="theme.js?v=919" defer></script>
-<script src="app-banner.js?v=919" defer></script>
+<script src="i18n.js?v=920"></script>
+<script src="currencies.js?v=920"></script>
+<script src="motion.js?v=920"></script>
+<script src="version.js?v=920"></script>
+<script src="notif-text.js?v=920"></script>
+<script src="shared-ui.js?v=920"></script>
+<script src="theme.js?v=920" defer></script>
+<script src="app-banner.js?v=920" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -373,6 +374,22 @@ if("serviceWorker" in navigator){
               </div>
             </div>
             <button class="icon-btn" id="settingsThemeBtn" data-i18n-title="settings.toggleThemeAria" aria-label="切換深色淺色模式"><span class="sb-ico" style="--ico:var(--ico-moon)" aria-hidden="true"></span></button>
+          </div>
+
+          <div class="settings-divider settings-divider-compact"></div>
+
+          <div class="settings-row">
+            <div class="settings-row-lead">
+              <span class="settings-row-icon"><span class="sb-ico" style="--ico:var(--ico-sparkle)" aria-hidden="true"></span></span>
+              <div>
+                <div class="settings-row-title" data-i18n="settings.holidayTitle">節日裝飾</div>
+                <div class="settings-hint settings-row-hint" data-i18n="settings.holidayHint">節日期間換上特別的配色與裝飾</div>
+              </div>
+            </div>
+            <label class="switch-toggle" for="holidayToggle">
+              <input type="checkbox" id="holidayToggle" data-i18n-title="settings.holidayTitle" aria-label="節日裝飾">
+              <span class="switch-slider"></span>
+            </label>
           </div>
 
           <div class="settings-divider settings-divider-compact"></div>
@@ -2102,6 +2119,12 @@ if(backBtn){
     });
   }
   window.addEventListener("splitbill-theme-change", syncSettingsThemeIcon);
+
+  const holidayToggle = document.getElementById("holidayToggle");
+  if(holidayToggle && window.splitbillHolidayEnabled){
+    holidayToggle.checked = window.splitbillHolidayEnabled();
+    holidayToggle.addEventListener("change", ()=> window.splitbillSetHolidayEnabled(holidayToggle.checked));
+  }
 
   // 語言設定改到這裡管理，原本每一頁角落浮動的語言切換鈕拿掉了。
   // SUPPORTED_LANGS／LANG_LABELS 是 i18n.js 開放出來的全域清單，直接
