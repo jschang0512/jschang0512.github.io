@@ -144,7 +144,9 @@ self.addEventListener("fetch", (event) => {
         }
         return response;
       })
-      .catch(() => caches.match(req))
+      // 快取比對要忽略查詢字串：currency.html?c=TWD 這種網址快取裡沒有完全相同的項目，
+      // 比不到會回空值，畫面就整片空白。真的沒有快取時再等一次網路，不要直接放棄。
+      .catch(async () => (await caches.match(req, { ignoreSearch: true })) || fetch(req))
   );
 });
 
