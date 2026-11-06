@@ -990,6 +990,7 @@ function triggerReceiptFlyAnimation(opts = {}){
     </div>
   `;
 
+  if(window.splitbillHolidayDressReceipt) window.splitbillHolidayDressReceipt(paper);
   overlay.appendChild(paper);
   document.body.appendChild(overlay);
 

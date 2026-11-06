@@ -90,7 +90,7 @@
   const GLYPHS = {
     newyear: '<path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z" fill="currentColor"/>',
     lunar: LANTERN_GLYPH,
-    lantern: LANTERN_GLYPH,
+    lantern: '<path d="M3 12h18c0 5-4 9-9 9s-9-4-9-9z" fill="currentColor"/><circle cx="8.5" cy="8.5" r="3" fill="currentColor"/><circle cx="15.5" cy="8.5" r="3" fill="currentColor"/>',
     valentine: '<path d="M12 20.5S3.5 15.3 3.5 9.2A4.7 4.7 0 0 1 12 6.6a4.7 4.7 0 0 1 8.5 2.6c0 6.1-8.5 11.3-8.5 11.3z" fill="currentColor"/>',
     dragonboat: '<path d="M12 3L21 19.5H3z" fill="currentColor"/>',
     qixi: '<path d="M7 3l1.4 4.6L13 9l-4.6 1.4L7 15l-1.4-4.6L1 9l4.6-1.4zM17 10l1.1 3.4 3.4 1.1-3.4 1.1L17 19l-1.1-3.4-3.4-1.1 3.4-1.1z" fill="currentColor"/>',

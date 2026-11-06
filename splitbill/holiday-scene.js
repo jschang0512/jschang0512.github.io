@@ -83,6 +83,42 @@
       <path d="M-32 14q32 26 64 0l-9 2-5 7-8-6-6 8-6-8-6 8-6-8-8 6-5-7z" fill="#FFD66B"/>
     </g>`;
   }
+  function zongzi(x, y, s){
+    return `<g transform="translate(${x} ${y}) scale(${s})">
+      <path d="M0-54C8-54 60 30 60 42c0 8-8 13-16 13h-88c-8 0-16-5-16-13C-60 30-8-54 0-54z" fill="#3E9C78"/>
+      <path d="M0-54C8-54 60 30 60 42c0 8-8 13-16 13H0z" fill="#2F8F72"/>
+      <path d="M-7-42C-22-8-36 20-40 52M0-50V55M7-42C22-8 36 20 40 52M-24-8c6 18 8 38 8 60M24-8c-6 18-8 38-8 60" fill="none" stroke="#1F7558" stroke-width="1.6" stroke-linecap="round"/>
+      <path d="M-13-32L20 54M13-32L-20 54" fill="none" stroke="${CREAM}" stroke-width="3.2" stroke-linecap="round"/>
+      <path d="M-45 8C-16 19 16 19 45 8" fill="none" stroke="${CREAM}" stroke-width="3.6" stroke-linecap="round"/>
+      <path d="M0 14c-8-12-24-10-24 0s16 10 24 0c8-12 24-10 24 0s-16 10-24 0z" fill="none" stroke="${CREAM}" stroke-width="3"/>
+      <circle cx="0" cy="14" r="4.5" fill="${CREAM}"/>
+    </g>`;
+  }
+  function magpie(x, y, s, flip){
+    return `<g transform="translate(${x} ${y}) scale(${flip * s} ${s})">
+      <path d="M-78 34l48-30 12 14-50 28z" fill="#2B2F6B"/>
+      <path d="M-30 8c8-24 36-34 58-20 6 4 8 10 8 16 0 22-24 34-46 30-14-3-24-14-20-26z" fill="#2B2F6B"/>
+      <path d="M-6 20c10 10 32 8 40-8 1 20-22 30-38 24-6-2-6-10-2-16z" fill="#FFFFFF"/>
+      <path d="M-24 6c10-16 30-16 38-3-10 15-26 18-38 3z" fill="#4C6FD0"/>
+      <circle cx="26" cy="-14" r="15" fill="#2B2F6B"/>
+      <path d="M40-18l15 5-15 5z" fill="${GOLD}"/>
+      <circle cx="31" cy="-17" r="2.6" fill="#FFFFFF"/>
+    </g>`;
+  }
+  function tangyuan(x, y, r, fill, shade){
+    return `<circle cx="${x}" cy="${y}" r="${r}" fill="${fill}"/><path d="M${x} ${y - r}a${r} ${r} 0 0 1 0 ${r * 2}a${r * 1.3} ${r * 1.3} 0 0 0 0-${r * 2}z" fill="${shade}"/><circle cx="${x - r * .36}" cy="${y - r * .36}" r="${r * .18}" fill="#FFFFFF"/>`;
+  }
+  function bowl(x, y, s){
+    return `<g transform="translate(${x} ${y}) scale(${s})">
+      <path d="M-24-76c-8-8 8-14 0-24M6-80c-8-8 8-14 0-24M34-74c-8-8 8-14 0-24" fill="none" stroke="${CREAM}" stroke-opacity=".6" stroke-width="3" stroke-linecap="round"/>
+      ${tangyuan(-34, -42, 20, "#FFF3EE", "#F2DDD6")}${tangyuan(34, -40, 19, CREAM, "#E6DFCF")}${tangyuan(0, -50, 22, "#FFC9D6", "#F7AFC0")}
+      <path d="M-78-30h156c-6 30-30 46-54 46h-48c-24 0-48-16-54-46z" fill="#F7F2E6"/>
+      <path d="M0-30h78c-6 30-30 46-54 46H0z" fill="#E6DFCF"/>
+      <path d="M-80-32h160" stroke="#C8362B" stroke-width="5" stroke-linecap="round"/>
+      <path d="M-54-12q10 10 20 0t20 0 20 0 20 0 20 0 20 0" fill="none" stroke="#3E6FB0" stroke-width="2.4"/>
+      <rect x="-26" y="16" width="52" height="7" rx="3" fill="#D8CFBC"/>
+    </g>`;
+  }
   function cloud(x, y, s, fill, line){
     return `<g transform="translate(${x} ${y}) scale(${s})">
       <path d="M-70 16a14 14 0 0 1 8-26 24 24 0 0 1 44-10 30 30 0 0 1 52 2 20 20 0 0 1 32 34z" fill="${fill}"/>
@@ -180,7 +216,7 @@
         <rect x="398" y="-4" width="15" height="170" fill="#2F8F72"/><rect x="407" y="-4" width="6" height="170" fill="#237A61"/></g>
         <g fill="#145445"><rect x="294" y="48" width="21" height="4" rx="2"/><rect x="294" y="110" width="21" height="4" rx="2"/><rect x="348" y="78" width="25" height="4" rx="2"/><rect x="348" y="136" width="25" height="4" rx="2"/><rect x="396" y="36" width="19" height="4" rx="2"/><rect x="396" y="98" width="19" height="4" rx="2"/></g>
         <g class="sb-sway is-soft" style="transform-origin:298px 48px"><path d="M298 48c-36-14-76-8-112 18 40 4 80 2 112-18z" fill="#7CCBA6"/><path d="M298 48c-40-2-76 6-112 18" fill="none" stroke="#4FA583" stroke-width="1.4"/><path d="M298 58c-30 2-62 18-84 46 34-8 66-20 84-46z" fill="#5DB592"/><path d="M298 58c-34 12-60 26-84 46" fill="none" stroke="#3F9477" stroke-width="1.4"/></g>
-        ${far(`<g transform="translate(150 22)"><line x1="0" y1="-24" x2="0" y2="4" stroke="${CREAM}" stroke-width="1.4"/><path d="M0 2c8 0 24 30 24 40 0 6-48 6-48 0C-24 32-8 2 0 2z" fill="#3E9C78"/><path d="M0 2c8 0 24 30 24 40 0 3-12 4-24 4z" fill="#2F8F72"/><path d="M-18 28h36" stroke="${CREAM}" stroke-width="2"/></g>`)}`)
+        ${far(`<line x1="150" y1="0" x2="150" y2="26" stroke="${CREAM}" stroke-width="1.4"/>${zongzi(150, 60, .62)}`)}`)
     },
     valentine: {
       status: "#C2366E",
@@ -199,16 +235,10 @@
       status: "#33205F", particle: "star", count: 8,
       ground: { h: 24, w: 60, img: tile(60, 24, `<path d="M0 24V12q15-12 30 0t30 0v12z" fill="#241547"/><path d="M0 12q15-12 30 0t30 0" fill="none" stroke="${GOLD}" stroke-opacity=".6" stroke-width="1.2"/>`) },
       left: svg("sb-scene-l", false, `
-        <g transform="translate(128 152)">
-          <path d="M-22-74c-8-8 8-14 0-24M6-78c-8-8 8-14 0-24" fill="none" stroke="${CREAM}" stroke-opacity=".55" stroke-width="3" stroke-linecap="round"/>
-          <circle cx="-30" cy="-42" r="19" fill="#FFF3EE"/><circle cx="4" cy="-46" r="20" fill="#FFC9D6"/><circle cx="34" cy="-40" r="17" fill="${CREAM}"/>
-          <circle cx="-36" cy="-48" r="4" fill="#FFFFFF"/><circle cx="-3" cy="-53" r="4" fill="#FFE3EA"/>
-          <path d="M-76-30h152c-6 30-30 46-54 46h-44c-24 0-48-16-54-46z" fill="#F7F2E6"/>
-          <path d="M0-30h76c-6 30-30 46-54 46H0z" fill="#E6DFCF"/>
-          <path d="M-78-32h156" stroke="#C8362B" stroke-width="5" stroke-linecap="round"/>
-          <path d="M-52-12q10 10 20 0t20 0 20 0 20 0 20 0" fill="none" stroke="#3E6FB0" stroke-width="2.4"/>
-        </g>`),
-      right: svg("sb-scene-r", true, lantern(344, 16, .98, 0, false) + lantern(250, 4, .72, -1.4, false) + far(lantern(168, 26, .56, -2.6, false)))
+        ${tangyuan(84, 118, 30, "#FFF3EE", "#F2DDD6")}${tangyuan(160, 136, 24, "#FFC9D6", "#F7AFC0")}
+        <g transform="translate(232 128)"><circle r="28" fill="${CREAM}"/><circle r="17" fill="#2E2238"/><circle cx="-5" cy="-5" r="3" fill="#4A3A58"/><path d="M-28-4c10-8 16 2 24-4s14 4 24-2" fill="none" stroke="#33205F" stroke-width="7" stroke-linecap="round"/></g>
+        <path d="M60 60c-7-7 7-12 0-20M104 58c-7-7 7-12 0-20" fill="none" stroke="${CREAM}" stroke-opacity=".5" stroke-width="3" stroke-linecap="round"/>`),
+      right: svg("sb-scene-r", false, bowl(310, 142, .98) + far(tangyuan(176, 136, 22, "#FFC9D6", "#F7AFC0")))
     },
     qixi: {
       status: "#1E1A4F", particle: "star", count: 10,
@@ -216,7 +246,7 @@
       left: svg("sb-scene-l", false, `
         <path d="M30 150Q170 30 310 150" fill="none" stroke="#3B3390" stroke-width="16" stroke-linecap="round"/>
         <path d="M30 150Q170 30 310 150" fill="none" stroke="${CREAM}" stroke-width="2" stroke-dasharray="3 12" stroke-linecap="round"/>
-        ${[[92,78,1],[138,60,1],[206,60,-1],[252,78,-1]].map(([x, y, d]) => `<g transform="translate(${x} ${y}) scale(${d} 1)"><path d="M-16 4c6-12 22-14 32-6l10-1-8 6c-2 10-14 14-24 10l-14 6 6-9z" fill="#F7F2E6"/><path d="M-6 2c-4-8-2-16 6-20 6 6 8 14 4 22z" fill="#5B55C8"/><circle cx="14" cy="-1" r="1.4" fill="#1E1A4F"/></g>`).join("")}`),
+        ${magpie(126, 62, .46, 1)}${magpie(214, 62, .46, -1)}`),
       right: svg("sb-scene-r", true, `
         <path d="M340 18a54 54 0 1 0 40 92 44 44 0 0 1-40-92z" fill="#F7DA8C"/>
         <g fill="#FFC9D6"><path d="M250 44l4 12 12 4-12 4-4 12-4-12-12-4 12-4z"/></g>
@@ -244,20 +274,29 @@
   }
 
   // 結清彩蛋：畫面中央出現節日主角，由暗轉亮，周圍散開幾顆平塗的小點。
-  function heartEmblem(){
-    return `<g transform="translate(100 62) scale(1.5)"><path d="${HEART}" fill="#E23D76"/><path d="M0 12c12-16 34-14 34 8 0 20-22 32-34 44z" fill="#C2285F"/></g>`;
-  }
   const EMBLEMS = {
     lunar: () => lantern(100, 36, 1.5, 0, true),
-    lantern: () => lantern(100, 36, 1.5, 0, false),
+    lantern: () => bowl(100, 140, 1.1),
     christmas: () => pine(100, 186, 158, "#1F6650", "#0E3A2D", true) + `<path d="M100 8l6 14 15 1-11 10 4 15-14-8-14 8 4-15-11-10 15-1z" fill="${GOLD}"/>`,
     midautumn: () => `<circle cx="100" cy="100" r="76" fill="#F7DA8C"/><path d="M100 24a76 76 0 0 1 0 152 92 92 0 0 0 0-152z" fill="#EFC768"/><g fill="#E3B654"><circle cx="72" cy="80" r="14"/><circle cx="120" cy="126" r="18"/></g>`,
     halloween: () => pumpkin(100, 112, 1.25),
-    dragonboat: () => `<g transform="translate(100 44) scale(2.4)"><path d="M0 2c8 0 24 30 24 40 0 6-48 6-48 0C-24 32-8 2 0 2z" fill="#3E9C78"/><path d="M0 2c8 0 24 30 24 40 0 3-12 4-24 4z" fill="#2F8F72"/><path d="M-18 28h36" stroke="${CREAM}" stroke-width="2.4"/></g>`,
-    valentine: heartEmblem,
-    qixi: heartEmblem,
+    dragonboat: () => zongzi(100, 106, 1.45),
+    valentine: () => `<g transform="translate(100 62) scale(1.5)"><path d="${HEART}" fill="#E23D76"/><path d="M0 12c12-16 34-14 34 8 0 20-22 32-34 44z" fill="#C2285F"/></g>`,
+    qixi: () => magpie(44, 118, .92, 1) + magpie(156, 118, .92, -1) + `<path transform="translate(100 52) scale(.34)" d="${HEART}" fill="#F2A7C3"/>`,
     newyear: () => `<g stroke-linecap="round"><g stroke="${GOLD}" stroke-width="3">${ring(100, 100, 78, 18, .42, GOLD, 3)}</g><g stroke="#F2A7C3" stroke-width="3.5">${ring(100, 100, 42, 10, .5, "#F2A7C3", 3.5)}</g><circle cx="100" cy="100" r="9" fill="${GOLD}"/></g>`
   };
+  // 記帳動畫：節日當天，飛進帳本的收據蓋上節日貼紙
+  window.splitbillHolidayDressReceipt = function(paper){
+    const h = document.documentElement.getAttribute("data-holiday");
+    if(!h || !EMBLEMS[h]) return;
+    paper.classList.add("is-holiday");
+    const sticker = document.createElement("div");
+    sticker.className = "sb-receipt-sticker";
+    sticker.setAttribute("aria-hidden", "true");
+    sticker.innerHTML = `<svg viewBox="0 0 200 200">${EMBLEMS[h]()}</svg>`;
+    paper.appendChild(sticker);
+  };
+
   const SPARK_COLORS = [GOLD, "#F2A7C3", "#8FD0EC", CREAM];
   window.splitbillHolidayCelebrate = function(){
     const h = document.documentElement.getAttribute("data-holiday");

@@ -9870,6 +9870,13 @@ html body .sb-holiday-spends[hidden]{ display:none; }
 html body .sb-holiday-spends button{ min-height:32px; padding:0 12px; border:1px solid var(--card-border); border-radius:999px; background:var(--tint); color:var(--ink); font:inherit; font-size:13px; font-weight:600; cursor:pointer; white-space:nowrap; }
 html body .sb-holiday-spends button:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
 
+/* 記帳動畫的節日貼紙 */
+html body .sb-receipt-sticker{ position:absolute; top:-46px; right:-16px; width:68px; height:68px; padding:6px; border-radius:50%; background:#FFFFFF; box-shadow:0 2px 8px rgba(24,22,36,.18); transform:rotate(10deg); animation:sbSticker .42s cubic-bezier(.16,1,.3,1) .28s both; }
+html body .sb-receipt-sticker svg{ display:block; width:100%; height:100%; }
+html body .sb-receipt-paper.is-holiday .sb-receipt-stamp{ color:var(--btn-primary); border-color:var(--btn-primary); }
+@keyframes sbSticker{ from{ transform:rotate(-14deg) scale(1.7); opacity:0; } to{ transform:rotate(10deg) scale(1); opacity:1; } }
+@media (prefers-reduced-motion:reduce){ html body .sb-receipt-sticker{ animation:none; } }
+
 /* 結清彩蛋 */
 html body .sb-moment{ position:fixed; inset:0; z-index:900; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; pointer-events:none; background:rgba(16,14,30,.52); animation:sbMomentFade 2.8s ease both; }
 html body .sb-moment-stage{ position:relative; width:220px; height:220px; }
