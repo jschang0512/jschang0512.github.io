@@ -964,7 +964,7 @@ function showRecordSuccess({ title, headline, amount, rows = [], onEdit = null, 
     <div class="sb-record-title">${escapeHtml(title)}</div>
     <div class="sb-record-headline">${escapeHtml(headline)}</div>
     <div class="sb-record-amount">${escapeHtml(amount)}</div>
-    <dl class="sb-record-rows">${rows.map(r => r.people ? `<div class="is-people"><dt>${escapeHtml(r.label)}</dt><dd>${escapeHtml(r.value)}</dd><div class="sb-record-people">${r.people.map(m => `<button type="button" data-member="${escapeHtml(m.id)}">${renderAvatarHTML(m, "avatar-md")}<span>${escapeHtml(m.name)}</span></button>`).join("")}</div></div>` : `<div><dt>${escapeHtml(r.label)}</dt><dd>${escapeHtml(r.value)}</dd></div>`).join("")}</dl>
+    <dl class="sb-record-rows">${rows.map(r => r.people ? `<div class="is-people"><dt>${escapeHtml(r.label)}</dt><dd>${escapeHtml(r.value)}</dd><div class="sb-record-people">${r.people.map(m => `<button type="button" data-member="${escapeHtml(m.id)}" title="${escapeHtml(m.name)}" aria-label="${escapeHtml(m.name)}">${renderAvatarHTML(m, "avatar-md")}</button>`).join("")}</div></div>` : `<div><dt>${escapeHtml(r.label)}</dt><dd>${escapeHtml(r.value)}</dd></div>`).join("")}</dl>
     <div class="sb-record-actions">
       ${onEdit ? `<button type="button" class="sb-record-edit">${escapeHtml(t("common.edit"))}</button>` : ""}
       <button type="button" class="sb-record-ok">${escapeHtml(t("record.confirm"))}</button>
@@ -998,7 +998,7 @@ function showRecordSuccess({ title, headline, amount, rows = [], onEdit = null, 
     if(e.key === "Escape") confirm();
   }
   document.addEventListener("keydown", onKey);
-  // 點頭像由全站共用的頭像點擊處理開個人資料，這裡補上點名字也能開
+  // 點頭像由全站共用的頭像點擊處理開個人資料，這裡補上按鈕邊緣和鍵盤操作
   pop.querySelectorAll("[data-member]").forEach(b => b.addEventListener("click", e => {
     if(!e.target.closest(".sb-avatar") && window.showMemberProfileModal) window.showMemberProfileModal(b.dataset.member);
   }));
