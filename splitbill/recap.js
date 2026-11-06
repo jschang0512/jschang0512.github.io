@@ -467,6 +467,14 @@
       [t("recap.monthLabel"), monthName(peak)]
     ].filter(Boolean);
     ctx.finalRows = finalRows;
+    ctx.tiles = [
+      { bg:"#4F5599", fg:"#FFFFFF", soft:"#DADCF6", label:t("recap.finalTotal"), value:moneyText(base, stats.total), sub:t("recap.totalDetail", { count:stats.count, days:stats.days.size }) },
+      { bg:"#6E1D3A", fg:"#FFFFFF", soft:"#F3CFDA", label:t("recap.priciestLabel"), value:moneyText(base, p.myShare), sub:p.title },
+      ctx.partnerName
+        ? { bg:"#F6EEDF", fg:"#2A2233", soft:"#6A5E55", label:t(partner.meal ? "recap.partnerFoodLabel" : "recap.partnerAllLabel"), value:ctx.partnerName, sub:t(partner.meal ? "recap.partnerFoodDetail" : "recap.partnerAllDetail", { count:partner.count }) }
+        : { bg:"#F6EEDF", fg:"#2A2233", soft:"#6A5E55", label:t("recap.avgLabel"), value:moneyText(base, perDay), sub:t("recap.avgDetail", { amount:moneyText(base, stats.total / stats.count) }) },
+      { bg:"#0E4A30", fg:"#FFFFFF", soft:"#BFE3CF", label:t("recap.monthLabel"), value:monthName(peak), sub:t("recap.monthDetail", { amount:moneyText(base, peakAmt) }) }
+    ];
     const canShare = !!(navigator.canShare && navigator.share);
     out.push(slideHTML("is-final", 330, `
       <h2 class="rc-final-title rc-rise">${escapeHtml(t("recap.finalTitle", { name: myName, year }))}</h2>
@@ -499,56 +507,121 @@
     return s + "…";
   }
 
+  function roundRectPath(c, x, y, w, h, rad){
+    c.beginPath();
+    c.moveTo(x + rad, y);
+    c.arcTo(x + w, y, x + w, y + h, rad);
+    c.arcTo(x + w, y + h, x, y + h, rad);
+    c.arcTo(x, y + h, x, y, rad);
+    c.arcTo(x, y, x + w, y, rad);
+    c.closePath();
+  }
+
+  // 把這一年的花費切成幾片，跟 logo 一樣每片往外推開一點：每個人的圖都不一樣
+  function drawYearPie(c, cx, cy, radius, slices){
+    const total = slices.reduce((sum, s) => sum + s.amount, 0);
+    let start = -Math.PI / 2;
+    slices.forEach(s => {
+      const sweep = s.amount / total * Math.PI * 2;
+      const mid = start + sweep / 2;
+      const push = slices.length > 1 ? 9 : 0;
+      const x = cx + Math.cos(mid) * push, y = cy + Math.sin(mid) * push;
+      c.beginPath();
+      c.moveTo(x, y);
+      c.arc(x, y, radius, start, start + sweep);
+      c.closePath();
+      c.fillStyle = s.color;
+      c.fill();
+      start += sweep;
+    });
+  }
+
   async function renderShareImage(ctx){
     if(document.fonts && document.fonts.load){
-      await Promise.all([document.fonts.load(`900 120px ${FONT}`), document.fonts.load(`700 44px ${FONT}`)]).catch(()=>{});
+      await Promise.all([document.fonts.load(`900 120px ${FONT}`), document.fonts.load(`700 44px ${FONT}`), document.fonts.load(`600 30px ${FONT}`)]).catch(()=>{});
     }
-    const W = 1080, H = 1350, PAD = 84;
+    const W = 1080, H = 1350, PAD = 64, INNER = W - PAD * 2;
+    const INK = "#F5F4FF", SOFT = "#C9CCF2";
     const canvas = document.createElement("canvas");
     canvas.width = W; canvas.height = H;
     const c = canvas.getContext("2d");
     c.fillStyle = "#23254F";
     c.fillRect(0, 0, W, H);
-
-    // 背景放大的 logo
-    c.save();
-    c.translate(W - 120, 250);
-    c.rotate(18 * Math.PI / 180);
-    c.scale(1.75, 1.75);
-    c.translate(-256, -286);
-    c.globalAlpha = .28;
-    c.fillStyle = "#9298D2";
-    ["M256,238 L118.5,138.1 A170,170 0 0,1 393.5,138.1 Z", "M271.6,265 L426.9,195.9 A170,170 0 0,1 289.4,434.1 Z", "M240.4,265 L222.6,434.1 A170,170 0 0,1 85.1,195.9 Z"].forEach(d => c.fill(new Path2D(d)));
-    c.restore();
-
     c.textBaseline = "alphabetic";
+
+    c.fillStyle = SOFT;
+    c.font = `700 28px ${FONT}`;
     c.textAlign = "left";
-    c.fillStyle = "#D3D5F3";
-    c.font = `700 30px ${FONT}`;
-    c.fillText("SPLITBILL", PAD, 120);
-    c.font = `600 34px ${FONT}`;
-    c.fillText(truncate(c, ctx.groupName, W - PAD * 2), PAD, 196);
+    c.fillText("SPLITBILL", PAD, 92);
+    c.textAlign = "right";
+    c.font = `600 28px ${FONT}`;
+    c.fillText(truncate(c, ctx.groupName, INNER - 240), W - PAD, 92);
+    c.textAlign = "left";
 
-    c.fillStyle = "#F5F4FF";
-    c.font = `900 190px ${FONT}`;
-    c.fillText(String(ctx.year), PAD - 6, 372);
+    // 年份撐滿整個版面寬，是這張圖的主角
+    const yearText = String(ctx.year);
+    let yearSize = 200;
+    c.font = `900 ${yearSize}px ${FONT}`;
+    yearSize = Math.floor(yearSize * INNER / c.measureText(yearText).width);
+    c.font = `900 ${yearSize}px ${FONT}`;
+    c.fillStyle = "#F6EEDF";
+    const yearBase = 124 + c.measureText(yearText).actualBoundingBoxAscent;
+    c.fillText(yearText, PAD + c.measureText(yearText).actualBoundingBoxLeft, yearBase);
+
     const title = t("recap.coverTitle", { name: ctx.myName });
-    fitFont(c, title, 700, 52, W - PAD * 2);
-    c.fillText(title, PAD, 456);
+    c.fillStyle = INK;
+    fitFont(c, title, 700, 46, INNER);
+    c.fillText(title, PAD, yearBase + 74);
 
-    let y = 540;
-    const rowH = (H - 84 - y) / ctx.finalRows.length;
-    ctx.finalRows.forEach(([k, v]) => {
-      c.strokeStyle = "rgba(255,255,255,.18)";
-      c.lineWidth = 2;
-      c.beginPath(); c.moveTo(PAD, y); c.lineTo(W - PAD, y); c.stroke();
-      c.fillStyle = "#D3D5F3";
+    // 花費圓餅和圖例
+    const pieTop = yearBase + 112, radius = 132;
+    const cats = ctx.stats.catList;
+    const shown = cats.slice(0, 3).map(s => ({ name: s.meta.name, amount: s.amount, color: s.meta.color }));
+    const rest = cats.slice(3).reduce((sum, s) => sum + s.amount, 0);
+    if(rest > 0) shown.push({ name: t("recap.otherCat"), amount: rest, color: "#8C8FB8" });
+    const pieX = PAD + radius + 10, pieY = pieTop + radius + 10;
+    drawYearPie(c, pieX, pieY, radius, shown);
+
+    const legendX = PAD + radius * 2 + 76, rowH = 62;
+    let ly = pieY - (shown.length - 1) * rowH / 2;
+    shown.forEach(s => {
+      const pct = Math.round(s.amount / ctx.stats.total * 100) + "%";
+      c.fillStyle = s.color;
+      roundRectPath(c, legendX, ly - 13, 26, 26, 7);
+      c.fill();
+      c.textBaseline = "middle";
+      c.fillStyle = INK;
+      c.font = `700 34px ${FONT}`;
+      c.textAlign = "right";
+      c.fillText(pct, W - PAD, ly + 1);
+      const pctW = c.measureText(pct).width;
+      c.textAlign = "left";
       c.font = `600 32px ${FONT}`;
-      c.fillText(k, PAD, y + rowH * .4);
-      c.fillStyle = "#F5F4FF";
-      c.font = `700 56px ${FONT}`;
-      c.fillText(truncate(c, v, W - PAD * 2), PAD, y + rowH * .82);
-      y += rowH;
+      c.fillText(truncate(c, s.name, W - PAD - pctW - 24 - legendX - 44), legendX + 44, ly + 1);
+      c.textBaseline = "alphabetic";
+      ly += rowH;
+    });
+
+    // 下方四格：跟回顧卡片同一套底色
+    const gap = 16, tileW = (INNER - gap) / 2;
+    const tilesTop = pieTop + radius * 2 + 54;
+    const tileH = (H - PAD - tilesTop - gap) / 2;
+    ctx.tiles.forEach((tile, i) => {
+      const x = PAD + (i % 2) * (tileW + gap);
+      const y = tilesTop + Math.floor(i / 2) * (tileH + gap);
+      c.fillStyle = tile.bg;
+      roundRectPath(c, x, y, tileW, tileH, 30);
+      c.fill();
+      const tx = x + 30, maxW = tileW - 60;
+      c.fillStyle = tile.soft;
+      c.font = `600 27px ${FONT}`;
+      c.fillText(truncate(c, tile.label, maxW), tx, y + 50);
+      c.fillStyle = tile.fg;
+      fitFont(c, tile.value, 900, 56, maxW);
+      c.fillText(tile.value, tx, y + tileH / 2 + 22);
+      c.fillStyle = tile.soft;
+      c.font = `600 26px ${FONT}`;
+      c.fillText(truncate(c, tile.sub, maxW), tx, y + tileH - 24);
     });
     return new Promise(resolve => canvas.toBlob(resolve, "image/png"));
   }
