@@ -29,18 +29,18 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=935">
-<link rel="stylesheet" href="shared.css?v=935">
-<script src="holiday.js?v=935"></script>
+<link rel="stylesheet" href="theme.css?v=936">
+<link rel="stylesheet" href="shared.css?v=936">
+<script src="holiday.js?v=936"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
-<script src="i18n.js?v=935"></script>
-<script src="currencies.js?v=935"></script>
-<script src="motion.js?v=935"></script>
-<script src="version.js?v=935"></script>
-<script src="notif-text.js?v=935"></script>
-<script src="shared-ui.js?v=935"></script>
-<script src="theme.js?v=935" defer></script>
-<script src="app-banner.js?v=935" defer></script>
+<script src="i18n.js?v=936"></script>
+<script src="currencies.js?v=936"></script>
+<script src="motion.js?v=936"></script>
+<script src="version.js?v=936"></script>
+<script src="notif-text.js?v=936"></script>
+<script src="shared-ui.js?v=936"></script>
+<script src="theme.js?v=936" defer></script>
+<script src="app-banner.js?v=936" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -2434,36 +2434,34 @@ renderNavLinks();
       submitBtn.textContent = t("summary.savingEllipsis");
 
       try {
-        const { error } = await sb.from("expenses").insert({
+        const { data: savedExpense, error } = await sb.from("expenses").insert({
           amount: totalAmount, description: fullDesc, note: noteVal || null,
           expense_date, created_by: myMember ? myMember.id : payers[0].member_id,
           payers, shares, currency, category: cat || "general"
-        });
+        }).select().single();
         if(error) throw error;
 
         localStorage.setItem("sb_last_active_currency", currency);
         closeModal();
         const curObj = (typeof CURRENCIES !== "undefined") ? CURRENCIES.find(c => c.code === currency) : null;
         const sym = curObj ? curObj.symbol : "$";
-        const firstPayerId = (payers && payers[0] && payers[0].member_id);
-        const payerName = (firstPayerId && quickMemberName(firstPayerId)) || (myMember && myMember.name) || t("summary.meFallback");
         const catMeta = (window.getCategoryMeta && window.getCategoryMeta(itemTitle, noteVal, cat)) || {};
-
-        if(typeof window.triggerReceiptFlyAnimation === "function"){
-          window.triggerReceiptFlyAnimation({
-            desc: itemTitle || t("summary.quickAddDefaultDesc"),
-            amount: totalAmount,
-            symbol: sym,
-            categoryIcon: catMeta.icon || sbIcon("receipt"),
-            payerName: payerName,
-            splitCount: (shares || []).length,
-            targetListEl: document.getElementById("allCurrenciesList") || document.querySelector(".currency-card")
-          });
-        }
-
-        if(typeof showToast === "function"){
-          showToast(t("summary.saveSuccessToastTitle"), t("summary.saveSuccessToastBody", {title: itemTitle, amount: sym+formatAmt(totalAmount), currency}));
-        }
+        const myShare = myMember && (shares || []).find(x => x.member_id === myMember.id);
+        window.showRecordSuccess({
+          title: t("record.expenseTitle"),
+          headline: itemTitle || t("summary.quickAddDefaultDesc"),
+          amount: sym + formatAmt(totalAmount),
+          rows: [
+            { label: t("record.category"), value: catMeta.name || "" },
+            { label: t("record.payer"), value: (payers || []).map(x => quickMemberName(x.member_id)).join("、") },
+            { label: t("record.split"), value: (shares || []).length > 1 ? t("receipt.splitAmong", {count: shares.length}) : t("receipt.personalOnly") },
+            ...(myShare ? [{ label: t("record.myShare"), value: sym + formatAmt(myShare.amount) }] : []),
+            { label: t("record.date"), value: expense_date },
+            ...(noteVal ? [{ label: t("record.note"), value: noteVal }] : [])
+          ],
+          onEdit: savedExpense ? () => { location.href = `currency.html?c=${encodeURIComponent(currency)}&editExpense=${encodeURIComponent(savedExpense.id)}`; } : null,
+          targetListEl: document.getElementById("allCurrenciesList") || document.querySelector(".currency-card")
+        });
         await loadAndRenderAllBalances();
       } catch(err){
         msgEl.textContent = t("summary.saveFailedPrefix") + (err.message || t("summary.networkErrorFallback"));

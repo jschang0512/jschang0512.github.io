@@ -298,6 +298,11 @@
   window.splitbillHolidayCelebrate = function(){
     const h = document.documentElement.getAttribute("data-holiday");
     if(!h || !EMBLEMS[h] || document.querySelector(".sb-moment")) return;
+    // 還款成功的視窗還開著就先等，按確認之後才播
+    if(document.querySelector(".sb-record-pop")){
+      document.addEventListener("splitbill-record-closed", window.splitbillHolidayCelebrate, { once:true });
+      return;
+    }
     const el = document.createElement("div");
     el.className = "sb-moment";
     el.setAttribute("role", "status");

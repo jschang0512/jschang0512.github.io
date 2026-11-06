@@ -8633,157 +8633,6 @@ input#aiExpenseTime {
   border: 1px solid color-mix(in srgb, var(--btn-primary) 28%, var(--line));
 }
 
-/* ============================================================
-   🧾 記帳成功「實體收據印出 ➔ 飛入帳本」動畫
-   ============================================================ */
-.sb-receipt-spool-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  pointer-events: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  perspective: 1000px;
-}
-
-.sb-receipt-paper {
-  position: absolute;
-  width: 228px;
-  background: #FFFFFF;
-  color: #2D2638;
-  border-radius: 4px;
-  padding: 18px 16px 20px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.42), 0 0 0 1px rgba(0, 0, 0, 0.08);
-  font-family: "Noto Sans TC", -apple-system, BlinkMacSystemFont, monospace;
-  box-sizing: border-box;
-  transform-origin: center bottom;
-  animation: receiptSpoolAndFloat 0.75s cubic-bezier(0.2, 0.9, 0.3, 1) forwards;
-}
-
-/* 齒狀撕紙邊緣 (Jagged receipt tear edge) */
-.sb-receipt-paper::before,
-.sb-receipt-paper::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 6px;
-  background-size: 10px 6px;
-}
-.sb-receipt-paper::before {
-  top: -6px;
-  background-image: radial-gradient(circle at 5px -1px, transparent 5px, #FFFFFF 5px);
-}
-.sb-receipt-paper::after {
-  bottom: -6px;
-  background-image: radial-gradient(circle at 5px 7px, transparent 5px, #FFFFFF 5px);
-}
-
-.sb-receipt-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px dashed rgba(0, 0, 0, 0.22);
-  padding-bottom: 8px;
-  margin-bottom: 10px;
-}
-.sb-receipt-store {
-  font-weight: 800;
-  font-size: 13px;
-  letter-spacing: 0.5px;
-  color: #1A1523;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-.sb-receipt-date {
-  font-size: 9px;
-  color: #7A7289;
-}
-.sb-receipt-body {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 11px;
-}
-.sb-receipt-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.sb-receipt-desc {
-  font-weight: 600;
-  max-width: 125px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: #2D2638;
-}
-.sb-receipt-amt {
-  font-size: 14px;
-  font-weight: 800;
-  color: #1A1523;
-}
-.sb-receipt-meta {
-  font-size: 10px;
-  color: #7A7289;
-}
-.sb-receipt-foot {
-  margin-top: 10px;
-  padding-top: 8px;
-  border-top: 1px dashed rgba(0, 0, 0, 0.22);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-}
-.sb-receipt-barcode {
-  width: 88%;
-  height: 16px;
-  background: repeating-linear-gradient(
-    90deg,
-    #2D2638 0px,
-    #2D2638 2px,
-    transparent 2px,
-    transparent 4px,
-    #2D2638 4px,
-    #2D2638 6px,
-    transparent 6px,
-    transparent 8px
-  );
-  opacity: 0.8;
-}
-.sb-receipt-stamp {
-  font-size: 9.5px;
-  font-weight: 800;
-  color: #2B8A3E;
-  border: 1.5px solid #2B8A3E;
-  padding: 1px 7px;
-  border-radius: 4px;
-  transform: rotate(-6deg);
-  letter-spacing: 1px;
-  background: rgba(43, 138, 62, 0.06);
-}
-
-@keyframes receiptSpoolAndFloat {
-  0% {
-    opacity: 0;
-    transform: translateY(40px) scaleY(0.15) scaleX(0.85);
-  }
-  45% {
-    opacity: 1;
-    transform: translateY(-16px) scaleY(1.05) scaleX(1);
-  }
-  75% {
-    transform: translateY(-28px) perspective(600px) rotateX(12deg) rotateZ(-3deg) scale(1.02);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(-22px) perspective(600px) rotateX(8deg) rotateZ(-2deg) scale(1);
-  }
-}
-
 /* 水波漣漪動畫 */
 .sb-ledger-ripple {
   animation: sbLedgerRipple 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -9904,17 +9753,26 @@ html body .sb-holiday-band{ position:absolute; top:0; left:0; right:0; height:13
 html body .exchange-rate-hint{ width:fit-content; max-width:100%; margin-left:auto; margin-right:auto; padding:3px 12px; border:1px solid var(--card-border); border-radius:999px; background:var(--card); color:var(--ink-soft); }
 html body .exchange-rate-hint:hover{ background:var(--card); color:var(--btn-primary); }
 
-/* 記帳成功的彈出視窗 */
-html body .sb-receipt-spool-overlay{ pointer-events:auto; cursor:pointer; background:rgba(16,14,30,.5); transition:background-color .3s ease; animation:sbRecordDim .2s ease both; }
-html body .sb-receipt-spool-overlay.is-leaving{ background:transparent; }
-html body .sb-record-pop{ width:min(300px, calc(100vw - 48px)); padding:22px 18px 20px; border-radius:20px; background:var(--tint); color:var(--ink); text-align:center; box-shadow:0 18px 44px rgba(16,14,30,.3); animation:sbRecordPop .32s cubic-bezier(.16,1,.3,1) both; }
-html body .sb-record-mark{ display:grid; place-items:center; width:56px; height:56px; margin:0 auto 8px; border-radius:50%; background:var(--btn-primary); color:#FFFFFF; font-size:26px; }
-html body .sb-record-mark .sb-ico{ width:28px; height:28px; }
-html body .sb-record-pop.is-holiday .sb-record-mark{ width:96px; height:96px; background:none; }
+/* 記帳／還款成功的彈出視窗 */
+html body .sb-record-overlay{ position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; padding:24px; background:rgba(16,14,30,.5); transition:opacity .18s ease; animation:sbRecordDim .2s ease both; }
+html body .sb-record-overlay.is-leaving{ opacity:0; }
+html body .sb-record-pop{ width:min(340px, 100%); max-height:100%; overflow-y:auto; padding:24px 20px 18px; border-radius:20px; background:var(--card); color:var(--ink); text-align:center; box-shadow:0 18px 44px rgba(16,14,30,.3); animation:sbRecordPop .32s cubic-bezier(.16,1,.3,1) both; }
+html body .sb-record-mark{ display:grid; place-items:center; width:52px; height:52px; margin:0 auto 10px; border-radius:50%; background:var(--btn-primary); color:#FFFFFF; font-size:24px; }
+html body .sb-record-mark .sb-ico{ width:26px; height:26px; }
+html body .sb-record-pop.is-holiday .sb-record-mark{ width:92px; height:92px; background:none; }
 html body .sb-record-pop.is-holiday .sb-record-mark svg{ width:100%; height:100%; }
-html body .sb-record-title{ margin-bottom:14px; font-size:18px; font-weight:700; }
-html body .sb-record-pop .sb-receipt-paper{ position:relative; width:100%; box-shadow:0 1px 3px rgba(16,14,30,.12); text-align:left; animation:none; }
-html body .sb-record-pop.is-holiday .sb-receipt-stamp{ color:var(--btn-primary); border-color:var(--btn-primary); }
+html body .sb-record-title{ font-size:14px; font-weight:600; color:var(--ink-soft); }
+html body .sb-record-headline{ margin-top:10px; font-size:18px; font-weight:700; line-height:1.4; overflow-wrap:anywhere; }
+html body .sb-record-amount{ margin-top:2px; font-size:32px; font-weight:700; line-height:1.25; }
+html body .sb-record-rows{ margin:16px 0 0; padding:0; border-top:1px solid var(--line); text-align:left; }
+html body .sb-record-rows div{ display:flex; justify-content:space-between; gap:16px; padding:9px 0; border-bottom:1px solid var(--line); font-size:14px; }
+html body .sb-record-rows dt{ flex:none; color:var(--ink-soft); }
+html body .sb-record-rows dd{ margin:0; min-width:0; font-weight:600; text-align:right; overflow-wrap:anywhere; }
+html body .sb-record-actions{ display:flex; gap:10px; margin-top:16px; }
+html body .sb-record-actions button{ flex:1; min-height:46px; border-radius:12px; font:inherit; font-size:15px; font-weight:700; cursor:pointer; white-space:nowrap; }
+html body .sb-record-edit{ border:1px solid var(--card-border); background:transparent; color:var(--ink); }
+html body .sb-record-ok{ border:0; background:var(--btn-primary); color:var(--btn-primary-fg); }
+html body .sb-record-actions button:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; }
 @keyframes sbRecordDim{ from{ background:transparent; } }
-@keyframes sbRecordPop{ from{ transform:scale(.86) translateY(14px); opacity:0; } to{ transform:none; opacity:1; } }
+@keyframes sbRecordPop{ from{ transform:scale(.9) translateY(12px); opacity:0; } to{ transform:none; opacity:1; } }
 @media (prefers-reduced-motion:reduce){ html body .sb-record-pop{ animation:none; } }

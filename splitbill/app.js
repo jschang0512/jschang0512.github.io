@@ -1008,6 +1008,13 @@
       if(targetExp) showExpenseDebtDetail(targetExp);
     }
 
+    // 首頁快速記帳成功後按「編輯」跳過來的（?editExpense=支出id）
+    const editExpenseId = new URLSearchParams(location.search).get("editExpense");
+    if(editExpenseId){
+      const targetExp = cachedExpenses.find(e => e.id === editExpenseId);
+      if(targetExp) startEditExpense(targetExp);
+    }
+
     // 債務關係表熱圖的顏色是算好直接寫進 inline style，不是純 CSS 變數，
     // 使用者切換深淺模式時 theme.js 會發這個事件，這裡收到後用現有快取
     // 的資料重畫一次（不用重打 API），顏色才會馬上跟著換。
@@ -2066,9 +2073,9 @@
         currency: editedCurrency,
         category: selectedExpCategory || "general"
       };
-      const { error } = editingExpenseId
+      const { data: savedExpense, error } = editingExpenseId
         ? await sb.from("expenses").update(payload).eq("id", editingExpenseId)
-        : await sb.from("expenses").insert(payload);
+        : await sb.from("expenses").insert(payload).select().single();
       if(error){ msg.textContent = (editingExpenseId ? t("currency.updateFailed") : t("currency.addFailed")) + error.message; msg.className = "msg error"; return; }
 
       if(userManuallyPickedCategory && itemTitle){
@@ -2081,18 +2088,23 @@
       const wasEditing = !!editingExpenseId;
       const btn = document.getElementById("addExpenseBtn");
 
-      // 觸發「實體收據印出 ➔ 飛入帳本」動畫
-      if(!wasEditing && typeof window.triggerReceiptFlyAnimation === "function"){
-        const firstPayerId = (payers && payers[0] && payers[0].member_id);
-        const payerName = (firstPayerId && memberById[firstPayerId]) || (myMember && myMember.name) || t("summary.meFallback");
+      if(!wasEditing && savedExpense){
         const catMeta = (window.getCategoryMeta && window.getCategoryMeta(itemTitle, itemNote, selectedExpCategory)) || {};
-        window.triggerReceiptFlyAnimation({
-          desc: itemTitle || t("currency.newExpenseDefaultDesc"),
-          amount: amount,
-          symbol: SYM || "$",
-          categoryIcon: catMeta.icon || sbIcon("receipt"),
-          payerName: payerName,
-          splitCount: (shares || []).length,
+        const payerNames = (payers || []).map(x => memberById[x.member_id] || t("summary.meFallback")).join("、");
+        const myShare = myMember && (shares || []).find(s => s.member_id === myMember.id);
+        window.showRecordSuccess({
+          title: t("record.expenseTitle"),
+          headline: itemTitle || t("currency.newExpenseDefaultDesc"),
+          amount: SYM + formatAmt(amount),
+          rows: [
+            { label: t("record.category"), value: catMeta.name || "" },
+            { label: t("record.payer"), value: payerNames },
+            { label: t("record.split"), value: (shares || []).length > 1 ? t("receipt.splitAmong", {count: shares.length}) : t("receipt.personalOnly") },
+            ...(myShare ? [{ label: t("record.myShare"), value: SYM + formatAmt(myShare.amount) }] : []),
+            { label: t("record.date"), value: expense_date },
+            ...(itemNote ? [{ label: t("record.note"), value: itemNote }] : [])
+          ],
+          onEdit: () => startEditExpense(savedExpense),
           targetListEl: document.getElementById("expenseList") || document.getElementById("tabExpenses")
         });
       }
@@ -2638,9 +2650,9 @@
         : CURRENCY;
 
       const payload = { from_member, to_member, amount, note: note || null, payment_date, created_by: myMember.id, currency: editedRepayCurrency };
-      const { error } = editingRepaymentId
+      const { data: savedRepayment, error } = editingRepaymentId
         ? await sb.from("repayments").update(payload).eq("id", editingRepaymentId)
-        : await sb.from("repayments").insert(payload);
+        : await sb.from("repayments").insert(payload).select().single();
       if(error){ msg.textContent = (editingRepaymentId ? t("currency.updateFailed") : t("currency.addFailed")) + error.message; msg.className = "msg error"; return; }
 
       msg.textContent = editingRepaymentId ? t("currency.updatedDone") : t("currency.repaymentRecorded");
@@ -2652,6 +2664,19 @@
         addRepayBtn.classList.remove("btn-success");
         addRepayBtn.textContent = t("currency.recordRepayment");
       }, 1100);
+      if(!wasEditing && savedRepayment){
+        window.showRecordSuccess({
+          title: t("record.repaymentTitle"),
+          headline: `${memberById[from_member] || "?"} → ${memberById[to_member] || "?"}`,
+          amount: SYM + formatAmt(amount),
+          rows: [
+            { label: t("record.date"), value: payment_date },
+            ...(note ? [{ label: t("record.note"), value: note }] : [])
+          ],
+          onEdit: () => startEditRepayment(savedRepayment),
+          targetListEl: document.getElementById("repaymentList") || document.getElementById("panelRepay")
+        });
+      }
       if(wasEditing) exitEditRepaymentMode();
       document.getElementById("repayAmount").value = "";
       document.getElementById("repayNote").value = "";

@@ -948,98 +948,60 @@ function renderAvatarHTML(memberOrName, sizeClass = "avatar-sm"){
   return `<span class="sb-avatar ${sizeClass}" title="${safeName}" data-name="${safeName}"${idAttr}><span class="sb-avatar-initial" style="background:${getAvatarColor(name)};">${initial}</span></span>`;
 }
 
-function triggerReceiptFlyAnimation(opts = {}){
-  const {
-    desc = t("receipt.itemFallback"),
-    amount = 0,
-    symbol = "$",
-    categoryIcon = sbIcon("receipt"),
-    payerName = t("common.memberFallback"),
-    splitCount = 1,
-    targetListEl = null,
-    onComplete = null
-  } = opts;
-
+// 記帳／還款成功的彈出視窗：列出這筆的內容，要按「確認」或「編輯」才關閉。
+// rows 是 [{ label, value }]；onEdit 不給就不顯示編輯按鈕。關閉時發出
+// splitbill-record-closed，節日彩蛋會等這個視窗關了才播。
+function showRecordSuccess({ title, headline, amount, rows = [], onEdit = null, targetListEl = null }){
   const overlay = document.createElement("div");
-  overlay.className = "sb-receipt-spool-overlay";
-
-  const now = new Date();
-  const dateStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-
-  const paper = document.createElement("div");
-  paper.className = "sb-receipt-paper";
-  paper.innerHTML = `
-    <div class="sb-receipt-head">
-      <div class="sb-receipt-store">${categoryIcon} <span>${typeof escapeHtml === "function" ? escapeHtml(desc || t("receipt.storeFallback")) : (desc || t("receipt.storeFallback"))}</span></div>
-      <div class="sb-receipt-date">${dateStr}</div>
-    </div>
-    <div class="sb-receipt-body">
-      <div class="sb-receipt-row">
-        <span class="sb-receipt-desc">${typeof escapeHtml === "function" ? escapeHtml(desc || t("receipt.descFallback")) : (desc || t("receipt.descFallback"))}</span>
-        <span class="sb-receipt-amt">${symbol}${typeof formatAmt === "function" ? formatAmt(amount) : amount}</span>
-      </div>
-      <div class="sb-receipt-row sb-receipt-meta">
-        <span>${t("receipt.paidLabel")} ${typeof escapeHtml === "function" ? escapeHtml(payerName) : payerName}</span>
-        <span>${splitCount > 1 ? t("receipt.splitAmong", {count: splitCount}) : t("receipt.personalOnly")}</span>
-      </div>
-    </div>
-    <div class="sb-receipt-foot">
-      <div class="sb-receipt-barcode"></div>
-      <div class="sb-receipt-stamp">✓ PAID & LOGGED</div>
-    </div>
-  `;
-
-  // 彈出視窗：收據放在畫面中央的卡片裡，停一下或點一下就飛進帳本
+  overlay.className = "sb-record-overlay";
   const pop = document.createElement("div");
   pop.className = "sb-record-pop";
-  pop.setAttribute("role", "status");
-  pop.innerHTML = `<div class="sb-record-mark">${sbIcon("check")}</div><div class="sb-record-title">${t("receipt.recordedTitle")}</div>`;
-  pop.appendChild(paper);
+  pop.setAttribute("role", "dialog");
+  pop.setAttribute("aria-modal", "true");
+  pop.setAttribute("aria-label", title);
+  pop.innerHTML = `
+    <div class="sb-record-mark">${sbIcon("check")}</div>
+    <div class="sb-record-title">${escapeHtml(title)}</div>
+    <div class="sb-record-headline">${escapeHtml(headline)}</div>
+    <div class="sb-record-amount">${escapeHtml(amount)}</div>
+    <dl class="sb-record-rows">${rows.map(r => `<div><dt>${escapeHtml(r.label)}</dt><dd>${escapeHtml(r.value)}</dd></div>`).join("")}</dl>
+    <div class="sb-record-actions">
+      ${onEdit ? `<button type="button" class="sb-record-edit">${escapeHtml(t("common.edit"))}</button>` : ""}
+      <button type="button" class="sb-record-ok">${escapeHtml(t("record.confirm"))}</button>
+    </div>`;
   if(window.splitbillHolidayDressReceipt) window.splitbillHolidayDressReceipt(pop);
   overlay.appendChild(pop);
   document.body.appendChild(overlay);
 
-  let leaving = false;
-  function flyAway(){
-    if(leaving) return;
-    leaving = true;
-    clearTimeout(holdTimer);
-    let endX = window.innerWidth / 2;
-    let endY = window.innerHeight - 100;
-
-    const target = targetListEl || document.getElementById("expenseList") || document.getElementById("quickExpenseModal") || document.querySelector(".card");
-    if(target && typeof target.getBoundingClientRect === "function"){
-      const targetRect = target.getBoundingClientRect();
-      if(targetRect.height > 0 && targetRect.width > 0){
-        endX = targetRect.left + targetRect.width / 2;
-        endY = Math.min(window.innerHeight - 80, Math.max(60, targetRect.top + 60));
-      }
-    }
-
-    const currentRect = pop.getBoundingClientRect();
-    const deltaX = endX - (currentRect.left + currentRect.width / 2);
-    const deltaY = endY - (currentRect.top + currentRect.height / 2);
-
+  let closed = false;
+  function close(afterClose){
+    if(closed) return;
+    closed = true;
+    document.removeEventListener("keydown", onKey);
     overlay.classList.add("is-leaving");
-    pop.style.animation = "none";
-    pop.style.transition = "transform 0.46s cubic-bezier(0.2, 0.8, 0.25, 1), opacity 0.42s ease";
-    pop.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.18) rotate(4deg)`;
-    pop.style.opacity = "0";
-
     setTimeout(() => {
-      if(target){
-        target.classList.remove("sb-ledger-ripple");
-        void target.offsetWidth;
-        target.classList.add("sb-ledger-ripple");
-      }
-      setTimeout(() => {
-        overlay.remove();
-        if(typeof onComplete === "function") onComplete();
-      }, 150);
-    }, 460);
+      overlay.remove();
+      if(afterClose) afterClose();
+      document.dispatchEvent(new Event("splitbill-record-closed"));
+    }, 180);
   }
-  const holdTimer = setTimeout(flyAway, 1800);
-  overlay.addEventListener("click", flyAway);
+  function confirm(){
+    close(() => {
+      if(targetListEl){
+        targetListEl.classList.remove("sb-ledger-ripple");
+        void targetListEl.offsetWidth;
+        targetListEl.classList.add("sb-ledger-ripple");
+      }
+    });
+  }
+  function onKey(e){
+    if(e.key === "Escape") confirm();
+  }
+  document.addEventListener("keydown", onKey);
+  pop.querySelector(".sb-record-ok").addEventListener("click", confirm);
+  const editBtn = pop.querySelector(".sb-record-edit");
+  if(editBtn) editBtn.addEventListener("click", () => close(onEdit));
+  pop.querySelector(".sb-record-ok").focus({ preventScroll:true });
 }
 
 function openFinancialKeypad(targetInput, onConfirm){
@@ -1159,7 +1121,7 @@ window.getCategoryIcon = getCategoryIcon;
 window.getCategoryMeta = getCategoryMeta;
 window.getAvatarColor = getAvatarColor;
 window.renderAvatarHTML = renderAvatarHTML;
-window.triggerReceiptFlyAnimation = triggerReceiptFlyAnimation;
+window.showRecordSuccess = showRecordSuccess;
 window.openFinancialKeypad = openFinancialKeypad;
 
 // 單一成員的跨幣別淨結餘（換算成 TWD）。正數代表該收（債權人），負數代表
