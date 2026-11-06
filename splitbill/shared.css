@@ -9802,14 +9802,14 @@ html body .sb-holiday-greet{ display:inline-flex; align-items:center; gap:5px; m
 html body .sb-holiday-greet svg{ color:var(--holiday-glyph); flex:none; }
 /* 節日場景：body 自成堆疊層，場景才能墊在內容後面又蓋住 body 底色 */
 html body.sb-has-scene{ isolation:isolate; }
+html body.sb-has-scene .app-header:has(> .header-utility-row){ margin-bottom:46px; }
+@media (max-width:767px){ html body.sb-has-scene .app-header:has(> .header-utility-row){ margin-bottom:58px; } }
 html body .sb-scene{ position:absolute; top:0; left:0; right:0; height:var(--scene-h,240px); z-index:-1; overflow:hidden; pointer-events:none; background:var(--scene-sky); }
-html body .sb-scene::after{ content:""; position:absolute; left:-10%; right:-10%; bottom:-26px; height:60px; border-radius:50%; background:var(--bg-canvas); }
-html body .sb-scene > svg{ position:absolute; top:0; height:calc(var(--scene-h,240px) * 1.08); width:calc(var(--scene-h,240px) * 1.512); max-width:calc(50vw - 200px); }
+html body .sb-scene > svg{ position:absolute; top:0; height:100%; width:calc(var(--scene-h,240px) * 2.334); max-width:calc(50vw - 200px); }
 html body .sb-scene-l{ left:0; }
 html body .sb-scene-r{ right:0; }
-html body .sb-scene-water{ position:absolute; left:0; right:0; bottom:0; height:44px; background-repeat:repeat-x,no-repeat; background-size:96px 16px,100% 100%; background-position:0 0,0 15px; }
-html body .sb-scene-strip{ position:absolute; top:0; left:0; right:0; height:46px; background-repeat:repeat-x; -webkit-mask-image:linear-gradient(90deg,#000 calc(50% - 200px),transparent 0,transparent calc(50% + 200px),#000 0); mask-image:linear-gradient(90deg,#000 calc(50% - 200px),transparent 0,transparent calc(50% + 200px),#000 0); }
-:root[data-holiday="dragonboat"] body .sb-scene > .sb-scene-l{ top:auto; bottom:24px; height:auto; aspect-ratio:420 / 110; width:min(458px, calc(50vw - 200px)); }
+html body .sb-scene-ground{ position:absolute; left:0; right:0; bottom:0; background-repeat:repeat-x; background-position:left bottom; }
+html body .sb-scene-strip{ position:absolute; top:0; left:0; right:0; height:34px; background-repeat:repeat-x; -webkit-mask-image:linear-gradient(90deg,#000 calc(50% - 200px),transparent 0,transparent calc(50% + 200px),#000 0); mask-image:linear-gradient(90deg,#000 calc(50% - 200px),transparent 0,transparent calc(50% + 200px),#000 0); }
 :root[data-holiday="newyear"]{ --scene-sky:#1B2458; }
 :root[data-holiday="lunar"]{ --scene-sky:#9E1B1B; }
 :root[data-holiday="valentine"]{ --scene-sky:#C2366E; }
