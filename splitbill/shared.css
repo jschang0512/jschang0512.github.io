@@ -9485,7 +9485,7 @@ html body .quick-exp-fab:hover{ transform:none; }
    效能、手機版頂部精簡、底部導覽列（2026-11）
    ============================================================ */
 /* 卡片、選單都已經是不透明底色，模糊效果看不到卻讓每次捲動都重算；只留給彈窗背景 */
-html body *:not(.calc-modal):not(.modal):not(.sb-dialog-backdrop){ -webkit-backdrop-filter:none !important; backdrop-filter:none !important; }
+html body *:not(.calc-modal):not(.modal):not(.sb-dialog-backdrop):not(.sb-record-overlay){ -webkit-backdrop-filter:none !important; backdrop-filter:none !important; }
 
 /* 換頁時淡入淡出，不再白一下（支援的瀏覽器才會生效） */
 @view-transition{ navigation:auto; }

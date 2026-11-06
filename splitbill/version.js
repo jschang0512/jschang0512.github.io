@@ -1,4 +1,4 @@
-const APP_VERSION = "939";
+const APP_VERSION = "940";
 
 
 
