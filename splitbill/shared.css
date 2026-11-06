@@ -9803,7 +9803,7 @@ html body .sb-holiday-greet svg{ color:var(--holiday-glyph); flex:none; }
 /* 節日場景：body 自成堆疊層，場景才能墊在內容後面又蓋住 body 底色 */
 html body.sb-has-scene{ isolation:isolate; }
 html body.sb-has-scene .app-header:has(> .header-utility-row){ margin-bottom:46px; }
-@media (max-width:767px){ html body.sb-has-scene .app-header:has(> .header-utility-row){ margin-bottom:58px; } }
+@media (max-width:767px){ html body.sb-has-scene .app-header:has(> .header-utility-row){ margin-bottom:58px !important; } }
 html body .sb-scene{ position:absolute; top:0; left:0; right:0; height:var(--scene-h,240px); z-index:-1; overflow:hidden; pointer-events:none; background:var(--scene-sky); }
 html body .sb-scene > svg{ position:absolute; top:0; height:100%; width:calc(var(--scene-h,240px) * 2.334); max-width:calc(50vw - 200px); }
 html body .sb-scene-l{ left:0; }
