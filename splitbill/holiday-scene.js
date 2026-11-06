@@ -94,13 +94,13 @@
     },
     dragonboat: {
       status: "#1B6B57", water: true,
-      left: svg(420, 300, "sb-scene-l", `
-        <g class="sb-bob">
+      left: svg(420, 110, "sb-scene-l", `
+        <g transform="translate(0 -60)"><g class="sb-bob">
           <path d="M26 122h318c-8 24-28 36-54 36H92c-30 0-54-14-66-36z" fill="#D8362B"/>
           <rect x="34" y="122" width="302" height="7" fill="#F2C14E"/>
           <path d="M338 128c18-8 22-26 16-44 12 2 26 8 36 4-4 12-16 18-26 18 2 12-4 24-14 32z" fill="#D8362B"/><circle cx="366" cy="96" r="3" fill="#F2C14E"/>
           <g fill="#0F4A3C">${[92,144,196,248,300].map(x => `<circle cx="${x}" cy="98" r="8"/><rect x="${x - 7}" y="106" width="14" height="18" rx="4"/>`).join("")}</g>
-        </g>`),
+        </g></g>`),
       right: svg(420, 300, "sb-scene-r", `
         <g fill="#2F8F72"><rect x="300" y="-4" width="16" height="220" rx="4"/><rect x="352" y="-4" width="20" height="220" rx="4"/><rect x="396" y="-4" width="14" height="220" rx="4"/></g>
         <g fill="#145445"><rect x="298" y="60" width="20" height="5"/><rect x="298" y="130" width="20" height="5"/><rect x="350" y="90" width="24" height="5"/><rect x="350" y="160" width="24" height="5"/><rect x="394" y="50" width="18" height="5"/><rect x="394" y="120" width="18" height="5"/></g>
@@ -127,10 +127,11 @@
   function particles(type, count){
     let html = "";
     for(let i = 0; i < count; i++){
-      const x = (i * 37 + 7) % 100, y = (i * 53 + 11) % 62;
+      const side = i % 2 === 0;
+      const x = side ? (i * 37 + 7) % 24 : 76 + (i * 29 + 3) % 24, y = (i * 53 + 11) % 62;
       const dur = 7 + (i * 5) % 9, delay = -((i * 7) % 12);
       const size = 2 + (i * 3) % 4;
-      html += `<i class="sb-p sb-p-${type}" style="--x:${x}%;--y:${y}%;--s:${size}px;--drift:${((i % 2) ? 1 : -1) * (10 + (i * 7) % 26)}px;animation-duration:${dur}s;animation-delay:${delay}s"></i>`;
+      html += `<i class="sb-p sb-p-${type}${side ? " is-left" : ""}" style="--x:${x}%;--y:${y}%;--s:${size}px;--drift:${((i % 2) ? 1 : -1) * (10 + (i * 7) % 26)}px;animation-duration:${dur}s;animation-delay:${delay}s"></i>`;
     }
     return html;
   }

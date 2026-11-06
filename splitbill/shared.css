@@ -9804,14 +9804,15 @@ html body .sb-holiday-greet svg{ color:var(--holiday-glyph); flex:none; }
 html body.sb-has-scene{ isolation:isolate; }
 html body .sb-scene{ position:absolute; top:0; left:0; right:0; height:var(--scene-h,240px); z-index:-1; overflow:hidden; pointer-events:none; background:var(--scene-sky); }
 html body .sb-scene::after{ content:""; position:absolute; left:-10%; right:-10%; bottom:-26px; height:60px; border-radius:50%; background:var(--bg-canvas); }
-html body .sb-scene > svg{ position:absolute; top:0; height:calc(var(--scene-h,240px) * 1.08); width:calc(var(--scene-h,240px) * 1.512); max-width:50vw; }
+html body .sb-scene > svg{ position:absolute; top:0; height:calc(var(--scene-h,240px) * 1.08); width:calc(var(--scene-h,240px) * 1.512); max-width:calc(50vw - 200px); }
 html body .sb-hero{ position:relative; display:flex; flex-direction:column; gap:4px; min-height:112px; padding:26px 0 40px; color:#FFFFFF; }
 html body .sb-hero strong{ font-size:32px; font-weight:700; line-height:1.25; letter-spacing:.02em; }
 html body .sb-hero span{ font-size:14px; line-height:1.5; color:rgba(255,255,255,.82); }
 html body .sb-scene-l{ left:0; }
 html body .sb-scene-r{ right:0; }
-html body .sb-scene-water{ position:absolute; left:0; right:0; bottom:0; height:46%; background-repeat:repeat-x,no-repeat; background-size:96px 16px,100% 100%; background-position:0 0,0 15px; }
-html body .sb-scene-strip{ position:absolute; top:0; left:0; right:0; height:46px; background-repeat:repeat-x; }
+html body .sb-scene-water{ position:absolute; left:0; right:0; bottom:0; height:62px; background-repeat:repeat-x,no-repeat; background-size:96px 16px,100% 100%; background-position:0 0,0 15px; }
+html body .sb-scene-strip{ position:absolute; top:0; left:0; right:0; height:46px; background-repeat:repeat-x; -webkit-mask-image:linear-gradient(90deg,#000 calc(50% - 200px),transparent 0,transparent calc(50% + 200px),#000 0); mask-image:linear-gradient(90deg,#000 calc(50% - 200px),transparent 0,transparent calc(50% + 200px),#000 0); }
+:root[data-holiday="dragonboat"] body .sb-scene > .sb-scene-l{ top:auto; bottom:36px; height:auto; aspect-ratio:420 / 110; width:min(458px, calc(50vw - 200px)); }
 :root[data-holiday="newyear"]{ --scene-sky:#1B2458; }
 :root[data-holiday="lunar"]{ --scene-sky:#9E1B1B; }
 :root[data-holiday="valentine"]{ --scene-sky:#C2366E; }
@@ -9852,8 +9853,10 @@ html body .sb-scene.is-paused, html body .sb-scene.is-paused *{ animation-play-s
   html body .sb-hero{ align-items:center; text-align:center; }
 }
 @media (max-width:767px){
-  html body .sb-scene > svg{ max-width:56vw; }
-  html body .sb-scene-l, html body .sb-scene .sb-far{ display:none; }
+  html body .sb-scene > svg{ max-width:46vw; }
+  html body .sb-scene > .sb-scene-l, html body .sb-scene .sb-far, html body .sb-p.is-left{ display:none; }
+  html body .sb-scene-strip{ -webkit-mask-image:linear-gradient(90deg,transparent 62%,#000 0); mask-image:linear-gradient(90deg,transparent 62%,#000 0); }
+  html body .sb-hero{ max-width:calc(54vw - 16px); }
   html body .sb-hero strong{ font-size:28px; }
 }
 @media (prefers-reduced-motion:reduce){
