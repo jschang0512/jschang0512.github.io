@@ -1155,6 +1155,7 @@ const I18N = {
     "common.ratioSplit": "依比例分攤",
 
     "receipt.itemFallback": "支出項目",
+    "receipt.recordedTitle": "記帳成功",
     "receipt.storeFallback": "新增支出",
     "receipt.descFallback": "一般消費",
     "receipt.paidLabel": "付款：",
@@ -2624,6 +2625,7 @@ const I18N = {
     "common.ratioSplit": "比率で分担",
 
     "receipt.itemFallback": "支出項目",
+    "receipt.recordedTitle": "記録しました",
     "receipt.storeFallback": "新規支出",
     "receipt.descFallback": "一般消費",
     "receipt.paidLabel": "支払い：",
@@ -4093,6 +4095,7 @@ const I18N = {
     "common.ratioSplit": "Split by Ratio",
 
     "receipt.itemFallback": "Expense Item",
+    "receipt.recordedTitle": "Expense added",
     "receipt.storeFallback": "New Expense",
     "receipt.descFallback": "General Expense",
     "receipt.paidLabel": "Paid by:",

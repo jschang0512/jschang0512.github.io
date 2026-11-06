@@ -950,7 +950,6 @@ function renderAvatarHTML(memberOrName, sizeClass = "avatar-sm"){
 
 function triggerReceiptFlyAnimation(opts = {}){
   const {
-    buttonEl,
     desc = t("receipt.itemFallback"),
     amount = 0,
     symbol = "$",
@@ -990,24 +989,25 @@ function triggerReceiptFlyAnimation(opts = {}){
     </div>
   `;
 
-  if(window.splitbillHolidayDressReceipt) window.splitbillHolidayDressReceipt(paper);
-  overlay.appendChild(paper);
+  // 彈出視窗：收據放在畫面中央的卡片裡，停一下或點一下就飛進帳本
+  const pop = document.createElement("div");
+  pop.className = "sb-record-pop";
+  pop.setAttribute("role", "status");
+  pop.innerHTML = `<div class="sb-record-mark">${sbIcon("check")}</div><div class="sb-record-title">${t("receipt.recordedTitle")}</div>`;
+  pop.appendChild(paper);
+  if(window.splitbillHolidayDressReceipt) window.splitbillHolidayDressReceipt(pop);
+  overlay.appendChild(pop);
   document.body.appendChild(overlay);
 
-  if(buttonEl && typeof buttonEl.getBoundingClientRect === "function"){
-    const btnRect = buttonEl.getBoundingClientRect();
-    const paperTop = Math.max(20, Math.min(window.innerHeight - 240, btnRect.top - 120));
-    const paperLeft = Math.max(16, Math.min(window.innerWidth - 244, btnRect.left + (btnRect.width / 2) - 114));
-    paper.style.top = `${paperTop}px`;
-    paper.style.left = `${paperLeft}px`;
-  }
-
-  // 第一階段：滑出並停留展示
-  setTimeout(() => {
+  let leaving = false;
+  function flyAway(){
+    if(leaving) return;
+    leaving = true;
+    clearTimeout(holdTimer);
     let endX = window.innerWidth / 2;
     let endY = window.innerHeight - 100;
 
-    const target = targetListEl || document.getElementById("expenseList") || document.getElementById("quickExpenseModal") || document.querySelector(".exp-item");
+    const target = targetListEl || document.getElementById("expenseList") || document.getElementById("quickExpenseModal") || document.querySelector(".card");
     if(target && typeof target.getBoundingClientRect === "function"){
       const targetRect = target.getBoundingClientRect();
       if(targetRect.height > 0 && targetRect.width > 0){
@@ -1016,16 +1016,15 @@ function triggerReceiptFlyAnimation(opts = {}){
       }
     }
 
-    const currentRect = paper.getBoundingClientRect();
-    const currentCenterX = currentRect.left + currentRect.width / 2;
-    const currentCenterY = currentRect.top + currentRect.height / 2;
-    const deltaX = endX - currentCenterX;
-    const deltaY = endY - currentCenterY;
+    const currentRect = pop.getBoundingClientRect();
+    const deltaX = endX - (currentRect.left + currentRect.width / 2);
+    const deltaY = endY - (currentRect.top + currentRect.height / 2);
 
-    // 第二階段：實體收據直接優雅滑翔飛入目標帳本中（無光球）
-    paper.style.transition = "transform 0.46s cubic-bezier(0.2, 0.8, 0.25, 1), opacity 0.42s ease";
-    paper.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.18) rotate(4deg)`;
-    paper.style.opacity = "0";
+    overlay.classList.add("is-leaving");
+    pop.style.animation = "none";
+    pop.style.transition = "transform 0.46s cubic-bezier(0.2, 0.8, 0.25, 1), opacity 0.42s ease";
+    pop.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(0.18) rotate(4deg)`;
+    pop.style.opacity = "0";
 
     setTimeout(() => {
       if(target){
@@ -1038,8 +1037,9 @@ function triggerReceiptFlyAnimation(opts = {}){
         if(typeof onComplete === "function") onComplete();
       }, 150);
     }, 460);
-
-  }, 850);
+  }
+  const holdTimer = setTimeout(flyAway, 1800);
+  overlay.addEventListener("click", flyAway);
 }
 
 function openFinancialKeypad(targetInput, onConfirm){

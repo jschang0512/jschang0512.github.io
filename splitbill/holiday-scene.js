@@ -285,16 +285,13 @@
     qixi: () => magpie(44, 118, .92, 1) + magpie(156, 118, .92, -1) + `<path transform="translate(100 52) scale(.34)" d="${HEART}" fill="#F2A7C3"/>`,
     newyear: () => `<g stroke-linecap="round"><g stroke="${GOLD}" stroke-width="3">${ring(100, 100, 78, 18, .42, GOLD, 3)}</g><g stroke="#F2A7C3" stroke-width="3.5">${ring(100, 100, 42, 10, .5, "#F2A7C3", 3.5)}</g><circle cx="100" cy="100" r="9" fill="${GOLD}"/></g>`
   };
-  // 記帳動畫：節日當天，飛進帳本的收據蓋上節日貼紙
-  window.splitbillHolidayDressReceipt = function(paper){
+  // 記帳成功的彈出視窗：節日當天，勾勾換成節日主角
+  window.splitbillHolidayDressReceipt = function(pop){
     const h = document.documentElement.getAttribute("data-holiday");
-    if(!h || !EMBLEMS[h]) return;
-    paper.classList.add("is-holiday");
-    const sticker = document.createElement("div");
-    sticker.className = "sb-receipt-sticker";
-    sticker.setAttribute("aria-hidden", "true");
-    sticker.innerHTML = `<svg viewBox="0 0 200 200">${EMBLEMS[h]()}</svg>`;
-    paper.appendChild(sticker);
+    const mark = pop.querySelector(".sb-record-mark");
+    if(!h || !EMBLEMS[h] || !mark) return;
+    pop.classList.add("is-holiday");
+    mark.innerHTML = `<svg viewBox="0 0 200 200" aria-hidden="true">${EMBLEMS[h]()}</svg>`;
   };
 
   const SPARK_COLORS = [GOLD, "#F2A7C3", "#8FD0EC", CREAM];
@@ -316,6 +313,7 @@
   };
 
   let observer = null;
+  let headerObserver = null;
   function placeHeight(scene){
     const header = document.querySelector(".app-header");
     if(header) scene.style.setProperty("--scene-h", Math.round(header.getBoundingClientRect().bottom + window.scrollY + parseFloat(getComputedStyle(header).marginBottom) - 12) + "px");
@@ -328,6 +326,7 @@
   window.splitbillMountHolidayScene = function(h){
     document.querySelectorAll(".sb-scene").forEach(el => el.remove());
     if(observer){ observer.disconnect(); observer = null; }
+    if(headerObserver){ headerObserver.disconnect(); headerObserver = null; }
     window.removeEventListener("resize", onResize);
     document.body.classList.remove("sb-has-scene");
     const def = h && SCENES[h];
@@ -345,6 +344,11 @@
     document.body.insertBefore(scene, document.body.firstChild);
     placeHeight(scene);
     window.addEventListener("resize", onResize);
+    // 匯率小字等內容晚一點才出現，頁首變高時場景要跟著長
+    if("ResizeObserver" in window){
+      headerObserver = new ResizeObserver(onResize);
+      headerObserver.observe(header);
+    }
     // 捲到看不見時先停下來，省電
     if("IntersectionObserver" in window){
       observer = new IntersectionObserver(entries => scene.classList.toggle("is-paused", !entries[0].isIntersecting));

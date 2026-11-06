@@ -2087,7 +2087,6 @@
         const payerName = (firstPayerId && memberById[firstPayerId]) || (myMember && myMember.name) || t("summary.meFallback");
         const catMeta = (window.getCategoryMeta && window.getCategoryMeta(itemTitle, itemNote, selectedExpCategory)) || {};
         window.triggerReceiptFlyAnimation({
-          buttonEl: btn,
           desc: itemTitle || t("currency.newExpenseDefaultDesc"),
           amount: amount,
           symbol: SYM || "$",
