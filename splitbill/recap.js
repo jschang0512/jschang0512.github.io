@@ -45,6 +45,21 @@
     }
   }
 
+  async function fetchAllRepayments(groupId){
+    const PAGE = 1000;
+    const rows = [];
+    for(let from = 0; ; from += PAGE){
+      const { data, error } = await sb.from("repayments")
+        .select("id,amount,currency,payment_date,from_member,to_member,offset_group")
+        .eq("group_id", groupId)
+        .order("payment_date", { ascending:true })
+        .range(from, from + PAGE - 1);
+      if(error) throw error;
+      rows.push(...(data || []));
+      if(!data || data.length < PAGE) return rows;
+    }
+  }
+
   // 一次抓齊所有幣別對臺幣的匯率。回傳 { JPY: 0.21, ... }，抓不到就是空物件。
   async function fetchTwdRates(){
     const sources = [
@@ -103,9 +118,35 @@
   function monthName(i){
     return new Date(2000, i, 1).toLocaleDateString(recapLocale(), { month:"long" });
   }
+  // 2023/1/1 是星期日，i 跟 Date.getDay() 同一套編號
+  function weekdayName(i, style){
+    return new Date(2023, 0, 1 + i).toLocaleDateString(recapLocale(), { weekday: style });
+  }
+  function isoWeekday(iso){
+    const [y, m, d] = iso.split("-").map(Number);
+    return new Date(y, m - 1, d).getDay();
+  }
+  function isoDayNumber(iso){
+    return Math.round(Date.parse(iso + "T00:00:00Z") / 86400000);
+  }
+  // 今年還沒過完，平均只算到今天
+  function daysInYearSoFar(year){
+    const now = new Date();
+    const end = year === now.getFullYear() ? now : new Date(year, 11, 31);
+    return Math.round((Date.UTC(end.getFullYear(), end.getMonth(), end.getDate()) - Date.UTC(year, 0, 1)) / 86400000) + 1;
+  }
+  function longestStreak(days){
+    const sorted = Array.from(days).sort();
+    let best = { len:0 }, start = 0;
+    sorted.forEach((iso, i) => {
+      if(i > 0 && isoDayNumber(iso) - isoDayNumber(sorted[i - 1]) !== 1) start = i;
+      if(i - start + 1 > best.len) best = { len: i - start + 1, from: sorted[start], to: iso };
+    });
+    return best;
+  }
 
-  function computeStats(rows, year, myId, memberById, conv){
-    const stats = { total:0, count:0, days:new Set(), months:Array(12).fill(0), cats:{}, food:{}, all:{}, priciest:null, paidCount:0, paidForOthers:0 };
+  function computeStats(rows, repayments, year, myId, memberById, conv){
+    const stats = { total:0, count:0, days:new Set(), months:Array(12).fill(0), weekdays:Array(7).fill(0), byDay:{}, titles:{}, currencies:new Set(), cats:{}, food:{}, all:{}, priciest:null, first:null, paidCount:0, paidForOthers:0, repayCount:0, repaySent:0, repayReceived:0 };
     rows.forEach(r => {
       if(!r.expense_date || !r.expense_date.startsWith(String(year))) return;
       const rate = conv.toBase[r.currency];
@@ -122,6 +163,11 @@
       stats.count += 1;
       stats.days.add(r.expense_date);
       stats.months[Number(r.expense_date.slice(5, 7)) - 1] += myShare;
+      stats.weekdays[isoWeekday(r.expense_date)] += myShare;
+      stats.currencies.add(r.currency);
+      const day = stats.byDay[r.expense_date] || (stats.byDay[r.expense_date] = { amount:0, count:0 });
+      day.amount += myShare;
+      day.count += 1;
 
       const cat = stats.cats[meta.type] || (stats.cats[meta.type] = { meta, amount:0, count:0 });
       cat.amount += myShare;
@@ -134,10 +180,14 @@
         if(isMeal) stats.food[s.member_id] = (stats.food[s.member_id] || 0) + 1;
       });
 
-      const total = Number(r.amount) * rate;
-      if(!stats.priciest || total > stats.priciest.total){
-        stats.priciest = { title: cleanTitle(r.description) || meta.name, total, myShare, date: r.expense_date };
+      const title = cleanTitle(r.description) || meta.name;
+      if(!stats.priciest || myShare > stats.priciest.myShare){
+        stats.priciest = { title, myShare, date: r.expense_date };
       }
+      if(!stats.first || r.expense_date < stats.first.date) stats.first = { title, myShare, date: r.expense_date };
+      const seen = stats.titles[title] || (stats.titles[title] = { title, amount:0, count:0 });
+      seen.amount += myShare;
+      seen.count += 1;
 
       const paid = (Array.isArray(r.payers) ? r.payers : []).find(p => p.member_id === myId);
       if(paid && Number(paid.amount) > 0){
@@ -145,7 +195,19 @@
         stats.paidForOthers += Math.max(0, Number(paid.amount) * rate - myShare);
       }
     });
+    // offset_group 是跨幣別債務轉移的內部沖帳，不是真的有人還錢
+    repayments.forEach(p => {
+      if(p.offset_group || !p.payment_date || !p.payment_date.startsWith(String(year))) return;
+      const rate = conv.toBase[p.currency];
+      if(!rate || (p.from_member !== myId && p.to_member !== myId)) return;
+      stats.repayCount += 1;
+      if(p.from_member === myId) stats.repaySent += Number(p.amount) * rate;
+      else stats.repayReceived += Number(p.amount) * rate;
+    });
     stats.catList = Object.values(stats.cats).sort((a, b) => b.amount - a.amount);
+    stats.topDay = Object.keys(stats.byDay).sort((a, b) => stats.byDay[b].amount - stats.byDay[a].amount)[0];
+    stats.topTitle = Object.values(stats.titles).sort((a, b) => b.count - a.count || b.amount - a.amount)[0];
+    stats.streak = longestStreak(stats.days);
     return stats;
   }
 
@@ -181,6 +243,13 @@
       ${noteHTML}
     `));
 
+    const perDay = stats.total / daysInYearSoFar(year);
+    out.push(slideHTML("is-ocean", 150, `
+      <p class="rc-label rc-rise">${escapeHtml(t("recap.avgLabel"))}</p>
+      <p class="rc-big rc-rise" style="--i:1">${escapeHtml(moneyText(base, perDay))}</p>
+      <p class="rc-detail rc-rise" style="--i:2">${t("recap.avgDetail", { amount:`<b>${escapeHtml(moneyText(base, stats.total / stats.count))}</b>` })}</p>
+    `));
+
     const top = stats.catList[0];
     const topThree = stats.catList.slice(0, 3);
     out.push(slideHTML("is-cat", 210, `
@@ -194,6 +263,14 @@
       </li>`).join("")}</ol>` : ""}
     `, `style="--cat:${top.meta.color}"`));
 
+    if(stats.topTitle.count >= 3){
+      out.push(slideHTML("is-cream", 70, `
+        <p class="rc-label rc-rise">${escapeHtml(t("recap.storeLabel"))}</p>
+        <p class="rc-big is-name is-long rc-rise" style="--i:1">${escapeHtml(stats.topTitle.title)}</p>
+        <p class="rc-detail rc-rise" style="--i:2">${t("recap.storeDetail", { count:`<b>${stats.topTitle.count}</b>`, amount:`<b>${escapeHtml(moneyText(base, stats.topTitle.amount))}</b>` })}</p>
+      `));
+    }
+
     // 一起吃飯的次數太少就不具代表性，改講一起分帳的次數
     const foodTop = topOf(stats.food);
     const partner = foodTop && foodTop.count >= 3 ? { ...foodTop, meal:true } : topOf(stats.all);
@@ -203,11 +280,12 @@
       const face = avatarUrl
         ? `<span class="rc-avatar rc-rise" style="background-image:url('${escapeHtml(avatarUrl)}')"></span>`
         : `<span class="rc-avatar rc-rise" style="background:${getAvatarColor(name)}">${escapeHtml(name.slice(0, 1))}</span>`;
-      out.push(slideHTML("is-cream", 300, `
+      out.push(slideHTML("is-plum", 300, `
         ${face}
         <p class="rc-label rc-rise" style="--i:1">${escapeHtml(t(partner.meal ? "recap.partnerFoodLabel" : "recap.partnerAllLabel"))}</p>
         <p class="rc-big is-name rc-rise" style="--i:2">${escapeHtml(name)}</p>
         <p class="rc-detail rc-rise" style="--i:3">${t(partner.meal ? "recap.partnerFoodDetail" : "recap.partnerAllDetail", { count:`<b>${partner.count}</b>` })}</p>
+        <p class="rc-detail rc-rise" style="--i:4">${t("recap.partnerPeople", { n:`<b>${Object.keys(stats.all).length}</b>` })}</p>
       `));
       ctx.partnerName = name;
     }
@@ -215,9 +293,17 @@
     const p = stats.priciest;
     out.push(slideHTML("is-wine", 40, `
       <p class="rc-label rc-rise">${escapeHtml(t("recap.priciestLabel"))}</p>
-      <p class="rc-big rc-rise" style="--i:1">${escapeHtml(moneyText(base, p.total))}</p>
+      <p class="rc-big rc-rise" style="--i:1">${escapeHtml(moneyText(base, p.myShare))}</p>
       <p class="rc-detail rc-rise" style="--i:2"><b>${escapeHtml(p.title)}</b></p>
-      <p class="rc-detail rc-rise" style="--i:3">${escapeHtml(t("recap.priciestDetail", { date: formatDate(p.date), share: moneyText(base, p.myShare) }))}</p>
+      <p class="rc-detail rc-rise" style="--i:3">${escapeHtml(formatDate(p.date))}</p>
+    `));
+
+    // 那天只有最貴的那一筆的話，跟上一張講的是同一件事，不用重複
+    const topDay = stats.byDay[stats.topDay];
+    if(topDay.count > 1) out.push(slideHTML("is-ocean", 270, `
+      <p class="rc-label rc-rise">${escapeHtml(t("recap.dayLabel"))}</p>
+      <p class="rc-big is-name rc-rise" style="--i:1">${escapeHtml(formatDate(stats.topDay))}</p>
+      <p class="rc-detail rc-rise" style="--i:2">${t("recap.dayDetail", { amount:`<b>${escapeHtml(moneyText(base, topDay.amount))}</b>`, count:`<b>${topDay.count}</b>` })}</p>
     `));
 
     const peak = stats.months.indexOf(Math.max(...stats.months));
@@ -229,6 +315,41 @@
       <div class="rc-months rc-rise" style="--i:3" aria-hidden="true">${stats.months.map((v, i) => `<div class="rc-month${i === peak ? " is-peak" : ""}" style="--i:${i}"><i style="--h:${(v / peakAmt).toFixed(3)};--i:${i}"></i><span>${i + 1}</span></div>`).join("")}</div>
     `));
 
+    const peakDay = stats.weekdays.indexOf(Math.max(...stats.weekdays));
+    const peakDayAmt = stats.weekdays[peakDay];
+    out.push(slideHTML("is-cream", 20, `
+      <p class="rc-label rc-rise">${escapeHtml(t("recap.weekdayLabel"))}</p>
+      <p class="rc-big is-name rc-rise" style="--i:1">${escapeHtml(weekdayName(peakDay, "long"))}</p>
+      <p class="rc-detail rc-rise" style="--i:2">${t("recap.weekdayDetail", { amount:`<b>${escapeHtml(moneyText(base, peakDayAmt))}</b>` })}</p>
+      <div class="rc-months is-week rc-rise" style="--i:3" aria-hidden="true">${stats.weekdays.map((v, i) => `<div class="rc-month${i === peakDay ? " is-peak" : ""}" style="--i:${i}"><i style="--h:${(v / peakDayAmt).toFixed(3)};--i:${i}"></i><span>${escapeHtml(weekdayName(i, "narrow"))}</span></div>`).join("")}</div>
+    `));
+
+    if(stats.streak.len >= 3){
+      out.push(slideHTML("is-pine", 110, `
+        <p class="rc-label rc-rise">${escapeHtml(t("recap.streakLabel"))}</p>
+        <p class="rc-big rc-rise" style="--i:1">${escapeHtml(t("recap.streakValue", { n: stats.streak.len }))}</p>
+        <p class="rc-detail rc-rise" style="--i:2">${escapeHtml(t("recap.streakDetail", { from: formatDate(stats.streak.from), to: formatDate(stats.streak.to) }))}</p>
+      `));
+    }
+
+    out.push(slideHTML("is-brand", 200, `
+      <p class="rc-label rc-rise">${escapeHtml(t("recap.firstLabel"))}</p>
+      <p class="rc-big is-name is-long rc-rise" style="--i:1">${escapeHtml(stats.first.title)}</p>
+      <p class="rc-detail rc-rise" style="--i:2">${escapeHtml(t("recap.firstDetail", { date: formatDate(stats.first.date), amount: moneyText(base, stats.first.myShare) }))}</p>
+    `));
+
+    if(stats.currencies.size >= 2){
+      const names = Array.from(stats.currencies).map(code => {
+        const c = CURRENCIES.find(x => x.code === code);
+        return c ? c.label : code;
+      });
+      out.push(slideHTML("is-plum", 350, `
+        <p class="rc-label rc-rise">${escapeHtml(t("recap.currencyLabel"))}</p>
+        <p class="rc-big rc-rise" style="--i:1">${escapeHtml(t("recap.currencyValue", { n: names.length }))}</p>
+        <p class="rc-detail rc-rise" style="--i:2">${escapeHtml(names.join("、"))}</p>
+      `));
+    }
+
     if(stats.paidCount > 0 && stats.paidForOthers > 0){
       out.push(slideHTML("is-pine", 250, `
         <p class="rc-label rc-rise">${escapeHtml(t("recap.paidLabel"))}</p>
@@ -237,15 +358,24 @@
       `));
     }
 
+    if(stats.repayCount > 0){
+      out.push(slideHTML("is-brand", 60, `
+        <p class="rc-label rc-rise">${escapeHtml(t("recap.repayLabel"))}</p>
+        <p class="rc-big rc-rise" style="--i:1">${escapeHtml(t("recap.repayValue", { n: stats.repayCount }))}</p>
+        <p class="rc-detail rc-rise" style="--i:2">${t("recap.repayDetail", { sent:`<b>${escapeHtml(moneyText(base, stats.repaySent))}</b>`, received:`<b>${escapeHtml(moneyText(base, stats.repayReceived))}</b>` })}</p>
+      `));
+    }
+
     const finalRows = [
       [t("recap.finalTotal"), moneyText(base, stats.total)],
       [t("recap.catLabel"), top.meta.name],
       ctx.partnerName ? [t(partner.meal ? "recap.partnerFoodLabel" : "recap.partnerAllLabel"), ctx.partnerName] : null,
-      [t("recap.priciestLabel"), `${p.title}・${moneyText(base, p.total)}`]
+      [t("recap.priciestLabel"), `${p.title}・${moneyText(base, p.myShare)}`],
+      [t("recap.monthLabel"), monthName(peak)]
     ].filter(Boolean);
     ctx.finalRows = finalRows;
     const canShare = !!(navigator.canShare && navigator.share);
-    out.push(slideHTML("", 330, `
+    out.push(slideHTML("is-final", 330, `
       <h2 class="rc-final-title rc-rise">${escapeHtml(t("recap.finalTitle", { name: myName, year }))}</h2>
       <dl class="rc-final-list rc-rise" style="--i:1">${finalRows.map(([k, v]) => `<div><dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd></div>`).join("")}</dl>
       <div class="rc-actions rc-rise" style="--i:2">
@@ -361,16 +491,60 @@
       }
       shareBtn.disabled = false;
     });
-    document.getElementById("rcReplayBtn").addEventListener("click", () => goTo(0));
+    document.getElementById("rcReplayBtn").addEventListener("click", () => {
+      slides.forEach(s => s.classList.remove("is-on"));
+      track.querySelectorAll("[data-done]").forEach(el => { delete el.dataset.done; });
+      goTo(0);
+    });
   }
 
   // ---------- 卡片切換 ----------
+  // 用 transform 自己移動，不靠原生橫向捲動：手機瀏覽器對捲動吸附的行為
+  // 不一致，有時根本滑不動；這樣手指拖多少卡片就跟多少，滑鼠也能拖。
   let slides = [];
+  let rail = null;
   let index = 0;
-  function goTo(i){
-    const target = slides[Math.max(0, Math.min(slides.length - 1, i))];
-    if(target) track.scrollTo({ left: target.offsetLeft, behavior: reducedMotion ? "auto" : "smooth" });
+  function placeRail(dragPx, animate){
+    if(!rail) return;
+    rail.style.transition = animate && !reducedMotion ? "transform .38s cubic-bezier(.16,1,.3,1)" : "none";
+    rail.style.transform = `translate3d(calc(${-index * 100}% + ${dragPx}px),0,0)`;
   }
+  function goTo(i){
+    if(!slides.length) return;
+    setActive(Math.max(0, Math.min(slides.length - 1, i)));
+    placeRail(0, true);
+  }
+
+  const drag = { id:null, x:0, y:0, dx:0, t:0, active:false };
+  track.addEventListener("pointerdown", e => {
+    if(!rail || drag.id !== null || (e.pointerType === "mouse" && e.button !== 0) || e.target.closest("button, a")) return;
+    Object.assign(drag, { id:e.pointerId, x:e.clientX, y:e.clientY, dx:0, t:e.timeStamp, active:false });
+  });
+  track.addEventListener("pointermove", e => {
+    if(e.pointerId !== drag.id) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if(!drag.active){
+      if(Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)){ drag.id = null; return; }
+      if(Math.abs(dx) < 8) return;
+      drag.active = true;
+      track.setPointerCapture(e.pointerId);
+    }
+    // 第一張往右、最後一張往左拉不動，只給一點阻力當回饋
+    const atEdge = (index === 0 && dx > 0) || (index === slides.length - 1 && dx < 0);
+    drag.dx = atEdge ? dx * .3 : dx;
+    placeRail(drag.dx, false);
+  });
+  function endDrag(e, cancelled){
+    if(e.pointerId !== drag.id) return;
+    const { active, dx, t:startT } = drag;
+    drag.id = null;
+    if(!active) return;
+    const fast = Math.abs(dx) > 24 && Math.abs(dx) / Math.max(1, e.timeStamp - startT) > .35;
+    const far = Math.abs(dx) > track.clientWidth * .2;
+    goTo(!cancelled && (fast || far) ? index + (dx < 0 ? 1 : -1) : index);
+  }
+  track.addEventListener("pointerup", e => endDrag(e, false));
+  track.addEventListener("pointercancel", e => endDrag(e, true));
 
   // 金額從 0 跑到最終值；先用最終文字算好字級，跑動時才不會忽大忽小
   function countUp(el){
@@ -388,6 +562,9 @@
   function setActive(i){
     index = i;
     const slide = slides[i];
+    slide.classList.add("is-on");
+    // 畫面外的卡片不能被 Tab 走到
+    slides.forEach((s, n) => { s.inert = n !== i; });
     progress.querySelectorAll("i").forEach((seg, n) => seg.classList.toggle("is-done", n <= i));
     stage.classList.toggle("is-light-slide", slide.classList.contains("is-cream") || slide.classList.contains("is-mist"));
     prevBtn.disabled = i === 0;
@@ -409,24 +586,15 @@
   }
 
   function mount(ctx){
-    track.innerHTML = buildSlides(ctx).join("");
-    slides = Array.from(track.querySelectorAll(".rc-slide"));
+    track.innerHTML = `<div class="rc-rail">${buildSlides(ctx).join("")}</div>`;
+    rail = track.firstElementChild;
+    slides = Array.from(rail.children);
     progress.innerHTML = slides.map(() => "<i></i>").join("");
     prevBtn.hidden = nextBtn.hidden = false;
-    track.scrollLeft = 0;
     fitBigText();
     wireShare(ctx);
-    const io = new IntersectionObserver(entries => {
-      entries.forEach(en => {
-        if(!en.isIntersecting) return;
-        en.target.classList.add("is-on");
-        setActive(slides.indexOf(en.target));
-      });
-    }, { root: track, threshold: .6 });
-    slides.forEach(s => io.observe(s));
-    if(mount.io) mount.io.disconnect();
-    mount.io = io;
     setActive(0);
+    placeRail(0, false);
     track.focus({ preventScroll:true });
   }
 
@@ -461,14 +629,14 @@
         location.href = "summary.html";
         return;
       }
-      const rows = await fetchAllExpenses(myMember.group_id);
-      const conv = await buildConverter(rows);
+      const [rows, repayments] = await Promise.all([fetchAllExpenses(myMember.group_id), fetchAllRepayments(myMember.group_id)]);
+      const conv = await buildConverter(rows.concat(repayments));
       const member = id => MEMBERS.find(m => m.id === id);
       const groupName = (myMember.groups && myMember.groups.name) || "";
 
       const statsByYear = {};
       Array.from(new Set(rows.map(r => Number((r.expense_date || "").slice(0, 4))).filter(Boolean))).forEach(y => {
-        const s = computeStats(rows, y, myMember.id, memberById, conv);
+        const s = computeStats(rows, repayments, y, myMember.id, memberById, conv);
         if(s.count >= MIN_EXPENSES) statsByYear[y] = s;
       });
       const years = Object.keys(statsByYear).map(Number).sort((a, b) => b - a);

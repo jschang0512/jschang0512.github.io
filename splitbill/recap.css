@@ -13,6 +13,8 @@
   --rc-mist-ink:#23254F;
   --rc-mist-soft:#5A5C80;
   --rc-pine:#0E4A30;
+  --rc-ocean:#0F4656;
+  --rc-plum:#46215C;
   --rc-light:#F5F4FF;
   --rc-light-soft:#D3D5F3;
   --rc-rose:#F0B8C8;
@@ -22,16 +24,20 @@ html, body{ overflow-x:clip; }
 html body.rc-page{ margin:0; min-height:100dvh; background:var(--rc-night-2); color:var(--rc-light); }
 
 .rc-stage{ position:fixed; inset:0; overflow:hidden; background:var(--rc-night); }
-.rc-track{ display:flex; height:100%; overflow-x:auto; overflow-y:hidden; scroll-snap-type:x mandatory; scrollbar-width:none; outline:none; overscroll-behavior-x:contain; }
-.rc-track::-webkit-scrollbar{ display:none; }
+.rc-track{ display:flex; height:100%; overflow:hidden; outline:none; touch-action:pan-y; user-select:none; -webkit-user-select:none; cursor:grab; }
+.rc-track:active{ cursor:grabbing; }
+.rc-rail{ display:flex; flex:0 0 100%; width:100%; height:100%; will-change:transform; }
 
-.rc-slide{ position:relative; flex:0 0 100%; width:100%; height:100%; scroll-snap-align:start; scroll-snap-stop:always; overflow:hidden; display:flex; flex-direction:column; justify-content:center; padding:calc(76px + env(safe-area-inset-top)) 28px calc(40px + env(safe-area-inset-bottom)); background:var(--bg); color:var(--fg); --bg:var(--rc-night); --fg:var(--rc-light); --soft:var(--rc-light-soft); }
+.rc-slide{ position:relative; flex:0 0 100%; width:100%; height:100%; overflow:hidden; display:flex; flex-direction:column; justify-content:center; padding:calc(76px + env(safe-area-inset-top)) 28px calc(40px + env(safe-area-inset-bottom)); background:var(--bg); color:var(--fg); --bg:var(--rc-night); --fg:var(--rc-light); --soft:var(--rc-light-soft); }
 .rc-slide.is-brand{ --bg:var(--rc-brand); }
 .rc-slide.is-cat{ --bg:color-mix(in srgb, var(--cat) 34%, #14141A); }
 .rc-slide.is-cream{ --bg:var(--rc-cream); --fg:var(--rc-cream-ink); --soft:var(--rc-cream-soft); }
 .rc-slide.is-wine{ --bg:var(--rc-wine); --soft:#F3CFDA; }
 .rc-slide.is-mist{ --bg:var(--rc-mist); --fg:var(--rc-mist-ink); --soft:var(--rc-mist-soft); }
 .rc-slide.is-pine{ --bg:var(--rc-pine); --soft:#BFE3CF; }
+.rc-slide.is-ocean{ --bg:var(--rc-ocean); --soft:#BCE0E8; }
+.rc-slide.is-plum{ --bg:var(--rc-plum); --soft:#DCC8EA; }
+.rc-slide.is-final{ overflow-y:auto; justify-content:safe center; }
 
 .rc-disk{ position:absolute; width:128vmin; height:128vmin; max-width:640px; max-height:640px; right:-34%; top:-16%; transform:rotate(var(--turn,0deg)); opacity:.22; pointer-events:none; }
 .rc-disk path{ fill:var(--disk,#fff); }
@@ -44,6 +50,7 @@ html body.rc-page{ margin:0; min-height:100dvh; background:var(--rc-night-2); co
 .rc-label{ margin:0 0 10px; font-size:18px; font-weight:600; line-height:1.4; color:var(--soft); }
 .rc-big{ margin:0; font-size:clamp(44px,15vw,76px); font-weight:900; line-height:1.08; letter-spacing:-.01em; white-space:nowrap; overflow-wrap:normal; }
 .rc-big.is-name{ white-space:normal; overflow-wrap:anywhere; }
+.rc-big.is-long{ font-size:clamp(34px,10.5vw,52px); line-height:1.2; }
 .rc-detail{ margin:16px 0 0; font-size:17px; line-height:1.6; color:var(--soft); }
 .rc-detail b{ color:var(--fg); font-weight:700; }
 .rc-note{ margin:22px 0 0; font-size:12.5px; line-height:1.5; color:var(--soft); }
@@ -75,6 +82,7 @@ html body.rc-page{ margin:0; min-height:100dvh; background:var(--rc-night-2); co
 
 /* 月份長條 */
 .rc-months{ display:grid; grid-template-columns:repeat(12,minmax(0,1fr)); gap:5px; align-items:end; height:190px; margin-top:28px; }
+.rc-months.is-week{ grid-template-columns:repeat(7,minmax(0,1fr)); gap:8px; }
 .rc-month{ display:flex; flex-direction:column; justify-content:flex-end; gap:6px; height:100%; min-width:0; }
 .rc-month i{ display:block; height:calc(var(--h,0) * 100%); min-height:3px; border-radius:4px 4px 2px 2px; background:#AEB2DE; transform-origin:bottom; }
 .rc-month.is-peak i{ background:var(--rc-night); }
@@ -141,5 +149,4 @@ html body.rc-page{ margin:0; min-height:100dvh; background:var(--rc-night-2); co
 @media (prefers-reduced-motion:reduce){
   .rc-slide .rc-rise{ opacity:1; }
   .rc-slide.is-on .rc-rise, .rc-slide.is-on .rc-disk, .rc-slide.is-on .rc-rank-bar i, .rc-slide.is-on .rc-month i{ animation:none; }
-  .rc-track{ scroll-behavior:auto; }
 }
