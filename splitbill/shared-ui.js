@@ -1196,3 +1196,10 @@ function recapYearFor(date){
   document.addEventListener("touchend", release);
   document.addEventListener("touchcancel", release);
 })();
+
+// 支出名稱裡可能夾帶 [xcur:...]／[recurring:...]／<!--CAT:...--> 這類隱藏標記，
+// 要顯示給人看之前先拿掉
+function sbCleanExpenseTitle(desc){
+  return String(desc || "").replace(/<!--[\s\S]*?-->/g, "").replace(/\[[a-z]+:[^\]]*\]/gi, "").replace(/AI_RECEIPT_DATA[\s\S]*$/, "").trim();
+}
+window.sbCleanExpenseTitle = sbCleanExpenseTitle;

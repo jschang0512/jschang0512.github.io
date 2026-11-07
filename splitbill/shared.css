@@ -9792,3 +9792,16 @@ html body .sb-record-pop{ border-radius:18px; }
 
 /* 節日場景上的頁首按鈕要有實心底，不然會透出插畫看不清楚 */
 html body.sb-has-scene .app-header :is(#logoutBtn, #backBtn, .notif-bell-btn), html body.sb-has-scene .app-header .nav-links a:not(.active){ background:var(--card) !important; color:var(--ink) !important; border:1px solid var(--card-border) !important; box-shadow:0 1px 3px rgba(16,14,30,.18); opacity:1; }
+
+/* 首頁的去年的今天 */
+html body .on-this-day{ position:relative; margin-bottom:14px; border:1px solid var(--card-border); border-radius:16px; background:var(--card); }
+html body .on-this-day.hidden{ display:none; }
+html body .on-this-day-link{ display:flex; align-items:center; gap:12px; padding:13px 44px 13px 14px; color:var(--ink); text-decoration:none; border-radius:16px; }
+html body .on-this-day-link:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; }
+html body .on-this-day-icon{ display:grid; place-items:center; flex:none; width:40px; height:40px; border-radius:12px; background:var(--tint); color:var(--btn-primary); font-size:20px; }
+html body .on-this-day-text{ min-width:0; }
+html body .on-this-day-title, html body .on-this-day-name, html body .on-this-day-detail{ display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+html body .on-this-day-title{ font-size:12.5px; font-weight:600; color:var(--ink-soft); }
+html body .on-this-day-name{ font-size:16px; font-weight:700; line-height:1.4; }
+html body .on-this-day-detail{ font-size:13px; color:var(--ink-soft); }
+html body .on-this-day-close{ position:absolute; top:50%; right:6px; width:36px; height:36px; margin-top:-18px; border:0; border-radius:50%; background:none; color:var(--ink-soft); font-size:14px; cursor:pointer; }

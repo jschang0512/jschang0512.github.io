@@ -111,11 +111,6 @@
     return sym + Math.round(amount).toLocaleString("en-US");
   }
 
-  // description 可能夾帶 [xcur:...]／[recurring:...]／<!--CAT:...--> 這類隱藏標記
-  function cleanTitle(desc){
-    return String(desc || "").replace(/<!--[\s\S]*?-->/g, "").replace(/\[[a-z]+:[^\]]*\]/gi, "").replace(/AI_RECEIPT_DATA[\s\S]*$/, "").trim();
-  }
-
   function formatDate(iso){
     const [y, m, d] = iso.split("-").map(Number);
     return new Date(y, m - 1, d).toLocaleDateString(recapLocale(), { month:"long", day:"numeric" });
@@ -202,7 +197,7 @@
         h.count += 1;
       });
 
-      const title = cleanTitle(r.description) || meta.name;
+      const title = sbCleanExpenseTitle(r.description) || meta.name;
       if(!stats.priciest || myShare > stats.priciest.myShare){
         stats.priciest = { title, myShare, date: r.expense_date };
       }

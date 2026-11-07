@@ -29,18 +29,18 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=945">
-<link rel="stylesheet" href="shared.css?v=945">
-<script src="holiday.js?v=945"></script>
+<link rel="stylesheet" href="theme.css?v=946">
+<link rel="stylesheet" href="shared.css?v=946">
+<script src="holiday.js?v=946"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
-<script src="i18n.js?v=945"></script>
-<script src="currencies.js?v=945"></script>
-<script src="motion.js?v=945"></script>
-<script src="version.js?v=945"></script>
-<script src="notif-text.js?v=945"></script>
-<script src="shared-ui.js?v=945"></script>
-<script src="theme.js?v=945" defer></script>
-<script src="app-banner.js?v=945" defer></script>
+<script src="i18n.js?v=946"></script>
+<script src="currencies.js?v=946"></script>
+<script src="motion.js?v=946"></script>
+<script src="version.js?v=946"></script>
+<script src="notif-text.js?v=946"></script>
+<script src="shared-ui.js?v=946"></script>
+<script src="theme.js?v=946" defer></script>
+<script src="app-banner.js?v=946" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -151,6 +151,18 @@ if("serviceWorker" in navigator){
       </span>
       <span class="recap-entry-go" aria-hidden="true">›</span>
     </a>
+
+    <div class="on-this-day hidden" id="onThisDay">
+      <a class="on-this-day-link" id="onThisDayLink">
+        <span class="on-this-day-icon"><span class="sb-ico" style="--ico:var(--ico-calendar)" aria-hidden="true"></span></span>
+        <span class="on-this-day-text">
+          <span class="on-this-day-title" id="onThisDayTitle"></span>
+          <span class="on-this-day-name" id="onThisDayName"></span>
+          <span class="on-this-day-detail" id="onThisDayDetail"></span>
+        </span>
+      </a>
+      <button type="button" class="on-this-day-close" id="onThisDayClose" data-i18n-title="common.close" title="關閉" aria-label="關閉">✕</button>
+    </div>
 
     <div class="summary-grid-2">
       <!-- 1. 我的餘額：只顯示有交易紀錄過的幣別 -->
@@ -1222,6 +1234,7 @@ renderNavLinks();
       window.allGroupRepayments = repRes.data || [];
 
       renderRecapEntry();
+      renderOnThisDay();
 
       // 非核心功能在背景非同步執行
       loadFeedback().catch(e => console.error("loadFeedback error:", e));
@@ -1236,6 +1249,45 @@ renderNavLinks();
         await forceLogout();
       }
     }
+  }
+
+  // 去年的今天：找以前同月同日、我有參與的帳，年份越近越優先，同一天挑最多人一起的那筆。
+  // 自動產生的週期性支出（房租之類）和跨幣別轉移不算回憶，跳過。關掉後當天不再出現。
+  function renderOnThisDay(){
+    const box = document.getElementById("onThisDay");
+    if(!box || !myMember) return;
+    const now = new Date();
+    const pad = n => String(n).padStart(2, "0");
+    const today = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    const DISMISS_KEY = "splitbill-on-this-day-closed";
+    try{ if(localStorage.getItem(DISMISS_KEY) === today) return; }catch(e){}
+
+    const monthDay = today.slice(4);
+    const matches = (window.allGroupExpenses || []).filter(e => {
+      const date = String(e.expense_date || "");
+      if(!date.endsWith(monthDay) || date >= today) return false;
+      if(/\[(recurring|xcur):/i.test(String(e.description || "") + String(e.note || ""))) return false;
+      return (e.shares || []).some(x => x.member_id === myMember.id && Number(x.amount) > 0);
+    }).sort((a, b) => b.expense_date.localeCompare(a.expense_date)
+      || (b.shares || []).length - (a.shares || []).length
+      || Number(b.amount) - Number(a.amount));
+    const pick = matches[0];
+    if(!pick) return;
+
+    const years = now.getFullYear() - Number(pick.expense_date.slice(0, 4));
+    const meta = getCategoryMeta(pick.description, pick.note, pick.category);
+    const cur = CURRENCIES.find(c => c.code === pick.currency);
+    const amount = (cur ? cur.symbol : pick.currency + " ") + formatAmt(pick.amount);
+    const people = (pick.shares || []).filter(x => Number(x.amount) > 0).length;
+    document.getElementById("onThisDayTitle").textContent = years === 1 ? t("summary.onThisDayOneYear") : t("summary.onThisDayYears", { n: years });
+    document.getElementById("onThisDayName").textContent = sbCleanExpenseTitle(pick.description) || meta.name;
+    document.getElementById("onThisDayDetail").textContent = people > 1 ? t("summary.onThisDayPeople", { count: people, amount }) : amount;
+    document.getElementById("onThisDayLink").href = `currency.html?c=${encodeURIComponent(pick.currency)}&openExpense=${encodeURIComponent(pick.id)}`;
+    document.getElementById("onThisDayClose").onclick = () => {
+      box.classList.add("hidden");
+      try{ localStorage.setItem(DISMISS_KEY, today); }catch(e){}
+    };
+    box.classList.remove("hidden");
   }
 
   // 年度回顧入口：只在跨年前後一週出現，而且那一年至少要有三筆跟我有關的帳。
