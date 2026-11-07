@@ -31,12 +31,16 @@
     return t("settings.msg.saveFailedRetry");
   }
 
+  const locale = () => getLang() === "zh-Hant" ? "zh-TW" : getLang();
+  const parseDay = iso => { const [y, m, d] = iso.split("-").map(Number); return new Date(y, m - 1, d); };
+  const dayNumber = iso => Math.round(Date.parse(iso + "T00:00:00Z") / 86400000);
+
   function feeText(e){
-    if(e.fee_mode === "per_person") return t("events.feeEach", { amount: money(e.currency, e.fee_amount) });
+    if(e.fee_mode === "per_person") return { main: money(e.currency, e.fee_amount), unit: t("events.perPerson") };
     const n = going(e.id).length;
     return n
-      ? t("events.feeShared", { total: money(e.currency, e.fee_amount), amount: money(e.currency, Math.ceil(e.fee_amount / n)) })
-      : t("events.feeTotal", { total: money(e.currency, e.fee_amount) });
+      ? { main: "≈ " + money(e.currency, Math.ceil(e.fee_amount / n)), unit: t("events.perPersonNow", { total: money(e.currency, e.fee_amount) }) }
+      : { main: money(e.currency, e.fee_amount), unit: t("events.totalSplit") };
   }
 
   function cardHTML(e){
@@ -47,42 +51,67 @@
     const full = e.capacity && attendees.length >= e.capacity;
     const expired = e.deadline && e.deadline < today();
     const open = e.status === "open";
-    const count = e.capacity ? t("events.countOf", { n: attendees.length, max: e.capacity }) : t("events.count", { n: attendees.length });
-    const faces = attendees.map(r => {
-      const m = memberRows.find(x => x.id === r.member_id) || { id: r.member_id, name: memberById[r.member_id] || "?" };
-      return renderAvatarHTML(m, "avatar-md");
-    }).join("");
+    const date = parseDay(e.event_date);
+    const fee = feeText(e);
+    const daysToDeadline = e.deadline ? dayNumber(e.deadline) - dayNumber(today()) : null;
     const state = e.status === "cancelled" ? t("events.stateCancelled")
       : e.status === "closed" ? t("events.stateClosed")
-      : expired ? t("events.stateExpired") : "";
-    return `<article class="event-card card" data-id="${e.id}">
-      <div class="event-head">
-        <h2>${escapeHtml(e.title)}</h2>
-        ${state ? `<span class="event-state">${escapeHtml(state)}</span>` : ""}
+      : expired ? t("events.stateExpired")
+      : full ? t("events.full")
+      : isGoing ? t("events.youreIn") : "";
+    const stateCls = isGoing && open && !expired && !full ? " is-in" : "";
+    const count = e.capacity ? t("events.countOf", { n: attendees.length, max: e.capacity }) : t("events.count", { n: attendees.length });
+    const faces = attendees.map(r => renderAvatarHTML(memberRows.find(x => x.id === r.member_id) || { id: r.member_id, name: memberById[r.member_id] || "?" }, "avatar-md")).join("");
+    const organizer = memberById[e.created_by] || "?";
+    const mapUrl = e.location ? "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(e.location) : "";
+    return `<article class="ev-card${open ? "" : " is-over"}" data-id="${e.id}">
+      <div class="ev-head">
+        <div class="ev-date">
+          <span>${escapeHtml(date.toLocaleDateString(locale(), { month: "short" }))}</span>
+          <b>${date.getDate()}</b>
+          <span>${escapeHtml(date.toLocaleDateString(locale(), { weekday: "short" }))}</span>
+        </div>
+        <div class="ev-title">
+          <h2>${escapeHtml(e.title)}</h2>
+          ${e.location ? `<a class="ev-line" href="${mapUrl}" target="_blank" rel="noopener"><span class="sb-ico" style="--ico:var(--ico-pin)" aria-hidden="true"></span><span>${escapeHtml(e.location)}</span></a>` : ""}
+          <p class="ev-line"><span class="sb-ico" style="--ico:var(--ico-user)" aria-hidden="true"></span><span>${escapeHtml(t("events.organizer", { name: organizer }))}</span></p>
+        </div>
+        ${state ? `<span class="ev-state${stateCls}">${escapeHtml(state)}</span>` : ""}
       </div>
-      <p class="event-meta">${escapeHtml(e.event_date)}${e.location ? "・" + escapeHtml(e.location) : ""}</p>
-      <p class="event-fee">${escapeHtml(feeText(e))}</p>
-      ${e.note ? `<p class="event-note">${escapeHtml(e.note)}</p>` : ""}
-      <div class="event-people"><span>${escapeHtml(count)}</span><div class="event-faces">${faces}</div></div>
-      ${e.deadline && open ? `<p class="event-meta">${escapeHtml(t("events.deadline", { date: e.deadline }))}</p>` : ""}
-      ${open ? `<div class="event-actions">
-        <button type="button" class="event-btn ${isGoing ? "" : "is-primary"}" data-act="${isGoing ? "leave" : "join"}" ${!isGoing && (full || expired) ? "disabled" : ""}>${escapeHtml(isGoing ? t("events.leave") : full ? t("events.full") : t("events.join"))}</button>
-        ${isOrganizer ? `<button type="button" class="event-btn" data-act="close">${escapeHtml(t("events.closeTitle"))}</button>
-        <button type="button" class="event-btn is-quiet" data-act="cancel">${escapeHtml(t("events.cancel"))}</button>` : ""}
+
+      <div class="ev-fee"><b>${escapeHtml(fee.main)}</b><span>${escapeHtml(fee.unit)}</span></div>
+      ${e.note ? `<p class="ev-note">${escapeHtml(e.note)}</p>` : ""}
+
+      <div class="ev-people">
+        <div class="ev-people-head">
+          <span>${escapeHtml(count)}</span>
+          ${open && e.deadline && !expired ? `<span>${escapeHtml(daysToDeadline === 0 ? t("events.deadlineToday") : t("events.deadlineIn", { n: daysToDeadline }))}</span>` : ""}
+        </div>
+        ${e.capacity ? `<div class="ev-bar"><i style="width:${Math.min(100, attendees.length / e.capacity * 100)}%"></i></div>` : ""}
+        ${faces ? `<div class="ev-faces">${faces}</div>` : `<p class="ev-nobody">${escapeHtml(t("events.nobody"))}</p>`}
+      </div>
+
+      ${open ? `<div class="ev-actions">
+        <button type="button" class="ev-btn${isGoing ? "" : " is-primary"}" data-act="${isGoing ? "leave" : "join"}"${!isGoing && (full || expired) ? " disabled" : ""}>${escapeHtml(isGoing ? t("events.leave") : full ? t("events.full") : expired ? t("events.stateExpired") : t("events.join"))}</button>
+        ${isOrganizer ? `<div class="ev-admin">
+          <button type="button" class="ev-link-btn" data-act="close">${escapeHtml(t("events.closeTitle"))}</button>
+          <button type="button" class="ev-link-btn" data-act="edit">${escapeHtml(t("common.edit"))}</button>
+          <button type="button" class="ev-link-btn is-quiet" data-act="cancel">${escapeHtml(t("events.cancel"))}</button>
+        </div>` : ""}
       </div>` : ""}
-      ${e.expense_id ? `<a class="event-link" href="currency.html?c=${encodeURIComponent(e.currency)}&openExpense=${encodeURIComponent(e.expense_id)}">${escapeHtml(t("events.viewExpense"))}</a>` : ""}
+      ${e.expense_id ? `<a class="ev-view" href="currency.html?c=${encodeURIComponent(e.currency)}&openExpense=${encodeURIComponent(e.expense_id)}">${escapeHtml(t("events.viewExpense"))} ›</a>` : ""}
       <div class="msg" data-msg></div>
     </article>`;
   }
 
   function render(){
-    const now = today();
     const active = events.filter(e => e.status === "open").sort((a, b) => a.event_date.localeCompare(b.event_date));
     const past = events.filter(e => e.status !== "open").sort((a, b) => b.event_date.localeCompare(a.event_date));
     $("eventList").innerHTML = active.map(cardHTML).join("");
     $("eventPastList").innerHTML = past.map(cardHTML).join("");
-    $("eventEmpty").classList.toggle("hidden", !!events.length);
-    $("eventPastTitle").classList.toggle("hidden", !past.length);
+    $("eventEmpty").classList.toggle("hidden", !!active.length);
+    $("eventPast").classList.toggle("hidden", !past.length);
+    $("eventPastTitle").textContent = t("events.pastCount", { n: past.length });
   }
 
   async function load(){
@@ -120,6 +149,7 @@
     if(act === "join") return setStatus(card, e, "going");
     if(act === "leave") return setStatus(card, e, "not_going");
     if(act === "close") return openClose(e);
+    if(act === "edit") return openForm(e);
     if(act === "cancel"){
       if(!(await sbConfirm(t("events.cancelConfirm", { name: e.title })))) return;
       const { error } = await sb.from("events").update({ status: "cancelled" }).eq("id", e.id);
@@ -128,39 +158,76 @@
     }
   }
   $("eventList").addEventListener("click", onCardClick);
+  $("eventPastList").addEventListener("click", onCardClick);
 
   const showModal = m => { m.classList.remove("hidden"); m.classList.add("show"); };
   const hideModal = m => m.classList.remove("show");
 
-  // ---------- 開新活動 ----------
+  // ---------- 開新活動／編輯 ----------
+  let editingEventId = null;
+  const feeRadios = Array.from(document.querySelectorAll('input[name="evFee"]'));
+  const feeMode = () => (feeRadios.find(r => r.checked) || feeRadios[0]).value;
   $("evCurrency").innerHTML = CURRENCIES.map(c => `<option value="${c.code}">${c.label} (${c.code})</option>`).join("");
-  $("eventAddBtn").addEventListener("click", () => {
-    ["evTitle", "evLocation", "evAmount", "evCapacity", "evDeadline", "evNote"].forEach(id => { $(id).value = ""; });
-    $("evDate").value = today();
-    $("evFeeMode").value = "per_person";
-    $("evCurrency").value = "TWD";
-    enhanceSelect($("evFeeMode"));
+
+  // 填金額時先算給主辦人看，全員都來大概是多少
+  function updateFeePreview(){
+    const mode = feeMode();
+    $("evAmountLabel").textContent = t(mode === "per_person" ? "events.amountEach" : "events.amountTotal");
+    const amount = Number($("evAmount").value);
+    const n = memberRows.filter(m => !m.left_at).length;
+    const box = $("evPreview");
+    box.classList.toggle("hidden", !(amount > 0));
+    if(!(amount > 0)) return;
+    const code = $("evCurrency").value;
+    box.textContent = mode === "per_person"
+      ? t("events.previewEach", { n, total: money(code, amount * n) })
+      : t("events.previewTotal", { n, each: money(code, Math.ceil(amount / n)) });
+  }
+  feeRadios.forEach(r => r.addEventListener("change", updateFeePreview));
+  $("evAmount").addEventListener("input", updateFeePreview);
+  $("evCurrency").addEventListener("change", updateFeePreview);
+
+  function openForm(e){
+    editingEventId = e ? e.id : null;
+    $("eventFormTitle").textContent = t(e ? "events.editTitle" : "events.add");
+    $("eventFormSubmit").textContent = t(e ? "events.save" : "events.create");
+    $("evTitle").value = e ? e.title : "";
+    $("evDate").value = e ? e.event_date : today();
+    $("evLocation").value = (e && e.location) || "";
+    $("evNote").value = (e && e.note) || "";
+    $("evAmount").value = e ? e.fee_amount : "";
+    $("evCapacity").value = (e && e.capacity) || "";
+    $("evDeadline").value = (e && e.deadline) || "";
+    const mode = e ? e.fee_mode : "per_person";
+    feeRadios.forEach(r => { r.checked = r.value === mode; });
+    $("evCurrency").value = e ? e.currency : "TWD";
     enhanceSelect($("evCurrency"));
     $("eventFormMsg").textContent = "";
+    updateFeePreview();
     showModal($("eventFormModal"));
-  });
+  }
+  $("eventAddBtn").addEventListener("click", () => openForm(null));
   $("eventFormClose").addEventListener("click", () => hideModal($("eventFormModal")));
   $("eventFormSubmit").addEventListener("click", async () => {
     const msg = $("eventFormMsg");
     const title = $("evTitle").value.trim();
     const amount = Number($("evAmount").value);
     const capacity = Number($("evCapacity").value) || null;
+    const deadline = $("evDeadline").value || null;
     if(!title){ msg.textContent = t("events.needTitle"); msg.className = "msg error"; return; }
     if(!$("evDate").value){ msg.textContent = t("events.needDate"); msg.className = "msg error"; return; }
     if(!(amount > 0)){ msg.textContent = t("settings.recurringFormNeedAmount"); msg.className = "msg error"; return; }
+    if(deadline && deadline > $("evDate").value){ msg.textContent = t("events.deadlineAfterEvent"); msg.className = "msg error"; return; }
+    const fields = {
+      title, event_date: $("evDate").value, location: $("evLocation").value.trim() || null,
+      note: $("evNote").value.trim() || null, currency: $("evCurrency").value,
+      fee_mode: feeMode(), fee_amount: amount, capacity, deadline
+    };
     const btn = $("eventFormSubmit");
     btn.disabled = true;
-    const { error } = await sb.from("events").insert({
-      group_id: myMember.group_id, created_by: myMember.id, title,
-      event_date: $("evDate").value, location: $("evLocation").value.trim() || null,
-      note: $("evNote").value.trim() || null, currency: $("evCurrency").value,
-      fee_mode: $("evFeeMode").value, fee_amount: amount, capacity, deadline: $("evDeadline").value || null
-    });
+    const { error } = editingEventId
+      ? await sb.from("events").update(fields).eq("id", editingEventId)
+      : await sb.from("events").insert({ ...fields, group_id: myMember.group_id, created_by: myMember.id });
     btn.disabled = false;
     if(error){ msg.textContent = t("settings.msg.saveFailedRetry"); msg.className = "msg error"; return; }
     hideModal($("eventFormModal"));
@@ -260,7 +327,8 @@
     }catch(e){
       console.error("讀取活動失敗：", e);
       $("eventList").innerHTML = "";
-      $("eventEmpty").textContent = t("events.loadFailed");
+      $("eventEmptyTitle").textContent = t("recap.loadFailTitle");
+      $("eventEmptyText").textContent = t("events.loadFailed");
       $("eventEmpty").classList.remove("hidden");
       $("eventAddBtn").classList.add("hidden");
       return;

@@ -26,15 +26,15 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=949">
-<link rel="stylesheet" href="shared.css?v=949">
-<script src="holiday.js?v=949"></script>
+<link rel="stylesheet" href="theme.css?v=950">
+<link rel="stylesheet" href="shared.css?v=950">
+<script src="holiday.js?v=950"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
-<script src="i18n.js?v=949"></script>
-<script src="currencies.js?v=949"></script>
-<script src="version.js?v=949"></script>
-<script src="shared-ui.js?v=949"></script>
-<script src="theme.js?v=949" defer></script>
+<script src="i18n.js?v=950"></script>
+<script src="currencies.js?v=950"></script>
+<script src="version.js?v=950"></script>
+<script src="shared-ui.js?v=950"></script>
+<script src="theme.js?v=950" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -69,59 +69,108 @@ if("serviceWorker" in navigator){
     </div>
   </div>
 
-  <button type="button" class="btn-wide" id="eventAddBtn" data-i18n="events.add">開新活動</button>
+  <div class="sbf-toolbar">
+    <p data-i18n="events.hint">揪團、聚餐、出遊，大家在這裡報名，結束後一鍵變成帳。</p>
+    <button type="button" class="sbf-primary" id="eventAddBtn"><span class="sb-ico" style="--ico:var(--ico-plus)" aria-hidden="true"></span><span data-i18n="events.addShort">開活動</span></button>
+  </div>
+
   <div id="eventList"><div class="sb-skel-bars" role="status"><i style="height:45%"></i><i style="height:75%"></i><i style="height:35%"></i></div></div>
-  <p class="settings-hint hidden" id="eventEmpty" data-i18n="events.empty">還沒有活動，開一個揪大家吧。</p>
-  <h2 class="event-past-title hidden" id="eventPastTitle" data-i18n="events.past">已結束</h2>
-  <div id="eventPastList"></div>
+  <div class="sbf-empty hidden" id="eventEmpty">
+    <span class="sb-ico" style="--ico:var(--ico-calendar)" aria-hidden="true"></span>
+    <b id="eventEmptyTitle" data-i18n="events.emptyTitle">還沒有活動</b>
+    <p id="eventEmptyText" data-i18n="events.emptyText">開一個活動，看誰要來。</p>
+  </div>
+  <details class="ev-past hidden" id="eventPast">
+    <summary id="eventPastTitle"></summary>
+    <div id="eventPastList"></div>
+  </details>
 </div>
 
 <div class="calc-modal" id="eventFormModal">
-  <div class="calc-card card">
+  <div class="calc-card card sbf-card">
     <div class="calc-header">
-      <span class="calc-header-name" data-i18n="events.add">開新活動</span>
+      <span class="calc-header-name" id="eventFormTitle" data-i18n="events.add">開新活動</span>
       <button type="button" class="calc-close" id="eventFormClose" data-i18n-title="common.close" aria-label="關閉">✕</button>
     </div>
-    <label for="evTitle" data-i18n="events.fieldTitle">活動名稱</label>
-    <input type="text" id="evTitle" maxlength="80" data-i18n-placeholder="events.fieldTitlePlaceholder" placeholder="例如 週末烤肉">
-    <label for="evDate" data-i18n="events.fieldDate">日期</label>
-    <input type="date" id="evDate" lang="en-CA">
-    <label for="evLocation" data-i18n="events.fieldLocation">地點（選填）</label>
-    <input type="text" id="evLocation" maxlength="120">
-    <label for="evFeeMode" data-i18n="events.fieldFeeMode">費用方式</label>
-    <div class="select-wrap"><select id="evFeeMode">
-      <option value="per_person" data-i18n="events.feePerPerson">每人固定金額</option>
-      <option value="split_total" data-i18n="events.feeSplitTotal">總額大家平分</option>
-    </select></div>
-    <label for="evCurrency" data-i18n="settings.recurringFormCurrencyLabel">幣別</label>
-    <div class="select-wrap"><select id="evCurrency"></select></div>
-    <label for="evAmount" data-i18n="events.fieldAmount">金額</label>
-    <input type="number" id="evAmount" min="1" step="1" inputmode="decimal">
-    <label for="evCapacity" data-i18n="events.fieldCapacity">人數上限（選填）</label>
-    <input type="number" id="evCapacity" min="1" step="1" inputmode="numeric">
-    <label for="evDeadline" data-i18n="events.fieldDeadline">報名截止日（選填）</label>
-    <input type="date" id="evDeadline" lang="en-CA">
-    <label for="evNote" data-i18n="events.fieldNote">備註（選填）</label>
-    <textarea id="evNote" maxlength="500" rows="2"></textarea>
-    <button type="button" class="btn-wide" id="eventFormSubmit" data-i18n="events.create">建立活動</button>
-    <div class="msg" id="eventFormMsg"></div>
+
+    <section class="sbf-sec">
+      <h3 data-i18n="events.secWhat">活動內容</h3>
+      <label for="evTitle" data-i18n="events.fieldTitle">活動名稱</label>
+      <input type="text" id="evTitle" maxlength="80" data-i18n-placeholder="events.fieldTitlePlaceholder" placeholder="例如 週末烤肉">
+      <div class="sbf-row">
+        <div>
+          <label for="evDate" data-i18n="events.fieldDate">日期</label>
+          <input type="date" id="evDate" lang="en-CA">
+        </div>
+        <div>
+          <label for="evLocation" data-i18n="events.fieldLocation">地點（選填）</label>
+          <input type="text" id="evLocation" maxlength="120" data-i18n-placeholder="events.fieldLocationPlaceholder" placeholder="例如 河濱公園">
+        </div>
+      </div>
+      <label for="evNote" data-i18n="events.fieldNote">備註（選填）</label>
+      <textarea id="evNote" maxlength="500" rows="2" data-i18n-placeholder="events.fieldNotePlaceholder" placeholder="集合時間、要帶什麼"></textarea>
+    </section>
+
+    <section class="sbf-sec">
+      <h3 data-i18n="events.secFee">費用怎麼算</h3>
+      <div class="sbf-choices" role="radiogroup">
+        <label class="sbf-choice"><input type="radio" name="evFee" value="per_person" checked><span><b data-i18n="events.feePerPerson">每人固定金額</b><small data-i18n="events.feePerPersonHint">例如門票，每人都付一樣</small></span></label>
+        <label class="sbf-choice"><input type="radio" name="evFee" value="split_total"><span><b data-i18n="events.feeSplitTotal">總額大家平分</b><small data-i18n="events.feeSplitTotalHint">例如包場，來的人越多越便宜</small></span></label>
+      </div>
+      <div class="sbf-row">
+        <div>
+          <label for="evCurrency" data-i18n="settings.recurringFormCurrencyLabel">幣別</label>
+          <div class="select-wrap"><select id="evCurrency"></select></div>
+        </div>
+        <div>
+          <label for="evAmount" id="evAmountLabel" data-i18n="events.amountEach">每人金額</label>
+          <input type="number" id="evAmount" min="1" step="1" inputmode="decimal" placeholder="0">
+        </div>
+      </div>
+      <p class="sbf-preview hidden" id="evPreview"></p>
+    </section>
+
+    <section class="sbf-sec">
+      <h3 data-i18n="events.secSignup">報名設定（選填）</h3>
+      <div class="sbf-row">
+        <div>
+          <label for="evCapacity" data-i18n="events.fieldCapacityShort">人數上限</label>
+          <input type="number" id="evCapacity" min="1" step="1" inputmode="numeric" data-i18n-placeholder="events.noLimit" placeholder="不限">
+        </div>
+        <div>
+          <label for="evDeadline" data-i18n="events.fieldDeadlineShort">報名截止日</label>
+          <input type="date" id="evDeadline" lang="en-CA">
+        </div>
+      </div>
+    </section>
+
+    <div class="sbf-actions">
+      <button type="button" class="sbf-primary sbf-wide" id="eventFormSubmit" data-i18n="events.create">建立活動</button>
+      <div class="msg" id="eventFormMsg"></div>
+    </div>
   </div>
 </div>
 
 <div class="calc-modal" id="eventCloseModal">
-  <div class="calc-card card">
+  <div class="calc-card card sbf-card">
     <div class="calc-header">
       <span class="calc-header-name" data-i18n="events.closeTitle">結算成帳目</span>
       <button type="button" class="calc-close" id="eventCloseClose" data-i18n-title="common.close" aria-label="關閉">✕</button>
     </div>
-    <p class="settings-hint" data-i18n="events.closeHint">會新增一筆帳，由你付款、勾選的人分攤。結算後名單就不能再改。</p>
-    <label data-i18n="events.closeAttendees">實際參加的人</label>
-    <div class="checks" id="eventCloseAttendees"></div>
-    <label for="eventCloseAmount" id="eventCloseAmountLabel"></label>
-    <input type="number" id="eventCloseAmount" min="1" step="1" inputmode="decimal">
-    <p class="settings-hint" id="eventCloseSummary"></p>
-    <button type="button" class="btn-wide" id="eventCloseSubmit" data-i18n="events.closeSubmit">轉成帳目</button>
-    <div class="msg" id="eventCloseMsg"></div>
+    <p class="sbf-note" data-i18n="events.closeHint">會新增一筆帳，由你付款、勾選的人分攤。結算後名單就不能再改。</p>
+    <section class="sbf-sec">
+      <h3 data-i18n="events.closeAttendees">實際參加的人</h3>
+      <div class="checks" id="eventCloseAttendees"></div>
+    </section>
+    <section class="sbf-sec">
+      <label for="eventCloseAmount" id="eventCloseAmountLabel"></label>
+      <input type="number" id="eventCloseAmount" min="1" step="1" inputmode="decimal">
+      <p class="sbf-preview" id="eventCloseSummary"></p>
+    </section>
+    <div class="sbf-actions">
+      <button type="button" class="sbf-primary sbf-wide" id="eventCloseSubmit" data-i18n="events.closeSubmit">轉成帳目</button>
+      <div class="msg" id="eventCloseMsg"></div>
+    </div>
   </div>
 </div>
 
@@ -129,6 +178,6 @@ if("serviceWorker" in navigator){
 const SUPABASE_URL = "https://ofevarwtqzvzrvhbanmf.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_pWT6foelsonrb1sLMXhnCw_oA3ytvaX";
 </script>
-<script src="events.js?v=949"></script>
+<script src="events.js?v=950"></script>
 </body>
 </html>

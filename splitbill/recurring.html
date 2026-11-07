@@ -26,15 +26,15 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=949">
-<link rel="stylesheet" href="shared.css?v=949">
-<script src="holiday.js?v=949"></script>
+<link rel="stylesheet" href="theme.css?v=950">
+<link rel="stylesheet" href="shared.css?v=950">
+<script src="holiday.js?v=950"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
-<script src="i18n.js?v=949"></script>
-<script src="currencies.js?v=949"></script>
-<script src="version.js?v=949"></script>
-<script src="shared-ui.js?v=949"></script>
-<script src="theme.js?v=949" defer></script>
+<script src="i18n.js?v=950"></script>
+<script src="currencies.js?v=950"></script>
+<script src="version.js?v=950"></script>
+<script src="shared-ui.js?v=950"></script>
+<script src="theme.js?v=950" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -69,73 +69,73 @@ if("serviceWorker" in navigator){
     </div>
   </div>
 
-  <div class="card">
-    <p class="settings-hint" data-i18n="recurring.hint">房租、訂閱這類固定費用，到期會自動記一筆帳。</p>
-    <button type="button" class="btn-wide" id="recurringTemplateAddBtn" data-i18n="settings.recurringAddBtn">新增週期性支出</button>
-    <div id="recurringTemplatesList"></div>
-    <p class="settings-hint hidden" id="recurringTemplatesEmpty" data-i18n="settings.recurringEmpty">目前沒有設定週期性支出</p>
+  <section class="fx-summary hidden" id="fxSummary" aria-live="polite"></section>
+
+  <div class="sbf-toolbar">
+    <p data-i18n="recurring.hint">房租、訂閱這類固定費用，到期會自動記一筆帳。</p>
+    <button type="button" class="sbf-primary" id="recurringTemplateAddBtn"><span class="sb-ico" style="--ico:var(--ico-plus)" aria-hidden="true"></span><span data-i18n="recurring.add">新增</span></button>
+  </div>
+
+  <div id="recurringTemplatesList"></div>
+  <div class="sbf-empty hidden" id="recurringTemplatesEmpty">
+    <span class="sb-ico" style="--ico:var(--ico-repeat)" aria-hidden="true"></span>
+    <b data-i18n="recurring.emptyTitle">還沒有固定支出</b>
+    <p data-i18n="recurring.emptyText">把房租、水電或訂閱加進來，到期就不用自己記。</p>
   </div>
 </div>
 
 <div class="calc-modal" id="recurringTemplateFormModal">
-  <div class="calc-card card">
+  <div class="calc-card card sbf-card">
     <div class="calc-header">
       <span class="calc-header-name" id="recurringTemplateFormTitle" data-i18n="settings.recurringFormTitleNew">新增週期性支出</span>
-      <button type="button" class="calc-close" id="recurringTemplateFormCloseBtn">✕</button>
+      <button type="button" class="calc-close" id="recurringTemplateFormCloseBtn" data-i18n-title="common.close" aria-label="關閉">✕</button>
     </div>
 
-    <label data-i18n="settings.recurringFormDescLabel">品項名稱</label>
-    <input type="text" id="recurTmplDesc" data-i18n-placeholder="settings.recurringFormDescPlaceholder" placeholder="例如 房租、Netflix 訂閱">
+    <section class="sbf-sec">
+      <h3 data-i18n="recurring.secWhat">這是什麼費用</h3>
+      <label for="recurTmplDesc" data-i18n="settings.recurringFormDescLabel">品項名稱</label>
+      <input type="text" id="recurTmplDesc" maxlength="60" data-i18n-placeholder="settings.recurringFormDescPlaceholder" placeholder="例如 房租、Netflix 訂閱">
+      <div class="sbf-chips" id="recurTmplSuggest"></div>
+      <label for="recurTmplCategory" data-i18n="recurring.categoryLabel">類別</label>
+      <div class="select-wrap"><select id="recurTmplCategory"><option value="general" data-i18n="cat.general"></option><option value="food" data-i18n="cat.food"></option><option value="drink" data-i18n="cat.drink"></option><option value="transit" data-i18n="cat.transit"></option><option value="car" data-i18n="cat.car"></option><option value="flight" data-i18n="cat.flight"></option><option value="hotel" data-i18n="cat.hotel"></option><option value="ticket" data-i18n="cat.ticket"></option><option value="shopping" data-i18n="cat.shopping"></option><option value="medical" data-i18n="cat.medical"></option><option value="network" data-i18n="cat.network"></option></select></div>
+    </section>
 
-    <label data-i18n="currency.categoryLabel">類別 (自動辨識 / 可手動選擇)</label>
-    <div class="select-wrap">
-      <select id="recurTmplCategory">
-        <option value="general" data-i18n="cat.general">一般支出</option>
-        <option value="food" data-i18n="cat.food">美食餐飲</option>
-        <option value="drink" data-i18n="cat.drink">飲料甜點</option>
-        <option value="transit" data-i18n="cat.transit">大眾交通</option>
-        <option value="car" data-i18n="cat.car">租車用油</option>
-        <option value="flight" data-i18n="cat.flight">機票航班</option>
-        <option value="hotel" data-i18n="cat.hotel">住宿溫泉</option>
-        <option value="ticket" data-i18n="cat.ticket">門票娛樂</option>
-        <option value="shopping" data-i18n="cat.shopping">購物藥妝</option>
-        <option value="medical" data-i18n="cat.medical">醫療藥品</option>
-        <option value="network" data-i18n="cat.network">網卡通訊</option>
-      </select>
+    <section class="sbf-sec">
+      <h3 data-i18n="recurring.secMoney">金額</h3>
+      <div class="sbf-row">
+        <div>
+          <label for="recurTmplCurrency" data-i18n="settings.recurringFormCurrencyLabel">幣別</label>
+          <div class="select-wrap"><select id="recurTmplCurrency"></select></div>
+        </div>
+        <div>
+          <label for="recurTmplAmount" data-i18n="settings.recurringFormAmountLabel">總金額</label>
+          <input type="number" id="recurTmplAmount" min="1" step="1" inputmode="decimal" placeholder="0">
+        </div>
+      </div>
+    </section>
+
+    <section class="sbf-sec">
+      <h3 data-i18n="recurring.secWho">誰付、誰分</h3>
+      <label for="recurTmplPayer" data-i18n="settings.recurringFormPayerLabel">誰付的錢</label>
+      <div class="select-wrap"><select id="recurTmplPayer"></select></div>
+      <label data-i18n="settings.recurringFormParticipantsLabel">誰要分攤（平分）</label>
+      <div class="checks" id="recurTmplParticipants"></div>
+    </section>
+
+    <section class="sbf-sec">
+      <h3 data-i18n="recurring.secWhen">什麼時候記</h3>
+      <div class="sbf-seg" role="radiogroup">
+        <label><input type="radio" name="recurUnit" value="monthly" checked><span data-i18n="currency.recurringUnitMonthly">每月</span></label>
+        <label><input type="radio" name="recurUnit" value="weekly"><span data-i18n="currency.recurringUnitWeekly">每週</span></label>
+      </div>
+      <div class="select-wrap" id="recurTmplMonthlyWrap"><select id="recurTmplMonthlyDay"></select></div>
+      <div class="select-wrap hidden" id="recurTmplWeeklyWrap"><select id="recurTmplWeeklyDay"></select></div>
+    </section>
+
+    <div class="sbf-actions">
+      <button type="button" class="sbf-primary sbf-wide" id="recurTmplSubmitBtn" data-i18n="settings.recurringFormSubmitNew">建立週期性支出</button>
+      <div class="msg" id="recurTmplMsg"></div>
     </div>
-
-    <label data-i18n="settings.recurringFormCurrencyLabel">幣別</label>
-    <div class="select-wrap">
-      <select id="recurTmplCurrency"></select>
-    </div>
-
-    <label data-i18n="settings.recurringFormAmountLabel">總金額</label>
-    <input type="number" id="recurTmplAmount" min="1" step="1" data-i18n-placeholder="currency.repayAmountPlaceholder" placeholder="例如 500">
-
-    <label data-i18n="settings.recurringFormPayerLabel">誰付的錢</label>
-    <div class="select-wrap">
-      <select id="recurTmplPayer"></select>
-    </div>
-
-    <label data-i18n="settings.recurringFormParticipantsLabel">誰要分攤（平分）</label>
-    <div class="checks" id="recurTmplParticipants"></div>
-
-    <label data-i18n="currency.recurringIntervalLabel">週期</label>
-    <div class="select-wrap">
-      <select id="recurTmplUnit">
-        <option value="monthly" data-i18n="currency.recurringUnitMonthly">每月</option>
-        <option value="weekly" data-i18n="currency.recurringUnitWeekly">每週</option>
-      </select>
-    </div>
-    <div class="select-wrap" id="recurTmplMonthlyWrap">
-      <select id="recurTmplMonthlyDay"></select>
-    </div>
-    <div class="select-wrap hidden" id="recurTmplWeeklyWrap">
-      <select id="recurTmplWeeklyDay"></select>
-    </div>
-
-    <button type="button" class="btn-wide" id="recurTmplSubmitBtn" data-i18n="settings.recurringFormSubmitNew">建立週期性支出</button>
-    <div class="msg" id="recurTmplMsg"></div>
   </div>
 </div>
 
@@ -143,6 +143,6 @@ if("serviceWorker" in navigator){
 const SUPABASE_URL = "https://ofevarwtqzvzrvhbanmf.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_pWT6foelsonrb1sLMXhnCw_oA3ytvaX";
 </script>
-<script src="recurring.js?v=949"></script>
+<script src="recurring.js?v=950"></script>
 </body>
 </html>

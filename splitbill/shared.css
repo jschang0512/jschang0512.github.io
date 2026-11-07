@@ -9847,21 +9847,109 @@ html body .home-tools-badge{ position:absolute; top:-6px; right:-4px; display:gr
 html body .home-tools-badge.hidden{ display:none; }
 html body .home-tools a:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; }
 
+/* 固定收支和活動共用：工具列、空狀態、分段表單 */
+html body .sbf-toolbar{ display:flex; align-items:center; justify-content:space-between; gap:14px; margin:4px 2px 14px; }
+html body .sbf-toolbar p{ margin:0; min-width:0; font-size:13.5px; line-height:1.5; color:var(--ink-soft); }
+html body .sbf-primary{ display:inline-flex; align-items:center; justify-content:center; gap:6px; flex:none; min-height:44px; padding:0 16px; border:0; border-radius:12px; background:var(--btn-primary); color:var(--btn-primary-fg); font:inherit; font-size:15px; font-weight:700; cursor:pointer; white-space:nowrap; }
+html body .sbf-primary:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; }
+html body .sbf-primary:disabled{ opacity:.55; cursor:not-allowed; }
+html body .sbf-wide{ width:100%; }
+html body .sbf-empty{ display:grid; justify-items:center; gap:6px; padding:44px 20px; border:1px dashed var(--card-border); border-radius:16px; text-align:center; color:var(--ink-soft); }
+html body .sbf-empty.hidden{ display:none; }
+html body .sbf-empty .sb-ico{ width:30px; height:30px; color:var(--btn-primary); }
+html body .sbf-empty b{ font-size:16px; color:var(--ink); }
+html body .sbf-empty p{ margin:0; font-size:14px; line-height:1.5; }
+html body .sbf-group-title{ margin:22px 2px 8px; font-size:14px; font-weight:600; color:var(--ink-soft); }
+html body .sbf-card{ max-width:460px; width:100%; max-height:calc(100dvh - 32px); overflow-y:auto; padding:20px; }
+html body .sbf-sec{ padding:14px 0; border-top:1px solid var(--line); }
+html body .sbf-sec h3{ margin:0 0 10px; font-size:14px; font-weight:700; color:var(--ink); }
+html body .sbf-sec label{ display:block; margin:10px 0 5px; font-size:13px; color:var(--ink-soft); }
+html body .sbf-sec h3 + label, html body .sbf-sec > label:first-child, html body .sbf-row > div > label{ margin-top:0; }
+html body .sbf-sec input[type="text"], html body .sbf-sec input[type="number"], html body .sbf-sec input[type="date"], html body .sbf-sec textarea{ width:100%; box-sizing:border-box; }
+html body .sbf-row{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:10px; margin-top:10px; }
+html body .sbf-sec h3 + .sbf-row{ margin-top:0; }
+html body .sbf-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+html body .sbf-chips button{ min-height:32px; padding:0 12px; border:1px solid var(--card-border); border-radius:999px; background:var(--tint); color:var(--ink); font:inherit; font-size:13px; cursor:pointer; }
+html body .sbf-seg{ display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:4px; margin-bottom:10px; padding:4px; border-radius:12px; background:var(--tint); }
+html body .sbf-sec .sbf-seg label{ margin:0; font-size:14px; }
+html body .sbf-seg input{ position:absolute; opacity:0; pointer-events:none; }
+html body .sbf-seg span{ display:block; padding:9px 0; border-radius:9px; color:var(--ink-soft); font-weight:600; text-align:center; cursor:pointer; }
+html body .sbf-seg input:checked + span{ background:var(--card); color:var(--ink); box-shadow:0 1px 3px rgba(16,14,30,.14); }
+html body .sbf-seg input:focus-visible + span{ outline:2px solid var(--btn-primary); }
+html body .sbf-choices{ display:grid; gap:8px; }
+html body .sbf-sec .sbf-choice{ margin:0; cursor:pointer; }
+html body .sbf-choice input{ position:absolute; opacity:0; pointer-events:none; }
+html body .sbf-choice > span{ display:block; padding:11px 13px; border:1.5px solid var(--card-border); border-radius:12px; }
+html body .sbf-choice b{ display:block; font-size:14.5px; color:var(--ink); }
+html body .sbf-choice small{ display:block; margin-top:1px; font-size:12.5px; line-height:1.4; color:var(--ink-soft); }
+html body .sbf-choice input:checked + span{ border-color:var(--btn-primary); background:var(--tint); }
+html body .sbf-choice input:focus-visible + span{ outline:2px solid var(--btn-primary); outline-offset:1px; }
+html body .sbf-preview{ margin:10px 0 0; padding:9px 12px; border-radius:10px; background:var(--tint); color:var(--ink); font-size:13.5px; line-height:1.45; }
+html body .sbf-preview.hidden{ display:none; }
+html body .sbf-note{ margin:0 0 12px; font-size:13.5px; line-height:1.5; color:var(--ink-soft); }
+html body .sbf-actions{ position:sticky; bottom:-20px; margin:0 -20px -20px; padding:12px 20px 16px; border-top:1px solid var(--line); background:var(--sb-pop-bg); }
+
+/* 固定收支頁 */
+html body .fx-summary{ margin-bottom:14px; padding:16px; border:1px solid var(--card-border); border-radius:16px; background:var(--card); }
+html body .fx-summary.hidden{ display:none; }
+html body .fx-sum-main + .fx-sum-main{ margin-top:12px; padding-top:12px; border-top:1px solid var(--line); }
+html body .fx-sum-main > span{ display:block; font-size:13px; color:var(--ink-soft); }
+html body .fx-sum-main strong{ display:block; font-size:30px; font-weight:700; line-height:1.25; }
+html body .fx-sum-main small{ font-size:13px; color:var(--ink-soft); }
+html body .fx-sum-next{ display:flex; align-items:center; gap:7px; margin-top:12px; padding-top:12px; border-top:1px solid var(--line); font-size:13.5px; }
+html body .fx-sum-next .sb-ico{ flex:none; color:var(--btn-primary); }
+html body .fx-item{ margin-bottom:10px; padding:14px; border:1px solid var(--card-border); border-radius:16px; background:var(--card); }
+html body .fx-item.is-paused .fx-top, html body .fx-item.is-paused .fx-people{ opacity:.55; }
+html body .fx-top{ display:flex; align-items:center; gap:12px; }
+html body .fx-icon{ display:grid; place-items:center; flex:none; width:42px; height:42px; border-radius:12px; background:color-mix(in srgb, var(--c) 15%, var(--card)); color:var(--c); font-size:20px; }
+html body .fx-name{ flex:1; min-width:0; }
+html body .fx-name h2{ margin:0; font-size:16px; font-weight:700; line-height:1.35; overflow-wrap:anywhere; }
+html body .fx-name p{ margin:1px 0 0; font-size:13px; line-height:1.4; color:var(--ink-soft); }
+html body .fx-amount{ flex:none; text-align:right; }
+html body .fx-amount b{ display:block; font-size:16px; font-weight:700; }
+html body .fx-amount small{ font-size:12.5px; color:var(--ink-soft); }
+html body .fx-bottom{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; padding-top:10px; border-top:1px solid var(--line); }
+html body .fx-people{ display:flex; flex-wrap:wrap; align-items:center; gap:3px; min-width:0; font-size:12.5px; color:var(--ink-soft); }
+html body .fx-people > span:last-child{ margin-left:6px; }
+html body .fx-actions{ display:flex; align-items:center; gap:4px; flex:none; }
+html body .fx-icon-btn{ display:grid; place-items:center; width:40px; height:40px; border:0; border-radius:10px; background:none; color:var(--ink-soft); cursor:pointer; }
+html body .fx-icon-btn:focus-visible{ outline:2px solid var(--btn-primary); }
+
 /* 活動頁 */
-html body .event-card{ margin-top:14px; }
-html body .event-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
-html body .event-head h2{ margin:0; min-width:0; overflow-wrap:anywhere; }
-html body .event-state{ flex:none; padding:2px 10px; border-radius:999px; background:var(--tint); color:var(--ink-soft); font-size:12px; font-weight:600; }
-html body .event-meta, html body .event-note{ margin:6px 0 0; font-size:13.5px; color:var(--ink-soft); overflow-wrap:anywhere; }
-html body .event-fee{ margin:8px 0 0; font-size:17px; font-weight:700; }
-html body .event-people{ display:flex; align-items:center; gap:10px; margin-top:12px; font-size:13.5px; color:var(--ink-soft); }
-html body .event-faces{ display:flex; flex-wrap:wrap; gap:4px; min-width:0; }
-html body .event-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
-html body .event-btn{ flex:1 1 auto; min-height:44px; padding:0 14px; border:1px solid var(--card-border); border-radius:12px; background:transparent; color:var(--ink); font:inherit; font-size:14px; font-weight:700; cursor:pointer; white-space:nowrap; }
-html body .event-btn.is-primary{ border-color:transparent; background:var(--btn-primary); color:var(--btn-primary-fg); }
-html body .event-btn.is-quiet{ flex:0 0 auto; color:var(--ink-soft); }
-html body .event-btn:disabled{ opacity:.55; cursor:not-allowed; }
-html body .event-btn:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; }
-html body .event-link{ display:inline-block; margin-top:10px; color:var(--btn-primary); font-size:14px; font-weight:600; }
-html body .event-past-title{ margin:22px 0 0; font-size:15px; color:var(--ink-soft); }
-html body .event-past-title.hidden, html body #eventEmpty.hidden{ display:none; }
+html body .ev-card{ margin-bottom:12px; padding:16px; border:1px solid var(--card-border); border-radius:18px; background:var(--card); }
+html body .ev-card.is-over{ opacity:.78; }
+html body .ev-head{ display:flex; align-items:flex-start; gap:13px; }
+html body .ev-date{ display:grid; justify-items:center; flex:none; width:56px; padding:7px 0; border-radius:13px; background:var(--tint); color:var(--ink-soft); font-size:11.5px; line-height:1.25; }
+html body .ev-date b{ font-size:23px; line-height:1.15; color:var(--btn-primary); }
+html body .ev-title{ flex:1; min-width:0; }
+html body .ev-title h2{ margin:0 0 3px; font-size:17px; font-weight:700; line-height:1.35; overflow-wrap:anywhere; }
+html body .ev-line{ display:flex; align-items:center; gap:5px; margin:1px 0 0; color:var(--ink-soft); font-size:13px; line-height:1.45; text-decoration:none; }
+html body .ev-line span:last-child{ min-width:0; overflow-wrap:anywhere; }
+html body .ev-line .sb-ico{ flex:none; width:14px; height:14px; }
+html body a.ev-line span:last-child{ text-decoration:underline; text-underline-offset:2px; }
+html body .ev-state{ flex:none; padding:3px 9px; border-radius:999px; background:var(--tint); color:var(--ink-soft); font-size:12px; font-weight:600; white-space:nowrap; }
+html body .ev-state.is-in{ background:color-mix(in srgb, var(--positive-text) 14%, var(--card)); color:var(--positive-text); }
+html body .ev-fee{ display:flex; flex-wrap:wrap; align-items:baseline; gap:2px 8px; margin-top:13px; }
+html body .ev-fee b{ font-size:22px; font-weight:700; line-height:1.25; }
+html body .ev-fee span{ font-size:13px; color:var(--ink-soft); }
+html body .ev-note{ margin:8px 0 0; padding:9px 11px; border-radius:10px; background:var(--tint); font-size:13.5px; line-height:1.5; white-space:pre-wrap; overflow-wrap:anywhere; }
+html body .ev-people{ margin-top:13px; padding-top:12px; border-top:1px solid var(--line); }
+html body .ev-people-head{ display:flex; justify-content:space-between; gap:10px; font-size:13px; font-weight:600; }
+html body .ev-people-head span + span{ font-weight:400; color:var(--ink-soft); }
+html body .ev-bar{ height:6px; margin-top:7px; border-radius:3px; background:var(--tint); overflow:hidden; }
+html body .ev-bar i{ display:block; height:100%; border-radius:3px; background:var(--btn-primary); }
+html body .ev-faces{ display:flex; flex-wrap:wrap; gap:4px; margin-top:9px; }
+html body .ev-nobody{ margin:6px 0 0; font-size:13px; color:var(--ink-soft); }
+html body .ev-actions{ margin-top:13px; }
+html body .ev-btn{ width:100%; min-height:46px; border:1px solid var(--card-border); border-radius:12px; background:transparent; color:var(--ink); font:inherit; font-size:15px; font-weight:700; cursor:pointer; }
+html body .ev-btn.is-primary{ border-color:transparent; background:var(--btn-primary); color:var(--btn-primary-fg); }
+html body .ev-btn:disabled{ opacity:.55; cursor:not-allowed; }
+html body .ev-btn:focus-visible, html body .ev-link-btn:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; }
+html body .ev-admin{ display:flex; flex-wrap:wrap; justify-content:center; gap:2px 6px; margin-top:6px; }
+html body .ev-link-btn{ min-height:40px; padding:0 10px; border:0; border-radius:8px; background:none; color:var(--btn-primary); font:inherit; font-size:14px; font-weight:600; cursor:pointer; }
+html body .ev-link-btn.is-quiet{ color:var(--ink-soft); }
+html body .ev-view{ display:inline-block; margin-top:12px; color:var(--btn-primary); font-size:14px; font-weight:600; text-decoration:none; }
+html body .ev-past{ margin-top:18px; }
+html body .ev-past.hidden{ display:none; }
+html body .ev-past summary{ padding:8px 2px; color:var(--ink-soft); font-size:14px; font-weight:600; cursor:pointer; }
+html body .ev-past[open] summary{ margin-bottom:6px; }

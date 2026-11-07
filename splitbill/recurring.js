@@ -23,6 +23,87 @@
       || (tmpl.shares || []).some(s => s.member_id === userId);
   }
 
+  const dayNumber = iso => Math.round(Date.parse(iso + "T00:00:00Z") / 86400000);
+  function todayIso(){
+    const d = new Date();
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  }
+  function money(code, amount){
+    const c = CURRENCIES.find(x => x.code === code);
+    return (c ? c.symbol : code + " ") + Math.round(amount).toLocaleString("en-US");
+  }
+  function dueText(iso){
+    const days = dayNumber(iso) - dayNumber(todayIso());
+    if(days <= 0) return t("summary.dueToday");
+    if(days === 1) return t("summary.dueTomorrow");
+    if(days <= 30) return t("summary.dueInDays", { days });
+    return iso;
+  }
+  // 一年 52 週，換算成每月大約多少，週週期才加得起來
+  const perMonth = tmpl => tmpl.interval_unit === "weekly" ? 52 / 12 : 1;
+
+  function renderSummary(active){
+    const box = document.getElementById("fxSummary");
+    if(!active.length){ box.classList.add("hidden"); return; }
+    const myId = myMember && myMember.id;
+    const byCurrency = {};
+    active.forEach(tmpl => {
+      const row = byCurrency[tmpl.currency] || (byCurrency[tmpl.currency] = { total:0, mine:0 });
+      row.total += Number(tmpl.amount) * perMonth(tmpl);
+      const share = (tmpl.shares || []).find(s => s.member_id === myId);
+      if(share) row.mine += Number(share.amount) * perMonth(tmpl);
+    });
+    const next = active.slice().sort((a, b) => a.next_due_date.localeCompare(b.next_due_date))[0];
+    box.innerHTML = Object.keys(byCurrency).map(code => `<div class="fx-sum-main">
+        <span>${escapeHtml(t("recurring.perMonthMine"))}</span>
+        <strong>${escapeHtml(money(code, byCurrency[code].mine))}</strong>
+        <small>${escapeHtml(t("recurring.perMonthGroup", { amount: money(code, byCurrency[code].total) }))}</small>
+      </div>`).join("") + `<div class="fx-sum-next">
+        <span class="sb-ico" style="--ico:var(--ico-clock)" aria-hidden="true"></span>
+        <span>${escapeHtml(t("recurring.next", { name: next.description || "" }))}・${escapeHtml(dueText(next.next_due_date))}</span>
+      </div>`;
+    box.classList.remove("hidden");
+  }
+
+  function itemHTML(tmpl, weekdayNames){
+    const myId = myMember && myMember.id;
+    const meta = getCategoryMeta(tmpl.description, null, tmpl.category);
+    const interval = tmpl.interval_unit === "weekly"
+      ? t("settings.recurringIntervalWeekly", { weekday: weekdayNames[tmpl.interval_day] || "" })
+      : t("settings.recurringIntervalMonthly", { day: tmpl.interval_day });
+    const canEdit = isRecurringTemplateParty(tmpl, myId);
+    const share = (tmpl.shares || []).find(s => s.member_id === myId);
+    const people = (tmpl.shares || []).map(s => memberRows.find(m => m.id === s.member_id) || { id: s.member_id, name: memberById[s.member_id] || "?" });
+    const payerId = tmpl.payers && tmpl.payers[0] && tmpl.payers[0].member_id;
+    return `<article class="fx-item${tmpl.active ? "" : " is-paused"}" data-id="${tmpl.id}">
+      <div class="fx-top">
+        <span class="fx-icon" style="--c:${meta.color}">${meta.icon}</span>
+        <div class="fx-name">
+          <h2>${escapeHtml(tmpl.description || "")}</h2>
+          <p>${escapeHtml(interval)}${tmpl.active ? "・" + escapeHtml(dueText(tmpl.next_due_date)) : ""}</p>
+        </div>
+        <div class="fx-amount">
+          <b>${escapeHtml(money(tmpl.currency, tmpl.amount))}</b>
+          ${share ? `<small>${escapeHtml(t("recurring.myShare", { amount: money(tmpl.currency, share.amount) }))}</small>` : ""}
+        </div>
+      </div>
+      <div class="fx-bottom">
+        <div class="fx-people">
+          ${people.map(m => renderAvatarHTML(m, "avatar-sm")).join("")}
+          <span>${escapeHtml(t("recurring.paidBy", { name: memberById[payerId] || "?" }))}</span>
+        </div>
+        ${canEdit ? `<div class="fx-actions">
+          <label class="switch-toggle" title="${escapeHtml(t("recurring.toggle"))}">
+            <input type="checkbox" class="recurring-tmpl-active-toggle" data-id="${tmpl.id}" aria-label="${escapeHtml(t("recurring.toggle"))}"${tmpl.active ? " checked" : ""}>
+            <span class="switch-slider"></span>
+          </label>
+          <button type="button" class="fx-icon-btn recurring-tmpl-edit" data-id="${tmpl.id}" title="${t("common.edit")}" aria-label="${t("common.edit")}"><span class="sb-ico" style="--ico:var(--ico-pencil)" aria-hidden="true"></span></button>
+          <button type="button" class="fx-icon-btn recurring-tmpl-delete" data-id="${tmpl.id}" data-name="${escapeHtml(tmpl.description || "")}" title="${t("settings.delete")}" aria-label="${t("settings.delete")}"><span class="sb-ico" style="--ico:var(--ico-trash)" aria-hidden="true"></span></button>
+        </div>` : `<span class="recurring-tmpl-readonly-badge">${t("settings.recurringReadOnly")}</span>`}
+      </div>
+    </article>`;
+  }
+
   let recurringTemplatesCache = [];
   async function renderRecurringTemplates(){
     const listEl = document.getElementById("recurringTemplatesList");
@@ -35,66 +116,35 @@
       .eq("group_id", myMember.group_id)
       .order("created_at", { ascending: false });
     if(error){
-      // 資料表可能還沒建立（尚未執行 scripts/recurring_expenses.sql），整塊
-      // 區塊直接藏起來就好，不影響設定頁其他功能。
-      console.warn("讀取週期性支出範本失敗（可能尚未建立 recurring_expenses 資料表）：", error);
-      const group = document.getElementById("recurringTemplatesGroup");
-      if(group) group.classList.add("hidden");
+      console.warn("讀取週期性支出範本失敗：", error);
+      await sbAlert(t("settings.msg.saveFailedRetry"), t("settings.errorTitle"));
       return;
     }
 
     const templates = data || [];
-    if(!templates.length){
-      listEl.innerHTML = "";
-      if(emptyEl) emptyEl.classList.remove("hidden");
-      return;
-    }
-    if(emptyEl) emptyEl.classList.add("hidden");
-
-    const myId = myMember && myMember.id;
-    const weekdayNames = t("currency.weekdays").split(",");
-    listEl.innerHTML = templates.map(tmpl => {
-      const curObj = CURRENCIES.find(c => c.code === tmpl.currency);
-      const sym = curObj ? curObj.symbol : tmpl.currency;
-      const intervalLabel = tmpl.interval_unit === "weekly"
-        ? t("settings.recurringIntervalWeekly", { weekday: weekdayNames[tmpl.interval_day] || "" })
-        : t("settings.recurringIntervalMonthly", { day: tmpl.interval_day });
-      const canEdit = isRecurringTemplateParty(tmpl, myId);
-      return `<div class="settings-row recurring-tmpl-row${tmpl.active ? "" : " inactive"}" data-id="${tmpl.id}">
-        <div class="settings-row-lead">
-          <span class="settings-row-icon"><span class="sb-ico" style="--ico:var(--ico-repeat)" aria-hidden="true"></span></span>
-          <div>
-            <div class="settings-row-title">${escapeHtml(tmpl.description || "")}・${sym}${Number(tmpl.amount).toLocaleString()}</div>
-            <div class="settings-hint settings-row-hint">${intervalLabel} · ${t("settings.recurringNextDue", { date: tmpl.next_due_date })}</div>
-          </div>
-        </div>
-        ${canEdit ? `<div class="recurring-tmpl-actions">
-          <label class="switch-toggle">
-            <input type="checkbox" class="recurring-tmpl-active-toggle" data-id="${tmpl.id}"${tmpl.active ? " checked" : ""}>
-            <span class="switch-slider"></span>
-          </label>
-          <button type="button" class="member-remove-btn recurring-tmpl-edit" data-id="${tmpl.id}" title="${t("common.edit")}">✎</button>
-          <button type="button" class="member-remove-btn recurring-tmpl-delete" data-id="${tmpl.id}" data-name="${escapeHtml(tmpl.description || "")}" title="${t("settings.delete")}">✕</button>
-        </div>` : `<span class="recurring-tmpl-readonly-badge">${t("settings.recurringReadOnly")}</span>`}
-      </div>`;
-    }).join("");
-
     recurringTemplatesCache = templates;
+    emptyEl.classList.toggle("hidden", !!templates.length);
+    const active = templates.filter(x => x.active).sort((a, b) => a.next_due_date.localeCompare(b.next_due_date));
+    const paused = templates.filter(x => !x.active);
+    renderSummary(active);
+
+    const weekdayNames = t("currency.weekdays").split(",");
+    listEl.innerHTML = active.map(x => itemHTML(x, weekdayNames)).join("")
+      + (paused.length ? `<h2 class="sbf-group-title">${escapeHtml(t("recurring.paused"))}</h2>` + paused.map(x => itemHTML(x, weekdayNames)).join("") : "");
 
     listEl.querySelectorAll(".recurring-tmpl-edit").forEach(btn => {
       btn.addEventListener("click", () => openRecurringTemplateForm(btn.dataset.id));
     });
     listEl.querySelectorAll(".recurring-tmpl-active-toggle").forEach(inp => {
       inp.addEventListener("change", async () => {
-        const row = inp.closest(".recurring-tmpl-row");
-        row.classList.toggle("inactive", !inp.checked);
         const { error: updErr } = await sb.from("recurring_expenses").update({ active: inp.checked }).eq("id", inp.dataset.id);
         if(updErr){
           console.error("更新週期性支出狀態失敗：", updErr);
           inp.checked = !inp.checked;
-          row.classList.toggle("inactive", !inp.checked);
           await sbAlert(t("settings.msg.saveFailedRetry"), t("settings.errorTitle"));
+          return;
         }
+        renderRecurringTemplates();
       });
     });
     listEl.querySelectorAll(".recurring-tmpl-delete").forEach(btn => {
@@ -152,7 +202,21 @@
     const amtInp = document.getElementById("recurTmplAmount");
     const payerSel = document.getElementById("recurTmplPayer");
     const participantsWrap = document.getElementById("recurTmplParticipants");
-    const unitSel = document.getElementById("recurTmplUnit");
+    // 週期是兩顆單選按鈕，包成跟下拉選單一樣的介面，下面的邏輯不用分兩套
+    const unitRadios = Array.from(document.querySelectorAll('input[name="recurUnit"]'));
+    const unitSel = {
+      get value(){ return (unitRadios.find(r => r.checked) || unitRadios[0]).value; },
+      set value(v){ unitRadios.forEach(r => { r.checked = r.value === v; }); },
+      addEventListener(type, fn){ unitRadios.forEach(r => r.addEventListener(type, fn)); }
+    };
+    const suggestWrap = document.getElementById("recurTmplSuggest");
+    ["rent", "utilities", "internet", "subscription", "phone"].forEach(key => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.textContent = t("recurring.sug." + key);
+      b.addEventListener("click", () => { descInp.value = b.textContent; descInp.focus(); });
+      suggestWrap.appendChild(b);
+    });
     const monthlyWrap = document.getElementById("recurTmplMonthlyWrap");
     const monthlyDaySel = document.getElementById("recurTmplMonthlyDay");
     const weeklyWrap = document.getElementById("recurTmplWeeklyWrap");
@@ -206,7 +270,7 @@
       if(amtInp) amtInp.value = "";
       populateMemberFields();
       if(payerSel){ payerSel.value = myMember ? myMember.id : payerSel.value; enhanceSelect(payerSel); }
-      if(unitSel){ unitSel.value = "monthly"; enhanceSelect(unitSel); }
+      unitSel.value = "monthly";
       if(monthlyWrap) monthlyWrap.classList.remove("hidden");
       if(weeklyWrap) weeklyWrap.classList.add("hidden");
     }
@@ -262,7 +326,7 @@
           inp.closest(".check-pill").classList.toggle("checked", checked);
         });
       }
-      if(unitSel){ unitSel.value = tmpl.interval_unit || "monthly"; enhanceSelect(unitSel); }
+      unitSel.value = tmpl.interval_unit || "monthly";
       const isWeekly = tmpl.interval_unit === "weekly";
       if(monthlyWrap) monthlyWrap.classList.toggle("hidden", isWeekly);
       if(weeklyWrap) weeklyWrap.classList.toggle("hidden", !isWeekly);
