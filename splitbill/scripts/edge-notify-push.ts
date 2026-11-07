@@ -3,7 +3,7 @@
 // ============================================================
 //
 // 由 Supabase Database Webhook 在 expenses / repayments 有
-// INSERT 或 UPDATE 時觸發。
+// INSERT 或 UPDATE、events 有 INSERT 時觸發。
 //
 // 2026-10 起「要通知誰、寫什麼」全部由資料庫 trigger
 // notify_expense_or_repayment() 決定：它在同一個交易裡替每位收件人
@@ -51,7 +51,7 @@ Deno.serve(async (req) => {
   if (!record || type === "DELETE") {
     return new Response("skipped");
   }
-  if (table !== "expenses" && table !== "repayments") {
+  if (table !== "expenses" && table !== "repayments" && table !== "events") {
     return new Response("skipped");
   }
 
@@ -81,7 +81,8 @@ Deno.serve(async (req) => {
   await Promise.all(
     (subs || []).map(async (sub) => {
       const n = rows.find((r) => r.member_id === sub.member_id)!;
-      const url = table === "expenses" && !n.params?.removed
+      const url = table === "events" ? "events.html"
+        : table === "expenses" && !n.params?.removed
         ? `currency.html?c=${cur}&openExpense=${encodeURIComponent(record.id)}`
         : `currency.html?c=${cur}`;
       const pushSubscription = {

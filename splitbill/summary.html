@@ -29,18 +29,18 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=948">
-<link rel="stylesheet" href="shared.css?v=948">
-<script src="holiday.js?v=948"></script>
+<link rel="stylesheet" href="theme.css?v=949">
+<link rel="stylesheet" href="shared.css?v=949">
+<script src="holiday.js?v=949"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
-<script src="i18n.js?v=948"></script>
-<script src="currencies.js?v=948"></script>
-<script src="motion.js?v=948"></script>
-<script src="version.js?v=948"></script>
-<script src="notif-text.js?v=948"></script>
-<script src="shared-ui.js?v=948"></script>
-<script src="theme.js?v=948" defer></script>
-<script src="app-banner.js?v=948" defer></script>
+<script src="i18n.js?v=949"></script>
+<script src="currencies.js?v=949"></script>
+<script src="motion.js?v=949"></script>
+<script src="version.js?v=949"></script>
+<script src="notif-text.js?v=949"></script>
+<script src="shared-ui.js?v=949"></script>
+<script src="theme.js?v=949" defer></script>
+<script src="app-banner.js?v=949" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -154,7 +154,7 @@ if("serviceWorker" in navigator){
 
     <nav class="home-tools" data-i18n-title="summary.toolsLabel">
       <a href="recurring.html"><span class="sb-ico" style="--ico:var(--ico-repeat)" aria-hidden="true"></span><span data-i18n="recurring.title">固定收支</span></a>
-      <a href="events.html" class="hidden" id="homeEventsLink"><span class="sb-ico" style="--ico:var(--ico-calendar)" aria-hidden="true"></span><span data-i18n="events.title">活動</span></a>
+      <a href="events.html" class="hidden" id="homeEventsLink"><span class="sb-ico" style="--ico:var(--ico-calendar)" aria-hidden="true"></span><span data-i18n="events.title">活動</span><span class="home-tools-badge hidden" id="homeEventsBadge"></span></a>
     </nav>
 
     <div class="onboard-card card hidden" id="onboardCard">
@@ -1262,10 +1262,7 @@ renderNavLinks();
       renderRecapEntry();
       renderOnThisDay();
       renderOnboarding();
-      // 活動資料表還沒建立時，入口保持隱藏
-      sb.from("events").select("id").limit(1).then(({ error }) => {
-        if(!error) document.getElementById("homeEventsLink").classList.remove("hidden");
-      });
+      renderEventsEntry();
       sbEnablePullToRefresh(refreshSummary);
 
       // 非核心功能在背景非同步執行
@@ -1312,6 +1309,23 @@ renderNavLinks();
     if(repRes.data){ window.cachedRepayments = repRes.data; window.allGroupRepayments = repRes.data; }
     await Promise.all([loadAndRenderAllBalances(), loadFeedback(), renderRecurringOverview()]);
     renderOnboarding();
+    renderEventsEntry();
+  }
+
+  // 活動入口：右上角的數字是別人開的、還沒看過的進行中活動。看過的時間記在這台手機上，
+  // 進活動頁就清掉。活動資料表讀不到時入口保持隱藏。
+  async function renderEventsEntry(){
+    const { data, error } = await sb.from("events").select("id,created_by,created_at")
+      .eq("group_id", myMember.group_id).eq("status", "open");
+    if(error) return;
+    document.getElementById("homeEventsLink").classList.remove("hidden");
+    let seenAt = 0;
+    try{ seenAt = Date.parse(localStorage.getItem("splitbill-events-seen-" + myMember.group_id)) || 0; }catch(e){}
+    const unseen = (data || []).filter(e => e.created_by !== myMember.id && Date.parse(e.created_at) > seenAt).length;
+    const badge = document.getElementById("homeEventsBadge");
+    badge.textContent = unseen > 9 ? "9+" : String(unseen);
+    badge.classList.toggle("hidden", !unseen);
+    document.getElementById("homeEventsLink").setAttribute("aria-label", unseen ? t("events.titleUnseen", { n: unseen }) : t("events.title"));
   }
 
   // 去年的今天：找以前同月同日、我有參與的帳，年份越近越優先，同一天挑最多人一起的那筆。

@@ -9842,6 +9842,9 @@ html body .onboard-steps li.is-done .onboard-go{ background:var(--tint); color:v
 html body .home-tools{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px; }
 html body .home-tools a{ display:inline-flex; align-items:center; gap:7px; min-height:40px; padding:0 14px; border:1px solid var(--card-border); border-radius:999px; background:var(--card); color:var(--ink); font-size:14px; font-weight:600; text-decoration:none; }
 html body .home-tools a.hidden{ display:none; }
+html body .home-tools a{ position:relative; }
+html body .home-tools-badge{ position:absolute; top:-6px; right:-4px; display:grid; place-items:center; min-width:20px; height:20px; padding:0 5px; border:2px solid var(--bg-canvas); border-radius:999px; background:var(--negative-text); color:#FFFFFF; font-size:11px; font-weight:700; line-height:1; box-sizing:border-box; }
+html body .home-tools-badge.hidden{ display:none; }
 html body .home-tools a:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; }
 
 /* 活動頁 */

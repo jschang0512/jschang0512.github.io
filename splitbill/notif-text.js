@@ -110,7 +110,8 @@
       paidMore: "你先付 {paid}，別人欠你 {diff}", paidLess: "你先付 {paid}，還要付 {diff}", paidEven: "你先付 {paid}",
       repNew: "{actor}記了一筆還款", repEdit: "{actor}修改了一筆還款",
       repTo: "{from}還你 {amount}", repFrom: "你還給{to} {amount}", repWas: "（原本 {old}）",
-      remind: "還款提醒", remindBody: "{creditor}提醒你結清 {amount}"
+      remind: "還款提醒", remindBody: "{creditor}提醒你結清 {amount}",
+      eventNew: "{actor}開了新活動", eventBody: "{desc}・{date}"
     },
     "ja": {
       someone: "誰か", item: "支出",
@@ -122,7 +123,8 @@
       paidMore: "{paid} を立て替え、{diff} を受け取る予定", paidLess: "{paid} を立て替え、あと {diff} を支払い", paidEven: "{paid} を立て替え",
       repNew: "{actor}さんが返済を記録しました", repEdit: "{actor}さんが返済を修正しました",
       repTo: "{from}さんから {amount} の返済", repFrom: "{to}さんに {amount} を返済", repWas: "（変更前 {old}）",
-      remind: "返済リマインド", remindBody: "{creditor}さんから {amount} の精算リマインドが届きました"
+      remind: "返済リマインド", remindBody: "{creditor}さんから {amount} の精算リマインドが届きました",
+      eventNew: "{actor}さんがイベントを作成しました", eventBody: "{desc}・{date}"
     },
     "en": {
       someone: "Someone", item: "Expense",
@@ -134,7 +136,8 @@
       paidMore: "You paid {paid}; others owe you {diff}", paidLess: "You paid {paid}; you still owe {diff}", paidEven: "You paid {paid}",
       repNew: "{actor} recorded a repayment", repEdit: "{actor} edited a repayment",
       repTo: "{from} paid you {amount}", repFrom: "You paid {to} {amount}", repWas: " (was {old})",
-      remind: "Repayment reminder", remindBody: "{creditor} asked you to settle {amount}"
+      remind: "Repayment reminder", remindBody: "{creditor} asked you to settle {amount}",
+      eventNew: "{actor} created an event", eventBody: "{desc} · {date}"
     }
   };
 
@@ -145,7 +148,7 @@
     const round = (v) => ZERO_DECIMALS.includes(cur) ? Math.round(v) : Math.round(v * 100) / 100;
     const vals = {
       actor: p.actor || L.someone, desc: p.desc || L.item, from: p.from || "?", to: p.to || "?",
-      creditor: p.creditor || L.someone, payee: p.payee || "",
+      creditor: p.creditor || L.someone, payee: p.payee || "", date: p.date || "",
       amount: money(p.amount, cur), old: p.old_amount != null ? money(p.old_amount, cur) : "",
       share: money(round(p.share || 0), cur), paid: money(round(p.paid || 0), cur),
       diff: money(Math.abs(round((p.paid || 0) - (p.share || 0))), cur)
@@ -181,6 +184,8 @@
       }
       case "debt_reminder":
         return { title: f(L.remind), body: f(L.remindBody) };
+      case "event_created":
+        return { title: f(L.eventNew), body: f(L.eventBody) };
     }
     return null;
   }

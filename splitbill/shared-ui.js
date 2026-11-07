@@ -661,7 +661,7 @@ async function initNotificationBell(sb, myMember){
     return { title: String(n.title || "").replace(/^\p{Extended_Pictographic}\s*/u, ""), body };
   }
   const NOTIF_KIND = { expenses_insert: "add", expenses_update: "edit", recurring_generated: "repeat",
-    repayments_insert: "repay", repayments_update: "repay", debt_reminder: "remind" };
+    repayments_insert: "repay", repayments_update: "repay", debt_reminder: "remind", event_created: "add" };
 
   async function loadList(){
     listEl.innerHTML = `<p class="filter-hint">${t("common.loading")}</p>`;
@@ -709,7 +709,9 @@ async function initNotificationBell(sb, myMember){
             location.href = `currency.html?c=${encodeURIComponent(exp.currency)}&openExpense=${encodeURIComponent(relatedId)}`;
           }
         } else if(relatedTable === "recurring_expenses" && relatedId){
-          location.href = `settings.html?tab=group&editRecurring=${encodeURIComponent(relatedId)}`;
+          location.href = `recurring.html?editRecurring=${encodeURIComponent(relatedId)}`;
+        } else if(relatedTable === "events"){
+          location.href = "events.html";
         }
       });
     });

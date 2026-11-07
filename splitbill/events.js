@@ -265,6 +265,7 @@
       $("eventAddBtn").classList.add("hidden");
       return;
     }
+    try{ localStorage.setItem("splitbill-events-seen-" + myMember.group_id, new Date().toISOString()); }catch(e){}
     sbEnablePullToRefresh(load);
   })();
 })();
