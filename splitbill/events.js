@@ -142,7 +142,7 @@
   async function onCardClick(ev){
     const btn = ev.target.closest("[data-act]");
     if(!btn) return;
-    const card = btn.closest(".event-card");
+    const card = btn.closest(".ev-card");
     const e = events.find(x => x.id === card.dataset.id);
     if(!e) return;
     const act = btn.dataset.act;
