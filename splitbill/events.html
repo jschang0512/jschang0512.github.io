@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<script>
+(function(){
+  try{
+    var t = localStorage.getItem("splitbill-theme");
+    if(t !== "dark" && t !== "light"){
+      t = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+    }
+    document.documentElement.setAttribute("data-theme", t);
+  }catch(e){}
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Splitbill｜活動</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#F4F5F7">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css?v=948">
+<link rel="stylesheet" href="shared.css?v=948">
+<script src="holiday.js?v=948"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+<script src="i18n.js?v=948"></script>
+<script src="currencies.js?v=948"></script>
+<script src="version.js?v=948"></script>
+<script src="shared-ui.js?v=948"></script>
+<script src="theme.js?v=948" defer></script>
+<script>
+if("serviceWorker" in navigator){
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  });
+}
+</script>
+</head>
+<body>
+<svg class="svg-defs-hidden" aria-hidden="true">
+  <defs>
+    <linearGradient id="logoGrad" x1="90" y1="90" x2="430" y2="430" gradientUnits="userSpaceOnUse">
+      <stop class="logo-stop-a" offset="0%"/>
+      <stop class="logo-stop-b" offset="100%"/>
+    </linearGradient>
+  </defs>
+</svg>
+<div class="wrap">
+
+  <div class="app-header">
+    <div class="header-utility-row">
+      <div id="notificationBellContainer"></div>
+      <button type="button" class="btn secondary small" id="backBtn" data-i18n="settings.back">‹ 返回</button>
+    </div>
+    <div class="title-row">
+      <svg class="app-logo" viewBox="0 0 512 512" aria-hidden="true">
+        <path class="s1" d="M256,238 L118.5,138.1 A170,170 0 0,1 393.5,138.1 Z"/>
+        <path class="s2" d="M271.6,265 L426.9,195.9 A170,170 0 0,1 289.4,434.1 Z"/>
+        <path class="s3" d="M240.4,265 L222.6,434.1 A170,170 0 0,1 85.1,195.9 Z"/>
+      </svg>
+      <h1 data-i18n="events.title">活動</h1>
+    </div>
+  </div>
+
+  <button type="button" class="btn-wide" id="eventAddBtn" data-i18n="events.add">開新活動</button>
+  <div id="eventList"><div class="sb-skel-bars" role="status"><i style="height:45%"></i><i style="height:75%"></i><i style="height:35%"></i></div></div>
+  <p class="settings-hint hidden" id="eventEmpty" data-i18n="events.empty">還沒有活動，開一個揪大家吧。</p>
+  <h2 class="event-past-title hidden" id="eventPastTitle" data-i18n="events.past">已結束</h2>
+  <div id="eventPastList"></div>
+</div>
+
+<div class="calc-modal" id="eventFormModal">
+  <div class="calc-card card">
+    <div class="calc-header">
+      <span class="calc-header-name" data-i18n="events.add">開新活動</span>
+      <button type="button" class="calc-close" id="eventFormClose" data-i18n-title="common.close" aria-label="關閉">✕</button>
+    </div>
+    <label for="evTitle" data-i18n="events.fieldTitle">活動名稱</label>
+    <input type="text" id="evTitle" maxlength="80" data-i18n-placeholder="events.fieldTitlePlaceholder" placeholder="例如 週末烤肉">
+    <label for="evDate" data-i18n="events.fieldDate">日期</label>
+    <input type="date" id="evDate" lang="en-CA">
+    <label for="evLocation" data-i18n="events.fieldLocation">地點（選填）</label>
+    <input type="text" id="evLocation" maxlength="120">
+    <label for="evFeeMode" data-i18n="events.fieldFeeMode">費用方式</label>
+    <div class="select-wrap"><select id="evFeeMode">
+      <option value="per_person" data-i18n="events.feePerPerson">每人固定金額</option>
+      <option value="split_total" data-i18n="events.feeSplitTotal">總額大家平分</option>
+    </select></div>
+    <label for="evCurrency" data-i18n="settings.recurringFormCurrencyLabel">幣別</label>
+    <div class="select-wrap"><select id="evCurrency"></select></div>
+    <label for="evAmount" data-i18n="events.fieldAmount">金額</label>
+    <input type="number" id="evAmount" min="1" step="1" inputmode="decimal">
+    <label for="evCapacity" data-i18n="events.fieldCapacity">人數上限（選填）</label>
+    <input type="number" id="evCapacity" min="1" step="1" inputmode="numeric">
+    <label for="evDeadline" data-i18n="events.fieldDeadline">報名截止日（選填）</label>
+    <input type="date" id="evDeadline" lang="en-CA">
+    <label for="evNote" data-i18n="events.fieldNote">備註（選填）</label>
+    <textarea id="evNote" maxlength="500" rows="2"></textarea>
+    <button type="button" class="btn-wide" id="eventFormSubmit" data-i18n="events.create">建立活動</button>
+    <div class="msg" id="eventFormMsg"></div>
+  </div>
+</div>
+
+<div class="calc-modal" id="eventCloseModal">
+  <div class="calc-card card">
+    <div class="calc-header">
+      <span class="calc-header-name" data-i18n="events.closeTitle">結算成帳目</span>
+      <button type="button" class="calc-close" id="eventCloseClose" data-i18n-title="common.close" aria-label="關閉">✕</button>
+    </div>
+    <p class="settings-hint" data-i18n="events.closeHint">會新增一筆帳，由你付款、勾選的人分攤。結算後名單就不能再改。</p>
+    <label data-i18n="events.closeAttendees">實際參加的人</label>
+    <div class="checks" id="eventCloseAttendees"></div>
+    <label for="eventCloseAmount" id="eventCloseAmountLabel"></label>
+    <input type="number" id="eventCloseAmount" min="1" step="1" inputmode="decimal">
+    <p class="settings-hint" id="eventCloseSummary"></p>
+    <button type="button" class="btn-wide" id="eventCloseSubmit" data-i18n="events.closeSubmit">轉成帳目</button>
+    <div class="msg" id="eventCloseMsg"></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://ofevarwtqzvzrvhbanmf.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_pWT6foelsonrb1sLMXhnCw_oA3ytvaX";
+</script>
+<script src="events.js?v=948"></script>
+</body>
+</html>

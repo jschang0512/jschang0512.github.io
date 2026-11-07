@@ -2409,7 +2409,7 @@
     if(templateBtn){
       templateBtn.onclick = () => {
         modal.classList.remove("show");
-        location.href = "settings.html?tab=group&editRecurring=" + encodeURIComponent(templateId);
+        location.href = "recurring.html?editRecurring=" + encodeURIComponent(templateId);
       };
     }
     if(closeBtn) closeBtn.onclick = () => modal.classList.remove("show");

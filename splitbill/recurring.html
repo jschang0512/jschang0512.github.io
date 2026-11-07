@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<script>
+(function(){
+  try{
+    var t = localStorage.getItem("splitbill-theme");
+    if(t !== "dark" && t !== "light"){
+      t = (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
+    }
+    document.documentElement.setAttribute("data-theme", t);
+  }catch(e){}
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Splitbill｜固定收支</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#F4F5F7">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css?v=948">
+<link rel="stylesheet" href="shared.css?v=948">
+<script src="holiday.js?v=948"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
+<script src="i18n.js?v=948"></script>
+<script src="currencies.js?v=948"></script>
+<script src="version.js?v=948"></script>
+<script src="shared-ui.js?v=948"></script>
+<script src="theme.js?v=948" defer></script>
+<script>
+if("serviceWorker" in navigator){
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  });
+}
+</script>
+</head>
+<body>
+<svg class="svg-defs-hidden" aria-hidden="true">
+  <defs>
+    <linearGradient id="logoGrad" x1="90" y1="90" x2="430" y2="430" gradientUnits="userSpaceOnUse">
+      <stop class="logo-stop-a" offset="0%"/>
+      <stop class="logo-stop-b" offset="100%"/>
+    </linearGradient>
+  </defs>
+</svg>
+<div class="wrap">
+
+  <div class="app-header">
+    <div class="header-utility-row">
+      <div id="notificationBellContainer"></div>
+      <button type="button" class="btn secondary small" id="backBtn" data-i18n="settings.back">‹ 返回</button>
+    </div>
+    <div class="title-row">
+      <svg class="app-logo" viewBox="0 0 512 512" aria-hidden="true">
+        <path class="s1" d="M256,238 L118.5,138.1 A170,170 0 0,1 393.5,138.1 Z"/>
+        <path class="s2" d="M271.6,265 L426.9,195.9 A170,170 0 0,1 289.4,434.1 Z"/>
+        <path class="s3" d="M240.4,265 L222.6,434.1 A170,170 0 0,1 85.1,195.9 Z"/>
+      </svg>
+      <h1 data-i18n="recurring.title">固定收支</h1>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="settings-hint" data-i18n="recurring.hint">房租、訂閱這類固定費用，到期會自動記一筆帳。</p>
+    <button type="button" class="btn-wide" id="recurringTemplateAddBtn" data-i18n="settings.recurringAddBtn">新增週期性支出</button>
+    <div id="recurringTemplatesList"></div>
+    <p class="settings-hint hidden" id="recurringTemplatesEmpty" data-i18n="settings.recurringEmpty">目前沒有設定週期性支出</p>
+  </div>
+</div>
+
+<div class="calc-modal" id="recurringTemplateFormModal">
+  <div class="calc-card card">
+    <div class="calc-header">
+      <span class="calc-header-name" id="recurringTemplateFormTitle" data-i18n="settings.recurringFormTitleNew">新增週期性支出</span>
+      <button type="button" class="calc-close" id="recurringTemplateFormCloseBtn">✕</button>
+    </div>
+
+    <label data-i18n="settings.recurringFormDescLabel">品項名稱</label>
+    <input type="text" id="recurTmplDesc" data-i18n-placeholder="settings.recurringFormDescPlaceholder" placeholder="例如 房租、Netflix 訂閱">
+
+    <label data-i18n="currency.categoryLabel">類別 (自動辨識 / 可手動選擇)</label>
+    <div class="select-wrap">
+      <select id="recurTmplCategory">
+        <option value="general" data-i18n="cat.general">一般支出</option>
+        <option value="food" data-i18n="cat.food">美食餐飲</option>
+        <option value="drink" data-i18n="cat.drink">飲料甜點</option>
+        <option value="transit" data-i18n="cat.transit">大眾交通</option>
+        <option value="car" data-i18n="cat.car">租車用油</option>
+        <option value="flight" data-i18n="cat.flight">機票航班</option>
+        <option value="hotel" data-i18n="cat.hotel">住宿溫泉</option>
+        <option value="ticket" data-i18n="cat.ticket">門票娛樂</option>
+        <option value="shopping" data-i18n="cat.shopping">購物藥妝</option>
+        <option value="medical" data-i18n="cat.medical">醫療藥品</option>
+        <option value="network" data-i18n="cat.network">網卡通訊</option>
+      </select>
+    </div>
+
+    <label data-i18n="settings.recurringFormCurrencyLabel">幣別</label>
+    <div class="select-wrap">
+      <select id="recurTmplCurrency"></select>
+    </div>
+
+    <label data-i18n="settings.recurringFormAmountLabel">總金額</label>
+    <input type="number" id="recurTmplAmount" min="1" step="1" data-i18n-placeholder="currency.repayAmountPlaceholder" placeholder="例如 500">
+
+    <label data-i18n="settings.recurringFormPayerLabel">誰付的錢</label>
+    <div class="select-wrap">
+      <select id="recurTmplPayer"></select>
+    </div>
+
+    <label data-i18n="settings.recurringFormParticipantsLabel">誰要分攤（平分）</label>
+    <div class="checks" id="recurTmplParticipants"></div>
+
+    <label data-i18n="currency.recurringIntervalLabel">週期</label>
+    <div class="select-wrap">
+      <select id="recurTmplUnit">
+        <option value="monthly" data-i18n="currency.recurringUnitMonthly">每月</option>
+        <option value="weekly" data-i18n="currency.recurringUnitWeekly">每週</option>
+      </select>
+    </div>
+    <div class="select-wrap" id="recurTmplMonthlyWrap">
+      <select id="recurTmplMonthlyDay"></select>
+    </div>
+    <div class="select-wrap hidden" id="recurTmplWeeklyWrap">
+      <select id="recurTmplWeeklyDay"></select>
+    </div>
+
+    <button type="button" class="btn-wide" id="recurTmplSubmitBtn" data-i18n="settings.recurringFormSubmitNew">建立週期性支出</button>
+    <div class="msg" id="recurTmplMsg"></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://ofevarwtqzvzrvhbanmf.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_pWT6foelsonrb1sLMXhnCw_oA3ytvaX";
+</script>
+<script src="recurring.js?v=948"></script>
+</body>
+</html>

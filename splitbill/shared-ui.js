@@ -1106,7 +1106,7 @@ window.sbBindKeyboardHide = sbBindKeyboardHide;
 // 首頁與設定頁的底部導覽：首頁 · 幣別 · 記一筆 · 設定（幣別頁有自己的一列，見 app.js）
 function sbBuildPageNav(){
   const page = (location.pathname.split("/").pop() || "").toLowerCase();
-  const current = page === "summary.html" ? "SUMMARY" : page === "settings.html" ? "SETTINGS" : null;
+  const current = page === "summary.html" ? "SUMMARY" : page === "settings.html" ? "SETTINGS" : (page === "recurring.html" || page === "events.html") ? "TOOL" : null;
   if(!current || document.querySelector(".sb-bottom-nav")) return;
   const item = (key, icon, label, active) =>
     `<button type="button" data-nav="${key}"${active ? ' class="active" aria-current="page"' : ""}><span class="sb-nav-ico">${sbIcon(icon)}</span><span>${escapeHtml(label)}</span></button>`;
