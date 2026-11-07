@@ -877,6 +877,37 @@ const LOCATION_WEATHER_CACHE_MS = 20 * 60 * 1000;
 // settings.html 只需要顯示這兩顆徽章，不用傳這個參數。沒有 #locationCard/
 // #weatherCard 容器的頁面（不在 summary/currency/settings 範圍內）呼叫這
 // 支函式也不會出錯，只是徽章不會顯示（renderXxxBadge 內部會做 null 檢查）。
+// 系統權限視窗一台裝置只主動跳一次：使用者關掉或沒回應，之後就不再自己跳，
+// 要開的話自己去設定按。第一次呼叫回傳 true，之後都是 false。
+function sbAskOnce(key){
+  try{
+    if(localStorage.getItem(key)) return false;
+    localStorage.setItem(key, "1");
+  }catch(e){ return false; }
+  return true;
+}
+window.sbAskOnce = sbAskOnce;
+
+// 這次可不可以呼叫 GPS。已經授權就直接用；還沒決定的話只問一次，之後改用
+// IP 定位（到城市等級，顯示所在地和判斷幣別都夠用），不會每次開 App 都跳視窗。
+async function sbCanUseGps(){
+  if(!navigator.geolocation) return false;
+  let state = "";
+  try{
+    const native = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation;
+    if(native && native.checkPermissions){
+      const p = await native.checkPermissions();
+      state = p.location || "";
+    } else if(navigator.permissions && navigator.permissions.query){
+      state = (await navigator.permissions.query({ name: "geolocation" })).state;
+    }
+  }catch(e){}
+  if(state === "granted") return true;
+  if(state === "denied") return false;
+  return sbAskOnce("splitbill-gps-asked");
+}
+window.sbCanUseGps = sbCanUseGps;
+
 async function initLocationWeatherWidget(onDetected){
   try {
     const cachedRaw = localStorage.getItem(LOCATION_WEATHER_CACHE_KEY);
@@ -893,7 +924,7 @@ async function initLocationWeatherWidget(onDetected){
 
   let lat, lon, countryCode = '', city = '', district = '', countryName = '';
   try {
-    if(!navigator.geolocation) throw new Error("no geolocation");
+    if(!(await sbCanUseGps())) throw new Error("gps not allowed");
     const pos = await new Promise((res, rej) => {
       navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 });
     });

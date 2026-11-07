@@ -29,18 +29,18 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=944">
-<link rel="stylesheet" href="shared.css?v=944">
-<script src="holiday.js?v=944"></script>
+<link rel="stylesheet" href="theme.css?v=945">
+<link rel="stylesheet" href="shared.css?v=945">
+<script src="holiday.js?v=945"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
-<script src="i18n.js?v=944"></script>
-<script src="currencies.js?v=944"></script>
-<script src="motion.js?v=944"></script>
-<script src="version.js?v=944"></script>
-<script src="notif-text.js?v=944"></script>
-<script src="shared-ui.js?v=944"></script>
-<script src="theme.js?v=944" defer></script>
-<script src="app-banner.js?v=944" defer></script>
+<script src="i18n.js?v=945"></script>
+<script src="currencies.js?v=945"></script>
+<script src="motion.js?v=945"></script>
+<script src="version.js?v=945"></script>
+<script src="notif-text.js?v=945"></script>
+<script src="shared-ui.js?v=945"></script>
+<script src="theme.js?v=945" defer></script>
+<script src="app-banner.js?v=945" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -783,9 +783,11 @@ renderNavLinks();
 
   // 登入後自動嘗試訂閱（預設開啟）；如果瀏覽器已經封鎖或使用者已關閉過，
   // 這裡什麼都不會發生，不會硬跳出來吵。
-  async function ensurePushSubscribed(){
+  async function ensurePushSubscribed(auto){
     if(!pushSupported || !currentUser) return;
     if(Notification.permission === "denied"){ await updateNotifyBtnState(); return; }
+    // 開 App 時自動跑的這條路，還沒授權的話只問一次；按鈴鐺才會再問
+    if(auto && Notification.permission !== "granted" && !sbAskOnce("splitbill-notify-asked")){ await updateNotifyBtnState(); return; }
 
     const permission = await Notification.requestPermission();
     if(permission !== "granted"){ await updateNotifyBtnState(); return; }
@@ -1225,7 +1227,7 @@ renderNavLinks();
       loadFeedback().catch(e => console.error("loadFeedback error:", e));
       renderRecurringOverview().catch(e => console.error("renderRecurringOverview error:", e));
       subscribeRealtime();
-      ensurePushSubscribed().catch(e => console.error("ensurePushSubscribed error:", e));
+      ensurePushSubscribed(true).catch(e => console.error("ensurePushSubscribed error:", e));
       // 背景偵測城市/國家變化
       detectAndNotifyLocationChange().catch(() => {});
     }catch(e){
@@ -1560,8 +1562,9 @@ renderNavLinks();
         nz:'NZD', vn:'VND', tw:'TWD', my:'MYR', id:'IDR', ph:'PHP',
         in:'INR'
       };
+      const canUseGps = await sbCanUseGps();
       const gpsResult = await new Promise((resolve) => {
-        if(!navigator.geolocation){ resolve(null); return; }
+        if(!canUseGps){ resolve(null); return; }
         navigator.geolocation.getCurrentPosition(async (pos) => {
           try {
             const lat = pos.coords.latitude, lon = pos.coords.longitude;

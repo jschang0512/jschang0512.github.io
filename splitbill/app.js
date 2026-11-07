@@ -671,9 +671,11 @@
 
   // 登入後自動嘗試訂閱（預設開啟）；如果瀏覽器已經封鎖或使用者已關閉過，
   // 這裡什麼都不會發生，不會硬跳出來吵。
-  async function ensurePushSubscribed(){
+  async function ensurePushSubscribed(auto){
     if(!pushSupported || !currentUser) return;
     if(Notification.permission === "denied"){ await updateNotifyBtnState(); return; }
+    // 開 App 時自動跑的這條路，還沒授權的話只問一次；按鈴鐺才會再問
+    if(auto && Notification.permission !== "granted" && !sbAskOnce("splitbill-notify-asked")){ await updateNotifyBtnState(); return; }
 
     const permission = await Notification.requestPermission();
     if(permission !== "granted"){ await updateNotifyBtnState(); return; }
@@ -997,7 +999,7 @@
     await expensesReady;
     generateDueRecurringExpenses();
     subscribeRealtime();
-    ensurePushSubscribed();
+    ensurePushSubscribed(true);
     if(typeof initLocationWeatherWidget === "function") initLocationWeatherWidget().catch(()=>{});
 
     // 從通知夾點「週期性支出已自動記錄」跳過來的（?openExpense=支出id），
