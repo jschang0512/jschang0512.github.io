@@ -1203,3 +1203,57 @@ function sbCleanExpenseTitle(desc){
   return String(desc || "").replace(/<!--[\s\S]*?-->/g, "").replace(/\[[a-z]+:[^\]]*\]/gi, "").replace(/AI_RECEIPT_DATA[\s\S]*$/, "").trim();
 }
 window.sbCleanExpenseTitle = sbCleanExpenseTitle;
+
+// 下拉重新整理：頁面在最頂端時往下拉超過門檻就重抓資料。頁面呼叫
+// sbEnablePullToRefresh(非同步函式) 才會啟用，有視窗開著或從可橫向捲動的表格開始拉都不算。
+function sbEnablePullToRefresh(refresh){
+  const THRESHOLD = 64;
+  document.documentElement.classList.add("sb-ptr-on");
+  const dot = document.createElement("div");
+  dot.className = "sb-ptr";
+  dot.setAttribute("aria-hidden", "true");
+  dot.innerHTML = '<svg viewBox="0 0 24 24" width="20" height="20"><path d="M20 12a8 8 0 1 1-2.4-5.7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M20 3v5h-5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  document.body.appendChild(dot);
+
+  let startX = 0, startY = 0, pull = 0, tracking = false, busy = false;
+  const place = () => { dot.style.transform = `translate(-50%, ${pull - 44}px) rotate(${pull * 4}deg)`; dot.style.opacity = Math.min(1, pull / THRESHOLD); };
+  function blocked(target){
+    return window.scrollY > 0 || busy
+      || document.querySelector(".calc-modal.show, .sb-record-overlay, .sb-sheet-backdrop, .sb-moment")
+      || (target.closest && target.closest("input, textarea, select, .matrix-scroll, .sb-drag-handle"));
+  }
+  document.addEventListener("touchstart", e => {
+    tracking = !blocked(e.target);
+    if(!tracking) return;
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+    pull = 0;
+    dot.classList.remove("is-settling");
+  }, { passive:true });
+  document.addEventListener("touchmove", e => {
+    if(!tracking) return;
+    const dx = e.touches[0].clientX - startX, dy = e.touches[0].clientY - startY;
+    if(dy <= 0 || Math.abs(dx) > dy){ pull = 0; place(); return; }
+    pull = Math.min(dy * .5, 96);
+    place();
+  }, { passive:true });
+  async function release(){
+    if(!tracking) return;
+    tracking = false;
+    dot.classList.add("is-settling");
+    if(pull < THRESHOLD){ pull = 0; place(); return; }
+    busy = true;
+    pull = THRESHOLD;
+    dot.classList.add("is-busy");
+    dot.style.transform = `translate(-50%, ${pull - 44}px)`;
+    dot.style.opacity = 1;
+    try{ await refresh(); }catch(e){ console.error("重新整理失敗：", e); }
+    busy = false;
+    dot.classList.remove("is-busy");
+    pull = 0;
+    place();
+  }
+  document.addEventListener("touchend", release);
+  document.addEventListener("touchcancel", release);
+}
+window.sbEnablePullToRefresh = sbEnablePullToRefresh;

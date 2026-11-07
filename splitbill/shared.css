@@ -9805,3 +9805,35 @@ html body .on-this-day-title{ font-size:12.5px; font-weight:600; color:var(--ink
 html body .on-this-day-name{ font-size:16px; font-weight:700; line-height:1.4; }
 html body .on-this-day-detail{ font-size:13px; color:var(--ink-soft); }
 html body .on-this-day-close{ position:absolute; top:50%; right:6px; width:36px; height:36px; margin-top:-18px; border:0; border-radius:50%; background:none; color:var(--ink-soft); font-size:14px; cursor:pointer; }
+
+/* 下拉重新整理 */
+html.sb-ptr-on, html.sb-ptr-on body{ overscroll-behavior-y:contain; }
+html body .sb-ptr{ position:fixed; top:0; left:50%; z-index:300; display:grid; place-items:center; width:38px; height:38px; border:1px solid var(--card-border); border-radius:50%; background:var(--card); color:var(--btn-primary); box-shadow:0 3px 10px rgba(16,14,30,.2); opacity:0; transform:translate(-50%,-44px); pointer-events:none; }
+html body .sb-ptr.is-settling{ transition:transform .2s ease, opacity .2s ease; }
+html body .sb-ptr.is-busy svg{ animation:sbPtrSpin .8s linear infinite; }
+@keyframes sbPtrSpin{ to{ transform:rotate(360deg); } }
+
+/* 骨架畫面：圖表還沒載入時先佔位 */
+html body .sb-skel-bars{ display:flex; align-items:flex-end; justify-content:space-around; gap:10px; height:150px; padding:8px 12px 0; }
+html body .sb-skel-bars i{ flex:1; max-width:56px; border-radius:6px 6px 2px 2px; background:var(--line); animation:sbSkelPulse 1.3s ease-in-out infinite alternate; }
+html body .sb-skel-bars i:nth-child(2n){ animation-delay:.2s; }
+html body .sb-skel-donut{ width:150px; height:150px; margin:12px auto; border-radius:50%; border:26px solid var(--line); box-sizing:border-box; animation:sbSkelPulse 1.3s ease-in-out infinite alternate; }
+@keyframes sbSkelPulse{ from{ opacity:1; } to{ opacity:.45; } }
+@media (prefers-reduced-motion:reduce){ html body .sb-skel-bars i, html body .sb-skel-donut, html body .sb-ptr.is-busy svg{ animation:none; } }
+
+/* 新手引導 */
+html body .onboard-card{ position:relative; margin-bottom:14px; }
+html body .onboard-card.hidden{ display:none; }
+html body .onboard-card h2{ margin:0 32px 10px 0; }
+html body .onboard-close{ position:absolute; top:10px; right:8px; width:36px; height:36px; border:0; border-radius:50%; background:none; color:var(--ink-soft); font-size:14px; cursor:pointer; }
+html body .onboard-steps{ list-style:none; margin:0; padding:0; }
+html body .onboard-steps li{ display:flex; align-items:center; gap:12px; padding:11px 0; border-top:1px solid var(--line); }
+html body .onboard-num{ display:grid; place-items:center; flex:none; width:28px; height:28px; border-radius:50%; background:var(--tint); color:var(--btn-primary); font-size:14px; font-weight:700; }
+html body .onboard-text{ flex:1; min-width:0; }
+html body .onboard-text b{ display:block; font-size:15px; line-height:1.4; }
+html body .onboard-text small{ display:block; font-size:12.5px; line-height:1.45; color:var(--ink-soft); }
+html body .onboard-go{ flex:none; min-height:36px; padding:0 14px; border:0; border-radius:999px; background:var(--btn-primary); color:var(--btn-primary-fg); font:inherit; font-size:13px; font-weight:700; line-height:36px; text-decoration:none; cursor:pointer; white-space:nowrap; }
+html body .onboard-go:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; }
+html body .onboard-steps li.is-done .onboard-num{ background:var(--positive-text); color:#FFFFFF; font-size:0; }
+html body .onboard-steps li.is-done .onboard-num::before{ content:"✓"; font-size:15px; }
+html body .onboard-steps li.is-done .onboard-go{ background:var(--tint); color:var(--ink); }

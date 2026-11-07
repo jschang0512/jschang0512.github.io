@@ -999,6 +999,7 @@
     await expensesReady;
     generateDueRecurringExpenses();
     subscribeRealtime();
+    sbEnablePullToRefresh(refreshExpenses);
     ensurePushSubscribed(true);
     if(typeof initLocationWeatherWidget === "function") initLocationWeatherWidget().catch(()=>{});
 

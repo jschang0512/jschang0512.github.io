@@ -29,18 +29,18 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=946">
-<link rel="stylesheet" href="shared.css?v=946">
-<script src="holiday.js?v=946"></script>
+<link rel="stylesheet" href="theme.css?v=947">
+<link rel="stylesheet" href="shared.css?v=947">
+<script src="holiday.js?v=947"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
-<script src="i18n.js?v=946"></script>
-<script src="currencies.js?v=946"></script>
-<script src="motion.js?v=946"></script>
-<script src="version.js?v=946"></script>
-<script src="notif-text.js?v=946"></script>
-<script src="shared-ui.js?v=946"></script>
-<script src="theme.js?v=946" defer></script>
-<script src="app-banner.js?v=946" defer></script>
+<script src="i18n.js?v=947"></script>
+<script src="currencies.js?v=947"></script>
+<script src="motion.js?v=947"></script>
+<script src="version.js?v=947"></script>
+<script src="notif-text.js?v=947"></script>
+<script src="shared-ui.js?v=947"></script>
+<script src="theme.js?v=947" defer></script>
+<script src="app-banner.js?v=947" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -152,6 +152,27 @@ if("serviceWorker" in navigator){
       <span class="recap-entry-go" aria-hidden="true">›</span>
     </a>
 
+    <div class="onboard-card card hidden" id="onboardCard">
+      <button type="button" class="onboard-close" id="onboardClose" data-i18n-title="common.close" title="關閉" aria-label="關閉">✕</button>
+      <h2 data-i18n="summary.onboardTitle">開始分帳只要三步</h2>
+      <ol class="onboard-steps">
+        <li id="onboardStepInvite">
+          <span class="onboard-num">1</span>
+          <span class="onboard-text"><b data-i18n="summary.onboardInviteTitle">邀請朋友加入</b><small data-i18n="summary.onboardInviteHint">把邀請碼傳給一起分帳的人</small></span>
+          <a class="onboard-go" href="settings.html?tab=group" data-i18n="summary.onboardInviteBtn">邀請</a>
+        </li>
+        <li>
+          <span class="onboard-num">2</span>
+          <span class="onboard-text"><b data-i18n="summary.onboardExpenseTitle">記下第一筆帳</b><small data-i18n="summary.onboardExpenseHint">誰付的、誰要分，填好就算好了</small></span>
+          <button type="button" class="onboard-go" id="onboardExpenseBtn" data-i18n="summary.onboardExpenseBtn">記一筆</button>
+        </li>
+        <li>
+          <span class="onboard-num">3</span>
+          <span class="onboard-text"><b data-i18n="summary.onboardSettleTitle">看誰該還誰</b><small data-i18n="summary.onboardSettleHint">債務關係表會自動算好，還完記一筆就結清</small></span>
+        </li>
+      </ol>
+    </div>
+
     <div class="on-this-day hidden" id="onThisDay">
       <a class="on-this-day-link" id="onThisDayLink">
         <span class="on-this-day-icon"><span class="sb-ico" style="--ico:var(--ico-calendar)" aria-hidden="true"></span></span>
@@ -187,7 +208,7 @@ if("serviceWorker" in navigator){
           </div>
         </div>
         <div id="balanceChartWrap">
-          <p class="filter-hint" data-i18n="common.loading">載入中…</p>
+          <div class="sb-skel-bars" role="status" data-i18n-title="common.loading" title="載入中…"><i style="height:45%"></i><i style="height:75%"></i><i style="height:35%"></i><i style="height:90%"></i><i style="height:60%"></i></div>
         </div>
       </div>
     </div>
@@ -1235,6 +1256,8 @@ renderNavLinks();
 
       renderRecapEntry();
       renderOnThisDay();
+      renderOnboarding();
+      sbEnablePullToRefresh(refreshSummary);
 
       // 非核心功能在背景非同步執行
       loadFeedback().catch(e => console.error("loadFeedback error:", e));
@@ -1249,6 +1272,37 @@ renderNavLinks();
         await forceLogout();
       }
     }
+  }
+
+  // 新手引導：群組還沒有任何帳時顯示，記了第一筆或按關閉就不再出現。
+  function renderOnboarding(){
+    const card = document.getElementById("onboardCard");
+    if(!card || !myMember) return;
+    const key = "splitbill-onboard-closed-" + myMember.group_id;
+    let closed = false;
+    try{ closed = !!localStorage.getItem(key); }catch(e){}
+    const show = !closed && !(window.allGroupExpenses || []).length;
+    card.classList.toggle("hidden", !show);
+    if(!show) return;
+    const hasFriends = (memberRows || []).filter(m => !m.left_at).length > 1;
+    document.getElementById("onboardStepInvite").classList.toggle("is-done", hasFriends);
+    document.getElementById("onboardExpenseBtn").onclick = () => document.getElementById("openQuickExpenseBtn").click();
+    document.getElementById("onboardClose").onclick = () => {
+      card.classList.add("hidden");
+      try{ localStorage.setItem(key, "1"); }catch(e){}
+    };
+  }
+
+  // 下拉重新整理：跟登入時載入的是同一批資料
+  async function refreshSummary(){
+    const [expRes, repRes] = await Promise.all([
+      sb.from("expenses").select("*").eq("group_id", myMember.group_id).order("created_at", { ascending:false }),
+      sb.from("repayments").select("*").eq("group_id", myMember.group_id).order("created_at", { ascending:false })
+    ]);
+    if(expRes.data){ window.cachedExpenses = expRes.data; window.allGroupExpenses = expRes.data; }
+    if(repRes.data){ window.cachedRepayments = repRes.data; window.allGroupRepayments = repRes.data; }
+    await Promise.all([loadAndRenderAllBalances(), loadFeedback(), renderRecurringOverview()]);
+    renderOnboarding();
   }
 
   // 去年的今天：找以前同月同日、我有參與的帳，年份越近越優先，同一天挑最多人一起的那筆。
