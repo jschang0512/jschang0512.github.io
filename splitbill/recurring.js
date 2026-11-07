@@ -200,7 +200,12 @@
     const catSel = document.getElementById("recurTmplCategory");
     const curSel = document.getElementById("recurTmplCurrency");
     const amtInp = document.getElementById("recurTmplAmount");
-    const payerSel = document.getElementById("recurTmplPayer");
+    // 付款人和星期幾改成點選的按鈕，包成跟下拉選單一樣有 value 的介面，存檔那段邏輯不用改
+    const payerWrap = document.getElementById("recurTmplPayer");
+    const payerSel = {
+      get value(){ const r = payerWrap.querySelector("input:checked"); return r ? r.value : ""; },
+      set value(v){ payerWrap.querySelectorAll("input").forEach(r => { r.checked = r.value === v; r.closest(".check-pill").classList.toggle("checked", r.checked); }); }
+    };
     const participantsWrap = document.getElementById("recurTmplParticipants");
     // 週期是兩顆單選按鈕，包成跟下拉選單一樣的介面，下面的邏輯不用分兩套
     const unitRadios = Array.from(document.querySelectorAll('input[name="recurUnit"]'));
@@ -210,17 +215,31 @@
       addEventListener(type, fn){ unitRadios.forEach(r => r.addEventListener(type, fn)); }
     };
     const suggestWrap = document.getElementById("recurTmplSuggest");
+    const SUGGEST_CATEGORY = { rent: "general", utilities: "general", internet: "network", subscription: "ticket", phone: "network" };
     ["rent", "utilities", "internet", "subscription", "phone"].forEach(key => {
       const b = document.createElement("button");
       b.type = "button";
       b.textContent = t("recurring.sug." + key);
-      b.addEventListener("click", () => { descInp.value = b.textContent; descInp.focus(); });
+      b.addEventListener("click", () => {
+        descInp.value = b.textContent;
+        catSel.value = SUGGEST_CATEGORY[key];
+        categoryTouched = true;
+        enhanceSelect(catSel);
+        amtInp.focus();
+      });
       suggestWrap.appendChild(b);
     });
     const monthlyWrap = document.getElementById("recurTmplMonthlyWrap");
     const monthlyDaySel = document.getElementById("recurTmplMonthlyDay");
     const weeklyWrap = document.getElementById("recurTmplWeeklyWrap");
-    const weeklyDaySel = document.getElementById("recurTmplWeeklyDay");
+    const weeklyDayWrap = document.getElementById("recurTmplWeeklyDay");
+    const weeklyDaySel = {
+      get value(){ const r = weeklyDayWrap.querySelector("input:checked"); return r ? r.value : "1"; },
+      set value(v){ weeklyDayWrap.querySelectorAll("input").forEach(r => { r.checked = r.value === String(v); }); }
+    };
+    const previewEl = document.getElementById("recurTmplPreview");
+    let editingNextDue = null;
+    let categoryTouched = false;
     if(!modal || !addBtn) return;
 
     if(curSel){
@@ -230,10 +249,41 @@
       monthlyDaySel.innerHTML = Array.from({length:28}, (_,i)=>i+1)
         .map(d => `<option value="${d}">${t("currency.recurringMonthlyDayOption", {day:d})}</option>`).join("");
     }
-    if(weeklyDaySel){
-      const weekdayNames = t("currency.weekdays").split(",");
-      weeklyDaySel.innerHTML = weekdayNames.map((name,i) => `<option value="${i}">${name}</option>`).join("");
+    const weekdayNames = t("currency.weekdays").split(",");
+    weeklyDayWrap.innerHTML = weekdayNames.map((name, i) => `<label><input type="radio" name="recurWeekday" value="${i}"${i === 1 ? " checked" : ""}><span>${escapeHtml(name.replace(/^(星期|週)/, ""))}</span></label>`).join("");
+
+    // 每人多少、下一次什麼時候記：邊填邊算給人看
+    function updatePreview(){
+      const amount = Number(amtInp.value);
+      const n = participantsWrap.querySelectorAll("input:checked").length;
+      if(!(amount > 0) || !n){ previewEl.classList.add("hidden"); return; }
+      const intervalDay = Number(unitSel.value === "weekly" ? weeklyDaySel.value : monthlyDaySel.value);
+      const next = editingNextDue || computeRecurTmplNextDueDate(unitSel.value, intervalDay, todayIso());
+      const [y, m, d] = next.split("-").map(Number);
+      const weekday = weekdayNames[new Date(y, m - 1, d).getDay()] || "";
+      previewEl.textContent = t("recurring.preview", { each: money(curSel.value, amount / n), n, date: next, weekday });
+      previewEl.classList.remove("hidden");
     }
+    [amtInp, monthlyDaySel, curSel].forEach(el => el.addEventListener("input", updatePreview));
+    [monthlyDaySel, curSel].forEach(el => el.addEventListener("change", updatePreview));
+    weeklyDayWrap.addEventListener("change", () => { editingNextDue = null; updatePreview(); });
+    monthlyDaySel.addEventListener("change", () => { editingNextDue = null; updatePreview(); });
+    unitSel.addEventListener("change", () => { editingNextDue = null; updatePreview(); });
+    participantsWrap.addEventListener("change", updatePreview);
+
+    // 名稱打完自動猜類別，使用者自己改過類別就不再動
+    catSel.addEventListener("change", () => { categoryTouched = true; });
+    descInp.addEventListener("input", () => {
+      if(categoryTouched || !descInp.value.trim()) return;
+      catSel.value = getCategoryMeta(descInp.value, null, null).type || "general";
+      enhanceSelect(catSel);
+    });
+    document.getElementById("recurTmplAll").addEventListener("click", () => {
+      const boxes = Array.from(participantsWrap.querySelectorAll("input"));
+      const allOn = boxes.every(b => b.checked);
+      boxes.forEach(b => { b.checked = !allOn; b.closest(".check-pill").classList.toggle("checked", b.checked); });
+      updatePreview();
+    });
     if(unitSel && monthlyWrap && weeklyWrap){
       unitSel.addEventListener("change", ()=>{
         const isWeekly = unitSel.value === "weekly";
@@ -244,9 +294,12 @@
 
     function populateMemberFields(){
       const activeMembers = (memberRows || []).filter(m => !m.left_at);
-      if(payerSel){
-        payerSel.innerHTML = activeMembers.map(m => `<option value="${m.id}">${escapeHtml(memberById[m.id] || m.name)}</option>`).join("");
-      }
+      payerWrap.innerHTML = activeMembers.map(m => `<label class="check-pill">
+          <input type="radio" name="recurPayer" value="${m.id}">
+          ${renderAvatarHTML(m, "avatar-xs")}
+          <span class="check-pill-name">${escapeHtml(memberById[m.id] || m.name)}</span>
+        </label>`).join("");
+      payerWrap.querySelectorAll("input").forEach(inp => inp.addEventListener("change", () => { payerSel.value = inp.value; }));
       if(participantsWrap){
         participantsWrap.innerHTML = activeMembers.map(m => `<label class="check-pill checked">
           <input type="checkbox" value="${m.id}" checked>
@@ -269,7 +322,9 @@
       if(curSel){ curSel.value = (shownCurrencies && shownCurrencies[0]) || "TWD"; enhanceSelect(curSel); }
       if(amtInp) amtInp.value = "";
       populateMemberFields();
-      if(payerSel){ payerSel.value = myMember ? myMember.id : payerSel.value; enhanceSelect(payerSel); }
+      if(myMember) payerSel.value = myMember.id;
+      editingNextDue = null;
+      categoryTouched = false;
       unitSel.value = "monthly";
       if(monthlyWrap) monthlyWrap.classList.remove("hidden");
       if(weeklyWrap) weeklyWrap.classList.add("hidden");
@@ -277,6 +332,7 @@
 
     function openModal(){
       resetForm();
+      updatePreview();
       modal.classList.remove("hidden");
       modal.classList.add("show");
     }
@@ -314,7 +370,9 @@
       if(curSel){ curSel.value = tmpl.currency || "TWD"; enhanceSelect(curSel); }
       if(amtInp) amtInp.value = tmpl.amount;
       const payerId = tmpl.payers && tmpl.payers[0] && tmpl.payers[0].member_id;
-      if(payerSel && payerId){ payerSel.value = payerId; enhanceSelect(payerSel); }
+      if(payerId) payerSel.value = payerId;
+      editingNextDue = tmpl.next_due_date;
+      categoryTouched = true;
       // 分攤名單依範本 shares 記錄勾回去；如果這個範本當初是用完整記帳表單建立、
       // 帶了自訂分攤或多付款人，這裡只能還原成「這些人平分」的簡化版本——
       // 儲存時會照這個簡化版本重新計算，等於把舊範本降版成平分制。
@@ -330,8 +388,9 @@
       const isWeekly = tmpl.interval_unit === "weekly";
       if(monthlyWrap) monthlyWrap.classList.toggle("hidden", isWeekly);
       if(weeklyWrap) weeklyWrap.classList.toggle("hidden", !isWeekly);
-      if(isWeekly && weeklyDaySel){ weeklyDaySel.value = tmpl.interval_day; enhanceSelect(weeklyDaySel); }
+      if(isWeekly){ weeklyDaySel.value = tmpl.interval_day; }
       else if(monthlyDaySel){ monthlyDaySel.value = tmpl.interval_day; enhanceSelect(monthlyDaySel); }
+      updatePreview();
       modal.classList.remove("hidden");
       modal.classList.add("show");
     };

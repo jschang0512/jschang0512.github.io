@@ -26,15 +26,15 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=951">
-<link rel="stylesheet" href="shared.css?v=951">
-<script src="holiday.js?v=951"></script>
+<link rel="stylesheet" href="theme.css?v=952">
+<link rel="stylesheet" href="shared.css?v=952">
+<script src="holiday.js?v=952"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
-<script src="i18n.js?v=951"></script>
-<script src="currencies.js?v=951"></script>
-<script src="version.js?v=951"></script>
-<script src="shared-ui.js?v=951"></script>
-<script src="theme.js?v=951" defer></script>
+<script src="i18n.js?v=952"></script>
+<script src="currencies.js?v=952"></script>
+<script src="version.js?v=952"></script>
+<script src="shared-ui.js?v=952"></script>
+<script src="theme.js?v=952" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -116,9 +116,12 @@ if("serviceWorker" in navigator){
 
     <section class="sbf-sec">
       <h3 data-i18n="recurring.secWho">誰付、誰分</h3>
-      <label for="recurTmplPayer" data-i18n="settings.recurringFormPayerLabel">誰付的錢</label>
-      <div class="select-wrap"><select id="recurTmplPayer"></select></div>
-      <label data-i18n="settings.recurringFormParticipantsLabel">誰要分攤（平分）</label>
+      <label data-i18n="settings.recurringFormPayerLabel">誰付的錢</label>
+      <div class="checks" id="recurTmplPayer" role="radiogroup"></div>
+      <div class="sbf-label-row">
+        <label data-i18n="settings.recurringFormParticipantsLabel">誰要分攤（平分）</label>
+        <button type="button" class="sbf-mini" id="recurTmplAll" data-i18n="recurring.everyone">全選</button>
+      </div>
       <div class="checks" id="recurTmplParticipants"></div>
     </section>
 
@@ -128,8 +131,15 @@ if("serviceWorker" in navigator){
         <label><input type="radio" name="recurUnit" value="monthly" checked><span data-i18n="currency.recurringUnitMonthly">每月</span></label>
         <label><input type="radio" name="recurUnit" value="weekly"><span data-i18n="currency.recurringUnitWeekly">每週</span></label>
       </div>
-      <div class="select-wrap" id="recurTmplMonthlyWrap"><select id="recurTmplMonthlyDay"></select></div>
-      <div class="select-wrap hidden" id="recurTmplWeeklyWrap"><select id="recurTmplWeeklyDay"></select></div>
+      <div id="recurTmplMonthlyWrap">
+        <label for="recurTmplMonthlyDay" data-i18n="recurring.monthDayLabel">每月幾號</label>
+        <div class="select-wrap"><select id="recurTmplMonthlyDay"></select></div>
+      </div>
+      <div class="hidden" id="recurTmplWeeklyWrap">
+        <label data-i18n="recurring.weekDayLabel">星期幾</label>
+        <div class="sbf-seg sbf-days" id="recurTmplWeeklyDay" role="radiogroup"></div>
+      </div>
+      <p class="sbf-preview hidden" id="recurTmplPreview"></p>
     </section>
 
     <div class="sbf-actions">
@@ -143,6 +153,6 @@ if("serviceWorker" in navigator){
 const SUPABASE_URL = "https://ofevarwtqzvzrvhbanmf.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_pWT6foelsonrb1sLMXhnCw_oA3ytvaX";
 </script>
-<script src="recurring.js?v=951"></script>
+<script src="recurring.js?v=952"></script>
 </body>
 </html>
