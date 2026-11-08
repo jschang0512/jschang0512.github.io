@@ -10017,3 +10017,20 @@ html body .fx-history-empty{ padding:10px 0; color:var(--ink-soft); font-size:13
 
 html body .recurring-overview-fill{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; padding:10px 12px; border-radius:12px; background:color-mix(in srgb, var(--btn-primary) 10%, var(--card)); color:var(--ink); text-decoration:none; font-size:13.5px; }
 html body .recurring-overview-fill b{ flex:none; color:var(--btn-primary); }
+
+/* ---------- 活動表單：快速選項、步進器、提示、預覽卡 ---------- */
+html body .sbf-chips button.is-on{ border-color:var(--btn-primary); background:color-mix(in srgb, var(--btn-primary) 14%, var(--card)); color:var(--btn-primary); font-weight:600; }
+html body .sbf-chips button:disabled{ opacity:.4; cursor:not-allowed; }
+html body .sbf-chips button:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:1px; }
+html body #evDeadlineChips{ margin:0 0 8px; }
+html body .sbf-hint{ margin:7px 2px 0; font-size:12.5px; line-height:1.45; color:var(--ink-soft); }
+html body .sbf-hint.hidden{ display:none; }
+html body .sbf-hint.is-bad{ color:var(--negative-text); font-weight:600; }
+html body .sbf-stepper{ display:flex; align-items:center; gap:8px; }
+html body .sbf-stepper > button:not(.sbf-mini){ flex:none; display:grid; place-items:center; width:44px; height:44px; border:1px solid var(--card-border); border-radius:12px; background:var(--card); color:var(--ink); font:inherit; font-size:20px; cursor:pointer; }
+html body .sbf-stepper > button:disabled{ opacity:.4; cursor:not-allowed; }
+html body .sbf-stepper > button:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:1px; }
+html body .sbf-sec .sbf-stepper input[type="number"]{ width:96px; flex:none; text-align:center; }
+html body .sbf-stepper .sbf-mini.hidden{ display:none; }
+html body .ev-preview .ev-card{ margin:0; pointer-events:none; }
+html body .ev-preview .ev-actions, html body .ev-preview [data-msg]{ display:none; }

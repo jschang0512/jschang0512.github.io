@@ -26,15 +26,15 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=953">
-<link rel="stylesheet" href="shared.css?v=953">
-<script src="holiday.js?v=953"></script>
+<link rel="stylesheet" href="theme.css?v=954">
+<link rel="stylesheet" href="shared.css?v=954">
+<script src="holiday.js?v=954"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
-<script src="i18n.js?v=953"></script>
-<script src="currencies.js?v=953"></script>
-<script src="version.js?v=953"></script>
-<script src="shared-ui.js?v=953"></script>
-<script src="theme.js?v=953" defer></script>
+<script src="i18n.js?v=954"></script>
+<script src="currencies.js?v=954"></script>
+<script src="version.js?v=954"></script>
+<script src="shared-ui.js?v=954"></script>
+<script src="theme.js?v=954" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -97,18 +97,20 @@ if("serviceWorker" in navigator){
       <h3 data-i18n="events.secWhat">活動內容</h3>
       <label for="evTitle" data-i18n="events.fieldTitle">活動名稱</label>
       <input type="text" id="evTitle" maxlength="80" data-i18n-placeholder="events.fieldTitlePlaceholder" placeholder="例如 週末烤肉">
-      <div class="sbf-row">
-        <div>
-          <label for="evDate" data-i18n="events.fieldDate">日期</label>
-          <input type="date" id="evDate" lang="en-CA">
-        </div>
-        <div>
-          <label for="evLocation" data-i18n="events.fieldLocation">地點（選填）</label>
-          <input type="text" id="evLocation" maxlength="120" data-i18n-placeholder="events.fieldLocationPlaceholder" placeholder="例如 河濱公園">
-        </div>
-      </div>
+      <div class="sbf-chips" id="evTitleChips"></div>
+    </section>
+
+    <section class="sbf-sec">
+      <h3 data-i18n="events.secWhen">時間地點</h3>
+      <label for="evDate" data-i18n="events.fieldDate">日期</label>
+      <input type="date" id="evDate" lang="en-CA">
+      <div class="sbf-chips" id="evDateChips"></div>
+      <p class="sbf-hint" id="evDateHint"></p>
+      <label for="evLocation" data-i18n="events.fieldLocation">地點（選填）</label>
+      <input type="text" id="evLocation" maxlength="120" data-i18n-placeholder="events.fieldLocationPlaceholder" placeholder="例如 河濱公園">
       <label for="evNote" data-i18n="events.fieldNote">備註（選填）</label>
-      <textarea id="evNote" maxlength="500" rows="2" data-i18n-placeholder="events.fieldNotePlaceholder" placeholder="集合時間、要帶什麼"></textarea>
+      <textarea id="evNote" maxlength="500" rows="3" data-i18n-placeholder="events.fieldNotePlaceholder" placeholder="集合時間、要帶什麼"></textarea>
+      <div class="sbf-chips" id="evNoteChips"></div>
     </section>
 
     <section class="sbf-sec">
@@ -124,7 +126,7 @@ if("serviceWorker" in navigator){
         </div>
         <div>
           <label for="evAmount" id="evAmountLabel" data-i18n="events.amountEach">每人金額</label>
-          <input type="number" id="evAmount" min="1" step="1" inputmode="decimal" placeholder="0">
+          <input type="number" id="evAmount" min="1" step="any" inputmode="decimal" placeholder="0">
         </div>
       </div>
       <p class="sbf-preview hidden" id="evPreview"></p>
@@ -132,16 +134,23 @@ if("serviceWorker" in navigator){
 
     <section class="sbf-sec">
       <h3 data-i18n="events.secSignup">報名設定（選填）</h3>
-      <div class="sbf-row">
-        <div>
-          <label for="evCapacity" data-i18n="events.fieldCapacityShort">人數上限</label>
-          <input type="number" id="evCapacity" min="1" step="1" inputmode="numeric" data-i18n-placeholder="events.noLimit" placeholder="不限">
-        </div>
-        <div>
-          <label for="evDeadline" data-i18n="events.fieldDeadlineShort">報名截止日</label>
-          <input type="date" id="evDeadline" lang="en-CA">
-        </div>
+      <label for="evCapacity" data-i18n="events.fieldCapacityShort">人數上限</label>
+      <div class="sbf-stepper">
+        <button type="button" id="evCapMinus" data-i18n-title="events.capLess" title="少一位" aria-label="少一位">−</button>
+        <input type="number" id="evCapacity" min="1" step="1" inputmode="numeric" data-i18n-placeholder="events.noLimit" placeholder="不限">
+        <button type="button" id="evCapPlus" data-i18n-title="events.capMore" title="多一位" aria-label="多一位">+</button>
+        <button type="button" class="sbf-mini" id="evCapClear" data-i18n="events.noLimit">不限</button>
       </div>
+      <p class="sbf-hint hidden" id="evCapHint"></p>
+      <label for="evDeadline" data-i18n="events.fieldDeadlineShort">報名截止日</label>
+      <div class="sbf-chips" id="evDeadlineChips"></div>
+      <input type="date" id="evDeadline" lang="en-CA">
+      <p class="sbf-hint" id="evDeadlineHint"></p>
+    </section>
+
+    <section class="sbf-sec ev-preview-sec">
+      <h3 data-i18n="events.previewTitle">大家會看到</h3>
+      <div class="ev-preview" id="evCardPreview" aria-hidden="true"></div>
     </section>
 
     <div class="sbf-actions">
@@ -178,6 +187,6 @@ if("serviceWorker" in navigator){
 const SUPABASE_URL = "https://ofevarwtqzvzrvhbanmf.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_pWT6foelsonrb1sLMXhnCw_oA3ytvaX";
 </script>
-<script src="events.js?v=953"></script>
+<script src="events.js?v=954"></script>
 </body>
 </html>

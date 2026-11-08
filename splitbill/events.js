@@ -165,16 +165,114 @@
 
   // ---------- 開新活動／編輯 ----------
   let editingEventId = null;
+  let deadlineRel = null; // 用「活動前 N 天」選的截止日，活動日期改了跟著移
   const feeRadios = Array.from(document.querySelectorAll('input[name="evFee"]'));
   const feeMode = () => (feeRadios.find(r => r.checked) || feeRadios[0]).value;
   $("evCurrency").innerHTML = CURRENCIES.map(c => `<option value="${c.code}">${c.label} (${c.code})</option>`).join("");
 
-  // 填金額時先算給主辦人看，全員都來大概是多少
+  const isoOf = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  const addDays = (iso, n) => { const d = parseDay(iso); d.setDate(d.getDate() + n); return isoOf(d); };
+  const longDay = iso => parseDay(iso).toLocaleDateString(locale(), { month: "numeric", day: "numeric", weekday: "short" });
+  function relDays(iso){
+    const n = dayNumber(iso) - dayNumber(today());
+    if(n === 0) return t("events.dToday");
+    if(n === 1) return t("events.dTomorrow");
+    return n > 1 ? t("events.inDays", { n }) : t("events.datePassed");
+  }
+  const activeCount = () => memberRows.filter(m => !m.left_at).length;
+  const goingCount = () => editingEventId ? going(editingEventId).length : 0;
+
+  // 快速選項：名稱、日期、備註
+  const titleChips = $("evTitleChips");
+  t("events.titleSuggestions").split(",").forEach(name => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = name;
+    b.addEventListener("click", () => { $("evTitle").value = name; refreshForm(); $("evDate").focus(); });
+    titleChips.appendChild(b);
+  });
+  const noteChips = $("evNoteChips");
+  ["noteTime", "noteBring", "noteGetThere"].forEach(key => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = "+ " + t("events." + key);
+    b.addEventListener("click", () => {
+      const note = $("evNote");
+      const line = t("events." + key) + "：";
+      note.value = note.value.trim() ? note.value.replace(/\s+$/, "") + "\n" + line : line;
+      note.focus();
+      note.setSelectionRange(note.value.length, note.value.length);
+      refreshForm();
+    });
+    noteChips.appendChild(b);
+  });
+
+  function renderDateChips(){
+    const now = today();
+    const dow = parseDay(now).getDay();
+    const sat = addDays(now, (6 - dow + 7) % 7);
+    const opts = [
+      ["events.dToday", now], ["events.dTomorrow", addDays(now, 1)],
+      ["events.dSat", sat], ["events.dSun", addDays(sat, 1)], ["events.dNextSat", addDays(sat, 7)]
+    ];
+    const seen = new Set();
+    const cur = $("evDate").value;
+    $("evDateChips").innerHTML = opts.filter(([, d]) => !seen.has(d) && seen.add(d))
+      .map(([k, d]) => `<button type="button" data-date="${d}" class="${d === cur ? "is-on" : ""}">${escapeHtml(t(k))}</button>`).join("");
+  }
+  $("evDateChips").addEventListener("click", e => {
+    const b = e.target.closest("[data-date]");
+    if(!b) return;
+    $("evDate").value = b.dataset.date;
+    onDateChange();
+  });
+
+  function renderDeadlineChips(){
+    const date = $("evDate").value;
+    const opts = [[null, "events.dlNone"], [1, "events.dlDayBefore"], [3, "events.dl3Days"], [7, "events.dlWeek"]];
+    const cur = $("evDeadline").value;
+    $("evDeadlineChips").innerHTML = opts.map(([n, k]) => {
+      const d = n && date ? addDays(date, -n) : null;
+      const disabled = n && (!date || d < today());
+      const on = n ? (d === cur) : !cur;
+      return `<button type="button" data-rel="${n || ""}" class="${on ? "is-on" : ""}"${disabled ? " disabled" : ""}>${escapeHtml(t(k))}</button>`;
+    }).join("");
+  }
+  $("evDeadlineChips").addEventListener("click", e => {
+    const b = e.target.closest("[data-rel]");
+    if(!b || b.disabled) return;
+    deadlineRel = b.dataset.rel ? Number(b.dataset.rel) : null;
+    $("evDeadline").value = deadlineRel && $("evDate").value ? addDays($("evDate").value, -deadlineRel) : "";
+    refreshForm();
+  });
+  $("evDeadline").addEventListener("input", () => { deadlineRel = null; });
+
+  function onDateChange(){
+    if(deadlineRel && $("evDate").value) $("evDeadline").value = addDays($("evDate").value, -deadlineRel);
+    refreshForm();
+  }
+  $("evDate").addEventListener("change", onDateChange);
+
+  // 人數上限：± 按鈕，編輯時不能比已經報名的人少
+  function setCapacity(v){ $("evCapacity").value = v == null ? "" : String(v); refreshForm(); }
+  $("evCapMinus").addEventListener("click", () => {
+    const v = Number($("evCapacity").value);
+    if(!v) return;
+    setCapacity(Math.max(1, goingCount(), v - 1));
+  });
+  $("evCapPlus").addEventListener("click", () => {
+    const v = Number($("evCapacity").value);
+    setCapacity(v ? v + 1 : Math.max(goingCount(), activeCount(), 2));
+  });
+  $("evCapClear").addEventListener("click", () => setCapacity(null));
+
+  // 填金額時先算給主辦人看，全員都來大概是多少（有上限就算到上限）
   function updateFeePreview(){
     const mode = feeMode();
     $("evAmountLabel").textContent = t(mode === "per_person" ? "events.amountEach" : "events.amountTotal");
     const amount = Number($("evAmount").value);
-    const n = memberRows.filter(m => !m.left_at).length;
+    const cap = Number($("evCapacity").value);
+    const n = cap ? Math.min(cap, activeCount()) : activeCount();
     const box = $("evPreview");
     box.classList.toggle("hidden", !(amount > 0));
     if(!(amount > 0)) return;
@@ -183,9 +281,66 @@
       ? t("events.previewEach", { n, total: money(code, amount * n) })
       : t("events.previewTotal", { n, each: money(code, Math.ceil(amount / n)) });
   }
-  feeRadios.forEach(r => r.addEventListener("change", updateFeePreview));
-  $("evAmount").addEventListener("input", updateFeePreview);
-  $("evCurrency").addEventListener("change", updateFeePreview);
+
+  function setHint(id, text, bad){
+    const el = $(id);
+    el.textContent = text || "";
+    el.classList.toggle("hidden", !text);
+    el.classList.toggle("is-bad", !!bad);
+  }
+
+  // 表單任何地方變了：提示、快速選項、預覽一起更新
+  function formErrors(){
+    const date = $("evDate").value;
+    const deadline = $("evDeadline").value;
+    const cap = Number($("evCapacity").value);
+    const original = editingEventId && events.find(x => x.id === editingEventId);
+    return {
+      date: date && date < today() && (!original || original.event_date !== date) ? t("events.datePassed") : "",
+      cap: cap && cap < goingCount() ? t("events.capBelowGoing", { n: goingCount() }) : "",
+      deadline: deadline && date && deadline > date ? t("events.deadlineAfterEvent")
+        : deadline && deadline < today() && (!original || original.deadline !== deadline) ? t("events.deadlinePassed") : ""
+    };
+  }
+  function refreshForm(){
+    const date = $("evDate").value;
+    const deadline = $("evDeadline").value;
+    const errs = formErrors();
+    setHint("evDateHint", errs.date || (date ? `${longDay(date)}・${relDays(date)}` : ""), !!errs.date);
+    const cap = Number($("evCapacity").value);
+    setHint("evCapHint", errs.cap || (goingCount() ? t("events.capGoing", { n: goingCount() }) : cap ? "" : t("events.capNone")), !!errs.cap);
+    setHint("evDeadlineHint", errs.deadline || (deadline ? t("events.dlUntil", { date: longDay(deadline) }) : t("events.dlNoneHint")), !!errs.deadline);
+    $("evCapMinus").disabled = !cap || cap <= Math.max(1, goingCount());
+    $("evCapClear").classList.toggle("hidden", !cap);
+    renderDateChips();
+    renderDeadlineChips();
+    updateFeePreview();
+    renderCardPreview();
+  }
+
+  // 用列表同一個卡片樣式畫出來，主辦人送出前就知道大家看到什麼
+  function renderCardPreview(){
+    const fake = {
+      id: editingEventId || "__preview",
+      title: $("evTitle").value.trim() || t("events.previewNoTitle"),
+      event_date: $("evDate").value || today(),
+      location: $("evLocation").value.trim() || null,
+      note: $("evNote").value.trim() || null,
+      currency: $("evCurrency").value,
+      fee_mode: feeMode(),
+      fee_amount: Number($("evAmount").value) || 0,
+      capacity: Number($("evCapacity").value) || null,
+      deadline: $("evDeadline").value || null,
+      status: "open",
+      created_by: myMember ? myMember.id : ""
+    };
+    $("evCardPreview").innerHTML = cardHTML(fake);
+  }
+
+  const formEl = $("eventFormModal");
+  formEl.addEventListener("input", e => { if(e.target.id !== "evDate") refreshForm(); });
+  feeRadios.forEach(r => r.addEventListener("change", refreshForm));
+  $("evCurrency").addEventListener("change", refreshForm);
 
   function openForm(e){
     editingEventId = e ? e.id : null;
@@ -198,26 +353,29 @@
     $("evAmount").value = e ? e.fee_amount : "";
     $("evCapacity").value = (e && e.capacity) || "";
     $("evDeadline").value = (e && e.deadline) || "";
+    deadlineRel = null;
     const mode = e ? e.fee_mode : "per_person";
     feeRadios.forEach(r => { r.checked = r.value === mode; });
     $("evCurrency").value = e ? e.currency : "TWD";
     enhanceSelect($("evCurrency"));
     $("eventFormMsg").textContent = "";
-    updateFeePreview();
+    refreshForm();
     showModal($("eventFormModal"));
   }
   $("eventAddBtn").addEventListener("click", () => openForm(null));
   $("eventFormClose").addEventListener("click", () => hideModal($("eventFormModal")));
   $("eventFormSubmit").addEventListener("click", async () => {
     const msg = $("eventFormMsg");
+    const fail = text => { msg.textContent = text; msg.className = "msg error"; };
     const title = $("evTitle").value.trim();
     const amount = Number($("evAmount").value);
     const capacity = Number($("evCapacity").value) || null;
     const deadline = $("evDeadline").value || null;
-    if(!title){ msg.textContent = t("events.needTitle"); msg.className = "msg error"; return; }
-    if(!$("evDate").value){ msg.textContent = t("events.needDate"); msg.className = "msg error"; return; }
-    if(!(amount > 0)){ msg.textContent = t("settings.recurringFormNeedAmount"); msg.className = "msg error"; return; }
-    if(deadline && deadline > $("evDate").value){ msg.textContent = t("events.deadlineAfterEvent"); msg.className = "msg error"; return; }
+    if(!title) return fail(t("events.needTitle"));
+    if(!$("evDate").value) return fail(t("events.needDate"));
+    if(!(amount > 0)) return fail(t("settings.recurringFormNeedAmount"));
+    const errs = formErrors();
+    if(errs.date || errs.cap || errs.deadline) return fail(errs.date || errs.cap || errs.deadline);
     const fields = {
       title, event_date: $("evDate").value, location: $("evLocation").value.trim() || null,
       note: $("evNote").value.trim() || null, currency: $("evCurrency").value,
@@ -229,7 +387,7 @@
       ? await sb.from("events").update(fields).eq("id", editingEventId)
       : await sb.from("events").insert({ ...fields, group_id: myMember.group_id, created_by: myMember.id });
     btn.disabled = false;
-    if(error){ msg.textContent = t("settings.msg.saveFailedRetry"); msg.className = "msg error"; return; }
+    if(error) return fail(t("settings.msg.saveFailedRetry"));
     hideModal($("eventFormModal"));
     await load();
   });
