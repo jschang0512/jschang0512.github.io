@@ -10156,3 +10156,11 @@ html body .sb-today-act{ flex:none; font-size:14px; font-weight:600; color:var(-
 html body .sb-today-row:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; border-radius:8px; }
 html body #evCardPreview .ev-extra{ display:none; }
 html body #feedbackSubmitBtn{ min-height:40px; }
+
+/* ---------- v961 更新公告 ---------- */
+html body .sb-whatsnew-card{ max-width:420px; }
+html body .sb-whatsnew-sec + .sb-whatsnew-sec{ margin-top:14px; padding-top:12px; border-top:1px solid var(--line); }
+html body .sb-whatsnew-ver{ margin:0 0 6px; font-size:13px; font-weight:600; color:var(--ink-soft); }
+html body .sb-whatsnew-sec ul{ margin:0; padding-left:1.2em; }
+html body .sb-whatsnew-sec li{ margin:0 0 8px; font-size:15px; line-height:1.55; color:var(--ink); }
+html body .sb-whatsnew-card .sbf-actions{ margin-top:16px; }

@@ -1422,6 +1422,8 @@ const I18N = {
     "banner.iosDesc": "點擊 Safari 底部分享 ➔「加入主畫面」，享有全螢幕 App 體驗與通知！",
 
     "shared.themeToggleAria": "切換深色／淺色模式",
+    "shared.whatsNewTitle": "更新內容",
+    "shared.whatsNewOk": "知道了",
     "shared.discardChanges": "還沒儲存的內容會不見，確定要關閉嗎？",
 
     "cat.general": "一般支出",
@@ -3130,6 +3132,8 @@ const I18N = {
     "banner.iosDesc": "Safari下部の共有ボタン ➔「ホーム画面に追加」をタップすると、全画面アプリ体験と通知が使えます！",
 
     "shared.themeToggleAria": "ダーク/ライトモード切替",
+    "shared.whatsNewTitle": "アップデート内容",
+    "shared.whatsNewOk": "OK",
     "shared.discardChanges": "保存していない内容は消えます。閉じてもいいですか？",
 
     "cat.general": "一般",
@@ -4838,6 +4842,8 @@ const I18N = {
     "banner.iosDesc": "Tap the Share button in Safari ➔ \"Add to Home Screen\" for a full-screen app experience with notifications!",
 
     "shared.themeToggleAria": "Toggle dark/light mode",
+    "shared.whatsNewTitle": "What’s new",
+    "shared.whatsNewOk": "Got it",
     "shared.discardChanges": "Your unsaved changes will be lost. Close anyway?",
 
     "cat.general": "General",

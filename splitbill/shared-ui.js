@@ -1455,3 +1455,83 @@ window.sbRecurAdvance = sbRecurAdvance;
 
   window.sbModalTop = top;
 })();
+
+// ============================================================
+// 更新公告（2026-11）
+// 每台裝置記住看過的版本（localStorage）。APP_VERSION 變了，就去讀 release-notes.js，
+// 有比上次看過的版本更新的公告才跳一次；跳出來的當下就記成看過，之後不再出現。
+// 只在登入後的頁面跳（登入頁、條款、關於不跳）；別的彈窗開著就等它關掉再跳。
+// 這台裝置從沒記過（第一次用、或這個功能剛上線）只顯示最新那一則。
+// ============================================================
+const SB_SEEN_VERSION_KEY = "splitbill-seen-version";
+function sbLoadReleaseNotes(){
+  if(window.SB_RELEASE_NOTES) return Promise.resolve(window.SB_RELEASE_NOTES);
+  return new Promise(resolve => {
+    const s = document.createElement("script");
+    s.src = "release-notes.js?v=" + (typeof APP_VERSION !== "undefined" ? APP_VERSION : "");
+    s.onload = () => resolve(window.SB_RELEASE_NOTES || []);
+    s.onerror = () => resolve([]);
+    document.head.appendChild(s);
+  });
+}
+function sbNoteItems(note){
+  const lang = typeof getLang === "function" ? getLang() : "zh-Hant";
+  return note[lang] || note["zh-Hant"] || [];
+}
+// 設定頁「最新更新項目」：顯示最新一則
+async function sbRenderLatestNotes(headerEl, listEl){
+  const notes = await sbLoadReleaseNotes();
+  const latest = notes.find(n => Number(n.version) <= Number(APP_VERSION));
+  if(!latest || !listEl) return;
+  if(headerEl) headerEl.textContent = t("settings.changelogHeader", { ver: latest.version });
+  listEl.innerHTML = sbNoteItems(latest).map(x => `<li>${escapeHtml(x)}</li>`).join("");
+}
+window.sbRenderLatestNotes = sbRenderLatestNotes;
+
+(function initWhatsNew(){
+  if(typeof APP_VERSION === "undefined") return;
+  const page = location.pathname.split("/").pop() || "index.html";
+  if(!["summary.html", "currency.html", "settings.html", "events.html", "recurring.html", "recap.html"].includes(page)) return;
+  let seen = null;
+  try { seen = localStorage.getItem(SB_SEEN_VERSION_KEY); } catch(e){ return; }
+  if(seen === APP_VERSION) return;
+  const markSeen = () => { try { localStorage.setItem(SB_SEEN_VERSION_KEY, APP_VERSION); } catch(e){} };
+
+  const busy = () => document.visibilityState !== "visible"
+    || document.querySelector(".calc-modal.show, .calc-modal.open, .sb-record-overlay, .sb-sheet-backdrop, .sb-moment");
+
+  function show(notes){
+    const modal = document.createElement("div");
+    modal.className = "calc-modal sb-whatsnew-modal";
+    modal.id = "sbWhatsNewModal";
+    modal.innerHTML = `<div class="calc-card card sb-whatsnew-card" role="dialog" aria-modal="true" aria-labelledby="sbWhatsNewTitle">
+      <div class="calc-header">
+        <span class="calc-header-name" id="sbWhatsNewTitle">${escapeHtml(t("shared.whatsNewTitle"))}</span>
+        <button type="button" class="calc-close" id="sbWhatsNewClose" aria-label="${escapeHtml(t("common.close"))}">✕</button>
+      </div>
+      ${notes.map(n => `<section class="sb-whatsnew-sec">
+        <p class="sb-whatsnew-ver">v${escapeHtml(n.version)}${n.date ? "・" + escapeHtml(n.date) : ""}</p>
+        <ul>${sbNoteItems(n).map(x => `<li>${escapeHtml(x)}</li>`).join("")}</ul>
+      </section>`).join("")}
+      <div class="sbf-actions"><button type="button" class="sbf-primary sbf-wide" id="sbWhatsNewOk">${escapeHtml(t("shared.whatsNewOk"))}</button></div>
+    </div>`;
+    document.body.appendChild(modal);
+    const close = () => { modal.classList.remove("show"); setTimeout(() => modal.remove(), 250); };
+    modal.querySelector("#sbWhatsNewClose").addEventListener("click", close);
+    modal.querySelector("#sbWhatsNewOk").addEventListener("click", close);
+    modal.classList.add("show");
+    markSeen();
+    modal.querySelector("#sbWhatsNewOk").focus({ preventScroll: true });
+  }
+
+  window.addEventListener("load", () => setTimeout(async () => {
+    const notes = (await sbLoadReleaseNotes()).filter(n => Number(n.version) <= Number(APP_VERSION));
+    const fresh = seen == null ? notes.slice(0, 1) : notes.filter(n => Number(n.version) > Number(seen));
+    if(!fresh.length){ markSeen(); return; }
+    let tries = 0;
+    (function attempt(){
+      if(!busy()) return show(fresh);
+      if(++tries < 60) setTimeout(attempt, 1000);   // 最多等一分鐘，等不到就下次打開再說
+    })();
+  }, 1200));
+})();

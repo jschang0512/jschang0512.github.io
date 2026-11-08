@@ -29,19 +29,19 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=960">
-<link rel="stylesheet" href="shared.css?v=960">
-<script src="holiday.js?v=960"></script>
+<link rel="stylesheet" href="theme.css?v=961">
+<link rel="stylesheet" href="shared.css?v=961">
+<script src="holiday.js?v=961"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
-<script src="i18n.js?v=960"></script>
-<script src="currencies.js?v=960"></script>
-<script src="motion.js?v=960"></script>
-<script src="version.js?v=960"></script>
-<script src="notif-text.js?v=960"></script>
-<script src="shared-ui.js?v=960"></script>
-<script src="theme.js?v=960" defer></script>
-<script src="app-banner.js?v=960" defer></script>
+<script src="i18n.js?v=961"></script>
+<script src="currencies.js?v=961"></script>
+<script src="motion.js?v=961"></script>
+<script src="version.js?v=961"></script>
+<script src="notif-text.js?v=961"></script>
+<script src="shared-ui.js?v=961"></script>
+<script src="theme.js?v=961" defer></script>
+<script src="app-banner.js?v=961" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -418,14 +418,8 @@ if("serviceWorker" in navigator){
             <span class="version-badge" id="settingsVerNum"></span>
           </div>
           <div class="settings-changelog-wrap settings-changelog-wrap-mt">
-            <div class="settings-changelog-header" id="settingsChangelogHeader">v642 最新更新項目：</div>
-            <ul class="settings-changelog settings-changelog-list">
-              <li data-i18n="settings.changelog1">AI 拆單可直接讀取台灣電子發票的 QR code，品項與金額照發票，不經 AI</li>
-              <li data-i18n="settings.changelog2">AI 拆單支援手寫劃記的點菜單（正字自動換算份數）和外送、叫車 App 的訂單截圖</li>
-              <li data-i18n="settings.changelog3">通知改寫：直接寫出你分攤多少、要付給誰、改了什麼，並依你的語言顯示；只補收據照片不再通知</li>
-              <li data-i18n="settings.changelog4">「我的款項」上方會提示未讀通知；AI 拆單預設保留收據原圖</li>
-              <li data-i18n="settings.changelog5">全新簡潔介面：線條圖示、更清楚的紅綠色與統一的藍色 logo</li>
-            </ul>
+            <div class="settings-changelog-header" id="settingsChangelogHeader"></div>
+            <ul class="settings-changelog settings-changelog-list" id="settingsChangelogList"></ul>
           </div>
         </div>
 
@@ -530,10 +524,10 @@ if("serviceWorker" in navigator){
 <script>
 document.getElementById("appFooter").textContent = "菘. v" + APP_VERSION;
 document.getElementById("settingsVerNum").textContent = "ver. " + APP_VERSION;
-document.getElementById("settingsChangelogHeader").textContent = t("settings.changelogHeader", { ver: APP_VERSION });
-document.addEventListener("splitbill-lang-changed", ()=>{
-  document.getElementById("settingsChangelogHeader").textContent = t("settings.changelogHeader", { ver: APP_VERSION });
-});
+// 最新更新項目跟新版公告讀同一份 release-notes.js
+const renderNotes = () => sbRenderLatestNotes(document.getElementById("settingsChangelogHeader"), document.getElementById("settingsChangelogList"));
+renderNotes();
+document.addEventListener("splitbill-lang-changed", renderNotes);
 </script>
 
 <script>
