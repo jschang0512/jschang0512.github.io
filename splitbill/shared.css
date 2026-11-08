@@ -389,7 +389,7 @@ body::after{
   display:flex;
   flex-direction:column;
   gap:3px;
-  animation:sbLoginCardIn .18s cubic-bezier(.34,1.56,.64,1);
+  animation:sbLoginCardIn .18s cubic-bezier(.16,1,.3,1);
 }
 .nav-dropdown-menu.hidden{ display:none; }
 .nav-dropdown-item{
@@ -584,7 +584,7 @@ textarea{ resize:vertical; min-height:70px; }
   background:var(--line);
   color:var(--ink-soft);
   cursor:pointer;
-  transition:all .15s ease;
+  transition:color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
 }
 .member-remove-btn:hover{
   background:var(--negative-text);
@@ -669,7 +669,7 @@ textarea{ resize:vertical; min-height:70px; }
   text-align:right;
   color:var(--ink);
   box-sizing:border-box;
-  transition:all .15s ease;
+  transition:color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
 }
 .amt-row-input:focus{
   outline:none;
@@ -692,7 +692,7 @@ textarea{ resize:vertical; min-height:70px; }
   padding:0;
   cursor:pointer;
   color:var(--ink-soft);
-  transition:all .15s ease;
+  transition:color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
 }
 .amt-row-calc-btn:active{ transform:scale(.92); }
 .amt-row-calc-btn.has-calc{ background:var(--btn-primary); border-color:var(--btn-primary); color:#FFFFFF; }
@@ -750,7 +750,7 @@ textarea{ resize:vertical; min-height:70px; }
   padding:26px;
   border-radius:32px;
   box-shadow:0 30px 70px rgba(10,6,20,.5);
-  animation:sbLoginCardIn .3s cubic-bezier(.34,1.56,.64,1);
+  animation:sbLoginCardIn .3s cubic-bezier(.16,1,.3,1);
 }
 .calc-header{
   display:flex;
@@ -773,7 +773,7 @@ textarea{ resize:vertical; min-height:70px; }
   color:var(--ink-soft);
   cursor:pointer;
   padding:0;
-  transition:all 0.15s ease;
+  transition:color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, transform 0.15s ease, filter 0.15s ease;
 }
 .calc-close:hover{
   background:color-mix(in srgb, var(--negative-text) 14%, var(--card));
@@ -835,7 +835,7 @@ textarea{ resize:vertical; min-height:70px; }
   padding:26px;
   border-radius:32px;
   box-shadow:0 30px 70px rgba(10,6,20,.5);
-  animation:sbLoginCardIn .3s cubic-bezier(.34,1.56,.64,1);
+  animation:sbLoginCardIn .3s cubic-bezier(.16,1,.3,1);
   text-align:left;
 }
 .settings-card .btn.small{ margin-top:8px; }
@@ -1035,7 +1035,7 @@ button.dd-btn {
   cursor:pointer;
   margin-top:12px;
   margin-bottom:10px;
-  transition:all .18s ease;
+  transition:color .18s ease, background-color .18s ease, border-color .18s ease, box-shadow .18s ease, opacity .18s ease, transform .18s ease, filter .18s ease;
 }
 .btn-wide:hover{
   border-color:var(--btn-primary);
@@ -1215,7 +1215,7 @@ button.dd-btn {
   color:var(--ink);
   cursor:pointer;
   box-shadow:0 1px 3px rgba(0,0,0,0.08);
-  transition:all .15s ease;
+  transition:color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
 }
 .lang-switch-toggle:hover{ background:var(--input-bg); }
 .lang-switch-caret{ font-size:10px; color:var(--ink-soft); }
@@ -1303,7 +1303,7 @@ button.dd-btn {
   color:var(--ink-soft);
   cursor:pointer;
   font-family:"Noto Sans TC",sans-serif;
-  transition:all .18s ease;
+  transition:color .18s ease, background-color .18s ease, border-color .18s ease, box-shadow .18s ease, opacity .18s ease, transform .18s ease, filter .18s ease;
 }
 .split-mode-btn:active{ transform:scale(.97); }
 .split-mode-btn:not(.active):hover{ border-color:transparent; background:rgba(0,0,0,.06); color:var(--ink); }
@@ -1386,7 +1386,7 @@ button.dd-btn {
   color:var(--ink-soft);
   cursor:pointer;
   font-family:"Noto Sans TC",sans-serif;
-  transition:all .18s ease;
+  transition:color .18s ease, background-color .18s ease, border-color .18s ease, box-shadow .18s ease, opacity .18s ease, transform .18s ease, filter .18s ease;
   white-space:nowrap;
 }
 .history-type-toggle .history-type-btn:active{ transform:scale(.96); }
@@ -1467,7 +1467,7 @@ button.dd-btn {
   color:var(--ink);
   border:1px solid var(--card-nested-border);
   box-shadow:var(--card-nested-shadow);
-  transition:all .18s ease;
+  transition:color .18s ease, background-color .18s ease, border-color .18s ease, box-shadow .18s ease, opacity .18s ease, transform .18s ease, filter .18s ease;
 }
 .btn.secondary:hover{
   border-color:var(--btn-primary);
@@ -1642,7 +1642,7 @@ button.dd-btn {
   padding:0;
   cursor:pointer;
   box-shadow:0 1px 3px rgba(0,0,0,.04);
-  transition:all .15s ease;
+  transition:color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
 }
 .exp-edit:hover{ background:#636AB1; color:#FFFFFF; border-color:#636AB1; transform:scale(1.06); }
 .exp-edit:active{ transform:scale(.92); }
@@ -1663,7 +1663,7 @@ button.dd-btn {
   padding:0;
   cursor:pointer;
   box-shadow:0 1px 3px rgba(0,0,0,.04);
-  transition:all .15s ease;
+  transition:color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
 }
 .exp-xcur-editrate:hover{ background:var(--btn-primary); color:#FFFFFF; border-color:var(--btn-primary); transform:scale(1.06); }
 .exp-xcur-editrate:active{ transform:scale(.92); }
@@ -1805,7 +1805,7 @@ button.dd-btn {
   color:var(--ink-soft);
   border-radius:10px;
   cursor:pointer;
-  transition:all .18s ease;
+  transition:color .18s ease, background-color .18s ease, border-color .18s ease, box-shadow .18s ease, opacity .18s ease, transform .18s ease, filter .18s ease;
 }
 .login-mode-switch-btn.active{
   background:linear-gradient(135deg, var(--logo-grad-a), var(--btn-primary));
@@ -1865,7 +1865,7 @@ button.dd-btn {
   background:transparent;
   color:var(--ink-soft);
   font-weight:600;
-  transition:all .18s ease;
+  transition:color .18s ease, background-color .18s ease, border-color .18s ease, box-shadow .18s ease, opacity .18s ease, transform .18s ease, filter .18s ease;
 }
 .login-card .filter-type-toggle .split-mode-btn.active{
   background:linear-gradient(135deg, var(--logo-grad-a), var(--btn-primary));
@@ -1920,7 +1920,7 @@ button.dd-btn {
   border:none;
   width:100%;
   cursor:pointer;
-  transition:all .15s ease;
+  transition:color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
 }
 :root[data-theme="dark"] .login-card .btn{
   color:#FFFFFF;
@@ -1976,7 +1976,7 @@ button.dd-btn {
   font-size:13px;
   font-weight:600;
   cursor:pointer;
-  transition:all .15s ease;
+  transition:color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
 }
 .oauth-btn:hover{
   background:var(--card);
@@ -2009,7 +2009,7 @@ button.dd-btn {
   margin-bottom:16px;
   position:relative;
   overflow:hidden;
-  transition:all .25s ease;
+  transition:color .25s ease, background-color .25s ease, border-color .25s ease, box-shadow .25s ease, opacity .25s ease, transform .25s ease, filter .25s ease;
   /* 資料還沒載入完、還沒判斷出正負餘額之前（.pos/.neg/.zero 都還沒被加上去）
      的預設底色，跟 .zero 同一組深紫灰——沒有這個的話這裡是透明的，裡面
      skeleton-light 那種白色系的骨架屏動畫會直接跟頁面底色融在一起看不見。
@@ -2108,7 +2108,7 @@ button.dd-btn {
   border-radius:999px;
   background:linear-gradient(135deg, var(--logo-grad-a), var(--btn-primary));
   box-shadow:0 2px 8px rgba(99, 106, 177,.35);
-  transition:transform .28s cubic-bezier(.34,1.2,.4,1), width .28s cubic-bezier(.34,1.2,.4,1);
+  transition:transform .28s cubic-bezier(.16,1,.3,1), width .28s cubic-bezier(.16,1,.3,1);
   z-index:0;
   pointer-events:none;
 }
@@ -2232,7 +2232,7 @@ button.dd-btn {
   border-radius:14px;
   box-shadow:var(--menu-shadow);
   padding:6px;
-  animation:sbLoginCardIn .18s cubic-bezier(.34,1.56,.64,1);
+  animation:sbLoginCardIn .18s cubic-bezier(.16,1,.3,1);
 }
 .chart-gran-menu.hidden{ display:none; }
 .chart-gran-option{
@@ -2248,7 +2248,7 @@ button.dd-btn {
   font-weight:600;
   color:var(--ink);
   cursor:pointer;
-  transition:all .12s ease;
+  transition:color .12s ease, background-color .12s ease, border-color .12s ease, box-shadow .12s ease, opacity .12s ease, transform .12s ease, filter .12s ease;
 }
 .chart-gran-option:hover{ background:rgba(99, 106, 177,.12); color:var(--btn-primary); }
 .chart-gran-option.active{ background:var(--btn-primary); color:#FFFFFF; font-weight:700; }
@@ -2291,7 +2291,7 @@ button.dd-btn {
   border:1px solid var(--menu-border);
   border-radius:16px;
   box-shadow:var(--menu-shadow);
-  animation:sbLoginCardIn .18s cubic-bezier(.34,1.56,.64,1);
+  animation:sbLoginCardIn .18s cubic-bezier(.16,1,.3,1);
   overflow:hidden;
 }
 .notif-panel.hidden{ display:none; }
@@ -2419,7 +2419,7 @@ button.dd-btn {
   border-radius:14px;
   box-shadow:var(--menu-shadow);
   padding:6px;
-  animation:sbLoginCardIn .18s cubic-bezier(.34,1.56,.64,1);
+  animation:sbLoginCardIn .18s cubic-bezier(.16,1,.3,1);
 }
 .dd-menu.hidden{ display:none; }
 .dd-option{
@@ -2437,7 +2437,7 @@ button.dd-btn {
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
-  transition:all .12s ease;
+  transition:color .12s ease, background-color .12s ease, border-color .12s ease, box-shadow .12s ease, opacity .12s ease, transform .12s ease, filter .12s ease;
 }
 .dd-option:hover{ background:rgba(99, 106, 177,.12); color:var(--btn-primary); }
 .dd-option.active{ background:var(--btn-primary); color:#FFFFFF; font-weight:700; }
@@ -2905,7 +2905,7 @@ button.dd-btn {
   text-decoration:none;
   box-shadow:0 2px 8px rgba(0,0,0,.08);
   cursor:pointer;
-  transition:all .2s cubic-bezier(.34,1.2,.4,1);
+  transition:color .2s cubic-bezier(.16,1,.3,1), background-color .2s cubic-bezier(.16,1,.3,1), border-color .2s cubic-bezier(.16,1,.3,1), box-shadow .2s cubic-bezier(.16,1,.3,1), opacity .2s cubic-bezier(.16,1,.3,1), transform .2s cubic-bezier(.16,1,.3,1), filter .2s cubic-bezier(.16,1,.3,1);
 }
 /* 幣別名稱那個 span 跟金額 span 同一排，日文較長的幣別名稱（見
    fitTextToOneLine() 動態縮字級）沒地方伸展的話會跟金額擠在一起，
@@ -3008,7 +3008,7 @@ button.dd-btn {
   font-size:12.5px;
   font-weight:600;
   cursor:pointer;
-  transition:all .2s ease;
+  transition:color .2s ease, background-color .2s ease, border-color .2s ease, box-shadow .2s ease, opacity .2s ease, transform .2s ease, filter .2s ease;
 }
 .settled-toggle-btn:hover{
   background:var(--paper);
@@ -3169,7 +3169,7 @@ button.dd-btn {
   color:var(--btn-primary);
   white-space:nowrap;
   cursor:pointer;
-  transition:all .15s ease;
+  transition:color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
 }
 .ledger-sort-toggle-btn:hover{
   border-color:var(--btn-primary);
@@ -3199,7 +3199,7 @@ button.dd-btn {
   padding:7px 6px;
   border-radius:9px;
   cursor:pointer;
-  transition:all .15s ease;
+  transition:color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
   font-family:inherit;
   white-space:nowrap;
   text-align:center;
@@ -3234,7 +3234,7 @@ button.dd-btn {
   padding:5px 10px;
   border-radius:8px;
   cursor:pointer;
-  transition:all .15s ease;
+  transition:color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
   white-space:nowrap;
   flex-shrink:0;
 }
@@ -3343,7 +3343,7 @@ button.dd-btn {
   margin-bottom:10px;
   border-radius:14px;
   box-shadow:var(--card-nested-shadow);
-  transition:all .18s cubic-bezier(.34,1.2,.4,1);
+  transition:color .18s cubic-bezier(.16,1,.3,1), background-color .18s cubic-bezier(.16,1,.3,1), border-color .18s cubic-bezier(.16,1,.3,1), box-shadow .18s cubic-bezier(.16,1,.3,1), opacity .18s cubic-bezier(.16,1,.3,1), transform .18s cubic-bezier(.16,1,.3,1), filter .18s cubic-bezier(.16,1,.3,1);
 }
 .ledger-row-wrap:hover{
   border-color:color-mix(in srgb, var(--btn-primary) 55%, var(--card-nested-border));
@@ -3467,7 +3467,7 @@ button.dd-btn {
   border:1px solid var(--line);
   color:var(--ink-soft);
   cursor:pointer;
-  transition:all .15s ease;
+  transition:color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
 }
 .ledger-row-quick-actions .exp-edit:hover,
 .ledger-row-quick-actions .exp-xcur-editrate:hover{
@@ -3653,7 +3653,7 @@ button.dd-btn {
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, transform 0.15s ease, filter 0.15s ease;
   touch-action: manipulation;
 }
 
@@ -3703,7 +3703,7 @@ button.dd-btn {
   border-radius:14px;
   margin-top:0;
   cursor:pointer;
-  transition:all .18s ease;
+  transition:color .18s ease, background-color .18s ease, border-color .18s ease, box-shadow .18s ease, opacity .18s ease, transform .18s ease, filter .18s ease;
 }
 
 .btn-repay-direct{
@@ -3752,7 +3752,7 @@ button.dd-btn {
   font-size:12.5px;
   font-weight:600;
   text-decoration:none;
-  transition:all .2s ease;
+  transition:color .2s ease, background-color .2s ease, border-color .2s ease, box-shadow .2s ease, opacity .2s ease, transform .2s ease, filter .2s ease;
 }
 .login-apk-download-link:hover{
   background:color-mix(in srgb, var(--btn-primary) 22%, transparent);
@@ -3905,7 +3905,7 @@ button.dd-btn {
   background:color-mix(in srgb, var(--btn-primary) 14%, var(--card)) !important;
   border:1px solid color-mix(in srgb, var(--btn-primary) 28%, var(--line)) !important;
   border-radius:8px !important;
-  transition:all .15s ease !important;
+  transition:color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease !important;
 }
 .exp-xcur-restore:hover{
   background:var(--btn-primary) !important;
@@ -4514,7 +4514,7 @@ button.dd-btn {
   color:var(--btn-primary) !important;
   background:var(--input-bg) !important;
   cursor:pointer !important;
-  transition:all .15s ease;
+  transition:color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
 }
 #settingsInviteCode:hover{
   background:color-mix(in srgb, var(--btn-primary) 6%, var(--input-bg)) !important;
@@ -4825,7 +4825,7 @@ button.dd-btn {
   display:inline-flex;
   align-items:center;
   gap:4px;
-  transition:all .15s ease;
+  transition:color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
   flex-shrink:0;
 }
 .exp-debt-edit-btn:hover{
@@ -4967,7 +4967,7 @@ button.dd-btn {
   color: var(--btn-primary);
   font-size: 12px;
   cursor: pointer;
-  transition: all .18s ease;
+  transition: color .18s ease, background-color .18s ease, border-color .18s ease, box-shadow .18s ease, opacity .18s ease, transform .18s ease, filter .18s ease;
   user-select: none;
   flex-shrink: 0;
   line-height: 1;
@@ -5457,7 +5457,7 @@ button.dd-btn {
   align-items:center;
   gap:6px;
   box-shadow:0 3px 10px rgba(99, 106, 177,.28);
-  transition:all .18s ease;
+  transition:color .18s ease, background-color .18s ease, border-color .18s ease, box-shadow .18s ease, opacity .18s ease, transform .18s ease, filter .18s ease;
   white-space:nowrap;
 }
 .btn-ai-receipt:hover{
@@ -5498,7 +5498,7 @@ button.dd-btn {
   text-align:center;
   background:rgba(0,0,0,.02);
   cursor:pointer;
-  transition:all .2s ease;
+  transition:color .2s ease, background-color .2s ease, border-color .2s ease, box-shadow .2s ease, opacity .2s ease, transform .2s ease, filter .2s ease;
   margin-top:10px;
 }
 :root[data-theme="dark"] .ai-receipt-dropzone{
@@ -5729,7 +5729,7 @@ button.dd-btn {
   cursor: pointer;
   padding: 3px 8px;
   border-radius: 6px;
-  transition: all .15s ease;
+  transition: color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
   line-height: 1.2;
 }
 .ai-section-action-btn:hover{
@@ -5752,7 +5752,7 @@ button.dd-btn {
   font-weight: 700;
   color: var(--ink);
   outline: none;
-  transition: all .15s ease;
+  transition: color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
 }
 .ai-receipt-store-input:focus{
   border-color: var(--btn-primary);
@@ -5787,7 +5787,7 @@ button.dd-btn {
   font-weight: 600;
   outline: none;
   cursor: pointer;
-  transition: all .15s ease;
+  transition: color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
   font-family: inherit;
   white-space: nowrap;
   flex-shrink: 0;
@@ -5907,7 +5907,7 @@ button.dd-btn {
   background: var(--input-bg) !important;
   border: 1px solid var(--line) !important;
   overflow: hidden !important;
-  transition: all .15s ease !important;
+  transition: color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease !important;
 }
 .ai-tax-price-wrap:focus-within{
   background: var(--paper) !important;
@@ -5956,7 +5956,7 @@ button.dd-btn {
   touch-action: manipulation;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-  transition: all .15s ease;
+  transition: color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
   text-align: center;
   display: inline-flex;
   align-items: center;
@@ -5987,7 +5987,7 @@ button.dd-btn {
   background: var(--input-bg);
   color: var(--ink-soft);
   cursor: pointer;
-  transition: all .15s ease;
+  transition: color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
   text-align: center;
 }
 .ai-tax-btn.active{
@@ -6120,7 +6120,7 @@ button.dd-btn {
   font-weight: 600;
   color: var(--ink);
   outline: none;
-  transition: all .15s ease;
+  transition: color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
 }
 .ai-receipt-item-name:focus{
   background: var(--paper);
@@ -6164,7 +6164,7 @@ button.dd-btn {
   border-radius: 8px;
   padding: 0 7px;
   box-sizing: border-box;
-  transition: all .15s ease;
+  transition: color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
 }
 .ai-receipt-price-wrap:focus-within{
   background: var(--paper);
@@ -6241,7 +6241,7 @@ button.dd-btn {
   padding: 0 !important;
   margin: 0 !important;
   box-shadow: 0 1.5px 4px rgba(0,0,0,0.15);
-  transition: all .15s ease;
+  transition: color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
   box-sizing: border-box !important;
 }
 .ai-receipt-item-del:hover{
@@ -6278,7 +6278,7 @@ button.dd-btn {
   margin: 0 !important;
   padding: 0 2px !important;
   -moz-appearance: textfield;
-  transition: all .15s ease;
+  transition: color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
 }
 :root[data-theme="dark"] .ai-receipt-item-qty{
   color: #FFFFFF !important;
@@ -6338,7 +6338,7 @@ button.dd-btn {
   background: var(--paper) !important;
   color: var(--ink-soft) !important;
   cursor: pointer !important;
-  transition: all .15s ease !important;
+  transition: color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease !important;
   white-space: nowrap !important;
   flex: 1 1 0 !important;
   margin: 0 !important;
@@ -6396,7 +6396,7 @@ button.dd-btn {
   font-family: "Noto Sans TC", monospace;
   outline: none;
   flex-shrink: 0;
-  transition: all .15s ease;
+  transition: color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
 }
 .ai-receipt-member-qty:focus{
   background: var(--paper);
@@ -6453,7 +6453,7 @@ button.dd-btn {
   background: var(--paper);
   border: 1.5px solid var(--line);
   cursor: pointer;
-  transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: color 0.18s cubic-bezier(.16,1,.3,1), background-color 0.18s cubic-bezier(.16,1,.3,1), border-color 0.18s cubic-bezier(.16,1,.3,1), box-shadow 0.18s cubic-bezier(.16,1,.3,1), opacity 0.18s cubic-bezier(.16,1,.3,1), transform 0.18s cubic-bezier(.16,1,.3,1), filter 0.18s cubic-bezier(.16,1,.3,1);
   user-select: none;
   box-shadow: 0 1px 3px rgba(0,0,0,0.03);
 }
@@ -6531,7 +6531,7 @@ button.dd-btn {
   background: var(--paper) !important;
   color: var(--ink-soft) !important;
   cursor: pointer !important;
-  transition: all .15s ease !important;
+  transition: color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease !important;
   white-space: nowrap !important;
   flex: 0 0 auto !important;
   width: auto !important;
@@ -6731,7 +6731,7 @@ button.dd-btn {
   white-space: nowrap;
   pointer-events: none;
   box-shadow: 0 1.5px 4px rgba(0,0,0,0.15);
-  transition: all 0.2s ease;
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease, transform 0.2s ease, filter 0.2s ease;
   box-sizing: border-box;
 }
 .ai-card-float-badge.unclaimed {
@@ -6770,7 +6770,7 @@ button.dd-btn {
   background: var(--input-bg);
   color: var(--ink);
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, transform 0.15s ease, filter 0.15s ease;
   white-space: nowrap;
 }
 .ai-btn-copy-compact:hover,
@@ -6810,7 +6810,7 @@ button.dd-btn {
   background:var(--input-bg);
   color:var(--ink-soft);
   cursor:pointer;
-  transition:all .15s ease;
+  transition:color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
   text-align:center;
 }
 .ai-payer-mode-btn.active{
@@ -6829,7 +6829,7 @@ button.dd-btn {
   font-size:13px;
   color:var(--ink);
   outline:none;
-  transition:all .15s ease;
+  transition:color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
   margin: 2px 0px;
 }
 .ai-select-custom:focus, .ai-input-custom:focus{
@@ -7193,7 +7193,7 @@ input#aiExpenseTime {
   padding: 3px 9px;
   border-radius: 999px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, transform 0.15s ease, filter 0.15s ease;
   font-family: inherit;
 }
 .amt-preset-btn:hover {
@@ -7250,7 +7250,7 @@ input#aiExpenseTime {
   padding: 0 32px 0 34px !important;
   outline: none;
   font-family: inherit;
-  transition: all .15s ease;
+  transition: color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
   box-sizing: border-box;
 }
 .history-live-search-wrap .search-icon {
@@ -7305,7 +7305,7 @@ input#aiExpenseTime {
   padding: 4px 11px;
   border-radius: 999px;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, transform 0.15s ease, filter 0.15s ease;
   font-family: inherit;
   user-select: none;
 }
@@ -7682,7 +7682,7 @@ input#aiExpenseTime {
   padding:3px 10px;
   border-radius:16px;
   cursor:pointer;
-  transition:all 0.15s ease;
+  transition:color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, transform 0.15s ease, filter 0.15s ease;
 }
 .donut-scope-tab.active{
   background:var(--btn-primary);
@@ -7813,7 +7813,7 @@ input#aiExpenseTime {
   background:color-mix(in srgb, var(--paper) 40%, var(--card));
   border:1px solid transparent;
   cursor:pointer;
-  transition:all 0.15s ease;
+  transition:color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, transform 0.15s ease, filter 0.15s ease;
 }
 .donut-legend-item:hover,
 .donut-legend-item.active{
@@ -8078,7 +8078,7 @@ input#aiExpenseTime {
   color: var(--ink);
   cursor: pointer;
   text-align: left;
-  transition: all 0.15s ease;
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, transform 0.15s ease, filter 0.15s ease;
   user-select: none;
 }
 .sb-ms-trigger:hover,
@@ -8139,7 +8139,7 @@ input#aiExpenseTime {
   flex-direction: column;
   overflow: hidden;
   max-height: 280px;
-  animation: sbLoginCardIn .18s cubic-bezier(.34,1.56,.64,1);
+  animation: sbLoginCardIn .18s cubic-bezier(.16,1,.3,1);
 }
 .sb-ms-popover.show{
   display: flex;
@@ -8408,7 +8408,7 @@ input#aiExpenseTime {
   font-family: "Noto Sans TC", monospace;
   cursor: pointer;
   white-space: nowrap;
-  transition: all .15s ease;
+  transition: color .15s ease, background-color .15s ease, border-color .15s ease, box-shadow .15s ease, opacity .15s ease, transform .15s ease, filter .15s ease;
 }
 .payment-bank-trigger:hover{
   background: color-mix(in srgb, var(--btn-primary) 12%, var(--card));
@@ -10084,7 +10084,6 @@ html body .recurring-auto-banner-list button > span:last-child{ color:var(--ink-
     max-height:92dvh !important; overflow-y:auto !important;
     border-radius:22px 22px 0 0 !important;
     padding-bottom:max(16px, calc(env(safe-area-inset-bottom) + 12px)) !important;
-    animation:sbBottomSheetUp .3s cubic-bezier(.16,1,.3,1) both !important;
   }
   html body .calc-modal > .calc-card > :is(.sbf-actions, .recurring-edit-scope-actions){
     position:sticky; bottom:calc(-1 * max(16px, calc(env(safe-area-inset-bottom) + 12px))); z-index:2;
@@ -10182,3 +10181,79 @@ html body .debt-payinfo-btn{ display:inline-flex; align-items:center; justify-co
 html body .debt-payinfo-btn .sb-ico{ width:16px; height:16px; }
 html body .debt-payinfo-hint{ display:block; padding:10px 2px; font-size:13px; color:var(--ink-soft); text-decoration:none; }
 html body .debt-payinfo-hint:hover{ color:var(--btn-primary); }
+
+/* ============================================================
+   v964 彈窗開、關都有動畫
+   以前是 display:none ⇄ flex，關的時候瞬間消失。現在彈窗平常就在版面上但隱形
+   （visibility:hidden，點不到、讀屏也略過），加上 .show 才出現，所以關的時候也能
+   淡出、往下滑走。.hidden（display:none !important）照樣完全藏起來。
+   快速記帳、成員資料（.sb-bottom-sheet）有自己的滑入滑出，卡片不在這裡管。
+   ============================================================ */
+html body .calc-modal{
+  display:flex; visibility:hidden; opacity:0; pointer-events:none; animation:none;
+  transition:opacity .2s cubic-bezier(.7,0,.84,0), visibility 0s linear .2s;
+}
+html body .calc-modal.show, html body .calc-modal.open{
+  visibility:visible; opacity:1; pointer-events:auto; animation:none;
+  transition:opacity .22s cubic-bezier(.16,1,.3,1), visibility 0s;
+}
+html body .calc-modal:not(.sb-bottom-sheet) > .calc-card{
+  animation:none !important;
+  transform:translateY(10px) scale(.97);
+  transition:transform .2s cubic-bezier(.7,0,.84,0);
+}
+html body .calc-modal:not(.sb-bottom-sheet):is(.show, .open) > .calc-card{
+  transform:none;
+  transition:transform .3s cubic-bezier(.16,1,.3,1);
+}
+@media (max-width: 767px){
+  /* 手機上是從底部滑上來的那幾種：關的時候滑回去 */
+  html body .calc-modal:not(.sb-bottom-sheet):not(.sb-dialog-modal):not(#recoveryModal):not(#receiptLightboxModal):not(#avatarCropModal) > .calc-card{
+    transform:translateY(100%);
+    transition:transform .22s cubic-bezier(.7,0,.84,0);
+  }
+  html body .calc-modal:not(.sb-bottom-sheet):not(.sb-dialog-modal):not(#recoveryModal):not(#receiptLightboxModal):not(#avatarCropModal):is(.show, .open) > .calc-card{
+    transform:none;
+    transition:transform .32s cubic-bezier(.16,1,.3,1);
+  }
+  /* 頂端小橫條：提示可以往下拖關掉 */
+  html body .calc-modal.sb-swipe-sheet > .calc-card{ position:relative; padding-top:22px !important; }
+  html body .calc-modal.sb-swipe-sheet > .calc-card::before{
+    content:""; position:absolute; top:8px; left:50%; width:36px; height:4px; margin-left:-18px;
+    border-radius:999px; background:color-mix(in srgb, var(--ink) 22%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce){
+  html body .calc-modal, html body .calc-modal > .calc-card{ transition-duration:.12s !important; }
+  html body .calc-modal > .calc-card, html body .calc-modal:is(.show, .open) > .calc-card{ transform:none !important; }
+}
+
+/* 換深淺色的那一瞬間不要漸變 */
+html.sb-theme-switching *, html.sb-theme-switching *::before, html.sb-theme-switching *::after{ transition:none !important; }
+
+/* ============================================================
+   v964 滑鼠移上去的放大：統一成一種輕微效果，只在有滑鼠的裝置上出現；
+   手機上點完不會卡在放大的樣子。
+   ============================================================ */
+@media (hover: hover) and (pointer: fine){
+  html body :is(.exp-edit, .exp-del, .exp-xcur-editrate, .exp-xcur-restore, .exp-debt-calc-toggle, .debt-detail-close, .receipt-gallery-thumb, .settings-avatar-preview):hover,
+  html body .exp-item:hover .exp-cat-badge{ transform:scale(1.04) !important; }
+}
+@media not all and (hover: hover) and (pointer: fine){
+  html body :is(.exp-edit, .exp-del, .exp-xcur-editrate, .exp-xcur-restore, .exp-debt-calc-toggle, .debt-detail-close, .receipt-gallery-thumb, .settings-avatar-preview):hover,
+  html body .exp-item:hover .exp-cat-badge{ transform:none !important; }
+}
+
+/* ============================================================
+   v964 數字等寬：金額上下排得齊（1,111 跟 8,000 一樣寬）
+   ============================================================ */
+html body{ font-variant-numeric:tabular-nums; }
+
+/* ---------- v964 活動：報名後人數條滑到新長度、新頭像淡入 ---------- */
+html body .ev-bar i{ transition:width .5s cubic-bezier(.16,1,.3,1); }
+@keyframes sbFaceIn{ from{ opacity:0; transform:scale(.6); } to{ opacity:1; transform:none; } }
+html body .ev-faces .is-new{ animation:sbFaceIn .35s cubic-bezier(.16,1,.3,1) both; }
+@media (prefers-reduced-motion: reduce){
+  html body .ev-bar i{ transition:none; }
+  html body .ev-faces .is-new{ animation:none; }
+}

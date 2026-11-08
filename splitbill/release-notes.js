@@ -8,6 +8,28 @@
 // ============================================================
 window.SB_RELEASE_NOTES = [
   {
+    version: "964",
+    date: "2026-11-09",
+    "zh-Hant": [
+      "彈出視窗關掉時也有動畫；手機上可以往下拖把視窗關掉",
+      "動畫改得更平順，切換深色模式時整頁一次換好",
+      "金額數字等寬，上下排得更整齊",
+      "報名活動後，人數條和頭像會有小動畫"
+    ],
+    "ja": [
+      "ポップアップを閉じるときもアニメーション。スマホでは下にスワイプして閉じられます",
+      "アニメーションをよりなめらかに。ダークモード切替時は画面全体が一度に切り替わります",
+      "金額の数字を等幅にして、縦にきれいにそろうように",
+      "イベントに参加すると、人数バーとアイコンが小さく動きます"
+    ],
+    "en": [
+      "Pop-ups now animate when they close too, and on phones you can swipe them down to close",
+      "Smoother animations, and switching dark mode changes the whole page at once",
+      "Amounts use even-width digits so they line up neatly",
+      "Joining an event gives a small animation on the head count and avatars"
+    ]
+  },
+  {
     version: "963",
     date: "2026-11-09",
     "zh-Hant": [

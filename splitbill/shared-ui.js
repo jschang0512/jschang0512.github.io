@@ -1382,7 +1382,7 @@ window.sbRecurAdvance = sbRecurAdvance;
   function sync(){
     const now = Array.from(document.querySelectorAll(OPEN_SEL));
     order = order.filter(m => now.includes(m));
-    now.forEach(m => { if(!order.includes(m)){ order.push(m); dirty.delete(m); } });
+    now.forEach(m => { if(!order.includes(m)){ order.push(m); dirty.delete(m); const c = m.querySelector(".calc-card"); if(c) c.scrollTop = 0; } });
     if(order.length && !armed){
       history.pushState(Object.assign({}, history.state, { sbModal: true }), "");
       armed = true;
@@ -1439,6 +1439,7 @@ window.sbRecurAdvance = sbRecurAdvance;
   document.addEventListener("change", markDirty, true);
 
   window.sbModalTop = top;
+  window.sbModalRequestClose = requestClose;
 })();
 
 // ============================================================
@@ -1534,3 +1535,77 @@ document.addEventListener("click", e => {
   if(browser && browser.open) browser.open({ url }).catch(() => { location.href = url; });
   else window.open(url, "_blank");
 });
+
+// ============================================================
+// 手機底部視窗往下拖就關（2026-11）
+// 只有從底部滑上來的那幾種（不含確認框、重設密碼、看大圖、裁頭貼；快速記帳、
+// 成員資料有自己的拖曳）。視窗內容已經捲到最上面、手指往下拉才算拖曳，
+// 不會跟捲動內容搶。拖超過 110px（或快速往下甩）就關；打過字的話照樣先問，
+// 選了不關就彈回原位。
+// ============================================================
+(function initSheetSwipe(){
+  const mq = window.matchMedia("(max-width: 767px)");
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const EXCLUDE = ".sb-bottom-sheet, .sb-dialog-modal, #recoveryModal, #receiptLightboxModal, #avatarCropModal";
+  const isSheet = m => m && m.classList.contains("calc-modal") && !m.matches(EXCLUDE);
+
+  // 標記可拖的視窗，CSS 用它畫頂端的小橫條
+  function mark(){
+    document.querySelectorAll(".calc-modal").forEach(m => m.classList.toggle("sb-swipe-sheet", mq.matches && isSheet(m)));
+  }
+  new MutationObserver(mark).observe(document.body || document.documentElement, { childList: true });
+  if(mq.addEventListener) mq.addEventListener("change", mark);
+  document.addEventListener("DOMContentLoaded", mark);
+  mark();
+
+  let drag = null;
+  document.addEventListener("touchstart", e => {
+    if(!mq.matches || e.touches.length !== 1) return;
+    const card = e.target.closest && e.target.closest(".calc-modal.sb-swipe-sheet.show > .calc-card");
+    if(!card) return;
+    if(e.target.closest("input[type=range], .no-swipe, canvas")) return;
+    // 手指底下到卡片之間，任何一層捲動區（例如通知清單）還沒捲到頂，就是要捲內容不是要拖
+    for(let el = e.target; el && el !== card.parentElement; el = el.parentElement){
+      if(el.scrollTop > 0) return;
+    }
+    drag = { card, modal: card.parentElement, y0: e.touches[0].clientY, x0: e.touches[0].clientX, t0: Date.now(), dy: 0, active: false };
+  }, { passive: true });
+
+  document.addEventListener("touchmove", e => {
+    if(!drag) return;
+    const dy = e.touches[0].clientY - drag.y0;
+    const dx = e.touches[0].clientX - drag.x0;
+    if(!drag.active){
+      // 內容還沒捲到頂、往上滑、或比較像左右滑：交給原本的捲動
+      if(dy < -4 || (Math.abs(dx) > 8 && Math.abs(dx) > dy)){ drag = null; return; }
+      if(dy < 8) return;
+      drag.active = true;
+      drag.card.style.transition = "none";
+    }
+    e.preventDefault();
+    drag.dy = Math.max(0, dy);
+    drag.card.style.transform = `translateY(${drag.dy}px)`;
+  }, { passive: false });
+
+  async function end(){
+    if(!drag) return;
+    const d = drag; drag = null;
+    if(!d.active) return;
+    const speed = d.dy / Math.max(1, Date.now() - d.t0);
+    const ease = reduce.matches ? "none" : "transform .22s cubic-bezier(.16,1,.3,1)";
+    if(d.dy > 110 || (d.dy > 60 && speed > 0.8)){
+      d.card.style.transition = ease;
+      d.card.style.transform = "translateY(100%)";
+      const closed = window.sbModalRequestClose ? await window.sbModalRequestClose(d.modal) : false;
+      if(closed){
+        setTimeout(() => { d.card.style.transition = ""; d.card.style.transform = ""; }, 260);
+        return;
+      }
+    }
+    d.card.style.transition = ease;
+    d.card.style.transform = "";
+    setTimeout(() => { d.card.style.transition = ""; }, 240);
+  }
+  document.addEventListener("touchend", end);
+  document.addEventListener("touchcancel", end);
+})();

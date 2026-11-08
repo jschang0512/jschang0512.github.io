@@ -107,11 +107,35 @@
     </article>`;
   }
 
+  // 報名人數變了（自己按參加／退出，或別人報名後重新整理）：人數條從舊長度滑到新長度，
+  // 新加入的頭像淡入。第一次畫的時候沒有「舊的」，就不動。
+  let lastShown = null;
+  function animateSignupChanges(active){
+    const now = {};
+    active.forEach(e => {
+      const ids = going(e.id).map(r => r.member_id);
+      now[e.id] = { ids, ratio: e.capacity ? Math.min(100, ids.length / e.capacity * 100) : null };
+      const prev = lastShown && lastShown[e.id];
+      const card = document.querySelector(`.ev-card[data-id="${e.id}"]`);
+      if(!prev || !card) return;
+      const bar = card.querySelector(".ev-bar i");
+      if(bar && prev.ratio != null && prev.ratio !== now[e.id].ratio){
+        bar.style.width = prev.ratio + "%";
+        void bar.offsetWidth;
+        bar.style.width = now[e.id].ratio + "%";
+      }
+      const faces = card.querySelectorAll(".ev-faces > *");
+      ids.forEach((id, i) => { if(!prev.ids.includes(id) && faces[i]) faces[i].classList.add("is-new"); });
+    });
+    lastShown = now;
+  }
+
   function render(){
     const active = events.filter(e => e.status === "open").sort((a, b) => a.event_date.localeCompare(b.event_date));
     const past = events.filter(e => e.status !== "open").sort((a, b) => b.event_date.localeCompare(a.event_date));
     $("eventList").innerHTML = active.map(cardHTML).join("");
     $("eventPastList").innerHTML = past.map(cardHTML).join("");
+    animateSignupChanges(active);
     $("eventEmpty").classList.toggle("hidden", !!active.length);
     $("eventPast").classList.toggle("hidden", !past.length);
     $("eventPastTitle").textContent = t("events.pastCount", { n: past.length });

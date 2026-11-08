@@ -29,7 +29,11 @@
 
   function applyToggle(){
     current = current === "dark" ? "light" : "dark";
-    document.documentElement.setAttribute("data-theme", current);
+    // 換色的那一瞬間先關掉所有漸變，整頁一次換好，不會有按鈕、卡片慢半拍變色
+    const root = document.documentElement;
+    root.classList.add("sb-theme-switching");
+    root.setAttribute("data-theme", current);
+    requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove("sb-theme-switching")));
     try{ localStorage.setItem(KEY, current); }catch(e){}
     // 債務關係表熱圖的顏色是算好直接寫進 inline style 的，不是純 CSS
     // 變數，切換深淺模式不會自動跟著換，這裡另外發一個事件讓 app.js
