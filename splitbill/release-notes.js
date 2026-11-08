@@ -8,6 +8,22 @@
 // ============================================================
 window.SB_RELEASE_NOTES = [
   {
+    version: "963",
+    date: "2026-11-09",
+    "zh-Hant": [
+      "點開兩人的往來明細，可以「複製轉帳資訊」：金額和對方的收款帳戶一次複製，直接貼到聊天室",
+      "通知清單改成彈出視窗，手機上從底部滑出，比較好讀"
+    ],
+    "ja": [
+      "2 人の取引明細で「振込情報をコピー」：金額と相手の受取口座をまとめてコピーして、そのままチャットに貼れます",
+      "通知一覧をポップアップに変更。スマホでは下から表示されて読みやすく"
+    ],
+    "en": [
+      "In the details between two people, “Copy payment details” copies the amount and their payment account so you can paste it into your chat",
+      "Notifications now open in a pop-up — a bottom sheet on phones, easier to read"
+    ]
+  },
+  {
     version: "962",
     date: "2026-11-09",
     "zh-Hant": [

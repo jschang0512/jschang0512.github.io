@@ -577,18 +577,27 @@ async function initNotificationBell(sb, myMember){
       <button type="button" class="icon-btn notif-bell-btn" id="notifBellBtn" title="${t("shared.notifLabel")}" aria-label="${t("shared.notifLabel")}">
         <span class="notif-badge hidden" id="notifBadge">0</span>
       </button>
-      <div class="notif-panel hidden" id="notifPanel">
-        <div class="notif-panel-head">
-          <span>${t("shared.notifLabel")}</span>
-          <button type="button" class="link-btn" id="notifMarkAllReadBtn">${t("shared.markAllRead")}</button>
-        </div>
-        <div class="notif-panel-list" id="notifPanelList"></div>
-      </div>
     </div>
   `;
+  // 通知清單是一般的彈出視窗（.calc-modal）：手機從底部滑上來、電腦置中，
+  // 返回鍵／點旁邊／Esc 關閉都交給全站彈窗管理。掛在 body 底下，不受頁首的層疊影響。
+  document.getElementById("notifModal")?.remove();
+  const panel = document.createElement("div");
+  panel.className = "calc-modal notif-modal";
+  panel.id = "notifModal";
+  panel.innerHTML = `
+    <div class="calc-card card notif-card" role="dialog" aria-modal="true" aria-labelledby="notifModalTitle">
+      <div class="calc-header notif-card-head">
+        <span class="calc-header-name" id="notifModalTitle">${t("shared.notifLabel")}</span>
+        <button type="button" class="link-btn" id="notifMarkAllReadBtn">${t("shared.markAllRead")}</button>
+        <button type="button" class="calc-close" id="notifCloseBtn" aria-label="${t("common.close")}">✕</button>
+      </div>
+      <div class="notif-panel-list" id="notifPanelList"></div>
+    </div>`;
+  document.body.appendChild(panel);
+  const isOpen = () => panel.classList.contains("show");
 
   const bellBtn = document.getElementById("notifBellBtn");
-  const panel = document.getElementById("notifPanel");
   const badge = document.getElementById("notifBadge");
   const listEl = document.getElementById("notifPanelList");
   const markAllBtn = document.getElementById("notifMarkAllReadBtn");
@@ -645,7 +654,7 @@ async function initNotificationBell(sb, myMember){
       el.addEventListener("click", (e)=>{
         e.stopPropagation(); // 不然冒泡到 document 的「點外面就關面板」會馬上又關掉
         window.scrollTo({ top: 0, behavior: "smooth" });
-        if(bellBtn && panel.classList.contains("hidden")) bellBtn.click();
+        if(bellBtn && !isOpen()) bellBtn.click();
       });
       anchor.parentNode.insertBefore(el, anchor);
     }
@@ -732,38 +741,14 @@ async function initNotificationBell(sb, myMember){
     });
   }
 
-  // 面板固定寬度 320px（窄螢幕會被 CSS 的 max-width 夾住縮小），開啟
-  // 當下才用鈴鐺按鈕實際的螢幕座標算 top/left，並且左右都留至少 12px
-  // 安全邊界，不管在哪一頁、手機還是電腦，面板都不會被切出螢幕外。
-  function positionNotifPanel(){
-    const rect = bellBtn.getBoundingClientRect();
-    const margin = 12;
-    const panelWidth = Math.min(320, window.innerWidth - margin * 2);
-    let left = rect.right - panelWidth;
-    left = Math.max(margin, Math.min(left, window.innerWidth - panelWidth - margin));
-    let top = rect.bottom + 10;
-    top = Math.min(top, window.innerHeight - 80);
-    panel.style.left = left + "px";
-    panel.style.top = top + "px";
-  }
-
   if(bellBtn){
     bellBtn.addEventListener("click", (e)=>{
       e.stopPropagation();
-      const willOpen = panel.classList.contains("hidden");
-      if(willOpen) positionNotifPanel();
-      panel.classList.toggle("hidden", !willOpen);
-      if(willOpen) loadList();
+      panel.classList.add("show");
+      loadList();
     });
   }
-  window.addEventListener("resize", ()=>{
-    if(!panel.classList.contains("hidden")) positionNotifPanel();
-  });
-  document.addEventListener("click", (e)=>{
-    if(!panel.classList.contains("hidden") && !panel.contains(e.target) && e.target !== bellBtn){
-      panel.classList.add("hidden");
-    }
-  });
+  document.getElementById("notifCloseBtn").addEventListener("click", ()=> panel.classList.remove("show"));
   if(markAllBtn){
     markAllBtn.addEventListener("click", async ()=>{
       await sb.from("notifications").update({ is_read: true }).eq("member_id", myMember.id).eq("is_read", false);
@@ -779,7 +764,7 @@ async function initNotificationBell(sb, myMember){
   sb.channel("notif-" + myMember.id)
     .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `member_id=eq.${myMember.id}` }, () => {
       refreshBadge();
-      if(!panel.classList.contains("hidden")) loadList();
+      if(isOpen()) loadList();
     })
     .subscribe();
 }

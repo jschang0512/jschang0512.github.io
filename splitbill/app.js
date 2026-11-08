@@ -3898,6 +3898,61 @@
   // 中斷、刪除永遠不會發生，資料庫反而卡在「應刪未刪」的曖昧狀態；先
   // 刪除、復原時用暫存資料重新 insert 回去，不管使用者何時離開，資料庫
   // 狀態永遠是確定、乾淨的——這也是為什麼倒數期間離開頁面等同放棄復原。
+  async function copyText(text){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      try { await navigator.clipboard.writeText(text); return true; } catch(e){}
+    }
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    let ok = false;
+    try { ok = document.execCommand("copy"); } catch(e){}
+    ta.remove();
+    return ok;
+  }
+
+  // 往來明細裡的「複製轉帳資訊」：複製出「請轉 NT$500 給 王小美」加上她的收款帳戶，直接貼到聊天室
+  async function attachPayInfoButton(wrap, creditorId, amount){
+    let accounts = [];
+    try {
+      const { data, error } = await sb.rpc("get_member_payment_accounts", { p_member_id: creditorId });
+      if(!error && Array.isArray(data)) accounts = data.filter(a => a && (a.bankName || a.account));
+    } catch(e){}
+    if(!wrap.isConnected) return;
+    const iAmCreditor = myMember && creditorId === myMember.id;
+    if(!accounts.length){
+      if(iAmCreditor){
+        const hint = document.createElement("a");
+        hint.className = "debt-payinfo-hint";
+        hint.href = "settings.html";
+        hint.textContent = t("currency.payInfoSetupHint");
+        wrap.appendChild(hint);
+      }
+      return;
+    }
+    const lines = accounts.map(acc => {
+      const label = window.formatBankLabel ? window.formatBankLabel(acc.bankCode, acc.bankName) : (acc.bankName || "");
+      return "・" + (acc.account ? `${label} ${acc.account}` : label).trim();
+    }).join("\n");
+    const text = t("currency.payInfoText", { amount: SYM + formatAmt(amount), name: memberById[creditorId] || "?", accounts: lines });
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn secondary debt-payinfo-btn";
+    btn.innerHTML = `<span class="sb-ico" style="--ico:var(--ico-list)" aria-hidden="true"></span><span>${escapeHtml(t("currency.payInfoCopy"))}</span>`;
+    btn.addEventListener("click", async () => {
+      const ok = await copyText(text);
+      const label = btn.querySelector("span:last-child");
+      label.textContent = t(ok ? "currency.payInfoCopied" : "currency.payInfoCopyFailed");
+      setTimeout(() => { if(btn.isConnected) label.textContent = t("currency.payInfoCopy"); }, 2000);
+    });
+    // 放在「記錄還款」正下方
+    const repay = wrap.querySelector("#matrixDetailRepayBtn");
+    if(repay && repay.nextSibling) wrap.insertBefore(btn, repay.nextSibling); else wrap.appendChild(btn);
+  }
+
   async function deleteRowsWithUndo(table, rows, refreshFn, label){
     const list = Array.isArray(rows) ? rows : [rows];
     const ids = list.map(r => r.id);
@@ -7772,6 +7827,16 @@ function showPairDetail(
   const remindBtn = document.getElementById("matrixDetailRemindBtn");
   if(remindBtn){
     remindBtn.onclick = () => sendDebtReminderFromBtn(remindBtn);
+  }
+
+  // 複製轉帳資訊：欠款的一方或收款的一方都看得到。收款帳戶存在 Vault，開視窗當下才用
+  // get_member_payment_accounts 現查（RPC 自己會檢查對方有沒有開放顯示）。查到才出現按鈕；
+  // 自己是收款人但還沒填帳戶，就提示去設定填。
+  const repayBtnForInfo = document.getElementById("matrixDetailRepayBtn");
+  const repayWrap = el.querySelector(".debt-repay-action-wrap");
+  if(repayBtnForInfo && repayWrap && myMember
+     && (repayBtnForInfo.dataset.debtor === myMember.id || repayBtnForInfo.dataset.creditor === myMember.id)){
+    attachPayInfoButton(repayWrap, repayBtnForInfo.dataset.creditor, Number(repayBtnForInfo.dataset.amt));
   }
 
   // ==========================================================

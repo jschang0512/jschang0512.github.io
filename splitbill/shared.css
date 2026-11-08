@@ -10164,3 +10164,21 @@ html body .sb-whatsnew-ver{ margin:0 0 6px; font-size:13px; font-weight:600; col
 html body .sb-whatsnew-sec ul{ margin:0; padding-left:1.2em; }
 html body .sb-whatsnew-sec li{ margin:0 0 8px; font-size:15px; line-height:1.55; color:var(--ink); }
 html body .sb-whatsnew-card .sbf-actions{ margin-top:16px; }
+
+/* ---------- v963 通知清單改成彈出視窗 ---------- */
+html body .notif-card{ max-width:440px; display:flex; flex-direction:column; max-height:min(640px, calc(100dvh - 40px)); padding:18px 14px 14px; }
+html body .notif-card-head{ gap:8px; margin-bottom:6px; padding:0 4px; }
+html body .notif-card-head .calc-header-name{ flex:1; min-width:0; font-size:17px; font-weight:700; }
+html body .notif-card-head .link-btn{ min-height:40px; padding:0 6px; white-space:nowrap; }
+html body .notif-card .notif-panel-list{ flex:1; min-height:0; overflow-y:auto; padding:0; margin:0 -4px; }
+html body .notif-card .notif-item-main{ cursor:pointer; }
+html body .notif-card .notif-item-del{ width:36px; height:36px; flex:none; }
+@media (max-width: 767px){
+  html body .notif-modal > .notif-card{ max-height:85dvh !important; }
+}
+
+/* ---------- v963 複製轉帳資訊 ---------- */
+html body .debt-payinfo-btn{ display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:44px; width:100%; margin:0; }
+html body .debt-payinfo-btn .sb-ico{ width:16px; height:16px; }
+html body .debt-payinfo-hint{ display:block; padding:10px 2px; font-size:13px; color:var(--ink-soft); text-decoration:none; }
+html body .debt-payinfo-hint:hover{ color:var(--btn-primary); }
