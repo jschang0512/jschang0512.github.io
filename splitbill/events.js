@@ -266,20 +266,9 @@
   });
   $("evCapClear").addEventListener("click", () => setCapacity(null));
 
-  // 填金額時先算給主辦人看，全員都來大概是多少（有上限就算到上限）
+  // 金額欄的標題跟著收費方式換
   function updateFeePreview(){
-    const mode = feeMode();
-    $("evAmountLabel").textContent = t(mode === "per_person" ? "events.amountEach" : "events.amountTotal");
-    const amount = Number($("evAmount").value);
-    const cap = Number($("evCapacity").value);
-    const n = cap ? Math.min(cap, activeCount()) : activeCount();
-    const box = $("evPreview");
-    box.classList.toggle("hidden", !(amount > 0));
-    if(!(amount > 0)) return;
-    const code = $("evCurrency").value;
-    box.textContent = mode === "per_person"
-      ? t("events.previewEach", { n, total: money(code, amount * n) })
-      : t("events.previewTotal", { n, each: money(code, Math.ceil(amount / n)) });
+    $("evAmountLabel").textContent = t(feeMode() === "per_person" ? "events.amountEach" : "events.amountTotal");
   }
 
   function setHint(id, text, bad){
