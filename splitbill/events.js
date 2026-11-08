@@ -428,14 +428,10 @@
         subtotal: total, taxAmount: 0, taxSplitMode: "ratio",
         participantIds: ids, payerIds: [myMember.id], addonAmounts: {}
       });
-      const { data: expense, error } = await sb.from("expenses").insert({
-        group_id: myMember.group_id, amount: total, description: e.title, note: e.note || null,
-        expense_date: e.event_date, created_by: myMember.id, currency: e.currency, category: "general",
-        payers: [{ member_id: myMember.id, amount: total }], shares
-      }).select().single();
+      // 記帳和把活動改成已結算在資料庫裡一次做完（scripts/2026-11-close-event.sql），
+      // 不會只做一半；已經結算過的活動會被擋下，按兩次也只記一筆
+      const { error } = await sb.rpc("close_event", { p_event_id: e.id, p_total: total, p_shares: shares });
       if(error) throw error;
-      const upd = await sb.from("events").update({ status: "closed", expense_id: expense.id }).eq("id", e.id);
-      if(upd.error) throw upd.error;
       hideModal($("eventCloseModal"));
       await load();
       showRecordSuccess({
@@ -449,6 +445,12 @@
       });
     }catch(err){
       console.error("活動結算失敗：", err);
+      if(/event_already_closed/.test(err && err.message || "")){
+        hideModal($("eventCloseModal"));
+        await load();
+        await sbAlert(t("events.alreadyClosed"), t("settings.errorTitle"));
+        return;
+      }
       msg.textContent = t("settings.msg.saveFailedRetry");
       msg.className = "msg error";
     }finally{
