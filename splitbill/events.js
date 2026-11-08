@@ -146,13 +146,53 @@
   // 活動只有日期；備註裡有「集合時間：19:00」這種寫法就從那個時間開始、抓兩小時，否則是整天。
   // 依裝置走最直接的路：iPhone 開 .ics（系統直接跳「加入行事曆」）、Android 瀏覽器用 intent
   // 開手機行事曆的新增畫面、App（Capacitor 不轉送 intent）和電腦開 Google 日曆的新增頁。
+  // 從備註找開始時間，口語也認：「18:30」「下午 3 點」「晚上七點半」「早上9點15分」「中午12點」
+  // 「午後3時」「7:30pm」「3 PM」。先看有「集合／時間／開始」字樣的那幾行，沒有才看整段。
+  const CN_NUM = { "零":0, "〇":0, "一":1, "二":2, "兩":2, "两":2, "三":3, "四":4, "五":5, "六":6, "七":7, "八":8, "九":9, "十":10 };
+  function cnToNum(s){
+    if(/^\d+$/.test(s)) return Number(s);
+    if(s.length === 1) return CN_NUM[s];
+    if(s[0] === "十") return 10 + (CN_NUM[s[1]] || 0);           // 十一、十二
+    if(s[1] === "十") return CN_NUM[s[0]] * 10 + (CN_NUM[s[2]] || 0); // 二十、二十五
+    return NaN;
+  }
+  function parseNoteTime(text){
+    const PM = /(下午|晚上|傍晚|夜晚|午後|夜|pm|p\.m\.)/i, AM = /(上午|早上|清晨|凌晨|午前|朝|am|a\.m\.)/i, NOON = /中午|正午|お昼/;
+    const N = "(\\d{1,2}|[零〇一二兩两三四五六七八九十]{1,3})";
+    const patterns = [
+      new RegExp("(\\d{1,2})\\s*[:：]\\s*(\\d{2})", "g"),
+      new RegExp(N + "\\s*[點点時时]\\s*(半|" + N + "\\s*分?)?", "g"),
+      new RegExp("(\\d{1,2})\\s*(?:[:.](\\d{2}))?\\s*(am|pm|a\\.m\\.|p\\.m\\.)", "gi")
+    ];
+    for(const re of patterns) for(const hit of text.matchAll(re)){
+      let h = cnToNum(hit[1]);
+      let min = hit[2] === "半" ? 30 : hit[2] ? cnToNum(String(hit[2]).replace(/\s*分$/, "")) : 0;
+      if(re === patterns[1] && hit[3]) min = cnToNum(hit[3]);
+      if(!Number.isFinite(h) || !Number.isFinite(min) || h > 24 || min > 59) continue;
+      // 上下午看數字前面那一小段；英文的 am/pm 也可能接在後面（7:30pm）
+      const after = text.slice(hit.index + hit[0].length, hit.index + hit[0].length + 5);
+      const before = text.slice(Math.max(0, hit.index - 4), hit.index)
+        + (re === patterns[2] ? hit[3] : "") + ((after.match(/^\s*(am|pm|a\.m\.|p\.m\.)/i) || [""])[0]);
+      // 中文數字的「一點」常是「早一點到」這種意思，要有上下午字樣或「半／分」才算時間
+      const marked = PM.test(before) || AM.test(before) || NOON.test(before);
+      if(hit[1] === "一" && !(marked || hit[2])) continue;
+      if(PM.test(before) && h < 12) h += 12;
+      else if(NOON.test(before) && h < 11) h += 12;
+      else if(AM.test(before) && h === 12) h = 0;
+      // 沒寫上下午的 1～6 點，聚會幾乎都是下午（「兩點半集合」＝14:30）
+      else if(!marked && re === patterns[1] && h >= 1 && h <= 6) h += 12;
+      if(h === 24) h = 0;
+      return { h, min };
+    }
+    return null;
+  }
   function calendarTimes(e){
     const [y, m, d] = e.event_date.split("-").map(Number);
-    const label = t("events.noteTime");
-    const line = (e.note || "").split("\n").find(l => l.includes(label)) || "";
-    const hit = line.match(/(\d{1,2})[:：](\d{2})/);
-    if(hit && Number(hit[1]) < 24 && Number(hit[2]) < 60){
-      const start = new Date(y, m - 1, d, Number(hit[1]), Number(hit[2]));
+    const note = e.note || "";
+    const keyLines = note.split("\n").filter(l => l.includes(t("events.noteTime")) || /集合|時間|时间|開始|开始|見合|開始|start|meet/i.test(l));
+    const time = parseNoteTime(keyLines.join("\n")) || parseNoteTime(note);
+    if(time){
+      const start = new Date(y, m - 1, d, time.h, time.min);
       return { allDay: false, start, end: new Date(start.getTime() + 2 * 3600000) };
     }
     return { allDay: true, start: new Date(y, m - 1, d), end: new Date(y, m - 1, d + 1) };
