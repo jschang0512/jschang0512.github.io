@@ -95,7 +95,7 @@ html body.rc-page{ margin:0; min-height:100dvh; background:var(--rc-night-2); co
 .rc-month{ display:flex; flex-direction:column; justify-content:flex-end; gap:6px; height:100%; min-width:0; }
 .rc-month i{ display:block; height:calc(var(--h,0) * 100%); min-height:3px; border-radius:4px 4px 2px 2px; background:#AEB2DE; transform-origin:bottom; }
 .rc-month.is-peak i{ background:var(--rc-night); }
-.rc-month span{ font-size:11px; line-height:1; text-align:center; color:var(--soft); }
+.rc-month span{ font-size:12px; line-height:1; text-align:center; color:var(--soft); }
 .rc-month.is-peak span{ color:var(--fg); font-weight:700; }
 .rc-slide.is-on .rc-month i{ animation:rcGrowUp .8s var(--rc-ease) both; animation-delay:calc(var(--i,0) * 35ms); }
 @keyframes rcGrowUp{ from{ transform:scaleY(0); } }

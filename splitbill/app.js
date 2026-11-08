@@ -1343,7 +1343,7 @@
     const modeText = manualTaxSplitMode === "ratio" ? t("summary.taxModeRatioDesc") : t("currency.taxEqual");
     previewEl.innerHTML = `
       <div>${t("currency.taxPreviewSummary", {subtotal: SYM+formatAmt(subtotal), tax: SYM+formatAmt(tax), total: SYM+formatAmt(total)})}</div>
-      <div style="font-size:11.5px;color:var(--ink-soft);margin-top:3px;">
+      <div style="font-size:12px;color:var(--ink-soft);margin-top:3px;">
         ${t("currency.taxPreviewMode", {mode: modeText})}
       </div>
     `;
@@ -1455,7 +1455,7 @@
     const taxPart = tax > 0 ? t("currency.addonsPreviewTaxPart", {tax: SYM+formatAmt(tax), total: SYM+formatAmt(total)}) : '';
     previewEl.innerHTML = `
       <div>${t("currency.addonsPreviewSummary", {subtotal: SYM+formatAmt(subtotal), taxPart})}</div>
-      <div style="font-size:11.5px;color:var(--ink-soft);margin-top:3px;">
+      <div style="font-size:12px;color:var(--ink-soft);margin-top:3px;">
         ${t("currency.addonsPreviewDetail", {addon: SYM+formatAmt(totalAddon), base: SYM+formatAmt(baseAmount), share: SYM+formatAmt(baseShare)})}
       </div>
     `;
@@ -2852,17 +2852,42 @@
   function renderRecurringAutoBanner(items){
     const banner = document.getElementById("recurringAutoBanner");
     if(!banner) return;
-    banner.innerHTML = items.map(({ expense, template }) => {
+    const labelOf = expense => {
       const { title } = splitExpenseTitleAndNote(expense.description || "", expense.note || "");
-      const label = title || expense.description || t("currency.expenseDetailFallback");
-      return `<div class="card recurring-auto-banner-item" data-expense-id="${expense.id}">
-        <span class="recurring-auto-banner-text">${t("currency.recurringAutoBannerText", { title: escapeHtml(label), amount: SYM + formatAmt(expense.amount) })}</span>
+      return title || expense.description || t("currency.expenseDetailFallback");
+    };
+    const closeBtn = `<button type="button" class="recurring-auto-banner-close" aria-label="${t("common.close")}">✕</button>`;
+    if(items.length === 1){
+      const { expense } = items[0];
+      banner.innerHTML = `<div class="card recurring-auto-banner-item" data-expense-id="${expense.id}">
+        <span class="recurring-auto-banner-text">${t("currency.recurringAutoBannerText", { title: escapeHtml(labelOf(expense)), amount: SYM + formatAmt(expense.amount) })}</span>
         <span class="recurring-auto-banner-actions">
           <button type="button" class="link-btn recurring-auto-banner-view" data-expense-id="${expense.id}">${t("currency.recurringAutoBannerViewBtn")}</button>
-          <button type="button" class="recurring-auto-banner-close" aria-label="${t("common.close")}">✕</button>
+          ${closeBtn}
         </span>
       </div>`;
-    }).join("");
+    } else if(items.length > 1){
+      // 一次記了好幾筆就合成一張，點開再看每一筆，不要一張張疊滿畫面
+      const total = items.reduce((sum, { expense }) => sum + Number(expense.amount || 0), 0);
+      banner.innerHTML = `<div class="card recurring-auto-banner-item is-group">
+        <span class="recurring-auto-banner-text">${t("currency.recurringAutoBannerMany", { n: items.length, amount: SYM + formatAmt(total) })}</span>
+        <span class="recurring-auto-banner-actions">
+          <button type="button" class="link-btn recurring-auto-banner-toggle" aria-expanded="false">${t("currency.recurringAutoBannerShow")}</button>
+          ${closeBtn}
+        </span>
+        <ul class="recurring-auto-banner-list" hidden>${items.map(({ expense }) => `<li><button type="button" class="recurring-auto-banner-view" data-expense-id="${expense.id}"><span>${escapeHtml(labelOf(expense))}</span><b>${SYM + formatAmt(expense.amount)}</b><span aria-hidden="true">›</span></button></li>`).join("")}</ul>
+      </div>`;
+      const toggle = banner.querySelector(".recurring-auto-banner-toggle");
+      const list = banner.querySelector(".recurring-auto-banner-list");
+      toggle.addEventListener("click", () => {
+        const open = list.hidden;
+        list.hidden = !open;
+        toggle.setAttribute("aria-expanded", String(open));
+        toggle.textContent = t(open ? "currency.recurringAutoBannerHide" : "currency.recurringAutoBannerShow");
+      });
+    } else {
+      banner.innerHTML = "";
+    }
 
     banner.querySelectorAll(".recurring-auto-banner-view").forEach(btn=>{
       btn.addEventListener("click", ()=>{
@@ -3948,7 +3973,7 @@
         return `<div class="exp-item" data-id="${e.id}" title="${t("currency.clickToViewDebtDetail")}">
           <div class="exp-cat-badge exp-cat-${catMeta.type}" title="${catMeta.name}"${catMeta.color ? ` style="--cat:${catMeta.color}"` : ""}>${icon}</div>
           <div class="exp-main">
-            <div class="exp-desc">${highlightedTitle}${isAiSplit ? `<span class="ai-split-badge" style="font-size:11px;font-weight:700;padding:1px 6px;border-radius:6px;background:color-mix(in srgb, var(--btn-primary) 14%, var(--paper));color:var(--btn-primary);margin-left:5px;">${t("currency.aiSplitBadge")}</span>` : ""}${isXcur ? `<span class="xcur-badge">${t("currency.xcurBadge")}</span>` : ""}${isRecurringGenerated ? `<span class="recurring-badge">${t("currency.recurringBadge")}</span>` : ""}</div>
+            <div class="exp-desc">${highlightedTitle}${isAiSplit ? `<span class="ai-split-badge" style="font-size:12px;font-weight:700;padding:1px 6px;border-radius:6px;background:color-mix(in srgb, var(--btn-primary) 14%, var(--paper));color:var(--btn-primary);margin-left:5px;">${t("currency.aiSplitBadge")}</span>` : ""}${isXcur ? `<span class="xcur-badge">${t("currency.xcurBadge")}</span>` : ""}${isRecurringGenerated ? `<span class="recurring-badge">${t("currency.recurringBadge")}</span>` : ""}</div>
             <div class="exp-meta">
               ${firstLineNote ? `<span class="exp-meta-line" style="color:var(--ink);font-weight:600;opacity:0.9;">${t("currency.notePrefix")}${highlightedNote}</span>` : ""}
               <span class="exp-meta-line">${t("currency.timePrefix")}${e.expense_date}${formatTime(e.created_at, e.expense_date) ? " " + formatTime(e.created_at, e.expense_date) : ""}（${highlightSearchMatch(memberById[e.created_by] || "?", searchKw)}）</span>
@@ -6386,7 +6411,7 @@ function showExpenseDebtDetail(e){
         <div style="display:inline-flex;align-items:center;gap:6px;">
           ${renderAvatarHTML({ id: f.debtorId, name: memberById[f.debtorId] }, "avatar-xs")}
           <b>${escapeHtml(memberById[f.debtorId] || "?")}</b>
-          <span style="color:var(--ink-soft);font-size:11.5px;">${t("currency.owesInline")}</span>
+          <span style="color:var(--ink-soft);font-size:12px;">${t("currency.owesInline")}</span>
           ${renderAvatarHTML({ id: f.creditorId, name: memberById[f.creditorId] }, "avatar-xs")}
           <b>${escapeHtml(memberById[f.creditorId] || "?")}</b>
         </div>
@@ -6533,9 +6558,9 @@ function showExpenseDebtDetail(e){
         <span class="exp-debt-info-total">${SYM}${formatAmt(e.amount)}</span>
       </div>
       <div class="exp-debt-info-list">
-        <div style="font-size:11.5px;color:var(--ink-soft);font-weight:700;margin-top:2px;">${t("currency.payerListTitle")}</div>
+        <div style="font-size:12px;color:var(--ink-soft);font-weight:700;margin-top:2px;">${t("currency.payerListTitle")}</div>
         ${payerDetails}
-        <div style="font-size:11.5px;color:var(--ink-soft);font-weight:700;margin-top:8px;">${t("currency.personalShareListTitle")}</div>
+        <div style="font-size:12px;color:var(--ink-soft);font-weight:700;margin-top:8px;">${t("currency.personalShareListTitle")}</div>
         ${shareDetails}
       </div>
     </div>

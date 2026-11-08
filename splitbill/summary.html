@@ -29,18 +29,18 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=956">
-<link rel="stylesheet" href="shared.css?v=956">
-<script src="holiday.js?v=956"></script>
+<link rel="stylesheet" href="theme.css?v=957">
+<link rel="stylesheet" href="shared.css?v=957">
+<script src="holiday.js?v=957"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
-<script src="i18n.js?v=956"></script>
-<script src="currencies.js?v=956"></script>
-<script src="motion.js?v=956"></script>
-<script src="version.js?v=956"></script>
-<script src="notif-text.js?v=956"></script>
-<script src="shared-ui.js?v=956"></script>
-<script src="theme.js?v=956" defer></script>
-<script src="app-banner.js?v=956" defer></script>
+<script src="i18n.js?v=957"></script>
+<script src="currencies.js?v=957"></script>
+<script src="motion.js?v=957"></script>
+<script src="version.js?v=957"></script>
+<script src="notif-text.js?v=957"></script>
+<script src="shared-ui.js?v=957"></script>
+<script src="theme.js?v=957" defer></script>
+<script src="app-banner.js?v=957" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -189,6 +189,11 @@ if("serviceWorker" in navigator){
       </a>
       <button type="button" class="on-this-day-close" id="onThisDayClose" data-i18n-title="common.close" title="關閉" aria-label="關閉">✕</button>
     </div>
+
+    <section class="card sb-today hidden" id="todayCard" aria-labelledby="todayTitle">
+      <h2 id="todayTitle" data-i18n="summary.todayTitle">今天</h2>
+      <ul class="sb-today-list" id="todayList"></ul>
+    </section>
 
     <div class="summary-grid-2">
       <!-- 1. 我的餘額：只顯示有交易紀錄過的幣別 -->
@@ -715,11 +720,16 @@ renderNavLinks();
     });
     el.querySelectorAll(".fb-del").forEach(btn=>{
       btn.addEventListener("click", async ()=>{
-        const ok = await sbConfirm(t("summary.feedbackDeleteConfirm"));
-        if(!ok) return;
+        // 直接刪、通知裡可以復原，不先跳確認框
+        const row = (cachedFeedback || []).find(x => x.id === btn.dataset.id);
         const { error } = await sb.from("feedback").delete().eq("id", btn.dataset.id);
         if(error){ await sbAlert(t("summary.feedbackDeleteFailed", {error: error.message}), t("settings.errorTitle")); return; }
         await loadFeedback();
+        if(row) showToast(t("currency.deletedToastTitle"), String(row.content || "").slice(0, 40), t("currency.undoLabel"), async ()=>{
+          const { error: insErr } = await sb.from("feedback").insert(row);
+          if(insErr){ await sbAlert(t("currency.undoFailed") + insErr.message, t("settings.errorTitle")); return; }
+          await loadFeedback();
+        });
       });
     });
     const prevBtn = el.querySelector(".pagination-prev");
@@ -1393,6 +1403,49 @@ renderNavLinks();
     return dateStr;
   }
 
+  // 「今天」卡片：今天要處理或今天發生的事集中在一起——等你填金額的固定支出、今天會自動記的、
+  // 今天的活動、今天截止報名而你還沒報的。沒有就整張不出現。
+  async function renderTodayCard(myRecurring){
+    const card = document.getElementById("todayCard");
+    const list = document.getElementById("todayList");
+    if(!card || !myMember) return;
+    const today = sbIsoDay(new Date());
+    const money = (code, amount) => {
+      const c = CURRENCIES.find(x => x.code === code);
+      return (c ? c.symbol : code + " ") + formatAmt(amount);
+    };
+    const row = (href, icon, title, sub, act, urgent) => `<li><a class="sb-today-row${urgent ? " is-urgent" : ""}" href="${href}">
+        <span class="sb-today-ico"><span class="sb-ico" style="--ico:var(--ico-${icon})" aria-hidden="true"></span></span>
+        <span class="sb-today-text"><b>${escapeHtml(title)}</b>${sub ? `<small>${escapeHtml(sub)}</small>` : ""}</span>
+        <span class="sb-today-act">${escapeHtml(act)} ›</span>
+      </a></li>`;
+    const rows = [];
+    (myRecurring || []).filter(x => x.variable_amount && x.next_due_date <= today).forEach(x => {
+      rows.push(row("recurring.html?fill=" + encodeURIComponent(x.id), "repeat", x.description || "", t("recurring.fillPending", { date: x.next_due_date }), t("recurring.fillBtn"), true));
+    });
+    (myRecurring || []).filter(x => !x.variable_amount && x.next_due_date === today).forEach(x => {
+      rows.push(row("recurring.html?show=" + encodeURIComponent(x.id), "repeat", x.description || "", t("summary.todayAutoRecord", { amount: money(x.currency, sbRecurAmount(x)) }), t("summary.todayView"), false));
+    });
+    try{
+      const { data: evs, error } = await sb.from("events").select("id,title,event_date,deadline,location")
+        .eq("group_id", myMember.group_id).eq("status", "open")
+        .or(`event_date.eq.${today},deadline.eq.${today}`);
+      if(!error && evs && evs.length){
+        const { data: regs } = await sb.from("event_registrations").select("event_id,status")
+          .eq("member_id", myMember.id).in("event_id", evs.map(e => e.id));
+        const goingIds = new Set((regs || []).filter(r => r.status === "going").map(r => r.event_id));
+        evs.filter(e => e.event_date === today).forEach(e => {
+          rows.push(row("events.html", "calendar", e.title, [goingIds.has(e.id) ? t("events.youreIn") : "", e.location || ""].filter(Boolean).join("・"), t("summary.todayEvent"), false));
+        });
+        evs.filter(e => e.event_date !== today && e.deadline === today && !goingIds.has(e.id)).forEach(e => {
+          rows.push(row("events.html", "clock", e.title, t("events.deadlineToday"), t("events.join"), true));
+        });
+      }
+    }catch(e){}
+    list.innerHTML = rows.join("");
+    card.classList.toggle("hidden", !rows.length);
+  }
+
   async function renderRecurringOverview(){
     const card = document.getElementById("recurringOverviewCard");
     const totalsEl = document.getElementById("recurringOverviewTotals");
@@ -1406,6 +1459,7 @@ renderNavLinks();
     if(error){
       console.warn("讀取週期性支出總覽失敗（可能尚未建立 recurring_expenses 資料表）：", error);
       card.classList.add("hidden");
+      renderTodayCard([]);
       return;
     }
 
@@ -1416,6 +1470,7 @@ renderNavLinks();
       (tmpl.payers || []).some(p => p.member_id === myMember.id) ||
       (tmpl.shares || []).some(s => s.member_id === myMember.id)
     );
+    renderTodayCard(data);
     if(!data.length){
       card.classList.add("hidden");
       return;
@@ -1453,14 +1508,9 @@ renderNavLinks();
         .filter(tmpl => tmpl.next_due_date >= todayStr)
         .sort((a, b) => a.next_due_date < b.next_due_date ? -1 : 1)
         .slice(0, 3);
-      // 金額每期不同、已經到期的：要有人去填金額才會記帳，放最上面
-      const pending = data.filter(tmpl => tmpl.variable_amount && tmpl.next_due_date <= todayStr);
-      const pendingHtml = pending.map(tmpl => `<a class="recurring-overview-fill" href="recurring.html?fill=${encodeURIComponent(tmpl.id)}">
-          <span>${escapeHtml(tmpl.description || "")}・${escapeHtml(t("recurring.fillPending", { date: tmpl.next_due_date }))}</span>
-          <b>${escapeHtml(t("recurring.fillBtn"))}</b>
-        </a>`).join("");
-      if(upcoming.length || pending.length){
-        upcomingEl.innerHTML = pendingHtml + (upcoming.length ? `<div class="recurring-overview-upcoming-label">${t("summary.recurringUpcomingLabel")}</div>` : "") +
+      // 等人填金額的那幾筆放在上面「今天」卡片，這裡只列即將到期
+      if(upcoming.length){
+        upcomingEl.innerHTML = (upcoming.length ? `<div class="recurring-overview-upcoming-label">${t("summary.recurringUpcomingLabel")}</div>` : "") +
           upcoming.map(tmpl => {
             const curObj = CURRENCIES.find(c => c.code === tmpl.currency);
             const sym = curObj ? curObj.symbol : tmpl.currency;
@@ -1785,7 +1835,7 @@ renderNavLinks();
       previewEl.classList.remove("hidden");
       previewEl.innerHTML = `
         <div>${t("summary.taxPreviewSummary", {subtotal: sym+formatAmt(subtotal), tax: sym+formatAmt(taxAmt), total: sym+formatAmt(total)})}</div>
-        <div style="font-size:11.5px;color:var(--ink-soft);margin-top:3px;">${t("summary.taxPreviewMode", {mode: modeText})}</div>
+        <div style="font-size:12px;color:var(--ink-soft);margin-top:3px;">${t("summary.taxPreviewMode", {mode: modeText})}</div>
       `;
     }
 
@@ -2227,7 +2277,7 @@ renderNavLinks();
       const baseShare = Math.floor(baseAmount / checked.length);
       previewEl.classList.remove("hidden");
       previewEl.innerHTML = `
-        <div style="font-size:11.5px;color:var(--ink-soft);">
+        <div style="font-size:12px;color:var(--ink-soft);">
           扣除個人自付合計 ${sym}${formatAmt(totalAddon)} ➔ 共同平分基本額 ${sym}${formatAmt(baseAmount)}（每人約 ${sym}${formatAmt(baseShare)}）
         </div>
       `;

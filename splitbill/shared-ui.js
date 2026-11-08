@@ -1350,3 +1350,108 @@ window.sbSplitByWeights = sbSplitByWeights;
 window.sbRecurShares = sbRecurShares;
 window.sbRecurPayers = sbRecurPayers;
 window.sbRecurAdvance = sbRecurAdvance;
+
+// ============================================================
+// 全站彈窗：返回鍵、點背景、Esc 都能關（2026-11）
+//
+// 各頁的彈窗都是 .calc-modal，加上 .show（或 .open）就顯示。這裡不改各頁怎麼開關，
+// 只在旁邊看著：有彈窗打開時多推一筆瀏覽紀錄，所以 Android 返回鍵是「關彈窗」
+// 而不是離開整頁；點背景、按 Esc 也一樣。關的時候按彈窗自己的關閉鈕，各頁原本
+// 的收尾邏輯照跑。使用者在彈窗裡打過字的話，用這三種「不小心」的方式關之前先問一句；
+// 按 ✕ 是明確要關，就不問。
+// 不適合誤觸就關的彈窗（從信件點進來的重設密碼）加 data-sb-sticky。
+// ============================================================
+(function initSbModalManager(){
+  const OPEN_SEL = ".calc-modal.show, .calc-modal.open";
+  let order = [];          // 打開的順序，最後一個在最上面
+  let armed = false;       // 瀏覽紀錄裡有沒有我們推的那一筆
+  let ignorePop = 0;       // 自己呼叫 history.back() 造成的 popstate 不處理
+  const usesHidden = new WeakSet();
+  const dirty = new WeakSet();
+
+  const isOpen = m => m.matches(OPEN_SEL);
+  const top = () => order[order.length - 1] || null;
+
+  function closeBtnOf(m){
+    return m.querySelector(".calc-close, [id$='CloseBtn'], [id$='Close'], [data-sb-close]");
+  }
+  function forceClose(m){
+    const btn = closeBtnOf(m);
+    if(btn && !btn.disabled){ btn.click(); }
+    if(isOpen(m)){
+      m.classList.remove("show", "open");
+      if(usesHidden.has(m)) setTimeout(() => { if(!isOpen(m)) m.classList.add("hidden"); }, 200);
+    }
+  }
+  async function requestClose(m){
+    if(!m || m.hasAttribute("data-sb-sticky")) return false;
+    if(dirty.has(m)){
+      const msg = typeof t === "function" ? t("shared.discardChanges") : "還沒儲存的內容會不見，確定要關閉嗎？";
+      const ok = typeof window.sbConfirm === "function" ? await window.sbConfirm(msg) : window.confirm(msg);
+      if(!ok) return false;
+    }
+    forceClose(m);
+    return true;
+  }
+
+  function sync(){
+    const now = Array.from(document.querySelectorAll(OPEN_SEL));
+    order = order.filter(m => now.includes(m));
+    now.forEach(m => { if(!order.includes(m)){ order.push(m); dirty.delete(m); } });
+    if(order.length && !armed){
+      history.pushState(Object.assign({}, history.state, { sbModal: true }), "");
+      armed = true;
+    } else if(!order.length && armed){
+      armed = false;
+      if(history.state && history.state.sbModal){ ignorePop++; history.back(); }
+    }
+  }
+
+  new MutationObserver(muts => {
+    muts.forEach(mu => {
+      const m = mu.target;
+      if(m.classList && m.classList.contains("calc-modal") && isOpen(m) && /\bhidden\b/.test(mu.oldValue || "")) usesHidden.add(m);
+    });
+    sync();
+  }).observe(document.documentElement, { subtree: true, attributes: true, attributeFilter: ["class"], attributeOldValue: true, childList: false });
+
+  window.addEventListener("popstate", () => {
+    if(ignorePop){ ignorePop--; return; }
+    armed = false;
+    const m = top();
+    if(!m) return;
+    // 先把那一筆補回去：彈窗沒關成（使用者選了不關、或還有下一層），再按返回一樣是關彈窗
+    history.pushState(Object.assign({}, history.state, { sbModal: true }), "");
+    armed = true;
+    requestClose(m);
+  });
+
+  document.addEventListener("keydown", e => {
+    if(e.key !== "Escape" || e.defaultPrevented) return;
+    const m = top();
+    if(m){ e.preventDefault(); e.stopPropagation(); requestClose(m); }
+  });
+
+  // 按下跟放開都在背景上才算（從卡片裡拖選文字拖到外面不算）
+  let downOnBackdrop = null;
+  document.addEventListener("pointerdown", e => {
+    downOnBackdrop = e.target.classList && e.target.classList.contains("calc-modal") && isOpen(e.target) ? e.target : null;
+  }, true);
+  document.addEventListener("click", e => {
+    const m = e.target;
+    if(m === downOnBackdrop && m === top()) requestClose(m);
+    downOnBackdrop = null;
+  });
+
+  const markDirty = e => {
+    if(!e.isTrusted) return;
+    const m = e.target.closest && e.target.closest(".calc-modal");
+    // 只算打字的欄位；勾選、下拉這類一點就生效的不算（篩選視窗之類的關掉也不會掉東西）
+    if(m && !m.classList.contains("sb-dialog-modal") && !m.hasAttribute("data-sb-nodirty")
+      && e.target.matches("textarea, input:not([type=file]):not([type=checkbox]):not([type=radio]):not([type=range]):not([type=search])")) dirty.add(m);
+  };
+  document.addEventListener("input", markDirty, true);
+  document.addEventListener("change", markDirty, true);
+
+  window.sbModalTop = top;
+})();

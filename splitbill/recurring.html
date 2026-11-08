@@ -26,15 +26,15 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=956">
-<link rel="stylesheet" href="shared.css?v=956">
-<script src="holiday.js?v=956"></script>
+<link rel="stylesheet" href="theme.css?v=957">
+<link rel="stylesheet" href="shared.css?v=957">
+<script src="holiday.js?v=957"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
-<script src="i18n.js?v=956"></script>
-<script src="currencies.js?v=956"></script>
-<script src="version.js?v=956"></script>
-<script src="shared-ui.js?v=956"></script>
-<script src="theme.js?v=956" defer></script>
+<script src="i18n.js?v=957"></script>
+<script src="currencies.js?v=957"></script>
+<script src="version.js?v=957"></script>
+<script src="shared-ui.js?v=957"></script>
+<script src="theme.js?v=957" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -76,6 +76,11 @@ if("serviceWorker" in navigator){
     <button type="button" class="sbf-primary" id="recurringTemplateAddBtn"><span class="sb-ico" style="--ico:var(--ico-plus)" aria-hidden="true"></span><span data-i18n="recurring.add">新增</span></button>
   </div>
 
+  <div class="fx-views hidden" id="fxViews" role="tablist">
+    <button type="button" role="tab" data-view="list" data-i18n="recurring.viewList">全部</button>
+    <button type="button" role="tab" data-view="category" data-i18n="recurring.viewCategory">依類別</button>
+    <button type="button" role="tab" data-view="upcoming" data-i18n="recurring.viewUpcoming">接下來 30 天</button>
+  </div>
   <div id="recurringTemplatesList"></div>
   <div class="sbf-empty hidden" id="recurringTemplatesEmpty">
     <span class="sb-ico" style="--ico:var(--ico-repeat)" aria-hidden="true"></span>
@@ -221,6 +226,6 @@ if("serviceWorker" in navigator){
 const SUPABASE_URL = "https://ofevarwtqzvzrvhbanmf.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_pWT6foelsonrb1sLMXhnCw_oA3ytvaX";
 </script>
-<script src="recurring.js?v=956"></script>
+<script src="recurring.js?v=957"></script>
 </body>
 </html>

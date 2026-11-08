@@ -136,6 +136,112 @@
     </article>`;
   }
 
+  // ---------- 檢視方式：全部／依類別／接下來 30 天 ----------
+  const VIEW_KEY = "splitbill-recurring-view";
+  function currentView(){
+    try { const v = localStorage.getItem(VIEW_KEY); if(v === "category" || v === "upcoming") return v; } catch(e){}
+    return "list";
+  }
+  function renderViewTabs(show){
+    const box = document.getElementById("fxViews");
+    box.classList.toggle("hidden", !show);
+    box.setAttribute("aria-label", t("recurring.viewLabel"));
+    const view = currentView();
+    box.querySelectorAll("[data-view]").forEach(b => {
+      const on = b.dataset.view === view;
+      b.classList.toggle("is-on", on);
+      b.setAttribute("aria-selected", String(on));
+    });
+  }
+  document.getElementById("fxViews").addEventListener("click", e => {
+    const b = e.target.closest("[data-view]");
+    if(!b) return;
+    try { localStorage.setItem(VIEW_KEY, b.dataset.view); } catch(err){}
+    renderRecurringTemplates();
+  });
+
+  // 不同幣別不能直接相加，金額一律「每個幣別各一個數字」用 + 串起來
+  function sumByCurrency(rows){
+    const by = {};
+    rows.forEach(r => { by[r.currency] = (by[r.currency] || 0) + r.amount; });
+    return Object.keys(by).map(code => money(code, by[code])).join(" + ");
+  }
+
+  function categoryHTML(active){
+    const groups = {};
+    active.forEach(tmpl => {
+      const meta = getCategoryMeta(tmpl.description, null, tmpl.category);
+      const g = groups[meta.type] || (groups[meta.type] = { meta, items: [], monthly: [] });
+      g.items.push(tmpl);
+      g.monthly.push({ currency: tmpl.currency, amount: Number(tmpl.amount) * perMonth(tmpl) });
+    });
+    return Object.values(groups)
+      .sort((a, b) => b.monthly.reduce((s, r) => s + r.amount, 0) - a.monthly.reduce((s, r) => s + r.amount, 0))
+      .map(g => `<section class="fx-group">
+        <h2 class="fx-group-head">
+          <span class="fx-icon" style="--c:${g.meta.color}">${g.meta.icon}</span>
+          <span>${escapeHtml(g.meta.name)}<small>${escapeHtml(t("recurring.groupCount", { n: g.items.length }))}</small></span>
+          <b>${escapeHtml(t("recurring.groupPerMonth", { amount: sumByCurrency(g.monthly) }))}</b>
+        </h2>
+        ${g.items.map(itemHTML).join("")}
+      </section>`).join("");
+  }
+
+  // 從下一期開始一期一期往後推，到 30 天後為止；有結束日、次數、漲價都照算
+  function occurrences(tmpl, untilIso){
+    const out = [];
+    if(isEnded(tmpl)) return out;
+    let date = tmpl.next_due_date, n = tmpl.generated_count || 0, guard = 0;
+    while(date <= untilIso && guard++ < 60){
+      if(tmpl.end_date && date > tmpl.end_date) break;
+      if(tmpl.total_count && n >= tmpl.total_count) break;
+      const amount = tmpl.next_amount && tmpl.next_amount_from && tmpl.next_amount_from <= date ? Number(tmpl.next_amount) : Number(tmpl.amount);
+      out.push({ tmpl, date, amount });
+      n++;
+      date = sbRecurNextDate(tmpl, date);
+    }
+    return out;
+  }
+
+  function upcomingHTML(active){
+    const myId = myMember && myMember.id;
+    const today = todayIso();
+    const [y, m, d] = today.split("-").map(Number);
+    const until = sbIsoDay(new Date(y, m - 1, d + 30));
+    const rows = active.flatMap(tmpl => occurrences(tmpl, until)).sort((a, b) => a.date.localeCompare(b.date));
+    if(!rows.length) return `<p class="fx-up-empty">${escapeHtml(t("recurring.upcomingEmpty"))}</p>`;
+    const mineRows = rows.map(r => {
+      const s = (sbRecurShares(r.tmpl, r.amount) || []).find(x => x.member_id === myId);
+      return { currency: r.tmpl.currency, amount: s ? Number(s.amount) : 0, share: s };
+    });
+    const byDate = {};
+    rows.forEach((r, i) => { (byDate[r.date] || (byDate[r.date] = [])).push({ ...r, share: mineRows[i].share }); });
+    const head = `<div class="fx-up-total">
+      <span>${escapeHtml(t("recurring.upcomingTotal"))}</span>
+      <b>${escapeHtml(sumByCurrency(rows.map(r => ({ currency: r.tmpl.currency, amount: r.amount }))))}</b>
+      <small>${escapeHtml(t("recurring.upcomingMine", { amount: sumByCurrency(mineRows) }))}</small>
+    </div>`;
+    return head + `<ol class="fx-timeline">` + Object.keys(byDate).map(date => {
+      const [yy, mm, dd] = date.split("-").map(Number);
+      const late = date < today;
+      return `<li class="fx-up-day${late ? " is-late" : ""}">
+        <div class="fx-up-date"><b>${mm}/${dd}</b><span>${escapeHtml(weekdayOf(date))}</span></div>
+        <div class="fx-up-items">
+          <p class="fx-up-when">${escapeHtml(dueText(date))}</p>
+          ${byDate[date].map(r => {
+            const meta = getCategoryMeta(r.tmpl.description, null, r.tmpl.category);
+            const pending = r.tmpl.variable_amount && late;
+            return `<button type="button" class="fx-up-row" data-id="${r.tmpl.id}">
+              <span class="fx-icon" style="--c:${meta.color}">${meta.icon}</span>
+              <span class="fx-up-name">${escapeHtml(r.tmpl.description || "")}${pending ? `<small>${escapeHtml(t("recurring.waitFill"))}</small>` : ""}</span>
+              <span class="fx-up-amt"><b>${r.tmpl.variable_amount ? escapeHtml(t("recurring.about")) : ""}${escapeHtml(money(r.tmpl.currency, r.amount))}</b>${r.share ? `<small>${escapeHtml(t("recurring.myShare", { amount: money(r.tmpl.currency, r.share.amount) }))}</small>` : ""}</span>
+            </button>`;
+          }).join("")}
+        </div>
+      </li>`;
+    }).join("") + `</ol>`;
+  }
+
   async function renderRecurringTemplates(){
     const listEl = document.getElementById("recurringTemplatesList");
     const emptyEl = document.getElementById("recurringTemplatesEmpty");
@@ -159,10 +265,14 @@
     const active = templates.filter(x => x.active).sort((a, b) => (needsFill(b) - needsFill(a)) || a.next_due_date.localeCompare(b.next_due_date));
     const paused = templates.filter(x => !x.active);
     renderSummary(active);
+    renderViewTabs(active.length >= 2);
 
-    listEl.innerHTML = active.map(itemHTML).join("")
-      + (paused.length ? `<h2 class="sbf-group-title">${escapeHtml(t("recurring.paused"))}</h2>` + paused.map(itemHTML).join("") : "");
+    const view = active.length >= 2 ? currentView() : "list";
+    const pausedHTML = paused.length ? `<h2 class="sbf-group-title">${escapeHtml(t("recurring.paused"))}</h2>` + paused.map(itemHTML).join("") : "";
+    listEl.innerHTML = view === "upcoming" ? upcomingHTML(active)
+      : (view === "category" ? categoryHTML(active) : active.map(itemHTML).join("")) + pausedHTML;
 
+    listEl.querySelectorAll(".fx-up-row").forEach(row => row.addEventListener("click", () => openDetail(row.dataset.id)));
     listEl.querySelectorAll(".fx-item").forEach(card => {
       const open = e => {
         if(e.target.closest("button, label, input, a")) return;
@@ -189,15 +299,20 @@
     });
     listEl.querySelectorAll(".recurring-tmpl-delete").forEach(btn => {
       btn.addEventListener("click", async () => {
-        const ok = await sbConfirm(t("settings.recurringDeleteConfirm", { name: btn.dataset.name }));
-        if(!ok) return;
+        // 直接刪、跳一個可以復原的通知，不先問「確定嗎」；復原就是把同一列原樣放回去
+        const row = templatesCache.find(x => x.id === btn.dataset.id);
         const { error: delErr } = await sb.from("recurring_expenses").delete().eq("id", btn.dataset.id);
         if(delErr){
           console.error("刪除固定支出失敗：", delErr);
           await sbAlert(t("settings.msg.saveFailedRetry"), t("settings.errorTitle"));
           return;
         }
-        renderRecurringTemplates();
+        await renderRecurringTemplates();
+        if(row) showToast(t("currency.deletedToastTitle"), row.description || "", t("currency.undoLabel"), async () => {
+          const { error: insErr } = await sb.from("recurring_expenses").insert(row);
+          if(insErr){ await sbAlert(t("currency.undoFailed") + insErr.message, t("settings.errorTitle")); return; }
+          renderRecurringTemplates();
+        });
       });
     });
   }

@@ -99,6 +99,9 @@
           <button type="button" class="ev-link-btn is-quiet" data-act="cancel">${escapeHtml(t("events.cancel"))}</button>
         </div>` : ""}
       </div>` : ""}
+      <div class="ev-extra">
+        ${open ? `<button type="button" class="ev-link-btn" data-act="calendar"><span class="sb-ico" style="--ico:var(--ico-calendar)" aria-hidden="true"></span>${escapeHtml(t("events.addToCalendar"))}</button>` : `<button type="button" class="ev-link-btn" data-act="again">${escapeHtml(t("events.runAgain"))}</button>`}
+      </div>
       ${e.expense_id ? `<a class="ev-view" href="currency.html?c=${encodeURIComponent(e.currency)}&openExpense=${encodeURIComponent(e.expense_id)}">${escapeHtml(t("events.viewExpense"))} ›</a>` : ""}
       <div class="msg" data-msg></div>
     </article>`;
@@ -139,6 +142,76 @@
     await load();
   }
 
+  // ---------- 加入行事曆 ----------
+  // 活動只有日期；備註裡有「集合時間：19:00」這種寫法就從那個時間開始、抓兩小時，否則是整天。
+  // 依裝置走最直接的路：iPhone 開 .ics（系統直接跳「加入行事曆」）、Android 瀏覽器用 intent
+  // 開手機行事曆的新增畫面、App（Capacitor 不轉送 intent）和電腦開 Google 日曆的新增頁。
+  function calendarTimes(e){
+    const [y, m, d] = e.event_date.split("-").map(Number);
+    const label = t("events.noteTime");
+    const line = (e.note || "").split("\n").find(l => l.includes(label)) || "";
+    const hit = line.match(/(\d{1,2})[:：](\d{2})/);
+    if(hit && Number(hit[1]) < 24 && Number(hit[2]) < 60){
+      const start = new Date(y, m - 1, d, Number(hit[1]), Number(hit[2]));
+      return { allDay: false, start, end: new Date(start.getTime() + 2 * 3600000) };
+    }
+    return { allDay: true, start: new Date(y, m - 1, d), end: new Date(y, m - 1, d + 1) };
+  }
+  const pad2 = n => String(n).padStart(2, "0");
+  const ymd = dt => dt.getFullYear() + pad2(dt.getMonth() + 1) + pad2(dt.getDate());
+  const ymdhms = dt => ymd(dt) + "T" + pad2(dt.getHours()) + pad2(dt.getMinutes()) + "00";
+  function calendarDetails(e){
+    const fee = feeText(e);
+    return [fee.main + " " + fee.unit, e.note || "", location.origin + location.pathname].filter(Boolean).join("\n\n");
+  }
+  function icsText(e){
+    const { allDay, start, end } = calendarTimes(e);
+    const esc = v => String(v || "").replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/([,;])/g, "\\$1");
+    return [
+      "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Splitbill//Events//EN", "BEGIN:VEVENT",
+      "UID:" + e.id + "@splitbill",
+      "DTSTAMP:" + new Date().toISOString().replace(/[-:]/g, "").slice(0, 15) + "Z",
+      allDay ? "DTSTART;VALUE=DATE:" + ymd(start) : "DTSTART:" + ymdhms(start),
+      allDay ? "DTEND;VALUE=DATE:" + ymd(end) : "DTEND:" + ymdhms(end),
+      "SUMMARY:" + esc(e.title),
+      e.location ? "LOCATION:" + esc(e.location) : "",
+      "DESCRIPTION:" + esc(calendarDetails(e)),
+      "END:VEVENT", "END:VCALENDAR"
+    ].filter(Boolean).join("\r\n");
+  }
+  function calendarLink(e){
+    const ua = navigator.userAgent;
+    const isApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+    const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const { allDay, start, end } = calendarTimes(e);
+    if(isIOS) return { kind: "ics", url: "data:text/calendar;charset=utf-8," + encodeURIComponent(icsText(e)) };
+    if(/Android/.test(ua) && !isApp){
+      // 整天的活動 Android 用 UTC 午夜表示
+      const begin = allDay ? Date.UTC(start.getFullYear(), start.getMonth(), start.getDate()) : start.getTime();
+      const finish = allDay ? Date.UTC(end.getFullYear(), end.getMonth(), end.getDate()) : end.getTime();
+      const x = v => encodeURIComponent(v || "");
+      return { kind: "intent", url: "intent:#Intent;action=android.intent.action.INSERT;type=vnd.android.cursor.item/event;"
+        + "S.title=" + x(e.title) + ";"
+        + (e.location ? "S.eventLocation=" + x(e.location) + ";" : "")
+        + "S.description=" + x(calendarDetails(e)) + ";"
+        + "l.beginTime=" + begin + ";l.endTime=" + finish + ";"
+        + (allDay ? "B.allDay=true;" : "") + "end" };
+    }
+    const q = new URLSearchParams({
+      action: "TEMPLATE",
+      text: e.title,
+      dates: allDay ? ymd(start) + "/" + ymd(end) : ymdhms(start) + "/" + ymdhms(end),
+      details: calendarDetails(e)
+    });
+    if(e.location) q.set("location", e.location);
+    return { kind: "google", url: "https://calendar.google.com/calendar/render?" + q.toString() };
+  }
+  function addToCalendar(e){
+    const link = calendarLink(e);
+    if(link.kind === "google") window.open(link.url, "_blank", "noopener");
+    else location.href = link.url;
+  }
+
   async function onCardClick(ev){
     const btn = ev.target.closest("[data-act]");
     if(!btn) return;
@@ -150,6 +223,8 @@
     if(act === "leave") return setStatus(card, e, "not_going");
     if(act === "close") return openClose(e);
     if(act === "edit") return openForm(e);
+    if(act === "calendar") return addToCalendar(e);
+    if(act === "again") return openForm(null, e);
     if(act === "cancel"){
       if(!(await sbConfirm(t("events.cancelConfirm", { name: e.title })))) return;
       const { error } = await sb.from("events").update({ status: "cancelled" }).eq("id", e.id);
@@ -331,7 +406,22 @@
   feeRadios.forEach(r => r.addEventListener("change", refreshForm));
   $("evCurrency").addEventListener("change", refreshForm);
 
-  function openForm(e){
+  // copyFrom：「再辦一次」，沿用舊活動的內容開一個新的；日期、截止日要重選
+  function openForm(e, copyFrom){
+    if(copyFrom){
+      openForm(null);
+      $("evTitle").value = copyFrom.title;
+      $("evLocation").value = copyFrom.location || "";
+      $("evNote").value = copyFrom.note || "";
+      $("evAmount").value = copyFrom.fee_amount;
+      $("evCapacity").value = copyFrom.capacity || "";
+      feeRadios.forEach(r => { r.checked = r.value === copyFrom.fee_mode; });
+      if(!feeRadios.some(r => r.checked)) feeRadios[0].checked = true;
+      $("evCurrency").value = copyFrom.currency;
+      enhanceSelect($("evCurrency"));
+      refreshForm();
+      return;
+    }
     editingEventId = e ? e.id : null;
     $("eventFormTitle").textContent = t(e ? "events.editTitle" : "events.add");
     $("eventFormSubmit").textContent = t(e ? "events.save" : "events.create");

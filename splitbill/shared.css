@@ -290,7 +290,7 @@ body::after{
 .logo-stop-b{ stop-color:var(--logo-grad-b); }
 .app-header .eyebrow{
   font-family:"Noto Sans TC",monospace;
-  font-size:11px;
+  font-size:12px;
   letter-spacing:.3em;
   text-transform:uppercase;
   color:var(--ink-soft);
@@ -426,7 +426,7 @@ body::after{
 }
 .nav-dropdown-code{
   font-family:"Noto Sans TC",monospace;
-  font-size:11px;
+  font-size:12px;
   color:var(--ink-soft);
   margin-left:auto;
 }
@@ -437,7 +437,7 @@ body::after{
   border:1px solid var(--line);
   border-radius:14px;
   padding:4px 10px;
-  font-size:11.5px;
+  font-size:12px;
   font-weight:600;
   color:var(--ink-soft);
   white-space:nowrap;
@@ -574,7 +574,7 @@ textarea{ resize:vertical; min-height:70px; }
   min-width:22px;
   padding:0;
   border-radius:50%;
-  font-size:11px;
+  font-size:12px;
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -951,8 +951,8 @@ input[type="password"]::-webkit-strong-password-auto-fill-button{ visibility:hid
 
 label.settings-row{ transition:background-color .15s ease; border-radius:8px; cursor:pointer; }
 label.settings-row:hover{ background:color-mix(in srgb, var(--line) 30%, transparent); }
-.settings-hint{ font-size:11.5px; color:var(--ink-soft); margin:0 0 12px; line-height:1.55; white-space:pre-line; }
-.settings-changelog{ margin:0 0 12px; padding-left:18px; font-size:11.5px; line-height:1.65; color:var(--ink-soft); }
+.settings-hint{ font-size:12px; color:var(--ink-soft); margin:0 0 12px; line-height:1.55; white-space:pre-line; }
+.settings-changelog{ margin:0 0 12px; padding-left:18px; font-size:12px; line-height:1.65; color:var(--ink-soft); }
 .settings-changelog li{ margin-bottom:4px; }
 .settings-changelog li:last-child{ margin-bottom:0; }
 .info-btn{
@@ -1113,13 +1113,13 @@ button.dd-btn {
 .rate-trend-range-tabs{ margin-bottom:12px; }
 .rate-trend-summary{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
 .rate-trend-current{ font-size:16px; font-weight:700; color:var(--ink); font-family:"Noto Sans TC",monospace; }
-.rate-trend-range{ font-size:11.5px; color:var(--ink-soft); font-family:"Noto Sans TC",monospace; }
+.rate-trend-range{ font-size:12px; color:var(--ink-soft); font-family:"Noto Sans TC",monospace; }
 .rate-trend-chart-wrap{ position:relative; }
 .rate-trend-chart{ width:100%; height:auto; display:block; overflow:visible; }
 .rate-trend-line{ stroke:var(--btn-primary); stroke-width:2; stroke-linejoin:round; stroke-linecap:round; }
 .rate-trend-dot{ fill:var(--btn-primary); }
 .rate-trend-date-label{ font-size:9px; fill:var(--ink-soft); font-family:"Noto Sans TC",monospace; }
-.rate-trend-note{ font-size:10.5px; color:var(--ink-soft); text-align:center; margin-top:8px; }
+.rate-trend-note{ font-size:12px; color:var(--ink-soft); text-align:center; margin-top:8px; }
 #rateTrendHoverArea{ cursor:crosshair; touch-action:pan-y; }
 .rate-trend-hover-line{ stroke:var(--ink-soft); stroke-width:1; stroke-dasharray:3 2; pointer-events:none; }
 .rate-trend-hover-dot{ fill:var(--card); stroke:var(--btn-primary); stroke-width:2; pointer-events:none; }
@@ -1128,7 +1128,7 @@ button.dd-btn {
   transform:translate(-50%, calc(-100% - 10px));
   background:var(--ink);
   color:var(--card);
-  font-size:11px;
+  font-size:12px;
   font-weight:700;
   font-family:"Noto Sans TC",monospace;
   padding:4px 8px;
@@ -1145,7 +1145,7 @@ button.dd-btn {
 .spending-insight-row-top{ align-items:flex-start; }
 .spending-insight-top-list{ display:flex; flex-wrap:wrap; gap:4px; justify-content:flex-end; }
 .spending-insight-top-chip{
-  font-size:11px;
+  font-size:12px;
   padding:2px 8px;
   border-radius:999px;
   background:var(--paper);
@@ -1163,7 +1163,7 @@ button.dd-btn {
 .recurring-overview-total-amt{ font-weight:700; font-family:"Noto Sans TC",monospace; }
 .recurring-overview-upcoming:empty{ display:none; }
 .recurring-overview-totals:not(:empty) + .recurring-overview-upcoming{ margin-top:10px; padding-top:10px; border-top:1px solid var(--line); }
-.recurring-overview-upcoming-label{ font-size:11.5px; color:var(--ink-soft); margin-bottom:6px; }
+.recurring-overview-upcoming-label{ font-size:12px; color:var(--ink-soft); margin-bottom:6px; }
 .recurring-overview-upcoming-row{
   display:flex; align-items:center; justify-content:space-between;
   font-size:12.5px; color:var(--ink-soft); padding:3px 0;
@@ -1178,7 +1178,7 @@ button.dd-btn {
 .recurring-tmpl-actions{ display:flex; align-items:center; gap:10px; flex-shrink:0; }
 .recurring-tmpl-readonly-badge{
   flex-shrink:0;
-  font-size:11px;
+  font-size:12px;
   color:var(--ink-soft);
   background:var(--line);
   padding:3px 9px;
@@ -1611,7 +1611,7 @@ button.dd-btn {
 }
 .exp-item .exp-main{ flex:1; min-width:0; }
 .exp-item .exp-desc{ font-size:14.5px; font-weight:700; color:var(--ink); line-height:1.4; }
-.exp-item .exp-meta{ font-size:11.5px; color:var(--ink-soft); margin-top:4px; line-height:1.65; }
+.exp-item .exp-meta{ font-size:12px; color:var(--ink-soft); margin-top:4px; line-height:1.65; }
 .exp-meta-line{ display:block; }
 .exp-item .exp-right{
   flex:0 0 auto;
@@ -1762,7 +1762,7 @@ button.dd-btn {
 .login-form-panel .app-header .eyebrow{
   color:var(--ink-soft);
   font-family:"Noto Sans TC",monospace;
-  font-size:11px;
+  font-size:12px;
   letter-spacing:.3em;
   margin-bottom:6px;
 }
@@ -1947,7 +1947,7 @@ button.dd-btn {
   gap:10px;
   margin:18px 0 14px;
   color:var(--ink-soft);
-  font-size:11.5px;
+  font-size:12px;
 }
 .login-divider::before, .login-divider::after{
   content:"";
@@ -2183,7 +2183,7 @@ button.dd-btn {
 .filter-date-row{ display:flex; align-items:center; gap:8px; margin-top:4px; }
 .filter-date-row input{ flex:1; min-width:0; }
 .filter-date-sep{ flex:0 0 auto; color:var(--ink-soft); font-size:12px; }
-.filter-hint{ font-size:11px; color:var(--ink-soft); margin:4px 0 0; }
+.filter-hint{ font-size:12px; color:var(--ink-soft); margin:4px 0 0; }
 .chart-title-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin:0 0 var(--sp-4); }
 /* 「債務趨勢」跟「花費類別分佈」合併後不再各自有 h2，這排只剩控制項，
    改成靠右對齊，維持跟原本（h2 靠左、控制項靠右）一樣的視覺位置。 */
@@ -2345,7 +2345,7 @@ button.dd-btn {
   vertical-align:middle;
 }
 .notif-item-body{ font-size:12px; color:var(--ink-soft); margin-top:2px; line-height:1.5; }
-.notif-item-time{ font-size:10.5px; color:var(--ink-soft); opacity:.75; margin-top:4px; }
+.notif-item-time{ font-size:12px; color:var(--ink-soft); opacity:.75; margin-top:4px; }
 .notif-item-del{
   flex:none;
   width:30px;
@@ -2516,7 +2516,7 @@ button.dd-btn {
 .flow-bar-up:hover{ opacity:.8; }
 .flow-bar-down{ fill:var(--positive-text); transition:opacity .15s ease; }
 .flow-bar-down:hover{ opacity:.8; }
-.flow-chart-legend{ display:flex; justify-content:center; gap:16px; margin:8px 0 0; font-size:11px; color:var(--ink-soft); }
+.flow-chart-legend{ display:flex; justify-content:center; gap:16px; margin:8px 0 0; font-size:12px; color:var(--ink-soft); }
 .flow-chart-legend .legend-up{ color:var(--negative-text); }
 .flow-chart-legend .legend-down{ color:var(--positive-text); }
 .flow-amt-label{ font-size:10px; font-family:"Noto Sans TC",monospace; font-weight:700; }
@@ -2558,7 +2558,7 @@ button.dd-btn {
   cursor:pointer;
 }
 .bal-cmp-amt{
-  font-size:11px;
+  font-size:12px;
   font-family:"Noto Sans TC",monospace;
   font-weight:700;
   white-space:nowrap;
@@ -2684,7 +2684,7 @@ button.dd-btn {
 .debt-matrix{
   border-collapse:separate;
   border-spacing:0;
-  font-size:11.5px;
+  font-size:12px;
   white-space:nowrap;
   width:100%;
   table-layout:auto;
@@ -2698,7 +2698,7 @@ button.dd-btn {
   transition:background-color .15s ease, color .15s ease;
 }
 .debt-matrix thead th{
-  font-size:11.5px;
+  font-size:12px;
   color:#48484A;
   font-weight:700;
   background:#F4F4F6; /* 明亮模式下乾淨質感的灰白色標頭 */
@@ -2708,7 +2708,7 @@ button.dd-btn {
   font-weight:700;
   color:#48484A;
   background:#F4F4F6;
-  font-size:11.5px;
+  font-size:12px;
   text-align:center;
   vertical-align:middle;
 }
@@ -2788,7 +2788,7 @@ button.dd-btn {
 .debt-matrix tfoot th{
   background:#F4F4F6;
   color:#48484A;
-  font-size:11.5px;
+  font-size:12px;
 }
 
 /* 橫向滑動表格時，把左側「債權人」欄固定住不跟著捲動 */
@@ -2858,7 +2858,7 @@ button.dd-btn {
 .config-warning-text{ font-size:13px; color:var(--ink-soft); line-height:1.7; }
 .summary-hint{ margin-bottom:10px; }
 .export-hint{ text-align:center; margin-top:8px; }
-.repay-hint{ font-size:11px; color:var(--ink-soft); margin:10px 0 0; }
+.repay-hint{ font-size:12px; color:var(--ink-soft); margin:10px 0 0; }
 #filterClearBtn{ margin-top:12px; }
 .sum-ok{
   display:inline-flex;
@@ -3020,7 +3020,7 @@ button.dd-btn {
 }
 .settled-toggle-btn:active{ transform:scale(.98); }
 .settled-toggle-btn .chevron{
-  font-size:11px;
+  font-size:12px;
   transition:transform .25s ease;
   color:var(--ink-soft);
 }
@@ -3052,7 +3052,7 @@ button.dd-btn {
   box-shadow:var(--card-nested-shadow);
 }
 .my-mini-balance.mini-pill .amt{
-  font-size:11.5px;
+  font-size:12px;
 }
 
 /* 讀取中的骨架屏佔位動畫 */
@@ -3157,12 +3157,12 @@ button.dd-btn {
   color:var(--ink);
 }
 .debt-section-icon{ font-size:15px; }
-.debt-section-count{ margin-left:auto; font-size:11px; font-weight:400; color:var(--ink-soft); }
+.debt-section-count{ margin-left:auto; font-size:12px; font-weight:400; color:var(--ink-soft); }
 
 .ledger-sort-toggle-btn{
   padding:3px 10px;
   border-radius:999px;
-  font-size:11px;
+  font-size:12px;
   font-weight:700;
   background:var(--paper);
   border:1px solid var(--line);
@@ -3229,7 +3229,7 @@ button.dd-btn {
   border:1px solid var(--line);
   background:var(--paper);
   color:var(--ink);
-  font-size:11px;
+  font-size:12px;
   font-weight:700;
   padding:5px 10px;
   border-radius:8px;
@@ -3263,7 +3263,7 @@ button.dd-btn {
   white-space:nowrap;
 }
 .archive-step-sub{
-  font-size:11px;
+  font-size:12px;
   font-weight:700;
   color:var(--positive-text);
   white-space:nowrap;
@@ -3278,7 +3278,7 @@ button.dd-btn {
     font-size:10px;
   }
   .archive-step-title{
-    font-size:11px;
+    font-size:12px;
   }
 }
 
@@ -3380,7 +3380,7 @@ button.dd-btn {
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:11px;
+  font-size:12px;
   box-shadow:0 2px 6px rgba(0,0,0,.15);
   z-index:2;
   transition:transform .15s ease;
@@ -3444,7 +3444,7 @@ button.dd-btn {
   margin-top:1px;
 }
 .ledger-row-date{
-  font-size:11px;
+  font-size:12px;
   color:var(--ink-soft);
   white-space:nowrap;
 }
@@ -3459,7 +3459,7 @@ button.dd-btn {
   height:22px;
   padding:0;
   border-radius:6px;
-  font-size:11px;
+  font-size:12px;
   display:inline-flex;
   align-items:center;
   justify-content:center;
@@ -3500,7 +3500,7 @@ button.dd-btn {
   gap:6px;
   padding:4px 9px;
   border-radius:8px;
-  font-size:11.5px;
+  font-size:12px;
   font-weight:600;
   box-sizing:border-box;
 }
@@ -3650,7 +3650,7 @@ button.dd-btn {
   border: 1px solid var(--line);
   background: var(--card);
   color: var(--ink-soft);
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -3831,7 +3831,7 @@ button.dd-btn {
   margin-top:8px;
 }
 .twd-settle-result-label{
-  font-size:11px;
+  font-size:12px;
   font-weight:700;
   color:var(--ink-soft);
   text-transform:uppercase;
@@ -3846,7 +3846,7 @@ button.dd-btn {
 }
 .twd-settle-result-formula{
   font-family:"Noto Sans TC",monospace;
-  font-size:11.5px;
+  font-size:12px;
   color:var(--ink-soft);
 }
 
@@ -3854,7 +3854,7 @@ button.dd-btn {
   margin-top:16px;
   padding-top:12px;
   border-top:1px dashed var(--line);
-  font-size:11.5px;
+  font-size:12px;
   line-height:1.6;
   color:var(--ink-soft);
 }
@@ -3874,7 +3874,7 @@ button.dd-btn {
   gap:3px;
   padding:2px 7px;
   border-radius:6px;
-  font-size:10.5px;
+  font-size:12px;
   font-weight:700;
   background:color-mix(in srgb, #636AB1 18%, var(--card));
   color:var(--btn-primary);
@@ -3888,7 +3888,7 @@ button.dd-btn {
   gap:3px;
   padding:2px 7px;
   border-radius:6px;
-  font-size:10.5px;
+  font-size:12px;
   font-weight:700;
   background:color-mix(in srgb, #2F8F4E 16%, var(--card));
   color:#2F8F4E;
@@ -3988,7 +3988,7 @@ button.dd-btn {
   line-height:1;
 }
 .country-info-label{
-  font-size:10.5px;
+  font-size:12px;
   color:var(--ink-soft);
 }
 .country-info-value{
@@ -4138,7 +4138,7 @@ button.dd-btn {
   height:17px;
   border-radius:50%;
   background:color-mix(in srgb, var(--btn-primary) 16%, var(--card));
-  font-size:11px;
+  font-size:12px;
   font-weight:700;
   flex-shrink:0;
   transition:transform .2s ease;
@@ -4163,20 +4163,20 @@ button.dd-btn {
   border:1.5px dashed var(--card-nested-border);
 }
 .exp-addons-hint{
-  font-size:11.5px;
+  font-size:12px;
   color:var(--ink-soft);
   line-height:1.45;
   margin-bottom:10px;
 }
 .exp-ratio-hint{
-  font-size:11.5px;
+  font-size:12px;
   color:var(--ink-soft);
   line-height:1.45;
   margin:8px 0;
 }
 .ratio-row-unit{ flex:0 0 auto; font-size:12px; color:var(--ink-soft); }
 .exp-addons-tax-warn{
-  font-size:11.5px;
+  font-size:12px;
   line-height:1.5;
   font-weight:600;
   margin-bottom:10px;
@@ -4190,7 +4190,7 @@ button.dd-btn {
   margin-top:4px;
 }
 .exp-shared-addon-hint{
-  font-size:11.5px;
+  font-size:12px;
   color:var(--ink-soft);
   line-height:1.45;
   margin-bottom:10px;
@@ -4230,7 +4230,7 @@ button.dd-btn {
   border:1px solid color-mix(in srgb, var(--negative-text) 34%, var(--line));
   background:color-mix(in srgb, var(--negative-text) 12%, var(--card));
   color:var(--negative-text);
-  font-size:11px;
+  font-size:12px;
   font-weight:700;
   cursor:pointer;
   display:inline-flex;
@@ -4249,7 +4249,7 @@ button.dd-btn {
 }
 .exp-shared-addon-item-hint{
   margin-top:8px;
-  font-size:11.5px;
+  font-size:12px;
   font-weight:600;
   color:var(--btn-primary);
 }
@@ -4318,7 +4318,7 @@ button.dd-btn {
   background:var(--btn-primary);
 }
 .sb-avatar.avatar-xs{ width:20px; height:20px; font-size:10px; border-width:1px; }
-.sb-avatar.avatar-sm{ width:26px; height:26px; font-size:11px; border-width:1.2px; }
+.sb-avatar.avatar-sm{ width:26px; height:26px; font-size:12px; border-width:1.2px; }
 .sb-avatar.avatar-md{ width:34px; height:34px; font-size:13px; border-width:1.5px; }
 .sb-avatar.avatar-xl{ width:76px; height:76px; font-size:28px; border-width:2.5px; }
 
@@ -4361,7 +4361,7 @@ button.dd-btn {
   width:100%;
   min-width:0;
   padding:2px 8px 2px 10px;
-  font-size:11.5px;
+  font-size:12px;
   font-weight:700;
   border-radius:999px;
   background:var(--line);
@@ -4497,7 +4497,7 @@ button.dd-btn {
   background:rgba(255,107,107,.08);
 }
 .settings-avatar-hint{
-  font-size:11.5px;
+  font-size:12px;
   color:var(--ink-soft);
   margin:0;
   text-align:center;
@@ -4770,7 +4770,7 @@ button.dd-btn {
   gap:6px;
 }
 .exp-date-group-badge{
-  font-size:11px;
+  font-size:12px;
   font-weight:700;
   padding:2px 8px;
   border-radius:999px;
@@ -4965,7 +4965,7 @@ button.dd-btn {
   border: 1px solid color-mix(in srgb, var(--btn-primary) 24%, transparent);
   border-radius: 6px;
   color: var(--btn-primary);
-  font-size: 11px;
+  font-size: 12px;
   cursor: pointer;
   transition: all .18s ease;
   user-select: none;
@@ -4998,7 +4998,7 @@ button.dd-btn {
 .exp-debt-calc-badge-expanded{
   display: inline-flex;
   align-items: center;
-  font-size: 11.5px;
+  font-size: 12px;
   font-family: "Noto Sans TC", monospace;
   font-weight: 600;
   padding: 3px 9px;
@@ -5143,7 +5143,7 @@ button.dd-btn {
     margin-bottom: 10px !important;
   }
   label {
-    font-size: 11.5px !important;
+    font-size: 12px !important;
     margin: 6px 0 5px !important;
   }
 
@@ -5174,7 +5174,7 @@ button.dd-btn {
   }
   .btn.small {
     padding: 5px 10px !important;
-    font-size: 11.5px !important;
+    font-size: 12px !important;
   }
   .check-pill {
     padding: 5px 8px !important;
@@ -5219,7 +5219,7 @@ button.dd-btn {
     line-height: 1.4 !important;
   }
   .exp-item .exp-meta {
-    font-size: 11.5px !important;
+    font-size: 12px !important;
     line-height: 1.55 !important;
     margin-top: 4px !important;
   }
@@ -5237,7 +5237,7 @@ button.dd-btn {
     font-size: 12.5px !important;
   }
   .exp-date-group-badge {
-    font-size: 11px !important;
+    font-size: 12px !important;
     padding: 2px 7px !important;
   }
 
@@ -5247,11 +5247,11 @@ button.dd-btn {
   .debt-matrix th,
   .debt-matrix td {
     padding: 6px 3px !important;
-    font-size: 11px !important;
+    font-size: 12px !important;
   }
   /* 8. 金額分攤列 (Amount Share Row) */
   .amt-row-name {
-    font-size: 11.5px !important;
+    font-size: 12px !important;
     max-width: 72px !important;
   }
 
@@ -5783,7 +5783,7 @@ button.dd-btn {
   border: 1px solid var(--line);
   background: var(--input-bg);
   color: var(--ink);
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
   outline: none;
   cursor: pointer;
@@ -5855,7 +5855,7 @@ button.dd-btn {
   border: 1px solid rgba(235, 87, 87, 0.32);
   border-radius: 9px;
   color: var(--negative-text, #E57373);
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1.5;
   box-sizing: border-box;
@@ -5887,7 +5887,7 @@ button.dd-btn {
   box-sizing: border-box;
 }
 .ai-tax-label{
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--ink-soft);
   white-space: nowrap;
@@ -6040,7 +6040,7 @@ button.dd-btn {
   border-radius: 999px;
 }
 .ai-claim-progress-status{
-  font-size: 11px;
+  font-size: 12px;
   margin-top: 5px;
   font-weight: 600;
   color: var(--ink-soft);
@@ -6101,7 +6101,7 @@ button.dd-btn {
   border-radius: 6px;
   background: color-mix(in srgb, var(--btn-primary) 14%, var(--paper));
   color: var(--btn-primary);
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 800;
   font-family: "Noto Sans TC", monospace;
   flex-shrink: 0;
@@ -6141,7 +6141,7 @@ button.dd-btn {
 }
 .ai-price-label,
 .ai-qty-unit-label{
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--ink-soft);
   font-weight: 600;
   flex-shrink: 0;
@@ -6224,7 +6224,7 @@ button.dd-btn {
   background: var(--paper);
   border: 1px solid var(--line);
   color: var(--ink-soft);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   width: 20px !important;
@@ -6327,7 +6327,7 @@ button.dd-btn {
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
-  font-size: 11px !important;
+  font-size: 12px !important;
   font-weight: 600 !important;
   padding: 0 10px !important;
   height: 28px !important;
@@ -6405,7 +6405,7 @@ button.dd-btn {
 }
 .ai-qty-allocated-hint{
   margin-top: 6px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--ink-soft);
 }
@@ -6506,7 +6506,7 @@ button.dd-btn {
   border-color: var(--btn-primary);
 }
 .ai-bubble-name{
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--ink);
   line-height: 1.2;
@@ -6520,7 +6520,7 @@ button.dd-btn {
   align-items: center !important;
   justify-content: center !important;
   gap: 4px;
-  font-size: 11px !important;
+  font-size: 12px !important;
   font-weight: 600 !important;
   padding: 0 12px !important;
   height: 28px !important;
@@ -6763,7 +6763,7 @@ button.dd-btn {
 .ai-btn-copy-compact,
 .ai-btn-copy-full {
   padding: 4px 9px;
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
   border-radius: 6px;
   border: 1px solid var(--line);
@@ -6850,7 +6850,7 @@ button.dd-btn {
   gap:8px;
 }
 .ai-payer-sum-check{
-  font-size:11.5px;
+  font-size:12px;
   margin-top:6px;
   text-align:right;
 }
@@ -6870,7 +6870,7 @@ button.dd-btn {
   line-height:1.5;
   white-space:pre-wrap;
   font-family:"Noto Sans TC",monospace;
-  font-size:11.5px;
+  font-size:12px;
 }
 
 /* ============================================================
@@ -7022,7 +7022,7 @@ input#aiExpenseTime {
 .settings-row-lead { display: flex; align-items: center; gap: 10px; }
 .settings-row-icon { font-size: 18px; }
 .settings-row-title { font-weight: 600; }
-.settings-row-hint { margin: 2px 0 0; font-size: 11px; }
+.settings-row-hint { margin: 2px 0 0; font-size: 12px; }
 .settings-divider-compact { margin: 8px 0; }
 /* 語言設定跟其他 settings-row 不一樣，不用左右並排（標籤文字比較長，
    跟下拉選單擠在同一行會被壓得又窄又擠、還可能自己先換行）——改成標籤
@@ -7036,7 +7036,7 @@ input#aiExpenseTime {
   color: var(--ink);
 }
 .settings-changelog-wrap-mt { margin-top: 10px; }
-.settings-changelog-header { font-size: 11.5px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+.settings-changelog-header { font-size: 12px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
 .settings-changelog-list { margin: 0; padding-left: 18px; }
 .login-apk-wrap { margin-bottom: 12px; }
 
@@ -7145,7 +7145,7 @@ input#aiExpenseTime {
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   border-radius: 999px;
   background: var(--btn-primary);
@@ -7188,7 +7188,7 @@ input#aiExpenseTime {
   border: 1px solid var(--line);
   background: var(--paper);
   color: var(--ink-soft);
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 600;
   padding: 3px 9px;
   border-radius: 999px;
@@ -7350,7 +7350,7 @@ input#aiExpenseTime {
   background: transparent;
   border: none;
   color: var(--btn-primary);
-  font-size: 11.5px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   padding: 2px 6px;
@@ -7603,10 +7603,10 @@ input#aiExpenseTime {
   }
   .debt-flow-name{
     max-width:64px;
-    font-size:11px;
+    font-size:12px;
   }
   .debt-flow-amount-pill{
-    font-size:11px;
+    font-size:12px;
     padding:2px 8px;
   }
 }
@@ -7646,7 +7646,7 @@ input#aiExpenseTime {
   letter-spacing:2px;
 }
 .debt-settled-stamp .stamp-sub{
-  font-size:11px;
+  font-size:12px;
   font-weight:700;
   letter-spacing:1px;
   opacity:0.85;
@@ -7677,7 +7677,7 @@ input#aiExpenseTime {
   border:none;
   background:transparent;
   color:var(--ink-soft);
-  font-size:11.5px;
+  font-size:12px;
   font-weight:600;
   padding:3px 10px;
   border-radius:16px;
@@ -7775,7 +7775,7 @@ input#aiExpenseTime {
   100%{ transform:scale(1); opacity:1; }
 }
 .donut-center-label{
-  font-size:11px;
+  font-size:12px;
   color:var(--ink-soft);
   font-weight:600;
   margin-bottom:2px;
@@ -7842,10 +7842,10 @@ input#aiExpenseTime {
   align-items:center;
   gap:8px;
   font-family:"Noto Sans TC", monospace;
-  font-size:11.5px;
+  font-size:12px;
 }
 .donut-legend-amt{ font-weight:700; color:var(--ink); }
-.donut-legend-pct{ font-size:10.5px; color:var(--ink-soft); }
+.donut-legend-pct{ font-size:12px; color:var(--ink-soft); }
 
 /* ============================================================
    支出類別下拉選單 (Category Select)
@@ -7861,7 +7861,7 @@ input#aiExpenseTime {
   margin-left:6px;
   padding:1px 7px;
   border-radius:999px;
-  font-size:10.5px;
+  font-size:12px;
   font-weight:700;
   background:color-mix(in srgb, var(--btn-primary) 15%, transparent);
   color:var(--btn-primary);
@@ -7966,7 +7966,7 @@ input#aiExpenseTime {
   min-width: 0;
 }
 .cat-exp-date{
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--ink-soft);
   display: flex;
   align-items: center;
@@ -7993,7 +7993,7 @@ input#aiExpenseTime {
 }
 .cat-exp-my-share{
   display: inline-block;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: #2b8a3e;
   background: color-mix(in srgb, #2b8a3e 12%, var(--card));
@@ -8025,7 +8025,7 @@ input#aiExpenseTime {
 .cat-exp-row-label{
   color: var(--ink-soft);
   font-weight: 600;
-  font-size: 11.5px;
+  font-size: 12px;
   min-width: 52px;
   width: auto;
   white-space: nowrap;
@@ -8111,11 +8111,11 @@ input#aiExpenseTime {
   border-radius: 10px;
   background: var(--btn-primary);
   color: #fff;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
 }
 .sb-ms-caret{
-  font-size: 11px;
+  font-size: 12px;
   color: var(--ink-soft);
   transition: transform 0.2s ease;
 }
@@ -8170,7 +8170,7 @@ input#aiExpenseTime {
 }
 .sb-ms-header-sep{
   color: var(--line);
-  font-size: 11px;
+  font-size: 12px;
 }
 .sb-ms-list{
   overflow-y: auto;
@@ -8275,7 +8275,7 @@ input#aiExpenseTime {
 .member-profile-relation-row.zero{ color: var(--ink-soft); font-weight: 500; }
 .member-profile-relation-currency-tag{
   flex-shrink: 0;
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 999px;
@@ -8295,7 +8295,7 @@ input#aiExpenseTime {
   text-align: left;
 }
 .member-profile-payment-label{
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--ink-soft);
 }
@@ -8436,7 +8436,7 @@ input#aiExpenseTime {
   gap: 2px;
 }
 .payment-bank-group-label{
-  font-size: 10.5px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--ink-soft);
   padding: 6px 8px 2px;
@@ -8601,7 +8601,7 @@ input#aiExpenseTime {
 }
 .quick-exp-ai-receipt-btn{
   padding: 5px 12px;
-  font-size: 11.5px;
+  font-size: 12px;
 }
 .quick-exp-modal-body {
   flex: 1 1 auto;
@@ -8624,7 +8624,7 @@ input#aiExpenseTime {
   margin: 0 !important;
 }
 .quick-cur-auto-badge {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--btn-primary);
   background: color-mix(in srgb, var(--btn-primary) 12%, var(--card));
@@ -9452,7 +9452,7 @@ html body .debt-empty-icon::after{ width:5px; height:5px; bottom:8px; left:-3px;
 .sb-app-banner-icon .sb-ico{ width:18px; height:18px; }
 .sb-app-banner-text{ flex:1; min-width:0; }
 .sb-app-banner-title{ font-size:13.5px; font-weight:700; line-height:1.3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.sb-app-banner-desc{ font-size:11.5px; line-height:1.35; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sb-app-banner-desc{ font-size:12px; line-height:1.35; color:var(--ink-soft); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .sb-app-banner.is-ios .sb-app-banner-desc{ white-space:normal; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
 .sb-app-banner-btn{
   flex:none; padding:7px 14px; border-radius:999px;
@@ -9530,7 +9530,7 @@ html body *:not(.calc-modal):not(.modal):not(.sb-dialog-backdrop):not(.sb-record
   .sb-bottom-nav button{
     display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
     min-height:52px; padding:4px 0; border:0; background:none; cursor:pointer;
-    color:var(--ink-soft); font:600 11.5px/1.2 var(--font-ui);
+    color:var(--ink-soft); font:600 12px/1.2 var(--font-ui);
     -webkit-tap-highlight-color:transparent;
   }
   .sb-nav-ico{
@@ -9843,7 +9843,7 @@ html body .home-tools{ display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px
 html body .home-tools a{ display:inline-flex; align-items:center; gap:7px; min-height:40px; padding:0 14px; border:1px solid var(--card-border); border-radius:999px; background:var(--card); color:var(--ink); font-size:14px; font-weight:600; text-decoration:none; }
 html body .home-tools a.hidden{ display:none; }
 html body .home-tools a{ position:relative; }
-html body .home-tools-badge{ position:absolute; top:-6px; right:-4px; display:grid; place-items:center; min-width:20px; height:20px; padding:0 5px; border:2px solid var(--bg-canvas); border-radius:999px; background:var(--negative-text); color:#FFFFFF; font-size:11px; font-weight:700; line-height:1; box-sizing:border-box; }
+html body .home-tools-badge{ position:absolute; top:-6px; right:-4px; display:grid; place-items:center; min-width:20px; height:20px; padding:0 5px; border:2px solid var(--bg-canvas); border-radius:999px; background:var(--negative-text); color:#FFFFFF; font-size:12px; font-weight:700; line-height:1; box-sizing:border-box; }
 html body .home-tools-badge.hidden{ display:none; }
 html body .home-tools a:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; }
 
@@ -9919,7 +9919,7 @@ html body .fx-icon-btn:focus-visible{ outline:2px solid var(--btn-primary); }
 html body .ev-card{ margin-bottom:12px; padding:16px; border:1px solid var(--card-border); border-radius:18px; background:var(--card); }
 html body .ev-card.is-over{ opacity:.78; }
 html body .ev-head{ display:flex; align-items:flex-start; gap:13px; }
-html body .ev-date{ display:grid; justify-items:center; flex:none; width:56px; padding:7px 0; border-radius:13px; background:var(--tint); color:var(--ink-soft); font-size:11.5px; line-height:1.25; }
+html body .ev-date{ display:grid; justify-items:center; flex:none; width:56px; padding:7px 0; border-radius:13px; background:var(--tint); color:var(--ink-soft); font-size:12px; line-height:1.25; }
 html body .ev-date b{ font-size:23px; line-height:1.15; color:var(--btn-primary); }
 html body .ev-title{ flex:1; min-width:0; }
 html body .ev-title h2{ margin:0 0 3px; font-size:17px; font-weight:700; line-height:1.35; overflow-wrap:anywhere; }
@@ -10036,3 +10036,122 @@ html body .ev-preview .ev-card{ margin:0; pointer-events:none; }
 html body .ev-preview .ev-actions, html body .ev-preview [data-msg]{ display:none; }
 /* 明細的頭像不能被 flex:1 撐開 */
 html body .fx-shares li > .sb-avatar{ flex:none; }
+
+/* ============================================================
+   v957 按得到的大小（目標 40–44px）
+   看起來可以小，但手指按的範圍要夠：放大不了的就用 ::after 往外擴可點範圍。
+   ============================================================ */
+html body :is(.sb-theme-btn, .info-btn, .whoami-group-switcher .dd-btn, .chart-nav-btn, .recurring-auto-banner-close, .ev-line, #addPaymentAccountBtn, .filter-toggle-head){ position:relative; }
+html body :is(.sb-theme-btn, .whoami-group-switcher .dd-btn, .chart-nav-btn, .recurring-auto-banner-close)::after{ content:""; position:absolute; inset:-6px; }
+html body .info-btn{ width:20px; height:20px; font-size:12px; }
+html body .info-btn::after{ content:""; position:absolute; inset:-12px; }
+html body .ev-line::after{ content:""; position:absolute; inset:-6px 0; }
+html body #addPaymentAccountBtn{ padding-block:11px; }
+html body .filter-toggle-head{ min-height:40px; }
+
+html body .app-header .notif-bell-btn{ width:40px; height:40px; }
+html body .app-header :is(#logoutBtn, #backBtn){ min-height:40px; padding-inline:14px; display:inline-flex; align-items:center; }
+html body .sb-theme-btn{ width:36px !important; height:36px !important; }
+html body .whoami-group-switcher .dd-btn{ min-height:28px; padding-block:4px; }
+
+html body .chart-nav-btn{ width:36px !important; height:36px !important; }
+html body .chart-gran-btn, html body .btn-tool-pill, html body .chart-toggle-tab{ min-height:36px !important; }
+html body :is(.settings-field-row, .settings-card, .settings-group) .btn.small{ min-height:40px; }
+html body .fb-edit, html body .fb-del{ width:36px !important; height:36px !important; }
+html body :is(.fb-edit + .fb-del, .exp-edit + .exp-del){ margin-left:8px; }
+html body .fx-fill-btn{ min-height:40px; }
+
+/* 自動記錄的橫幅：一筆一張，多筆合成一張可展開 */
+html body .recurring-auto-banner-close{ width:32px; height:32px; display:inline-grid; place-items:center; }
+html body .recurring-auto-banner-view.link-btn, html body .recurring-auto-banner-toggle{ min-height:32px; padding-inline:6px; }
+html body .recurring-auto-banner-item.is-group{ flex-wrap:wrap; }
+html body .recurring-auto-banner-list{ flex-basis:100%; list-style:none; margin:8px 0 0; padding:0; border-top:1px solid var(--line); }
+html body .recurring-auto-banner-list button{ display:flex; align-items:center; gap:8px; width:100%; min-height:44px; padding:0 2px; border:0; border-bottom:1px solid var(--line); background:none; color:var(--ink); font:inherit; font-size:14px; text-align:left; cursor:pointer; }
+html body .recurring-auto-banner-list li:last-child button{ border-bottom:0; }
+html body .recurring-auto-banner-list button > span:first-child{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+html body .recurring-auto-banner-list button > span:last-child{ color:var(--ink-soft); }
+
+/* ============================================================
+   v957 手機上的彈窗一律從底部滑上來；確認框、重設密碼、看大圖、裁頭貼維持置中。
+   表單的主要按鈕固定在最下面，填長表單不用捲回去找。
+   ============================================================ */
+@media (max-width: 767px){
+  html body .calc-modal:not(.sb-bottom-sheet):not(.sb-dialog-modal):not(#recoveryModal):not(#receiptLightboxModal):not(#avatarCropModal){
+    align-items:flex-end !important; padding:0 !important;
+  }
+  html body .calc-modal:not(.sb-bottom-sheet):not(.sb-dialog-modal):not(#recoveryModal):not(#receiptLightboxModal):not(#avatarCropModal) > .calc-card{
+    width:100% !important; max-width:100% !important; margin:0 !important;
+    max-height:92dvh !important; overflow-y:auto !important;
+    border-radius:22px 22px 0 0 !important;
+    padding-bottom:max(16px, calc(env(safe-area-inset-bottom) + 12px)) !important;
+    animation:sbBottomSheetUp .3s cubic-bezier(.16,1,.3,1) both !important;
+  }
+  html body .calc-modal > .calc-card > :is(.sbf-actions, .recurring-edit-scope-actions){
+    position:sticky; bottom:calc(-1 * max(16px, calc(env(safe-area-inset-bottom) + 12px))); z-index:2;
+    margin-inline:-12px; padding:10px 12px max(16px, calc(env(safe-area-inset-bottom) + 12px));
+    margin-bottom:calc(-1 * max(16px, calc(env(safe-area-inset-bottom) + 12px)));
+    background:var(--card); border-top:1px solid var(--line);
+  }
+}
+@media (max-width: 767px) and (prefers-reduced-motion: reduce){
+  html body .calc-modal > .calc-card{ animation:none !important; }
+}
+
+/* ---------- v957 活動：加入行事曆／再辦一次 ---------- */
+html body .ev-extra{ display:flex; flex-wrap:wrap; gap:4px; margin:6px -10px 0; }
+html body .ev-extra:empty{ display:none; }
+html body .ev-link-btn{ display:inline-flex; align-items:center; gap:6px; }
+html body .ev-link-btn .sb-ico{ width:16px; height:16px; }
+
+/* ---------- v957 固定支出：檢視方式、依類別、接下來 30 天 ---------- */
+html body .fx-views{ display:flex; gap:4px; margin:0 0 12px; padding:4px; border-radius:12px; background:var(--line); }
+html body .fx-views.hidden{ display:none; }
+html body .fx-views button{ flex:1; min-height:36px; padding:0 8px; border:0; border-radius:9px; background:none; color:var(--ink-soft); font:inherit; font-size:14px; font-weight:600; white-space:nowrap; cursor:pointer; }
+html body .fx-views button.is-on{ background:var(--card); color:var(--ink); box-shadow:0 1px 2px rgba(16,14,30,.12); }
+html body .fx-views button:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:1px; }
+
+html body .fx-group{ margin-bottom:18px; }
+html body .fx-group-head{ display:flex; align-items:center; gap:10px; margin:0 2px 8px; font-size:15px; font-weight:700; }
+html body .fx-group-head .fx-icon{ width:30px; height:30px; border-radius:9px; font-size:15px; }
+html body .fx-group-head > span:nth-child(2){ flex:1; min-width:0; }
+html body .fx-group-head small{ margin-left:6px; font-size:13px; font-weight:500; color:var(--ink-soft); }
+html body .fx-group-head > b{ flex:none; font-size:14px; font-weight:600; color:var(--ink-soft); }
+
+html body .fx-up-total{ display:grid; grid-template-columns:1fr auto; align-items:baseline; gap:2px 10px; margin-bottom:14px; padding:14px 16px; border:1px solid var(--card-border); border-radius:16px; background:var(--card); }
+html body .fx-up-total span{ font-size:14px; color:var(--ink-soft); }
+html body .fx-up-total b{ font-size:18px; font-weight:700; text-align:right; overflow-wrap:anywhere; }
+html body .fx-up-total small{ grid-column:1 / -1; font-size:13px; color:var(--ink-soft); }
+html body .fx-timeline{ list-style:none; margin:0; padding:0; }
+html body .fx-up-day{ display:grid; grid-template-columns:48px minmax(0, 1fr); gap:10px; padding-bottom:14px; position:relative; }
+html body .fx-up-day::before{ content:""; position:absolute; left:23px; top:44px; bottom:0; width:2px; background:var(--line); }
+html body .fx-up-day:last-child::before{ display:none; }
+html body .fx-up-date{ display:grid; place-items:center; align-content:center; width:48px; height:44px; border-radius:12px; background:var(--card); border:1px solid var(--card-border); line-height:1.15; }
+html body .fx-up-date b{ font-size:15px; }
+html body .fx-up-date span{ font-size:12px; color:var(--ink-soft); }
+html body .fx-up-day.is-late .fx-up-date{ border-color:var(--negative-text); color:var(--negative-text); }
+html body .fx-up-when{ margin:2px 2px 6px; font-size:13px; color:var(--ink-soft); }
+html body .fx-up-row{ display:flex; align-items:center; gap:10px; width:100%; min-height:56px; margin-bottom:6px; padding:8px 12px; border:1px solid var(--card-border); border-radius:14px; background:var(--card); color:var(--ink); font:inherit; text-align:left; cursor:pointer; }
+html body .fx-up-row:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; }
+html body .fx-up-row .fx-icon{ width:34px; height:34px; border-radius:10px; font-size:16px; }
+html body .fx-up-name{ flex:1; min-width:0; font-size:15px; font-weight:600; overflow-wrap:anywhere; }
+html body .fx-up-name small{ display:block; font-size:12.5px; font-weight:500; color:var(--negative-text); }
+html body .fx-up-amt{ flex:none; text-align:right; }
+html body .fx-up-amt b{ display:block; font-size:15px; }
+html body .fx-up-amt small{ font-size:12.5px; color:var(--ink-soft); }
+html body .fx-up-empty{ padding:28px 12px; text-align:center; color:var(--ink-soft); }
+
+/* ---------- v957 首頁「今天」 ---------- */
+html body .sb-today h2{ margin-bottom:6px; }
+html body .sb-today-list{ list-style:none; margin:0; padding:0; }
+html body .sb-today-row{ display:flex; align-items:center; gap:12px; min-height:56px; padding:6px 0; border-top:1px solid var(--line); color:var(--ink); text-decoration:none; }
+html body .sb-today-list li:first-child .sb-today-row{ border-top:0; }
+html body .sb-today-ico{ display:grid; place-items:center; flex:none; width:36px; height:36px; border-radius:10px; background:var(--line); color:var(--ink-soft); }
+html body .sb-today-ico .sb-ico{ width:18px; height:18px; }
+html body .sb-today-row.is-urgent .sb-today-ico{ background:color-mix(in srgb, var(--btn-primary) 14%, var(--card)); color:var(--btn-primary); }
+html body .sb-today-text{ flex:1; min-width:0; }
+html body .sb-today-text b{ display:block; font-size:15px; font-weight:600; overflow-wrap:anywhere; }
+html body .sb-today-text small{ display:block; font-size:13px; color:var(--ink-soft); overflow-wrap:anywhere; }
+html body .sb-today-act{ flex:none; font-size:14px; font-weight:600; color:var(--btn-primary); white-space:nowrap; }
+html body .sb-today-row:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; border-radius:8px; }
+html body #evCardPreview .ev-extra{ display:none; }
+html body #feedbackSubmitBtn{ min-height:40px; }
