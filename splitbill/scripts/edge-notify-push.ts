@@ -3,7 +3,8 @@
 // ============================================================
 //
 // 由 Supabase Database Webhook 在 expenses / repayments 有
-// INSERT 或 UPDATE、events 有 INSERT 時觸發。
+// INSERT 或 UPDATE、events 有 INSERT 時觸發；固定支出的到期提醒由每天的
+// pg_cron（recurring_daily_reminders）寫好通知後，用 table = recurring_expenses 呼叫。
 //
 // 2026-10 起「要通知誰、寫什麼」全部由資料庫 trigger
 // notify_expense_or_repayment() 決定：它在同一個交易裡替每位收件人
@@ -51,7 +52,7 @@ Deno.serve(async (req) => {
   if (!record || type === "DELETE") {
     return new Response("skipped");
   }
-  if (table !== "expenses" && table !== "repayments" && table !== "events") {
+  if (table !== "expenses" && table !== "repayments" && table !== "events" && table !== "recurring_expenses") {
     return new Response("skipped");
   }
 
@@ -82,6 +83,8 @@ Deno.serve(async (req) => {
     (subs || []).map(async (sub) => {
       const n = rows.find((r) => r.member_id === sub.member_id)!;
       const url = table === "events" ? "events.html"
+        : table === "recurring_expenses"
+        ? `recurring.html?${n.type === "recurring_need_amount" ? "fill" : "show"}=${encodeURIComponent(record.id)}`
         : table === "expenses" && !n.params?.removed
         ? `currency.html?c=${cur}&openExpense=${encodeURIComponent(record.id)}`
         : `currency.html?c=${cur}`;

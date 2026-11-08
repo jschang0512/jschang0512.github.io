@@ -9962,3 +9962,58 @@ html body .sbf-days{ grid-template-columns:repeat(7, minmax(0, 1fr)); margin-bot
 html body .sbf-days span{ padding:8px 0; }
 html body #recurTmplPayer .check-pill input{ position:absolute; opacity:0; pointer-events:none; }
 html body #recurTmplPayer .check-pill:has(input:focus-visible){ outline:2px solid var(--btn-primary); outline-offset:2px; }
+
+/* ---------- 固定支出 v2：表單的分攤列、開關列、明細、填金額 ---------- */
+/* 表單裡通用的 label{display:block} 會蓋掉人名膠囊的置中 */
+html body .sbf-sec label.check-pill{ display:flex; align-items:center; justify-content:center; margin:0; padding:0 10px; color:var(--ink); }
+html body .sbf-sec .sbf-seg:has(> label:nth-child(3)){ grid-template-columns:repeat(3, minmax(0, 1fr)); }
+html body .sbf-sec .sbf-seg label.is-disabled span{ opacity:.4; cursor:not-allowed; }
+html body #recurTmplMonthlyWrap:has(> .hidden:first-child){ grid-template-columns:minmax(0, 1fr); }
+html body .sbf-row.hidden, html body .sbf-row > .hidden{ display:none; }
+html body .sbf-sec label.sbf-switch-row{ display:flex; align-items:center; justify-content:space-between; gap:14px; margin:12px 0 0; padding:11px 12px; border-radius:12px; background:var(--tint); color:var(--ink); cursor:pointer; }
+html body .sbf-switch-row > span:first-child{ min-width:0; }
+html body .sbf-switch-row b{ display:block; font-size:14px; font-weight:600; }
+html body .sbf-switch-row small{ display:block; margin-top:2px; font-size:12.5px; line-height:1.45; color:var(--ink-soft); }
+html body .sbf-switch-row .switch-toggle{ flex:none; }
+html body #recurTmplFromWrap .sbf-note, html body #recurTmplCountWrap .sbf-note{ margin:6px 0 0; font-size:12.5px; }
+html body .sbf-split-rows{ display:grid; gap:6px; margin-top:4px; }
+html body .sbf-split-rows.hidden, html body .sbf-note.hidden{ display:none; }
+html body .sbf-split-row{ display:flex; align-items:center; gap:8px; min-height:48px; padding:4px 6px 4px 10px; border:1px solid var(--line); border-radius:12px; }
+html body .sbf-split-name{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; font-weight:600; }
+html body .sbf-split-calc{ flex:none; font-size:12.5px; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+html body .sbf-split-input{ display:flex; align-items:center; gap:4px; flex:none; }
+html body .sbf-split-input i{ font-style:normal; font-size:13px; color:var(--ink-soft); }
+html body .sbf-sec .sbf-split-input input[type="number"]{ width:84px; min-height:38px; text-align:right; }
+html body #recurTmplSplitNote{ margin:8px 2px 0; font-size:13px; }
+html body #recurTmplSplitNote.is-bad{ color:var(--negative-text); font-weight:600; }
+html body .sbf-ghost{ display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:0 16px; border:1px solid var(--line); border-radius:12px; background:var(--card); color:var(--ink); font:inherit; font-size:14.5px; font-weight:600; cursor:pointer; }
+html body .sbf-ghost:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; }
+
+html body .fx-item{ cursor:pointer; }
+html body .fx-item:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; }
+html body .fx-tags{ display:flex; flex-wrap:wrap; gap:5px; margin:10px 0 0 54px; }
+html body .fx-tags span{ padding:3px 8px; border-radius:999px; background:var(--tint); color:var(--ink-soft); font-size:12px; font-weight:600; }
+html body .fx-item.needs-fill{ border-color:color-mix(in srgb, var(--btn-primary) 45%, var(--card-border)); }
+html body .fx-fill{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:12px; padding:10px 10px 10px 12px; border-radius:12px; background:color-mix(in srgb, var(--btn-primary) 10%, var(--card)); font-size:13.5px; font-weight:600; }
+html body .fx-fill .sbf-primary{ min-height:38px; padding:0 14px; font-size:14px; }
+
+html body .fx-detail .fx-facts{ margin:4px 0 0; }
+html body .fx-facts > div{ display:flex; justify-content:space-between; gap:14px; padding:9px 0; border-bottom:1px solid var(--line); font-size:14px; }
+html body .fx-facts dt{ flex:none; color:var(--ink-soft); }
+html body .fx-facts dd{ margin:0; text-align:right; font-weight:600; overflow-wrap:anywhere; }
+html body .fx-sub{ margin:18px 0 6px; font-size:14px; font-weight:700; }
+html body .fx-shares, html body .fx-history{ margin:0; padding:0; list-style:none; }
+html body .fx-shares li{ display:flex; align-items:center; gap:10px; padding:7px 0; font-size:14px; }
+html body .fx-shares li > span{ flex:1; min-width:0; }
+html body .fx-shares small{ margin-left:6px; color:var(--ink-soft); font-size:12.5px; }
+html body .fx-shares b, html body .fx-history b{ font-variant-numeric:tabular-nums; }
+html body .fx-detail-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; }
+html body .fx-detail-actions > *{ flex:1 1 140px; }
+html body .fx-history a{ display:flex; align-items:center; gap:10px; min-height:44px; border-bottom:1px solid var(--line); color:var(--ink); text-decoration:none; font-size:14px; }
+html body .fx-history a > span{ flex:1; }
+html body .fx-history small{ margin-left:8px; color:var(--ink-soft); font-size:12.5px; }
+html body .fx-history i{ font-style:normal; color:var(--ink-soft); font-size:18px; }
+html body .fx-history-empty{ padding:10px 0; color:var(--ink-soft); font-size:13.5px; }
+
+html body .recurring-overview-fill{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; padding:10px 12px; border-radius:12px; background:color-mix(in srgb, var(--btn-primary) 10%, var(--card)); color:var(--ink); text-decoration:none; font-size:13.5px; }
+html body .recurring-overview-fill b{ flex:none; color:var(--btn-primary); }

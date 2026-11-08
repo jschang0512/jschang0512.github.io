@@ -661,7 +661,8 @@ async function initNotificationBell(sb, myMember){
     return { title: String(n.title || "").replace(/^\p{Extended_Pictographic}\s*/u, ""), body };
   }
   const NOTIF_KIND = { expenses_insert: "add", expenses_update: "edit", recurring_generated: "repeat",
-    repayments_insert: "repay", repayments_update: "repay", debt_reminder: "remind", event_created: "add" };
+    repayments_insert: "repay", repayments_update: "repay", debt_reminder: "remind", event_created: "add",
+    recurring_upcoming: "repeat", recurring_need_amount: "repeat" };
 
   async function loadList(){
     listEl.innerHTML = `<p class="filter-hint">${t("common.loading")}</p>`;
@@ -681,7 +682,7 @@ async function initNotificationBell(sb, myMember){
       return;
     }
     listEl.innerHTML = data.map(n => { const txt = notifText(n); return `
-      <div class="notif-item notif-kind-${NOTIF_KIND[n.type] || "other"}${n.is_read ? "" : " unread"}${n.related_table && n.related_id ? " notif-item-linked" : ""}" data-id="${n.id}" data-related-table="${n.related_table || ""}" data-related-id="${n.related_id || ""}">
+      <div class="notif-item notif-kind-${NOTIF_KIND[n.type] || "other"}${n.is_read ? "" : " unread"}${n.related_table && n.related_id ? " notif-item-linked" : ""}" data-id="${n.id}" data-type="${escapeHtml(n.type || "")}" data-related-table="${n.related_table || ""}" data-related-id="${n.related_id || ""}">
         <div class="notif-item-main">
           <div class="notif-item-title">${n.is_read ? "" : '<span class="notif-unread-dot"></span>'}${escapeHtml(txt.title)}</div>
           <div class="notif-item-body">${escapeHtml(txt.body)}</div>
@@ -709,7 +710,7 @@ async function initNotificationBell(sb, myMember){
             location.href = `currency.html?c=${encodeURIComponent(exp.currency)}&openExpense=${encodeURIComponent(relatedId)}`;
           }
         } else if(relatedTable === "recurring_expenses" && relatedId){
-          location.href = `recurring.html?editRecurring=${encodeURIComponent(relatedId)}`;
+          location.href = `recurring.html?${item.dataset.type === "recurring_need_amount" ? "fill" : "show"}=${encodeURIComponent(relatedId)}`;
         } else if(relatedTable === "events"){
           location.href = "events.html";
         }
@@ -1259,3 +1260,93 @@ function sbEnablePullToRefresh(refresh){
   document.addEventListener("touchcancel", release);
 }
 window.sbEnablePullToRefresh = sbEnablePullToRefresh;
+
+// ---------- 固定支出共用：固定收支頁跟幣別頁的自動記帳都用這幾個，規則只寫一份 ----------
+function sbIsoDay(dt){
+  return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0");
+}
+// 從某一期往後推一期
+function sbRecurNextDate(tmpl, fromIso){
+  const [y, m, d] = fromIso.split("-").map(Number);
+  if(tmpl.interval_unit === "weekly") return sbIsoDay(new Date(y, m - 1, d + 7));
+  if(tmpl.interval_unit === "yearly") return sbIsoDay(new Date(y + 1, (tmpl.interval_month || m) - 1, tmpl.interval_day));
+  return sbIsoDay(new Date(y, m, tmpl.interval_day));
+}
+// 新建或改了排程時的第一期：今天之後最近的那一天（今天本身不算，避免一建立就馬上記帳）
+function sbRecurFirstDate(unit, day, month, todayIso){
+  const [y, m, d] = todayIso.split("-").map(Number);
+  if(unit === "weekly"){
+    const base = new Date(y, m - 1, d);
+    const diff = ((day - base.getDay() + 7) % 7) || 7;
+    return sbIsoDay(new Date(y, m - 1, d + diff));
+  }
+  if(unit === "yearly"){
+    const thisYear = sbIsoDay(new Date(y, month - 1, day));
+    return thisYear > todayIso ? thisYear : sbIsoDay(new Date(y + 1, month - 1, day));
+  }
+  const thisMonth = sbIsoDay(new Date(y, m - 1, day));
+  return thisMonth > todayIso ? thisMonth : sbIsoDay(new Date(y, m, day));
+}
+// 這一期要記的金額：排了漲價而且已經到了，就用新金額
+function sbRecurAmount(tmpl){
+  return tmpl.next_amount && tmpl.next_amount_from && tmpl.next_amount_from <= tmpl.next_due_date
+    ? Number(tmpl.next_amount) : Number(tmpl.amount);
+}
+// 依權重分錢，捨入的零頭給小數部分最大的人，總和一定等於 total
+function sbSplitByWeights(total, weights, currency){
+  const c = (typeof CURRENCIES !== "undefined" ? CURRENCIES : []).find(x => x.code === currency);
+  const unit = Math.pow(10, c ? c.decimals : 2);
+  const units = Math.round(Number(total) * unit);
+  const sum = weights.reduce((s, w) => s + Number(w.weight), 0) || 1;
+  const rows = weights.map(w => {
+    const exact = units * Number(w.weight) / sum;
+    return { member_id: w.member_id, u: Math.floor(exact), frac: exact - Math.floor(exact) };
+  });
+  let rest = units - rows.reduce((s, r) => s + r.u, 0);
+  rows.slice().sort((a, b) => b.frac - a.frac).forEach(r => { if(rest > 0){ r.u++; rest--; } });
+  return rows.map(r => ({ member_id: r.member_id, amount: r.u / unit }));
+}
+// 金額變了，分攤跟付款照原本的比例重算（比例模式用設定的份數）
+function sbRecurShares(tmpl, amount){
+  if(Number(amount) === Number(tmpl.amount)) return tmpl.shares;
+  const weights = tmpl.split_mode === "ratio" && Array.isArray(tmpl.split_weights) && tmpl.split_weights.length
+    ? tmpl.split_weights
+    : (tmpl.shares || []).map(s => ({ member_id: s.member_id, weight: Number(s.amount) }));
+  return sbSplitByWeights(amount, weights, tmpl.currency);
+}
+function sbRecurPayers(tmpl, amount){
+  if(Number(amount) === Number(tmpl.amount)) return tmpl.payers;
+  return sbSplitByWeights(amount, (tmpl.payers || []).map(p => ({ member_id: p.member_id, weight: Number(p.amount) || 1 })), tmpl.currency);
+}
+// 往下一期推：記了帳（generated）或跳過這期都走這裡。回傳要寫回範本的欄位。
+// schedule_rev 一定要加一，資料庫靠它分辨是新版 App 在動排程。
+function sbRecurAdvance(tmpl, { generated, amount, todayIso }){
+  const next = sbRecurNextDate(tmpl, tmpl.next_due_date);
+  const upd = { next_due_date: next, schedule_rev: (tmpl.schedule_rev || 0) + 1 };
+  const amt = amount != null ? Number(amount) : sbRecurAmount(tmpl);
+  if(amt !== Number(tmpl.amount)){
+    upd.amount = amt;
+    upd.shares = sbRecurShares(tmpl, amt);
+    upd.payers = sbRecurPayers(tmpl, amt);
+  }
+  if(tmpl.next_amount_from && tmpl.next_amount_from <= tmpl.next_due_date){
+    upd.next_amount = null;
+    upd.next_amount_from = null;
+  }
+  if(generated){
+    upd.generated_count = (tmpl.generated_count || 0) + 1;
+    upd.last_generated_date = todayIso;
+  }
+  if((tmpl.total_count && generated && upd.generated_count >= tmpl.total_count) || (tmpl.end_date && next > tmpl.end_date)){
+    upd.active = false;
+  }
+  return upd;
+}
+window.sbIsoDay = sbIsoDay;
+window.sbRecurNextDate = sbRecurNextDate;
+window.sbRecurFirstDate = sbRecurFirstDate;
+window.sbRecurAmount = sbRecurAmount;
+window.sbSplitByWeights = sbSplitByWeights;
+window.sbRecurShares = sbRecurShares;
+window.sbRecurPayers = sbRecurPayers;
+window.sbRecurAdvance = sbRecurAdvance;

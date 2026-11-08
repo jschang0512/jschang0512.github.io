@@ -2847,21 +2847,7 @@
   }
 
   // ---------- 固定／週期性支出：到期自動記錄 ----------
-  // 算「下一次」到期日：從給定的日期往後推一整個週期。月週期固定在
-  // interval_day 號（建立範本時已限制 1~28，不會有月底天數不一致的問題），
-  // 週週期單純加 7 天（範本的 next_due_date 本來就已經落在正確的星期幾上）。
-  // 這個函式同時用在「建立範本」（算第一次到期日）跟「產生完這期後算下一期」，
-  // 邏輯完全一樣，不用寫兩份。
-  function computeNextDueDate(intervalUnit, intervalDay, fromDateStr){
-    const [y, m, d] = fromDateStr.split("-").map(Number);
-    let dt;
-    if(intervalUnit === "weekly"){
-      dt = new Date(y, m - 1, d + 7);
-    } else {
-      dt = new Date(y, m, intervalDay); // m（1-based 的當月）在 0-based 月份索引裡剛好就是下個月
-    }
-    return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0");
-  }
+  // 下一期日期、這期金額、分攤怎麼算都在 shared-ui.js 的 sbRecur*，固定收支頁也用同一份。
 
   function renderRecurringAutoBanner(items){
     const banner = document.getElementById("recurringAutoBanner");
@@ -2914,12 +2900,19 @@
     const generatedForThisCurrency = [];
 
     for(const tmpl of dueTemplates){
-      const nextDate = computeNextDueDate(tmpl.interval_unit, tmpl.interval_day, tmpl.next_due_date);
+      // 金額每期不同的不自動記，到期時在固定收支頁填金額（每天早上也會推播提醒）
+      if(tmpl.variable_amount) continue;
+      // 設了結束日而且已經過了：直接停掉，不記這期
+      if(tmpl.end_date && tmpl.next_due_date > tmpl.end_date){
+        await sb.from("recurring_expenses").update({ active: false }).eq("id", tmpl.id);
+        continue;
+      }
+      const amount = sbRecurAmount(tmpl);
       const { data: claimed, error: claimErr } = await sb
         .from("recurring_expenses")
-        .update({ next_due_date: nextDate, last_generated_date: todayStr })
+        .update(sbRecurAdvance(tmpl, { generated: true, amount, todayIso: todayStr }))
         .eq("id", tmpl.id)
-        .lte("next_due_date", todayStr)
+        .eq("next_due_date", tmpl.next_due_date)
         .select();
       if(claimErr || !claimed || !claimed.length) continue; // 搶輸了，別人已經處理過這筆
 
@@ -2930,10 +2923,10 @@
         group_id: tmpl.group_id,
         description: tmpl.description,
         category: tmpl.category,
-        amount: tmpl.amount,
+        amount,
         currency: tmpl.currency,
-        payers: tmpl.payers,
-        shares: tmpl.shares,
+        payers: sbRecurPayers(tmpl, amount),
+        shares: sbRecurShares(tmpl, amount),
         expense_date: tmpl.next_due_date,
         created_by: tmpl.created_by,
         note: `[recurring:${tmpl.id}]`

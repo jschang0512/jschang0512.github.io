@@ -111,7 +111,8 @@
       repNew: "{actor}記了一筆還款", repEdit: "{actor}修改了一筆還款",
       repTo: "{from}還你 {amount}", repFrom: "你還給{to} {amount}", repWas: "（原本 {old}）",
       remind: "還款提醒", remindBody: "{creditor}提醒你結清 {amount}",
-      eventNew: "{actor}開了新活動", eventBody: "{desc}・{date}"
+      eventNew: "{actor}開了新活動", eventBody: "{desc}・{date}",
+      recurSoon: "明天會自動記錄「{desc}」", recurNeed: "{desc}該填金額了", recurNeedBody: "這期金額不固定，點開填好就會記帳"
     },
     "ja": {
       someone: "誰か", item: "支出",
@@ -124,7 +125,8 @@
       repNew: "{actor}さんが返済を記録しました", repEdit: "{actor}さんが返済を修正しました",
       repTo: "{from}さんから {amount} の返済", repFrom: "{to}さんに {amount} を返済", repWas: "（変更前 {old}）",
       remind: "返済リマインド", remindBody: "{creditor}さんから {amount} の精算リマインドが届きました",
-      eventNew: "{actor}さんがイベントを作成しました", eventBody: "{desc}・{date}"
+      eventNew: "{actor}さんがイベントを作成しました", eventBody: "{desc}・{date}",
+      recurSoon: "明日「{desc}」を自動記録します", recurNeed: "{desc}の金額を入力してください", recurNeedBody: "今回の金額は毎回変わります。入力すると記録されます"
     },
     "en": {
       someone: "Someone", item: "Expense",
@@ -137,7 +139,8 @@
       repNew: "{actor} recorded a repayment", repEdit: "{actor} edited a repayment",
       repTo: "{from} paid you {amount}", repFrom: "You paid {to} {amount}", repWas: " (was {old})",
       remind: "Repayment reminder", remindBody: "{creditor} asked you to settle {amount}",
-      eventNew: "{actor} created an event", eventBody: "{desc} · {date}"
+      eventNew: "{actor} created an event", eventBody: "{desc} · {date}",
+      recurSoon: "\"{desc}\" will be recorded tomorrow", recurNeed: "Time to enter the amount for {desc}", recurNeedBody: "This one changes each period. Enter it and it gets recorded"
     }
   };
 
@@ -186,6 +189,10 @@
         return { title: f(L.remind), body: f(L.remindBody) };
       case "event_created":
         return { title: f(L.eventNew), body: f(L.eventBody) };
+      case "recurring_upcoming":
+        return { title: f(L.recurSoon), body: vals.amount + (p.share > 0 ? f(L.share) : "") };
+      case "recurring_need_amount":
+        return { title: f(L.recurNeed), body: f(L.recurNeedBody) };
     }
     return null;
   }

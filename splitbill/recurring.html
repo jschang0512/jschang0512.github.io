@@ -26,15 +26,15 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=952">
-<link rel="stylesheet" href="shared.css?v=952">
-<script src="holiday.js?v=952"></script>
+<link rel="stylesheet" href="theme.css?v=953">
+<link rel="stylesheet" href="shared.css?v=953">
+<script src="holiday.js?v=953"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
-<script src="i18n.js?v=952"></script>
-<script src="currencies.js?v=952"></script>
-<script src="version.js?v=952"></script>
-<script src="shared-ui.js?v=952"></script>
-<script src="theme.js?v=952" defer></script>
+<script src="i18n.js?v=953"></script>
+<script src="currencies.js?v=953"></script>
+<script src="version.js?v=953"></script>
+<script src="shared-ui.js?v=953"></script>
+<script src="theme.js?v=953" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -108,9 +108,18 @@ if("serviceWorker" in navigator){
           <div class="select-wrap"><select id="recurTmplCurrency"></select></div>
         </div>
         <div>
-          <label for="recurTmplAmount" data-i18n="settings.recurringFormAmountLabel">總金額</label>
-          <input type="number" id="recurTmplAmount" min="1" step="1" inputmode="decimal" placeholder="0">
+          <label for="recurTmplAmount" id="recurTmplAmountLabel" data-i18n="settings.recurringFormAmountLabel">總金額</label>
+          <input type="number" id="recurTmplAmount" min="1" step="any" inputmode="decimal" placeholder="0">
         </div>
+      </div>
+      <label class="sbf-switch-row">
+        <span><b data-i18n="recurring.variableLabel">金額每期不同</b><small data-i18n="recurring.variableHint">像水電瓦斯。到期時再填實際金額，上面填大概的就好</small></span>
+        <span class="switch-toggle"><input type="checkbox" id="recurTmplVariable"><span class="switch-slider"></span></span>
+      </label>
+      <div class="hidden" id="recurTmplFromWrap">
+        <label for="recurTmplFrom" data-i18n="recurring.fromLabel">新金額從哪一期開始</label>
+        <div class="select-wrap"><select id="recurTmplFrom"></select></div>
+        <p class="sbf-note" data-i18n="recurring.fromHint">已經記過的帳不會改</p>
       </div>
     </section>
 
@@ -119,10 +128,18 @@ if("serviceWorker" in navigator){
       <label data-i18n="settings.recurringFormPayerLabel">誰付的錢</label>
       <div class="checks" id="recurTmplPayer" role="radiogroup"></div>
       <div class="sbf-label-row">
-        <label data-i18n="settings.recurringFormParticipantsLabel">誰要分攤（平分）</label>
+        <label data-i18n="recurring.whoShares">誰要分攤</label>
         <button type="button" class="sbf-mini" id="recurTmplAll" data-i18n="recurring.everyone">全選</button>
       </div>
       <div class="checks" id="recurTmplParticipants"></div>
+      <label data-i18n="recurring.splitHow">怎麼分</label>
+      <div class="sbf-seg" role="radiogroup">
+        <label><input type="radio" name="recurSplit" value="equal" checked><span data-i18n="recurring.splitEqual">平分</span></label>
+        <label><input type="radio" name="recurSplit" value="ratio"><span data-i18n="recurring.splitRatio">照比例</span></label>
+        <label><input type="radio" name="recurSplit" value="amount"><span data-i18n="recurring.splitAmount">指定金額</span></label>
+      </div>
+      <div class="sbf-split-rows hidden" id="recurTmplSplitRows"></div>
+      <p class="sbf-note hidden" id="recurTmplSplitNote"></p>
     </section>
 
     <section class="sbf-sec">
@@ -130,14 +147,36 @@ if("serviceWorker" in navigator){
       <div class="sbf-seg" role="radiogroup">
         <label><input type="radio" name="recurUnit" value="monthly" checked><span data-i18n="currency.recurringUnitMonthly">每月</span></label>
         <label><input type="radio" name="recurUnit" value="weekly"><span data-i18n="currency.recurringUnitWeekly">每週</span></label>
+        <label><input type="radio" name="recurUnit" value="yearly"><span data-i18n="recurring.unitYearly">每年</span></label>
       </div>
-      <div id="recurTmplMonthlyWrap">
-        <label for="recurTmplMonthlyDay" data-i18n="recurring.monthDayLabel">每月幾號</label>
-        <div class="select-wrap"><select id="recurTmplMonthlyDay"></select></div>
+      <div class="sbf-row" id="recurTmplMonthlyWrap">
+        <div class="hidden" id="recurTmplMonthWrap">
+          <label for="recurTmplMonth" data-i18n="recurring.monthLabel">幾月</label>
+          <div class="select-wrap"><select id="recurTmplMonth"></select></div>
+        </div>
+        <div>
+          <label for="recurTmplMonthlyDay" id="recurTmplDayLabel" data-i18n="recurring.monthDayLabel">每月幾號</label>
+          <div class="select-wrap"><select id="recurTmplMonthlyDay"></select></div>
+        </div>
       </div>
       <div class="hidden" id="recurTmplWeeklyWrap">
         <label data-i18n="recurring.weekDayLabel">星期幾</label>
         <div class="sbf-seg sbf-days" id="recurTmplWeeklyDay" role="radiogroup"></div>
+      </div>
+      <label data-i18n="recurring.endLabel">什麼時候停</label>
+      <div class="sbf-seg" role="radiogroup">
+        <label><input type="radio" name="recurEnd" value="never" checked><span data-i18n="recurring.endNever">不會停</span></label>
+        <label><input type="radio" name="recurEnd" value="date"><span data-i18n="recurring.endDate">到某天</span></label>
+        <label><input type="radio" name="recurEnd" value="count"><span data-i18n="recurring.endCount">記幾次</span></label>
+      </div>
+      <div class="hidden" id="recurTmplEndDateWrap">
+        <label for="recurTmplEndDate" data-i18n="recurring.endDateLabel">最後一天（這天之後就不記）</label>
+        <input type="date" id="recurTmplEndDate">
+      </div>
+      <div class="hidden" id="recurTmplCountWrap">
+        <label for="recurTmplCount" data-i18n="recurring.endCountLabel">總共記幾次</label>
+        <input type="number" id="recurTmplCount" min="1" max="600" step="1" inputmode="numeric" placeholder="12">
+        <p class="sbf-note hidden" id="recurTmplCountDone"></p>
       </div>
       <p class="sbf-preview hidden" id="recurTmplPreview"></p>
     </section>
@@ -149,10 +188,39 @@ if("serviceWorker" in navigator){
   </div>
 </div>
 
+<div class="calc-modal" id="fxDetailModal">
+  <div class="calc-card card sbf-card fx-detail">
+    <div class="calc-header">
+      <span class="calc-header-name" id="fxDetailTitle"></span>
+      <button type="button" class="calc-close" id="fxDetailClose" data-i18n-title="common.close" aria-label="關閉">✕</button>
+    </div>
+    <div id="fxDetailBody"></div>
+  </div>
+</div>
+
+<div class="calc-modal" id="fxFillModal">
+  <div class="calc-card card sbf-card">
+    <div class="calc-header">
+      <span class="calc-header-name" id="fxFillTitle"></span>
+      <button type="button" class="calc-close" id="fxFillClose" data-i18n-title="common.close" aria-label="關閉">✕</button>
+    </div>
+    <section class="sbf-sec">
+      <p class="sbf-note" id="fxFillWhen"></p>
+      <label for="fxFillAmount" data-i18n="recurring.fillLabel">這期實際金額</label>
+      <input type="number" id="fxFillAmount" min="0" step="any" inputmode="decimal" placeholder="0">
+      <p class="sbf-preview hidden" id="fxFillPreview"></p>
+    </section>
+    <div class="sbf-actions">
+      <button type="button" class="sbf-primary sbf-wide" id="fxFillSubmit" data-i18n="recurring.fillSubmit">記這一期</button>
+      <div class="msg" id="fxFillMsg"></div>
+    </div>
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL = "https://ofevarwtqzvzrvhbanmf.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_pWT6foelsonrb1sLMXhnCw_oA3ytvaX";
 </script>
-<script src="recurring.js?v=952"></script>
+<script src="recurring.js?v=953"></script>
 </body>
 </html>

@@ -29,18 +29,18 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=952">
-<link rel="stylesheet" href="shared.css?v=952">
-<script src="holiday.js?v=952"></script>
+<link rel="stylesheet" href="theme.css?v=953">
+<link rel="stylesheet" href="shared.css?v=953">
+<script src="holiday.js?v=953"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
-<script src="i18n.js?v=952"></script>
-<script src="currencies.js?v=952"></script>
-<script src="motion.js?v=952"></script>
-<script src="version.js?v=952"></script>
-<script src="notif-text.js?v=952"></script>
-<script src="shared-ui.js?v=952"></script>
-<script src="theme.js?v=952" defer></script>
-<script src="app-banner.js?v=952" defer></script>
+<script src="i18n.js?v=953"></script>
+<script src="currencies.js?v=953"></script>
+<script src="motion.js?v=953"></script>
+<script src="version.js?v=953"></script>
+<script src="notif-text.js?v=953"></script>
+<script src="shared-ui.js?v=953"></script>
+<script src="theme.js?v=953" defer></script>
+<script src="app-banner.js?v=953" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -1453,14 +1453,20 @@ renderNavLinks();
         .filter(tmpl => tmpl.next_due_date >= todayStr)
         .sort((a, b) => a.next_due_date < b.next_due_date ? -1 : 1)
         .slice(0, 3);
-      if(upcoming.length){
-        upcomingEl.innerHTML = `<div class="recurring-overview-upcoming-label">${t("summary.recurringUpcomingLabel")}</div>` +
+      // 金額每期不同、已經到期的：要有人去填金額才會記帳，放最上面
+      const pending = data.filter(tmpl => tmpl.variable_amount && tmpl.next_due_date <= todayStr);
+      const pendingHtml = pending.map(tmpl => `<a class="recurring-overview-fill" href="recurring.html?fill=${encodeURIComponent(tmpl.id)}">
+          <span>${escapeHtml(tmpl.description || "")}・${escapeHtml(t("recurring.fillPending", { date: tmpl.next_due_date }))}</span>
+          <b>${escapeHtml(t("recurring.fillBtn"))}</b>
+        </a>`).join("");
+      if(upcoming.length || pending.length){
+        upcomingEl.innerHTML = pendingHtml + (upcoming.length ? `<div class="recurring-overview-upcoming-label">${t("summary.recurringUpcomingLabel")}</div>` : "") +
           upcoming.map(tmpl => {
             const curObj = CURRENCIES.find(c => c.code === tmpl.currency);
             const sym = curObj ? curObj.symbol : tmpl.currency;
             return `<div class="recurring-overview-upcoming-row">
               <span class="recurring-overview-upcoming-desc"><span class="sb-ico" style="--ico:var(--ico-repeat)" aria-hidden="true"></span> ${escapeHtml(tmpl.description || "")}</span>
-              <span class="recurring-overview-upcoming-meta">${sym}${formatAmt(tmpl.amount)} · ${formatRelativeDueDate(tmpl.next_due_date, todayStr)}</span>
+              <span class="recurring-overview-upcoming-meta">${tmpl.variable_amount ? escapeHtml(t("recurring.about")) : ""}${sym}${formatAmt(tmpl.amount)} · ${formatRelativeDueDate(tmpl.next_due_date, todayStr)}</span>
             </div>`;
           }).join("");
       } else {
