@@ -1535,3 +1535,17 @@ window.sbRenderLatestNotes = sbRenderLatestNotes;
     })();
   }, 1200));
 })();
+
+// App 裡按「下載 APK」：App 的 WebView 不會處理下載，交給 Chrome（Browser 外掛開 Custom Tab）去下載。
+// 一般瀏覽器照連結本身的 download 屬性下載，不用管。
+document.addEventListener("click", e => {
+  const a = e.target.closest && e.target.closest('a[href$=".apk"], a[href*=".apk?"]');
+  if(!a) return;
+  const cap = window.Capacitor;
+  if(!(cap && cap.isNativePlatform && cap.isNativePlatform())) return;
+  e.preventDefault();
+  const url = new URL(a.getAttribute("href"), location.href).href;
+  const browser = cap.Plugins && cap.Plugins.Browser;
+  if(browser && browser.open) browser.open({ url }).catch(() => { location.href = url; });
+  else window.open(url, "_blank");
+});

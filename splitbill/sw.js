@@ -108,6 +108,9 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // App 安裝檔（6 MB）交給瀏覽器直接下載，不經過快取
+  if(url.pathname.toLowerCase().endsWith(".apk")) return;
+
   // 帶版本號的檔案（app.js?v=903…）內容永遠不會在同一個網址下改變，直接用快取，
   // 換頁時不必每次重新下載幾百 KB；版本號一換就是新網址，自然會抓新的。
   // 圖示等靜態圖片同理。

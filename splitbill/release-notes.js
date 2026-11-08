@@ -8,6 +8,22 @@
 // ============================================================
 window.SB_RELEASE_NOTES = [
   {
+    version: "962",
+    date: "2026-11-09",
+    "zh-Hant": [
+      "修正：按「下載 APK」沒有反應",
+      "頁面開啟更快：只載入你使用的語言"
+    ],
+    "ja": [
+      "修正：「APK をダウンロード」を押しても反応しない問題",
+      "ページの表示を高速化：使用中の言語だけを読み込むように"
+    ],
+    "en": [
+      "Fixed: tapping “Download APK” did nothing",
+      "Faster pages: only your language is loaded"
+    ]
+  },
+  {
     version: "961",
     date: "2026-11-09",
     "zh-Hant": [

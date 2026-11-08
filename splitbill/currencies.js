@@ -1379,11 +1379,8 @@ function initDesktopShortcuts(){
     const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : "";
     const isInput = tag === "input" || tag === "textarea" || tag === "select" || (e.target && e.target.isContentEditable);
 
+    // 彈窗的 Esc 由 shared-ui.js 的全站彈窗管理處理（會走各彈窗自己的關閉鈕、打過字會先問），這裡只收數字鍵盤
     if(e.key === "Escape"){
-      document.querySelectorAll(".calc-modal.show, .modal.show").forEach(m => {
-        m.classList.remove("show");
-        m.classList.add("hidden");
-      });
       const numpad = document.getElementById("sbFinancialKeypadDrawer");
       if(numpad) numpad.remove();
       return;
