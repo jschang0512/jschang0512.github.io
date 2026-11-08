@@ -53,7 +53,7 @@
         <div class="sb-app-banner-title">${tt(isIOS ? "banner.iosTitle" : "banner.androidTitle")}</div>
         <div class="sb-app-banner-desc">${tt(isIOS ? "banner.iosDesc" : "banner.androidDesc")}</div>
       </div>
-      ${isAndroid ? `<a class="sb-app-banner-btn" id="sbAppInstallGet" href="https://github.com/jschang0512/splitbill/releases/latest/download/splitbill.apk">${tt("banner.downloadApk")}</a>` : ""}
+      ${isAndroid ? `<a class="sb-app-banner-btn" id="sbAppInstallGet" href="splitbill.apk?v=2.5.0">${tt("banner.downloadApk")}</a>` : ""}
       <button type="button" class="sb-app-banner-close" id="sbAppInstallClose" aria-label="${tt("common.close")}">${icon("x")}</button>
     `;
     document.body.appendChild(banner);
