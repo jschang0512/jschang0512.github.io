@@ -2428,7 +2428,7 @@ CRITICAL TRANSLATION & NAMING GUIDELINES:
         }
 
         // 3. 組合金額組成明細文字與完整狀態結構
-        const expenseDate = (aiExpenseDate && aiExpenseDate.value) || new Date().toISOString().split("T")[0];
+        const expenseDate = (aiExpenseDate && aiExpenseDate.value) || sbIsoDay(new Date());
         const breakdownSummary = generateBreakdownSummary(memberCalcMap, subtotal, netExtraFees, finalTotal);
         const aiReceiptMeta = {
           storeName,

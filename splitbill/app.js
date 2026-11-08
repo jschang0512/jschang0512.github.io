@@ -974,7 +974,7 @@
     }
 
     const expDateInp = document.getElementById("expDate");
-    if(expDateInp) expDateInp.value = new Date().toISOString().slice(0,10);
+    if(expDateInp) expDateInp.value = sbIsoDay(new Date());
 
     const repayFromSel = document.getElementById("repayFrom");
     const repayToSel = document.getElementById("repayTo");
@@ -994,7 +994,7 @@
       enhanceSelect(repayToSel);
     }
     const repayDateInp = document.getElementById("repayDate");
-    if(repayDateInp) repayDateInp.value = new Date().toISOString().slice(0,10);
+    if(repayDateInp) repayDateInp.value = sbIsoDay(new Date());
 
     await expensesReady;
     generateDueRecurringExpenses();
@@ -2907,7 +2907,7 @@
   // 而跳過，不會重複記兩筆帳。
   async function generateDueRecurringExpenses(){
     if(!myMember || !myMember.group_id) return;
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = sbIsoDay(new Date());
     const { data: dueTemplates, error } = await sb
       .from("recurring_expenses")
       .select("*")
@@ -4577,7 +4577,7 @@
     }
 
     const dismissKey = "sb_settle_reminder_dismissed_" + CURRENCY;
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = sbIsoDay(new Date());
     if(localStorage.getItem(dismissKey) === todayStr){
       banner.innerHTML = "";
       return;
@@ -4630,18 +4630,18 @@
   // date input 的值。跟支出歷史篩選（filterFrom/filterTo）用同一套字串
   // 比對方式（expense_date 本來就是 YYYY-MM-DD，字串排序＝時間排序）。
   function getDonutDateBounds(){
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = sbIsoDay(new Date());
     if(donutTimeRange === "week"){
       const d = new Date(); d.setDate(d.getDate() - 7);
-      return { from: d.toISOString().slice(0, 10), to: todayStr };
+      return { from: sbIsoDay(d), to: todayStr };
     }
     if(donutTimeRange === "month"){
       const d = new Date(); d.setMonth(d.getMonth() - 1);
-      return { from: d.toISOString().slice(0, 10), to: todayStr };
+      return { from: sbIsoDay(d), to: todayStr };
     }
     if(donutTimeRange === "year"){
       const d = new Date(); d.setFullYear(d.getFullYear() - 1);
-      return { from: d.toISOString().slice(0, 10), to: todayStr };
+      return { from: sbIsoDay(d), to: todayStr };
     }
     if(donutTimeRange === "custom"){
       const fromEl = document.getElementById("donutCustomFrom");
@@ -6078,7 +6078,7 @@ if(exportSettlementImgBtn){
       if(settlementImgModal) settlementImgModal.classList.add("show");
 
       const groupName = (myMember && myMember.groups && myMember.groups.name) || t("currency.groupNameFallback");
-      const filename = `${t("currency.settlementFilePrefix")}_${groupName}_${CURRENCY}_${new Date().toISOString().slice(0,10)}.png`;
+      const filename = `${t("currency.settlementFilePrefix")}_${groupName}_${CURRENCY}_${sbIsoDay(new Date())}.png`;
       const file = new File([blob], filename, { type: "image/png" });
       const isCapacitor = typeof window.Capacitor !== "undefined" && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform();
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -7657,7 +7657,7 @@ function showPairDetail(
           const r = parseFloat(rateInput.value) || (conversionRate || 1);
           const twdAmt = Math.round(amt * r);
           const note = t("currency.directClearNote", {amount: twdAmt.toLocaleString(), rate: r});
-          const today = new Date().toISOString().slice(0,10);
+          const today = sbIsoDay(new Date());
 
           directClearBtn.disabled = true;
           directClearBtn.textContent = t("currency.settlingEllipsis");
@@ -7695,7 +7695,7 @@ function showPairDetail(
           }
 
           const xcurId = generateUUID();
-          const today = new Date().toISOString().slice(0, 10);
+          const today = sbIsoDay(new Date());
 
           goTwdBtn.disabled = true;
           goTwdBtn.textContent = t("currency.transferringEllipsis");
@@ -7882,7 +7882,7 @@ function showPairDetail(
 
       offsetBtn.disabled = true;
 
-      const today = new Date().toISOString().slice(0,10);
+      const today = sbIsoDay(new Date());
       const note = t("currency.manualOffsetNote");
       // 用同一個 offset_group 把這兩筆方向相反的還款綁在一起，
       // 歷史紀錄裡才能合併顯示、一起刪除，不會被單獨改掉一半。
@@ -7966,7 +7966,7 @@ function showPairDetail(
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${t("currency.csvFilenamePrefix")}_${CURRENCY}_${new Date().toISOString().slice(0,10)}.csv`;
+      a.download = `${t("currency.csvFilenamePrefix")}_${CURRENCY}_${sbIsoDay(new Date())}.csv`;
       document.body.appendChild(a);
       a.click();
       a.remove();

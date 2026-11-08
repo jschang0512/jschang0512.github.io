@@ -43,6 +43,20 @@
     if(days <= 30) return t("summary.dueInDays", { days });
     return iso;
   }
+  // 只說「什麼時候」，不說「自動記錄」——金額每期不同的那種到期不會自動記，要有人填
+  function whenText(iso){
+    const days = dayNumber(iso) - dayNumber(todayIso());
+    if(days < 0) return t("recurring.overdueShort");
+    if(days === 0) return t("events.dToday");
+    if(days === 1) return t("events.dTomorrow");
+    return t("events.inDays", { n: days });
+  }
+  // 這一筆下一期的狀態：會自動記的用原本的「N 天後自動記錄」，要填金額的說「N 天後要填金額」
+  function nextText(tmpl, iso){
+    if(!tmpl.variable_amount) return dueText(iso);
+    const days = dayNumber(iso) - dayNumber(todayIso());
+    return days < 0 ? t("recurring.waitFill") : days > 30 ? iso : t("recurring.fillDue", { when: whenText(iso) });
+  }
   const memberObj = id => memberRows.find(m => m.id === id) || { id, name: memberById[id] || "?" };
   // 一年 52 週、每年一次，換算成每月大約多少，才加得起來
   const perMonth = tmpl => tmpl.interval_unit === "weekly" ? 52 / 12 : tmpl.interval_unit === "yearly" ? 1 / 12 : 1;
@@ -80,7 +94,7 @@
         <small>${escapeHtml(t("recurring.perMonthGroup", { amount: money(code, byCurrency[code].total) }))}</small>
       </div>`).join("") + `<div class="fx-sum-next">
         <span class="sb-ico" style="--ico:var(--ico-clock)" aria-hidden="true"></span>
-        <span>${escapeHtml(t("recurring.next", { name: next.description || "" }))}・${escapeHtml(dueText(next.next_due_date))}</span>
+        <span>${escapeHtml(t("recurring.next", { name: next.description || "" }))}・${escapeHtml(nextText(next, next.next_due_date))}</span>
       </div>`;
     box.classList.remove("hidden");
   }
@@ -100,7 +114,7 @@
     const end = endText(tmpl);
     if(end) tags.push(end);
     if(tmpl.next_amount && tmpl.next_amount_from) tags.push(t("recurring.tagPriceChange", { date: tmpl.next_amount_from, amount: money(tmpl.currency, tmpl.next_amount) }));
-    const status = ended ? t("recurring.ended") : needsFill(tmpl) ? t("recurring.waitFill") : tmpl.active ? dueText(tmpl.next_due_date) : "";
+    const status = ended ? t("recurring.ended") : needsFill(tmpl) ? t("recurring.waitFill") : tmpl.active ? nextText(tmpl, tmpl.next_due_date) : "";
     const fill = needsFill(tmpl) && canEdit;
     return `<article class="fx-item${tmpl.active ? "" : " is-paused"}${fill ? " needs-fill" : ""}" data-id="${tmpl.id}" tabindex="0" role="button" aria-label="${escapeHtml(t("recurring.openDetail", { name: tmpl.description || "" }))}">
       <div class="fx-top">
@@ -227,13 +241,13 @@
       return `<li class="fx-up-day${late ? " is-late" : ""}">
         <div class="fx-up-date"><b>${mm}/${dd}</b><span>${escapeHtml(weekdayOf(date))}</span></div>
         <div class="fx-up-items">
-          <p class="fx-up-when">${escapeHtml(dueText(date))}</p>
+          <p class="fx-up-when">${escapeHtml(whenText(date))}</p>
           ${byDate[date].map(r => {
             const meta = getCategoryMeta(r.tmpl.description, null, r.tmpl.category);
             const pending = r.tmpl.variable_amount && late;
             return `<button type="button" class="fx-up-row" data-id="${r.tmpl.id}">
               <span class="fx-icon" style="--c:${meta.color}">${meta.icon}</span>
-              <span class="fx-up-name">${escapeHtml(r.tmpl.description || "")}${pending ? `<small>${escapeHtml(t("recurring.waitFill"))}</small>` : ""}</span>
+              <span class="fx-up-name">${escapeHtml(r.tmpl.description || "")}<small class="${pending ? "is-late" : ""}">${escapeHtml(t(pending ? "recurring.waitFill" : r.tmpl.variable_amount ? "recurring.fillOnDay" : "recurring.autoRecord"))}</small></span>
               <span class="fx-up-amt"><b>${r.tmpl.variable_amount ? escapeHtml(t("recurring.about")) : ""}${escapeHtml(money(r.tmpl.currency, r.amount))}</b>${r.share ? `<small>${escapeHtml(t("recurring.myShare", { amount: money(r.tmpl.currency, r.share.amount) }))}</small>` : ""}</span>
             </button>`;
           }).join("")}
@@ -338,7 +352,7 @@
     document.getElementById("fxDetailTitle").textContent = tmpl.description || "";
     const ended = isEnded(tmpl);
     const rows = [
-      [t("recurring.dNext"), ended ? t("recurring.ended") : tmpl.active ? `${tmpl.next_due_date}（${weekdayOf(tmpl.next_due_date)}）` + (dueText(tmpl.next_due_date) !== tmpl.next_due_date ? `・${dueText(tmpl.next_due_date)}` : "") : t("recurring.paused")],
+      [t("recurring.dNext"), ended ? t("recurring.ended") : tmpl.active ? `${tmpl.next_due_date}（${weekdayOf(tmpl.next_due_date)}）` + (nextText(tmpl, tmpl.next_due_date) !== tmpl.next_due_date ? `・${nextText(tmpl, tmpl.next_due_date)}` : "") : t("recurring.paused")],
       [t("recurring.dInterval"), intervalText(tmpl)],
       [t(tmpl.variable_amount ? "recurring.amountEstimate" : "settings.recurringFormAmountLabel"), money(tmpl.currency, tmpl.amount)],
     ];

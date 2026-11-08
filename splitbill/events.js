@@ -206,7 +206,24 @@
     if(e.location) q.set("location", e.location);
     return { kind: "google", url: "https://calendar.google.com/calendar/render?" + q.toString() };
   }
-  function addToCalendar(e){
+  // App 1.1 起內建 CalendarIntent 外掛，直接開手機行事曆的新增畫面；舊版 App 沒有就照下面開 Google 日曆
+  async function addToCalendar(e){
+    const cap = window.Capacitor;
+    if(cap && cap.isPluginAvailable && cap.isPluginAvailable("CalendarIntent")){
+      const { allDay, start, end } = calendarTimes(e);
+      const opts = {
+        title: e.title, location: e.location || "", description: calendarDetails(e), allDay,
+        // 整天的活動 Android 用 UTC 午夜表示
+        begin: allDay ? Date.UTC(start.getFullYear(), start.getMonth(), start.getDate()) : start.getTime(),
+        end: allDay ? Date.UTC(end.getFullYear(), end.getMonth(), end.getDate()) : end.getTime()
+      };
+      try {
+        const plugin = cap.Plugins && cap.Plugins.CalendarIntent;
+        if(plugin && plugin.insert) await plugin.insert(opts);
+        else await cap.nativePromise("CalendarIntent", "insert", opts);
+        return;
+      } catch(err){ console.warn("CalendarIntent failed, falling back:", err); }
+    }
     const link = calendarLink(e);
     if(link.kind === "google") window.open(link.url, "_blank", "noopener");
     else location.href = link.url;
