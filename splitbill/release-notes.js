@@ -8,6 +8,22 @@
 // ============================================================
 window.SB_RELEASE_NOTES = [
   {
+    version: "966",
+    date: "2026-11-10",
+    "zh-Hant": [
+      "電腦版左側選單加上頭像、群組切換、通知、深淺色切換和登出，頁首變得更清爽",
+      "固定收支、活動頁也有通知鈴鐺了"
+    ],
+    "ja": [
+      "PC 版の左メニューにアイコン・グループ切替・通知・ダークモード切替・ログアウトを追加し、ヘッダーをすっきり",
+      "固定収支・イベントのページにも通知ベルを追加"
+    ],
+    "en": [
+      "The desktop sidebar now holds your avatar, group switcher, notifications, dark-mode toggle and log out, so the header is cleaner",
+      "The fixed-cost and events pages now have the notification bell too"
+    ]
+  },
+  {
     version: "965",
     date: "2026-11-10",
     "zh-Hant": [

@@ -10343,3 +10343,48 @@ html body .sb-side-nav{ display:none; }
   html body .sb-side-badge{ margin-left:auto; min-width:20px; height:20px; padding:0 6px; border-radius:999px; background:var(--negative-text); color:#fff; font-size:12px; font-weight:700; line-height:20px; text-align:center; }
   html body .sb-side-badge[hidden]{ display:none; }
 }
+
+/* ---------- v966 電腦版選單：頭像、群組、深淺色 ---------- */
+@media (min-width: 1100px){
+  /* 頭像那一列搬進選單後，上方那列只剩深淺色和齒輪，選單裡都有了 */
+  html body.has-side-nav #appScreen > .topbar{ display:none !important; }
+  html body .sb-side-profile:empty{ display:none; }
+  html body .sb-side-profile{ margin:0 0 12px; padding:10px; border:1px solid var(--card-border); border-radius:14px; background:var(--bg-canvas); }
+  html body .sb-side-profile .whoami-wrap{ display:flex !important; align-items:center; gap:10px; width:100%; min-width:0; margin:0; padding:0; }
+  html body .sb-side-profile #whoamiAvatar{ flex:none; }
+  html body .sb-side-profile #whoamiText{ display:flex; flex-direction:column; align-items:flex-start; gap:4px; flex:1; min-width:0; }
+  html body .sb-side-profile #whoamiName{ max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:15px; }
+  html body .sb-side-profile .whoami-group-switcher{ display:block; width:100%; margin:0; }
+  html body .sb-side-profile .whoami-group-switcher .dd-btn{ width:100%; justify-content:space-between; min-height:30px; }
+  /* 沒有頭像列的頁面（固定收支、活動）：靜態的一份，點了去設定 */
+  html body .sb-side-nav a.sb-side-me{ display:flex; gap:10px; min-height:0; padding:0; border-radius:0; background:none; }
+  html body .sb-side-me-av{ flex:none; display:inline-flex; }
+  html body .sb-side-me-text{ display:flex; flex-direction:column; min-width:0; }
+  html body .sb-side-me-text b{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:15px; }
+  html body .sb-side-me-text small{ font-size:12.5px; font-weight:600; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  /* 最下面：設定＋深淺色切換 */
+  html body .sb-side-foot{ display:flex; align-items:center; gap:6px; }
+  html body .sb-side-foot > a{ flex:1; }
+  html body .sb-side-theme{ display:grid; place-items:center; flex:none; width:40px; height:40px; border:0; border-radius:10px; background:none; color:var(--ink); cursor:pointer; }
+  html body .sb-side-theme:hover{ background:var(--line); }
+  html body .sb-side-theme:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:-2px; }
+}
+@media (min-width: 1100px){
+  /* 頭像卡：左邊頭像、名字、群組，右邊通知鈴鐺 */
+  html body .sb-side-profile{ display:flex; align-items:flex-start; gap:6px; }
+  html body .sb-side-profile-me{ flex:1; min-width:0; }
+  html body .sb-side-profile-bell{ flex:none; }
+  html body .sb-side-profile-bell:empty{ display:none; }
+  html body .sb-side-profile-bell #notificationBellContainer{ display:block; margin:0; }
+  html body .sb-side-profile-bell .notif-bell-btn{ width:36px; height:36px; }
+  /* 登出：最下面一列，顏色淡一點 */
+  html body .sb-side-logout{
+    display:flex; align-items:center; gap:10px; width:100%; min-height:40px; margin-top:2px; padding:0 12px;
+    border:0; border-radius:10px; background:none; color:var(--ink-soft); font:inherit; font-size:15px; font-weight:600; text-align:left; cursor:pointer;
+    transition:background-color .15s ease, color .15s ease;
+  }
+  html body .sb-side-logout:hover{ background:var(--line); color:var(--negative-text); }
+  html body .sb-side-logout:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:-2px; }
+  /* 頁首原本的登出按鈕不重複出現 */
+  html body.has-side-nav #logoutBtn{ display:none !important; }
+}

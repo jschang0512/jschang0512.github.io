@@ -957,6 +957,8 @@
     window.myMember = myMember;
     window.memberRows = memberRows;
     if(!myMember){ location.href = "summary.html"; return; }
+    // 通知鈴鐺：這頁原本有位子但沒開，現在跟首頁一樣可以看通知
+    if(typeof initNotificationBell === "function") initNotificationBell(sb, myMember).catch(() => {});
     initRecurringTemplateForm();
     await renderRecurringTemplates();
     sbEnablePullToRefresh(renderRecurringTemplates);

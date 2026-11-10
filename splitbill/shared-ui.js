@@ -1626,6 +1626,40 @@ document.addEventListener("click", e => {
     : page === "events.html" ? "events" : null;
   if(!here) return;
 
+  // 頭像、名字、群組切換：有這組的頁面（首頁、幣別、設定）在電腦版把它整組搬進選單，
+  // 縮回平板／手機寬度時搬回原位（搬的是同一組元素，群組切換照常能用）。
+  // 固定收支、活動頁沒有這組，就用上次在別頁看到的頭像、名字、群組畫一份靜態的。
+  const PROFILE_KEY = "splitbill-side-profile";
+  const desktop = window.matchMedia("(min-width: 1100px)");
+  function saveProfile(){
+    const av = document.getElementById("whoamiAvatar");
+    const name = document.getElementById("whoamiName");
+    if(!av || !name || !name.textContent.trim()) return;
+    const grp = document.querySelector("#whoamiWrap .whoami-group-switcher .dd-btn-text");
+    try { localStorage.setItem(PROFILE_KEY, JSON.stringify({ avatar: av.innerHTML, name: name.textContent.trim(), group: grp ? grp.textContent.trim() : "" })); } catch(e){}
+  }
+  // 把頁面上的一組元素在電腦版搬進選單、縮窄時搬回原位（搬的是同一組元素，事件照常）
+  function dock(el, slot){
+    if(!el || !slot) return;
+    const home = document.createComment("sb-dock");
+    el.parentNode.insertBefore(home, el);
+    const move = () => { if(desktop.matches){ if(el.parentNode !== slot) slot.appendChild(el); } else if(home.parentNode && el.parentNode === slot){ home.parentNode.insertBefore(el, home.nextSibling); } };
+    move();
+    if(desktop.addEventListener) desktop.addEventListener("change", move);
+  }
+  function placeProfile(slot){
+    const who = document.getElementById("whoamiWrap");
+    if(!who){
+      let p = null;
+      try { p = JSON.parse(localStorage.getItem(PROFILE_KEY) || "null"); } catch(e){}
+      if(p) slot.innerHTML = `<a class="sb-side-me" href="settings.html"><span class="sb-side-me-av">${p.avatar}</span><span class="sb-side-me-text"><b>${escapeHtml(p.name)}</b>${p.group ? `<small>${escapeHtml(p.group)}</small>` : ""}</span></a>`;
+      return;
+    }
+    dock(who, slot);
+    new MutationObserver(saveProfile).observe(who, { childList: true, subtree: true, characterData: true });
+    saveProfile();
+  }
+
   function build(){
     if(document.querySelector(".sb-side-nav") || typeof sbIcon !== "function") return;
     let shown = ["TWD"];
@@ -1642,6 +1676,7 @@ document.addEventListener("click", e => {
         <svg class="app-logo" viewBox="0 0 512 512" aria-hidden="true"><path class="s1" d="M256,238 L118.5,138.1 A170,170 0 0,1 393.5,138.1 Z"/><path class="s2" d="M271.6,265 L426.9,195.9 A170,170 0 0,1 289.4,434.1 Z"/><path class="s3" d="M240.4,265 L222.6,434.1 A170,170 0 0,1 85.1,195.9 Z"/></svg>
         <span>Splitbill</span>
       </a>
+      <div class="sb-side-profile"><div class="sb-side-profile-me"></div><div class="sb-side-profile-bell"></div></div>
       ${link("summary.html", "home", sbIcon("grid"), t("common.overview"))}
       <p class="sb-side-label">${escapeHtml(t("nav.currencies"))}</p>
       ${list.map(c => link("currency.html?c=" + encodeURIComponent(c.code), "cur:" + c.code,
@@ -1650,9 +1685,22 @@ document.addEventListener("click", e => {
       ${link("recurring.html", "recurring", sbIcon("repeat"), t("recurring.title"))}
       ${link("events.html", "events", sbIcon("calendar"), t("events.title"))}
       ${typeof recapYearFor === "function" && recapYearFor(new Date()) ? link("recap.html", "recap", sbIcon("sparkle"), t("nav.recap")) : ""}
-      <div class="sb-side-foot">${link("settings.html", "settings", sbIcon("gear"), t("common.settings"))}</div>`;
+      <div class="sb-side-foot">
+        ${link("settings.html", "settings", sbIcon("gear"), t("common.settings"))}
+        <button type="button" class="sb-theme-btn sb-side-theme" title="${escapeHtml(t("shared.themeToggleAria"))}" aria-label="${escapeHtml(t("shared.themeToggleAria"))}"><span class="sb-ico" style="--ico:var(--ico-${document.documentElement.getAttribute("data-theme") === "dark" ? "sun" : "moon"})" aria-hidden="true"></span></button>
+      </div>
+      <button type="button" class="sb-side-logout"><span class="sb-side-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg></span><span>${escapeHtml(t("common.logout"))}</span></button>`;
     document.body.appendChild(nav);
     document.body.classList.add("has-side-nav");
+    placeProfile(nav.querySelector(".sb-side-profile-me"));
+    dock(document.getElementById("notificationBellContainer"), nav.querySelector(".sb-side-profile-bell"));
+    nav.querySelector(".sb-side-logout").addEventListener("click", async () => {
+      const own = document.getElementById("logoutBtn");
+      if(own){ own.click(); return; }
+      try { localStorage.removeItem(LOGIN_TIME_KEY); } catch(e){}
+      try { if(window.sb) await window.sb.auth.signOut(); } catch(e){}
+      location.href = "index.html";
+    });
     // 首頁上「活動」捷徑的未看數字，選單上也顯示一份
     const src = document.getElementById("homeEventsBadge");
     const evLink = nav.querySelector('a[href="events.html"]');
