@@ -8,6 +8,25 @@
 // ============================================================
 window.SB_RELEASE_NOTES = [
   {
+    version: "975",
+    date: "2026-11-11",
+    "zh-Hant": [
+      "派派有 12 種表情了，每句台詞配自己的表情",
+      "台詞更兇、情勒句更多，每天換一句",
+      "派派看「欠多少」加上「欠多久」決定有多兇：小錢拖很久才出現，大錢很快就翻臉（NT$1,000 大約兩週出現、90 天裂開）"
+    ],
+    "ja": [
+      "パイパイの表情が 12 種類に。セリフごとに顔が変わります",
+      "セリフがより辛口に、泣き落としも増えました。毎日入れ替わります",
+      "「いくら」と「何日」の両方で怒り具合が決まります。少額はなかなか出てこず、大きな額はすぐ本気に（NT$1,000 なら約 2 週間で登場、90 日で割れます）"
+    ],
+    "en": [
+      "Pie now has 12 expressions, and each line comes with its own face",
+      "Sharper lines and more guilt trips, rotating daily",
+      "How fierce Pie gets now depends on both how much and how long: small change takes ages, big amounts escalate fast (NT$1,000 shows up after about two weeks and cracks at 90 days)"
+    ]
+  },
+  {
     version: "974",
     date: "2026-11-11",
     "zh-Hant": [

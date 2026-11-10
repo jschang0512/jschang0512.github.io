@@ -10566,3 +10566,9 @@ html body .sb-nag.lv-4 .sb-pie{ animation:sbPieShake .5s ease-in-out .2s both; }
   html body .sb-nag-line{ font-size:15px; }
 }
 html body .sb-nag-line:has(+ .sb-nag-actions){ margin-bottom:10px; }
+/* 派派 v2 表情零件 */
+html body .sb-pie-ring{ stroke:#fff; stroke-width:.9; }
+html body .sb-pie-teeth{ stroke:#26215C; stroke-width:1; fill:none; }
+html body .sb-pie-vein{ stroke:#E24B4A; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; fill:none; }
+html body .sb-pie-cheek{ fill:#E24B4A; opacity:.55; }
+html body .sb-pie-blush{ fill:#F4A7C0; opacity:.75; }

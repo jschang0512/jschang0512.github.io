@@ -1882,15 +1882,24 @@ window.sbStartQuickExpense = sbStartQuickExpense;
 //
 // 欠款天數 = 你欠某人的錢「從哪天開始一直沒還清」（buildDebtMatrix 記的 __since），
 // 跟欠款表是同一套計算。取最久的那筆，依天數分四級：
-//   7 天 微笑提醒 → 14 天 斜眼 → 30 天 流淚、出現裂痕 → 60 天 裂開掉一片
+//   14 天開始出現 → 30 天 → 60 天 出現裂痕 → 90 天 裂開掉一片（表情跟著當天那句台詞）
 // 台詞每天換一句。「明天再說」：今天先不出現，但隔天會記仇；拖越多次越酸。
-// 沒有欠人、只有別人欠你很久（14 天以上）時，派派問要不要幫你催——按了才會去，不會自動催。
+// 沒有欠人、只有別人欠你很久（30 天以上）時，派派問要不要幫你催——按了才會去，不會自動催。
 // ============================================================
-const SB_NAG_LEVELS = [7, 14, 30, 60];
+const SB_NAG_LEVELS = [14, 30, 60, 90];
 function sbNagLevel(days){ let lv = 0; SB_NAG_LEVELS.forEach((d, i) => { if(days >= d) lv = i + 1; }); return lv; }
+// 嚴重程度 = 天數 × 金額權重。金額先換成台幣，NT$1,000 權重 1（門檻就是 14／30／60／90 天）；
+// 越多越快升級（最多 2 倍：NT$4,000 以上 7 天就出現），越少越慢（最少 0.5 倍：NT$250 以下要 28 天）。
+function sbNagWeight(amount, currency){
+  const twd = typeof convertToTWD === "function" ? Number(convertToTWD(amount, currency)) || amount : amount;
+  return Math.min(2, Math.max(0.5, Math.sqrt(Math.max(0, twd) / 1000)));
+}
 
-// 一整顆派長出臉。level 0 = 開心（別人欠你時用）；1 微笑；2 斜眼；3 流淚＋裂痕；4 裂開掉一片
-function sbPieMascotSVG(level){
+// 一整顆派長出臉。level 決定派本身（3 = 出現裂痕、4 = 裂開掉一片），mood 決定表情（跟著台詞走）。
+// 線條類的五官都是「白線＋深色描邊」，淺色、深色模式的派上都看得清楚。
+const SB_PIE_MOODS = ["smile", "sweet", "sideeye", "stare", "smirk", "angry", "furious", "shock", "cry", "sob", "sinister", "dead"];
+function sbPieMascotSVG(level, mood){
+  if(!SB_PIE_MOODS.includes(mood)) mood = ["smile", "smile", "sideeye", "cry", "dead"][Math.min(4, Math.max(0, level))];
   const top = '<path d="M32 33 L9.48 20 A26 26 0 0 1 54.52 20 Z" fill="var(--logo-3)"/>';
   const right = '<path d="M32 33 L54.52 20 A26 26 0 0 1 32 59 Z" fill="var(--logo-2)"/>';
   const leftPath = '<path d="M32 33 L32 59 A26 26 0 0 1 9.48 20 Z" fill="var(--logo-1)"/>';
@@ -1899,24 +1908,58 @@ function sbPieMascotSVG(level){
     : level >= 3 ? '<path d="M32 33 L9.48 20 M32 33 L54.52 20"/>'
     : '<path d="M32 33 L9.48 20 M32 33 L54.52 20 M32 33 L32 59"/>';
   const crack = level === 3 ? '<path class="sb-pie-crack" d="M32 33 L31 41 L33 47 L31 53 L32 59"/>' : "";
-  const eye = (cx, dx, dy) => '<circle class="sb-pie-white" cx="' + cx + '" cy="31" r="4.6"/><circle class="sb-pie-ink" cx="' + (cx + dx) + '" cy="' + (31 + dy) + '" r="2.4"/>';
-  const line = d => '<path class="sb-pie-mouth-o" d="' + d + '"/><path class="sb-pie-mouth" d="' + d + '"/>';
-  let face;
-  if(level >= 4){
-    face = line("M19 27 l7 6 m0 -6 l-7 6 M37 27 l7 6 m0 -6 l-7 6") + '<ellipse class="sb-pie-ink" cx="34" cy="43" rx="4.4" ry="3.4"/>';
-  } else if(level === 3){
-    face = '<path class="sb-pie-brow" d="M18 24.5 L28 27.5 M46 24.5 L36 27.5"/>' + eye(24, 0, 1.4) + eye(40, 0, 1.4)
-      + '<path class="sb-pie-tear" d="M21.5 36.5 q-2.4 4.6 0 5.8 q2.4 -1.2 0 -5.8"/>' + line("M25 45 Q32 39 39 45");
-  } else if(level === 2){
-    face = eye(24, 2.2, 1.4) + eye(40, 2.2, 1.4)
-      + '<path class="sb-pie-lid" d="M18.8 29.2 L29.2 29.2 L29.2 25.8 L18.8 25.8 Z M34.8 29.2 L45.2 29.2 L45.2 25.8 L34.8 25.8 Z"/>' + line("M26.5 42 L37.5 42");
-  } else {
-    face = eye(24, 0, 0.6) + eye(40, 0, 0.6) + line("M25 40 Q32 46 39 40");
-  }
-  return '<svg class="sb-pie lv-' + level + '" viewBox="0 0 64 64" aria-hidden="true">' + top + right + left
-    + '<g class="sb-pie-seam">' + seams + '</g>' + crack + face + '</svg>';
+
+  // ---- 零件 ----
+  const ln = d => '<path class="sb-pie-mouth-o" d="' + d + '"/><path class="sb-pie-mouth" d="' + d + '"/>';
+  const eyeRound = (cx, dx, dy, r, pr) => '<circle class="sb-pie-white" cx="' + cx + '" cy="31" r="' + (r || 4.6) + '"/><circle class="sb-pie-ink" cx="' + (cx + (dx || 0)) + '" cy="' + (31 + (dy || 0)) + '" r="' + (pr || 2.4) + '"/>';
+  const eyesRound = (dx, dy, r, pr) => eyeRound(24, dx, dy, r, pr) + eyeRound(40, dx, dy, r, pr);
+  // 半閉眼：只畫下半個眼白，上面一條眼皮線
+  const eyeHalf = (cx, dx) => '<path class="sb-pie-white" d="M' + (cx - 4.6) + ' 30.5 A4.6 4.6 0 0 0 ' + (cx + 4.6) + ' 30.5 Z"/><circle class="sb-pie-ink" cx="' + (cx + dx) + '" cy="32.6" r="2"/>' + ln("M" + (cx - 5) + " 30.5 L" + (cx + 5) + " 30.5");
+  const eyesHalf = dx => eyeHalf(24, dx) + eyeHalf(40, dx);
+  const eyesDots = '<circle class="sb-pie-ink sb-pie-ring" cx="24" cy="31" r="2.2"/><circle class="sb-pie-ink sb-pie-ring" cx="40" cy="31" r="2.2"/>';
+  const eyesHappy = ln("M20 32 Q24 27 28 32 M36 32 Q40 27 44 32");
+  const eyesSadClosed = ln("M20 30 Q24 34 28 30 M36 30 Q40 34 44 30");
+  const eyesX = ln("M20.5 27.5 l7 7 m0 -7 l-7 7 M36.5 27.5 l7 7 m0 -7 l-7 7");
+  const browsAngry = '<path class="sb-pie-brow" d="M18 23.5 L28.5 27.5 M46 23.5 L35.5 27.5"/>';
+  const browsSad = '<path class="sb-pie-brow" d="M18 27.5 L28 24.5 M46 27.5 L36 24.5"/>';
+  const vein = '<path class="sb-pie-vein" d="M46 15 l2 3 l3 -1 m-3 1 l-1 3 m1 -3 l3 2"/>';
+  const cheeks = '<ellipse class="sb-pie-cheek" cx="18.5" cy="38" rx="3.4" ry="2"/><ellipse class="sb-pie-cheek" cx="45.5" cy="38" rx="3.4" ry="2"/>';
+  const blush = '<ellipse class="sb-pie-blush" cx="18.5" cy="37.5" rx="3.2" ry="1.8"/><ellipse class="sb-pie-blush" cx="45.5" cy="37.5" rx="3.2" ry="1.8"/>';
+  const tear = '<path class="sb-pie-tear" d="M21.5 36.5 q-2.4 4.6 0 5.8 q2.4 -1.2 0 -5.8"/>';
+  const streams = '<path class="sb-pie-tear" d="M21 33 q-1.6 8 0.4 16 l2.6 0 q-1.4 -8 0 -16 Z M43 33 q1.6 8 -0.4 16 l-2.6 0 q1.4 -8 0 -16 Z"/>';
+  const sweat = '<path class="sb-pie-tear" d="M48.5 21 q-2.6 4.8 0 6.2 q2.6 -1.4 0 -6.2"/>';
+  const mouthO = (rx, ry) => '<ellipse class="sb-pie-ink sb-pie-ring" cx="32" cy="43" rx="' + rx + '" ry="' + ry + '"/>';
+  const grit = '<rect class="sb-pie-white" x="24.5" y="39" width="15" height="6.4" rx="2"/><path class="sb-pie-teeth" d="M29.5 39 V45.4 M34.5 39 V45.4 M24.5 42.2 H39.5"/>';
+  const grin = '<path class="sb-pie-white" d="M22.5 38 Q32 49 41.5 38 Z"/><path class="sb-pie-teeth" d="M27 38.6 V42.6 M32 38.6 V44.4 M37 38.6 V42.6"/>';
+
+  const faces = {
+    smile:    eyesRound(0, 0.6) + ln("M25 40 Q32 46 39 40"),
+    sweet:    eyesHappy + blush + ln("M25 40 Q32 46 39 40"),
+    sideeye:  eyesHalf(2.3) + ln("M26.5 42 L37.5 42"),
+    stare:    eyesDots + ln("M27 42 L37 42"),
+    smirk:    eyesHalf(0) + ln("M26 42.5 Q33 44 39 39"),
+    angry:    browsAngry + eyesRound(0, 1.2) + vein + ln("M25 45 Q32 39.5 39 45"),
+    furious:  browsAngry + eyesRound(0, 0.8, 4.6, 1.6) + vein + cheeks + grit,
+    shock:    eyesRound(0, 0, 5.6, 1.5) + sweat + mouthO(3.4, 4),
+    cry:      browsSad + eyesRound(0, 1.4) + tear + ln("M25 45 Q32 39 39 45"),
+    sob:      browsSad + eyesSadClosed + streams + ln("M24 44 q2 -2 4 0 t4 0 t4 0 t4 0"),
+    sinister: browsAngry + eyesHappy + grin,
+    dead:     eyesX + mouthO(4.4, 3.4)
+  };
+  return '<svg class="sb-pie lv-' + level + ' mood-' + mood + '" viewBox="0 0 64 64" aria-hidden="true">' + top + right + left
+    + '<g class="sb-pie-seam">' + seams + '</g>' + crack + faces[mood] + '</svg>';
 }
 window.sbPieMascotSVG = sbPieMascotSVG;
+
+// 每一句台詞配的表情（各語言共用）
+const SB_NAG_MOOD = {
+  "nag.l1_1": "sweet",    "nag.l1_2": "stare",   "nag.l1_3": "smile",   "nag.l1_4": "sideeye", "nag.l1_5": "smirk",   "nag.l1_6": "sweet",
+  "nag.l2_1": "stare",    "nag.l2_2": "smirk",   "nag.l2_3": "angry",   "nag.l2_4": "sideeye", "nag.l2_5": "cry",     "nag.l2_6": "angry",
+  "nag.l3_1": "sinister", "nag.l3_2": "angry",   "nag.l3_3": "cry",     "nag.l3_4": "furious", "nag.l3_5": "stare",   "nag.l3_6": "smirk",
+  "nag.l4_1": "dead",     "nag.l4_2": "shock",   "nag.l4_3": "stare",   "nag.l4_4": "sob",     "nag.l4_5": "sinister","nag.l4_6": "furious",
+  "nag.snoozedOnce": "angry", "nag.snoozedAgain": "smirk", "nag.snoozedMany": "furious",
+  "nag.creditor1": "sinister", "nag.creditor2": "angry", "nag.creditor3": "smirk", "nag.creditor4": "sinister"
+};
 
 // 找出最該被情勒的那一筆。expenses / repayments 可以是多個幣別，會分幣別各算一次欠款表。
 function sbNagFind(myId, expenses, repayments){
@@ -1938,7 +1981,8 @@ function sbNagFind(myId, expenses, repayments){
       if(net <= tiny) return;
       const from = since[creditor] && since[creditor][debtor];
       if(!from) return;
-      items.push({ currency: code, creditor, debtor, amount: net, since: from, days: dayNum(today) - dayNum(from), iOwe: debtor === myId });
+      const days = dayNum(today) - dayNum(from);
+      items.push({ currency: code, creditor, debtor, amount: net, since: from, days, score: days * sbNagWeight(net, code), iOwe: debtor === myId });
     }));
   });
   const snoozed = it => {
@@ -1947,9 +1991,9 @@ function sbNagFind(myId, expenses, repayments){
       return s && s.until > today ? s : null;
     } catch(e){ return null; }
   };
-  const pick = list => list.filter(it => !snoozed(it)).sort((a, b) => b.days - a.days)[0] || null;
-  return pick(items.filter(it => it.iOwe && it.days >= SB_NAG_LEVELS[0]))
-    || pick(items.filter(it => !it.iOwe && it.days >= SB_NAG_LEVELS[1]));
+  const pick = list => list.filter(it => !snoozed(it)).sort((a, b) => b.score - a.score)[0] || null;
+  return pick(items.filter(it => it.iOwe && it.score >= SB_NAG_LEVELS[0]))
+    || pick(items.filter(it => !it.iOwe && it.score >= SB_NAG_LEVELS[1]));
 }
 window.sbNagFind = sbNagFind;
 
@@ -1967,27 +2011,33 @@ function sbRenderNag(el, opts){
   const amount = (meta ? meta.symbol : it.currency + " ") + (typeof formatAmt === "function" ? formatAmt(it.amount) : Math.round(it.amount));
   const other = it.iOwe ? it.creditor : it.debtor;
   const vars = { name: opts.nameOf(other) || "?", amount: amount, days: it.days, n: count };
-  const level = it.iOwe ? sbNagLevel(it.days) : 0;
+  const level = it.iOwe ? sbNagLevel(it.score) : 0;
   const dayIdx = Math.round(Date.now() / 86400000);
-  const pickLine = prefix => {
+  // 今天輪到哪一句（每天換）；表情跟著那一句走
+  const pickKey = prefix => {
     const all = [];
-    for(let i = 1; i <= 4; i++){ const k = prefix + i; if(t(k) !== k) all.push(k); }
-    return all.length ? t(all[dayIdx % all.length], vars) : "";
+    for(let i = 1; i <= 9; i++){ const k = prefix + i; if(t(k) !== k) all.push(k); }
+    return all.length ? all[dayIdx % all.length] : null;
   };
-  let line;
-  if(!it.iOwe) line = pickLine("nag.creditor");
-  else if(count >= 4) line = t("nag.snoozedMany", vars);
-  else if(count >= 2) line = t("nag.snoozedAgain", vars);
-  else if(count === 1) line = t("nag.snoozedOnce", vars);
-  else line = pickLine("nag.l" + level + "_");
-  const sub = t(it.iOwe ? "nag.subOwe" : "nag.subOwed", vars);
+  let lineKey;
+  if(!it.iOwe) lineKey = pickKey("nag.creditor");
+  else if(count >= 4) lineKey = "nag.snoozedMany";
+  else if(count >= 2) lineKey = "nag.snoozedAgain";
+  else if(count === 1) lineKey = "nag.snoozedOnce";
+  else lineKey = pickKey("nag.l" + level + "_");
+  const line = lineKey ? t(lineKey, vars) : "";
+  const mood = SB_NAG_MOOD[lineKey];
+  // 外幣在灰字補上「約 NT$…」，比較有感；只有真的有匯率（即時或內建表）才換算，沒有就不亂猜
+  const rate = it.currency !== "TWD" && ((window.cachedExchangeRates || {})[it.currency] || (window.DEFAULT_RATES_TO_TWD || {})[it.currency]);
+  const approx = rate ? t("nag.approx", { twd: "NT$" + (typeof formatAmt === "function" ? formatAmt(Math.round(it.amount * rate)) : Math.round(it.amount * rate)) }) : "";
+  const sub = t(it.iOwe ? "nag.subOwe" : "nag.subOwed", Object.assign({}, vars, { amount: amount + approx }));
   el.hidden = false;
   el.innerHTML = '<div class="card sb-nag lv-' + level + (it.iOwe ? "" : " is-creditor") + '" role="status">'
-    + '<div class="sb-nag-pie" title="' + escapeHtml(t("nag.mascotName")) + '">' + sbPieMascotSVG(level) + '</div>'
+    + '<div class="sb-nag-pie" title="' + escapeHtml(t("nag.mascotName")) + '">' + sbPieMascotSVG(level, mood) + '</div>'
     + '<div class="sb-nag-body">'
     + '<p class="sb-nag-line">' + escapeHtml(line) + '</p>'
     // 台詞已經講了金額，下面那行灰字就不重複
-    + (line.includes(amount) ? '' : '<p class="sb-nag-sub">' + escapeHtml(sub) + '</p>')
+    + (line.includes(amount) && !approx ? '' : '<p class="sb-nag-sub">' + escapeHtml(sub) + '</p>')
     + '<div class="sb-nag-actions">'
     + '<button type="button" class="sbf-primary sb-nag-go">' + escapeHtml(t(it.iOwe ? "nag.pay" : "nag.nudge")) + '</button>'
     + '<button type="button" class="sb-nag-later">' + escapeHtml(t(it.iOwe ? "nag.snooze" : "nag.later")) + '</button>'
