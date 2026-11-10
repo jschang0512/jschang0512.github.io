@@ -10388,3 +10388,19 @@ html body .sb-side-nav{ display:none; }
   /* 頁首原本的登出按鈕不重複出現 */
   html body.has-side-nav #logoutBtn{ display:none !important; }
 }
+@media (min-width: 1100px){
+  /* 通知：設定上面獨立一列（跟選單項目同一種樣子），頁首的鈴鐺不重複出現 */
+  html body.has-side-nav #notificationBellContainer{ display:none !important; }
+  html body .sb-side-notif{
+    display:flex; align-items:center; gap:10px; width:100%; min-height:40px; padding:0 12px;
+    border:0; border-radius:10px; background:none; color:var(--ink); font:inherit; font-size:15px; font-weight:600; text-align:left; cursor:pointer;
+    transition:background-color .15s ease, color .15s ease;
+  }
+  html body .sb-side-notif[hidden]{ display:none; }
+  html body .sb-side-notif:hover{ background:var(--line); }
+  html body .sb-side-notif:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:-2px; }
+  /* 底部那一組（通知、設定、登出）靠到最下面，分隔線移到通知上方 */
+  html body .sb-side-notif:not([hidden]){ position:relative; margin-top:auto; }
+  html body .sb-side-notif:not([hidden])::before{ content:""; position:absolute; left:0; right:0; top:-7px; height:1px; background:var(--line); }
+  html body .sb-side-notif:not([hidden]) + .sb-side-foot{ margin-top:0; padding-top:0; border-top:0; }
+}
