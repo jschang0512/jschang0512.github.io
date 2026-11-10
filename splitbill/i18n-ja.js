@@ -1464,6 +1464,8 @@ I18N["ja"] = {
     "nav.mainLabel": "メインナビゲーション",
 
     "nav.currencies": "通貨",
+    "nav.tools": "ツール",
+    "nav.recap": "年間まとめ",
 
     "currency.switchCurrencyTitle": "通貨を切り替え",
     "currency.tab.expense": "支出",

@@ -8,6 +8,25 @@
 // ============================================================
 window.SB_RELEASE_NOTES = [
   {
+    version: "965",
+    date: "2026-11-10",
+    "zh-Hant": [
+      "電腦版改版：左側選單一眼看到所有幣別和工具，首頁與總表分成左右兩欄",
+      "電腦和平板上表單不再拉得很寬；固定支出、活動卡片排成兩欄",
+      "手機上「我的款項」放到最上面，圖表的日期切換和週／月選單合成一行"
+    ],
+    "ja": [
+      "PC 版を刷新：左のメニューで通貨とツールが一目でわかり、ホームと総表は 2 列表示に",
+      "PC・タブレットでフォームが横に広がりすぎないように。固定支出とイベントのカードは 2 列に",
+      "スマホでは「自分の残高」を一番上に。グラフの期間切替と週／月メニューを 1 行に"
+    ],
+    "en": [
+      "Desktop redesign: a sidebar shows every currency and tool at a glance, and Home and the overview use two columns",
+      "Forms no longer stretch across wide screens; fixed-cost and event cards sit in two columns on tablets and computers",
+      "On phones, My Balance comes first, and the chart’s date and week/month controls share one row"
+    ]
+  },
+  {
     version: "964",
     date: "2026-11-09",
     "zh-Hant": [

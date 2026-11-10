@@ -29,18 +29,18 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=964">
-<link rel="stylesheet" href="shared.css?v=964">
-<script src="holiday.js?v=964"></script>
+<link rel="stylesheet" href="theme.css?v=965">
+<link rel="stylesheet" href="shared.css?v=965">
+<script src="holiday.js?v=965"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
-<script src="i18n.js?v=964"></script>
-<script src="currencies.js?v=964"></script>
-<script src="motion.js?v=964"></script>
-<script src="version.js?v=964"></script>
-<script src="notif-text.js?v=964"></script>
-<script src="shared-ui.js?v=964"></script>
-<script src="theme.js?v=964" defer></script>
-<script src="app-banner.js?v=964" defer></script>
+<script src="i18n.js?v=965"></script>
+<script src="currencies.js?v=965"></script>
+<script src="motion.js?v=965"></script>
+<script src="version.js?v=965"></script>
+<script src="notif-text.js?v=965"></script>
+<script src="shared-ui.js?v=965"></script>
+<script src="theme.js?v=965" defer></script>
+<script src="app-banner.js?v=965" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -190,12 +190,14 @@ if("serviceWorker" in navigator){
       <button type="button" class="on-this-day-close" id="onThisDayClose" data-i18n-title="common.close" title="關閉" aria-label="關閉">✕</button>
     </div>
 
+    <!-- 電腦版分成兩欄：左邊「今天、我的款項」，右邊其他；手機上照順序排成一欄 -->
+    <div class="sb-home-cols">
+    <div class="sb-home-main">
     <section class="card sb-today hidden" id="todayCard" aria-labelledby="todayTitle">
       <h2 id="todayTitle" data-i18n="summary.todayTitle">今天</h2>
       <ul class="sb-today-list" id="todayList"></ul>
     </section>
 
-    <div class="summary-grid-2">
       <!-- 1. 我的餘額：只顯示有交易紀錄過的幣別 -->
       <div class="card">
         <h2 data-i18n="summary.myAmtTitle">我的款項</h2>
@@ -205,6 +207,8 @@ if("serviceWorker" in navigator){
         </div>
       </div>
 
+    </div><!-- /sb-home-main -->
+    <div class="sb-home-side">
       <!-- 2. 淨餘額比較：長條圖，取代原本的文字總表 (在群組留言之上) -->
       <div class="card">
         <div class="chart-title-row">
@@ -221,7 +225,6 @@ if("serviceWorker" in navigator){
           <div class="sb-skel-bars" role="status" data-i18n-title="common.loading" title="載入中…"><i style="height:45%"></i><i style="height:75%"></i><i style="height:35%"></i><i style="height:90%"></i><i style="height:60%"></i></div>
         </div>
       </div>
-    </div>
 
     <!-- 🔁 本月週期性支出總覽：純粹用 recurring_expenses 現有資料算出來，不用等
          自動記錄跑過才看得到，一打開總覽就知道每個月固定要繳多少、最近哪幾筆快到期 -->
@@ -246,6 +249,8 @@ if("serviceWorker" in navigator){
             <div id="feedbackList"></div>
           </div>
         </div>
+    </div><!-- /sb-home-side -->
+    </div><!-- /sb-home-cols -->
 
     <!-- ⚡ 浮動快速記帳按鈕 -->
     <button type="button" class="quick-exp-fab" id="openQuickExpenseBtn" data-i18n-title="summary.quickExpFab" title="一鍵快速記帳" aria-label="一鍵快速記帳">

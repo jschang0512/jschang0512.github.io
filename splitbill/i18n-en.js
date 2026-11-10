@@ -1464,6 +1464,8 @@ I18N["en"] = {
     "nav.mainLabel": "Main navigation",
 
     "nav.currencies": "Currencies",
+    "nav.tools": "Tools",
+    "nav.recap": "Year in review",
 
     "currency.switchCurrencyTitle": "Switch currency",
     "currency.tab.expense": "Expense",

@@ -1489,6 +1489,8 @@ const I18N = {
     "nav.mainLabel": "主要導覽",
 
     "nav.currencies": "幣別",
+    "nav.tools": "工具",
+    "nav.recap": "年度回顧",
 
     "currency.switchCurrencyTitle": "切換幣別",
     "currency.tab.expense": "支出",

@@ -656,7 +656,8 @@ async function initNotificationBell(sb, myMember){
         window.scrollTo({ top: 0, behavior: "smooth" });
         if(bellBtn && !isOpen()) bellBtn.click();
       });
-      anchor.parentNode.insertBefore(el, anchor);
+      // 幣別頁：放在「我的款項」橫幅正下方（最重要的數字先看到）；總覽頁：放在「我的款項」卡片標題前
+      if(balance) balance.after(el); else anchor.parentNode.insertBefore(el, anchor);
     }
     el.textContent = n === 1 ? t("shared.unreadNotifAlertOne") : t("shared.unreadNotifAlert", { n: n > 99 ? "99+" : n });
   }
@@ -1608,4 +1609,61 @@ document.addEventListener("click", e => {
   }
   document.addEventListener("touchend", end);
   document.addEventListener("touchcancel", end);
+})();
+
+// ============================================================
+// 電腦版左側選單（2026-11）：寬度 ≥ 1100px 時出現，取代上方「首頁／臺幣／日幣」
+// 那排膠囊和首頁的「固定收支／活動」按鈕，一眼看到所有地方。手機、平板不出現，
+// 照舊用底部導覽列和上方膠囊。幣別清單跟上方膠囊同一份（設定裡勾選顯示的幣別）。
+// ============================================================
+(function initSideNav(){
+  const page = (location.pathname.split("/").pop() || "").toLowerCase();
+  const params = new URLSearchParams(location.search);
+  const here = page === "summary.html" ? "home"
+    : page === "currency.html" ? "cur:" + (params.get("c") || "TWD")
+    : page === "settings.html" ? "settings"
+    : page === "recurring.html" ? "recurring"
+    : page === "events.html" ? "events" : null;
+  if(!here) return;
+
+  function build(){
+    if(document.querySelector(".sb-side-nav") || typeof sbIcon !== "function") return;
+    let shown = ["TWD"];
+    try { shown = JSON.parse(localStorage.getItem("splitbill-shown-currencies") || "null") || ["TWD"]; } catch(e){}
+    const curCode = here.startsWith("cur:") ? here.slice(4) : null;
+    const list = (typeof CURRENCIES !== "undefined" ? CURRENCIES : []).filter(c => shown.includes(c.code) || c.code === curCode);
+    const link = (href, key, iconHtml, label) =>
+      `<a href="${href}"${key === here ? ' class="is-current" aria-current="page"' : ""}><span class="sb-side-ico">${iconHtml}</span><span>${escapeHtml(label)}</span></a>`;
+    const nav = document.createElement("nav");
+    nav.className = "sb-side-nav";
+    nav.setAttribute("aria-label", t("nav.mainLabel"));
+    nav.innerHTML = `
+      <a class="sb-side-brand" href="summary.html">
+        <svg class="app-logo" viewBox="0 0 512 512" aria-hidden="true"><path class="s1" d="M256,238 L118.5,138.1 A170,170 0 0,1 393.5,138.1 Z"/><path class="s2" d="M271.6,265 L426.9,195.9 A170,170 0 0,1 289.4,434.1 Z"/><path class="s3" d="M240.4,265 L222.6,434.1 A170,170 0 0,1 85.1,195.9 Z"/></svg>
+        <span>Splitbill</span>
+      </a>
+      ${link("summary.html", "home", sbIcon("grid"), t("common.overview"))}
+      <p class="sb-side-label">${escapeHtml(t("nav.currencies"))}</p>
+      ${list.map(c => link("currency.html?c=" + encodeURIComponent(c.code), "cur:" + c.code,
+          (typeof currencyFlagImgHTML === "function" && currencyFlagImgHTML(c.code)) || sbIcon("globe"), c.label)).join("")}
+      <p class="sb-side-label">${escapeHtml(t("nav.tools"))}</p>
+      ${link("recurring.html", "recurring", sbIcon("repeat"), t("recurring.title"))}
+      ${link("events.html", "events", sbIcon("calendar"), t("events.title"))}
+      ${typeof recapYearFor === "function" && recapYearFor(new Date()) ? link("recap.html", "recap", sbIcon("sparkle"), t("nav.recap")) : ""}
+      <div class="sb-side-foot">${link("settings.html", "settings", sbIcon("gear"), t("common.settings"))}</div>`;
+    document.body.appendChild(nav);
+    document.body.classList.add("has-side-nav");
+    // 首頁上「活動」捷徑的未看數字，選單上也顯示一份
+    const src = document.getElementById("homeEventsBadge");
+    const evLink = nav.querySelector('a[href="events.html"]');
+    if(src && evLink){
+      const badge = document.createElement("span");
+      badge.className = "sb-side-badge";
+      evLink.appendChild(badge);
+      const sync = () => { badge.textContent = src.textContent; badge.hidden = src.classList.contains("hidden") || !src.textContent.trim(); };
+      new MutationObserver(sync).observe(src, { attributes: true, childList: true, characterData: true, subtree: true });
+      sync();
+    }
+  }
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", build); else build();
 })();
