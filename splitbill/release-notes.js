@@ -8,6 +8,28 @@
 // ============================================================
 window.SB_RELEASE_NOTES = [
   {
+    version: "976",
+    date: "2026-11-11",
+    "zh-Hant": [
+      "派派一天只完整出現一次，其他時候會變成標題旁的 logo，點一下就能聽它唸",
+      "還清欠款時，派派會出來開心一下",
+      "記帳時如果還欠別人錢，派派可能會在成功畫面吐槽你（一天最多一次）",
+      "設定 → 偏好設定可以把派派調成「溫和」或「關閉」"
+    ],
+    "ja": [
+      "パイパイが全面に出てくるのは 1 日 1 回だけ。それ以外はタイトル横のロゴになり、タップすると話しかけてきます",
+      "完済するとパイパイが喜びます",
+      "まだ返していないお金があるのに記録すると、完了画面でツッコまれることがあります（1 日 1 回まで）",
+      "設定 → 環境設定でパイパイを「やさしめ」や「オフ」にできます"
+    ],
+    "en": [
+      "Pie now shows up in full only once a day; the rest of the time it lives in the logo next to the page title, tap to hear it out",
+      "Pay off a debt and Pie celebrates with you",
+      "If you still owe someone, Pie may roast you on the saved screen when you log an expense (once a day at most)",
+      "In Settings → Preferences you can set Pie to Gentle or turn it off"
+    ]
+  },
+  {
     version: "975",
     date: "2026-11-11",
     "zh-Hant": [

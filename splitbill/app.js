@@ -2122,6 +2122,7 @@
         const payerNames = (payers || []).map(x => memberById[x.member_id] || t("summary.meFallback")).join("、");
         const myShare = myMember && (shares || []).find(s => s.member_id === myMember.id);
         window.showRecordSuccess({
+          nag: true,
           title: t("record.expenseTitle"),
           headline: itemTitle || t("currency.newExpenseDefaultDesc"),
           amount: SYM + formatAmt(amount),
@@ -4708,6 +4709,7 @@
     sbRenderNag(banner, {
       myId: myMember.id, expenses, repayments,
       nameOf: id => memberById[id],
+      surface: "cur:" + CURRENCY, scope: CURRENCY,
       onPay: it => openPairFromNag(it.debtor, it.creditor),
       onNudge: it => openPairFromNag(it.debtor, it.creditor)
     });
@@ -7572,6 +7574,13 @@ function showPairDetail(
   // ==========================================================
 
   el.innerHTML = html;
+
+  // 打開「你欠他錢」的那個人時，派派在明細上方探頭補一句
+  if(myMember && debtorId === myMember.id && typeof window.sbNagPeekHTML === "function"){
+    const peek = window.sbNagPeekHTML(creditorId, CURRENCY, memberById[creditorId] || "?");
+    const hdr = el.querySelector(".debt-detail-header");
+    if(peek && hdr) hdr.insertAdjacentHTML("afterend", peek);
+  }
 
   el.style.display = "block";
 

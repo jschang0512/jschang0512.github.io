@@ -10572,3 +10572,35 @@ html body .sb-pie-teeth{ stroke:#26215C; stroke-width:1; fill:none; }
 html body .sb-pie-vein{ stroke:#E24B4A; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; fill:none; }
 html body .sb-pie-cheek{ fill:#E24B4A; opacity:.55; }
 html body .sb-pie-blush{ fill:#F4A7C0; opacity:.75; }
+
+/* ---------- v976 派派：logo、開心、記帳吐槽、往來明細探頭、設定 ---------- */
+/* 標題旁的 logo 變成派派（有話要說時），點了展開卡片 */
+html body .sb-title-pie{ display:none; flex:none; padding:0; margin:-4px; border:0; border-radius:50%; background:none; cursor:pointer; }
+html body .title-row.has-pie .sb-title-pie{ display:inline-grid; place-items:center; }
+html body .title-row.has-pie > .app-logo{ display:none !important; }
+html body .sb-title-pie .sb-pie{ width:100%; height:100%; animation:sbPieWiggle .6s cubic-bezier(.16,1,.3,1) .3s both; transform-origin:50% 90%; }
+html body .sb-title-pie:hover .sb-pie{ animation:sbPieWiggle .5s cubic-bezier(.16,1,.3,1) both; }
+html body .sb-title-pie:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; }
+html body .sb-pie-spark{ fill:#EF9F27; }
+html body .sb-nag.is-yay{ border-color:color-mix(in srgb, var(--positive-text) 40%, var(--card-border)); }
+html body .sb-nag.is-yay .sb-pie{ animation:sbPieHop .7s cubic-bezier(.16,1,.3,1) .1s both; }
+@keyframes sbPieHop{ 0%{ transform:translateY(0) } 35%{ transform:translateY(-8px) rotate(-6deg) } 70%{ transform:translateY(0) rotate(4deg) } 100%{ transform:none } }
+/* 記帳成功畫面裡的吐槽 */
+html body .sb-record-nag{ display:flex; align-items:center; gap:10px; margin:12px 0 4px; padding:10px 12px; border-radius:14px; background:color-mix(in srgb, var(--btn-primary) 9%, transparent); text-align:left; }
+html body .sb-record-nag .sb-pie{ flex:none; width:44px; height:44px; animation:sbPieWiggle .6s cubic-bezier(.16,1,.3,1) .4s both; transform-origin:50% 90%; }
+html body .sb-record-nag p{ margin:0; font-size:14px; font-weight:600; line-height:1.5; color:var(--ink); }
+/* 往來明細裡探頭 */
+html body .sb-pair-peek{ display:flex; align-items:center; gap:10px; margin:10px 0; padding:8px 12px; border-radius:14px; background:color-mix(in srgb, var(--btn-primary) 8%, transparent); }
+html body .sb-pair-peek .sb-pie{ flex:none; width:40px; height:40px; }
+html body .sb-pair-peek p{ margin:0; font-size:14px; font-weight:600; line-height:1.45; color:var(--ink); }
+/* 設定：派派提醒 */
+html body .sb-nag-setting{ flex-wrap:wrap; gap:10px; }
+html body .sb-nag-setting-icon{ width:34px; height:34px; padding:0; background:none; }
+html body .sb-nag-setting-icon .sb-pie{ width:34px; height:34px; }
+html body .sb-seg{ display:flex; gap:3px; padding:3px; border-radius:12px; background:var(--line); margin-left:auto; }
+html body .sb-seg button{ min-height:36px; padding:0 12px; border:0; border-radius:9px; background:none; color:var(--ink-soft); font:inherit; font-size:14px; font-weight:600; white-space:nowrap; cursor:pointer; }
+html body .sb-seg button.is-on{ background:var(--card); color:var(--ink); box-shadow:0 1px 2px rgba(16,14,30,.12); }
+html body .sb-seg button:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:1px; }
+@media (prefers-reduced-motion: reduce){
+  html body :is(.sb-title-pie, .sb-record-nag, .sb-nag.is-yay) .sb-pie{ animation:none !important; }
+}

@@ -1897,7 +1897,7 @@ function sbNagWeight(amount, currency){
 
 // 一整顆派長出臉。level 決定派本身（3 = 出現裂痕、4 = 裂開掉一片），mood 決定表情（跟著台詞走）。
 // 線條類的五官都是「白線＋深色描邊」，淺色、深色模式的派上都看得清楚。
-const SB_PIE_MOODS = ["smile", "sweet", "sideeye", "stare", "smirk", "angry", "furious", "shock", "cry", "sob", "sinister", "dead"];
+const SB_PIE_MOODS = ["smile", "sweet", "sideeye", "stare", "smirk", "angry", "furious", "shock", "cry", "sob", "sinister", "dead", "joy"];
 function sbPieMascotSVG(level, mood){
   if(!SB_PIE_MOODS.includes(mood)) mood = ["smile", "smile", "sideeye", "cry", "dead"][Math.min(4, Math.max(0, level))];
   const top = '<path d="M32 33 L9.48 20 A26 26 0 0 1 54.52 20 Z" fill="var(--logo-3)"/>';
@@ -1944,7 +1944,8 @@ function sbPieMascotSVG(level, mood){
     cry:      browsSad + eyesRound(0, 1.4) + tear + ln("M25 45 Q32 39 39 45"),
     sob:      browsSad + eyesSadClosed + streams + ln("M24 44 q2 -2 4 0 t4 0 t4 0 t4 0"),
     sinister: browsAngry + eyesHappy + grin,
-    dead:     eyesX + mouthO(4.4, 3.4)
+    dead:     eyesX + mouthO(4.4, 3.4),
+    joy:      eyesHappy + blush + '<path class="sb-pie-white" d="M23.5 38 Q32 49 40.5 38 Z"/>' + '<path class="sb-pie-spark" d="M11 14 l1.4 3 l3 1.4 l-3 1.4 l-1.4 3 l-1.4 -3 l-3 -1.4 l3 -1.4 Z M53 10 l1 2.2 l2.2 1 l-2.2 1 l-1 2.2 l-1 -2.2 l-2.2 -1 l2.2 -1 Z"/>'
   };
   return '<svg class="sb-pie lv-' + level + ' mood-' + mood + '" viewBox="0 0 64 64" aria-hidden="true">' + top + right + left
     + '<g class="sb-pie-seam">' + seams + '</g>' + crack + faces[mood] + '</svg>';
@@ -1958,14 +1959,30 @@ const SB_NAG_MOOD = {
   "nag.l3_1": "sinister", "nag.l3_2": "angry",   "nag.l3_3": "cry",     "nag.l3_4": "furious", "nag.l3_5": "stare",   "nag.l3_6": "smirk",
   "nag.l4_1": "dead",     "nag.l4_2": "shock",   "nag.l4_3": "stare",   "nag.l4_4": "sob",     "nag.l4_5": "sinister","nag.l4_6": "furious",
   "nag.snoozedOnce": "angry", "nag.snoozedAgain": "smirk", "nag.snoozedMany": "furious",
-  "nag.creditor1": "sinister", "nag.creditor2": "angry", "nag.creditor3": "smirk", "nag.creditor4": "sinister"
+  "nag.creditor1": "sinister", "nag.creditor2": "angry", "nag.creditor3": "smirk", "nag.creditor4": "sinister",
+  "nag.roast1": "smirk", "nag.roast2": "sideeye", "nag.roast3": "stare", "nag.roast4": "angry",
+  "nag.peek1": "stare", "nag.peek2": "sideeye", "nag.peek3": "smirk",
+  "nag.yay1": "joy", "nag.yay2": "joy", "nag.yay3": "joy", "nag.yayOwed1": "joy", "nag.yayOwed2": "joy"
 };
 
-// 找出最該被情勒的那一筆。expenses / repayments 可以是多個幣別，會分幣別各算一次欠款表。
-function sbNagFind(myId, expenses, repayments){
-  if(!myId || typeof buildDebtMatrix !== "function") return null;
-  const today = sbIsoDay(new Date());
-  const dayNum = iso => Math.round(Date.parse(iso + "T00:00:00Z") / 86400000);
+// 使用者自己選的派派模式：off 關閉／gentle 溫和／normal 正常（預設）。只存在這台裝置。
+function sbNagMode(){
+  try { const m = localStorage.getItem("sb-nag-mode"); return m === "off" || m === "gentle" ? m : "normal"; } catch(e){ return "normal"; }
+}
+window.sbNagMode = sbNagMode;
+// 溫和模式只用這些表情的台詞，派也不會裂開
+const SB_NAG_GENTLE_MOODS = ["smile", "sweet", "stare", "sideeye", "smirk"];
+const sbNagStore = {
+  get(k, d){ try { const v = JSON.parse(localStorage.getItem(k) || "null"); return v == null ? d : v; } catch(e){ return d; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+const sbNagToday = () => sbIsoDay(new Date());
+const sbNagDayNum = iso => Math.round(Date.parse(iso + "T00:00:00Z") / 86400000);
+
+// 我跟每個人之間、每個幣別的欠款，各自從哪天開始欠、加權後多嚴重。expenses / repayments 可以是多個幣別。
+function sbNagItems(myId, expenses, repayments){
+  if(!myId || typeof buildDebtMatrix !== "function") return [];
+  const today = sbNagToday();
   const byCur = {};
   (expenses || []).forEach(e => { const c = e.currency || "TWD"; (byCur[c] || (byCur[c] = { e: [], r: [] })).e.push(e); });
   (repayments || []).forEach(r => { const c = r.currency || "TWD"; (byCur[c] || (byCur[c] = { e: [], r: [] })).r.push(r); });
@@ -1981,62 +1998,151 @@ function sbNagFind(myId, expenses, repayments){
       if(net <= tiny) return;
       const from = since[creditor] && since[creditor][debtor];
       if(!from) return;
-      const days = dayNum(today) - dayNum(from);
-      items.push({ currency: code, creditor, debtor, amount: net, since: from, days, score: days * sbNagWeight(net, code), iOwe: debtor === myId });
+      const days = sbNagDayNum(today) - sbNagDayNum(from);
+      items.push({ key: code + "-" + creditor + "-" + debtor, currency: code, creditor, debtor, amount: net, since: from, days,
+        score: days * sbNagWeight(net, code), iOwe: debtor === myId });
     }));
   });
-  const snoozed = it => {
-    try {
-      const s = JSON.parse(localStorage.getItem("sb-nag-" + it.currency + "-" + it.creditor + "-" + it.debtor) || "null");
-      return s && s.until > today ? s : null;
-    } catch(e){ return null; }
-  };
+  return items;
+}
+window.sbNagItems = sbNagItems;
+
+// 挑今天要講的那一筆：先看你欠人的；沒有才看別人欠你的（同一個人一週最多問一次「要不要幫你催」）
+function sbNagFind(myId, expenses, repayments, items){
+  items = items || sbNagItems(myId, expenses, repayments);
+  const today = sbNagToday();
+  const snoozed = it => { const s = sbNagStore.get("sb-nag-" + it.key, null); return s && s.until > today; };
+  const askedThisWeek = it => { const d = sbNagStore.get("sb-nag-asked-" + it.key, null); return d && sbNagDayNum(today) - sbNagDayNum(d) < 7; };
   const pick = list => list.filter(it => !snoozed(it)).sort((a, b) => b.score - a.score)[0] || null;
   return pick(items.filter(it => it.iOwe && it.score >= SB_NAG_LEVELS[0]))
-    || pick(items.filter(it => !it.iOwe && it.score >= SB_NAG_LEVELS[1]));
+    || pick(items.filter(it => !it.iOwe && it.score >= SB_NAG_LEVELS[1] && !askedThisWeek(it)));
 }
 window.sbNagFind = sbNagFind;
 
-// 把派派畫進 el。opts：{ myId, expenses, repayments, nameOf(id), onPay(item), onNudge(item) }
+// 從今天輪替的台詞裡挑一句；溫和模式只挑客氣表情的那幾句
+function sbNagPickKey(prefixes, gentle){
+  const all = [];
+  prefixes.forEach(prefix => { for(let i = 1; i <= 9; i++){ const k = prefix + i; if(t(k) !== k && (!gentle || SB_NAG_GENTLE_MOODS.includes(SB_NAG_MOOD[k]))) all.push(k); } });
+  return all.length ? all[Math.round(Date.now() / 86400000) % all.length] : null;
+}
+
+function sbNagMoney(amount, currency){
+  const meta = (typeof CURRENCIES !== "undefined" ? CURRENCIES : []).find(c => c.code === currency);
+  return (meta ? meta.symbol : currency + " ") + (typeof formatAmt === "function" ? formatAmt(amount) : Math.round(amount));
+}
+
+// 標題旁的 logo：派派有話要說時變成帶表情的派派，點了展開那張卡片；沒事時恢復成一般 logo
+function sbNagSetLogo(level, mood, onClick){
+  const row = document.querySelector(".app-header .title-row");
+  const logo = row && row.querySelector(".app-logo");
+  if(!row || !logo) return;
+  let btn = row.querySelector(".sb-title-pie");
+  if(level == null){ row.classList.remove("has-pie"); if(btn) btn.remove(); return; }
+  if(!btn){
+    btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "sb-title-pie";
+    logo.parentNode.insertBefore(btn, logo);
+  }
+  const size = Math.round(logo.getBoundingClientRect().width) || 32;
+  btn.style.width = btn.style.height = (size + 8) + "px";
+  btn.setAttribute("aria-label", t("nag.logoAria"));
+  btn.title = t("nag.logoAria");
+  btn.innerHTML = sbPieMascotSVG(level, mood);
+  btn.onclick = onClick;
+  row.classList.add("has-pie");
+}
+
+// 把派派畫進 el。opts：{ myId, expenses, repayments, nameOf(id), onPay(item), onNudge(item),
+//   surface（"home" 或 "cur:TWD"，一天各自只完整出現一次）, scope（幣別頁傳 "TWD"；首頁不傳＝全部幣別）, expand }
 function sbRenderNag(el, opts){
   if(!el) return;
-  const it = sbNagFind(opts.myId, opts.expenses, opts.repayments);
-  if(!it){ el.innerHTML = ""; el.hidden = true; return; }
-  const key = "sb-nag-" + it.currency + "-" + it.creditor + "-" + it.debtor;
-  let snoozeInfo = null;
-  try { snoozeInfo = JSON.parse(localStorage.getItem(key) || "null"); } catch(e){}
+  const mode = sbNagMode();
+  const clear = () => { el.innerHTML = ""; el.hidden = true; };
+  if(mode === "off"){ clear(); sbNagSetLogo(null); window.__sbNagCurrent = null; window.__sbNagItems = []; return; }
+  const gentle = mode === "gentle";
+  const today = sbNagToday();
+  const items = sbNagItems(opts.myId, opts.expenses, opts.repayments);
+  window.__sbNagItems = items;
+
+  // ---- 還清了：派派唸過的那筆不見了，就開心一次 ----
+  // 只檢查這次資料涵蓋的幣別（幣別頁只有自己那個幣別）；資料是空的（可能讀取失敗）就不判斷，免得誤報
+  const tracked = sbNagStore.get("sb-nag-track", {});
+  if((opts.expenses || []).length){
+    const cleared = Object.keys(tracked).filter(k => {
+      const tr = tracked[k];
+      if(opts.scope && tr.currency !== opts.scope) return false;
+      return !items.some(it => it.key === k && it.since === tr.since);
+    });
+    if(cleared.length){
+      const tr = tracked[cleared[0]];
+      cleared.forEach(k => { delete tracked[k]; try { localStorage.removeItem("sb-nag-" + k); } catch(e){} });
+      sbNagStore.set("sb-nag-track", tracked);
+      const lineKey = sbNagPickKey([tr.iOwe ? "nag.yay" : "nag.yayOwed"], false);
+      el.hidden = false;
+      el.innerHTML = '<div class="card sb-nag is-yay" role="status">'
+        + '<div class="sb-nag-pie">' + sbPieMascotSVG(0, "joy") + '</div>'
+        + '<div class="sb-nag-body"><p class="sb-nag-line">' + escapeHtml(t(lineKey, { name: tr.name, amount: tr.amountText })) + '</p>'
+        + '<div class="sb-nag-actions"><button type="button" class="sbf-primary sb-nag-ok">' + escapeHtml(t("nag.yayOk")) + '</button></div></div></div>';
+      sbNagSetLogo(0, "joy", () => el.scrollIntoView({ behavior: "smooth", block: "center" }));
+      el.querySelector(".sb-nag-ok").addEventListener("click", () => {
+        el.querySelector(".sb-nag").classList.add("is-leaving");
+        setTimeout(() => sbRenderNag(el, Object.assign({}, opts, { expand: false })), 220);
+      });
+      return;
+    }
+  }
+
+  const it = sbNagFind(opts.myId, opts.expenses, opts.repayments, items);
+  window.__sbNagCurrent = it && it.iOwe ? it : null;
+  if(!it){ clear(); sbNagSetLogo(null); return; }
+
+  const amount = sbNagMoney(it.amount, it.currency);
+  const other = it.iOwe ? it.creditor : it.debtor;
+  const name = opts.nameOf(other) || "?";
+  // 記下派派唸過哪一筆，之後還清了才知道要開心
+  tracked[it.key] = { since: it.since, currency: it.currency, iOwe: it.iOwe, name, amountText: amount };
+  if(it.iOwe) window.__sbNagCurrent = Object.assign({}, it, { name });
+  sbNagStore.set("sb-nag-track", tracked);
+
+  const snoozeInfo = sbNagStore.get("sb-nag-" + it.key, null);
   // 記仇只記這一筆：還清後又欠的新債（開始日期不同）重新算
   const count = snoozeInfo && snoozeInfo.since === it.since ? snoozeInfo.count || 0 : 0;
-  const meta = (typeof CURRENCIES !== "undefined" ? CURRENCIES : []).find(c => c.code === it.currency);
-  const amount = (meta ? meta.symbol : it.currency + " ") + (typeof formatAmt === "function" ? formatAmt(it.amount) : Math.round(it.amount));
-  const other = it.iOwe ? it.creditor : it.debtor;
-  const vars = { name: opts.nameOf(other) || "?", amount: amount, days: it.days, n: count };
-  const level = it.iOwe ? sbNagLevel(it.score) : 0;
-  const dayIdx = Math.round(Date.now() / 86400000);
-  // 今天輪到哪一句（每天換）；表情跟著那一句走
-  const pickKey = prefix => {
-    const all = [];
-    for(let i = 1; i <= 9; i++){ const k = prefix + i; if(t(k) !== k) all.push(k); }
-    return all.length ? all[dayIdx % all.length] : null;
-  };
+  const vars = { name, amount, days: it.days, n: count };
+  let level = it.iOwe ? sbNagLevel(it.score) : 0;
+  if(gentle) level = Math.min(level, 2);
   let lineKey;
-  if(!it.iOwe) lineKey = pickKey("nag.creditor");
-  else if(count >= 4) lineKey = "nag.snoozedMany";
-  else if(count >= 2) lineKey = "nag.snoozedAgain";
-  else if(count === 1) lineKey = "nag.snoozedOnce";
-  else lineKey = pickKey("nag.l" + level + "_");
+  if(!it.iOwe) lineKey = sbNagPickKey(["nag.creditor"], gentle);
+  else if(!gentle && count >= 4) lineKey = "nag.snoozedMany";
+  else if(!gentle && count >= 2) lineKey = "nag.snoozedAgain";
+  else if(!gentle && count === 1) lineKey = "nag.snoozedOnce";
+  else lineKey = sbNagPickKey(gentle ? ["nag.l1_", "nag.l2_"] : ["nag.l" + level + "_"], gentle);
   const line = lineKey ? t(lineKey, vars) : "";
   const mood = SB_NAG_MOOD[lineKey];
-  // 外幣在灰字補上「約 NT$…」，比較有感；只有真的有匯率（即時或內建表）才換算，沒有就不亂猜
+
+  // 外幣在灰字補上「約 NT$…」；只有真的有匯率（即時或內建表）才換算
   const rate = it.currency !== "TWD" && ((window.cachedExchangeRates || {})[it.currency] || (window.DEFAULT_RATES_TO_TWD || {})[it.currency]);
   const approx = rate ? t("nag.approx", { twd: "NT$" + (typeof formatAmt === "function" ? formatAmt(Math.round(it.amount * rate)) : Math.round(it.amount * rate)) }) : "";
   const sub = t(it.iOwe ? "nag.subOwe" : "nag.subOwed", Object.assign({}, vars, { amount: amount + approx }));
+
+  // 一天只完整出現一次（每個頁面各自算）；其餘時間縮在標題旁的 logo，點了才展開
+  const seenKey = "sb-nag-seen-" + (opts.surface || "home");
+  const expand = () => { sbRenderNag(el, Object.assign({}, opts, { expand: true })); setTimeout(() => el.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" }), 30); };
+  sbNagSetLogo(level, mood, expand);
+  // 這次開頁已經完整出現過的，頁面重畫（資料更新、即時同步）時維持展開，不要自己縮回去
+  const shownThisVisit = window.__sbNagFullShown || (window.__sbNagFullShown = {});
+  const surfaceId = opts.surface || "home";
+  if(!opts.expand && !shownThisVisit[surfaceId] && sbNagStore.get(seenKey, null) === today){ clear(); return; }
+  shownThisVisit[surfaceId] = true;
+  sbNagStore.set(seenKey, today);
+  if(!it.iOwe) sbNagStore.set("sb-nag-asked-" + it.key, today);
+
   el.hidden = false;
   el.innerHTML = '<div class="card sb-nag lv-' + level + (it.iOwe ? "" : " is-creditor") + '" role="status">'
     + '<div class="sb-nag-pie" title="' + escapeHtml(t("nag.mascotName")) + '">' + sbPieMascotSVG(level, mood) + '</div>'
     + '<div class="sb-nag-body">'
     + '<p class="sb-nag-line">' + escapeHtml(line) + '</p>'
-    // 台詞已經講了金額，下面那行灰字就不重複
+    // 台詞已經講了金額，下面那行灰字就不重複（外幣例外，要看換算）
     + (line.includes(amount) && !approx ? '' : '<p class="sb-nag-sub">' + escapeHtml(sub) + '</p>')
     + '<div class="sb-nag-actions">'
     + '<button type="button" class="sbf-primary sb-nag-go">' + escapeHtml(t(it.iOwe ? "nag.pay" : "nag.nudge")) + '</button>'
@@ -2044,11 +2150,70 @@ function sbRenderNag(el, opts){
     + '</div></div></div>';
   el.querySelector(".sb-nag-go").addEventListener("click", () => (it.iOwe ? opts.onPay : opts.onNudge)(it));
   el.querySelector(".sb-nag-later").addEventListener("click", () => {
-    // 欠人的：明天再出現，而且記一次；別人欠你的：三天後再問
-    const d = new Date(); d.setDate(d.getDate() + (it.iOwe ? 1 : 3));
-    try { localStorage.setItem(key, JSON.stringify({ until: sbIsoDay(d), count: count + 1, since: it.since })); } catch(e){}
+    if(it.iOwe){
+      // 欠人的：明天再出現，而且記一次
+      const d = new Date(); d.setDate(d.getDate() + 1);
+      sbNagStore.set("sb-nag-" + it.key, { until: sbIsoDay(d), count: count + 1, since: it.since });
+    }
     el.querySelector(".sb-nag").classList.add("is-leaving");
-    setTimeout(() => sbRenderNag(el, opts), 220);
+    setTimeout(() => sbRenderNag(el, Object.assign({}, opts, { expand: false })), 220);
   });
 }
 window.sbRenderNag = sbRenderNag;
+
+// 記帳成功畫面裡的吐槽：你還欠人錢（第 2 級以上）卻又記了一筆帳。一天最多一次，只在「正常」模式。
+function sbNagRoast(){
+  const it = window.__sbNagCurrent;
+  if(sbNagMode() !== "normal" || !it || !it.iOwe || sbNagLevel(it.score) < 2) return null;
+  const today = sbNagToday();
+  if(sbNagStore.get("sb-nag-roast", null) === today) return null;
+  sbNagStore.set("sb-nag-roast", today);
+  const lineKey = sbNagPickKey(["nag.roast"], false);
+  const name = it.name || "?";
+  return { level: Math.min(sbNagLevel(it.score), 3), mood: SB_NAG_MOOD[lineKey], line: t(lineKey, { name, amount: sbNagMoney(it.amount, it.currency), days: it.days }) };
+}
+window.sbNagRoast = sbNagRoast;
+
+// 往來明細裡探頭：打開「你欠他錢」的那個人時，派派在旁邊補一句
+function sbNagPeekHTML(creditorId, currency, name){
+  if(sbNagMode() === "off") return "";
+  const it = (window.__sbNagItems || []).find(x => x.iOwe && x.creditor === creditorId && x.currency === currency && x.score >= SB_NAG_LEVELS[0]);
+  if(!it) return "";
+  const gentle = sbNagMode() === "gentle";
+  const lineKey = sbNagPickKey(["nag.peek"], gentle);
+  if(!lineKey) return "";
+  const level = gentle ? Math.min(sbNagLevel(it.score), 2) : sbNagLevel(it.score);
+  return '<div class="sb-pair-peek">' + sbPieMascotSVG(Math.min(level, 2), SB_NAG_MOOD[lineKey])
+    + '<p>' + escapeHtml(t(lineKey, { name, amount: sbNagMoney(it.amount, it.currency), days: it.days })) + '</p></div>';
+}
+window.sbNagPeekHTML = sbNagPeekHTML;
+
+
+// 設定頁「派派提醒」：關閉／溫和／正常（存在這台裝置）
+(function initNagModeSetting(){
+  function setup(){
+    const seg = document.getElementById("nagModeSeg");
+    if(!seg) return;
+    const icon = document.getElementById("nagModeIcon");
+    const hint = document.getElementById("nagModeHint");
+    const sync = () => {
+      const mode = sbNagMode();
+      seg.querySelectorAll("[data-mode]").forEach(b => {
+        const on = b.dataset.mode === mode;
+        b.classList.toggle("is-on", on);
+        b.setAttribute("aria-checked", String(on));
+      });
+      if(icon) icon.innerHTML = sbPieMascotSVG(mode === "normal" ? 2 : 1, mode === "off" ? "stare" : mode === "gentle" ? "sweet" : "smirk");
+      if(hint) hint.textContent = t(mode === "off" ? "nag.settingHintOff" : mode === "gentle" ? "nag.settingHintGentle" : "nag.settingHint");
+    };
+    seg.addEventListener("click", e => {
+      const b = e.target.closest("[data-mode]");
+      if(!b) return;
+      try { localStorage.setItem("sb-nag-mode", b.dataset.mode); } catch(err){}
+      sync();
+    });
+    document.addEventListener("splitbill-lang-changed", sync);
+    sync();
+  }
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", setup); else setup();
+})();

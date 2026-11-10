@@ -1489,6 +1489,27 @@ const I18N = {
     "nav.mainLabel": "主要導覽",
 
     "nav.currencies": "幣別",
+    "nag.logoAria": "派派有話要說",
+    "nag.yay1": "終於！{name}的 {amount} 回家了。我原諒你了。",
+    "nag.yay2": "還清了！你看，這樣不是很好嗎？",
+    "nag.yay3": "{name}的 {amount} 平安回家。我宣布你是好人。",
+    "nag.yayOwed1": "{name}把 {amount} 還你了！我就說他會還的。",
+    "nag.yayOwed2": "{amount} 回來了！{name}這次表現不錯。",
+    "nag.yayOk": "好耶",
+    "nag.roast1": "有錢記帳，沒錢還{name}？",
+    "nag.roast2": "花錢的速度很快嘛。還錢的速度呢？{name}還在等 {amount}。",
+    "nag.roast3": "這筆記得很快喔。欠{name}的那筆什麼時候也處理一下？",
+    "nag.roast4": "記帳很勤勞，還錢很懶惰。",
+    "nag.peek1": "對，就是{name}。{amount}，{days} 天。",
+    "nag.peek2": "看到了吧，就是這位。",
+    "nag.peek3": "{name}人很好，你知道的。所以呢？",
+    "nag.settingTitle": "派派提醒",
+    "nag.settingHint": "欠錢太久時，派派會出來唸你",
+    "nag.settingHintGentle": "派派只會客氣地提醒你，不會發飆",
+    "nag.settingHintOff": "派派不會出現",
+    "nag.modeOff": "關閉",
+    "nag.modeGentle": "溫和",
+    "nag.modeNormal": "正常",
     "nag.approx": "（約 {twd}）",
     "nag.l1_5": "{name}當初借你錢的時候，應該沒想到要等這麼久吧。",
     "nag.l1_6": "沒關係，我會一直在這裡。每天。提醒你。",
@@ -1802,7 +1823,7 @@ let currentLang = detectDefaultLang();
 // 用 document.write 插一個同步載入的 <script>（同網域，瀏覽器不會擋）。版本號沿用
 // i18n.js 自己的 ?v=，換版時一起換新。切換語言本來就會整頁重新整理（見 setLang）。
 // 日文、英文翻譯檔各自的內容指紋，由 scripts/stamp-assets.js 自動填，不要手改
-const SB_LANG_V = {"en": "148ce85c3f", "ja": "89b8e794ed"};
+const SB_LANG_V = {"en": "e20246f14f", "ja": "35f3084213"};
 (function loadLangDict(){
   if(currentLang === "zh-Hant" || I18N[currentLang]) return;
   const self = document.currentScript;

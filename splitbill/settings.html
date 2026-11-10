@@ -30,16 +30,16 @@
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=599a4d1bd5">
-<link rel="stylesheet" href="shared.css?v=80214cf584">
+<link rel="stylesheet" href="shared.css?v=8193c87a13">
 <script src="holiday.js?v=2816c2cc17"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
-<script src="i18n.js?v=f13dc94fec"></script>
-<script src="currencies.js?v=62690b3f5e"></script>
+<script src="i18n.js?v=d9735eb1a4"></script>
+<script src="currencies.js?v=1fe139e56b"></script>
 <script src="motion.js?v=c960fb49b3"></script>
-<script src="version.js?v=b24d0451cc"></script>
+<script src="version.js?v=a07c677bf7"></script>
 <script src="notif-text.js?v=f501aac2ce"></script>
-<script src="shared-ui.js?v=b8d14fe9c2"></script>
+<script src="shared-ui.js?v=af64dbc000"></script>
 <script src="theme.js?v=01d7c0a8c1" defer></script>
 <script src="app-banner.js?v=c400decf5d" defer></script>
 <script>
@@ -384,6 +384,24 @@ if("serviceWorker" in navigator){
               <input type="checkbox" id="holidayToggle" data-i18n-title="settings.holidayTitle" aria-label="節日裝飾">
               <span class="switch-slider"></span>
             </label>
+          </div>
+
+          <div class="settings-divider settings-divider-compact"></div>
+
+          <!-- 派派：欠錢太久時的情勒提醒，可以關掉或調溫和（只存在這台裝置） -->
+          <div class="settings-row sb-nag-setting">
+            <div class="settings-row-lead">
+              <span class="settings-row-icon sb-nag-setting-icon" id="nagModeIcon" aria-hidden="true"></span>
+              <div>
+                <div class="settings-row-title" data-i18n="nag.settingTitle">派派提醒</div>
+                <div class="settings-hint settings-row-hint" id="nagModeHint" data-i18n="nag.settingHint">欠錢太久時，派派會出來唸你</div>
+              </div>
+            </div>
+            <div class="sb-seg" role="radiogroup" id="nagModeSeg" data-i18n-title="nag.settingTitle" title="派派提醒" aria-label="派派提醒">
+              <button type="button" role="radio" data-mode="off" data-i18n="nag.modeOff">關閉</button>
+              <button type="button" role="radio" data-mode="gentle" data-i18n="nag.modeGentle">溫和</button>
+              <button type="button" role="radio" data-mode="normal" data-i18n="nag.modeNormal">正常</button>
+            </div>
           </div>
 
           <div class="settings-divider settings-divider-compact"></div>
