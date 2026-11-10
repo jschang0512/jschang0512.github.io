@@ -401,7 +401,9 @@ async function showMemberProfileModal(memberId){
   if(!modal || !memberId) return;
 
   const myMember = window.myMember;
-  if(myMember && myMember.group_id && (!window.allGroupExpenses || !window.allGroupExpenses.length)){
+  // 首頁本來就有全部幣別的資料；幣別頁只抓自己那個幣別，這裡要跨幣別總額就自己抓一份（超過 20 秒就重抓）
+  const stale = window.__sbAllGroupAt && Date.now() - window.__sbAllGroupAt > 20000;
+  if(myMember && myMember.group_id && (!window.allGroupExpenses || !window.allGroupExpenses.length || stale)){
     try {
       const sb = window.sb;
       const [allExpRes, allRepRes] = await Promise.all([
@@ -409,6 +411,7 @@ async function showMemberProfileModal(memberId){
         sb.from("repayments").select("*").eq("group_id", myMember.group_id).order("created_at", { ascending:false })
       ]);
       if(allExpRes.data) window.allGroupExpenses = allExpRes.data;
+      if(allExpRes.data) window.__sbAllGroupAt = Date.now();
       if(allRepRes.data) window.allGroupRepayments = allRepRes.data;
     } catch(e){}
   }

@@ -2798,13 +2798,14 @@
     let expQuery = sb.from("expenses").select("*").order("expense_date", { ascending:false }).order("created_at", { ascending:false });
     let repQuery = sb.from("repayments").select("*").order("payment_date", { ascending:false }).order("created_at", { ascending:false });
 
+    // 只抓這個幣別：這頁畫的、算的全是這個幣別。以前會把整個群組所有幣別都抓下來再篩，
+    // 用越多種幣別的群組浪費越多。（成員資料卡要跨幣別的總額，它自己會另外抓。）
     if(gid){
       expQuery = expQuery.eq("group_id", gid);
       repQuery = repQuery.eq("group_id", gid);
-    } else {
-      expQuery = expQuery.eq("currency", CURRENCY);
-      repQuery = repQuery.eq("currency", CURRENCY);
     }
+    expQuery = expQuery.eq("currency", CURRENCY);
+    repQuery = repQuery.eq("currency", CURRENCY);
 
     // member_balances 這個 RPC、類別學習清單，跟支出/還款查詢彼此獨立
     // （都是各自從資料庫現況算出來的），一起打出去平行等，不用等前一個
@@ -2841,12 +2842,15 @@
     await applyLedger(allExp || [], allRep || [], { data: balRows, error: balError });
   }
 
-  // 把整個群組的支出／還款（全部幣別）套到畫面上。完整重新整理和「別人改了一筆、只更新那一筆」
+  // 這個幣別的支出／還款套到畫面上。完整重新整理和「別人改了一筆、只更新那一筆」
   // 兩條路都走這裡，畫面怎麼畫只有一份。
+  // 注意：這裡只有這個幣別的資料，不能放進 window.allGroupExpenses（那個名字代表
+  // 「整個群組、所有幣別」，成員資料卡會拿它算跨幣別總額，沒有就會自己去抓完整的）。
+  let ledgerExp = null, ledgerRep = null;
   async function applyLedger(allExp, allRep, balResult){
     const balRows = balResult.data, balError = balResult.error;
-    window.allGroupExpenses = allExp;
-    window.allGroupRepayments = allRep;
+    ledgerExp = allExp;
+    ledgerRep = allRep;
 
     const expenses = allExp.filter(e => e.currency === CURRENCY);
     const repayments = allRep.filter(r => r.currency === CURRENCY);
@@ -3028,8 +3032,8 @@
     async function applyPendingChanges(){
       const batch = pendingChanges.splice(0);
       if(!batch.length) return;
-      if(!Array.isArray(window.allGroupExpenses) || !Array.isArray(window.allGroupRepayments)) return refreshExpenses();
-      const lists = { expenses: window.allGroupExpenses.slice(), repayments: window.allGroupRepayments.slice() };
+      if(!Array.isArray(ledgerExp) || !Array.isArray(ledgerRep)) return refreshExpenses();
+      const lists = { expenses: ledgerExp.slice(), repayments: ledgerRep.slice() };
       for(const { table, payload } of batch){
         const list = lists[table];
         if(!list) return refreshExpenses();
@@ -3041,6 +3045,12 @@
         } else {
           const row = payload.new;
           if(!row || !row.id || row.group_id !== myMember.group_id) return refreshExpenses();
+          if(row.currency !== CURRENCY){
+            // 改成別的幣別了：從這個幣別的清單拿掉
+            const j = list.findIndex(r => r.id === row.id);
+            if(j >= 0) list.splice(j, 1);
+            continue;
+          }
           if(row.amount != null) row.amount = Number(row.amount);
           const i = list.findIndex(r => r.id === row.id);
           if(i >= 0) list[i] = row; else list.push(row);
@@ -3062,14 +3072,18 @@
     sb.channel("splitbill-" + CURRENCY)
       .on("postgres_changes", { event: "*", schema: "public", table: "expenses", filter: `group_id=eq.${myMember.group_id}` }, (payload)=>{
         const row = (payload.new && Object.keys(payload.new).length) ? payload.new : payload.old;
-        if(row && row.currency !== CURRENCY) return;
-        notifyRelevantChange("expenses", payload);
+        const sameCurrency = !row || row.currency === CURRENCY;
+        // 別的幣別的不管；但「從這個幣別改成別的幣別」的修改要收，才能把它從這頁拿掉
+        if(!sameCurrency && payload.eventType !== "UPDATE") return;
+        if(sameCurrency) notifyRelevantChange("expenses", payload);
         scheduleRefresh("expenses", payload);
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "repayments", filter: `group_id=eq.${myMember.group_id}` }, (payload)=>{
         const row = (payload.new && Object.keys(payload.new).length) ? payload.new : payload.old;
-        if(row && row.currency !== CURRENCY) return;
-        notifyRelevantChange("repayments", payload);
+        const sameCurrency = !row || row.currency === CURRENCY;
+        // 別的幣別的不管；但「從這個幣別改成別的幣別」的修改要收，才能把它從這頁拿掉
+        if(!sameCurrency && payload.eventType !== "UPDATE") return;
+        if(sameCurrency) notifyRelevantChange("repayments", payload);
         scheduleRefresh("repayments", payload);
       })
       .subscribe();
