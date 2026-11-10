@@ -1660,14 +1660,49 @@ document.addEventListener("click", e => {
     saveProfile();
   }
 
+  // 每個幣別旁邊顯示「我在這個幣別」的淨額：別人欠我是綠色 +，我欠別人是紅色 −，結清就不顯示。
+  // 跟「我的款項」用同一支 member_balances；記帳、還款後畫面上的款項一變就重新抓一次。
+  async function loadSideBalances(nav){
+    const me = window.myMember;
+    if(!window.sb || !me) return;
+    let rows = null;
+    try { const { data, error } = await window.sb.rpc("member_balances", { p_since: null }); if(!error) rows = data || []; } catch(e){}
+    if(!rows) return;
+    nav.querySelectorAll(".sb-side-bal").forEach(el => {
+      const code = el.dataset.bal;
+      const row = rows.find(r => r.member_id === me.id && r.currency === code);
+      const v = row ? Number(row.balance) : 0;
+      const c = (typeof CURRENCIES !== "undefined" ? CURRENCIES : []).find(x => x.code === code);
+      const tiny = Math.abs(v) < (c && c.decimals === 0 ? 0.5 : 0.005);
+      el.textContent = tiny ? "" : (v > 0 ? "+" : "−") + (c ? c.symbol : "") + (typeof formatAmt === "function" ? formatAmt(Math.abs(v)) : Math.abs(v).toFixed(0));
+      el.classList.toggle("is-pos", !tiny && v > 0);
+      el.classList.toggle("is-neg", !tiny && v < 0);
+    });
+  }
+  function watchSideBalances(nav){
+    let timer = null;
+    const later = (ms) => { clearTimeout(timer); timer = setTimeout(() => loadSideBalances(nav), ms); };
+    // 等登入、成員資料好了再抓
+    let tries = 0;
+    (function wait(){ if(window.myMember && window.sb) loadSideBalances(nav); else if(++tries < 40) setTimeout(wait, 500); })();
+    ["myBalanceAmt", "myAmtList"].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) new MutationObserver(() => later(800)).observe(el, { childList: true, subtree: true, characterData: true });
+    });
+    document.addEventListener("visibilitychange", () => { if(document.visibilityState === "visible") later(300); });
+  }
+
   function build(){
     if(document.querySelector(".sb-side-nav") || typeof sbIcon !== "function") return;
     let shown = ["TWD"];
     try { shown = JSON.parse(localStorage.getItem("splitbill-shown-currencies") || "null") || ["TWD"]; } catch(e){}
     const curCode = here.startsWith("cur:") ? here.slice(4) : null;
     const list = (typeof CURRENCIES !== "undefined" ? CURRENCIES : []).filter(c => shown.includes(c.code) || c.code === curCode);
-    const link = (href, key, iconHtml, label) =>
-      `<a href="${href}"${key === here ? ' class="is-current" aria-current="page"' : ""}><span class="sb-side-ico">${iconHtml}</span><span>${escapeHtml(label)}</span></a>`;
+    const link = (href, key, iconHtml, label, extra) =>
+      `<a href="${href}" title="${escapeHtml(label)}" data-key="${key}"${key === here ? ' class="is-current" aria-current="page"' : ""}><span class="sb-side-ico">${iconHtml}</span><span class="sb-side-text">${escapeHtml(label)}</span>${extra || ""}</a>`;
+    // 幣別頁：目前幣別底下列出「總表、支出、還款、紀錄」（電腦版取代頁面上那排分頁）
+    const subTabs = curCode ? Array.from(document.querySelectorAll("#mainAppTabs .app-tab")) : [];
+    const subHTML = subTabs.length ? `<div class="sb-side-sub">${subTabs.map((tab, i) => `<button type="button" data-tab="${tab.dataset.tab}" title="${escapeHtml(tab.dataset.i18n ? t(tab.dataset.i18n) : tab.textContent.trim())}"><span>${escapeHtml(tab.dataset.i18n ? t(tab.dataset.i18n) : tab.textContent.trim())}</span><kbd>${i + 1}</kbd></button>`).join("")}</div>` : "";
     const nav = document.createElement("nav");
     nav.className = "sb-side-nav";
     nav.setAttribute("aria-label", t("nav.mainLabel"));
@@ -1676,24 +1711,49 @@ document.addEventListener("click", e => {
         <svg class="app-logo" viewBox="0 0 512 512" aria-hidden="true"><path class="s1" d="M256,238 L118.5,138.1 A170,170 0 0,1 393.5,138.1 Z"/><path class="s2" d="M271.6,265 L426.9,195.9 A170,170 0 0,1 289.4,434.1 Z"/><path class="s3" d="M240.4,265 L222.6,434.1 A170,170 0 0,1 85.1,195.9 Z"/></svg>
         <span>Splitbill</span>
       </a>
-      ${link("summary.html", "home", sbIcon("grid"), t("common.overview"))}
+      <button type="button" class="sb-side-quick" title="${escapeHtml(t("summary.quickExpFabText"))} (N)"><span class="sb-side-ico">${sbIcon("plus")}</span><span class="sb-side-text">${escapeHtml(t("summary.quickExpFabText"))}</span><kbd>N</kbd></button>
+      ${link("summary.html", "home", sbIcon("grid"), t("common.overview"), "<kbd>H</kbd>")}
       <p class="sb-side-label">${escapeHtml(t("nav.currencies"))}</p>
       ${list.map(c => link("currency.html?c=" + encodeURIComponent(c.code), "cur:" + c.code,
-          (typeof currencyFlagImgHTML === "function" && currencyFlagImgHTML(c.code)) || sbIcon("globe"), c.label)).join("")}
+          (typeof currencyFlagImgHTML === "function" && currencyFlagImgHTML(c.code)) || sbIcon("globe"), c.label, `<span class="sb-side-bal" data-bal="${c.code}"></span>`) + (c.code === curCode ? subHTML : "")).join("")}
       <p class="sb-side-label">${escapeHtml(t("nav.tools"))}</p>
       ${link("recurring.html", "recurring", sbIcon("repeat"), t("recurring.title"))}
       ${link("events.html", "events", sbIcon("calendar"), t("events.title"))}
       ${typeof recapYearFor === "function" && recapYearFor(new Date()) ? link("recap.html", "recap", sbIcon("sparkle"), t("nav.recap")) : ""}
       <div class="sb-side-profile"><div class="sb-side-profile-me"></div></div>
-      <button type="button" class="sb-side-notif" hidden><span class="sb-side-ico">${sbIcon("bell")}</span><span>${escapeHtml(t("shared.notifLabel"))}</span><span class="sb-side-badge" hidden></span></button>
+      <button type="button" class="sb-side-notif" hidden><span class="sb-side-ico">${sbIcon("bell")}</span><span class="sb-side-text">${escapeHtml(t("shared.notifLabel"))}</span><span class="sb-side-badge" hidden></span></button>
       <div class="sb-side-foot">
         ${link("settings.html", "settings", sbIcon("gear"), t("common.settings"))}
         <button type="button" class="sb-theme-btn sb-side-theme" title="${escapeHtml(t("shared.themeToggleAria"))}" aria-label="${escapeHtml(t("shared.themeToggleAria"))}"><span class="sb-ico" style="--ico:var(--ico-${document.documentElement.getAttribute("data-theme") === "dark" ? "sun" : "moon"})" aria-hidden="true"></span></button>
       </div>
-      <button type="button" class="sb-side-logout"><span class="sb-side-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg></span><span>${escapeHtml(t("common.logout"))}</span></button>`;
+      <button type="button" class="sb-side-logout"><span class="sb-side-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg></span><span class="sb-side-text">${escapeHtml(t("common.logout"))}</span></button>
+      <button type="button" class="sb-side-keys">${escapeHtml(t("shortcuts.title"))} <kbd>?</kbd></button>`;
     document.body.appendChild(nav);
     document.body.classList.add("has-side-nav");
     placeProfile(nav.querySelector(".sb-side-profile-me"));
+    nav.querySelector(".sb-side-quick").addEventListener("click", sbStartQuickExpense);
+    nav.querySelector(".sb-side-keys").addEventListener("click", () => window.sbShowShortcuts && window.sbShowShortcuts());
+    // 幣別分頁子項目：點了等於點頁面上的分頁；目前在哪一頁跟著反白
+    if(subTabs.length){
+      const syncSub = () => {
+        const active = document.querySelector("#mainAppTabs .app-tab.active");
+        nav.querySelectorAll(".sb-side-sub button").forEach(b => {
+          const on = !!active && b.dataset.tab === active.dataset.tab;
+          b.classList.toggle("is-current", on);
+          if(on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+        });
+      };
+      nav.querySelector(".sb-side-sub").addEventListener("click", e => {
+        const b = e.target.closest("button[data-tab]");
+        const tab = b && document.querySelector(`#mainAppTabs .app-tab[data-tab="${b.dataset.tab}"]`);
+        if(!tab) return;
+        tab.click();
+        window.scrollTo({ top: 0, behavior: "auto" });
+      });
+      subTabs.forEach(tab => new MutationObserver(syncSub).observe(tab, { attributes: true, attributeFilter: ["class"] }));
+      syncSub();
+    }
+    watchSideBalances(nav);
     // 通知：設定上面獨立一列，點了打開跟鈴鐺同一個通知視窗；未讀數字照抄鈴鐺上的。
     // 鈴鐺是登入後才裝上去的，所以等它出現再接上；電腦版頁首的鈴鐺由 CSS 藏起來。
     const notifRow = nav.querySelector(".sb-side-notif");
@@ -1734,4 +1794,75 @@ document.addEventListener("click", e => {
     }
   }
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", build); else build();
+})();
+
+// ============================================================
+// 記一筆：首頁開快速記帳視窗、幣別頁切到「支出」表單，其他頁回首頁直接打開快速記帳。
+// 側邊選單的「記一筆」和鍵盤 N 都用這個。
+// ============================================================
+function sbStartQuickExpense(){
+  const quick = document.getElementById("openQuickExpenseBtn");
+  if(quick){ quick.click(); return; }
+  const fab = document.getElementById("currencyAddExpenseFab");
+  if(fab){ fab.click(); return; }
+  location.href = "summary.html?quick=1";
+}
+window.sbStartQuickExpense = sbStartQuickExpense;
+
+// ============================================================
+// 鍵盤快捷鍵（電腦）：N 記一筆、H 回首頁、幣別頁 1–4 切分頁、/ 搜尋紀錄、? 看說明。
+// 正在打字、按著 Ctrl/⌘/Alt、或有彈窗開著的時候不作用（? 除外的都是）。
+// ============================================================
+(function initShortcuts(){
+  const page = (location.pathname.split("/").pop() || "").toLowerCase();
+  if(!["summary.html", "currency.html", "settings.html", "recurring.html", "events.html"].includes(page)) return;
+  const typing = el => el && (el.isContentEditable || /^(input|textarea|select)$/i.test(el.tagName));
+
+  function showHelp(){
+    let m = document.getElementById("sbKeysModal");
+    if(!m){
+      const row = (keys, label) => `<li><span>${keys.map(k => `<kbd>${escapeHtml(k)}</kbd>`).join(" ")}</span><span>${escapeHtml(label)}</span></li>`;
+      m = document.createElement("div");
+      m.className = "calc-modal sb-keys-modal";
+      m.id = "sbKeysModal";
+      m.innerHTML = `<div class="calc-card card sb-keys-card" role="dialog" aria-modal="true" aria-labelledby="sbKeysTitle">
+        <div class="calc-header"><span class="calc-header-name" id="sbKeysTitle">${escapeHtml(t("shortcuts.title"))}</span><button type="button" class="calc-close" id="sbKeysCloseBtn" aria-label="${escapeHtml(t("common.close"))}">✕</button></div>
+        <ul class="sb-keys-list">
+          ${row(["N"], t("shortcuts.quick"))}
+          ${row(["H"], t("shortcuts.home"))}
+          ${row(["1", "2", "3", "4"], t("shortcuts.tabs"))}
+          ${row(["/"], t("shortcuts.search"))}
+          ${row(["Esc"], t("shortcuts.close"))}
+          ${row(["?"], t("shortcuts.help"))}
+        </ul>
+      </div>`;
+      document.body.appendChild(m);
+      m.querySelector("#sbKeysCloseBtn").addEventListener("click", () => m.classList.remove("show"));
+    }
+    m.classList.add("show");
+  }
+  window.sbShowShortcuts = showHelp;
+
+  document.addEventListener("keydown", e => {
+    if(e.ctrlKey || e.metaKey || e.altKey || e.defaultPrevented || typing(e.target)) return;
+    if(e.key === "?"){ e.preventDefault(); showHelp(); return; }
+    if(document.querySelector(".calc-modal.show, .calc-modal.open")) return;
+    const k = e.key.toLowerCase();
+    if(k === "n"){ e.preventDefault(); sbStartQuickExpense(); return; }
+    if(k === "h"){ if(page !== "summary.html"){ e.preventDefault(); location.href = "summary.html"; } return; }
+    if(page === "currency.html" && /^[1-4]$/.test(e.key)){
+      const tab = document.querySelectorAll("#mainAppTabs .app-tab")[Number(e.key) - 1];
+      if(tab){ e.preventDefault(); tab.click(); window.scrollTo({ top: 0, behavior: "auto" }); }
+      return;
+    }
+    if(e.key === "/" && page === "currency.html"){
+      const hist = document.querySelector('#mainAppTabs .app-tab[data-tab="history"]');
+      const inp = document.getElementById("historyLiveSearch");
+      if(hist && inp){
+        e.preventDefault();
+        if(!hist.classList.contains("active")) hist.click();
+        setTimeout(() => { inp.focus(); inp.select(); }, 60);
+      }
+    }
+  });
 })();

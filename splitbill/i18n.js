@@ -1489,6 +1489,13 @@ const I18N = {
     "nav.mainLabel": "主要導覽",
 
     "nav.currencies": "幣別",
+    "shortcuts.title": "鍵盤快捷鍵",
+    "shortcuts.quick": "記一筆",
+    "shortcuts.home": "回首頁",
+    "shortcuts.tabs": "切換總表／支出／還款／紀錄（幣別頁）",
+    "shortcuts.search": "搜尋紀錄（幣別頁）",
+    "shortcuts.close": "關閉彈出視窗",
+    "shortcuts.help": "顯示這個說明",
     "nav.tools": "工具",
     "nav.recap": "年度回顧",
 

@@ -1388,31 +1388,7 @@ function initDesktopShortcuts(){
 
     if(isInput) return;
 
-    // N or Ctrl+K / Cmd+K: Open Quick Expense
-    if((e.key === "n" || e.key === "N") || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k")){
-      e.preventDefault();
-      const openQuick = document.getElementById("openQuickExpenseBtn") || document.getElementById("openExpenseModalBtn");
-      if(openQuick) openQuick.click();
-      return;
-    }
-
-    // / or Ctrl+F / Cmd+F: Focus search
-    if(e.key === "/" || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f")){
-      const searchInp = document.getElementById("historySearchInput");
-      if(searchInp){
-        e.preventDefault();
-        searchInp.focus();
-        searchInp.select();
-      }
-      return;
-    }
-
-    // 1: Jump to summary
-    if(e.key === "1"){
-      if(!location.pathname.includes("summary.html")){
-        location.href = "summary.html";
-      }
-    }
+    // N、H、1–4、/、? 這些快捷鍵統一在 shared-ui.js 的 initShortcuts（每頁都有）
   });
 }
 window.initDesktopShortcuts = initDesktopShortcuts;

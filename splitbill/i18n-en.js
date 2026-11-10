@@ -1464,6 +1464,13 @@ I18N["en"] = {
     "nav.mainLabel": "Main navigation",
 
     "nav.currencies": "Currencies",
+    "shortcuts.title": "Keyboard shortcuts",
+    "shortcuts.quick": "New expense",
+    "shortcuts.home": "Go home",
+    "shortcuts.tabs": "Switch Overview / Expense / Repay / History (currency page)",
+    "shortcuts.search": "Search history (currency page)",
+    "shortcuts.close": "Close a pop-up",
+    "shortcuts.help": "Show this help",
     "nav.tools": "Tools",
     "nav.recap": "Year in review",
 

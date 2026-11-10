@@ -1464,6 +1464,13 @@ I18N["ja"] = {
     "nav.mainLabel": "メインナビゲーション",
 
     "nav.currencies": "通貨",
+    "shortcuts.title": "キーボードショートカット",
+    "shortcuts.quick": "記録する",
+    "shortcuts.home": "ホームへ",
+    "shortcuts.tabs": "総表／支出／返済／履歴を切替（通貨ページ）",
+    "shortcuts.search": "履歴を検索（通貨ページ）",
+    "shortcuts.close": "ポップアップを閉じる",
+    "shortcuts.help": "この説明を表示",
     "nav.tools": "ツール",
     "nav.recap": "年間まとめ",
 

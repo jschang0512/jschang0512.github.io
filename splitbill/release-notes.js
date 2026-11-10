@@ -8,6 +8,28 @@
 // ============================================================
 window.SB_RELEASE_NOTES = [
   {
+    version: "969",
+    date: "2026-11-10",
+    "zh-Hant": [
+      "電腦版左側選單最上面有「＋ 記一筆」，每個幣別旁邊直接顯示你在那個幣別的款項",
+      "電腦版幣別的總表／支出／還款／紀錄移進選單，頁首改成靠左的標題",
+      "鍵盤快捷鍵：N 記一筆、H 回首頁、1–4 切分頁、/ 搜尋紀錄，按 ? 看全部",
+      "平板橫放時左邊有只有圖示的窄選單"
+    ],
+    "ja": [
+      "PC 版の左メニュー上部に「＋ 記録する」、各通貨の横に自分の残高を表示",
+      "PC 版では通貨ページの総表／支出／返済／履歴をメニューに移動し、見出しを左寄せに",
+      "キーボードショートカット：N 記録、H ホーム、1–4 タブ切替、/ 履歴検索。? で一覧",
+      "タブレット横向きではアイコンだけの細いメニューを表示"
+    ],
+    "en": [
+      "The desktop sidebar now starts with “+ New expense”, and each currency shows your balance next to it",
+      "On desktop, a currency’s Overview / Expense / Repay / History live in the sidebar, and page titles are left-aligned",
+      "Keyboard shortcuts: N new expense, H home, 1–4 switch tabs, / search history — press ? for the list",
+      "Tablets in landscape get a slim icon-only sidebar"
+    ]
+  },
+  {
     version: "966",
     date: "2026-11-10",
     "zh-Hant": [

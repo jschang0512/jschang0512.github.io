@@ -10417,3 +10417,94 @@ html body .sb-side-nav{ display:none; }
   html body .sb-side-profile:has(> .sb-side-profile-me:empty){ display:none; }
   html body .sb-side-profile:has(> .sb-side-profile-me:empty) + .sb-side-notif:not([hidden]){ margin-top:auto; }
 }
+
+/* ============================================================
+   v969 側邊選單：記一筆、各幣別款項、幣別分頁子項目、快捷鍵；電腦版頁首；平板圖示窄選單
+   ============================================================ */
+html body .sb-keys-list{ list-style:none; margin:4px 0 0; padding:0; }
+html body .sb-keys-list li{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:10px 2px; border-top:1px solid var(--line); font-size:14.5px; }
+html body .sb-keys-list li:first-child{ border-top:0; }
+html body .sb-keys-list li > span:first-child{ display:flex; gap:4px; flex:none; }
+html body :is(.sb-keys-list, .sb-side-nav) kbd{
+  display:inline-grid; place-items:center; min-width:22px; height:22px; padding:0 6px; box-sizing:border-box;
+  border:1px solid var(--card-border); border-bottom-width:2px; border-radius:6px; background:var(--bg-canvas);
+  color:var(--ink-soft); font:600 12px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+html body .sb-keys-card{ max-width:440px; }
+
+@media (min-width: 1100px){
+  /* 記一筆：選單最上面的主要按鈕 */
+  html body .sb-side-quick{
+    display:flex; align-items:center; gap:10px; width:100%; min-height:44px; margin:0 0 14px; padding:0 12px;
+    border:0; border-radius:12px; background:var(--btn-primary); color:var(--btn-primary-fg);
+    font:inherit; font-size:15px; font-weight:700; text-align:left; cursor:pointer;
+    transition:filter .15s ease;
+  }
+  html body .sb-side-quick:hover{ filter:brightness(1.08); }
+  html body .sb-side-quick:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; }
+  html body .sb-side-quick .sb-side-ico .sb-ico{ width:18px; height:18px; }
+  html body .sb-side-quick kbd{ margin-left:auto; background:transparent; border-color:color-mix(in srgb, var(--btn-primary-fg) 40%, transparent); color:var(--btn-primary-fg); }
+  /* 快捷鍵提示只在滑過時出現，平常不佔視線 */
+  html body .sb-side-nav a kbd, html body .sb-side-sub kbd{ margin-left:auto; opacity:0; transition:opacity .12s ease; }
+  html body .sb-side-nav a:is(:hover, :focus-visible) kbd, html body .sb-side-sub button:is(:hover, :focus-visible) kbd{ opacity:1; }
+  /* 幣別旁的款項 */
+  html body .sb-side-bal{ margin-left:auto; font-size:12.5px; font-weight:700; white-space:nowrap; }
+  html body .sb-side-bal:empty{ display:none; }
+  html body .sb-side-bal.is-pos{ color:var(--positive-text); }
+  html body .sb-side-bal.is-neg{ color:var(--negative-text); }
+  /* 目前幣別底下的分頁 */
+  html body .sb-side-sub{ display:flex; flex-direction:column; gap:1px; margin:2px 0 6px 23px; padding-left:10px; border-left:1px solid var(--line); }
+  html body .sb-side-sub button{
+    display:flex; align-items:center; gap:8px; min-height:34px; padding:0 10px; border:0; border-radius:8px;
+    background:none; color:var(--ink-soft); font:inherit; font-size:14px; font-weight:600; text-align:left; cursor:pointer;
+    transition:background-color .15s ease, color .15s ease;
+  }
+  html body .sb-side-sub button:hover{ background:var(--line); color:var(--ink); }
+  html body .sb-side-sub button.is-current{ color:var(--btn-primary); background:color-mix(in srgb, var(--btn-primary) 10%, transparent); }
+  html body .sb-side-sub button:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:-2px; }
+  html body.has-side-nav #mainAppTabs{ display:none !important; }
+  /* 快捷鍵說明連結 */
+  html body .sb-side-keys{ display:flex; align-items:center; gap:6px; margin-top:6px; padding:6px 12px; border:0; background:none; color:var(--ink-soft); font:inherit; font-size:12.5px; cursor:pointer; }
+  html body .sb-side-keys:hover{ color:var(--ink); }
+
+  /* 3. 頁首：選單左上已經有 logo，頁面標題改成靠左對齊內容；返回鈕用不到 */
+  html body.has-side-nav .app-header > .header-utility-row{ display:none !important; }
+  html body.has-side-nav .app-header .title-row{ justify-content:flex-start; text-align:left; margin:4px 0 18px; }
+  html body.has-side-nav .app-header .title-row .app-logo{ display:none; }
+  html body.has-side-nav .app-header .title-row h1{ font-size:28px; }
+  html body.has-side-nav #backBtn{ display:none !important; }
+}
+
+/* 選單上有「記一筆」了，右下角的浮動按鈕不用（平板窄選單也有） */
+@media (min-width: 900px){
+  html body.has-side-nav .quick-exp-fab{ display:none !important; }
+}
+
+/* ---------- 6. 平板（900–1099）：只有圖示的窄選單，滑過顯示名稱 ---------- */
+@media (min-width: 900px) and (max-width: 1099.98px){
+  html body.has-side-nav{ padding-left:72px; }
+  html body .sb-side-nav{
+    display:flex; flex-direction:column; align-items:center; gap:4px; position:fixed; z-index:150; top:0; bottom:0; left:0; width:72px;
+    padding:16px 10px; box-sizing:border-box; overflow-y:auto; background:var(--card); border-right:1px solid var(--card-border);
+  }
+  html body .sb-side-nav :is(.sb-side-text, .sb-side-label, .sb-side-bal, .sb-side-sub, kbd, .sb-side-profile, .sb-side-notif, .sb-side-theme, .sb-side-logout, .sb-side-keys){ display:none !important; }
+  html body .sb-side-brand > span{ display:none; }
+  html body .sb-side-nav a, html body .sb-side-quick{
+    position:relative; display:grid; place-items:center; width:48px; height:44px; padding:0; border:0; border-radius:12px;
+    color:var(--ink); background:none; text-decoration:none; cursor:pointer;
+  }
+  html body .sb-side-nav a:hover{ background:var(--line); }
+  html body .sb-side-nav a.is-current{ background:color-mix(in srgb, var(--btn-primary) 13%, var(--card)); color:var(--btn-primary); }
+  html body .sb-side-nav a:focus-visible, html body .sb-side-quick:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:-2px; }
+  html body .sb-side-brand{ margin-bottom:8px; }
+  html body .sb-side-brand .app-logo{ width:26px; height:26px; }
+  html body .sb-side-quick{ margin-bottom:10px; background:var(--btn-primary); color:var(--btn-primary-fg); }
+  html body .sb-side-ico{ display:inline-grid; place-items:center; width:22px; height:22px; }
+  html body .sb-side-ico .sb-ico, html body .sb-side-ico svg{ width:20px; height:20px; }
+  html body .sb-side-ico img{ width:22px; height:auto; border-radius:3px; }
+  html body .sb-side-foot{ margin-top:auto; padding-top:10px; border-top:1px solid var(--line); }
+  html body .sb-side-badge{ position:absolute; top:4px; right:4px; min-width:16px; height:16px; padding:0 4px; border-radius:999px; background:var(--negative-text); color:#fff; font-size:10px; font-weight:700; line-height:16px; text-align:center; }
+  html body .sb-side-badge[hidden]{ display:none; }
+  /* 窄選單已經能到各頁，上方膠囊和首頁捷徑不重複 */
+  html body.has-side-nav :is(#navLinks, .home-tools){ display:none !important; }
+}
