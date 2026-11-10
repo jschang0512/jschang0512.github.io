@@ -1017,6 +1017,12 @@
     if(repayDateInp) repayDateInp.value = sbIsoDay(new Date());
 
     await expensesReady;
+    // 從首頁派派過來的：?pay=對方（我欠他）或 ?nudge=對方（他欠我），直接打開兩人的往來明細
+    {
+      const p = new URLSearchParams(location.search);
+      if(p.get("pay") && myMember) openPairFromNag(myMember.id, p.get("pay"));
+      else if(p.get("nudge") && myMember) openPairFromNag(p.get("nudge"), myMember.id);
+    }
     generateDueRecurringExpenses();
     subscribeRealtime();
     sbEnablePullToRefresh(refreshExpenses);
@@ -2869,7 +2875,7 @@
       applyFiltersAndRenderBoth();
     }
     await renderBalances(expenses, repayments, { data: balRows, error: balError });
-    if(!balError) renderSettleReminder(repayments, balRows);
+    renderSettleReminder(expenses, repayments);
 
     // 如果「往來紀錄」視窗目前開著（例如別人在同一時間新增/編輯了帳目），
     // 用最新資料重新畫一次，數字才不會停在剛打開當下那一刻的舊快照。
@@ -4694,64 +4700,30 @@
     renderDebtMatrix(expenses, repayments, owedForRender);
   }
 
-  // 💸 結算提醒：太久沒還款、但這個幣別還有未結清的餘額時，主動提示一下——
-  // 純粹用既有的 repayments 最新日期 + member_balances 算出來，不用另外記錄
-  // 「上次結清時間」。跟催款提醒（send_debt_reminder，針對特定一對人）不同，
-  // 這個是「整個幣別帳都放很久沒人處理」的整體提醒，一天最多看到一次（用
-  // localStorage 記當天有沒有關掉過，跟 matrixShowOnlyMine 同一種輕量作法）。
-  const SETTLE_REMINDER_THRESHOLD_DAYS = 30;
-  function renderSettleReminder(repayments, balRows){
+  // 派派（shared-ui.js 的 sbRenderNag）：你欠某人太久就出來情勒；別人欠你太久就問要不要幫你催。
+  // 取代以前「上次結清是 N 天前」那條只看還款日期、跟你欠誰無關的提醒。
+  function renderSettleReminder(expenses, repayments){
     const banner = document.getElementById("settleReminderBanner");
-    if(!banner) return;
-
-    const hasOutstanding = (balRows || []).some(row => row.currency === CURRENCY && Math.abs(Number(row.balance)) > 0.5);
-    if(!hasOutstanding){
-      banner.innerHTML = "";
-      return;
-    }
-
-    const dismissKey = "sb_settle_reminder_dismissed_" + CURRENCY;
-    const todayStr = sbIsoDay(new Date());
-    if(localStorage.getItem(dismissKey) === todayStr){
-      banner.innerHTML = "";
-      return;
-    }
-
-    const relevantRepayments = (repayments || []).filter(r => r.currency === CURRENCY);
-    if(!relevantRepayments.length){
-      // 從來沒還款紀錄，沒有「上次」可以算，不硬湊一個天數出來誤導使用者。
-      banner.innerHTML = "";
-      return;
-    }
-    const lastDateStr = relevantRepayments.reduce((max, r) => r.payment_date > max ? r.payment_date : max, relevantRepayments[0].payment_date);
-    const daysSince = Math.floor((new Date(todayStr) - new Date(lastDateStr)) / 86400000);
-    if(daysSince < SETTLE_REMINDER_THRESHOLD_DAYS){
-      banner.innerHTML = "";
-      return;
-    }
-
-    banner.innerHTML = `<div class="card recurring-auto-banner-item">
-      <span class="recurring-auto-banner-text">${t("currency.settleReminderText", {days: daysSince})}</span>
-      <span class="recurring-auto-banner-actions">
-        <button type="button" class="link-btn" id="settleReminderGoBtn">${t("currency.settleReminderGoBtn")}</button>
-        <button type="button" class="recurring-auto-banner-close" aria-label="${t("common.close")}">✕</button>
-      </span>
-    </div>`;
-
-    const goBtn = document.getElementById("settleReminderGoBtn");
-    if(goBtn){
-      goBtn.addEventListener("click", ()=>{
-        const repayTab = document.querySelector('.app-tab[data-tab="repay"]');
-        if(repayTab) repayTab.click();
-      });
-    }
-    const closeBtn = banner.querySelector(".recurring-auto-banner-close");
-    if(closeBtn){
-      closeBtn.addEventListener("click", ()=>{
-        localStorage.setItem(dismissKey, todayStr);
-        banner.innerHTML = "";
-      });
-    }
+    if(!banner || !myMember || typeof sbRenderNag !== "function") return;
+    sbRenderNag(banner, {
+      myId: myMember.id, expenses, repayments,
+      nameOf: id => memberById[id],
+      onPay: it => openPairFromNag(it.debtor, it.creditor),
+      onNudge: it => openPairFromNag(it.debtor, it.creditor)
+    });
+  }
+  // 打開兩個人之間的往來明細（裡面有記錄還款、複製轉帳資訊、提醒對方），並捲過去
+  function openPairFromNag(debtorId, creditorId){
+    const summaryTab = document.querySelector('#mainAppTabs .app-tab[data-tab="summary"]');
+    if(summaryTab && !summaryTab.classList.contains("active")) summaryTab.click();
+    showPairDetail(debtorId, creditorId, cachedExpenses, cachedRepayments);
+    const detail = document.getElementById("matrixDetail");
+    // 等圖表、清單畫完再捲（太早捲的話，後面畫出來的內容會把明細往下推）
+    // 直接捲到「記錄還款／複製轉帳資訊／提醒對方」那排按鈕（往來紀錄可能很長，按鈕在最下面）
+    if(detail) setTimeout(() => requestAnimationFrame(() => {
+      const target = detail.querySelector(".debt-repay-action-wrap") || detail;
+      target.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: target === detail ? "start" : "center" });
+    }), 450);
   }
 
   // ==========================================================

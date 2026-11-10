@@ -1236,6 +1236,10 @@ window.computeExpenseDebts = computeExpenseDebts;
 // 「一鍵抵銷」處理。傳入的 expenses/repayments 必須已經是同一個幣別的。
 function buildDebtMatrix(expenses, repayments){
   const owed = {};
+  // 每一筆欠款「從哪天開始一直沒還清」：從 0 變成有欠的那個事件的日期；還清就清掉。
+  // 掛在回傳物件上但不列舉（Object.keys 看不到），原本用 owed 的地方完全不受影響。
+  const since = {};
+  let curDate = "";
 
   function addDebt(creditorId, debtorId, amount){
     if(!creditorId) return;
@@ -1248,6 +1252,7 @@ function buildDebtMatrix(expenses, repayments){
     if(!owed[creditorId]){
       owed[creditorId] = {};
     }
+    if(!(owed[creditorId][debtorId] > 0.01)) (since[creditorId] || (since[creditorId] = {}))[debtorId] = curDate;
     owed[creditorId][debtorId] = (owed[creditorId][debtorId] || 0) + amount;
   }
 
@@ -1297,6 +1302,7 @@ function buildDebtMatrix(expenses, repayments){
   });
 
   events.forEach(ev=>{
+    curDate = ev.date || (ev.createdAt || "").slice(0, 10);
     if(ev.type === "expense"){
       addDebt(ev.creditorId, ev.debtorId, ev.amount);
       return;
@@ -1311,7 +1317,7 @@ function buildDebtMatrix(expenses, repayments){
     const paid = Math.min(current, remaining);
     if(paid > 0){
       receiverDebts[payerId] = current - paid;
-      if(receiverDebts[payerId] <= 0.01) delete receiverDebts[payerId];
+      if(receiverDebts[payerId] <= 0.01){ delete receiverDebts[payerId]; if(since[receiverId]) delete since[receiverId][payerId]; }
       remaining -= paid;
     }
     // 這筆還款發生的當下，能沖銷的欠款就這麼多，沖不完、多還的部分反過來
@@ -1322,6 +1328,7 @@ function buildDebtMatrix(expenses, repayments){
     }
   });
 
+  Object.defineProperty(owed, "__since", { value: since, enumerable: false });
   return owed;
 }
 window.buildDebtMatrix = buildDebtMatrix;

@@ -8,6 +8,25 @@
 // ============================================================
 window.SB_RELEASE_NOTES = [
   {
+    version: "974",
+    date: "2026-11-11",
+    "zh-Hant": [
+      "新角色「派派」登場：欠人錢超過一週沒還，它就會出來提醒你；拖越久越戲精，60 天會直接裂開",
+      "按「現在去還」直接跳到記錄還款；按「明天再說」，它隔天會記得",
+      "別人欠你太久，派派也會問要不要幫你催"
+    ],
+    "ja": [
+      "新キャラ「パイパイ」登場：1 週間以上返していないお金があると声をかけてきます。放っておくほど大げさになり、60 日で割れます",
+      "「今すぐ返す」で返済の記録へ直行。「また明日」と言うと、翌日ちゃんと覚えています",
+      "相手の返済が長く止まっているときは、代わりに催促するか聞いてくれます"
+    ],
+    "en": [
+      "Meet Pie: if you've owed someone for over a week, Pie shows up to remind you, getting more dramatic the longer it waits, and literally cracks at 60 days",
+      "“Pay now” jumps straight to recording the repayment; say “Tomorrow” and Pie will remember",
+      "When someone has owed you for a while, Pie offers to nudge them for you"
+    ]
+  },
+  {
     version: "972",
     date: "2026-11-10",
     "zh-Hant": [

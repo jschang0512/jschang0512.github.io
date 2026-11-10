@@ -1876,3 +1876,129 @@ window.sbStartQuickExpense = sbStartQuickExpense;
     }
   });
 })();
+
+// ============================================================
+// 派派：太久沒還錢就開始情勒的吉祥物（2026-11）
+//
+// 欠款天數 = 你欠某人的錢「從哪天開始一直沒還清」（buildDebtMatrix 記的 __since），
+// 跟欠款表是同一套計算。取最久的那筆，依天數分四級：
+//   7 天 微笑提醒 → 14 天 斜眼 → 30 天 流淚、出現裂痕 → 60 天 裂開掉一片
+// 台詞每天換一句。「明天再說」：今天先不出現，但隔天會記仇；拖越多次越酸。
+// 沒有欠人、只有別人欠你很久（14 天以上）時，派派問要不要幫你催——按了才會去，不會自動催。
+// ============================================================
+const SB_NAG_LEVELS = [7, 14, 30, 60];
+function sbNagLevel(days){ let lv = 0; SB_NAG_LEVELS.forEach((d, i) => { if(days >= d) lv = i + 1; }); return lv; }
+
+// 一整顆派長出臉。level 0 = 開心（別人欠你時用）；1 微笑；2 斜眼；3 流淚＋裂痕；4 裂開掉一片
+function sbPieMascotSVG(level){
+  const top = '<path d="M32 33 L9.48 20 A26 26 0 0 1 54.52 20 Z" fill="var(--logo-3)"/>';
+  const right = '<path d="M32 33 L54.52 20 A26 26 0 0 1 32 59 Z" fill="var(--logo-2)"/>';
+  const leftPath = '<path d="M32 33 L32 59 A26 26 0 0 1 9.48 20 Z" fill="var(--logo-1)"/>';
+  const left = level >= 4 ? '<g class="sb-pie-fallen" transform="translate(-5 4) rotate(-12 20 40)">' + leftPath + '</g>' : leftPath;
+  const seams = level >= 4 ? '<path d="M32 33 L54.52 20"/>'
+    : level >= 3 ? '<path d="M32 33 L9.48 20 M32 33 L54.52 20"/>'
+    : '<path d="M32 33 L9.48 20 M32 33 L54.52 20 M32 33 L32 59"/>';
+  const crack = level === 3 ? '<path class="sb-pie-crack" d="M32 33 L31 41 L33 47 L31 53 L32 59"/>' : "";
+  const eye = (cx, dx, dy) => '<circle class="sb-pie-white" cx="' + cx + '" cy="31" r="4.6"/><circle class="sb-pie-ink" cx="' + (cx + dx) + '" cy="' + (31 + dy) + '" r="2.4"/>';
+  const line = d => '<path class="sb-pie-mouth-o" d="' + d + '"/><path class="sb-pie-mouth" d="' + d + '"/>';
+  let face;
+  if(level >= 4){
+    face = line("M19 27 l7 6 m0 -6 l-7 6 M37 27 l7 6 m0 -6 l-7 6") + '<ellipse class="sb-pie-ink" cx="34" cy="43" rx="4.4" ry="3.4"/>';
+  } else if(level === 3){
+    face = '<path class="sb-pie-brow" d="M18 24.5 L28 27.5 M46 24.5 L36 27.5"/>' + eye(24, 0, 1.4) + eye(40, 0, 1.4)
+      + '<path class="sb-pie-tear" d="M21.5 36.5 q-2.4 4.6 0 5.8 q2.4 -1.2 0 -5.8"/>' + line("M25 45 Q32 39 39 45");
+  } else if(level === 2){
+    face = eye(24, 2.2, 1.4) + eye(40, 2.2, 1.4)
+      + '<path class="sb-pie-lid" d="M18.8 29.2 L29.2 29.2 L29.2 25.8 L18.8 25.8 Z M34.8 29.2 L45.2 29.2 L45.2 25.8 L34.8 25.8 Z"/>' + line("M26.5 42 L37.5 42");
+  } else {
+    face = eye(24, 0, 0.6) + eye(40, 0, 0.6) + line("M25 40 Q32 46 39 40");
+  }
+  return '<svg class="sb-pie lv-' + level + '" viewBox="0 0 64 64" aria-hidden="true">' + top + right + left
+    + '<g class="sb-pie-seam">' + seams + '</g>' + crack + face + '</svg>';
+}
+window.sbPieMascotSVG = sbPieMascotSVG;
+
+// 找出最該被情勒的那一筆。expenses / repayments 可以是多個幣別，會分幣別各算一次欠款表。
+function sbNagFind(myId, expenses, repayments){
+  if(!myId || typeof buildDebtMatrix !== "function") return null;
+  const today = sbIsoDay(new Date());
+  const dayNum = iso => Math.round(Date.parse(iso + "T00:00:00Z") / 86400000);
+  const byCur = {};
+  (expenses || []).forEach(e => { const c = e.currency || "TWD"; (byCur[c] || (byCur[c] = { e: [], r: [] })).e.push(e); });
+  (repayments || []).forEach(r => { const c = r.currency || "TWD"; (byCur[c] || (byCur[c] = { e: [], r: [] })).r.push(r); });
+  const items = [];
+  Object.keys(byCur).forEach(code => {
+    const owed = buildDebtMatrix(byCur[code].e, byCur[code].r);
+    const since = owed.__since || {};
+    const meta = (typeof CURRENCIES !== "undefined" ? CURRENCIES : []).find(c => c.code === code);
+    const tiny = meta && meta.decimals === 0 ? 0.5 : 0.01;
+    Object.keys(owed).forEach(creditor => Object.keys(owed[creditor]).forEach(debtor => {
+      if(creditor !== myId && debtor !== myId) return;
+      const net = (owed[creditor][debtor] || 0) - ((owed[debtor] && owed[debtor][creditor]) || 0);
+      if(net <= tiny) return;
+      const from = since[creditor] && since[creditor][debtor];
+      if(!from) return;
+      items.push({ currency: code, creditor, debtor, amount: net, since: from, days: dayNum(today) - dayNum(from), iOwe: debtor === myId });
+    }));
+  });
+  const snoozed = it => {
+    try {
+      const s = JSON.parse(localStorage.getItem("sb-nag-" + it.currency + "-" + it.creditor + "-" + it.debtor) || "null");
+      return s && s.until > today ? s : null;
+    } catch(e){ return null; }
+  };
+  const pick = list => list.filter(it => !snoozed(it)).sort((a, b) => b.days - a.days)[0] || null;
+  return pick(items.filter(it => it.iOwe && it.days >= SB_NAG_LEVELS[0]))
+    || pick(items.filter(it => !it.iOwe && it.days >= SB_NAG_LEVELS[1]));
+}
+window.sbNagFind = sbNagFind;
+
+// 把派派畫進 el。opts：{ myId, expenses, repayments, nameOf(id), onPay(item), onNudge(item) }
+function sbRenderNag(el, opts){
+  if(!el) return;
+  const it = sbNagFind(opts.myId, opts.expenses, opts.repayments);
+  if(!it){ el.innerHTML = ""; el.hidden = true; return; }
+  const key = "sb-nag-" + it.currency + "-" + it.creditor + "-" + it.debtor;
+  let snoozeInfo = null;
+  try { snoozeInfo = JSON.parse(localStorage.getItem(key) || "null"); } catch(e){}
+  // 記仇只記這一筆：還清後又欠的新債（開始日期不同）重新算
+  const count = snoozeInfo && snoozeInfo.since === it.since ? snoozeInfo.count || 0 : 0;
+  const meta = (typeof CURRENCIES !== "undefined" ? CURRENCIES : []).find(c => c.code === it.currency);
+  const amount = (meta ? meta.symbol : it.currency + " ") + (typeof formatAmt === "function" ? formatAmt(it.amount) : Math.round(it.amount));
+  const other = it.iOwe ? it.creditor : it.debtor;
+  const vars = { name: opts.nameOf(other) || "?", amount: amount, days: it.days, n: count };
+  const level = it.iOwe ? sbNagLevel(it.days) : 0;
+  const dayIdx = Math.round(Date.now() / 86400000);
+  const pickLine = prefix => {
+    const all = [];
+    for(let i = 1; i <= 4; i++){ const k = prefix + i; if(t(k) !== k) all.push(k); }
+    return all.length ? t(all[dayIdx % all.length], vars) : "";
+  };
+  let line;
+  if(!it.iOwe) line = pickLine("nag.creditor");
+  else if(count >= 4) line = t("nag.snoozedMany", vars);
+  else if(count >= 2) line = t("nag.snoozedAgain", vars);
+  else if(count === 1) line = t("nag.snoozedOnce", vars);
+  else line = pickLine("nag.l" + level + "_");
+  const sub = t(it.iOwe ? "nag.subOwe" : "nag.subOwed", vars);
+  el.hidden = false;
+  el.innerHTML = '<div class="card sb-nag lv-' + level + (it.iOwe ? "" : " is-creditor") + '" role="status">'
+    + '<div class="sb-nag-pie" title="' + escapeHtml(t("nag.mascotName")) + '">' + sbPieMascotSVG(level) + '</div>'
+    + '<div class="sb-nag-body">'
+    + '<p class="sb-nag-line">' + escapeHtml(line) + '</p>'
+    // 台詞已經講了金額，下面那行灰字就不重複
+    + (line.includes(amount) ? '' : '<p class="sb-nag-sub">' + escapeHtml(sub) + '</p>')
+    + '<div class="sb-nag-actions">'
+    + '<button type="button" class="sbf-primary sb-nag-go">' + escapeHtml(t(it.iOwe ? "nag.pay" : "nag.nudge")) + '</button>'
+    + '<button type="button" class="sb-nag-later">' + escapeHtml(t(it.iOwe ? "nag.snooze" : "nag.later")) + '</button>'
+    + '</div></div></div>';
+  el.querySelector(".sb-nag-go").addEventListener("click", () => (it.iOwe ? opts.onPay : opts.onNudge)(it));
+  el.querySelector(".sb-nag-later").addEventListener("click", () => {
+    // 欠人的：明天再出現，而且記一次；別人欠你的：三天後再問
+    const d = new Date(); d.setDate(d.getDate() + (it.iOwe ? 1 : 3));
+    try { localStorage.setItem(key, JSON.stringify({ until: sbIsoDay(d), count: count + 1, since: it.since })); } catch(e){}
+    el.querySelector(".sb-nag").classList.add("is-leaving");
+    setTimeout(() => sbRenderNag(el, opts), 220);
+  });
+}
+window.sbRenderNag = sbRenderNag;

@@ -1489,6 +1489,30 @@ const I18N = {
     "nav.mainLabel": "主要導覽",
 
     "nav.currencies": "幣別",
+    "nag.mascotName": "派派",
+    "nag.l1_1": "欸～你欠{name} {amount} 一個禮拜了，順手還一下？",
+    "nag.l1_2": "{name}的 {amount} 還在你這邊喔，記得還～",
+    "nag.l1_3": "小提醒：{name}的 {amount}，已經 {days} 天囉。",
+    "nag.l2_1": "{days} 天了。{name}什麼都沒說，但我都看在眼裡。",
+    "nag.l2_2": "我不是在催你，我只是剛好路過，順便看了一下你欠{name}的 {amount}。",
+    "nag.l2_3": "{name}昨天問我你過得好不好。我說你很好，只是還沒還錢。",
+    "nag.l3_1": "整整 {days} 天。{name}的 {amount} 在你那邊應該過得很好吧。",
+    "nag.l3_2": "{days} 天了，我都開始幫{name}難過了。",
+    "nag.l3_3": "一個月了。{amount} 不會自己走回{name}家。",
+    "nag.l4_1": "{days} 天……我把你的那片派吃掉了。開玩笑的，但你真的該還了。",
+    "nag.l4_2": "我裂開了。字面上的意思。{name}的 {amount}，拜託。",
+    "nag.l4_3": "{days} 天。我已經不想說話了。（但還是要說：還錢。）",
+    "nag.snoozedOnce": "你昨天說明天。今天就是明天。",
+    "nag.snoozedAgain": "這是你第 {n} 次說明天了。我都有記。",
+    "nag.snoozedMany": "「明天再說」是你的口頭禪嗎？{name}還在等 {amount}。",
+    "nag.creditor1": "{name}欠你 {amount} 已經 {days} 天了。要我幫你去提醒一下嗎？",
+    "nag.creditor2": "{name}的 {amount} 好像迷路了，{days} 天還沒回到你身邊。要我去找找嗎？",
+    "nag.subOwe": "你欠{name} {amount}・已經 {days} 天",
+    "nag.subOwed": "{name}欠你 {amount}・已經 {days} 天",
+    "nag.pay": "現在去還",
+    "nag.snooze": "明天再說",
+    "nag.nudge": "幫我催",
+    "nag.later": "先不用",
     "shortcuts.title": "鍵盤快捷鍵",
     "shortcuts.quick": "記一筆",
     "shortcuts.home": "回首頁",
@@ -1763,7 +1787,7 @@ let currentLang = detectDefaultLang();
 // 用 document.write 插一個同步載入的 <script>（同網域，瀏覽器不會擋）。版本號沿用
 // i18n.js 自己的 ?v=，換版時一起換新。切換語言本來就會整頁重新整理（見 setLang）。
 // 日文、英文翻譯檔各自的內容指紋，由 scripts/stamp-assets.js 自動填，不要手改
-const SB_LANG_V = {"en": "1fb75516da", "ja": "87ce04413f"};
+const SB_LANG_V = {"en": "5e768cf382", "ja": "dc6048d61e"};
 (function loadLangDict(){
   if(currentLang === "zh-Hant" || I18N[currentLang]) return;
   const self = document.currentScript;
