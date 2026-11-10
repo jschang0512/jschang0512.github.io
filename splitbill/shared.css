@@ -10404,3 +10404,16 @@ html body .sb-side-nav{ display:none; }
   html body .sb-side-notif:not([hidden])::before{ content:""; position:absolute; left:0; right:0; top:-7px; height:1px; background:var(--line); }
   html body .sb-side-notif:not([hidden]) + .sb-side-foot{ margin-top:0; padding-top:0; border-top:0; }
 }
+@media (min-width: 1100px){
+  /* 頭像卡移到底部那一組最上面（分隔線上方）：它負責把整組推到最下面 */
+  html body .sb-side-profile{ margin:auto 0 12px; }
+  html body .sb-side-notif:not([hidden]){ margin-top:0; }
+  html body .sb-side-profile:empty + .sb-side-notif:not([hidden]){ margin-top:auto; }
+  /* 群組選單往上開，不會超出畫面底部 */
+  html body .sb-side-profile .dd-menu{ top:auto; bottom:calc(100% + 8px); }
+}
+@media (min-width: 1100px){
+  /* 還沒有頭像資料（例如第一次就直接開固定收支頁）：卡片不出現，改由通知那列把底部那組推下去 */
+  html body .sb-side-profile:has(> .sb-side-profile-me:empty){ display:none; }
+  html body .sb-side-profile:has(> .sb-side-profile-me:empty) + .sb-side-notif:not([hidden]){ margin-top:auto; }
+}

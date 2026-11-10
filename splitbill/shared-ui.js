@@ -1676,7 +1676,6 @@ document.addEventListener("click", e => {
         <svg class="app-logo" viewBox="0 0 512 512" aria-hidden="true"><path class="s1" d="M256,238 L118.5,138.1 A170,170 0 0,1 393.5,138.1 Z"/><path class="s2" d="M271.6,265 L426.9,195.9 A170,170 0 0,1 289.4,434.1 Z"/><path class="s3" d="M240.4,265 L222.6,434.1 A170,170 0 0,1 85.1,195.9 Z"/></svg>
         <span>Splitbill</span>
       </a>
-      <div class="sb-side-profile"><div class="sb-side-profile-me"></div></div>
       ${link("summary.html", "home", sbIcon("grid"), t("common.overview"))}
       <p class="sb-side-label">${escapeHtml(t("nav.currencies"))}</p>
       ${list.map(c => link("currency.html?c=" + encodeURIComponent(c.code), "cur:" + c.code,
@@ -1685,6 +1684,7 @@ document.addEventListener("click", e => {
       ${link("recurring.html", "recurring", sbIcon("repeat"), t("recurring.title"))}
       ${link("events.html", "events", sbIcon("calendar"), t("events.title"))}
       ${typeof recapYearFor === "function" && recapYearFor(new Date()) ? link("recap.html", "recap", sbIcon("sparkle"), t("nav.recap")) : ""}
+      <div class="sb-side-profile"><div class="sb-side-profile-me"></div></div>
       <button type="button" class="sb-side-notif" hidden><span class="sb-side-ico">${sbIcon("bell")}</span><span>${escapeHtml(t("shared.notifLabel"))}</span><span class="sb-side-badge" hidden></span></button>
       <div class="sb-side-foot">
         ${link("settings.html", "settings", sbIcon("gear"), t("common.settings"))}
