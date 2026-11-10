@@ -1172,10 +1172,8 @@ button.dd-btn {
 .recurring-overview-upcoming-meta{ font-family:"Noto Sans TC",monospace; flex-shrink:0; margin-left:8px; }
 
 /* ---------- Settings：週期性支出範本管理 ---------- */
-.recurring-tmpl-row{ align-items:center; }
-.recurring-tmpl-row.inactive .settings-row-title,
-.recurring-tmpl-row.inactive .settings-row-hint{ opacity:.5; }
-.recurring-tmpl-actions{ display:flex; align-items:center; gap:10px; flex-shrink:0; }
+
+
 .recurring-tmpl-readonly-badge{
   flex-shrink:0;
   font-size:12px;
@@ -8684,9 +8682,7 @@ input#aiExpenseTime {
     padding-bottom: max(20px, env(safe-area-inset-bottom)) !important;
     animation: sbBottomSheetUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
   }
-  .modal.sb-bottom-sheet.is-closing .quick-exp-modal-card {
-    animation: sbBottomSheetDown 0.24s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
-  }
+  
 }
 
 @keyframes sbBottomSheetUp {
@@ -9747,7 +9743,7 @@ html body .recap-entry-hint{ font-size:12.5px; line-height:1.45; color:#C9CCF2; 
 html body .recap-entry-go{ flex:none; font-size:20px; color:#C9CCF2; }
 html body .recap-entry.hidden{ display:none; }
 html body .recap-entry-title, html body .recap-entry-hint{ display:block; }
-html body .sb-holiday-band{ position:absolute; top:0; left:0; right:0; height:132px; z-index:0; pointer-events:none; background:var(--holiday-glyph); opacity:.16; -webkit-mask-repeat:repeat, no-repeat; mask-repeat:repeat, no-repeat; -webkit-mask-size:64px 44px, 100% 100%; mask-size:64px 44px, 100% 100%; -webkit-mask-composite:source-in; mask-composite:intersect; }
+
 
 /* 匯率小字：包成膠囊，放在節日場景上也看得清楚 */
 html body .exchange-rate-hint{ width:fit-content; max-width:100%; margin-left:auto; margin-right:auto; padding:3px 12px; border:1px solid var(--card-border); border-radius:999px; background:var(--card); color:var(--ink-soft); }
@@ -10015,8 +10011,6 @@ html body .fx-history small{ margin-left:8px; color:var(--ink-soft); font-size:1
 html body .fx-history i{ font-style:normal; color:var(--ink-soft); font-size:18px; }
 html body .fx-history-empty{ padding:10px 0; color:var(--ink-soft); font-size:13.5px; }
 
-html body .recurring-overview-fill{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px; padding:10px 12px; border-radius:12px; background:color-mix(in srgb, var(--btn-primary) 10%, var(--card)); color:var(--ink); text-decoration:none; font-size:13.5px; }
-html body .recurring-overview-fill b{ flex:none; color:var(--btn-primary); }
 
 /* ---------- 活動表單：快速選項、步進器、提示、預覽卡 ---------- */
 html body .sbf-chips button.is-on{ border-color:var(--btn-primary); background:color-mix(in srgb, var(--btn-primary) 14%, var(--card)); color:var(--btn-primary); font-weight:600; }
@@ -10373,10 +10367,10 @@ html body .sb-side-nav{ display:none; }
   /* 頭像卡：左邊頭像、名字、群組，右邊通知鈴鐺 */
   html body .sb-side-profile{ display:flex; align-items:flex-start; gap:6px; }
   html body .sb-side-profile-me{ flex:1; min-width:0; }
-  html body .sb-side-profile-bell{ flex:none; }
-  html body .sb-side-profile-bell:empty{ display:none; }
-  html body .sb-side-profile-bell #notificationBellContainer{ display:block; margin:0; }
-  html body .sb-side-profile-bell .notif-bell-btn{ width:36px; height:36px; }
+  
+  
+  
+  
   /* 登出：最下面一列，顏色淡一點 */
   html body .sb-side-logout{
     display:flex; align-items:center; gap:10px; width:100%; min-height:40px; margin-top:2px; padding:0 12px;
@@ -10467,11 +10461,8 @@ html body .sb-keys-card{ max-width:440px; }
   html body .sb-side-keys{ display:flex; align-items:center; gap:6px; margin-top:6px; padding:6px 12px; border:0; background:none; color:var(--ink-soft); font:inherit; font-size:12.5px; cursor:pointer; }
   html body .sb-side-keys:hover{ color:var(--ink); }
 
-  /* 3. 頁首：選單左上已經有 logo，頁面標題改成靠左對齊內容；返回鈕用不到 */
+  /* 3. 頁首：頁面標題維持置中；頁首那排按鈕都收進選單了，返回鈕用不到 */
   html body.has-side-nav .app-header > .header-utility-row{ display:none !important; }
-  html body.has-side-nav .app-header .title-row{ justify-content:flex-start; text-align:left; margin:4px 0 18px; }
-  html body.has-side-nav .app-header .title-row .app-logo{ display:none; }
-  html body.has-side-nav .app-header .title-row h1{ font-size:28px; }
   html body.has-side-nav #backBtn{ display:none !important; }
 }
 
@@ -10507,4 +10498,29 @@ html body .sb-keys-card{ max-width:440px; }
   html body .sb-side-badge[hidden]{ display:none; }
   /* 窄選單已經能到各頁，上方膠囊和首頁捷徑不重複 */
   html body.has-side-nav :is(#navLinks, .home-tools){ display:none !important; }
+}
+
+/* ---------- v970 地點和版本號貼齊頁面最底部（電腦、平板）----------
+   頁面至少一個螢幕高，底部留位子給這兩行並固定在最下面；內容比螢幕長時就接在內容後面。
+   手機有底部導覽列，維持原樣。 */
+@media (min-width: 768px){
+  html body .wrap{ min-height:100vh; min-height:100dvh; box-sizing:border-box; padding-bottom:140px !important; }
+  html body .wrap .footer-location{ position:absolute; left:0; right:0; bottom:58px; margin:0; }
+  html body .wrap .app-footer{ position:absolute; left:0; right:0; bottom:18px; margin:0; }
+}
+@media (min-width: 768px){
+  /* 底部導覽列只在手機出現，電腦、平板的 body 不用再留底部空間（否則短頁面會多捲 32px、版本號離底部太遠） */
+  html body{ padding-bottom:0 !important; }
+}
+/* 關於、隱私權、條款這類閱讀頁：電腦上一行不要太長 */
+@media (min-width: 768px){
+  html body.sb-doc-page .wrap{ max-width:780px; }
+}
+@media (min-width: 1100px){
+  /* 側邊選單的群組選單：跟整張頭像卡一樣寬，名字太長就換行顯示完整，不會被切掉 */
+  html body .sb-side-profile{ position:relative; }
+  html body .sb-side-profile :is(.whoami-group-switcher, .dd-select){ position:static; }
+  html body .sb-side-profile .dd-menu{ left:0; right:0; width:auto; max-height:min(320px, 60vh); }
+  html body .sb-side-profile .dd-option{ white-space:normal; overflow-wrap:anywhere; text-overflow:clip; height:auto; min-height:40px; line-height:1.35; padding-block:8px; text-align:left; }
+  html body .sb-side-profile .dd-btn-text{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
 }
