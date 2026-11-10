@@ -10604,3 +10604,288 @@ html body .sb-seg button:focus-visible{ outline:2px solid var(--btn-primary); ou
 @media (prefers-reduced-motion: reduce){
   html body :is(.sb-title-pie, .sb-record-nag, .sb-nag.is-yay) .sb-pie{ animation:none !important; }
 }
+
+/* ===== 設定頁 v977：清單卡片版面 =====
+   每一區是一張清單卡片，上面一個灰色小標；每一列左邊圖示＋標題＋一行說明，
+   右邊放控制項。開關＝switch、選一個＝分段、開下一層＝整列加 ›、
+   文字欄位改了才出現儲存、危險操作是紅字列。 */
+html body .sbs{ --sbs-pad:14px; --sbs-on:#2F8F4E; --sbs-off:var(--line); max-width:640px; margin:0 auto; }
+:root[data-theme="dark"] body .sbs{ --sbs-on:#34A853; --sbs-off:#3A3A3A; }
+html body .sbs > .app-tabs{ margin:4px 0 2px; }
+html body .sbs-label{ margin:22px 6px 8px; padding:0; font-size:13px; font-weight:600; line-height:1.3; letter-spacing:.02em; color:var(--ink-soft); text-transform:none; }
+html body .sbs .settings-tab-panel > .sbs-label:first-child,
+html body .sbs #groupManageSection > .sbs-label:first-child{ margin-top:18px; }
+html body .sbs-list{ background:var(--card); border:1px solid var(--card-border); border-radius:16px; }
+
+/* 一列 */
+html body .sbs-row{
+  display:grid; grid-template-columns:32px minmax(0,1fr) auto; column-gap:12px; align-items:center;
+  width:100%; min-height:58px; margin:0; padding:11px var(--sbs-pad); box-sizing:border-box;
+  background:none; border:0; border-top:1px solid var(--line); border-radius:0; box-shadow:none;
+  font:inherit; font-size:15px; text-align:left; color:var(--ink); text-decoration:none;
+  transition:background-color .15s ease;
+}
+html body .sbs-row.hidden{ display:none; }
+html body .sbs-list > :first-child,
+html body .sbs-list > :first-child > .sbs-row:first-child{ border-top:0; }
+html body .sbs-list > .sbs-row:first-child,
+html body .sbs-list > :first-child > .sbs-row:first-child{ border-radius:15px 15px 0 0; }
+html body .sbs-list > .sbs-row:last-child,
+html body .sbs-list > .sbs-row:nth-last-child(2):has(+ .msg:empty){ border-radius:0 0 15px 15px; }
+html body .sbs-list > .sbs-row:only-child{ border-radius:15px; }
+html body .sbs-row-compact{ grid-template-columns:minmax(0,1fr) auto; min-height:50px; padding-block:8px; }
+
+html body .sbs-ico{
+  display:grid; place-items:center; width:32px; height:32px; border-radius:9px;
+  background:color-mix(in srgb, var(--btn-primary) 11%, transparent); color:var(--btn-primary); font-size:17px;
+}
+html body .sbs-ico-brand{ font-size:15px; font-weight:700; color:var(--ink); background:color-mix(in srgb, var(--ink) 7%, transparent); }
+html body .sbs-body{ display:block; min-width:0; }
+html body .sbs-title{ display:block; margin:0; font-size:15px; font-weight:600; line-height:1.35; color:inherit; }
+html body .sbs-hint{ display:block; margin:2px 0 0; font-size:12.5px; font-weight:400; line-height:1.5; color:var(--ink-soft); white-space:normal; }
+html body .sbs-hint:empty{ display:none; }
+html body .sbs-hint-after{ margin-top:6px; }
+html body .sbs-ctl{ display:flex; align-items:center; justify-content:flex-end; gap:8px; min-width:0; }
+html body .sbs-val{ max-width:11em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; font-weight:500; color:var(--ink-soft); }
+html body .sbs-body .msg{ margin:6px 0 0; text-align:left; }
+html body .sbs-body .msg:empty{ margin:0; }
+html body .sbs-list-msg{ margin:0; padding:0 var(--sbs-pad); text-align:left; }
+html body .sbs-list-msg:not(:empty){ padding-block:0 12px; }
+
+/* 可以點的列：開下一層加 ›；switch 列整列都能點 */
+html body :is(.sbs-nav, .sbs-tap, label.sbs-row, .sbs-danger){ cursor:pointer; -webkit-tap-highlight-color:transparent; }
+html body :is(.sbs-nav, .sbs-tap, label.sbs-row, .sbs-danger):hover{ background:color-mix(in srgb, var(--line) 38%, transparent); }
+html body :is(.sbs-nav, .sbs-tap, label.sbs-row, .sbs-danger):active{ background:color-mix(in srgb, var(--line) 65%, transparent); }
+html body :is(.sbs-nav, .sbs-danger):focus-visible{ outline:2px solid var(--btn-primary); outline-offset:-2px; }
+html body .sbs-nav > .sbs-ctl::after{
+  content:""; flex:none; width:7px; height:7px; margin:0 3px 0 2px;
+  border-top:2px solid currentColor; border-right:2px solid currentColor; transform:rotate(45deg);
+  color:var(--ink-soft); opacity:.55;
+}
+
+/* 文字欄位列：輸入框排在標題底下 */
+html body .sbs-row-field{ align-items:start; }
+html body .sbs-row-field > .sbs-ico{ margin-top:1px; }
+html body .sbs-field{ display:flex; align-items:center; gap:8px; margin-top:9px; }
+html body .sbs-field input{ flex:1; min-width:0; width:auto; height:42px; margin:0; font-size:15px; }
+html body .sbs-field input[readonly]{ cursor:copy; font-family:ui-monospace, "SFMono-Regular", Menlo, monospace; letter-spacing:.04em; }
+
+/* 統一的按鈕 */
+html body .sbs-btn{
+  display:inline-flex; align-items:center; justify-content:center; flex:none; gap:6px;
+  min-height:40px; margin:0; padding:0 15px; box-sizing:border-box;
+  background:var(--paper); color:var(--ink); border:1px solid var(--card-border); border-radius:10px; box-shadow:none;
+  font:inherit; font-size:14px; font-weight:700; line-height:1; white-space:nowrap; cursor:pointer; text-decoration:none;
+  transition:background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+html body .sbs-btn:hover{ border-color:var(--btn-primary); color:var(--btn-primary); }
+html body .sbs-btn:active{ transform:scale(.97); }
+html body .sbs-btn:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:1px; }
+html body .sbs-btn:disabled{ opacity:.55; cursor:not-allowed; }
+html body .sbs-btn.hidden{ display:none; }
+html body .sbs-save{ background:var(--btn-primary); border-color:var(--btn-primary); color:var(--btn-primary-fg); }
+html body .sbs-save:hover{ color:var(--btn-primary-fg); filter:brightness(1.06); }
+/* 改了才出現 */
+html body [data-dirty]:not(.is-dirty) .sbs-save{ display:none; }
+html body [data-dirty].is-dirty .sbs-save{ animation:sbsSaveIn .2s cubic-bezier(.16,1,.3,1); }
+@keyframes sbsSaveIn{ from{ opacity:0; transform:translateX(6px); } }
+
+/* switch：label 包 input 的那種，跟按鈕做成的那種長得一樣 */
+html body .sbs .switch-toggle{ position:relative; display:inline-block; width:46px; height:28px; flex:none; }
+html body .sbs .switch-slider{ inset:0; border:0; border-radius:999px; background-color:var(--sbs-off); }
+html body .sbs .switch-slider:before{ left:3px; bottom:3px; width:22px; height:22px; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.25); transition:transform .22s cubic-bezier(.16,1,.3,1); }
+html body .sbs .switch-toggle input:checked + .switch-slider{ background-color:var(--sbs-on); }
+html body .sbs .switch-toggle input:checked + .switch-slider:before{ transform:translateX(18px); }
+html body .sbs .switch-toggle input:focus-visible + .switch-slider{ outline:2px solid var(--btn-primary); outline-offset:2px; }
+html body .sbs button.sbs-switch{
+  position:relative; display:block; flex:none; width:46px; height:28px; min-height:0; margin:0; padding:0;
+  border:0; border-radius:999px; background:var(--sbs-off); box-shadow:none; font-size:0; color:transparent; cursor:pointer;
+  transition:background-color .2s ease;
+}
+html body .sbs button.sbs-switch > *{ display:none; }
+html body .sbs button.sbs-switch::after{
+  content:""; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%;
+  background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.25); transition:transform .22s cubic-bezier(.16,1,.3,1);
+}
+html body .sbs button.sbs-switch.active{ background:var(--sbs-on); }
+html body .sbs button.sbs-switch.active::after{ transform:translateX(18px); }
+html body .sbs button.sbs-switch:hover{ transform:none; box-shadow:none; filter:none; }
+html body .sbs button.sbs-switch:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; }
+
+/* 下拉選單列（目前群組、語言）：只顯示目前的值＋ › */
+html body .sbs-select-row .sbs-ctl{ position:relative; }
+html body .sbs-select-row .dd-select{ width:auto; }
+html body .sbs-select-row .dd-btn{
+  width:auto; max-width:11em; min-height:0; padding:4px 0; gap:0;
+  background:none; border:0; border-radius:6px; box-shadow:none;
+  font-size:14px; font-weight:500; color:var(--ink-soft);
+}
+html body .sbs-select-row .dd-btn:hover,
+html body .sbs-select-row .dd-btn.open{ color:var(--btn-primary); }
+html body .sbs-select-row .dd-caret{ display:none; }
+html body .sbs-select-row .dd-menu{ left:auto; right:-18px; min-width:220px; max-width:min(320px, calc(100vw - 32px)); }
+
+/* 分段控制（派派提醒）跟在標題右邊；窄螢幕換到下一行 */
+html body .sbs-row-seg .sb-seg{ margin:0; }
+html body .sbs-row-seg > .sb-nag-setting-icon{ width:32px; height:32px; background:none; }
+html body .sbs-row-seg > .sb-nag-setting-icon .sb-pie{ width:34px; height:34px; }
+
+/* 大頭貼列 */
+html body .sbs-row-avatar{ grid-template-columns:56px minmax(0,1fr) auto; min-height:80px; }
+html body .sbs-row-avatar .settings-avatar-badge-wrap{ position:relative; width:56px; height:56px; }
+html body .sbs-row-avatar .settings-avatar-preview .sb-avatar,
+html body .sbs-row-avatar .settings-avatar-preview .avatar-xl{ width:56px !important; height:56px !important; font-size:22px !important; box-shadow:none; }
+html body .sbs-row-avatar .settings-avatar-badge-wrap{ margin:0 !important; }
+html body .sbs-row-avatar .avatar-zoom-badge{ width:22px; height:22px; right:-2px !important; bottom:-2px !important; font-size:11px; }
+html body .sbs-row-avatar .avatar-btn-upload{ position:relative; }
+
+/* 清單卡片裡的整塊內容（收款帳戶、成員管理、更新項目） */
+html body .sbs-block{ padding:12px var(--sbs-pad) 14px; border-top:1px solid var(--line); }
+html body .sbs-list > .sbs-block:first-child{ border-top:0; }
+html body .sbs-block > .sbs-hint:first-child{ margin:0 0 10px; }
+html body .sbs-block .payment-accounts-list:empty{ display:none; }
+html body .sbs-block .msg{ text-align:left; }
+html body .sbs-subhead{ padding:12px var(--sbs-pad) 6px; border-top:1px solid var(--line); }
+html body .sbs-sublist .sbs-row{ padding-left:calc(var(--sbs-pad) + 44px); }
+html body .sbs-sublist .filter-hint{ margin:0; padding:4px var(--sbs-pad) 14px calc(var(--sbs-pad) + 44px); }
+
+/* 新增：虛線整列 */
+html body .sbs-add{
+  display:flex; align-items:center; justify-content:center; gap:8px; width:100%; min-height:46px; margin:10px 0 0; padding:0 14px; box-sizing:border-box;
+  background:none; border:1.5px dashed var(--card-border); border-radius:12px; box-shadow:none;
+  font:inherit; font-size:14px; font-weight:700; color:var(--btn-primary); cursor:pointer;
+  transition:background-color .15s ease, border-color .15s ease;
+}
+html body .sbs-add:hover{ border-color:var(--btn-primary); background:color-mix(in srgb, var(--btn-primary) 6%, transparent); }
+html body .sbs-add:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:1px; }
+html body .sbs-savebar{ display:flex; justify-content:flex-end; }
+html body .sbs-savebar.is-dirty{ margin-top:10px; }
+html body .sbs-savebar .sbs-save{ min-width:96px; }
+
+/* 危險：紅字列 */
+html body .sbs-danger .sbs-title{ color:var(--negative-text); }
+html body .sbs-danger .sbs-ico{ color:var(--negative-text); background:color-mix(in srgb, var(--negative-text) 11%, transparent); }
+html body .sbs-danger{ align-items:start; }
+html body .sbs-danger > .sbs-ico{ margin-top:1px; }
+
+/* 更新項目 */
+html body .sbs-changelog .settings-changelog-list{ margin:0; }
+
+@media (max-width: 519px){
+  html body .sbs{ --sbs-pad:13px; }
+  html body .sbs-row-seg{ grid-template-columns:32px minmax(0,1fr); }
+  html body .sbs-row-seg > .sbs-ctl{ grid-column:2 / -1; justify-content:flex-start; margin-top:10px; }
+  html body .sbs-row-avatar{ grid-template-columns:56px minmax(0,1fr); }
+  html body .sbs-row-avatar > .sbs-ctl{ grid-column:2 / -1; justify-content:flex-start; margin-top:8px; }
+  html body .sbs-val{ max-width:8em; }
+  html body .sbs-select-row .dd-btn{ max-width:8em; }
+}
+@media (prefers-reduced-motion: reduce){
+  html body [data-dirty].is-dirty .sbs-save{ animation:none; }
+  html body .sbs button.sbs-switch, html body .sbs button.sbs-switch::after, html body .sbs .switch-slider:before{ transition:none; }
+}
+/* 列裡已經有左邊的圖示，標題字前面不再自動加一個 */
+html body .sbs-row .sbs-title[data-i18n]::before{ content:none; display:none; }
+html body .sbs label.sbs-title{ display:block; margin:0; padding:0; font-size:15px !important; font-weight:600; line-height:1.35; color:var(--ink); }
+
+/* ===== 設定頁 v977 美化：彩色圖示、個人資料卡、點了才展開的欄位、內縮分隔線、註腳 ===== */
+html body .sbs{
+  --sbs-indigo:#5B5BD6; --sbs-blue:#2F7BEA; --sbs-teal:#1497A8; --sbs-green:#2E9D63;
+  --sbs-orange:#EE7D24; --sbs-pink:#DB4C82; --sbs-red:#E5484D; --sbs-gray:#7C828D; --sbs-discord:#5865F2;
+  --sbs-inset:calc(var(--sbs-pad) + 44px);
+}
+/* 彩色圖示方塊：白色線條圖示 */
+html body .sbs-ico[data-c]{ color:#fff; background:var(--sbs-c); font-size:16px; font-weight:700; }
+html body .sbs-ico[data-c="indigo"]{ --sbs-c:var(--sbs-indigo); }
+html body .sbs-ico[data-c="blue"]{ --sbs-c:var(--sbs-blue); }
+html body .sbs-ico[data-c="teal"]{ --sbs-c:var(--sbs-teal); }
+html body .sbs-ico[data-c="green"]{ --sbs-c:var(--sbs-green); }
+html body .sbs-ico[data-c="orange"]{ --sbs-c:var(--sbs-orange); }
+html body .sbs-ico[data-c="pink"]{ --sbs-c:var(--sbs-pink); }
+html body .sbs-ico[data-c="red"]{ --sbs-c:var(--sbs-red); }
+html body .sbs-ico[data-c="gray"]{ --sbs-c:var(--sbs-gray); }
+html body .sbs-ico[data-c="discord"]{ --sbs-c:var(--sbs-discord); }
+html body .sbs-danger .sbs-ico[data-c]{ color:#fff; background:var(--sbs-c); }
+html body .sbs-ico-google{ background:var(--card); color:#4285F4; border:1px solid var(--card-border); font-size:16px; font-weight:700; box-sizing:border-box; }
+html body .sbs-ico .sb-ico{ width:1em; height:1em; }
+
+/* 一行的列比較矮；分隔線從文字開始，不穿過圖示 */
+html body .sbs-row{ min-height:52px; padding-block:9px; border-top:0; position:relative; }
+html body .sbs-row::before{ content:""; position:absolute; top:0; right:0; left:var(--sbs-inset); border-top:1px solid var(--line); pointer-events:none; }
+html body .sbs-row-compact::before{ left:var(--sbs-pad); }
+html body .sbs-sublist .sbs-row::before{ left:var(--sbs-inset); }
+html body .sbs-list > :first-child::before,
+html body .sbs-list > :first-child > .sbs-row:first-child::before,
+html body .sbs-list > #pwChangeSection.hidden + .sbs-row::before{ display:none; }
+html body .sbs-block, html body .sbs-subhead{ border-top:0; position:relative; }
+html body .sbs-block::before, html body .sbs-subhead::before{ content:""; position:absolute; top:0; left:var(--sbs-pad); right:0; border-top:1px solid var(--line); }
+html body .sbs-list > .sbs-block:first-child::before{ display:none; }
+html body :is(.sbs-nav, .sbs-tap, .sbs-edit, label.sbs-row, .sbs-danger):active{ background:color-mix(in srgb, var(--line) 75%, transparent); }
+html body .sbs-edit{ cursor:pointer; -webkit-tap-highlight-color:transparent; }
+html body .sbs-edit:not(.is-editing):hover{ background:color-mix(in srgb, var(--line) 38%, transparent); }
+html body .sbs-edit:focus-visible, html body .sbs-tap:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:-2px; }
+
+/* 點了才展開的欄位 */
+html body .sbs-edit{ align-items:center; }
+html body .sbs-edit .sbs-editor{ display:none; }
+html body .sbs-edit.is-editing{ align-items:start; cursor:default; }
+html body .sbs-edit.is-editing .sbs-editor{ display:block; animation:sbsEditIn .22s cubic-bezier(.16,1,.3,1); }
+html body .sbs-edit.is-editing .sbs-editor > .sbs-hint{ margin-top:3px; }
+html body .sbs-edit.is-editing > .sbs-ctl{ align-self:start; padding-top:5px; }
+html body .sbs-edit.is-editing > .sbs-ctl .sbs-val{ display:none; }
+html body .sbs-edit.is-editing .sbs-title{ cursor:pointer; }
+html body .sbs-edit > .sbs-ctl::after{
+  content:""; flex:none; width:7px; height:7px; margin:0 3px 0 2px;
+  border-top:2px solid currentColor; border-right:2px solid currentColor; transform:rotate(45deg);
+  color:var(--ink-soft); opacity:.55; transition:transform .2s cubic-bezier(.16,1,.3,1);
+}
+html body .sbs-edit.is-editing > .sbs-ctl::after{ transform:rotate(135deg); }
+html body .sbs-edit.is-editing > .sbs-ico{ margin-top:1px; }
+@keyframes sbsEditIn{ from{ opacity:0; transform:translateY(-4px); } }
+html body .sbs-val.is-empty, html body .sbs-profile-sub.is-empty{ color:var(--ink-soft); opacity:.7; font-weight:400; }
+html body .sbs-val{ max-width:12em; }
+/* 信箱：平常不顯示「目前信箱」，只有等待確認新信箱時才顯示 */
+html body .sbs-edit:not(.is-editing) #emailStatusHint:not(.is-pending){ display:none; }
+html body #emailStatusHint.is-pending{ color:var(--accent-text); }
+/* 通知：說明只在被擋住時出現 */
+html body #notifyRow:not(.is-blocked) .sbs-hint-blocked{ display:none; }
+html body #notifyRow.is-blocked .sbs-hint-blocked{ color:var(--negative-text); }
+
+/* 邀請碼 */
+html body .sbs-code{ display:block; margin-top:2px; font-family:ui-monospace, "SFMono-Regular", Menlo, monospace; font-size:14px; letter-spacing:.06em; color:var(--ink-soft); }
+html body .sbs-code:empty{ display:none; }
+
+/* 個人資料卡 */
+html body .sbs-profile{ display:grid; grid-template-columns:64px minmax(0,1fr) auto; align-items:center; column-gap:14px; padding:16px var(--sbs-pad); margin-top:14px; }
+html body .sbs-profile .settings-avatar-badge-wrap{ position:relative; width:64px; height:64px; margin:0 !important; }
+html body .sbs-profile .settings-avatar-preview .sb-avatar{ width:64px !important; height:64px !important; font-size:25px !important; box-shadow:none; }
+html body .sbs-profile .avatar-zoom-badge{ width:22px; height:22px; right:-2px !important; bottom:-2px !important; }
+html body .sbs-profile-text{ min-width:0; }
+html body .sbs-profile-name{ display:block; font-size:18px; font-weight:700; line-height:1.3; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+html body .sbs-profile-sub{ display:block; margin-top:2px; font-size:13px; color:var(--ink-soft); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+html body .sbs-profile .msg{ margin:4px 0 0; text-align:left; }
+html body .sbs-profile .msg:empty{ margin:0; }
+html body .sbs-profile-actions{ display:flex; flex-direction:column; align-items:stretch; gap:6px; }
+html body .sbs-btn-quiet{ background:none; border-color:transparent; color:var(--ink-soft); font-weight:600; min-height:32px; }
+html body .sbs-btn-quiet:hover{ border-color:transparent; color:var(--negative-text); }
+
+/* 卡片下面的灰色註腳 */
+html body .sbs-foot{ margin:7px 6px 0; font-size:12.5px; line-height:1.55; color:var(--ink-soft); }
+
+@media (max-width: 519px){
+  html body .sbs-profile{ grid-template-columns:56px minmax(0,1fr); row-gap:12px; }
+  html body .sbs-profile .settings-avatar-badge-wrap{ width:56px; height:56px; }
+  html body .sbs-profile .settings-avatar-preview .sb-avatar{ width:56px !important; height:56px !important; font-size:22px !important; }
+  html body .sbs-profile-actions{ grid-column:1 / -1; flex-direction:row; }
+  html body .sbs-profile-actions .sbs-btn{ flex:1; }
+  html body .sbs-val{ max-width:9em; }
+}
+@media (prefers-reduced-motion: reduce){
+  html body .sbs-edit.is-editing .sbs-editor{ animation:none; }
+  html body .sbs-edit > .sbs-ctl::after{ transition:none; }
+}
+html body .sbs-sublist .sbs-row{ padding-left:var(--sbs-pad); }
+html body .sbs-sublist .sbs-row::before{ left:var(--sbs-pad); }
+html body .sbs-sublist .sbs-title{ font-weight:500; }
+html body .sbs-sublist .filter-hint{ padding-left:var(--sbs-pad); }
+html body .sbs-subhead .sbs-title{ font-size:13px; font-weight:600; color:var(--ink-soft); }

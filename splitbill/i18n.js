@@ -1489,6 +1489,31 @@ const I18N = {
     "nav.mainLabel": "主要導覽",
 
     "nav.currencies": "幣別",
+    "settings.notSet": "未設定",
+    "settings.noEmailShort": "還沒設定信箱",
+    "settings.nicknameShort": "我的暱稱",
+    "settings.foot.payment": "別人點你的頭像就看得到收款帳戶，越上面越優先，按住 ⠿ 拖曳排序。關掉的群組看不到。",
+    "settings.foot.linkIdentity": "連結 Google 或 Discord 後，用它們登入也會進到這個帳號。",
+    "settings.sec.profile": "個人資料",
+    "settings.sec.display": "顯示",
+    "settings.sec.notify": "通知",
+    "settings.sec.app": "App",
+    "settings.hint.avatar": "點頭像看大圖，可以用相機或相簿",
+    "settings.hint.username": "全站唯一，登入時可以直接打這個名稱",
+    "settings.hint.paymentAccounts": "別人點你的頭像就看得到。越上面越優先，按住 ⠿ 拖曳排序",
+    "settings.hint.paymentVisibility": "關掉的群組，其他人看不到你的收款帳戶",
+    "settings.hint.linkIdentity": "連結後，用它登入也會進到這個帳號",
+    "settings.hint.nickname": "只影響這個群組；留空就用登入帳號",
+    "settings.hint.inviteCode": "給朋友，讓他們加入這個群組",
+    "settings.hint.qr": "對方掃了就會自動帶入邀請碼",
+    "settings.hint.joinByCode": "加入後會自動切換到那個群組",
+    "settings.hint.createGroup": "需要開發者給的建團授權碼",
+    "settings.hint.currency": "只顯示勾選的幣別，取消不會刪紀錄",
+    "settings.hint.showLeft": "關掉後總表和成員清單會隱藏他們",
+    "settings.hint.apk": "不是 Google Play 版，安裝時會提醒「不明來源」。iPhone 請按分享 → 加入主畫面",
+    "settings.inviteCodeShort": "邀請碼",
+    "settings.addPaymentAccountRow": "新增收款帳戶",
+    "settings.apkRowTitle": "下載 Android App",
     "nag.logoAria": "派派有話要說",
     "nag.yay1": "終於！{name}的 {amount} 回家了。我原諒你了。",
     "nag.yay2": "還清了！你看，這樣不是很好嗎？",
@@ -1823,7 +1848,7 @@ let currentLang = detectDefaultLang();
 // 用 document.write 插一個同步載入的 <script>（同網域，瀏覽器不會擋）。版本號沿用
 // i18n.js 自己的 ?v=，換版時一起換新。切換語言本來就會整頁重新整理（見 setLang）。
 // 日文、英文翻譯檔各自的內容指紋，由 scripts/stamp-assets.js 自動填，不要手改
-const SB_LANG_V = {"en": "e20246f14f", "ja": "35f3084213"};
+const SB_LANG_V = {"en": "36b723c4fa", "ja": "90f471159d"};
 (function loadLangDict(){
   if(currentLang === "zh-Hant" || I18N[currentLang]) return;
   const self = document.currentScript;

@@ -30,14 +30,14 @@
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=599a4d1bd5">
-<link rel="stylesheet" href="shared.css?v=8193c87a13">
+<link rel="stylesheet" href="shared.css?v=c2acf94ad6">
 <script src="holiday.js?v=2816c2cc17"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
-<script src="i18n.js?v=d9735eb1a4"></script>
+<script src="i18n.js?v=36b382561c"></script>
 <script src="currencies.js?v=1fe139e56b"></script>
 <script src="motion.js?v=c960fb49b3"></script>
-<script src="version.js?v=a07c677bf7"></script>
+<script src="version.js?v=055769d5e0"></script>
 <script src="notif-text.js?v=f501aac2ce"></script>
 <script src="shared-ui.js?v=af64dbc000"></script>
 <script src="theme.js?v=01d7c0a8c1" defer></script>
@@ -138,7 +138,12 @@ if("serviceWorker" in navigator){
       <span class="offline-banner-text" data-i18n="shared.offlineBannerText">目前離線，部分功能可能無法使用</span>
     </div>
 
-    <div class="card">
+    <!-- 設定頁 v977：分頁在最上面，每一區是一張清單卡片；每一列一個彩色圖示。
+         開關一律用 switch、選一個用分段、開下一層用整列加 ›；
+         文字欄位平常只顯示目前的值，點整列才展開輸入框，改了才出現「儲存」；
+         說明只在需要時出現（編輯中、被擋住、危險操作），其餘放在卡片下的灰色註腳。
+         元素 id 全部沿用，底下的程式邏輯不用改。 -->
+    <div class="sbs" id="settingsCard">
       <div class="app-tabs" id="settingsTabs">
         <div class="tab-indicator" id="settingsTabIndicator"></div>
         <button type="button" class="app-tab active" data-settings-tab="account" data-i18n="settings.tab.account">帳號</button>
@@ -146,300 +151,341 @@ if("serviceWorker" in navigator){
         <button type="button" class="app-tab" data-settings-tab="prefs" data-i18n="settings.tab.prefs">偏好設定</button>
       </div>
 
+      <!-- ===================== 帳號 ===================== -->
       <div id="settingsTabAccount" class="settings-tab-panel">
 
-        <div class="settings-group">
-          <div class="settings-section-title" data-i18n="settings.basicInfoTitle">基本資料</div>
+        <div class="sbs-list sbs-profile">
+          <div class="settings-avatar-badge-wrap">
+            <div class="settings-avatar-preview" id="settingsAvatarPreview" data-i18n-title="settings.avatarPreviewTitle" title="點擊查看大圖"></div>
+            <button type="button" class="avatar-zoom-badge hidden" id="avatarZoomBtn" data-i18n-title="settings.avatarViewPhoto" title="查看大頭貼相片" aria-label="查看相片">
+              <span class="sb-ico" style="--ico:var(--ico-search)" aria-hidden="true"></span>
+            </button>
+          </div>
+          <div class="sbs-profile-text">
+            <span class="sbs-profile-name" data-mirror="settingsName"></span>
+            <span class="sbs-profile-sub" data-mirror="settingsEmail" data-empty="settings.noEmailShort"></span>
+            <div class="msg" id="avatarMsg"></div>
+          </div>
+          <div class="sbs-profile-actions">
+            <label class="sbs-btn avatar-btn-upload" for="avatarFileInput">
+              <span data-i18n="settings.avatarChangePhoto">更換相片</span>
+              <input type="file" id="avatarFileInput" accept="image/*" class="hidden">
+            </label>
+            <button type="button" class="sbs-btn sbs-btn-quiet avatar-btn-remove hidden" id="removeAvatarBtn" data-i18n="settings.avatarRemove">✕ 移除</button>
+          </div>
+        </div>
 
-          <label data-i18n="settings.avatarLabel">個人大頭貼</label>
-          <div class="settings-avatar-card">
-            <div class="settings-avatar-badge-wrap">
-              <div class="settings-avatar-preview" id="settingsAvatarPreview" data-i18n-title="settings.avatarPreviewTitle" title="點擊查看大圖"></div>
-              <button type="button" class="avatar-zoom-badge hidden" id="avatarZoomBtn" data-i18n-title="settings.avatarViewPhoto" title="查看大頭貼相片" aria-label="查看相片">
-                <span class="sb-ico" style="--ico:var(--ico-search)" aria-hidden="true"></span>
-              </button>
-            </div>
-            <div class="settings-avatar-info">
-              <div class="settings-avatar-row">
-                <label class="btn secondary small avatar-btn-upload" for="avatarFileInput">
-                  <span data-i18n="settings.avatarChangePhoto">更換相片</span>
-                  <input type="file" id="avatarFileInput" accept="image/*" class="hidden">
-                </label>
-                <button type="button" class="btn secondary small avatar-btn-remove hidden" id="removeAvatarBtn" data-i18n="settings.avatarRemove">
-                  ✕ 移除
-                </button>
+        <h2 class="sbs-label" data-i18n="settings.sec.profile">個人資料</h2>
+        <div class="sbs-list">
+          <div class="sbs-row sbs-edit" tabindex="0" aria-expanded="false">
+            <span class="sbs-ico" data-c="indigo" aria-hidden="true"><span class="sb-ico" style="--ico:var(--ico-user)"></span></span>
+            <div class="sbs-body">
+              <label class="sbs-title" for="settingsName" data-i18n="login.usernameLabel">登入帳號</label>
+              <div class="sbs-editor">
+                <p class="sbs-hint" data-i18n="settings.hint.username">全站唯一，登入時可以直接打這個名稱</p>
+                <div class="sbs-field" data-dirty>
+                  <input type="text" id="settingsName" data-i18n-placeholder="settings.usernamePlaceholder" placeholder="例如 小菘、chiasung" maxlength="20" autocomplete="username">
+                  <button type="button" class="sbs-btn sbs-save" id="saveNameBtn" data-i18n="common.save">儲存</button>
+                </div>
               </div>
-              <p class="settings-avatar-hint" data-i18n="settings.avatarHint">點擊頭像或 放大鏡查看照片，支援相機與相簿裁切</p>
+              <div class="msg" id="nameMsg"></div>
+            </div>
+            <div class="sbs-ctl"><span class="sbs-val" data-mirror="settingsName" data-empty="settings.notSet"></span></div>
+          </div>
+
+          <div class="sbs-row sbs-edit" tabindex="0" aria-expanded="false">
+            <span class="sbs-ico" data-c="blue" aria-hidden="true"><span class="sb-ico" style="--ico:var(--ico-message)"></span></span>
+            <div class="sbs-body">
+              <label class="sbs-title" for="settingsEmail" data-i18n="login.emailLabel">電子信箱</label>
+              <p class="sbs-hint" id="emailStatusHint"></p>
+              <div class="sbs-editor">
+                <p class="sbs-hint" data-i18n="settings.emailInfo">填了才能用忘記密碼救回帳號。</p>
+                <div class="sbs-field" data-dirty>
+                  <input type="email" id="settingsEmail" data-i18n-placeholder="login.emailPlaceholder" placeholder="例如 you@gmail.com" autocomplete="email">
+                  <button type="button" class="sbs-btn sbs-save" id="saveEmailBtn" data-i18n="common.save">儲存</button>
+                </div>
+              </div>
+              <div class="msg" id="emailMsg"></div>
+            </div>
+            <div class="sbs-ctl"><span class="sbs-val" data-mirror="settingsEmail" data-empty="settings.notSet"></span></div>
+          </div>
+        </div>
+
+        <h2 class="sbs-label" data-i18n="settings.paymentAccountsTitle">收款帳戶</h2>
+        <div class="sbs-list">
+          <div class="sbs-block">
+            <div class="payment-accounts-list" id="paymentAccountsList"></div>
+            <button type="button" class="sbs-add" id="addPaymentAccountBtn">
+              <span class="sb-ico" style="--ico:var(--ico-plus)" aria-hidden="true"></span>
+              <span data-i18n="settings.addPaymentAccountRow">新增收款帳戶</span>
+            </button>
+            <div class="sbs-savebar" data-dirty>
+              <button type="button" class="sbs-btn sbs-save" id="savePaymentInfoBtn" data-i18n="common.save">儲存</button>
+            </div>
+            <div class="msg" id="paymentInfoMsg"></div>
+          </div>
+          <div class="sbs-subhead">
+            <span class="sbs-title" data-i18n="settings.paymentVisibilityTitle">收款帳戶顯示範圍</span>
+          </div>
+          <div id="paymentVisibilityList" class="sbs-sublist"></div>
+        </div>
+        <p class="sbs-foot" id="infoPaymentInfo" data-i18n="settings.foot.payment">別人點你的頭像就看得到收款帳戶，越上面越優先，按住 ⠿ 拖曳排序。關掉的群組看不到。</p>
+
+        <h2 class="sbs-label" data-i18n="settings.loginMethodTitle">登入方式</h2>
+        <div class="sbs-list">
+          <div id="pwChangeSection">
+            <button type="button" class="sbs-row sbs-nav" id="pwChangeModalOpenBtn">
+              <span class="sbs-ico" data-c="gray" aria-hidden="true"><span class="sb-ico" style="--ico:var(--ico-key)"></span></span>
+              <span class="sbs-body">
+                <span class="sbs-title" data-i18n="settings.resetPassword">重設密碼</span>
+              </span>
+              <span class="sbs-ctl"></span>
+            </button>
+          </div>
+          <div class="sbs-row hidden" id="pwChangeLockedHint">
+            <span class="sbs-ico" data-c="gray" aria-hidden="true"><span class="sb-ico" style="--ico:var(--ico-lock)"></span></span>
+            <div class="sbs-body">
+              <span class="sbs-title" data-i18n="settings.resetPassword">重設密碼</span>
+              <p class="sbs-hint" data-i18n="settings.pwChangeLockedHint">請先在上面設定並確認信箱，才能在這裡修改密碼——不然以後忘記密碼會沒辦法用忘記密碼功能救回帳號。</p>
             </div>
           </div>
-          <div class="msg" id="avatarMsg"></div>
-
-          <label data-i18n="login.usernameLabel">登入帳號<button type="button" class="info-btn" data-info-for="infoAccountName" data-i18n-title="common.info" title="說明" aria-label="說明"><span class="info-btn-i">i</span></button></label>
-          <p class="settings-hint hidden" id="infoAccountName" data-i18n="settings.usernameInfo">全站唯一，不能跟別人重複；登入頁可以直接打這個名稱登入，不用記信箱。改了會同步套用到你所有群組的預設顯示名稱——除非某個群組另外設定了暱稱，那個群組會繼續顯示暱稱，不受這裡影響。可以是中文、英文、數字、底線，2~20 個字。</p>
-          <div class="settings-field-row">
-            <input type="text" id="settingsName" data-i18n-placeholder="settings.usernamePlaceholder" placeholder="例如 小菘、chiasung" maxlength="20">
-            <button class="btn secondary small" id="saveNameBtn" data-i18n="common.save">儲存</button>
+          <div class="sbs-row">
+            <span class="sbs-ico sbs-ico-google" aria-hidden="true">G</span>
+            <div class="sbs-body"><span class="sbs-title">Google</span></div>
+            <div class="sbs-ctl"><button type="button" class="sbs-btn" id="linkGoogleBtn" data-i18n="settings.link">連結</button></div>
           </div>
-          <div class="msg" id="nameMsg"></div>
-
-          <label data-i18n="login.emailLabel">電子信箱<button type="button" class="info-btn" data-info-for="infoEmail" data-i18n-title="common.info" title="說明" aria-label="說明"><span class="info-btn-i">i</span></button></label>
-          <p class="settings-hint hidden" id="infoEmail" data-i18n="settings.emailInfo">填了才能用忘記密碼救回帳號。</p>
-          <div class="settings-field-row">
-            <input type="email" id="settingsEmail" data-i18n-placeholder="login.emailPlaceholder" placeholder="例如 you@gmail.com">
-            <button class="btn secondary small" id="saveEmailBtn" data-i18n="common.save">儲存</button>
+          <div class="sbs-row">
+            <span class="sbs-ico" data-c="discord" aria-hidden="true">D</span>
+            <div class="sbs-body"><span class="sbs-title">Discord</span></div>
+            <div class="sbs-ctl"><button type="button" class="sbs-btn" id="linkDiscordBtn" data-i18n="settings.link">連結</button></div>
           </div>
-          <p class="settings-hint" id="emailStatusHint"></p>
-          <div class="msg" id="emailMsg"></div>
+          <div class="msg sbs-list-msg" id="linkIdentityMsg"></div>
         </div>
+        <p class="sbs-foot" data-i18n="settings.foot.linkIdentity">連結 Google 或 Discord 後，用它們登入也會進到這個帳號。</p>
 
-        <div class="settings-group">
-          <div class="settings-section-title" data-i18n="settings.paymentAccountsTitle">收款帳戶</div>
-
-          <p class="settings-hint" id="infoPaymentInfo" data-i18n="settings.paymentAccountsInfo">填寫後，其他成員點開你的頭像查看個人資料時就會看到，方便他們知道該轉帳到哪裡還你錢。可以依偏好順序，由上而下新增多筆帳戶。</p>
-          <div class="payment-accounts-list" id="paymentAccountsList"></div>
-          <div class="payment-account-add-row">
-            <button type="button" class="link-btn" id="addPaymentAccountBtn" data-i18n="settings.addPaymentAccount">+ 新增帳戶</button>
-          </div>
-          <button class="btn secondary small payment-account-save-btn" id="savePaymentInfoBtn" data-i18n="common.save">儲存</button>
-          <div class="msg" id="paymentInfoMsg"></div>
-        </div>
-
-        <div class="settings-group">
-          <div class="settings-section-title" data-i18n="settings.paymentVisibilityTitle">收款帳戶顯示範圍</div>
-          <p class="settings-hint" data-i18n="settings.paymentVisibilityHint">收款帳戶會同步顯示在你所在的每個群組，可以個別選擇要在哪些群組讓其他成員看到。</p>
-          <div id="paymentVisibilityList"></div>
-        </div>
-
-        <div class="settings-group">
-          <div class="settings-section-title" data-i18n="settings.loginMethodTitle">登入方式</div>
-
-          <div id="pwChangeSection">
-            <button type="button" class="btn-wide" id="pwChangeModalOpenBtn" data-i18n="settings.resetPassword">重設密碼</button>
-          </div>
-          <p class="settings-hint hidden" id="pwChangeLockedHint" data-i18n="settings.pwChangeLockedHint">請先在上面設定並確認信箱，才能在這裡修改密碼——不然以後忘記密碼會沒辦法用忘記密碼功能救回帳號。</p>
-
-          <label data-i18n="settings.linkIdentityLabel">連結其他登入方式<button type="button" class="info-btn" data-info-for="infoLinkIdentity" data-i18n-title="common.info" title="說明" aria-label="說明"><span class="info-btn-i">i</span></button></label>
-          <p class="settings-hint hidden" id="infoLinkIdentity" data-i18n="settings.linkIdentityInfo">把不同信箱的 Google/Discord 帳號連結到這個帳號，以後不管用哪一種方式登入，都是同一個帳號、同一批群組資料。建議現在就先連結起來，之後才不會因為信箱不一樣，不小心用 Google/Discord 登入又建立出一個新帳號。</p>
-          <div class="settings-row">
-            <span>Google</span>
-            <button class="btn secondary small" id="linkGoogleBtn" data-i18n="settings.link">連結</button>
-          </div>
-          <div class="settings-row">
-            <span>Discord</span>
-            <button class="btn secondary small" id="linkDiscordBtn" data-i18n="settings.link">連結</button>
-          </div>
-          <div class="msg" id="linkIdentityMsg"></div>
-        </div>
-
-        <div class="settings-group settings-group-danger">
-          <div class="settings-section-title" data-i18n="settings.dangerZoneTitle">危險區域</div>
-
-          <label data-i18n="settings.deleteAccountLabel">銷毀帳號</label>
-          <p class="settings-hint" id="infoDeleteAccount" data-i18n="settings.deleteAccountInfo">會讓這個帳號沒辦法再登入，並讓你離開所有群組（歷史支出/還款紀錄會保留，其他人還是看得到）。如果你在任何群組裡還有沒結清的款項，沒辦法銷毀。</p>
-          <button class="btn-wide" id="deleteAccountBtn" data-i18n="settings.deleteAccountBtn">銷毀帳號</button>
-          <div class="msg" id="deleteAccountMsg"></div>
+        <h2 class="sbs-label" data-i18n="settings.dangerZoneTitle">危險區域</h2>
+        <div class="sbs-list">
+          <button type="button" class="sbs-row sbs-danger" id="deleteAccountBtn">
+            <span class="sbs-ico" data-c="red" aria-hidden="true"><span class="sb-ico" style="--ico:var(--ico-trash)"></span></span>
+            <span class="sbs-body">
+              <span class="sbs-title" data-i18n="settings.deleteAccountBtn">銷毀帳號</span>
+              <span class="sbs-hint" id="infoDeleteAccount" data-i18n="settings.deleteAccountInfo">會讓這個帳號沒辦法再登入，並讓你離開所有群組（歷史支出/還款紀錄會保留，其他人還是看得到）。如果你在任何群組裡還有沒結清的款項，沒辦法銷毀。</span>
+            </span>
+          </button>
+          <div class="msg sbs-list-msg" id="deleteAccountMsg"></div>
         </div>
 
       </div>
 
+      <!-- ===================== 群組 ===================== -->
       <div id="settingsTabGroup" class="settings-tab-panel hidden">
 
-        <div class="settings-group">
-          <div class="settings-section-title" data-i18n="settings.thisGroupTitle">這個群組</div>
-
-          <label data-i18n="settings.currentGroupLabel">目前所在的群組<button type="button" class="info-btn" data-info-for="infoGroupSelect" data-i18n-title="common.info" title="說明" aria-label="說明"><span class="info-btn-i">i</span></button></label>
-          <p class="settings-hint hidden" id="infoGroupSelect" data-i18n="settings.currentGroupInfo">切換群組後頁面會重新整理，只會看到那個群組的資料。</p>
-          <div class="settings-field-row">
-            <select id="settingsGroupSelect"></select>
+        <h2 class="sbs-label" data-i18n="settings.thisGroupTitle">這個群組</h2>
+        <div class="sbs-list">
+          <div class="sbs-row sbs-nav sbs-select-row">
+            <span class="sbs-ico" data-c="teal" aria-hidden="true"><span class="sb-ico" style="--ico:var(--ico-swap)"></span></span>
+            <div class="sbs-body">
+              <span class="sbs-title" data-i18n="settings.currentGroupLabel">目前所在的群組</span>
+              <div class="msg" id="settingsGroupMsg"></div>
+            </div>
+            <div class="sbs-ctl"><select id="settingsGroupSelect" data-i18n-title="settings.currentGroupLabel"></select></div>
           </div>
-          <div class="msg" id="settingsGroupMsg"></div>
 
-          <label data-i18n="settings.nicknameLabel">在這個群組顯示的暱稱<button type="button" class="info-btn" data-info-for="infoNickname" data-i18n-title="common.info" title="說明" aria-label="說明"><span class="info-btn-i">i</span></button></label>
-          <p class="settings-hint hidden" id="infoNickname" data-i18n="settings.nicknameInfo">只影響這個群組看到的名字，不影響「帳號」分頁的登入帳號、也不影響你在其他群組的名字。留空表示不特別設定，跟著登入帳號走。</p>
-          <div class="settings-field-row">
-            <input type="text" id="settingsNickname" data-i18n-placeholder="settings.nicknamePlaceholder" placeholder="這個群組看到的名字">
-            <button class="btn secondary small" id="saveNicknameBtn" data-i18n="common.save">儲存</button>
+          <div class="sbs-row sbs-edit" tabindex="0" aria-expanded="false">
+            <span class="sbs-ico" data-c="pink" aria-hidden="true"><span class="sb-ico" style="--ico:var(--ico-tag)"></span></span>
+            <div class="sbs-body">
+              <label class="sbs-title" for="settingsNickname" data-i18n="settings.nicknameShort">我的暱稱</label>
+              <div class="sbs-editor">
+                <p class="sbs-hint" data-i18n="settings.hint.nickname">只影響這個群組；留空就用登入帳號</p>
+                <div class="sbs-field" data-dirty>
+                  <input type="text" id="settingsNickname" data-i18n-placeholder="settings.nicknamePlaceholder" placeholder="這個群組看到的名字">
+                  <button type="button" class="sbs-btn sbs-save" id="saveNicknameBtn" data-i18n="common.save">儲存</button>
+                </div>
+              </div>
+              <div class="msg" id="nicknameMsg"></div>
+            </div>
+            <div class="sbs-ctl"><span class="sbs-val" data-mirror="settingsNickname" data-empty="settings.notSet"></span></div>
           </div>
-          <div class="msg" id="nicknameMsg"></div>
 
-          <label data-i18n="settings.groupNameLabel">目前的群組名稱<button type="button" class="info-btn" data-info-for="infoGroupName" data-i18n-title="common.info" title="說明" aria-label="說明"><span class="info-btn-i">i</span></button></label>
-          <p class="settings-hint hidden" id="infoGroupName" data-i18n="settings.groupNameInfo">任何成員都可以改，不限建立者。</p>
-          <div class="settings-field-row">
-            <input type="text" id="settingsGroupName" data-i18n-placeholder="groupChoice.groupNameLabel" placeholder="群組名稱">
-            <button class="btn secondary small" id="saveGroupNameBtn" data-i18n="common.save">儲存</button>
+          <div class="sbs-row sbs-edit" tabindex="0" aria-expanded="false">
+            <span class="sbs-ico" data-c="orange" aria-hidden="true"><span class="sb-ico" style="--ico:var(--ico-pencil)"></span></span>
+            <div class="sbs-body">
+              <label class="sbs-title" for="settingsGroupName" data-i18n="groupChoice.groupNameLabel">群組名稱</label>
+              <div class="sbs-editor">
+                <p class="sbs-hint" data-i18n="settings.groupNameInfo">任何成員都可以改，不限建立者。</p>
+                <div class="sbs-field" data-dirty>
+                  <input type="text" id="settingsGroupName" data-i18n-placeholder="groupChoice.groupNameLabel" placeholder="群組名稱">
+                  <button type="button" class="sbs-btn sbs-save" id="saveGroupNameBtn" data-i18n="common.save">儲存</button>
+                </div>
+              </div>
+              <div class="msg" id="groupNameMsg"></div>
+            </div>
+            <div class="sbs-ctl"><span class="sbs-val" data-mirror="settingsGroupName"></span></div>
           </div>
-          <div class="msg" id="groupNameMsg"></div>
         </div>
 
-
-        <div class="settings-group">
-          <div class="settings-section-title" data-i18n="settings.inviteJoinTitle">邀請與加入</div>
-
-          <label data-i18n="settings.inviteCodeLabel">邀請碼（給朋友，讓他們加入這個群組）</label>
-          <div class="settings-field-row">
-            <input type="text" id="settingsInviteCode" readonly data-i18n-title="settings.inviteCodeTitle" title="點擊一鍵複製邀請碼">
-            <button class="btn secondary small" id="copyInviteCodeBtn" data-i18n="common.copy">複製</button>
+        <h2 class="sbs-label" data-i18n="settings.inviteJoinTitle">邀請與加入</h2>
+        <div class="sbs-list">
+          <div class="sbs-row sbs-tap" id="inviteCodeRow">
+            <span class="sbs-ico" data-c="green" aria-hidden="true"><span class="sb-ico" style="--ico:var(--ico-ticket)"></span></span>
+            <div class="sbs-body">
+              <span class="sbs-title" data-i18n="settings.inviteCodeShort">邀請碼</span>
+              <span class="sbs-code" data-mirror="settingsInviteCode"></span>
+              <input type="text" id="settingsInviteCode" class="hidden" readonly tabindex="-1" aria-hidden="true">
+              <div class="msg" id="copyInviteCodeMsg"></div>
+            </div>
+            <div class="sbs-ctl"><button type="button" class="sbs-btn" id="copyInviteCodeBtn" data-i18n="common.copy">複製</button></div>
           </div>
-          <div class="msg" id="copyInviteCodeMsg"></div>
-          <button type="button" class="btn-wide" id="qrModalOpenBtn" data-i18n="settings.showQrCode">顯示 QR Code</button>
 
-          <label data-i18n="settings.joinByCodeLabel">用邀請碼加入<button type="button" class="info-btn" data-info-for="infoJoinGroup" data-i18n-title="common.info" title="說明" aria-label="說明"><span class="info-btn-i">i</span></button></label>
-          <p class="settings-hint hidden" id="infoJoinGroup" data-i18n="settings.joinByCodeInfo">會用「帳號」分頁設定的姓名加入，加入後自動切換過去，之後可以隨時用上面的下拉選單換回來，或是在這個群組另外設定暱稱。</p>
-          <div class="settings-field-row">
-            <input type="text" id="settingsJoinCode" data-i18n-placeholder="settings.inviteCodePlaceholder" placeholder="邀請碼">
-            <button class="btn secondary small" id="settingsJoinGroupBtn" data-i18n="common.join">加入</button>
+          <button type="button" class="sbs-row sbs-nav" id="qrModalOpenBtn">
+            <span class="sbs-ico" data-c="indigo" aria-hidden="true"><span class="sb-ico" style="--ico:var(--ico-qr)"></span></span>
+            <span class="sbs-body"><span class="sbs-title" data-i18n="settings.showQrCode">顯示 QR Code</span></span>
+            <span class="sbs-ctl"></span>
+          </button>
+
+          <div class="sbs-row sbs-edit" tabindex="0" aria-expanded="false">
+            <span class="sbs-ico" data-c="blue" aria-hidden="true"><span class="sb-ico" style="--ico:var(--ico-users)"></span></span>
+            <div class="sbs-body">
+              <label class="sbs-title" for="settingsJoinCode" data-i18n="settings.joinByCodeLabel">用邀請碼加入</label>
+              <div class="sbs-editor">
+                <p class="sbs-hint" data-i18n="settings.hint.joinByCode">加入後會自動切換到那個群組</p>
+                <div class="sbs-field" data-dirty="nonempty">
+                  <input type="text" id="settingsJoinCode" data-i18n-placeholder="settings.inviteCodePlaceholder" placeholder="邀請碼">
+                  <button type="button" class="sbs-btn sbs-save" id="settingsJoinGroupBtn" data-i18n="common.join">加入</button>
+                </div>
+              </div>
+              <div class="msg" id="settingsJoinGroupMsg"></div>
+            </div>
+            <div class="sbs-ctl"></div>
           </div>
-          <div class="msg" id="settingsJoinGroupMsg"></div>
 
-          <label data-i18n="settings.createNewGroupLabel">建立新群組</label>
-          <button type="button" class="btn-wide" id="createGroupModalOpenBtn" data-i18n="settings.createNewGroupBtn">建立新群組</button>
+          <button type="button" class="sbs-row sbs-nav" id="createGroupModalOpenBtn">
+            <span class="sbs-ico" data-c="green" aria-hidden="true"><span class="sb-ico" style="--ico:var(--ico-plus)"></span></span>
+            <span class="sbs-body"><span class="sbs-title" data-i18n="settings.createNewGroupBtn">建立新群組</span></span>
+            <span class="sbs-ctl"></span>
+          </button>
         </div>
 
-        <div class="settings-group settings-group-danger">
-          <div class="settings-section-title" data-i18n="settings.dangerZoneTitle">危險區域</div>
-
-          <label data-i18n="settings.leaveGroupLabel">退出目前這個群組</label>
-          <p class="settings-hint" id="infoLeaveGroup" data-i18n="settings.leaveGroupInfo">退出後這個群組的資料就看不到了，歷史紀錄會保留（別人還是看得到你之前的支出/還款），之後可以再用邀請碼加回來。</p>
-          <button class="btn-wide" id="leaveGroupBtn" data-i18n="settings.leaveGroupBtn">退出目前群組</button>
-          <div class="msg" id="leaveGroupMsg"></div>
-
-          <div id="groupManageSection" class="hidden">
-            <div class="settings-divider"></div>
-
-            <label data-i18n="settings.manageMembers">建立者專屬：管理成員</label>
-            <div class="checks" id="groupMemberManageList"></div>
-            <div class="msg" id="groupMemberManageMsg"></div>
-
-            <label data-i18n="settings.deleteGroupLabel">刪除整個群組</label>
-            <p class="settings-hint" id="infoDeleteGroup" data-i18n="settings.deleteGroupInfo">會把這個群組所有支出、還款、留言、成員都一起清掉，沒辦法復原。</p>
-            <button class="btn secondary small" id="deleteGroupBtn" data-i18n="settings.deleteGroupBtn">刪除整個群組</button>
-            <div class="msg" id="deleteGroupMsg"></div>
+        <div id="groupManageSection" class="hidden">
+          <h2 class="sbs-label" data-i18n="settings.manageMembers">建立者專屬：管理成員</h2>
+          <div class="sbs-list">
+            <div class="sbs-block">
+              <div class="checks" id="groupMemberManageList"></div>
+              <div class="msg" id="groupMemberManageMsg"></div>
+            </div>
           </div>
+        </div>
+
+        <h2 class="sbs-label" data-i18n="settings.dangerZoneTitle">危險區域</h2>
+        <div class="sbs-list">
+          <button type="button" class="sbs-row sbs-danger" id="leaveGroupBtn">
+            <span class="sbs-ico" data-c="red" aria-hidden="true"><span class="sb-ico" style="--ico:var(--ico-x)"></span></span>
+            <span class="sbs-body">
+              <span class="sbs-title" data-i18n="settings.leaveGroupBtn">退出目前群組</span>
+              <span class="sbs-hint" id="infoLeaveGroup" data-i18n="settings.leaveGroupInfo">退出後這個群組的資料就看不到了，歷史紀錄會保留（別人還是看得到你之前的支出/還款），之後可以再用邀請碼加回來。</span>
+            </span>
+          </button>
+          <div class="msg sbs-list-msg" id="leaveGroupMsg"></div>
+          <button type="button" class="sbs-row sbs-danger hidden" id="deleteGroupBtn">
+            <span class="sbs-ico" data-c="red" aria-hidden="true"><span class="sb-ico" style="--ico:var(--ico-trash)"></span></span>
+            <span class="sbs-body">
+              <span class="sbs-title" data-i18n="settings.deleteGroupBtn">刪除整個群組</span>
+              <span class="sbs-hint" id="infoDeleteGroup" data-i18n="settings.deleteGroupInfo">會把這個群組所有支出、還款、留言、成員都一起清掉，沒辦法復原。</span>
+            </span>
+          </button>
+          <div class="msg sbs-list-msg" id="deleteGroupMsg"></div>
         </div>
 
       </div>
 
+      <!-- ===================== 偏好設定 ===================== -->
       <div id="settingsTabPrefs" class="settings-tab-panel hidden">
 
-        <div class="settings-group">
-          <div class="settings-section-title" data-i18n="settings.displayContentTitle">顯示內容</div>
-
-          <label data-i18n="settings.currencyLabel">顯示幣別<button type="button" class="info-btn" data-info-for="infoCurrency" data-i18n-title="common.info" title="說明" aria-label="說明"><span class="info-btn-i">i</span></button></label>
-          <p class="settings-hint hidden" id="infoCurrency" data-i18n="settings.currencyInfo">勾選的幣別才會出現在首頁的導覽列、總表、我的款項；取消勾選不會刪除紀錄。</p>
-          <button type="button" class="btn-wide" id="currencyModalOpenBtn">
-            <span id="currencyToggleSummary" data-i18n="settings.selectDisplayCurrencies">選擇要顯示的幣別</span>
+        <h2 class="sbs-label" data-i18n="settings.sec.display">顯示</h2>
+        <div class="sbs-list">
+          <button type="button" class="sbs-row sbs-nav" id="currencyModalOpenBtn">
+            <span class="sbs-ico" data-c="green" aria-hidden="true"><span class="sb-ico" style="--ico:var(--ico-wallet)"></span></span>
+            <span class="sbs-body"><span class="sbs-title" data-i18n="settings.currencyLabel">顯示幣別</span></span>
+            <span class="sbs-ctl"><span class="sbs-val" id="currencyToggleSummary"></span></span>
           </button>
 
-          <div class="settings-row settings-row-mt">
-            <span class="settings-item-label-wrap">
-              <span data-i18n="settings.showLeftMembersLabel">顯示已退出／已銷毀成員</span>
-              <button type="button" class="info-btn" data-info-for="infoShowLeft" data-i18n-title="common.info" title="說明" aria-label="說明"><span class="info-btn-i">i</span></button>
-            </span>
-            <label class="switch-toggle" for="showLeftMembersToggle">
-              <input type="checkbox" id="showLeftMembersToggle">
-              <span class="switch-slider"></span>
-            </label>
+          <div class="sbs-row sbs-tap" id="themeRow">
+            <span class="sbs-ico" data-c="indigo" id="themeRowIcon" aria-hidden="true"><span class="sb-ico" style="--ico:var(--ico-moon)"></span></span>
+            <div class="sbs-body"><span class="sbs-title" data-i18n="settings.darkModeTitle">深色模式</span></div>
+            <div class="sbs-ctl"><button type="button" class="sbs-switch" id="settingsThemeBtn" role="switch" aria-checked="false" data-i18n-title="settings.darkModeTitle" aria-label="深色模式"></button></div>
           </div>
-          <p class="settings-hint hidden" id="infoShowLeft" data-i18n="settings.showLeftMembersInfo">關閉後，總表、成員清單等畫面就不會再出現已經退出群組或帳號已銷毀的人（歷史支出/還款紀錄上的名字不受影響）。</p>
+
+          <div class="sbs-row sbs-nav sbs-select-row settings-row-lang">
+            <span class="sbs-ico" data-c="blue" aria-hidden="true"><span class="sb-ico" style="--ico:var(--ico-globe)"></span></span>
+            <div class="sbs-body"><span class="sbs-title" data-i18n="settings.languageTitle">顯示語言</span></div>
+            <div class="sbs-ctl"><select id="settingsLangSelect" class="settings-lang-select" data-i18n-title="settings.languageTitle"></select></div>
+          </div>
+
+          <label class="sbs-row" for="holidayToggle">
+            <span class="sbs-ico" data-c="pink" aria-hidden="true"><span class="sb-ico" style="--ico:var(--ico-sparkle)"></span></span>
+            <span class="sbs-body"><span class="sbs-title" data-i18n="settings.holidayTitle">節日裝飾</span></span>
+            <span class="sbs-ctl switch-toggle">
+              <input type="checkbox" id="holidayToggle" role="switch">
+              <span class="switch-slider"></span>
+            </span>
+          </label>
+
+          <label class="sbs-row" for="showLeftMembersToggle">
+            <span class="sbs-ico" data-c="gray" aria-hidden="true"><span class="sb-ico" style="--ico:var(--ico-users)"></span></span>
+            <span class="sbs-body"><span class="sbs-title" data-i18n="settings.showLeftMembersLabel">顯示已退出／已銷毀成員</span></span>
+            <span class="sbs-ctl switch-toggle">
+              <input type="checkbox" id="showLeftMembersToggle" role="switch">
+              <span class="switch-slider"></span>
+            </span>
+          </label>
         </div>
 
-        <div class="settings-group">
-          <div class="settings-section-title" data-i18n="settings.notifAppearanceTitle">通知與外觀</div>
-
-          <div class="settings-row settings-row-clickable" id="notifyRow">
-            <div class="settings-row-lead">
-              <span class="settings-row-icon"><span class="sb-ico" style="--ico:var(--ico-bell)" aria-hidden="true"></span></span>
-              <div>
-                <div class="settings-row-title" data-i18n="settings.changeNotifyTitle">異動通知</div>
-                <div class="settings-hint settings-row-hint" id="notifyHint" data-i18n="settings.changeNotifyHint">有相關支出或還款異動就通知你</div>
-              </div>
+        <h2 class="sbs-label" data-i18n="settings.sec.notify">通知</h2>
+        <div class="sbs-list">
+          <div class="sbs-row sbs-tap" id="notifyRow">
+            <span class="sbs-ico" data-c="orange" aria-hidden="true"><span class="sb-ico" style="--ico:var(--ico-bell)"></span></span>
+            <div class="sbs-body">
+              <span class="sbs-title" data-i18n="settings.changeNotifyTitle">異動通知</span>
+              <p class="sbs-hint sbs-hint-blocked" id="notifyHint"></p>
             </div>
-            <button class="icon-btn" id="notifyBtn" data-i18n-title="settings.notifyTitleOn" title="開啟通知" aria-label="通知"><span class="sb-ico" style="--ico:var(--ico-bell)" aria-hidden="true"></span></button>
+            <div class="sbs-ctl"><button type="button" class="sbs-switch" id="notifyBtn" role="switch" aria-checked="false" data-i18n-title="settings.notifyTitleOn" title="開啟通知" aria-label="異動通知"></button></div>
           </div>
-
-          <div class="settings-divider settings-divider-compact"></div>
-
-          <div class="settings-row settings-row-clickable" id="themeRow">
-            <div class="settings-row-lead">
-              <span class="settings-row-icon" id="themeRowIcon"><span class="sb-ico" style="--ico:var(--ico-moon)" aria-hidden="true"></span></span>
-              <div>
-                <div class="settings-row-title" data-i18n="settings.darkModeTitle">深色模式</div>
-                <div class="settings-hint settings-row-hint" data-i18n="settings.darkModeHint">切換深色與淺色視覺主題</div>
-              </div>
-            </div>
-            <button class="icon-btn" id="settingsThemeBtn" data-i18n-title="settings.toggleThemeAria" aria-label="切換深色淺色模式"><span class="sb-ico" style="--ico:var(--ico-moon)" aria-hidden="true"></span></button>
-          </div>
-
-          <div class="settings-divider settings-divider-compact"></div>
-
-          <div class="settings-row">
-            <div class="settings-row-lead">
-              <span class="settings-row-icon"><span class="sb-ico" style="--ico:var(--ico-sparkle)" aria-hidden="true"></span></span>
-              <div>
-                <div class="settings-row-title" data-i18n="settings.holidayTitle">節日裝飾</div>
-                <div class="settings-hint settings-row-hint" data-i18n="settings.holidayHint">節日期間換上特別的配色與裝飾</div>
-              </div>
-            </div>
-            <label class="switch-toggle" for="holidayToggle">
-              <input type="checkbox" id="holidayToggle" data-i18n-title="settings.holidayTitle" aria-label="節日裝飾">
-              <span class="switch-slider"></span>
-            </label>
-          </div>
-
-          <div class="settings-divider settings-divider-compact"></div>
 
           <!-- 派派：欠錢太久時的情勒提醒，可以關掉或調溫和（只存在這台裝置） -->
-          <div class="settings-row sb-nag-setting">
-            <div class="settings-row-lead">
-              <span class="settings-row-icon sb-nag-setting-icon" id="nagModeIcon" aria-hidden="true"></span>
-              <div>
-                <div class="settings-row-title" data-i18n="nag.settingTitle">派派提醒</div>
-                <div class="settings-hint settings-row-hint" id="nagModeHint" data-i18n="nag.settingHint">欠錢太久時，派派會出來唸你</div>
+          <div class="sbs-row sbs-row-seg sb-nag-setting">
+            <span class="sbs-ico sb-nag-setting-icon" id="nagModeIcon" aria-hidden="true"></span>
+            <div class="sbs-body">
+              <span class="sbs-title" data-i18n="nag.settingTitle">派派提醒</span>
+              <p class="sbs-hint" id="nagModeHint" data-i18n="nag.settingHint">欠錢太久時，派派會出來唸你</p>
+            </div>
+            <div class="sbs-ctl">
+              <div class="sb-seg" role="radiogroup" id="nagModeSeg" data-i18n-title="nag.settingTitle" title="派派提醒" aria-label="派派提醒">
+                <button type="button" role="radio" data-mode="off" data-i18n="nag.modeOff">關閉</button>
+                <button type="button" role="radio" data-mode="gentle" data-i18n="nag.modeGentle">溫和</button>
+                <button type="button" role="radio" data-mode="normal" data-i18n="nag.modeNormal">正常</button>
               </div>
             </div>
-            <div class="sb-seg" role="radiogroup" id="nagModeSeg" data-i18n-title="nag.settingTitle" title="派派提醒" aria-label="派派提醒">
-              <button type="button" role="radio" data-mode="off" data-i18n="nag.modeOff">關閉</button>
-              <button type="button" role="radio" data-mode="gentle" data-i18n="nag.modeGentle">溫和</button>
-              <button type="button" role="radio" data-mode="normal" data-i18n="nag.modeNormal">正常</button>
-            </div>
-          </div>
-
-          <div class="settings-divider settings-divider-compact"></div>
-
-          <div class="settings-row-lang">
-            <div class="settings-row-lead">
-              <span class="settings-row-icon"><span class="sb-ico" style="--ico:var(--ico-globe)" aria-hidden="true"></span></span>
-              <div>
-                <div class="settings-row-title" data-i18n="settings.languageTitle">顯示語言</div>
-                <div class="settings-hint settings-row-hint" data-i18n="settings.languageHint">切換整個 App 的顯示語言</div>
-              </div>
-            </div>
-            <select id="settingsLangSelect" class="settings-lang-select"></select>
           </div>
         </div>
 
-
-
-        <div class="settings-group">
-          <div class="settings-section-title" data-i18n="settings.downloadAppTitle">下載 App</div>
-
-          <label data-i18n="settings.apkLabel">Android APK</label>
-          <p class="settings-hint" id="infoApk" data-i18n-html="settings.apkInfo">這不是 Google Play 上架版，安裝時手機會提示「不明來源」，需要手動允許才能安裝——這是側載 APK 本來就會有的正常警告，跟 App 本身無關。<br>如果是 iOS 使用者請點擊分享後新增至主螢幕，以擁有似應用程式的使用體驗。</p>
-          <a class="btn-wide" href="splitbill.apk" download="splitbill.apk" data-i18n="settings.downloadApk">下載 APK</a>
-        </div>
-
-        <div class="settings-group">
-          <div class="settings-section-title" data-i18n="settings.versionInfoTitle">版本資訊</div>
-
-          <div class="settings-row">
-            <span data-i18n="settings.currentVersionLabel">目前版本</span>
-            <span class="version-badge" id="settingsVerNum"></span>
+        <h2 class="sbs-label" data-i18n="settings.sec.app">App</h2>
+        <div class="sbs-list">
+          <a class="sbs-row sbs-nav" id="apkDownloadRow" href="splitbill.apk" download="splitbill.apk">
+            <span class="sbs-ico" data-c="green" aria-hidden="true"><span class="sb-ico" style="--ico:var(--ico-download)"></span></span>
+            <span class="sbs-body"><span class="sbs-title" data-i18n="settings.apkRowTitle">下載 Android App</span></span>
+            <span class="sbs-ctl"><span class="sbs-val">APK</span></span>
+          </a>
+          <div class="sbs-row">
+            <span class="sbs-ico" data-c="gray" aria-hidden="true"><span class="sb-ico" style="--ico:var(--ico-info)"></span></span>
+            <div class="sbs-body"><span class="sbs-title" data-i18n="settings.currentVersionLabel">目前版本</span></div>
+            <div class="sbs-ctl"><span class="sbs-val" id="settingsVerNum"></span></div>
           </div>
-          <div class="settings-changelog-wrap settings-changelog-wrap-mt">
+          <div class="sbs-block sbs-changelog">
             <div class="settings-changelog-header" id="settingsChangelogHeader"></div>
             <ul class="settings-changelog settings-changelog-list" id="settingsChangelogList"></ul>
           </div>
         </div>
+        <p class="sbs-foot" id="infoApk" data-i18n="settings.hint.apk">不是 Google Play 版，安裝時會提醒「不明來源」。iPhone 請按分享 → 加入主畫面</p>
 
       </div>
     </div>
@@ -541,7 +587,7 @@ if("serviceWorker" in navigator){
 
 <script>
 document.getElementById("appFooter").textContent = "菘. v" + APP_VERSION;
-document.getElementById("settingsVerNum").textContent = "ver. " + APP_VERSION;
+document.getElementById("settingsVerNum").textContent = "v" + APP_VERSION;
 // 最新更新項目跟新版公告讀同一份 release-notes.js
 const renderNotes = () => sbRenderLatestNotes(document.getElementById("settingsChangelogHeader"), document.getElementById("settingsChangelogList"));
 renderNotes();
@@ -697,7 +743,8 @@ if(backBtn){
   // ---------- 幣別偏好 ----------
   function updateCurrencyToggleSummary(){
     const summary = document.getElementById("currencyToggleSummary");
-    if(summary) summary.textContent = shownCurrencies.length ? t("settings.currenciesSelected", { n: shownCurrencies.length }) : t("settings.selectDisplayCurrencies");
+    // 列右邊只放目前的值：三種以內直接列代碼，再多就列前兩個加「+N」
+    if(summary) summary.textContent = !shownCurrencies.length ? "—" : shownCurrencies.length <= 3 ? shownCurrencies.join(" · ") : shownCurrencies.slice(0, 2).join(" · ") + " +" + (shownCurrencies.length - 2);
   }
   const currencyModal = document.getElementById("currencyModal");
   const currencyModalOpenBtn = document.getElementById("currencyModalOpenBtn");
@@ -777,6 +824,8 @@ if(backBtn){
     const isCreator = !!(activeRow && activeRow.groups && activeRow.groups.created_by === currentUser.id);
     const manageSection = document.getElementById("groupManageSection");
     if(manageSection) manageSection.classList.toggle("hidden", !isCreator);
+    const deleteGroupRow = document.getElementById("deleteGroupBtn");
+    if(deleteGroupRow) deleteGroupRow.classList.toggle("hidden", !isCreator);
     if(isCreator) await renderGroupMemberManageList();
   }
 
@@ -1690,13 +1739,13 @@ if(backBtn){
       return;
     }
     list.innerHTML = data.map(r => `
-      <div class="settings-row">
-        <span>${escapeHtml((r.groups && r.groups.name) || "?")}</span>
-        <label class="switch-toggle">
-          <input type="checkbox" class="payment-visibility-toggle" data-member-id="${r.id}"${r.payment_accounts_visible !== false ? " checked" : ""}>
+      <label class="sbs-row sbs-row-compact">
+        <span class="sbs-body"><span class="sbs-title">${escapeHtml((r.groups && r.groups.name) || "?")}</span></span>
+        <span class="sbs-ctl switch-toggle">
+          <input type="checkbox" role="switch" class="payment-visibility-toggle" data-member-id="${r.id}"${r.payment_accounts_visible !== false ? " checked" : ""}>
           <span class="switch-slider"></span>
-        </label>
-      </div>
+        </span>
+      </label>
     `).join("");
     list.querySelectorAll(".payment-visibility-toggle").forEach(inp => {
       inp.addEventListener("change", async ()=>{
@@ -1733,7 +1782,10 @@ if(backBtn){
 
   function syncSettingsThemeIcon(){
     const isDark = document.documentElement.getAttribute("data-theme") === "dark";
-    if(settingsThemeBtn) settingsThemeBtn.innerHTML = sbIcon(isDark ? "sun" : "moon");
+    if(settingsThemeBtn){
+      settingsThemeBtn.classList.toggle("active", isDark);
+      settingsThemeBtn.setAttribute("aria-checked", isDark ? "true" : "false");
+    }
     if(themeRowIcon) themeRowIcon.innerHTML = sbIcon(isDark ? "sun" : "moon");
   }
   if(settingsThemeBtn){
@@ -1779,6 +1831,131 @@ if(backBtn){
       if(e.target !== notifyBtn) notifyBtn.click();
     });
   }
+
+  // ---------- 設定頁 v977 版面的小行為 ----------
+  // 通知：原本的程式只切換 #notifyBtn 的 .active／.hidden，這裡把它轉成 switch 的狀態；
+  // 這台裝置不支援推播時整列藏起來。
+  if(notifyBtn){
+    const syncNotifySwitch = ()=>{
+      notifyBtn.setAttribute("aria-checked", notifyBtn.classList.contains("active") ? "true" : "false");
+      if(notifyRow) notifyRow.classList.toggle("hidden", notifyBtn.classList.contains("hidden"));
+      const blocked = [t("settings.notifyTitleSystemBlocked"), t("settings.notifyTitleBrowserBlocked")].includes(notifyBtn.title);
+      if(notifyRow) notifyRow.classList.toggle("is-blocked", blocked);
+    };
+    new MutationObserver(syncNotifySwitch).observe(notifyBtn, { attributes: true, attributeFilter: ["class", "title"] });
+    syncNotifySwitch();
+  }
+
+  // 文字欄位：平常只顯示目前的值，點整列才展開輸入框（說明也只在這時出現）。
+  // 值改了才出現「儲存」；程式塞值（載入、存完重抓）走 value setter，當成新的基準，
+  // 使用者打字不會。存成功（.msg.ok）更新基準並收起來；Esc 或再點一次整列就放棄修改。
+  (function initEditRows(){
+    const nativeValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value");
+    function mirror(id, v){
+      document.querySelectorAll('[data-mirror="' + id + '"]').forEach(el => {
+        const empty = !String(v || "").trim();
+        el.textContent = empty ? (el.dataset.empty ? t(el.dataset.empty) : "") : v;
+        el.classList.toggle("is-empty", empty);
+      });
+    }
+    function watch(inp, onSet){
+      Object.defineProperty(inp, "value", {
+        configurable: true,
+        get(){ return nativeValue.get.call(inp); },
+        set(v){ nativeValue.set.call(inp, v); onSet(nativeValue.get.call(inp)); }
+      });
+    }
+    window.__sbsMirror = mirror;
+    document.addEventListener("splitbill-lang-changed", ()=>{
+      document.querySelectorAll("[data-mirror]").forEach(el => {
+        const src = document.getElementById(el.dataset.mirror);
+        if(src && el.classList.contains("is-empty")) mirror(src.id, "");
+      });
+    });
+
+    document.querySelectorAll(".sbs-field[data-dirty]").forEach(field => {
+      const inp = field.querySelector("input");
+      const btn = field.querySelector(".sbs-save");
+      if(!inp || !btn) return;
+      const row = field.closest(".sbs-edit");
+      const nonEmptyMode = field.dataset.dirty === "nonempty";
+      const cur = ()=> nativeValue.get.call(inp);
+      let base = cur();
+      const update = ()=> field.classList.toggle("is-dirty", nonEmptyMode ? cur().trim() !== "" : cur().trim() !== String(base).trim());
+      watch(inp, (v)=>{ if(!nonEmptyMode){ base = v; mirror(inp.id, v); } update(); });
+
+      function setOpen(open){
+        if(!row) return;
+        if(!open && !nonEmptyMode) nativeValue.set.call(inp, base);
+        row.classList.toggle("is-editing", open);
+        row.setAttribute("aria-expanded", open ? "true" : "false");
+        update();
+        if(open) setTimeout(()=>{
+          inp.focus();
+          const n = cur().length;
+          try{ inp.setSelectionRange(n, n); }catch(e){}
+        }, 40);
+      }
+      if(row){
+        row.addEventListener("click", (e)=>{
+          if(e.target.closest(".sbs-editor, .msg")) return;
+          e.preventDefault();
+          setOpen(!row.classList.contains("is-editing"));
+        });
+        row.addEventListener("keydown", (e)=>{
+          if(e.target === row && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); setOpen(!row.classList.contains("is-editing")); }
+        });
+      }
+      inp.addEventListener("input", update);
+      inp.addEventListener("keydown", (e)=>{
+        if(e.key === "Enter" && !e.isComposing && field.classList.contains("is-dirty")){ e.preventDefault(); btn.click(); }
+        else if(e.key === "Escape" && row){ e.preventDefault(); e.stopPropagation(); setOpen(false); row.focus(); }
+      });
+      const msg = (row || field.parentElement).querySelector(".msg");
+      if(msg) new MutationObserver(()=>{
+        if(!msg.classList.contains("ok")) return;
+        if(!nonEmptyMode){ base = cur(); mirror(inp.id, base); }
+        update();
+        if(row && !nonEmptyMode) setOpen(false);
+      }).observe(msg, { attributes: true, attributeFilter: ["class"], childList: true });
+      if(!nonEmptyMode) mirror(inp.id, base);
+      update();
+    });
+
+    // 邀請碼：只顯示代碼，整列點了就複製
+    const inviteInpEl = document.getElementById("settingsInviteCode");
+    if(inviteInpEl) watch(inviteInpEl, v => mirror("settingsInviteCode", v));
+    const inviteRow = document.getElementById("inviteCodeRow");
+    if(inviteRow) inviteRow.addEventListener("click", (e)=>{
+      if(e.target.closest("#copyInviteCodeBtn, .msg")) return;
+      const copyBtn = document.getElementById("copyInviteCodeBtn");
+      if(copyBtn) copyBtn.click();
+    });
+
+  // 收款帳戶：清單裡有任何變動（打字、換銀行、新增、刪除、拖曳）才出現儲存
+    const bar = document.querySelector(".sbs-savebar[data-dirty]");
+    const accList = document.getElementById("paymentAccountsList");
+    const accMsg = document.getElementById("paymentInfoMsg");
+    if(bar && accList){
+      const mark = ()=> bar.classList.add("is-dirty");
+      accList.addEventListener("input", mark);
+      accList.addEventListener("click", (e)=>{ if(e.target.closest(".payment-account-del, .payment-bank-option")) mark(); });
+      accList.addEventListener("pointerup", (e)=>{ if(e.target.closest(".payment-account-drag-handle")) mark(); });
+      const addBtn = document.getElementById("addPaymentAccountBtn");
+      if(addBtn) addBtn.addEventListener("click", mark);
+      if(accMsg) new MutationObserver(()=>{ if(accMsg.classList.contains("ok")) bar.classList.remove("is-dirty"); })
+        .observe(accMsg, { attributes: true, attributeFilter: ["class"], childList: true });
+    }
+  })();
+
+  // 下拉選單那一列（目前群組、語言）：點整列任何地方都打開選單
+  document.querySelectorAll(".sbs-select-row").forEach(row => {
+    row.addEventListener("click", (e)=>{
+      if(e.target.closest(".dd-select")) return;
+      const btn = row.querySelector(".dd-btn");
+      if(btn){ e.stopPropagation(); btn.click(); }
+    });
+  });
 
   const showLeftMembersToggle = document.getElementById("showLeftMembersToggle");
   if(showLeftMembersToggle){
@@ -2118,6 +2295,7 @@ if(backBtn){
             const u = data && data.user;
             if(u && u.new_email && u.new_email !== u.email){
               emailStatusHint.textContent = t("settings.pendingNewEmail", { email: u.new_email });
+              emailStatusHint.classList.add("is-pending");
             }
           }
         })()

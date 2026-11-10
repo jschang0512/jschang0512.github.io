@@ -8,6 +8,28 @@
 // ============================================================
 window.SB_RELEASE_NOTES = [
   {
+    version: "977",
+    date: "2026-11-11",
+    "zh-Hant": [
+      "設定頁重新設計：最上面是你的頭像卡，每一區是一張清單，每個項目有自己顏色的圖示，右邊直接看到目前的值",
+      "開關都改成同一種滑動開關（通知、深色模式也是）；要開下一層的項目整列都能點",
+      "名稱、信箱、暱稱點一下才展開來改，改了才會出現「儲存」，按 Enter 也能存；說明只在需要時出現",
+      "退出群組、銷毀帳號這類操作集中在每一頁最底下"
+    ],
+    "ja": [
+      "設定画面を刷新：一番上にプロフィールカード、区分ごとにリスト表示。項目ごとに色付きアイコン、右に現在の値",
+      "オン／オフはすべて同じスイッチに（通知・ダークモードも）。次の画面を開く項目は行全体をタップできます",
+      "名前・メール・ニックネームはタップすると編集欄が開き、変更したときだけ「保存」が表示されます（Enter でも保存）。説明は必要なときだけ表示",
+      "グループ退出やアカウント削除などは各タブの一番下にまとめました"
+    ],
+    "en": [
+      "Redesigned Settings: your profile card sits on top, each section is a list, every item has its own colored icon, and current values show on the right",
+      "Every on/off option now uses the same switch (notifications and dark mode too), and rows that open something are tappable end to end",
+      "Tap your username, email or nickname to edit it; Save appears only once you change something, and Enter saves too. Hints show up only when they're needed",
+      "Leaving a group, deleting your account and similar actions now sit at the bottom of each tab"
+    ]
+  },
+  {
     version: "976",
     date: "2026-11-11",
     "zh-Hant": [
