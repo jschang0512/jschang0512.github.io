@@ -1383,7 +1383,7 @@ CRITICAL TRANSLATION & NAMING GUIDELINES:
           // 台灣電子發票：照片裡讀得到 QR code 就直接照發票（準確、免費、不送 AI），讀不到才交給 AI
           let einvoice = null;
           try {
-            await import("./einvoice.js?v=" + (typeof APP_VERSION !== "undefined" ? APP_VERSION : ""));
+            await import("./" + (typeof sbAsset === "function" ? sbAsset("einvoice.js") : "einvoice.js"));
             einvoice = await self.splitbillReadEInvoice(offCanvas);
           } catch(e){
             console.warn("電子發票模組載入失敗，改用 AI：", e);

@@ -594,7 +594,7 @@
     const btn = $("eventCloseSubmit");
     btn.disabled = true;
     try{
-      const formShared = await import("./expense-form-shared.js?v=" + APP_VERSION);
+      const formShared = await import("./" + sbAsset("expense-form-shared.js"));
       const shares = formShared.computeEqualSplitShares({
         subtotal: total, taxAmount: 0, taxSplitMode: "ratio",
         participantIds: ids, payerIds: [myMember.id], addonAmounts: {}

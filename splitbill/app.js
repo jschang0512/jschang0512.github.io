@@ -961,16 +961,36 @@
       // 拿到的永遠是「呼叫當下」最新的那份）。
       getCachedExpenses: () => cachedExpenses
     };
-    // 支出資料先開始抓，跟 AI 拆單模組的下載同時進行（以前要等模組載完才開始抓資料）
     const expensesReady = refreshExpenses();
-    const aiReceiptModule = await import("./ai-receipt.js?v=" + APP_VERSION);
-    aiReceiptModule.setupAiReceiptModal(aiReceiptDeps);
 
-    // 從總表頁「快速記帳」按了「改用照片自動拆單」跳過來的（?ai=1），
-    // 直接開拍照拆單看板本身。
-    if(new URLSearchParams(location.search).get("ai") === "1"){
-      const aiBtn = document.getElementById("aiReceiptBtn");
-      if(aiBtn) aiBtn.click();
+    // AI 拆單模組（120KB）等真的要用才載：第一次按「AI 拆單」時才下載、裝好再替使用者按一次。
+    // 手指移上去或按下去的瞬間就先開始下載，真的點下去時通常已經好了。
+    // 例外：從快速記帳跳過來（?ai=1）、或從手機相簿分享照片進來（?shared=1，模組一裝好就會
+    // 自己把那張照片撈出來），這兩種一開頁就要用，直接載。
+    let aiReady = null;
+    const loadAi = () => aiReady || (aiReady = import("./" + sbAsset("ai-receipt.js")).then(m => { m.setupAiReceiptModal(aiReceiptDeps); }));
+    const aiBtnEl = document.getElementById("aiReceiptBtn");
+    if(aiBtnEl){
+      const warm = () => { loadAi().catch(() => { aiReady = null; }); };
+      aiBtnEl.addEventListener("pointerenter", warm, { once: true });
+      aiBtnEl.addEventListener("touchstart", warm, { once: true, passive: true });
+      aiBtnEl.addEventListener("click", async (e) => {
+        if(aiBtnEl.dataset.aiReady) return;   // 模組已經接手，照常
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        aiBtnEl.disabled = true;
+        try { await loadAi(); aiBtnEl.dataset.aiReady = "1"; }
+        catch(err){ aiReady = null; console.error("載入 AI 拆單失敗：", err); await sbAlert(t("settings.msg.saveFailedRetry"), t("settings.errorTitle")); return; }
+        finally { aiBtnEl.disabled = false; }
+        aiBtnEl.click();
+      }, true);
+    }
+    const aiParams = new URLSearchParams(location.search);
+    if(aiParams.get("ai") === "1" || aiParams.get("shared") === "1"){
+      await loadAi();
+      if(aiBtnEl) aiBtnEl.dataset.aiReady = "1";
+      // 從總表頁「快速記帳」按了「改用照片自動拆單」跳過來的（?ai=1），直接開拍照拆單看板
+      if(aiParams.get("ai") === "1" && aiBtnEl) aiBtnEl.click();
     }
 
     const expDateInp = document.getElementById("expDate");
@@ -1910,7 +1930,7 @@
   let expWizardInstance = null;
   async function getExpWizard(){
     if(expWizardInstance) return expWizardInstance;
-    const formShared = await import("./expense-form-shared.js?v=" + APP_VERSION);
+    const formShared = await import("./" + sbAsset("expense-form-shared.js"));
     expWizardInstance = formShared.createFormWizard({
       steps: [
         { id:"content", sectionEl: document.querySelector("#panelExpense .sec-content"), validate: validateExpStep1 },
@@ -1998,7 +2018,7 @@
           // module），跟「快速記帳」共用同一套演算法，不用再各自維護一份。
           const addonAmounts = {};
           Object.keys(addonItems).forEach(id => { addonAmounts[id] = addonItems[id].finalAmt; });
-          const formShared = await import("./expense-form-shared.js?v=" + APP_VERSION);
+          const formShared = await import("./" + sbAsset("expense-form-shared.js"));
           shares = formShared.computeEqualSplitShares({
             subtotal, taxAmount, taxSplitMode: manualTaxSplitMode,
             participantIds: participants,
@@ -2012,7 +2032,7 @@
         // 均分/自訂分攤的計算已經抽成共用的 expense-form-shared.js（ES
         // module），跟「快速記帳」共用同一套演算法，不用再各自維護一份。
         {
-          const formShared = await import("./expense-form-shared.js?v=" + APP_VERSION);
+          const formShared = await import("./" + sbAsset("expense-form-shared.js"));
           shares = formShared.computeCustomSplitShares({ subtotal, taxAmount, taxSplitMode: manualTaxSplitMode, rows: customRows });
         }
       } else {
@@ -2022,7 +2042,7 @@
           msg.className = "msg error";
           return;
         }
-        const formShared = await import("./expense-form-shared.js?v=" + APP_VERSION);
+        const formShared = await import("./" + sbAsset("expense-form-shared.js"));
         shares = formShared.computeRatioSplitShares({
           subtotal, taxAmount, taxSplitMode: manualTaxSplitMode,
           rows: ratioRows,
@@ -2801,22 +2821,13 @@
       { data: balRows, error: balError },
       { data: catLearnRows, error: catLearnError }
     ] = await Promise.all([expQuery, repQuery, balQuery, catLearnQuery]);
+    // 側邊選單的各幣別款項直接用這次查到的，不用再查一次
+    if(!balError) window.__sbBalRows = { at: Date.now(), rows: balRows || [] };
 
     if(expError || repError){
       console.error("讀取支出/還款失敗：", expError || repError);
       return;
     }
-
-    window.allGroupExpenses = allExp || [];
-    window.allGroupRepayments = allRep || [];
-
-    const expenses = (allExp || []).filter(e => e.currency === CURRENCY);
-    const repayments = (allRep || []).filter(r => r.currency === CURRENCY);
-
-    cachedExpenses = expenses;
-    cachedRepayments = repayments;
-    window.cachedExpenses = cachedExpenses;
-    window.cachedRepayments = cachedRepayments;
 
     // 類別學習清單原本是另外、事後才發一次請求，現在併進上面同一批
     // Promise.all 一起平行處理，不用再多等一趟網路來回。
@@ -2826,6 +2837,24 @@
       categoryLearningMap = {};
       (catLearnRows || []).forEach(row => { categoryLearningMap[row.keyword] = row.category; });
     }
+
+    await applyLedger(allExp || [], allRep || [], { data: balRows, error: balError });
+  }
+
+  // 把整個群組的支出／還款（全部幣別）套到畫面上。完整重新整理和「別人改了一筆、只更新那一筆」
+  // 兩條路都走這裡，畫面怎麼畫只有一份。
+  async function applyLedger(allExp, allRep, balResult){
+    const balRows = balResult.data, balError = balResult.error;
+    window.allGroupExpenses = allExp;
+    window.allGroupRepayments = allRep;
+
+    const expenses = allExp.filter(e => e.currency === CURRENCY);
+    const repayments = allRep.filter(r => r.currency === CURRENCY);
+
+    cachedExpenses = expenses;
+    cachedRepayments = repayments;
+    window.cachedExpenses = cachedExpenses;
+    window.cachedRepayments = cachedRepayments;
 
     // 即時同步（Realtime）觸發的重新整理跟頁面初始載入是各自獨立的兩條路徑，
     // 理論上不該同時發生，但偶爾會在 loadMembers() 還沒跑完、myMember
@@ -2984,11 +3013,47 @@
     if(realtimeSubscribed) return;
     realtimeSubscribed = true;
 
+    // 別人改了帳：不再整包重抓全部歷史帳目，而是把收到的那幾筆直接改進手上的清單，
+    // 只重抓一次餘額（一個小查詢）。0.4 秒內來的多筆一起處理。收到的資料不完整、
+    // 或手上還沒有清單時，退回原本的完整重新整理。
     let refreshTimer = null;
-    function scheduleRefresh(){
+    const pendingChanges = [];
+    const byDateDesc = (dateKey) => (a, b) =>
+      String(b[dateKey] || "").localeCompare(String(a[dateKey] || "")) || String(b.created_at || "").localeCompare(String(a.created_at || ""));
+    function scheduleRefresh(table, payload){
+      pendingChanges.push({ table, payload });
       clearTimeout(refreshTimer);
-      refreshTimer = setTimeout(()=>{ refreshExpenses(); }, 400);
+      refreshTimer = setTimeout(applyPendingChanges, 400);
     }
+    async function applyPendingChanges(){
+      const batch = pendingChanges.splice(0);
+      if(!batch.length) return;
+      if(!Array.isArray(window.allGroupExpenses) || !Array.isArray(window.allGroupRepayments)) return refreshExpenses();
+      const lists = { expenses: window.allGroupExpenses.slice(), repayments: window.allGroupRepayments.slice() };
+      for(const { table, payload } of batch){
+        const list = lists[table];
+        if(!list) return refreshExpenses();
+        if(payload.eventType === "DELETE"){
+          const id = payload.old && payload.old.id;
+          if(!id) return refreshExpenses();
+          const i = list.findIndex(r => r.id === id);
+          if(i >= 0) list.splice(i, 1);
+        } else {
+          const row = payload.new;
+          if(!row || !row.id || row.group_id !== myMember.group_id) return refreshExpenses();
+          if(row.amount != null) row.amount = Number(row.amount);
+          const i = list.findIndex(r => r.id === row.id);
+          if(i >= 0) list[i] = row; else list.push(row);
+        }
+      }
+      lists.expenses.sort(byDateDesc("expense_date"));
+      lists.repayments.sort(byDateDesc("payment_date"));
+      const bal = await sb.rpc("member_balances", { p_since: null });
+      if(bal.error) return refreshExpenses();
+      window.__sbBalRows = { at: Date.now(), rows: bal.data || [] };
+      await applyLedger(lists.expenses, lists.repayments, bal);
+    }
+    window.__sbApplyRealtime = (table, payload) => scheduleRefresh(table, payload);
 
     // filter 一定要帶 group_id，不然即時同步會把「所有群組」的異動都廣播過來，
     // 雖然畫面上會被 splitbillNotifParams() 擋掉不顯示，但資料還是會傳到瀏覽器裡，
@@ -2999,13 +3064,13 @@
         const row = (payload.new && Object.keys(payload.new).length) ? payload.new : payload.old;
         if(row && row.currency !== CURRENCY) return;
         notifyRelevantChange("expenses", payload);
-        scheduleRefresh();
+        scheduleRefresh("expenses", payload);
       })
       .on("postgres_changes", { event: "*", schema: "public", table: "repayments", filter: `group_id=eq.${myMember.group_id}` }, (payload)=>{
         const row = (payload.new && Object.keys(payload.new).length) ? payload.new : payload.old;
         if(row && row.currency !== CURRENCY) return;
         notifyRelevantChange("repayments", payload);
-        scheduleRefresh();
+        scheduleRefresh("repayments", payload);
       })
       .subscribe();
   }

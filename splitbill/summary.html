@@ -29,18 +29,18 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=971">
-<link rel="stylesheet" href="shared.css?v=971">
-<script src="holiday.js?v=971"></script>
+<link rel="stylesheet" href="theme.css?v=599a4d1bd5">
+<link rel="stylesheet" href="shared.css?v=85c49a3c55">
+<script src="holiday.js?v=2816c2cc17"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
-<script src="i18n.js?v=971"></script>
-<script src="currencies.js?v=971"></script>
-<script src="motion.js?v=971"></script>
-<script src="version.js?v=971"></script>
-<script src="notif-text.js?v=971"></script>
-<script src="shared-ui.js?v=971"></script>
-<script src="theme.js?v=971" defer></script>
-<script src="app-banner.js?v=971" defer></script>
+<script src="i18n.js?v=9d34657fe1"></script>
+<script src="currencies.js?v=cfe0f4b3a7"></script>
+<script src="motion.js?v=c960fb49b3"></script>
+<script src="version.js?v=ca743a7f38"></script>
+<script src="notif-text.js?v=f501aac2ce"></script>
+<script src="shared-ui.js?v=8fef0b4519"></script>
+<script src="theme.js?v=01d7c0a8c1" defer></script>
+<script src="app-banner.js?v=c400decf5d" defer></script>
 <script>
 if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
@@ -927,6 +927,7 @@ renderNavLinks();
   // 回傳的資料決定 ── 沒用過的幣別根本不會出現，總表跟我的款項都不用列出來。
   async function loadBalances(sinceDate){
     const { data, error } = await sb.rpc("member_balances", { p_since: sinceDate || null });
+    if(!error && !sinceDate) window.__sbBalRows = { at: Date.now(), rows: data || [] };
     if(error){
       // 讀取失敗不能回傳空物件——下面 renderMyAmtList() 會把「查無資料」
       // 跟「這個人真的每個幣別都結清了」當成同一件事，顯示假的「已結清 🎉」，
@@ -1329,9 +1330,19 @@ renderNavLinks();
 
   // 活動入口：右上角的數字是別人開的、還沒看過的進行中活動。看過的時間記在這台手機上，
   // 進活動頁就清掉。活動資料表讀不到時入口保持隱藏。
+  // 首頁的「活動」捷徑和「今天」卡片都要進行中的活動，同一次載入共用一個請求
+  let openEventsReq = null, openEventsAt = 0;
+  function loadOpenEvents(){
+    if(!openEventsReq || Date.now() - openEventsAt > 3000){
+      openEventsAt = Date.now();
+      openEventsReq = sb.from("events").select("id,title,event_date,deadline,location,created_by,created_at")
+        .eq("group_id", myMember.group_id).eq("status", "open");
+    }
+    return openEventsReq;
+  }
+
   async function renderEventsEntry(){
-    const { data, error } = await sb.from("events").select("id,created_by,created_at")
-      .eq("group_id", myMember.group_id).eq("status", "open");
+    const { data, error } = await loadOpenEvents();
     if(error) return;
     document.getElementById("homeEventsLink").classList.remove("hidden");
     let seenAt = 0;
@@ -1432,9 +1443,8 @@ renderNavLinks();
       rows.push(row("recurring.html?show=" + encodeURIComponent(x.id), "repeat", x.description || "", t("summary.todayAutoRecord", { amount: money(x.currency, sbRecurAmount(x)) }), t("summary.todayView"), false));
     });
     try{
-      const { data: evs, error } = await sb.from("events").select("id,title,event_date,deadline,location")
-        .eq("group_id", myMember.group_id).eq("status", "open")
-        .or(`event_date.eq.${today},deadline.eq.${today}`);
+      const { data: allOpen, error } = await loadOpenEvents();
+      const evs = (allOpen || []).filter(e => e.event_date === today || e.deadline === today);
       if(!error && evs && evs.length){
         const { data: regs } = await sb.from("event_registrations").select("event_id,status")
           .eq("member_id", myMember.id).in("event_id", evs.map(e => e.id));
@@ -2414,7 +2424,7 @@ renderNavLinks();
     let quickExpWizardInstance = null;
     async function getQuickExpWizard(){
       if(quickExpWizardInstance) return quickExpWizardInstance;
-      const formShared = await import("./expense-form-shared.js?v=" + APP_VERSION);
+      const formShared = await import("./" + sbAsset("expense-form-shared.js"));
       quickExpWizardInstance = formShared.createFormWizard({
         steps: [
           { id:"content", sectionEl: document.querySelector("#quickExpenseModal .sec-content"), validate: validateQuickStep1 },
@@ -2544,7 +2554,7 @@ renderNavLinks();
         const { items: addonItems } = getQuickAddonsData();
         // 均分/自訂分攤的計算已經抽成共用的 expense-form-shared.js（ES
         // module），跟「新增支出」完整表單共用同一套演算法，不用再各自維護一份。
-        const formShared = await import("./expense-form-shared.js?v=" + APP_VERSION);
+        const formShared = await import("./" + sbAsset("expense-form-shared.js"));
         shares = formShared.computeEqualSplitShares({
           subtotal, taxAmount: taxAmt, taxSplitMode: quickTaxSplitMode,
           participantIds: checked,
@@ -2562,7 +2572,7 @@ renderNavLinks();
 
         // 均分/自訂分攤的計算已經抽成共用的 expense-form-shared.js（ES
         // module），跟「新增支出」完整表單共用同一套演算法，不用再各自維護一份。
-        const formShared = await import("./expense-form-shared.js?v=" + APP_VERSION);
+        const formShared = await import("./" + sbAsset("expense-form-shared.js"));
         shares = formShared.computeCustomSplitShares({ subtotal, taxAmount: taxAmt, taxSplitMode: quickTaxSplitMode, rows: customRows });
       } else {
         const quickSharesRatio = document.getElementById("quickSharesRatio");
@@ -2573,7 +2583,7 @@ renderNavLinks();
             if(v > 0) ratioRows.push({ member_id: inp.dataset.member, weight: v });
           });
         }
-        const formShared = await import("./expense-form-shared.js?v=" + APP_VERSION);
+        const formShared = await import("./" + sbAsset("expense-form-shared.js"));
         shares = formShared.computeRatioSplitShares({
           subtotal, taxAmount: taxAmt, taxSplitMode: quickTaxSplitMode,
           rows: ratioRows,

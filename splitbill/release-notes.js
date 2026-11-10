@@ -8,6 +8,25 @@
 // ============================================================
 window.SB_RELEASE_NOTES = [
   {
+    version: "972",
+    date: "2026-11-10",
+    "zh-Hant": [
+      "更新更省流量：以後每次更新只下載有改到的部分，不用整個 App 重抓",
+      "開啟更快：AI 拆單等到要用時才載入；別人記帳時只更新那一筆，不再整頁重新讀取",
+      "修正：通知會在背景重複連線，久開會多耗電"
+    ],
+    "ja": [
+      "アップデートの通信量を削減：今後は変更された部分だけをダウンロード",
+      "起動を高速化：AI 解析は使うときに読み込み、他の人が記録したときはその 1 件だけを更新",
+      "修正：通知がバックグラウンドで重複接続し、開きっぱなしだと電池を多く使う問題"
+    ],
+    "en": [
+      "Lighter updates: from now on only the parts that changed are downloaded, not the whole app",
+      "Faster: AI Splitting loads only when you use it, and when someone else records an expense only that entry is refreshed",
+      "Fixed: notifications could open duplicate background connections and drain battery over time"
+    ]
+  },
+  {
     version: "969",
     date: "2026-11-10",
     "zh-Hant": [

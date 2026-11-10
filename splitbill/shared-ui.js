@@ -571,6 +571,9 @@ window.showMemberProfileModal = showMemberProfileModal;
 async function initNotificationBell(sb, myMember){
   const container = document.getElementById("notificationBellContainer");
   if(!container || !myMember) return;
+  // 同一頁只裝一次：之後再呼叫（例如自動記了固定支出）只更新未讀數字，
+  // 不要重畫鈴鐺、更不要再開一條即時連線（以前會越開越多條）
+  if(window.__sbBell && window.__sbBell.memberId === myMember.id){ window.__sbBell.refresh(); return; }
 
   container.innerHTML = `
     <div class="notif-bell-wrap" id="notifBellWrap">
@@ -759,6 +762,7 @@ async function initNotificationBell(sb, myMember){
   }
 
   refreshBadge();
+  window.__sbBell = { memberId: myMember.id, refresh: refreshBadge };
 
   // 即時更新未讀數字：這個帳號一有新通知寫進來就重新算一次角標，
   // 面板開著的話順便重畫清單，不用手動重新整理頁面才看得到。
@@ -1455,7 +1459,7 @@ function sbLoadReleaseNotes(){
   if(window.SB_RELEASE_NOTES) return Promise.resolve(window.SB_RELEASE_NOTES);
   return new Promise(resolve => {
     const s = document.createElement("script");
-    s.src = "release-notes.js?v=" + (typeof APP_VERSION !== "undefined" ? APP_VERSION : "");
+    s.src = typeof sbAsset === "function" ? sbAsset("release-notes.js") : "release-notes.js";
     s.onload = () => resolve(window.SB_RELEASE_NOTES || []);
     s.onerror = () => resolve([]);
     document.head.appendChild(s);
@@ -1665,8 +1669,11 @@ document.addEventListener("click", e => {
   async function loadSideBalances(nav){
     const me = window.myMember;
     if(!window.sb || !me) return;
-    let rows = null;
-    try { const { data, error } = await window.sb.rpc("member_balances", { p_since: null }); if(!error) rows = data || []; } catch(e){}
+    // 頁面剛查過（5 秒內）就直接用，不再多打一次資料庫
+    let rows = window.__sbBalRows && Date.now() - window.__sbBalRows.at < 5000 ? window.__sbBalRows.rows : null;
+    if(!rows){
+      try { const { data, error } = await window.sb.rpc("member_balances", { p_since: null }); if(!error){ rows = data || []; window.__sbBalRows = { at: Date.now(), rows }; } } catch(e){}
+    }
     if(!rows) return;
     nav.querySelectorAll(".sb-side-bal").forEach(el => {
       const code = el.dataset.bal;

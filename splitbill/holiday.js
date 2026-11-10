@@ -171,7 +171,7 @@
     if(window.splitbillMountHolidayScene){ window.splitbillMountHolidayScene(h); return; }
     if(!h || document.body.classList.contains("rc-page")) return;
     const s = document.createElement("script");
-    s.src = "holiday-scene.js?v=" + (typeof APP_VERSION !== "undefined" ? APP_VERSION : "");
+    s.src = typeof sbAsset === "function" ? sbAsset("holiday-scene.js") : "holiday-scene.js";
     s.onload = () => window.splitbillMountHolidayScene(document.documentElement.getAttribute("data-holiday"));
     document.head.appendChild(s);
   }

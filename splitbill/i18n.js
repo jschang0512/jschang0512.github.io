@@ -1762,10 +1762,13 @@ let currentLang = detectDefaultLang();
 // 每頁少下載兩、三百 KB。要在後面的 script 跑 t() 之前就到位，所以趁頁面還在解析時
 // 用 document.write 插一個同步載入的 <script>（同網域，瀏覽器不會擋）。版本號沿用
 // i18n.js 自己的 ?v=，換版時一起換新。切換語言本來就會整頁重新整理（見 setLang）。
+// 日文、英文翻譯檔各自的內容指紋，由 scripts/stamp-assets.js 自動填，不要手改
+const SB_LANG_V = {"en": "1fb75516da", "ja": "87ce04413f"};
 (function loadLangDict(){
   if(currentLang === "zh-Hant" || I18N[currentLang]) return;
   const self = document.currentScript;
-  const ver = self && self.src.includes("?") ? self.src.slice(self.src.indexOf("?")) : "";
+  const ver = SB_LANG_V[currentLang] ? "?v=" + SB_LANG_V[currentLang]
+    : (self && self.src.includes("?") ? self.src.slice(self.src.indexOf("?")) : "");
   if(document.readyState === "loading"){
     document.write('<script src="i18n-' + currentLang + '.js' + ver + '"><\/script>');
   }

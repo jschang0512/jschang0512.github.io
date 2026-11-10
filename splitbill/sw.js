@@ -8,46 +8,65 @@
 
 importScripts("version.js");
 importScripts("notif-text.js");
+// 兩個快取（2026-11 改）：
+//   CACHE_NAME（每版一個）：頁面 HTML、圖示、manifest——換版就換新的一份。
+//   ASSET_CACHE（跨版本一直留著）：帶 ?v=指紋 的 js / css。指紋是檔案內容算出來的
+//     （scripts/stamp-assets.js），同一個網址的內容永遠不會變，所以換版時不用清掉；
+//     沒改到的檔案網址不變，更新時就不必重抓。同一個檔案有了新指紋，舊的那份順手刪掉。
 const CACHE_NAME = "splitbill-v" + APP_VERSION;
+const ASSET_CACHE = "splitbill-assets";
 
-const APP_SHELL = [
-  "index.html",
-  "summary.html",
-  "currency.html",
-  "settings.html",
-  "about.html",
-  "privacy.html",
-  "terms.html",
-  "share-receipt.html",
-  "recap.html",
-  "recurring.html",
-  "events.html",
-  "currencies.js",
-  "shared.css",
-  "theme.css",
-  "theme.js",
-  "holiday.js",
-  "holiday-scene.js",
-  "recap.js",
-  "recurring.js",
-  "events.js",
-  "recap.css",
-  "shared-ui.js",
-  "notif-text.js",
-  "motion.js",
-  "app-banner.js",
-  "app.js",
-  "version.js",
-  "manifest.json",
-  "icon.svg",
-  "icon-mono.svg",
-  "icon-192.png",
-  "icon-512.png"
+const PAGES = [
+  "index.html", "summary.html", "currency.html", "settings.html", "about.html", "privacy.html",
+  "terms.html", "share-receipt.html", "recap.html", "recurring.html", "events.html"
 ];
+const APP_SHELL = PAGES.concat(["manifest.json", "icon.svg", "icon-mono.svg", "icon-192.png", "icon-512.png"]);
+
+// 指紋 = 內容 SHA-256 的前 10 碼（跟 scripts/stamp-assets.js 一樣）。
+// 網址上是 10 碼十六進位才檢查；舊式的數字版本號（?v=972）沒得比，照收。
+async function verifyHash(url, response){
+  const v = new URL(url).searchParams.get("v") || "";
+  if(!/^[0-9a-f]{10}$/.test(v)) return true;
+  const buf = await response.clone().arrayBuffer();
+  const digest = await crypto.subtle.digest("SHA-256", buf);
+  const hex = Array.from(new Uint8Array(digest)).map(b => b.toString(16).padStart(2, "0")).join("");
+  return hex.slice(0, 10) === v;
+}
+// 抓一個帶指紋的檔案、確認內容對得上再放進快取，並刪掉同一個檔案的舊版本
+async function fetchAndStoreAsset(request){
+  const response = await fetch(request, { cache: "no-cache" });
+  if(response && response.ok && await verifyHash(request.url || request, response)){
+    const cache = await caches.open(ASSET_CACHE);
+    const url = new URL(request.url || request);
+    const keys = await cache.keys();
+    await Promise.all(keys.filter(k => { const u = new URL(k.url); return u.pathname === url.pathname && u.search !== url.search; }).map(k => cache.delete(k)));
+    await cache.put(request, response.clone());
+  }
+  return response;
+}
+// 安裝新版時：讀每一頁用到的 js / css，只下載手機上還沒有的（通常只有這版改到的幾個）
+async function precacheAssets(){
+  const shell = await caches.open(CACHE_NAME);
+  const assets = await caches.open(ASSET_CACHE);
+  const urls = new Set();
+  for(const page of PAGES){
+    const res = await shell.match(page);
+    if(!res) continue;
+    const html = await res.text();
+    for(const m of html.matchAll(/(?:src|href)="([^":?#]+\.(?:js|css)\?v=[^"]+)"/g)) urls.add(new URL(m[1], self.registration.scope).href);
+  }
+  // 按需載入的檔案只先存小的、離線也用得到的；AI 拆單本來就要連網，節日場景平常用不到
+  ["expense-form-shared.js", "release-notes.js"].forEach(name => {
+    if(typeof SB_ASSET_V !== "undefined" && SB_ASSET_V[name]) urls.add(new URL(sbAsset(name), self.registration.scope).href);
+  });
+  await Promise.allSettled([...urls].map(async u => { if(!(await assets.match(u))) await fetchAndStoreAsset(new Request(u)); }));
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(APP_SHELL))
+      .then(() => precacheAssets().catch(() => {}))
   );
   self.skipWaiting();
 });
@@ -55,7 +74,7 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+      Promise.all(keys.filter((k) => k !== CACHE_NAME && k !== ASSET_CACHE).map((k) => caches.delete(k)))
     )
   );
   self.clients.claim();
@@ -111,10 +130,16 @@ self.addEventListener("fetch", (event) => {
   // App 安裝檔（6 MB）交給瀏覽器直接下載，不經過快取
   if(url.pathname.toLowerCase().endsWith(".apk")) return;
 
-  // 帶版本號的檔案（app.js?v=903…）內容永遠不會在同一個網址下改變，直接用快取，
-  // 換頁時不必每次重新下載幾百 KB；版本號一換就是新網址，自然會抓新的。
-  // 圖示等靜態圖片同理。
+  // 帶指紋的檔案（app.js?v=8322b8aff7）：網址對應的內容永遠不變，快取有就直接用，
+  // 不用每次開頁都在背景再問伺服器一次；沒有才下載、核對指紋、存起來。
   const isVersioned = url.searchParams.has("v");
+  const isHashed = isVersioned && /^[0-9a-f]{10}$/.test(url.searchParams.get("v"));
+  if(isHashed){
+    event.respondWith(caches.match(req, { cacheName: ASSET_CACHE }).then((hit) => hit || fetchAndStoreAsset(req).catch(() => caches.match(req))));
+    return;
+  }
+
+  // 舊式數字版本號的檔案、圖示等靜態圖片：先回快取，背景再驗證一次
   const isStaticImage = /\.(png|svg|ico|webp|jpg|jpeg)$/i.test(url.pathname);
   if(isVersioned || isStaticImage){
     // 先回快取（快），同時在背景用 ETag 驗證一次並更新快取——萬一部署當下 CDN
