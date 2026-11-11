@@ -36,9 +36,9 @@
 <script src="i18n.js?v=bdb63a21a3"></script>
 <script src="currencies.js?v=1fe139e56b"></script>
 <script src="motion.js?v=c960fb49b3"></script>
-<script src="version.js?v=95c7b21459"></script>
+<script src="version.js?v=7af0ff7299"></script>
 <script src="notif-text.js?v=f501aac2ce"></script>
-<script src="shared-ui.js?v=8bb2ac7103"></script>
+<script src="shared-ui.js?v=e8c18975e4"></script>
 <script src="theme.js?v=01d7c0a8c1" defer></script>
 <script src="app-banner.js?v=c400decf5d" defer></script>
 <script>
@@ -1291,7 +1291,7 @@ renderNavLinks();
       loadFeedback().catch(e => console.error("loadFeedback error:", e));
       renderRecurringOverview().catch(e => console.error("renderRecurringOverview error:", e));
       subscribeRealtime();
-      ensurePushSubscribed(true).catch(e => console.error("ensurePushSubscribed error:", e));
+      sbRetirePush(sb); // 只用站內通知，取消這台裝置以前登記的推播
       // 背景偵測城市/國家變化
       detectAndNotifyLocationChange().catch(() => {});
     }catch(e){

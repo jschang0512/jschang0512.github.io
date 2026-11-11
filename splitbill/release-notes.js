@@ -8,6 +8,19 @@
 // ============================================================
 window.SB_RELEASE_NOTES = [
   {
+    version: "981",
+    date: "2026-11-11",
+    "zh-Hant": [
+      "通知改成只在 App 裡顯示：看右上角鈴鐺的紅點和首頁的「未讀通知」，不再跳手機或電腦的系統通知，也不用再設定通知權限"
+    ],
+    "ja": [
+      "通知はアプリ内だけに：右上のベルの赤い点とホームの「未読通知」で確認できます。スマホやパソコンのシステム通知は出なくなり、通知の許可設定も不要です"
+    ],
+    "en": [
+      "Notifications now live inside the app: check the red dot on the bell and the unread banner on Home. No more phone or desktop system notifications, and no permission to set up"
+    ]
+  },
+  {
     version: "980",
     date: "2026-11-11",
     "zh-Hant": [

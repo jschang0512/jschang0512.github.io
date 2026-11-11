@@ -130,6 +130,28 @@ function isSessionExpired(){
   if(!sbRememberMe() && !sbSessionAlive()) return true;
   return (Date.now() - loginTime > SESSION_DURATION_MS);
 }
+// 2026-11 起只用站內通知（鈴鐺＋未讀橫幅），不再發系統推播：有些機器設定不了推播權限。
+// 這台裝置以前登記過的推播（瀏覽器的 Web Push、APK 的 Firebase）在這裡取消，只做一次。
+async function sbRetirePush(sb){
+  try{
+    if(localStorage.getItem("sb-push-retired") === "1") return;
+    const cap = window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform();
+    const P = cap && window.Capacitor.Plugins && window.Capacitor.Plugins.PushNotifications;
+    if(P){
+      try{ if(P.removeAllListeners) await P.removeAllListeners(); await P.unregister(); }catch(e){}
+    }
+    if("serviceWorker" in navigator){
+      const reg = await navigator.serviceWorker.getRegistration();
+      const sub = reg && reg.pushManager ? await reg.pushManager.getSubscription() : null;
+      if(sub){
+        try{ if(sb) await sb.from("push_subscriptions").delete().eq("endpoint", sub.endpoint); }catch(e){}
+        await sub.unsubscribe();
+      }
+    }
+    localStorage.setItem("sb-push-retired", "1");
+  }catch(e){}
+}
+window.sbRetirePush = sbRetirePush;
 function refreshLoginTime(){
   localStorage.setItem(LOGIN_TIME_KEY, String(Date.now()));
   try{ document.cookie = "sb_alive=1; path=/; SameSite=Lax" + (location.protocol === "https:" ? "; Secure" : ""); }catch(e){}

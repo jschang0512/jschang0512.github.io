@@ -37,9 +37,9 @@
 <script src="i18n.js?v=bdb63a21a3"></script>
 <script src="currencies.js?v=1fe139e56b"></script>
 <script src="motion.js?v=c960fb49b3"></script>
-<script src="version.js?v=95c7b21459"></script>
+<script src="version.js?v=7af0ff7299"></script>
 <script src="notif-text.js?v=f501aac2ce"></script>
-<script src="shared-ui.js?v=8bb2ac7103"></script>
+<script src="shared-ui.js?v=e8c18975e4"></script>
 <script src="theme.js?v=01d7c0a8c1" defer></script>
 <script src="app-banner.js?v=c400decf5d" defer></script>
 <script>
@@ -442,15 +442,6 @@ if("serviceWorker" in navigator){
 
         <h2 class="sbs-label" data-i18n="settings.sec.notify">通知</h2>
         <div class="sbs-list">
-          <div class="sbs-row sbs-tap" id="notifyRow">
-            <span class="sbs-ico" data-c="orange" aria-hidden="true"><span class="sb-ico" style="--ico:var(--ico-bell)"></span></span>
-            <div class="sbs-body">
-              <span class="sbs-title" data-i18n="settings.changeNotifyTitle">異動通知</span>
-              <p class="sbs-hint sbs-hint-blocked" id="notifyHint"></p>
-            </div>
-            <div class="sbs-ctl"><button type="button" class="sbs-switch" id="notifyBtn" role="switch" aria-checked="false" data-i18n-title="settings.notifyTitleOn" title="開啟通知" aria-label="異動通知"></button></div>
-          </div>
-
           <!-- 派派：欠錢太久時的情勒提醒，可以關掉或調溫和（只存在這台裝置） -->
           <div class="sbs-row sbs-row-seg sb-nag-setting">
             <span class="sbs-ico sb-nag-setting-icon" id="nagModeIcon" aria-hidden="true"></span>
@@ -2273,6 +2264,7 @@ if(backBtn){
       }
 
       renderSettingsCurrencyList();
+      sbRetirePush(sb); // 只用站內通知，取消這台裝置以前登記的推播
 
       // 其餘背景資料並行載入，不阻塞主畫面
       Promise.allSettled([

@@ -1033,7 +1033,7 @@
     generateDueRecurringExpenses();
     subscribeRealtime();
     sbEnablePullToRefresh(refreshExpenses);
-    ensurePushSubscribed(true);
+    sbRetirePush(sb); // 只用站內通知，取消這台裝置以前登記的推播
     if(typeof initLocationWeatherWidget === "function") initLocationWeatherWidget().catch(()=>{});
 
     // 從通知夾點「週期性支出已自動記錄」跳過來的（?openExpense=支出id），
@@ -4609,12 +4609,7 @@
       return;
     }
 
-    // 站內通知已經寫進去了（上面 RPC 保證的那條路），這裡再「順便」
-    // 呼叫一次推播，純加分——刻意不 await、不管成不成功都不影響
-    // 使用者看到的「已提醒」結果，對方沒開推播權限也完全沒差。
-    sb.functions.invoke("send-reminder", {
-      body: { debtorMemberId: debtorId, creditorMemberId: creditorId, amount: amt, currency: CURRENCY }
-    }).catch(()=>{});
+    // 站內通知已經由上面的 RPC 寫進去了；2026-11 起只用站內通知，不再另外發推播。
 
     await sbAlert(t("currency.reminderSentSuccess", {name: memberById[debtorId] || t("currency.counterpartFallback")}), t("common.notifyDialogTitle"));
   }
