@@ -10889,3 +10889,75 @@ html body .sbs-sublist .sbs-row::before{ left:var(--sbs-pad); }
 html body .sbs-sublist .sbs-title{ font-weight:500; }
 html body .sbs-sublist .filter-hint{ padding-left:var(--sbs-pad); }
 html body .sbs-subhead .sbs-title{ font-size:13px; font-weight:600; color:var(--ink-soft); }
+
+/* ===== 首頁 v979：通知橫幅在最上面、「今天」一張卡、派派住進「我的款項」 ===== */
+html body #homeAlertSlot:empty{ display:none; }
+html body #homeAlertSlot .unread-notif-alert{ width:100%; margin:0 0 14px; }
+
+/* 一年前的今天：「今天」卡最後一行，安靜的灰字 */
+html body .sb-today .on-this-day{ margin:0; border:0; border-top:1px solid var(--line); border-radius:0; background:none; }
+html body .sb-today .on-this-day-link{ gap:12px; min-height:52px; padding:8px 40px 8px 0; border-radius:8px; }
+html body .sb-today .on-this-day-icon{ width:36px; height:36px; border-radius:10px; font-size:18px; background:var(--line); color:var(--ink-soft); }
+html body .sb-today .on-this-day-text{ display:flex; flex-wrap:wrap; align-items:baseline; column-gap:6px; }
+html body .sb-today .on-this-day-title{ flex:none; font-size:13px; font-weight:600; color:var(--ink-soft); }
+html body .sb-today .on-this-day-title::after{ content:"："; }
+html body .sb-today .on-this-day-name{ min-width:0; font-size:14px; font-weight:600; color:var(--ink); }
+html body .sb-today .on-this-day-detail{ flex-basis:100%; font-size:12.5px; }
+html body .sb-today .on-this-day-close{ right:-6px; width:32px; height:32px; margin-top:-16px; font-size:12px; }
+html body .sb-today-list:empty + .on-this-day{ border-top:0; }
+/* 只有回憶的日子：卡片縮成一行，不放「今天」大標 */
+html body .sb-today.is-memory-only{ padding-block:6px; }
+html body .sb-today.is-memory-only h2{ display:none; }
+
+/* 派派在「我的款項」卡片裡：不再是一張卡，改成卡片裡一塊淡色區域 */
+html body .card #nagCard{ margin:2px 0 12px; }
+html body .card #nagCard .sb-nag{
+  margin:0; padding:12px 14px; border:0; border-radius:14px; box-shadow:none;
+  background:color-mix(in srgb, var(--btn-primary) 8%, transparent);
+}
+html body .card #nagCard .sb-nag.lv-3, html body .card #nagCard .sb-nag.lv-4{ background:color-mix(in srgb, var(--negative-text) 9%, transparent); }
+html body .card #nagCard .sb-nag.is-yay{ background:color-mix(in srgb, var(--positive-text) 10%, transparent); }
+html body .card #nagCard .sb-nag-pie{ width:56px; height:56px; }
+@media (max-width: 519px){
+  html body .card #nagCard .sb-nag{ gap:10px; padding:12px; }
+  html body .card #nagCard .sb-nag-pie{ width:48px; height:48px; }
+}
+
+/* ===== v979 排版修正 ===== */
+/* 幣別頁：餘額＋提醒一組。未讀通知、自動記錄只在「總表」分頁出現 */
+html body .cur-top{ margin-bottom:16px; }
+html body .cur-top .my-balance{ margin-bottom:0; }
+html body .cur-top-side > :not(:empty){ margin-top:10px; }
+html body .cur-top-side .sb-nag{ margin:0; }
+html body .cur-top-side .unread-notif-alert{ width:100%; margin:0; }
+html body #curAlertSlot:empty{ display:none; }
+html body[data-cur-tab]:not([data-cur-tab="summary"]) .cur-summary-only{ display:none; }
+@media (min-width: 1100px){
+  /* 電腦版：左邊餘額、右邊提醒，跟下面總表的兩欄對齊；沒有提醒時餘額只佔左半，不拉滿整排 */
+  html body .cur-top{ display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:20px; align-items:start; }
+  html body .cur-top .my-balance{ min-height:72px; box-sizing:border-box; }
+  html body .cur-top-side > :not(:empty) ~ :not(:empty){ margin-top:10px; }
+  html body .cur-top-side > :not(:empty){ margin-top:0; }
+  html body .cur-top-side > :not(:empty) ~ :not(:empty){ margin-top:10px; }
+  html body .cur-top-side .recurring-auto-banner-item{ margin:0; }
+}
+
+/* 手機上太小的點擊目標：群組切換、關於頁底部連結 */
+html body .whoami-group-switcher .dd-btn{ position:relative; min-height:34px; }
+html body .whoami-group-switcher .dd-btn::after{ content:""; position:absolute; inset:-6px -4px; }
+html body .about-footer-links a{ display:inline-block; padding:10px 6px; }
+
+/* 電腦版：固定收支、活動頁不要拉得太寬；固定收支同一排的卡片等高 */
+@media (min-width: 1100px){
+  html body.has-side-nav .wrap:has(#recurringTemplatesList),
+  html body.has-side-nav .wrap:has(#eventList){ max-width:960px; }
+  html body #recurringTemplatesList{ align-items:stretch; }
+  html body #recurringTemplatesList > *{ margin-bottom:0; }
+}
+@media (min-width: 1100px){
+  html body #recurringTemplatesList > .fx-item{ display:flex; flex-direction:column; }
+  html body #recurringTemplatesList > .fx-item > .fx-bottom{ margin-top:auto; }
+}
+/* 首頁工具列：兩顆平分整排，跟下面滿版的橫幅、卡片對齊 */
+html body .home-tools{ display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); gap:10px; }
+html body .home-tools a{ justify-content:center; min-height:44px; border-radius:14px; }

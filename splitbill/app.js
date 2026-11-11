@@ -553,6 +553,13 @@
       }
     });
     appTabs.forEach(tab => tab.addEventListener("click", syncNav));
+    // 目前在哪個分頁記在 body 上，CSS 用來決定哪些提醒要收起來
+    const syncTabAttr = () => {
+      const active = document.querySelector("#mainAppTabs .app-tab.active");
+      document.body.dataset.curTab = active ? active.dataset.tab : "summary";
+    };
+    appTabs.forEach(tab => tab.addEventListener("click", syncTabAttr));
+    syncTabAttr();
 
     // 幣別切換面板：從底部滑出，第一項是「總覽」，接著是要顯示的幣別；
     // 換到別的幣別時停在目前的分頁（在「支出」切到臺幣，就直接是臺幣的支出表單）

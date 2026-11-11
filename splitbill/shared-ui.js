@@ -648,8 +648,9 @@ async function initNotificationBell(sb, myMember){
   function renderUnreadAlert(n){
     const balance = document.getElementById("myBalance");
     const amtTitle = document.querySelector('#myAmtList')?.closest(".card")?.querySelector("h2");
+    const slot = document.getElementById("homeAlertSlot") || document.getElementById("curAlertSlot"); // 首頁／幣別頁專門留的位置
     const anchor = balance || amtTitle;
-    if(!anchor) return;
+    if(!anchor && !slot) return;
     let el = document.getElementById("unreadNotifAlert");
     if(!n){ if(el) el.remove(); return; }
     if(!el){
@@ -663,7 +664,8 @@ async function initNotificationBell(sb, myMember){
         if(bellBtn && !isOpen()) bellBtn.click();
       });
       // 幣別頁：放在「我的款項」橫幅正下方（最重要的數字先看到）；總覽頁：放在「我的款項」卡片標題前
-      if(balance) balance.after(el); else anchor.parentNode.insertBefore(el, anchor);
+      if(slot) slot.appendChild(el);
+      else if(balance) balance.after(el); else anchor.parentNode.insertBefore(el, anchor);
     }
     el.textContent = n === 1 ? t("shared.unreadNotifAlertOne") : t("shared.unreadNotifAlert", { n: n > 99 ? "99+" : n });
   }

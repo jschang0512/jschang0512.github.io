@@ -8,6 +8,25 @@
 // ============================================================
 window.SB_RELEASE_NOTES = [
   {
+    version: "979",
+    date: "2026-11-11",
+    "zh-Hant": [
+      "首頁整理過：未讀通知在最上面，今天的待辦和「一年前的今天」合成一張「今天」卡",
+      "派派搬進「我的款項」卡片裡，不再另外佔一張",
+      "幣別頁的未讀通知和自動記錄提醒只在「總表」出現，記帳、還款時表單一進來就看得到；電腦版餘額和提醒左右並排"
+    ],
+    "ja": [
+      "ホームを整理：未読通知を一番上に、今日の予定と「1 年前の今日」を「今日」カード 1 枚にまとめました",
+      "パイパイは「自分の残高」カードの中に移動し、別のカードを使わなくなりました",
+      "通貨ページの未読通知と自動記録のお知らせは「総表」だけに表示。記録・返済のフォームがすぐ見えます。PC では残高とお知らせを左右に並べました"
+    ],
+    "en": [
+      "A tidier Home: unread notifications sit at the top, and today's to-dos and “On this day” now share one Today card",
+      "Pie moved into the My Balance card instead of taking up a card of its own",
+      "On a currency page, unread notifications and auto-recorded notices show only on Overview, so the expense and repayment forms are right there; on desktop your balance and notices sit side by side"
+    ]
+  },
+  {
     version: "977",
     date: "2026-11-11",
     "zh-Hant": [
