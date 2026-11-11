@@ -8,6 +8,19 @@
 // ============================================================
 window.SB_RELEASE_NOTES = [
   {
+    version: "984",
+    date: "2026-11-11",
+    "zh-Hant": [
+      "兩人的往來紀錄一次只先顯示最近 10 筆，想看更早的再按「顯示更早的紀錄」，不用一直往下滑"
+    ],
+    "ja": [
+      "2 人の取引履歴は最新 10 件だけを先に表示。それより前は「さらに前を表示」で開けるので、長くスクロールしなくて済みます"
+    ],
+    "en": [
+      "The history between two people now shows the latest 10 entries first; tap “Show earlier” for more instead of scrolling forever"
+    ]
+  },
+  {
     version: "982",
     date: "2026-11-11",
     "zh-Hant": [

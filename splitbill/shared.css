@@ -11076,3 +11076,13 @@ html body .notif-item.unread .notif-item-title{ font-weight:700; }
 @media (max-width: 767px) and (prefers-reduced-motion: reduce){
   html body .calc-modal.sb-bottom-sheet > .calc-card{ animation:none !important; }
 }
+
+/* 往來紀錄：顯示更早的紀錄 */
+html body .ledger-more-btn{
+  display:block; width:100%; min-height:44px; margin:4px 0 10px; padding:0 14px; box-sizing:border-box;
+  border:1.5px dashed var(--card-border); border-radius:12px; background:none;
+  color:var(--btn-primary); font:inherit; font-size:14px; font-weight:600; cursor:pointer;
+  transition:background-color .15s ease, border-color .15s ease;
+}
+html body .ledger-more-btn:hover{ border-color:var(--btn-primary); background:color-mix(in srgb, var(--btn-primary) 6%, transparent); }
+html body .ledger-more-btn:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; }

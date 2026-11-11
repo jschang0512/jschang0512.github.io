@@ -1464,6 +1464,7 @@ I18N["en"] = {
     "nav.mainLabel": "Main navigation",
 
     "nav.currencies": "Currencies",
+    "currency.ledgerShowMore": "Show {n} earlier",
     "shared.deleteAllNotif": "Delete all",
     "shared.deleteAllNotifConfirm": "Delete all notifications? This can't be undone.",
     "shared.unreadMore": "+{n} more",

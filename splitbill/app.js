@@ -6872,6 +6872,9 @@ let currentPairDetail = null; // 目前開啟中的往來紀錄視窗是哪一�
 // （用 "debtorId|creditorId" 當 key），關掉視窗再打開同一對人，會留在原本
 // 看到的那一輪，不用重新按好幾次「上一輪」。
 let pairOlderCyclePageMap = {};
+// 往來紀錄一次只顯示最近幾筆（每對人、每一輪各自記），按「顯示更早」再多 10 筆
+const LEDGER_PAGE = 10;
+let pairLedgerShowMap = {};
 
 // ==========================================================
 // 編輯「跨幣別債務轉入」當初換算用的匯率——歷史紀錄裡帶 [xcur:UUID]
@@ -7479,14 +7482,23 @@ function showPairDetail(
     `;
   };
 
+  const ledgerShowKey = pairKey + "|" + olderCyclePage;
+  const renderLimited = (list) => {
+    const limit = pairLedgerShowMap[ledgerShowKey] || LEDGER_PAGE;
+    const hidden = Math.max(0, list.length - limit);
+    const moreBtn = hidden ? `<button type="button" class="ledger-more-btn" id="matrixLedgerMoreBtn">${t("currency.ledgerShowMore", { n: hidden })}</button>` : "";
+    // 新到舊：最新的在最上面，取前面 N 筆；舊到新：最新的在最下面，取最後 N 筆
+    const shown = ledgerSortAsc ? list.slice(hidden) : list.slice(0, limit);
+    if(ledgerSortAsc) html += moreBtn;
+    shown.forEach(ev => { html += renderTimelineCard(ev); });
+    if(!ledgerSortAsc) html += moreBtn;
+  };
   if(olderCyclePage > 0){
     // 正在瀏覽歷史已結清存檔
-    if(olderEvents.length){
-      olderEvents.forEach(ev => { html += renderTimelineCard(ev); });
-    }
+    if(olderEvents.length) renderLimited(olderEvents);
   } else if(visibleEvents.length){
     // 正在瀏覽進行中
-    visibleEvents.forEach(ev => { html += renderTimelineCard(ev); });
+    renderLimited(visibleEvents);
   } else if(remainingDebt > 0.01){
     // 目前這個方向沒有直接的支出/還款紀錄，但金額卻不是 0——代表這筆欠款
     // 是從對方那邊的多還／溢付轉過來的，不是憑空冒出來的錯誤。
@@ -7628,6 +7640,20 @@ function showPairDetail(
   // ==========================================================
   // 往來紀錄排序方向切換（新到舊 / 舊到新）
   // ==========================================================
+  const ledgerMoreBtn = document.getElementById("matrixLedgerMoreBtn");
+  if(ledgerMoreBtn){
+    ledgerMoreBtn.addEventListener("click", ()=>{
+      const anchor = ledgerSortAsc ? ledgerMoreBtn.nextElementSibling : null;
+      const anchorId = anchor && anchor.dataset.id;
+      const before = anchor ? anchor.getBoundingClientRect().top : 0;
+      pairLedgerShowMap[ledgerShowKey] = (pairLedgerShowMap[ledgerShowKey] || LEDGER_PAGE) + LEDGER_PAGE;
+      showPairDetail(debtorId, creditorId, expenses, repayments, owedMatrix);
+      if(anchorId){
+        const again = document.querySelector('#matrixDetail .ledger-row-wrap[data-id="' + CSS.escape(anchorId) + '"]');
+        if(again) window.scrollBy(0, again.getBoundingClientRect().top - before);
+      }
+    });
+  }
   const ledgerSortBtn = document.getElementById("matrixLedgerSortBtn");
   if(ledgerSortBtn){
     ledgerSortBtn.addEventListener("click", ()=>{
