@@ -8386,9 +8386,9 @@ function pairStmtData(){
     if(ev.type === "expense"){
       const e = ev.expense;
       name = getFirstLineDesc(e.description || t("summary.untitledExpense"));
-      sub = (e.payers || []).filter(p => Number(p.amount) > 0.005)
-        .map(p => t("stmt.advanced", { name: memberById[p.member_id] || "?", amt: formatAmt(p.amount), money: SYM + formatAmt(p.amount) }))
-        .join("、");
+      // 寫這兩人之間的份額：誰替對方墊了多少（不是整筆支出的總額）
+      const share = Number(ev.amount) || 0;
+      sub = t("stmt.advanced", { name: ev.direction === "forward" ? B : A, amt: formatAmt(share), money: SYM + formatAmt(share) });
     } else {
       const r = ev.repayment;
       const offset = r.offset_group && !isXcurStr(r.offset_group);
@@ -8421,6 +8421,12 @@ function pairStmtSettle(d){
     ? t("stmt.settleLine", { a: d.A, b: d.B, amount: SYM + formatAmt(d.net) })
     : t("stmt.settleLine", { a: d.B, b: d.A, amount: SYM + formatAmt(-d.net) });
 }
+// 欄名「王小美欠Bruce」：名字本身不拆行，太窄時只在名字和「欠」之間換行
+function pairStmtOwesHead(a, b){
+  return escapeHtml(t("stmt.colOwes", { a: "", b: "" }))
+    .replace("", `<span class="pair-stmt-nw">${escapeHtml(a)}</span>`)
+    .replace("", `<span class="pair-stmt-nw">${escapeHtml(b)}</span>`);
+}
 function renderPairStatement(){
   const body = document.getElementById("pairStmtBody");
   if(!body) return;
@@ -8451,10 +8457,10 @@ function renderPairStatement(){
       <div class="pair-stmt-period">${escapeHtml(pairStmtDate(d.from, true))} – ${escapeHtml(pairStmtDate(d.to, true))} · ${escapeHtml(rangeLabel)} · ${escapeHtml(t("stmt.count", { n: d.rows.length }))}</div>
       <table class="pair-stmt-table">
         <colgroup><col class="c-item"><col class="c-amt"><col class="c-amt"></colgroup>
-        <thead><tr><th scope="col">${escapeHtml(t("stmt.colItem"))}</th><th scope="col">${escapeHtml(t("stmt.colOwes", { a: d.A, b: d.B }))}</th><th scope="col">${escapeHtml(t("stmt.colOwes", { a: d.B, b: d.A }))}</th></tr></thead>
+        <thead><tr><th scope="col">${escapeHtml(t("stmt.colItem"))}</th><th scope="col">${pairStmtOwesHead(d.A, d.B)}</th><th scope="col">${pairStmtOwesHead(d.B, d.A)}</th></tr></thead>
         <tbody>
           ${hasOpen ? `<tr class="is-open"><td>${escapeHtml(t("stmt.opening"))}</td>${cellTd(d.openA)}${cellTd(d.openB)}</tr>` : ""}
-          ${d.rows.map(r => `<tr><td><span class="pair-stmt-name">${escapeHtml(pairStmtDate(r.date, withYear))} ${escapeHtml(r.name)}</span>${r.sub || r.flag ? `<small>${escapeHtml(r.sub)}${r.flag ? ` <em class="pair-stmt-flag">${escapeHtml(r.flag)}</em>` : ""}</small>` : ""}</td>${cellTd(r.a)}${cellTd(r.b)}</tr>`).join("")}
+          ${d.rows.map(r => `<tr><td><span class="pair-stmt-name"><span class="pair-stmt-date">${escapeHtml(pairStmtDate(r.date, withYear))}</span> ${escapeHtml(r.name)}</span>${r.sub || r.flag ? `<small>${escapeHtml(r.sub)}${r.flag ? ` <em class="pair-stmt-flag">${escapeHtml(r.flag)}</em>` : ""}</small>` : ""}</td>${cellTd(r.a)}${cellTd(r.b)}</tr>`).join("")}
         </tbody>
         <tfoot><tr><th scope="row">${escapeHtml(t("stmt.total"))}</th><td>${formatAmt(d.endA)}</td><td>${formatAmt(d.endB)}</td></tr></tfoot>
       </table>

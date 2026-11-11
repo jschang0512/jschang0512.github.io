@@ -11218,3 +11218,12 @@ html body .sb-today-rc-acts .rc-btn{ min-height:36px; white-space:nowrap; }
   html body .sb-today-rc-acts{ width:100%; padding-left:48px; }
   html body .sb-today-rc-acts .rc-btn{ flex:1; justify-content:center; }
 }
+/* 對帳單欄名：名字不拆行；手機上字小一點 */
+html body .pair-stmt-nw{ white-space:nowrap; }
+@media (max-width: 560px){
+  html body .pair-stmt-table th{ font-size:11px; padding:6px 2px; }
+  html body .pair-stmt-table col.c-amt{ width:30%; }
+}
+@media (max-width: 560px){
+  html body .pair-stmt-date{ display:block; font-size:11px; font-weight:500; color:var(--ink-soft); }
+}
