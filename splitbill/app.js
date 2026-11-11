@@ -1041,6 +1041,7 @@
     const openExpenseId = new URLSearchParams(location.search).get("openExpense");
     if(openExpenseId){
       const targetExp = cachedExpenses.find(e => e.id === openExpenseId);
+      window.__sbCmtFocus = new URLSearchParams(location.search).get("comments") === "1";
       if(targetExp) showExpenseDebtDetail(targetExp);
     }
 
@@ -2852,12 +2853,19 @@
       ? sb.from("category_learning").select("keyword, category").eq("group_id", myMember.group_id)
       : Promise.resolve({ data: [], error: null });
 
+    const cmtQuery = gid
+      ? sb.from("expense_comments").select("expense_id").eq("group_id", gid)
+      : Promise.resolve({ data: [], error: null });
     const [
       { data: allExp, error: expError },
       { data: allRep, error: repError },
       { data: balRows, error: balError },
-      { data: catLearnRows, error: catLearnError }
-    ] = await Promise.all([expQuery, repQuery, balQuery, catLearnQuery]);
+      { data: catLearnRows, error: catLearnError },
+      { data: cmtRows, error: cmtError }
+    ] = await Promise.all([expQuery, repQuery, balQuery, catLearnQuery, cmtQuery]);
+    // 單筆支出的留言數（資料表還沒建時就當作都沒有留言）
+    window.__sbCommentCounts = {};
+    if(!cmtError) (cmtRows || []).forEach(c => { window.__sbCommentCounts[c.expense_id] = (window.__sbCommentCounts[c.expense_id] || 0) + 1; });
     // 側邊選單的各幣別款項直接用這次查到的，不用再查一次
     if(!balError) window.__sbBalRows = { at: Date.now(), rows: balRows || [] };
 
@@ -4013,61 +4021,6 @@
   // 中斷、刪除永遠不會發生，資料庫反而卡在「應刪未刪」的曖昧狀態；先
   // 刪除、復原時用暫存資料重新 insert 回去，不管使用者何時離開，資料庫
   // 狀態永遠是確定、乾淨的——這也是為什麼倒數期間離開頁面等同放棄復原。
-  async function copyText(text){
-    if(navigator.clipboard && navigator.clipboard.writeText){
-      try { await navigator.clipboard.writeText(text); return true; } catch(e){}
-    }
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    ta.style.position = "fixed";
-    ta.style.opacity = "0";
-    document.body.appendChild(ta);
-    ta.select();
-    let ok = false;
-    try { ok = document.execCommand("copy"); } catch(e){}
-    ta.remove();
-    return ok;
-  }
-
-  // 往來明細裡的「複製轉帳資訊」：複製出「請轉 NT$500 給 王小美」加上她的收款帳戶，直接貼到聊天室
-  async function attachPayInfoButton(wrap, creditorId, amount){
-    let accounts = [];
-    try {
-      const { data, error } = await sb.rpc("get_member_payment_accounts", { p_member_id: creditorId });
-      if(!error && Array.isArray(data)) accounts = data.filter(a => a && (a.bankName || a.account));
-    } catch(e){}
-    if(!wrap.isConnected) return;
-    const iAmCreditor = myMember && creditorId === myMember.id;
-    if(!accounts.length){
-      if(iAmCreditor){
-        const hint = document.createElement("a");
-        hint.className = "debt-payinfo-hint";
-        hint.href = "settings.html";
-        hint.textContent = t("currency.payInfoSetupHint");
-        wrap.appendChild(hint);
-      }
-      return;
-    }
-    const lines = accounts.map(acc => {
-      const label = window.formatBankLabel ? window.formatBankLabel(acc.bankCode, acc.bankName) : (acc.bankName || "");
-      return "・" + (acc.account ? `${label} ${acc.account}` : label).trim();
-    }).join("\n");
-    const text = t("currency.payInfoText", { amount: SYM + formatAmt(amount), name: memberById[creditorId] || "?", accounts: lines });
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "btn secondary debt-payinfo-btn";
-    btn.innerHTML = `<span class="sb-ico" style="--ico:var(--ico-list)" aria-hidden="true"></span><span>${escapeHtml(t("currency.payInfoCopy"))}</span>`;
-    btn.addEventListener("click", async () => {
-      const ok = await copyText(text);
-      const label = btn.querySelector("span:last-child");
-      label.textContent = t(ok ? "currency.payInfoCopied" : "currency.payInfoCopyFailed");
-      setTimeout(() => { if(btn.isConnected) label.textContent = t("currency.payInfoCopy"); }, 2000);
-    });
-    // 放在「記錄還款」正下方
-    const repay = wrap.querySelector("#matrixDetailRepayBtn");
-    if(repay && repay.nextSibling) wrap.insertBefore(btn, repay.nextSibling); else wrap.appendChild(btn);
-  }
-
   async function deleteRowsWithUndo(table, rows, refreshFn, label){
     const list = Array.isArray(rows) ? rows : [rows];
     const ids = list.map(r => r.id);
@@ -4143,7 +4096,7 @@
         return `<div class="exp-item" data-id="${e.id}" title="${t("currency.clickToViewDebtDetail")}">
           <div class="exp-cat-badge exp-cat-${catMeta.type}" title="${catMeta.name}"${catMeta.color ? ` style="--cat:${catMeta.color}"` : ""}>${icon}</div>
           <div class="exp-main">
-            <div class="exp-desc">${highlightedTitle}${isAiSplit ? `<span class="ai-split-badge" style="font-size:12px;font-weight:700;padding:1px 6px;border-radius:6px;background:color-mix(in srgb, var(--btn-primary) 14%, var(--paper));color:var(--btn-primary);margin-left:5px;">${t("currency.aiSplitBadge")}</span>` : ""}${isXcur ? `<span class="xcur-badge">${t("currency.xcurBadge")}</span>` : ""}${isRecurringGenerated ? `<span class="recurring-badge">${t("currency.recurringBadge")}</span>` : ""}</div>
+            <div class="exp-desc">${highlightedTitle}${isAiSplit ? `<span class="ai-split-badge" style="font-size:12px;font-weight:700;padding:1px 6px;border-radius:6px;background:color-mix(in srgb, var(--btn-primary) 14%, var(--paper));color:var(--btn-primary);margin-left:5px;">${t("currency.aiSplitBadge")}</span>` : ""}${isXcur ? `<span class="xcur-badge">${t("currency.xcurBadge")}</span>` : ""}${isRecurringGenerated ? `<span class="recurring-badge">${t("currency.recurringBadge")}</span>` : ""}${cmtBadgeHTML(e.id)}</div>
             <div class="exp-meta">
               ${firstLineNote ? `<span class="exp-meta-line" style="color:var(--ink);font-weight:600;opacity:0.9;">${t("currency.notePrefix")}${highlightedNote}</span>` : ""}
               <span class="exp-meta-line">${t("currency.timePrefix")}${e.expense_date}${formatTime(e.created_at, e.expense_date) ? " " + formatTime(e.created_at, e.expense_date) : ""}（${highlightSearchMatch(memberById[e.created_by] || "?", searchKw)}）</span>
@@ -4301,11 +4254,13 @@
         const isXcur = isXcurStr(r.note) || isXcurStr(r.offset_group);
         const xcurId = isXcur ? (r.offset_group || extractXcurId(r.note)) : null;
         const cleanNote = cleanXcurText(r.note);
+        const rc = repayConfirmBits(r);
         return `<div class="exp-item" data-rid="${r.id}">
           <div class="exp-cat-badge" style="background:color-mix(in srgb, #40C057 12%, var(--card));"><span class="sb-ico" style="--ico:var(--ico-wallet)" aria-hidden="true"></span></div>
           <div class="exp-main">
-            <div class="exp-desc">${t("currency.repayFromTo", {from: highlightSearchMatch(memberById[r.from_member] || "?", searchKw), to: highlightSearchMatch(memberById[r.to_member] || "?", searchKw)})}${isXcur ? `<span class="xcur-badge">${t("currency.convertedToTwd")}</span>` : ""}</div>
+            <div class="exp-desc">${t("currency.repayFromTo", {from: highlightSearchMatch(memberById[r.from_member] || "?", searchKw), to: highlightSearchMatch(memberById[r.to_member] || "?", searchKw)})}${isXcur ? `<span class="xcur-badge">${t("currency.convertedToTwd")}</span>` : ""}${rc.pill}</div>
             <div class="exp-meta">${t("currency.recordTimePrefix")}${r.payment_date}${formatTime(r.created_at, r.payment_date) ? " " + formatTime(r.created_at, r.payment_date) : ""}（${highlightSearchMatch(memberById[r.created_by] || "?", searchKw)}）${cleanNote ? " ・ " + highlightSearchMatch(cleanNote, searchKw) : ""}</div>
+            ${rc.acts}
           </div>
           <div class="exp-right">
             <div class="exp-amt">${SYM}${highlightSearchMatch(formatAmt(r.amount), searchKw)}${conversionHint(r.amount)}</div>
@@ -6702,7 +6657,11 @@ function showExpenseDebtDetail(e){
     ${breakdownCardHtml}
 
     ${dynamicDebtSection}
+
+    <section class="exp-cmt" id="expCmtSection" aria-label="${escapeHtml(t("cmt.title"))}"></section>
   `;
+  renderExpenseComments(e, body.querySelector("#expCmtSection"), !!window.__sbCmtFocus);
+  window.__sbCmtFocus = false;
 
   // 綁定明細複製按鈕事件
   const expDebtCopyCompactBtn = body.querySelector("#expDebtCopyCompactBtn");
@@ -7278,6 +7237,7 @@ function showPairDetail(
   });
   // 預設「新到舊」；使用者可按排序按鈕切換成「舊到新」，狀態存在 ledgerSortAsc。
   const allEventsDisplay = ledgerSortAsc ? allEventsDisplayAsc : allEventsDisplayAsc.slice().reverse();
+  window.__sbPairStmt = { debtorId, creditorId, items: allEventsDisplayAsc };
 
   const maxSegment = cutoffTimes.length; // 0 = 最新一段，數字愈大代表愈早
   const visibleEvents = allEventsDisplay.filter(x => x.segment === 0).map(x => x.ev);
@@ -7310,6 +7270,7 @@ function showPairDetail(
           <span class="debt-detail-title-icon"><span class="sb-ico" style="--ico:var(--ico-chart)" aria-hidden="true"></span></span>
           <span>${t("currency.debtDetailTitle")}</span>
         </div>
+        <button type="button" id="matrixStatementBtn" class="debt-detail-stmt-btn">${sbIcon("list")}<span>${t("stmt.btn")}</span></button>
         <button type="button" id="matrixDetailClose" class="debt-detail-close" aria-label="${t("common.close")}">✕</button>
       </div>
 
@@ -7406,7 +7367,7 @@ function showPairDetail(
           <div class="ledger-row ledger-row-open-expense" data-id="${e.id}">
             <div class="ledger-row-header">
               <div class="ledger-row-name">
-                ${escapeHtml(firstLine)}${isAiSplit ? `<span class="ai-split-badge" style="font-size:10px;font-weight:700;padding:1px 5px;border-radius:6px;background:color-mix(in srgb, var(--btn-primary) 14%, var(--paper));color:var(--btn-primary);margin-left:5px;">${t("currency.aiShortBadge")}</span>` : ""}${isExpXcur ? `<span class="xcur-badge">${t("currency.xcurBadge")}</span>` : ""}
+                ${escapeHtml(firstLine)}${isAiSplit ? `<span class="ai-split-badge" style="font-size:10px;font-weight:700;padding:1px 5px;border-radius:6px;background:color-mix(in srgb, var(--btn-primary) 14%, var(--paper));color:var(--btn-primary);margin-left:5px;">${t("currency.aiShortBadge")}</span>` : ""}${isExpXcur ? `<span class="xcur-badge">${t("currency.xcurBadge")}</span>` : ""}${cmtBadgeHTML(e.id)}
               </div>
               <div class="ledger-row-amount ${rowColor(ev).cls}">${rowColor(ev).sign}${SYM}${formatAmt(ev.amount)}</div>
             </div>
@@ -7440,13 +7401,14 @@ function showPairDetail(
       : (isRepaymentParty(r, myId) || r.created_by === myId);
     const isRepXcur = isXcurStr(r.note) || isXcurStr(r.offset_group);
     const repXcurId = isRepXcur ? (r.offset_group || extractXcurId(r.note)) : null;
+    const rc = repayConfirmBits(r);
     return `
       <div class="ledger-row-wrap ${rowWrapClass(ev)}" data-id="${r.id}">
         <div class="ledger-timeline-node is-repay" title="${t("currency.repaymentIconTitle")}"><span class="sb-ico" style="--ico:var(--ico-wallet)" aria-hidden="true"></span></div>
         <div class="ledger-row" onclick="if(!event.target.closest('button')){this.closest('.ledger-row-wrap').classList.toggle('is-expanded')}">
           <div class="ledger-row-header">
             <div class="ledger-row-name">
-              ${(r.offset_group && !isXcurStr(r.offset_group)) ? `<span class="champion-tag">${t("currency.offsetTag")}</span> ` : ""}${t("currency.repayFromTo", {from: escapeHtml(memberById[r.from_member] || "?"), to: escapeHtml(memberById[r.to_member] || "?")})}${(isXcurStr(r.note) || isXcurStr(r.offset_group)) ? `<span class="xcur-badge">${t("currency.convertedToTwd")}</span>` : ""}
+              ${(r.offset_group && !isXcurStr(r.offset_group)) ? `<span class="champion-tag">${t("currency.offsetTag")}</span> ` : ""}${t("currency.repayFromTo", {from: escapeHtml(memberById[r.from_member] || "?"), to: escapeHtml(memberById[r.to_member] || "?")})}${(isXcurStr(r.note) || isXcurStr(r.offset_group)) ? `<span class="xcur-badge">${t("currency.convertedToTwd")}</span>` : ""}${rc.pill}
             </div>
             <div class="ledger-row-amount ${rowColor(ev).cls}">${rowColor(ev).sign}${SYM}${formatAmt(amount)}</div>
           </div>
@@ -7467,6 +7429,7 @@ function showPairDetail(
             ` : ""}
           </div>
           ${balanceText(ev.balanceForward, ev.balanceReverse, ev.forwardDelta, ev.reverseDelta)}
+          ${rc.acts}
         </div>
         <div class="ledger-row-detail">
           <div class="debt-info-row">
@@ -7638,6 +7601,8 @@ function showPairDetail(
       currentPairDetail = null;
     };
   }
+  const stmtBtn = document.getElementById("matrixStatementBtn");
+  if(stmtBtn) stmtBtn.onclick = openPairStatement;
 
   // ==========================================================
   // 往來紀錄排序方向切換（新到舊 / 舊到新）
@@ -7941,16 +7906,6 @@ function showPairDetail(
     remindBtn.onclick = () => sendDebtReminderFromBtn(remindBtn);
   }
 
-  // 複製轉帳資訊：欠款的一方或收款的一方都看得到。收款帳戶存在 Vault，開視窗當下才用
-  // get_member_payment_accounts 現查（RPC 自己會檢查對方有沒有開放顯示）。查到才出現按鈕；
-  // 自己是收款人但還沒填帳戶，就提示去設定填。
-  const repayBtnForInfo = document.getElementById("matrixDetailRepayBtn");
-  const repayWrap = el.querySelector(".debt-repay-action-wrap");
-  if(repayBtnForInfo && repayWrap && myMember
-     && (repayBtnForInfo.dataset.debtor === myMember.id || repayBtnForInfo.dataset.creditor === myMember.id)){
-    attachPayInfoButton(repayWrap, repayBtnForInfo.dataset.creditor, Number(repayBtnForInfo.dataset.amt));
-  }
-
   // ==========================================================
   // 點支出列（編輯/刪除按鈕以外的地方）直接開啟完整的支出明細彈出視窗。
   // 這裡要用 addEventListener 綁在這個閉包裡呼叫 showExpenseDebtDetail，
@@ -8169,4 +8124,470 @@ function showPairDetail(
       goToLogin();
     }
   })();
+
+// ============================================================
+// v988：單筆支出留言（expense_comments）
+// ============================================================
+// 留言數存在 window.__sbCommentCounts（refreshExpenses 一起抓）；列表上的小標記
+// 用 data-cmt-for 找，留言送出/刪除後就地更新，不用整頁重畫。資料表還沒建時
+// 整段留言區不出現，其他功能照常。
+const CMT_KINDS = { not_involved: "cmt.kindNotInvolved", wrong_amount: "cmt.kindWrongAmount", ok: "cmt.kindOk" };
+function cmtBadgeHTML(expenseId){
+  const n = (window.__sbCommentCounts || {})[expenseId] || 0;
+  return `<span class="cmt-badge" data-cmt-for="${expenseId}" title="${escapeHtml(t("cmt.badgeTitle", { n }))}"${n ? "" : " hidden"}>${sbIcon("message")}<b>${n}</b></span>`;
+}
+function setCommentCount(expenseId, n){
+  const counts = window.__sbCommentCounts || (window.__sbCommentCounts = {});
+  counts[expenseId] = Math.max(0, n);
+  document.querySelectorAll(`.cmt-badge[data-cmt-for="${CSS.escape(expenseId)}"]`).forEach(b => {
+    b.hidden = !counts[expenseId];
+    const num = b.querySelector("b");
+    if(num) num.textContent = counts[expenseId];
+    b.title = t("cmt.badgeTitle", { n: counts[expenseId] });
+  });
+}
+function cmtTimeText(iso){
+  const d = new Date(iso), now = new Date();
+  const hm = d.toLocaleTimeString(getLang() === "en" ? "en-US" : getLang() === "ja" ? "ja-JP" : "zh-TW", { hour: "2-digit", minute: "2-digit", hour12: false });
+  const day = x => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diff = Math.round((day(now) - day(d)) / 86400000);
+  if(diff <= 0) return t("cmt.today", { time: hm });
+  if(diff === 1) return t("cmt.yesterday", { time: hm });
+  return `${d.getMonth() + 1}/${d.getDate()} ${hm}`;
+}
+async function renderExpenseComments(e, host, focus){
+  if(!host || !e || !myMember) return;
+  const myId = myMember.id;
+  host.innerHTML = `
+    <div class="exp-cmt-head">${sbIcon("message")}<span>${escapeHtml(t("cmt.title"))}</span><span class="exp-cmt-count"></span></div>
+    <div class="exp-cmt-list" aria-live="polite"><p class="exp-cmt-empty">${escapeHtml(t("common.loading"))}</p></div>
+    <div class="exp-cmt-quick">
+      ${Object.keys(CMT_KINDS).map(k => `<button type="button" class="exp-cmt-chip" data-kind="${k}">${escapeHtml(t(CMT_KINDS[k]))}</button>`).join("")}
+    </div>
+    <form class="exp-cmt-form" autocomplete="off">
+      <input type="text" class="exp-cmt-input" maxlength="500" placeholder="${escapeHtml(t("cmt.placeholder"))}" aria-label="${escapeHtml(t("cmt.placeholder"))}">
+      <button type="submit" class="exp-cmt-send" aria-label="${escapeHtml(t("cmt.send"))}" title="${escapeHtml(t("cmt.send"))}">${sbIcon("upload")}</button>
+    </form>`;
+  const listEl = host.querySelector(".exp-cmt-list");
+  const countEl = host.querySelector(".exp-cmt-count");
+  const input = host.querySelector(".exp-cmt-input");
+
+  const { data, error } = await sb.from("expense_comments")
+    .select("id,member_id,content,kind,created_at")
+    .eq("expense_id", e.id)
+    .order("created_at", { ascending: true });
+  if(error){ host.remove(); return; } // 資料表還沒建好：不顯示留言區
+  let rows = data || [];
+
+  function draw(){
+    countEl.textContent = rows.length ? rows.length : "";
+    if(!rows.length){
+      listEl.innerHTML = `<p class="exp-cmt-empty">${escapeHtml(t("cmt.empty"))}</p>`;
+      return;
+    }
+    listEl.innerHTML = rows.map(c => {
+      const tag = c.kind === "not_involved" || c.kind === "wrong_amount"
+        ? `<span class="exp-cmt-tag is-ask">${escapeHtml(t("cmt.askTag"))}</span>`
+        : c.kind === "ok" ? `<span class="exp-cmt-tag is-ok">${escapeHtml(t("cmt.okTag"))}</span>` : "";
+      return `<div class="exp-cmt-item" data-id="${c.id}">
+        ${renderAvatarHTML({ id: c.member_id, name: memberById[c.member_id] }, "avatar-sm")}
+        <div class="exp-cmt-main">
+          <div class="exp-cmt-meta"><b>${escapeHtml(memberById[c.member_id] || "?")}</b><time>${escapeHtml(cmtTimeText(c.created_at))}</time>
+            ${c.member_id === myId ? `<button type="button" class="exp-cmt-del" data-id="${c.id}" aria-label="${escapeHtml(t("cmt.delete"))}" title="${escapeHtml(t("cmt.delete"))}">✕</button>` : ""}</div>
+          <div class="exp-cmt-text">${tag}${escapeHtml(c.content)}</div>
+        </div>
+      </div>`;
+    }).join("");
+  }
+  draw();
+  setCommentCount(e.id, rows.length);
+  if(focus){
+    setTimeout(()=>{
+      host.scrollIntoView({ block: "end", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+      if(!matchMedia("(pointer: coarse)").matches) input.focus();
+    }, 250);
+  }
+
+  let busy = false;
+  async function send(content, kind){
+    content = String(content || "").trim();
+    if(!content || busy) return;
+    busy = true;
+    host.classList.add("is-sending");
+    const { data: row, error: insErr } = await sb.from("expense_comments")
+      .insert({ expense_id: e.id, group_id: e.group_id || myMember.group_id, member_id: myId, content: content.slice(0, 500), kind: kind || null })
+      .select("id,member_id,content,kind,created_at").single();
+    busy = false;
+    host.classList.remove("is-sending");
+    if(insErr || !row){
+      console.error("留言失敗：", insErr);
+      if(window.showToast) showToast(t("cmt.sendFailed"));
+      return;
+    }
+    rows.push(row);
+    draw();
+    setCommentCount(e.id, rows.length);
+    listEl.lastElementChild && listEl.lastElementChild.scrollIntoView({ block: "nearest" });
+  }
+  host.querySelector(".exp-cmt-form").addEventListener("submit", async (ev)=>{
+    ev.preventDefault();
+    const v = input.value;
+    if(!v.trim()) return;
+    input.value = "";
+    await send(v, null);
+  });
+  host.querySelectorAll(".exp-cmt-chip").forEach(chip => {
+    chip.addEventListener("click", ()=>{
+      const extra = input.value.trim();
+      input.value = "";
+      send(t(CMT_KINDS[chip.dataset.kind]) + (extra ? "：" + extra : ""), chip.dataset.kind);
+    });
+  });
+  listEl.addEventListener("click", async (ev)=>{
+    const del = ev.target.closest(".exp-cmt-del");
+    if(!del) return;
+    if(!(await sbConfirm(t("cmt.deleteConfirm")))) return;
+    const { error: delErr } = await sb.from("expense_comments").delete().eq("id", del.dataset.id);
+    if(delErr){ if(window.showToast) showToast(t("cmt.sendFailed")); return; }
+    rows = rows.filter(c => c.id !== del.dataset.id);
+    draw();
+    setCommentCount(e.id, rows.length);
+  });
+}
+
+// ============================================================
+// v988：收款確認（repayments.confirm_status）
+// ============================================================
+// 別人替收款人記的還款是「待確認」；收款人按「收到了／還沒收到」。欠款照常扣
+// （待確認只是標記），所以這裡只負責標籤和按鈕。資料庫還沒更新時沒有這個欄位，
+// 一律當作已確認，什麼都不顯示。
+function repayConfirmBits(r){
+  const st = r && r.confirm_status;
+  if(!st || (st === "confirmed" && !r.confirmed_at)) return { pill: "", acts: "" };
+  const myId = myMember && myMember.id;
+  const mine = r.to_member === myId;
+  const toName = escapeHtml(memberById[r.to_member] || "?");
+  let pill = "";
+  if(st === "pending") pill = `<span class="rc-pill is-pending">${escapeHtml(t(mine ? "rc.pendingMine" : "rc.pending"))}</span>`;
+  else if(st === "disputed") pill = `<span class="rc-pill is-disputed">${t("rc.disputed", { name: toName })}</span>`;
+  else pill = `<span class="rc-pill is-ok">${sbIcon("check")}${t("rc.confirmed", { name: toName })}</span>`;
+  const acts = mine && st !== "confirmed"
+    ? `<div class="rc-acts">
+        <button type="button" class="rc-btn is-yes" data-rc="${r.id}" data-v="confirmed">${sbIcon("check")}${escapeHtml(t("rc.gotIt"))}</button>
+        ${st === "pending" ? `<button type="button" class="rc-btn is-no" data-rc="${r.id}" data-v="disputed">${escapeHtml(t("rc.notYet"))}</button>` : ""}
+      </div>`
+    : "";
+  return { pill, acts };
+}
+document.addEventListener("click", async (ev)=>{
+  const btn = ev.target.closest && ev.target.closest(".rc-btn[data-rc]");
+  if(!btn) return;
+  ev.preventDefault();
+  ev.stopPropagation();
+  const id = btn.dataset.rc, v = btn.dataset.v;
+  btn.closest(".rc-acts")?.querySelectorAll("button").forEach(b => { b.disabled = true; });
+  const { data, error } = await sb.from("repayments").update({ confirm_status: v }).eq("id", id).select("id,confirm_status").maybeSingle();
+  if(error || !data || data.confirm_status !== v){
+    console.error("收款確認失敗：", error);
+    btn.closest(".rc-acts")?.querySelectorAll("button").forEach(b => { b.disabled = false; });
+    if(window.showToast) showToast(t("rc.failed"));
+    return;
+  }
+  const local = (cachedRepayments || []).find(r => r.id === id);
+  if(local){ local.confirm_status = v; local.confirmed_at = new Date().toISOString(); }
+  if(window.showToast) showToast(t(v === "confirmed" ? "rc.doneOk" : "rc.doneNo"));
+  await refreshExpenses();
+}, true);
+
+// ============================================================
+// v988：兩人對帳單
+// ============================================================
+// showPairDetail 每次畫完會把這一對的完整時間軸（含每筆讓兩邊各多欠/少欠多少）
+// 放在 window.__sbPairStmt。對帳單三欄：日期・品項／A 欠 B／B 欠 A；最下面合計
+// 與結算（兩欄相減）。期間開始時如果兩邊本來就有欠款，會多一列「期初」。
+let pairStmtRange = "round";
+function pairStmtData(){
+  const S = window.__sbPairStmt;
+  if(!S) return null;
+  const all = S.items || [];
+  let list;
+  if(pairStmtRange === "all"){
+    list = all;
+  } else if(pairStmtRange === "custom"){
+    const from = (document.getElementById("pairStmtFrom") || {}).value || "";
+    const to = (document.getElementById("pairStmtTo") || {}).value || "";
+    list = all.filter(x => (!from || x.ev.date >= from) && (!to || x.ev.date <= to));
+  } else {
+    list = all.filter(x => x.segment === 0);
+    if(!list.length){
+      // 現在剛好結清：「這一輪」改看剛結清的那一輪
+      const segs = all.map(x => x.segment).filter(s => s > 0);
+      if(segs.length){ const m = Math.min(...segs); list = all.filter(x => x.segment === m); }
+    }
+  }
+  const evs = list.map(x => x.ev);
+  const A = memberById[S.debtorId] || "?", B = memberById[S.creditorId] || "?";
+  const r2 = v => Math.round(v * 100) / 100;
+  if(!evs.length) return { A, B, rows: [], empty: true };
+  const first = evs[0], last = evs[evs.length - 1];
+  const openA = r2(first.balanceForward - first.forwardDelta);
+  const openB = r2(first.balanceReverse - first.reverseDelta);
+  const rows = evs.map(ev => {
+    let name, sub, flag = "";
+    if(ev.type === "expense"){
+      const e = ev.expense;
+      name = getFirstLineDesc(e.description || t("summary.untitledExpense"));
+      const payers = (e.payers || []).filter(p => Number(p.amount) > 0.005).map(p => memberById[p.member_id] || "?");
+      sub = payers.length ? t("stmt.paidBy", { names: payers.join("、") }) : "";
+    } else {
+      const r = ev.repayment;
+      const offset = r.offset_group && !isXcurStr(r.offset_group);
+      name = t(offset ? "stmt.offset" : "stmt.repay");
+      sub = offset ? `${memberById[r.from_member] || "?"} ↔ ${memberById[r.to_member] || "?"}` : `${memberById[r.from_member] || "?"} → ${memberById[r.to_member] || "?"}`;
+      if(r.confirm_status === "pending") flag = t("stmt.pendingMark");
+      else if(r.confirm_status === "disputed") flag = t("stmt.disputedMark");
+    }
+    return { date: ev.date || "", name, sub, flag, a: ev.forwardDelta, b: ev.reverseDelta };
+  });
+  const endA = last.balanceForward, endB = last.balanceReverse;
+  const dates = evs.map(ev => ev.date).filter(Boolean).sort();
+  return { A, B, rows, openA, openB, endA, endB, net: r2(endA - endB), from: dates[0] || "", to: dates[dates.length - 1] || "" };
+}
+function pairStmtDate(d, withYear){
+  if(!d) return "";
+  const [y, m, day] = d.split("-");
+  return withYear ? `${y}/${m}/${day}` : `${m}/${day}`;
+}
+function pairStmtCell(v){
+  if(Math.abs(v) < 0.005) return { txt: "—", cls: "is-zero" };
+  return { txt: (v < 0 ? "−" : "") + formatAmt(Math.abs(v)), cls: v < 0 ? "is-minus" : "" };
+}
+function pairStmtSettle(d){
+  if(Math.abs(d.net) < 0.005) return t("stmt.settled");
+  return d.net > 0
+    ? t("stmt.settleLine", { a: d.A, b: d.B, amount: SYM + formatAmt(d.net) })
+    : t("stmt.settleLine", { a: d.B, b: d.A, amount: SYM + formatAmt(-d.net) });
+}
+function renderPairStatement(){
+  const body = document.getElementById("pairStmtBody");
+  if(!body) return;
+  document.querySelectorAll("#pairStatementModal .pair-stmt-chip").forEach(c => {
+    const on = c.dataset.range === pairStmtRange;
+    c.classList.toggle("is-on", on);
+    c.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+  const customBox = document.getElementById("pairStmtCustom");
+  if(customBox) customBox.hidden = pairStmtRange !== "custom";
+  const d = pairStmtData();
+  const actions = document.querySelectorAll("#pairStmtCopyBtn, #pairStmtShareBtn");
+  if(!d || d.empty){
+    body.innerHTML = `<p class="pair-stmt-empty">${escapeHtml(t("stmt.empty"))}</p>`;
+    actions.forEach(b => { b.disabled = true; });
+    return;
+  }
+  actions.forEach(b => { b.disabled = false; });
+  const withYear = d.from.slice(0, 4) !== d.to.slice(0, 4) || d.from.slice(0, 4) !== String(new Date().getFullYear());
+  const cellTd = v => { const c = pairStmtCell(v); return `<td class="${c.cls}">${c.txt}</td>`; };
+  const hasOpen = Math.abs(d.openA) >= 0.005 || Math.abs(d.openB) >= 0.005;
+  const rangeLabel = t(pairStmtRange === "all" ? "stmt.all" : pairStmtRange === "custom" ? "stmt.custom" : "stmt.round");
+  body.innerHTML = `
+    <div class="pair-stmt-sheet">
+      <div class="pair-stmt-head">
+        <b>${escapeHtml(t("stmt.heading", { a: d.A, b: d.B }))}</b><span>${escapeHtml(CURRENCY)}</span>
+      </div>
+      <div class="pair-stmt-period">${escapeHtml(pairStmtDate(d.from, true))} – ${escapeHtml(pairStmtDate(d.to, true))} · ${escapeHtml(rangeLabel)} · ${escapeHtml(t("stmt.count", { n: d.rows.length }))}</div>
+      <table class="pair-stmt-table">
+        <colgroup><col class="c-item"><col class="c-amt"><col class="c-amt"></colgroup>
+        <thead><tr><th scope="col">${escapeHtml(t("stmt.colItem"))}</th><th scope="col">${escapeHtml(t("stmt.colOwes", { a: d.A, b: d.B }))}</th><th scope="col">${escapeHtml(t("stmt.colOwes", { a: d.B, b: d.A }))}</th></tr></thead>
+        <tbody>
+          ${hasOpen ? `<tr class="is-open"><td>${escapeHtml(t("stmt.opening"))}</td>${cellTd(d.openA)}${cellTd(d.openB)}</tr>` : ""}
+          ${d.rows.map(r => `<tr><td><span class="pair-stmt-name">${escapeHtml(pairStmtDate(r.date, withYear))} ${escapeHtml(r.name)}</span>${r.sub || r.flag ? `<small>${escapeHtml(r.sub)}${r.flag ? ` <em class="pair-stmt-flag">${escapeHtml(r.flag)}</em>` : ""}</small>` : ""}</td>${cellTd(r.a)}${cellTd(r.b)}</tr>`).join("")}
+        </tbody>
+        <tfoot><tr><th scope="row">${escapeHtml(t("stmt.total"))}</th><td>${formatAmt(d.endA)}</td><td>${formatAmt(d.endB)}</td></tr></tfoot>
+      </table>
+      <div class="pair-stmt-settle${Math.abs(d.net) < 0.005 ? " is-clear" : ""}"><span>${escapeHtml(t("stmt.settle"))}</span><b>${escapeHtml(pairStmtSettle(d))}</b></div>
+    </div>`;
+}
+function pairStatementText(){
+  const d = pairStmtData();
+  if(!d || d.empty) return "";
+  const withYear = d.from.slice(0, 4) !== d.to.slice(0, 4) || d.from.slice(0, 4) !== String(new Date().getFullYear());
+  const owes = (x, y, v) => `${t("stmt.colOwes", { a: x, b: y })} ${pairStmtCell(v).txt}`;
+  const both = (va, vb) => [Math.abs(va) >= 0.005 ? owes(d.A, d.B, va) : "", Math.abs(vb) >= 0.005 ? owes(d.B, d.A, vb) : ""].filter(Boolean).join("・");
+  const lines = [];
+  lines.push(`${t("stmt.heading", { a: d.A, b: d.B })}（${CURRENCY}）`);
+  lines.push(`${pairStmtDate(d.from, true)} – ${pairStmtDate(d.to, true)}・${t("stmt.count", { n: d.rows.length })}`);
+  lines.push("");
+  if(Math.abs(d.openA) >= 0.005 || Math.abs(d.openB) >= 0.005) lines.push(`${t("stmt.opening")}｜${both(d.openA, d.openB)}`);
+  d.rows.forEach(r => {
+    const sub = [r.sub, r.flag].filter(Boolean).join("・");
+    lines.push(`${pairStmtDate(r.date, withYear)} ${r.name}${sub ? `（${sub}）` : ""}｜${both(r.a, r.b) || "—"}`);
+  });
+  lines.push("");
+  lines.push(`${t("stmt.total")}｜${t("stmt.colOwes", { a: d.A, b: d.B })} ${SYM}${formatAmt(d.endA)}・${t("stmt.colOwes", { a: d.B, b: d.A })} ${SYM}${formatAmt(d.endB)}`);
+  lines.push(`${t("stmt.settle")}｜${pairStmtSettle(d)}`);
+  return lines.join("\n");
+}
+// 圖片：跟結算圖片同一套配色，3 倍解析度，背景鋪滿（聊天軟體裡不會缺角）
+function pairStatementCanvas(){
+  const d = pairStmtData();
+  if(!d || d.empty) return null;
+  const C = getSettlementImageColors(isSettlementDarkTheme());
+  const FONT = "'Noto Sans TC', sans-serif";
+  const withYear = d.from.slice(0, 4) !== d.to.slice(0, 4) || d.from.slice(0, 4) !== String(new Date().getFullYear());
+  const hasOpen = Math.abs(d.openA) >= 0.005 || Math.abs(d.openB) >= 0.005;
+  const W = 560, PAD = 24, innerW = W - PAD * 2;
+  const colAmt = 128, colItem = innerW - colAmt * 2;
+  const headH = 88, theadH = 36, rowH = 50, openH = 36, footH = 40, settleH = 56;
+  const tableH = theadH + (hasOpen ? openH : 0) + d.rows.length * rowH + footH;
+  const H = headH + tableH + 14 + settleH + PAD;
+  const dpr = Math.max(window.devicePixelRatio || 1, 3);
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(W * dpr);
+  canvas.height = Math.round(H * dpr);
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+  ctx.fillStyle = C.canvas; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = C.brand; ctx.fillRect(0, 0, W, 4);
+  const fit = (text, maxW) => {
+    let s = String(text);
+    if(ctx.measureText(s).width <= maxW) return s;
+    while(s.length > 1 && ctx.measureText(s + "…").width > maxW) s = s.slice(0, -1);
+    return s + "…";
+  };
+  ctx.textBaseline = "alphabetic";
+  ctx.textAlign = "left";
+  ctx.fillStyle = C.ink; ctx.font = `700 20px ${FONT}`;
+  ctx.fillText(fit(t("stmt.heading", { a: d.A, b: d.B }), innerW - 60), PAD, 40);
+  ctx.textAlign = "right"; ctx.fillStyle = C.muted; ctx.font = `600 13px ${FONT}`;
+  ctx.fillText(CURRENCY, W - PAD, 40);
+  ctx.textAlign = "left";
+  ctx.fillText(`${pairStmtDate(d.from, true)} – ${pairStmtDate(d.to, true)} · ${t("stmt.count", { n: d.rows.length })}`, PAD, 64);
+
+  // 表格卡片
+  const tx = PAD, ty = headH;
+  ctx.fillStyle = C.card; ctx.strokeStyle = C.border; ctx.lineWidth = 1;
+  ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(tx, ty, innerW, tableH, 12); else ctx.rect(tx, ty, innerW, tableH);
+  ctx.fill(); ctx.stroke();
+  const xAmtA = tx + colItem + colAmt - 14, xAmtB = tx + innerW - 14;
+  let y = ty;
+  ctx.font = `600 12.5px ${FONT}`; ctx.fillStyle = C.muted;
+  ctx.textAlign = "left"; ctx.fillText(t("stmt.colItem"), tx + 14, y + 23);
+  ctx.textAlign = "right";
+  ctx.fillText(fit(t("stmt.colOwes", { a: d.A, b: d.B }), colAmt - 18), xAmtA, y + 23);
+  ctx.fillText(fit(t("stmt.colOwes", { a: d.B, b: d.A }), colAmt - 18), xAmtB, y + 23);
+  y += theadH;
+  const hr = () => { ctx.fillStyle = C.line; ctx.fillRect(tx + 1, y, innerW - 2, 1); };
+  const amt = (v, x, yy, bold) => {
+    const c = pairStmtCell(v);
+    ctx.textAlign = "right";
+    ctx.font = `${bold ? 700 : 600} 14px ${FONT}`;
+    ctx.fillStyle = c.cls === "is-zero" ? C.faint : c.cls === "is-minus" ? C.positive : C.ink;
+    ctx.fillText(c.txt, x, yy);
+  };
+  if(hasOpen){
+    hr();
+    ctx.textAlign = "left"; ctx.font = `600 13px ${FONT}`; ctx.fillStyle = C.muted;
+    ctx.fillText(t("stmt.opening"), tx + 14, y + 23);
+    amt(d.openA, xAmtA, y + 23); amt(d.openB, xAmtB, y + 23);
+    y += openH;
+  }
+  d.rows.forEach(r => {
+    hr();
+    ctx.textAlign = "left"; ctx.font = `600 14px ${FONT}`; ctx.fillStyle = C.ink;
+    ctx.fillText(fit(`${pairStmtDate(r.date, withYear)} ${r.name}`, colItem - 20), tx + 14, y + 22);
+    const sub = [r.sub, r.flag].filter(Boolean).join("・");
+    if(sub){
+      ctx.font = `500 12px ${FONT}`; ctx.fillStyle = r.flag ? C.negative : C.muted;
+      ctx.fillText(fit(sub, colItem - 20), tx + 14, y + 40);
+    }
+    amt(r.a, xAmtA, y + 29); amt(r.b, xAmtB, y + 29);
+    y += rowH;
+  });
+  ctx.fillStyle = C.tint; ctx.fillRect(tx + 1, y, innerW - 2, footH - 1);
+  hr();
+  ctx.textAlign = "left"; ctx.font = `700 14px ${FONT}`; ctx.fillStyle = C.ink;
+  ctx.fillText(t("stmt.total"), tx + 14, y + 26);
+  ctx.textAlign = "right";
+  ctx.fillText(formatAmt(d.endA), xAmtA, y + 26);
+  ctx.fillText(formatAmt(d.endB), xAmtB, y + 26);
+
+  // 結算
+  const sy = ty + tableH + 14;
+  const clear = Math.abs(d.net) < 0.005;
+  ctx.fillStyle = clear ? C.tint : (isSettlementDarkTheme() ? "#173322" : "#E3F4E9");
+  ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(PAD, sy, innerW, settleH, 12); else ctx.rect(PAD, sy, innerW, settleH);
+  ctx.fill();
+  ctx.textAlign = "left"; ctx.font = `600 14px ${FONT}`; ctx.fillStyle = clear ? C.muted : C.positive;
+  ctx.fillText(t("stmt.settle"), PAD + 16, sy + 34);
+  ctx.textAlign = "right"; ctx.font = `700 17px ${FONT}`;
+  ctx.fillText(fit(pairStmtSettle(d), innerW - 90), W - PAD - 16, sy + 35);
+  return canvas;
+}
+async function sbShareImageBlob(blob, filename, title){
+  const isCapacitor = typeof window.Capacitor !== "undefined" && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform();
+  if(isCapacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem && window.Capacitor.Plugins.Share){
+    try{
+      const dataUrl = await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(blob); });
+      const saved = await window.Capacitor.Plugins.Filesystem.writeFile({ path: filename, data: String(dataUrl).split(",")[1], directory: "CACHE" });
+      if(saved && saved.uri){ await window.Capacitor.Plugins.Share.share({ title, url: saved.uri, dialogTitle: title }); return; }
+    }catch(e){ console.warn("Capacitor share failed:", e); }
+  }
+  const file = new File([blob], filename, { type: "image/png" });
+  if(navigator.share && navigator.canShare && navigator.canShare({ files: [file] })){
+    try{ await navigator.share({ files: [file], title }); return; }
+    catch(e){ if(e && e.name === "AbortError") return; }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ a.remove(); URL.revokeObjectURL(url); }, 1000);
+  if(window.showToast) showToast(t("stmt.downloaded"));
+}
+function openPairStatement(){
+  const modal = document.getElementById("pairStatementModal");
+  if(!modal || !window.__sbPairStmt) return;
+  const fromEl = document.getElementById("pairStmtFrom"), toEl = document.getElementById("pairStmtTo");
+  const items = window.__sbPairStmt.items || [];
+  if(fromEl && toEl && items.length){
+    if(!fromEl.value) fromEl.value = items[0].ev.date || "";
+    if(!toEl.value) toEl.value = sbIsoDay(new Date());
+  }
+  renderPairStatement();
+  modal.classList.add("show");
+}
+(function initPairStatement(){
+  const modal = document.getElementById("pairStatementModal");
+  if(!modal) return;
+  document.getElementById("pairStmtCloseBtn")?.addEventListener("click", ()=> modal.classList.remove("show"));
+  modal.querySelectorAll(".pair-stmt-chip").forEach(c => c.addEventListener("click", ()=>{
+    pairStmtRange = c.dataset.range;
+    renderPairStatement();
+  }));
+  ["pairStmtFrom", "pairStmtTo"].forEach(id => document.getElementById(id)?.addEventListener("change", renderPairStatement));
+  const copyBtn = document.getElementById("pairStmtCopyBtn");
+  copyBtn?.addEventListener("click", async ()=>{
+    const text = pairStatementText();
+    if(!text) return;
+    await copyToClipboard(text);
+    if(window.showToast) showToast(t("stmt.copied"));
+  });
+  const shareBtn = document.getElementById("pairStmtShareBtn");
+  shareBtn?.addEventListener("click", async ()=>{
+    const canvas = pairStatementCanvas();
+    if(!canvas) return;
+    shareBtn.disabled = true;
+    try{
+      const blob = await new Promise(res => canvas.toBlob(res, "image/png"));
+      if(!blob){ await sbAlert(t("currency.imageGenFailed"), t("settings.errorTitle")); return; }
+      const S = window.__sbPairStmt;
+      const title = t("stmt.heading", { a: memberById[S.debtorId] || "?", b: memberById[S.creditorId] || "?" });
+      await sbShareImageBlob(blob, `${title}_${CURRENCY}_${sbIsoDay(new Date())}.png`.replace(/[\\/:*?"<>|\s]+/g, "_"), title);
+    } finally {
+      shareBtn.disabled = false;
+    }
+  });
+})();
+
 })();

@@ -30,15 +30,15 @@
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=599a4d1bd5">
-<link rel="stylesheet" href="shared.css?v=c9ab326fc1">
+<link rel="stylesheet" href="shared.css?v=2b0c5080fb">
 <script src="holiday.js?v=2816c2cc17"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
-<script src="i18n.js?v=cf78d1a0fd"></script>
+<script src="i18n.js?v=d4977e2e8a"></script>
 <script src="currencies.js?v=1fe139e56b"></script>
 <script src="motion.js?v=c960fb49b3"></script>
-<script src="version.js?v=09c0198b47"></script>
-<script src="notif-text.js?v=f501aac2ce"></script>
-<script src="shared-ui.js?v=0a4fac52ef"></script>
+<script src="version.js?v=353fc5baea"></script>
+<script src="notif-text.js?v=6e6a6d9174"></script>
+<script src="shared-ui.js?v=6756a5811a"></script>
 <script src="theme.js?v=01d7c0a8c1" defer></script>
 <script src="app-banner.js?v=c400decf5d" defer></script>
 <script>
@@ -1479,6 +1479,17 @@ renderNavLinks();
           rows.push(row("events.html", "clock", e.title, t("events.deadlineToday"), t("events.join"), true));
         });
       }
+    }catch(e){}
+    // 別人替我記的還款，等我確認收到（資料庫還沒有這個欄位時查不到，略過）
+    try{
+      const { data: pend, error: pendErr } = await sb.from("repayments").select("id,from_member,amount,currency,payment_date")
+        .eq("group_id", myMember.group_id).eq("to_member", myMember.id).eq("confirm_status", "pending")
+        .order("payment_date", { ascending: false }).limit(5);
+      if(!pendErr) (pend || []).forEach(r => {
+        rows.unshift(row(`currency.html?c=${encodeURIComponent(r.currency)}&openRepayment=${encodeURIComponent(r.id)}`, "wallet",
+          t("rc.todayTitle", { name: memberById[r.from_member] || "?", amount: money(r.currency, r.amount) }),
+          r.payment_date || "", t("rc.todayAct"), true));
+      });
     }catch(e){}
     list.innerHTML = rows.join("");
     syncTodayCard();

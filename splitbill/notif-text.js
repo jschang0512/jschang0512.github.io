@@ -112,7 +112,9 @@
       repTo: "{from}還你 {amount}", repFrom: "你還給{to} {amount}", repWas: "（原本 {old}）",
       remind: "還款提醒", remindBody: "{creditor}提醒你結清 {amount}",
       eventNew: "{actor}開了新活動", eventBody: "{desc}・{date}",
-      recurSoon: "明天會自動記錄「{desc}」", recurNeed: "{desc}該填金額了", recurNeedBody: "這期金額不固定，點開填好就會記帳"
+      recurSoon: "明天會自動記錄「{desc}」", recurNeed: "{desc}該填金額了", recurNeedBody: "這期金額不固定，點開填好就會記帳",
+      cmtNew: "{actor}在「{desc}」留言", cmtAsk: "{actor}對「{desc}」有疑問",
+      disputed: "{to}說還沒收到這筆還款", disputedBody: "{date} {amount}・確認一下有沒有轉成功，或修改這筆還款"
     },
     "ja": {
       someone: "誰か", item: "支出",
@@ -126,7 +128,9 @@
       repTo: "{from}さんから {amount} の返済", repFrom: "{to}さんに {amount} を返済", repWas: "（変更前 {old}）",
       remind: "返済リマインド", remindBody: "{creditor}さんから {amount} の精算リマインドが届きました",
       eventNew: "{actor}さんがイベントを作成しました", eventBody: "{desc}・{date}",
-      recurSoon: "明日「{desc}」を自動記録します", recurNeed: "{desc}の金額を入力してください", recurNeedBody: "今回の金額は毎回変わります。入力すると記録されます"
+      recurSoon: "明日「{desc}」を自動記録します", recurNeed: "{desc}の金額を入力してください", recurNeedBody: "今回の金額は毎回変わります。入力すると記録されます",
+      cmtNew: "{actor}さんが「{desc}」にコメントしました", cmtAsk: "{actor}さんが「{desc}」について質問しています",
+      disputed: "{to}さんはこの返済をまだ受け取っていないそうです", disputedBody: "{date} {amount}・送金できているか確認するか、返済を修正してください"
     },
     "en": {
       someone: "Someone", item: "Expense",
@@ -140,7 +144,9 @@
       repTo: "{from} paid you {amount}", repFrom: "You paid {to} {amount}", repWas: " (was {old})",
       remind: "Repayment reminder", remindBody: "{creditor} asked you to settle {amount}",
       eventNew: "{actor} created an event", eventBody: "{desc} · {date}",
-      recurSoon: "\"{desc}\" will be recorded tomorrow", recurNeed: "Time to enter the amount for {desc}", recurNeedBody: "This one changes each period. Enter it and it gets recorded"
+      recurSoon: "\"{desc}\" will be recorded tomorrow", recurNeed: "Time to enter the amount for {desc}", recurNeedBody: "This one changes each period. Enter it and it gets recorded",
+      cmtNew: "{actor} commented on \"{desc}\"", cmtAsk: "{actor} has a question about \"{desc}\"",
+      disputed: "{to} says this repayment hasn't arrived", disputedBody: "{date} {amount} · Check the transfer went through, or edit the repayment"
     }
   };
 
@@ -154,7 +160,8 @@
       creditor: p.creditor || L.someone, payee: p.payee || "", date: p.date || "",
       amount: money(p.amount, cur), old: p.old_amount != null ? money(p.old_amount, cur) : "",
       share: money(round(p.share || 0), cur), paid: money(round(p.paid || 0), cur),
-      diff: money(Math.abs(round((p.paid || 0) - (p.share || 0))), cur)
+      diff: money(Math.abs(round((p.paid || 0) - (p.share || 0))), cur),
+      text: p.text || ""
     };
     const f = (tpl) => tpl.replace(/\{(\w+)\}/g, (m, k) => (k in vals ? vals[k] : m));
 
@@ -193,6 +200,10 @@
         return { title: f(L.recurSoon), body: vals.amount + (p.share > 0 ? f(L.share) : "") };
       case "recurring_need_amount":
         return { title: f(L.recurNeed), body: f(L.recurNeedBody) };
+      case "expense_comment":
+        return { title: f(p.kind === "not_involved" || p.kind === "wrong_amount" ? L.cmtAsk : L.cmtNew), body: vals.text };
+      case "repayment_disputed":
+        return { title: f(L.disputed), body: f(L.disputedBody) };
     }
     return null;
   }

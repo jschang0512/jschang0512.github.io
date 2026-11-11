@@ -732,8 +732,10 @@ async function initNotificationBell(sb, myMember){
   }
   const NOTIF_KIND = { expenses_insert: "add", expenses_update: "edit", recurring_generated: "repeat",
     repayments_insert: "repay", repayments_update: "repay", debt_reminder: "remind", event_created: "add",
-    recurring_upcoming: "repeat", recurring_need_amount: "repeat" };
-  const NOTIF_ICON = { add: "receipt", edit: "pencil", repeat: "repeat", repay: "swap", remind: "bell", other: "bell" };
+    recurring_upcoming: "repeat", recurring_need_amount: "repeat", expense_comment: "comment", repayment_disputed: "remind" };
+  const NOTIF_ICON = { add: "receipt", edit: "pencil", repeat: "repeat", repay: "swap", remind: "bell", comment: "message", other: "bell" };
+  // 別人替我記的還款，通知上直接放「收到了／還沒收到」（還款 id → 目前狀態）
+  let notifRepayStatus = {};
 
   // 點通知：跳到對應的那一筆（支出、還款、固定支出、活動、催款的那個人）
   async function openNotif(n){
@@ -741,7 +743,7 @@ async function initNotificationBell(sb, myMember){
     const enc = encodeURIComponent;
     if(table === "expenses" && id){
       const { data: exp } = await sb.from("expenses").select("currency").eq("id", id).maybeSingle();
-      if(exp && exp.currency) location.href = `currency.html?c=${enc(exp.currency)}&openExpense=${enc(id)}`;
+      if(exp && exp.currency) location.href = `currency.html?c=${enc(exp.currency)}&openExpense=${enc(id)}${n.type === "expense_comment" ? "&comments=1" : ""}`;
       else if(window.showToast) showToast(t("shared.notifTargetGone"));
     } else if(table === "repayments" && id){
       const { data: rep } = await sb.from("repayments").select("currency").eq("id", id).maybeSingle();
@@ -782,6 +784,10 @@ async function initNotificationBell(sb, myMember){
           <div class="notif-item-title">${n.is_read ? "" : '<span class="notif-unread-dot"></span>'}${escapeHtml(txt.title)}</div>
           <div class="notif-item-body">${escapeHtml(txt.body)}</div>
           <div class="notif-item-time">${notifTimeAgo(n.created_at)}</div>
+          ${n.related_table === "repayments" && notifRepayStatus[n.related_id] === "pending" && n.params && n.params.role === "to" ? `<div class="notif-rc">
+            <button type="button" class="notif-rc-btn is-yes" data-rid="${n.related_id}" data-v="confirmed">${escapeHtml(t("rc.gotIt"))}</button>
+            <button type="button" class="notif-rc-btn" data-rid="${n.related_id}" data-v="disputed">${escapeHtml(t("rc.notYet"))}</button>
+          </div>` : ""}
         </div>
         <button type="button" class="notif-item-del" data-id="${n.id}" title="${t("shared.deleteNotifTitle")}" aria-label="${t("settings.delete")}">✕</button>
       </div>`;
@@ -819,12 +825,32 @@ async function initNotificationBell(sb, myMember){
     }
     rows = rows.concat(data || []);
     hasMore = (data || []).length === PAGE;
+    const repIds = (data || []).filter(n => n.related_table === "repayments" && n.related_id && n.params && n.params.role === "to").map(n => n.related_id);
+    if(repIds.length){
+      const { data: reps, error: repErr } = await sb.from("repayments").select("id,confirm_status").in("id", [...new Set(repIds)]);
+      if(!repErr) (reps || []).forEach(r => { notifRepayStatus[r.id] = r.confirm_status; });
+    }
     renderList();
   }
 
   // 清單裡的點擊統一在這裡處理（清單會重畫，不用每次重綁）
   listEl.addEventListener("click", async (e)=>{
     if(e.target.closest("#notifLoadMore")){ e.target.closest("#notifLoadMore").disabled = true; await loadList(true); return; }
+    const rcBtn = e.target.closest(".notif-rc-btn");
+    if(rcBtn){
+      e.stopPropagation();
+      rcBtn.parentElement.querySelectorAll("button").forEach(b => { b.disabled = true; });
+      const { data: upd, error: rcErr } = await sb.from("repayments").update({ confirm_status: rcBtn.dataset.v }).eq("id", rcBtn.dataset.rid).select("id,confirm_status").maybeSingle();
+      if(rcErr || !upd || upd.confirm_status !== rcBtn.dataset.v){
+        rcBtn.parentElement.querySelectorAll("button").forEach(b => { b.disabled = false; });
+        if(window.showToast) showToast(t("rc.failed"));
+        return;
+      }
+      notifRepayStatus[upd.id] = upd.confirm_status;
+      if(window.showToast) showToast(t(upd.confirm_status === "confirmed" ? "rc.doneOk" : "rc.doneNo"));
+      renderList();
+      return;
+    }
     const del = e.target.closest(".notif-item-del");
     const item = e.target.closest(".notif-item");
     if(!item) return;

@@ -10171,10 +10171,6 @@ html body .notif-card .notif-item-del{ width:36px; height:36px; flex:none; }
 }
 
 /* ---------- v963 複製轉帳資訊 ---------- */
-html body .debt-payinfo-btn{ display:inline-flex; align-items:center; justify-content:center; gap:6px; min-height:44px; width:100%; margin:0; }
-html body .debt-payinfo-btn .sb-ico{ width:16px; height:16px; }
-html body .debt-payinfo-hint{ display:block; padding:10px 2px; font-size:13px; color:var(--ink-soft); text-decoration:none; }
-html body .debt-payinfo-hint:hover{ color:var(--btn-primary); }
 
 /* ============================================================
    v964 彈窗開、關都有動畫
@@ -11103,3 +11099,98 @@ html body .sb-title-streak{
 }
 @media (max-width: 767px){ html body .sb-title-streak{ font-size:11px; padding:2px 7px; } }
 @media (prefers-reduced-motion: reduce){ html body .sb-nag-progress i{ animation:none; } }
+
+/* ===== v988：單筆支出留言、收款確認、兩人對帳單 ===== */
+html body .cmt-badge{ display:inline-flex; align-items:center; gap:3px; margin-left:6px; padding:1px 7px; border-radius:999px; vertical-align:2px;
+  background:color-mix(in srgb, var(--btn-primary) 12%, transparent); color:var(--btn-primary); font-size:11.5px; font-weight:700; line-height:1.5; }
+html body .cmt-badge[hidden]{ display:none; }
+html body .cmt-badge .sb-ico{ width:12px; height:12px; }
+html body .exp-cmt{ margin-top:16px; padding-top:14px; border-top:1px solid var(--line, color-mix(in srgb, var(--ink) 10%, transparent)); }
+html body .exp-cmt-head{ display:flex; align-items:center; gap:6px; font-weight:700; font-size:15px; color:var(--ink); margin-bottom:10px; }
+html body .exp-cmt-head .sb-ico{ width:17px; height:17px; }
+html body .exp-cmt-count{ color:var(--ink-soft); font-weight:600; }
+html body .exp-cmt-list{ display:flex; flex-direction:column; gap:12px; margin-bottom:12px; }
+html body .exp-cmt-empty{ margin:0; color:var(--ink-soft); font-size:13.5px; }
+html body .exp-cmt-item{ display:flex; gap:10px; align-items:flex-start; }
+html body .exp-cmt-main{ min-width:0; flex:1; }
+html body .exp-cmt-meta{ display:flex; align-items:center; gap:8px; font-size:13px; }
+html body .exp-cmt-meta b{ color:var(--ink); font-weight:700; }
+html body .exp-cmt-meta time{ color:var(--ink-soft); font-size:12px; }
+html body .exp-cmt-del{ margin-left:auto; border:0; background:none; color:var(--ink-soft); font-size:13px; min-width:32px; min-height:32px; border-radius:8px; cursor:pointer; }
+html body .exp-cmt-del:hover{ background:color-mix(in srgb, var(--ink) 7%, transparent); color:var(--ink); }
+html body .exp-cmt-text{ font-size:14.5px; color:var(--ink); line-height:1.55; overflow-wrap:anywhere; white-space:pre-wrap; }
+html body .exp-cmt-tag{ display:inline-block; margin-right:6px; padding:0 7px; border-radius:999px; font-size:11.5px; font-weight:700; line-height:1.7; vertical-align:1px; }
+html body .exp-cmt-tag.is-ask{ background:color-mix(in srgb, #E8A317 20%, transparent); color:color-mix(in srgb, #8A5A00 85%, var(--ink)); }
+html body .exp-cmt-tag.is-ok{ background:color-mix(in srgb, var(--positive-text) 14%, transparent); color:var(--positive-text); }
+html body .exp-cmt-quick{ display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
+html body .exp-cmt-chip{ min-height:34px; padding:4px 12px; border-radius:999px; border:1px solid color-mix(in srgb, var(--ink) 16%, transparent); background:var(--card); color:var(--ink-soft); font:inherit; font-size:13px; cursor:pointer; white-space:nowrap; }
+html body .exp-cmt-chip:hover{ color:var(--ink); border-color:color-mix(in srgb, var(--ink) 30%, transparent); }
+html body .exp-cmt-form{ display:flex; gap:8px; }
+html body .exp-cmt-input{ flex:1; min-width:0; min-height:44px; }
+html body .exp-cmt-send{ flex:none; width:44px; min-height:44px; border-radius:12px; border:0; background:var(--btn-primary); color:#fff; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; }
+html body .exp-cmt-send .sb-ico{ width:18px; height:18px; }
+html body .exp-cmt.is-sending .exp-cmt-send, html body .exp-cmt.is-sending .exp-cmt-chip{ opacity:.55; pointer-events:none; }
+html body :is(.exp-cmt-chip, .exp-cmt-send, .exp-cmt-del):focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; }
+
+html body .rc-pill{ display:inline-flex; align-items:center; gap:3px; margin-left:6px; padding:1px 8px; border-radius:999px; font-size:11.5px; font-weight:700; line-height:1.6; vertical-align:1px; white-space:nowrap; }
+html body .rc-pill .sb-ico{ width:11px; height:11px; }
+html body .rc-pill.is-pending{ background:color-mix(in srgb, #E8A317 20%, transparent); color:color-mix(in srgb, #8A5A00 85%, var(--ink)); }
+html body .rc-pill.is-disputed{ background:color-mix(in srgb, var(--negative-text, #D0283F) 13%, transparent); color:var(--negative-text, #D0283F); }
+html body .rc-pill.is-ok{ background:color-mix(in srgb, var(--positive-text) 13%, transparent); color:var(--positive-text); }
+html body .rc-acts{ display:flex; gap:8px; margin-top:8px; }
+html body .rc-btn{ display:inline-flex; align-items:center; gap:4px; min-height:36px; padding:4px 14px; border-radius:10px; border:1px solid color-mix(in srgb, var(--ink) 16%, transparent); background:var(--card); color:var(--ink); font:inherit; font-size:13.5px; font-weight:600; cursor:pointer; }
+html body .rc-btn.is-yes{ background:var(--positive-text); border-color:transparent; color:#fff; }
+html body .rc-btn .sb-ico{ width:14px; height:14px; }
+html body .rc-btn:disabled{ opacity:.55; cursor:not-allowed; }
+html body .rc-btn:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; }
+html body .notif-rc{ display:flex; gap:8px; margin-top:8px; }
+html body .notif-rc-btn{ min-height:34px; padding:3px 14px; border-radius:10px; border:1px solid color-mix(in srgb, var(--ink) 16%, transparent); background:var(--card); color:var(--ink); font:inherit; font-size:13px; font-weight:600; cursor:pointer; }
+html body .notif-rc-btn.is-yes{ background:var(--positive-text); border-color:transparent; color:#fff; }
+html body .notif-rc-btn:disabled{ opacity:.55; }
+html body .notif-kind-comment .notif-item-ico{ color:var(--btn-primary); }
+
+html body .debt-detail-top-bar{ gap:8px; }
+html body .debt-detail-stmt-btn{ margin-left:auto; display:inline-flex; align-items:center; gap:5px; min-height:36px; padding:4px 12px; border-radius:10px;
+  border:1px solid color-mix(in srgb, var(--ink) 14%, transparent); background:var(--card); color:var(--ink); font:inherit; font-size:13.5px; font-weight:600; cursor:pointer; white-space:nowrap; }
+html body .debt-detail-stmt-btn .sb-ico{ width:15px; height:15px; }
+html body .debt-detail-stmt-btn:hover{ border-color:color-mix(in srgb, var(--ink) 28%, transparent); }
+html body .debt-detail-stmt-btn:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; }
+html body .pair-stmt-card{ max-width:560px; width:100%; }
+html body .pair-stmt-range{ display:flex; gap:6px; flex-wrap:wrap; margin:4px 0 10px; }
+html body .pair-stmt-chip{ min-height:34px; padding:4px 14px; border-radius:999px; border:1px solid color-mix(in srgb, var(--ink) 16%, transparent); background:var(--card); color:var(--ink-soft); font:inherit; font-size:13.5px; font-weight:600; cursor:pointer; }
+html body .pair-stmt-chip.is-on{ background:color-mix(in srgb, var(--btn-primary) 13%, transparent); border-color:color-mix(in srgb, var(--btn-primary) 45%, transparent); color:var(--btn-primary); }
+html body .pair-stmt-chip:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; }
+html body .pair-stmt-custom{ display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+html body .pair-stmt-custom[hidden]{ display:none; }
+html body .pair-stmt-custom input{ flex:1; min-width:0; min-height:40px; }
+html body .pair-stmt-sheet{ border:1px solid color-mix(in srgb, var(--ink) 11%, transparent); border-radius:14px; padding:14px; background:var(--card); }
+html body .pair-stmt-head{ display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+html body .pair-stmt-head b{ font-size:15.5px; color:var(--ink); overflow-wrap:anywhere; }
+html body .pair-stmt-head span{ font-size:12px; font-weight:700; color:var(--ink-soft); }
+html body .pair-stmt-period{ font-size:12.5px; color:var(--ink-soft); margin:2px 0 8px; }
+html body .pair-stmt-table{ width:100%; border-collapse:collapse; table-layout:fixed; font-size:13.5px; font-variant-numeric:tabular-nums; }
+html body .pair-stmt-table col.c-amt{ width:27%; }
+html body .pair-stmt-table th{ font-size:12px; font-weight:700; color:var(--ink-soft); text-align:right; padding:6px 4px; border-bottom:1px solid color-mix(in srgb, var(--ink) 16%, transparent); overflow-wrap:anywhere; }
+html body .pair-stmt-table th:first-child, html body .pair-stmt-table td:first-child{ text-align:left; }
+html body .pair-stmt-table td{ padding:7px 4px; text-align:right; vertical-align:top; border-bottom:1px solid color-mix(in srgb, var(--ink) 8%, transparent); color:var(--ink); font-weight:600; }
+html body .pair-stmt-table td:first-child{ font-weight:500; }
+html body .pair-stmt-name{ display:block; overflow-wrap:anywhere; }
+html body .pair-stmt-table small{ display:block; font-size:11.5px; color:var(--ink-soft); font-weight:500; }
+html body .pair-stmt-flag{ font-style:normal; color:var(--negative-text, #D0283F); font-weight:700; }
+html body .pair-stmt-table td.is-zero{ color:color-mix(in srgb, var(--ink) 30%, transparent); font-weight:400; }
+html body .pair-stmt-table td.is-minus{ color:var(--positive-text); }
+html body .pair-stmt-table tr.is-open td{ color:var(--ink-soft); }
+html body .pair-stmt-table tfoot th, html body .pair-stmt-table tfoot td{ border-bottom:0; padding-top:9px; font-weight:800; color:var(--ink); font-size:14px; }
+html body .pair-stmt-table tfoot th{ text-align:left; }
+html body .pair-stmt-settle{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:8px; padding:10px 12px; border-radius:10px;
+  background:color-mix(in srgb, var(--positive-text) 12%, transparent); color:var(--positive-text); font-size:14px; }
+html body .pair-stmt-settle b{ font-size:15px; text-align:right; }
+html body .pair-stmt-settle.is-clear{ background:color-mix(in srgb, var(--ink) 6%, transparent); color:var(--ink-soft); }
+html body .pair-stmt-empty{ margin:14px 0; color:var(--ink-soft); text-align:center; }
+html body .pair-stmt-actions{ display:flex; gap:8px; margin-top:12px; }
+html body .pair-stmt-actions .btn{ flex:1; }
+@media (max-width: 767px){
+  html body .debt-detail-stmt-btn span{ font-size:13px; }
+  html body .pair-stmt-table{ font-size:13px; }
+  html body .pair-stmt-sheet{ padding:12px 10px; }
+}

@@ -8,6 +8,25 @@
 // ============================================================
 window.SB_RELEASE_NOTES = [
   {
+    version: "988",
+    date: "2026-11-12",
+    "zh-Hant": [
+      "每一筆支出都可以留言，有疑問直接在那筆底下問，相關的人會收到通知",
+      "別人替你記的還款，你可以按「收到了」或「還沒收到」，記的人會知道",
+      "兩人往來明細多了「對帳單」，可以複製文字或分享圖片給對方核對"
+    ],
+    "ja": [
+      "支出ごとにコメントできるようになりました。関係する人に通知が届きます",
+      "ほかの人が記録したあなたへの返済に「受け取った／まだ届いていない」で返事できます",
+      "2 人のやり取りの画面に「明細書」を追加。テキストや画像で相手と確認できます"
+    ],
+    "en": [
+      "Comment on any expense. Everyone involved gets notified",
+      "When someone records a repayment to you, tap Got it or Not yet so they know",
+      "A Statement button on the two-person history lets you copy or share it to check together"
+    ]
+  },
+  {
     version: "987",
     date: "2026-11-12",
     "zh-Hant": [
