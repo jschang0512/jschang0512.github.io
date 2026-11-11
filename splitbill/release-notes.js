@@ -8,6 +8,25 @@
 // ============================================================
 window.SB_RELEASE_NOTES = [
   {
+    version: "989",
+    date: "2026-11-12",
+    "zh-Hant": [
+      "紀錄的搜尋也會找留言，搜到的那則會列在支出下面",
+      "快速篩選多了「有疑問」，只看還沒解決疑問的支出；有疑問的留言標記會變成黃色",
+      "對帳單可以下載成 PDF 或圖片"
+    ],
+    "ja": [
+      "履歴の検索でコメントも探せます。見つかったコメントは支出の下に表示",
+      "クイックフィルターに「質問あり」を追加。未解決の質問がある支出だけ表示します",
+      "明細書を PDF または画像でダウンロードできます"
+    ],
+    "en": [
+      "Search in History now covers comments, and shows the matching one under the expense",
+      "New Has questions quick filter shows only expenses with an open question",
+      "Download a statement as a PDF or an image"
+    ]
+  },
+  {
     version: "988",
     date: "2026-11-12",
     "zh-Hant": [

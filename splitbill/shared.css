@@ -11194,3 +11194,15 @@ html body .pair-stmt-actions .btn{ flex:1; }
   html body .pair-stmt-table{ font-size:13px; }
   html body .pair-stmt-sheet{ padding:12px 10px; }
 }
+
+/* ===== v989：留言搜尋、有疑問 ===== */
+html body .cmt-badge.is-ask{ background:color-mix(in srgb, #E8A317 22%, transparent); color:color-mix(in srgb, #8A5A00 85%, var(--ink)); }
+html body .exp-meta-line.exp-cmt-hit{ display:flex; align-items:flex-start; gap:5px; color:var(--ink); }
+html body .exp-cmt-hit .sb-ico{ flex:none; width:13px; height:13px; margin-top:3px; color:var(--btn-primary); }
+html body .exp-cmt-hit > span{ min-width:0; overflow-wrap:anywhere; }
+html body .debt-empty-icon{ display:flex; align-items:center; justify-content:center; }
+/* 對帳單：彈窗限高，表格區自己捲動（電腦版太長也滑得到），表頭黏在上面 */
+html body #pairStatementModal .pair-stmt-card{ display:flex !important; flex-direction:column; max-height:calc(100dvh - 40px) !important; overflow:hidden !important; }
+html body #pairStatementModal .pair-stmt-body{ flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+html body #pairStatementModal .pair-stmt-table thead th{ position:sticky; top:0; z-index:1; background:var(--card); }
+html body #pairStatementModal .pair-stmt-actions{ flex:none; }

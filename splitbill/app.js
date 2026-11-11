@@ -2854,7 +2854,7 @@
       : Promise.resolve({ data: [], error: null });
 
     const cmtQuery = gid
-      ? sb.from("expense_comments").select("expense_id").eq("group_id", gid)
+      ? sb.from("expense_comments").select("expense_id,member_id,content,kind,created_at").eq("group_id", gid).order("created_at", { ascending: true })
       : Promise.resolve({ data: [], error: null });
     const [
       { data: allExp, error: expError },
@@ -2865,7 +2865,11 @@
     ] = await Promise.all([expQuery, repQuery, balQuery, catLearnQuery, cmtQuery]);
     // 單筆支出的留言數（資料表還沒建時就當作都沒有留言）
     window.__sbCommentCounts = {};
-    if(!cmtError) (cmtRows || []).forEach(c => { window.__sbCommentCounts[c.expense_id] = (window.__sbCommentCounts[c.expense_id] || 0) + 1; });
+    window.__sbComments = {};
+    if(!cmtError) (cmtRows || []).forEach(c => {
+      window.__sbCommentCounts[c.expense_id] = (window.__sbCommentCounts[c.expense_id] || 0) + 1;
+      (window.__sbComments[c.expense_id] || (window.__sbComments[c.expense_id] = [])).push(c);
+    });
     // 側邊選單的各幣別款項直接用這次查到的，不用再查一次
     if(!balError) window.__sbBalRows = { at: Date.now(), rows: balRows || [] };
 
@@ -3382,7 +3386,8 @@
       e.note || "",
       String(e.amount || ""),
       (e.payers || []).map(p => memberById[p.member_id] || "").join(" "),
-      (e.shares || []).map(s => memberById[s.member_id] || "").join(" ")
+      (e.shares || []).map(s => memberById[s.member_id] || "").join(" "),
+      ((window.__sbComments || {})[e.id] || []).map(c => (memberById[c.member_id] || "") + " " + c.content).join(" ")
     ].join(" ").toLowerCase();
 
     if(keyword && !searchTarget.includes(keyword)) return false;
@@ -3418,6 +3423,7 @@
     if(activeMultiFilters.has("recurring")){
       if(!(isRecurringGeneratedStr(e.description) || isRecurringGeneratedStr(e.note))) return false;
     }
+    if(activeMultiFilters.has("asking") && !expenseHasOpenQuestion(e.id)) return false;
 
     // 💰 金額區間篩選
     const amt = Number(e.amount) || 0;
@@ -4102,6 +4108,7 @@
               <span class="exp-meta-line">${t("currency.timePrefix")}${e.expense_date}${formatTime(e.created_at, e.expense_date) ? " " + formatTime(e.created_at, e.expense_date) : ""}（${highlightSearchMatch(memberById[e.created_by] || "?", searchKw)}）</span>
               <span class="exp-meta-line">${t("currency.paymentPrefix")}${payerNames || "—"}</span>
               <span class="exp-meta-line">${t("currency.owePrefix")}${shareNames || "—"}</span>
+              ${commentHitHTML(e.id, searchKw)}
             </div>
           </div>
           <div class="exp-right">
@@ -8132,18 +8139,52 @@ function showPairDetail(
 // 用 data-cmt-for 找，留言送出/刪除後就地更新，不用整頁重畫。資料表還沒建時
 // 整段留言區不出現，其他功能照常。
 const CMT_KINDS = { not_involved: "cmt.kindNotInvolved", wrong_amount: "cmt.kindWrongAmount", ok: "cmt.kindOk" };
+// 「有疑問」：最近一則有標記的留言是「這筆我沒參與」或「金額好像不對」；之後有人按
+// 「確認沒問題」就算解決了。
+function expenseHasOpenQuestion(expenseId){
+  const list = (window.__sbComments || {})[expenseId] || [];
+  for(let i = list.length - 1; i >= 0; i--){
+    const k = list[i].kind;
+    if(k === "ok") return false;
+    if(k === "not_involved" || k === "wrong_amount") return true;
+  }
+  return false;
+}
 function cmtBadgeHTML(expenseId){
   const n = (window.__sbCommentCounts || {})[expenseId] || 0;
-  return `<span class="cmt-badge" data-cmt-for="${expenseId}" title="${escapeHtml(t("cmt.badgeTitle", { n }))}"${n ? "" : " hidden"}>${sbIcon("message")}<b>${n}</b></span>`;
+  const ask = expenseHasOpenQuestion(expenseId);
+  return `<span class="cmt-badge${ask ? " is-ask" : ""}" data-cmt-for="${expenseId}" title="${escapeHtml(t(ask ? "cmt.badgeAskTitle" : "cmt.badgeTitle", { n }))}"${n ? "" : " hidden"}>${sbIcon("message")}<b>${n}</b></span>`;
+}
+// 搜尋關鍵字出現在留言裡：列出第一則，關鍵字前後各留一點字
+function commentHitHTML(expenseId, kw){
+  kw = String(kw || "").trim().toLowerCase();
+  if(!kw) return "";
+  const c = ((window.__sbComments || {})[expenseId] || []).find(x => String(x.content).toLowerCase().includes(kw) || String(memberById[x.member_id] || "").toLowerCase().includes(kw));
+  if(!c) return "";
+  const text = String(c.content);
+  const at = text.toLowerCase().indexOf(kw);
+  let snip = text;
+  if(text.length > 44){
+    const start = Math.max(0, (at < 0 ? 0 : at) - 16);
+    snip = (start > 0 ? "…" : "") + text.slice(start, start + 44) + (start + 44 < text.length ? "…" : "");
+  }
+  const esc = s => escapeHtml(s);
+  const mark = (s) => {
+    const i = s.toLowerCase().indexOf(kw);
+    return i < 0 ? esc(s) : esc(s.slice(0, i)) + '<mark class="sb-search-match">' + esc(s.slice(i, i + kw.length)) + "</mark>" + esc(s.slice(i + kw.length));
+  };
+  return `<span class="exp-meta-line exp-cmt-hit">${sbIcon("message")}<span>${mark(memberById[c.member_id] || "?")}：${mark(snip)}</span></span>`;
 }
 function setCommentCount(expenseId, n){
   const counts = window.__sbCommentCounts || (window.__sbCommentCounts = {});
   counts[expenseId] = Math.max(0, n);
+  const ask = expenseHasOpenQuestion(expenseId);
   document.querySelectorAll(`.cmt-badge[data-cmt-for="${CSS.escape(expenseId)}"]`).forEach(b => {
     b.hidden = !counts[expenseId];
+    b.classList.toggle("is-ask", ask);
     const num = b.querySelector("b");
     if(num) num.textContent = counts[expenseId];
-    b.title = t("cmt.badgeTitle", { n: counts[expenseId] });
+    b.title = t(ask ? "cmt.badgeAskTitle" : "cmt.badgeTitle", { n: counts[expenseId] });
   });
 }
 function cmtTimeText(iso){
@@ -8200,6 +8241,7 @@ async function renderExpenseComments(e, host, focus){
     }).join("");
   }
   draw();
+  (window.__sbComments || (window.__sbComments = {}))[e.id] = rows.slice();
   setCommentCount(e.id, rows.length);
   if(focus){
     setTimeout(()=>{
@@ -8226,7 +8268,8 @@ async function renderExpenseComments(e, host, focus){
     }
     rows.push(row);
     draw();
-    setCommentCount(e.id, rows.length);
+    (window.__sbComments || (window.__sbComments = {}))[e.id] = rows.slice();
+  setCommentCount(e.id, rows.length);
     listEl.lastElementChild && listEl.lastElementChild.scrollIntoView({ block: "nearest" });
   }
   host.querySelector(".exp-cmt-form").addEventListener("submit", async (ev)=>{
@@ -8251,7 +8294,8 @@ async function renderExpenseComments(e, host, focus){
     if(delErr){ if(window.showToast) showToast(t("cmt.sendFailed")); return; }
     rows = rows.filter(c => c.id !== del.dataset.id);
     draw();
-    setCommentCount(e.id, rows.length);
+    (window.__sbComments || (window.__sbComments = {}))[e.id] = rows.slice();
+  setCommentCount(e.id, rows.length);
   });
 }
 
@@ -8332,22 +8376,31 @@ function pairStmtData(){
   const first = evs[0], last = evs[evs.length - 1];
   const openA = r2(first.balanceForward - first.forwardDelta);
   const openB = r2(first.balanceReverse - first.reverseDelta);
+  // 每一列的金額取「這一列之後的結餘 − 前一列的結餘」（結餘本來就算到分），
+  // 各列加起來一定剛好等於合計，不會差 0.01
+  let prevA = openA, prevB = openB;
   const rows = evs.map(ev => {
-    let name, sub, flag = "";
+    const a = r2(ev.balanceForward - prevA), b = r2(ev.balanceReverse - prevB);
+    prevA = ev.balanceForward; prevB = ev.balanceReverse;
+    let name, sub, flag = "", flagKind = "";
     if(ev.type === "expense"){
       const e = ev.expense;
       name = getFirstLineDesc(e.description || t("summary.untitledExpense"));
-      const payers = (e.payers || []).filter(p => Number(p.amount) > 0.005).map(p => memberById[p.member_id] || "?");
-      sub = payers.length ? t("stmt.paidBy", { names: payers.join("、") }) : "";
+      sub = (e.payers || []).filter(p => Number(p.amount) > 0.005)
+        .map(p => t("stmt.advanced", { name: memberById[p.member_id] || "?", amt: formatAmt(p.amount), money: SYM + formatAmt(p.amount) }))
+        .join("、");
     } else {
       const r = ev.repayment;
       const offset = r.offset_group && !isXcurStr(r.offset_group);
       name = t(offset ? "stmt.offset" : "stmt.repay");
-      sub = offset ? `${memberById[r.from_member] || "?"} ↔ ${memberById[r.to_member] || "?"}` : `${memberById[r.from_member] || "?"} → ${memberById[r.to_member] || "?"}`;
-      if(r.confirm_status === "pending") flag = t("stmt.pendingMark");
-      else if(r.confirm_status === "disputed") flag = t("stmt.disputedMark");
+      const money = { amt: formatAmt(ev.amount), money: SYM + formatAmt(ev.amount) };
+      sub = offset
+        ? t("stmt.offsetLine", money)
+        : t("stmt.repaidLine", Object.assign({ from: memberById[r.from_member] || "?", to: memberById[r.to_member] || "?" }, money));
+      if(r.confirm_status === "pending"){ flag = t("stmt.pendingMark"); flagKind = "pending"; }
+      else if(r.confirm_status === "disputed"){ flag = t("stmt.disputedMark"); flagKind = "disputed"; }
     }
-    return { date: ev.date || "", name, sub, flag, a: ev.forwardDelta, b: ev.reverseDelta };
+    return { type: ev.type, date: ev.date || "", name, sub, flag, flagKind, a, b };
   });
   const endA = last.balanceForward, endB = last.balanceReverse;
   const dates = evs.map(ev => ev.date).filter(Boolean).sort();
@@ -8359,7 +8412,7 @@ function pairStmtDate(d, withYear){
   return withYear ? `${y}/${m}/${day}` : `${m}/${day}`;
 }
 function pairStmtCell(v){
-  if(Math.abs(v) < 0.005) return { txt: "—", cls: "is-zero" };
+  if(Math.abs(v) < 0.005) return { txt: "0", cls: "is-zero" };
   return { txt: (v < 0 ? "−" : "") + formatAmt(Math.abs(v)), cls: v < 0 ? "is-minus" : "" };
 }
 function pairStmtSettle(d){
@@ -8379,7 +8432,7 @@ function renderPairStatement(){
   const customBox = document.getElementById("pairStmtCustom");
   if(customBox) customBox.hidden = pairStmtRange !== "custom";
   const d = pairStmtData();
-  const actions = document.querySelectorAll("#pairStmtCopyBtn, #pairStmtShareBtn");
+  const actions = document.querySelectorAll("#pairStmtPdfBtn, #pairStmtImgBtn");
   if(!d || d.empty){
     body.innerHTML = `<p class="pair-stmt-empty">${escapeHtml(t("stmt.empty"))}</p>`;
     actions.forEach(b => { b.disabled = true; });
@@ -8408,31 +8461,12 @@ function renderPairStatement(){
       <div class="pair-stmt-settle${Math.abs(d.net) < 0.005 ? " is-clear" : ""}"><span>${escapeHtml(t("stmt.settle"))}</span><b>${escapeHtml(pairStmtSettle(d))}</b></div>
     </div>`;
 }
-function pairStatementText(){
-  const d = pairStmtData();
-  if(!d || d.empty) return "";
-  const withYear = d.from.slice(0, 4) !== d.to.slice(0, 4) || d.from.slice(0, 4) !== String(new Date().getFullYear());
-  const owes = (x, y, v) => `${t("stmt.colOwes", { a: x, b: y })} ${pairStmtCell(v).txt}`;
-  const both = (va, vb) => [Math.abs(va) >= 0.005 ? owes(d.A, d.B, va) : "", Math.abs(vb) >= 0.005 ? owes(d.B, d.A, vb) : ""].filter(Boolean).join("・");
-  const lines = [];
-  lines.push(`${t("stmt.heading", { a: d.A, b: d.B })}（${CURRENCY}）`);
-  lines.push(`${pairStmtDate(d.from, true)} – ${pairStmtDate(d.to, true)}・${t("stmt.count", { n: d.rows.length })}`);
-  lines.push("");
-  if(Math.abs(d.openA) >= 0.005 || Math.abs(d.openB) >= 0.005) lines.push(`${t("stmt.opening")}｜${both(d.openA, d.openB)}`);
-  d.rows.forEach(r => {
-    const sub = [r.sub, r.flag].filter(Boolean).join("・");
-    lines.push(`${pairStmtDate(r.date, withYear)} ${r.name}${sub ? `（${sub}）` : ""}｜${both(r.a, r.b) || "—"}`);
-  });
-  lines.push("");
-  lines.push(`${t("stmt.total")}｜${t("stmt.colOwes", { a: d.A, b: d.B })} ${SYM}${formatAmt(d.endA)}・${t("stmt.colOwes", { a: d.B, b: d.A })} ${SYM}${formatAmt(d.endB)}`);
-  lines.push(`${t("stmt.settle")}｜${pairStmtSettle(d)}`);
-  return lines.join("\n");
-}
 // 圖片：跟結算圖片同一套配色，3 倍解析度，背景鋪滿（聊天軟體裡不會缺角）
 function pairStatementCanvas(){
   const d = pairStmtData();
   if(!d || d.empty) return null;
-  const C = getSettlementImageColors(isSettlementDarkTheme());
+  const dark = isSettlementDarkTheme();
+  const C = getSettlementImageColors(dark);
   const FONT = "'Noto Sans TC', sans-serif";
   const withYear = d.from.slice(0, 4) !== d.to.slice(0, 4) || d.from.slice(0, 4) !== String(new Date().getFullYear());
   const hasOpen = Math.abs(d.openA) >= 0.005 || Math.abs(d.openB) >= 0.005;
@@ -8515,7 +8549,7 @@ function pairStatementCanvas(){
   // 結算
   const sy = ty + tableH + 14;
   const clear = Math.abs(d.net) < 0.005;
-  ctx.fillStyle = clear ? C.tint : (isSettlementDarkTheme() ? "#173322" : "#E3F4E9");
+  ctx.fillStyle = clear ? C.tint : (dark ? "#173322" : "#E3F4E9");
   ctx.beginPath(); if(ctx.roundRect) ctx.roundRect(PAD, sy, innerW, settleH, 12); else ctx.rect(PAD, sy, innerW, settleH);
   ctx.fill();
   ctx.textAlign = "left"; ctx.font = `600 14px ${FONT}`; ctx.fillStyle = clear ? C.muted : C.positive;
@@ -8524,26 +8558,267 @@ function pairStatementCanvas(){
   ctx.fillText(fit(pairStmtSettle(d), innerW - 90), W - PAD - 16, sy + 35);
   return canvas;
 }
-async function sbShareImageBlob(blob, filename, title){
+// 下載檔案：APP 裡存到「文件」資料夾，瀏覽器直接下載
+async function sbDownloadBlob(blob, filename){
   const isCapacitor = typeof window.Capacitor !== "undefined" && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform();
-  if(isCapacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem && window.Capacitor.Plugins.Share){
+  if(isCapacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem){
     try{
       const dataUrl = await new Promise(res => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(blob); });
-      const saved = await window.Capacitor.Plugins.Filesystem.writeFile({ path: filename, data: String(dataUrl).split(",")[1], directory: "CACHE" });
-      if(saved && saved.uri){ await window.Capacitor.Plugins.Share.share({ title, url: saved.uri, dialogTitle: title }); return; }
-    }catch(e){ console.warn("Capacitor share failed:", e); }
-  }
-  const file = new File([blob], filename, { type: "image/png" });
-  if(navigator.share && navigator.canShare && navigator.canShare({ files: [file] })){
-    try{ await navigator.share({ files: [file], title }); return; }
-    catch(e){ if(e && e.name === "AbortError") return; }
+      await window.Capacitor.Plugins.Filesystem.writeFile({ path: filename, data: String(dataUrl).split(",")[1], directory: "DOCUMENTS" });
+      if(window.showToast) showToast(t("stmt.savedTitle"), t("stmt.savedBody", { filename }));
+      return;
+    }catch(e){ console.warn("Capacitor save failed:", e); }
   }
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url; a.download = filename;
   document.body.appendChild(a); a.click();
-  setTimeout(()=>{ a.remove(); URL.revokeObjectURL(url); }, 1000);
-  if(window.showToast) showToast(t("stmt.downloaded"));
+  setTimeout(()=>{ a.remove(); URL.revokeObjectURL(url); }, 4000);
+}
+// PDF：A4 直式，每一頁自己排版（不是把圖片切開）。字級用 pt：大標題 16、小標題 14、
+// 內文 12、小備註 10；中文微軟正黑體、英文 Arial（裝置上沒有時用系統字型）。
+// 版面：抬頭（標題、群組；右邊對帳期間、幣別、輸出時間）→ 摘要（期初、本期代墊、本期還款、
+// 期末）與結算 → 往來明細（序號、日期、項目・說明、兩欄金額；跨頁時「小計（轉下頁）」／
+// 「承上頁」，每頁重畫表頭）→ 註記；頁尾右下角「第 n 頁／共 N 頁」。黑白灰為主，列印清楚。
+function pairStatementPdfPages(){
+  const d = pairStmtData();
+  if(!d || d.empty) return [];
+  const PW = 595.28, PH = 841.89, M = 42, S = 3;
+  const FONT = `Arial, "Microsoft JhengHei", "微軟正黑體", "PingFang TC", "Noto Sans TC", sans-serif`;
+  const C = { ink: "#1C1B22", muted: "#6B6A75", faint: "#B4B3BC", rule: "#E3E2E9", box: "#D9D8E0",
+    head: "#F1F2F6", zebra: "#FAFAFC", amberBg: "#FAEEDA", amber: "#633806", redBg: "#FCEBEB", red: "#A32D2D" };
+  const W = PW - M * 2;
+  const cNo = 24, cDate = 74, cAmt = 104, cDesc = W - cNo - cDate - cAmt * 2;
+  const xNo = M + 6, xDate = M + cNo, xDesc = xDate + cDate, xA = M + W - cAmt - 8, xB = M + W - 8;
+  const bottom = PH - 58;
+  const r2 = v => Math.round(v * 100) / 100;
+  const now = new Date(), p2 = n => String(n).padStart(2, "0");
+  const exportStr = `${now.getFullYear()}/${p2(now.getMonth() + 1)}/${p2(now.getDate())} ${p2(now.getHours())}:${p2(now.getMinutes())}`;
+  const curMeta = (CURRENCIES || []).find(c => c.code === CURRENCY);
+  const curLabel = curMeta && curMeta.label && curMeta.label !== CURRENCY ? `${curMeta.label}（${CURRENCY}）` : CURRENCY;
+  const groupName = (myMember && myMember.groups && myMember.groups.name) || "";
+  const title = t("stmt.heading", { a: d.A, b: d.B });
+
+  // 摘要：期初＋本期代墊＋本期還款＝期末
+  const sum = (type, key) => r2(d.rows.filter(r => r.type === type).reduce((s, r) => s + r[key], 0));
+  const summ = {
+    advA: sum("expense", "a"), advB: sum("expense", "b"),
+    repA: sum("repayment", "a"), repB: sum("repayment", "b")
+  };
+  // 同一欄只要有小數，整欄都顯示兩位
+  // 臺幣這類本來不顯示小數，但分攤後真的有小數時照實寫，各列加起來才會等於合計
+  const hasFrac = list => list.some(v => Math.abs(v - Math.round(v)) > 0.004);
+  const decA = hasFrac([d.openA, d.endA, summ.advA, summ.repA].concat(d.rows.map(r => r.a))) ? 2 : 0;
+  const decB = hasFrac([d.openB, d.endB, summ.advB, summ.repB].concat(d.rows.map(r => r.b))) ? 2 : 0;
+  const fmt = (v, dec) => {
+    if(Math.abs(v) < 0.005) return "0";
+    return (v < 0 ? "−" : "") + Math.abs(v).toLocaleString("en-US", { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  };
+
+  const pages = [];
+  let ctx, y;
+  const newPage = () => {
+    const c = document.createElement("canvas");
+    c.width = Math.round(PW * S); c.height = Math.round(PH * S);
+    ctx = c.getContext("2d");
+    ctx.scale(S, S);
+    ctx.fillStyle = "#FFFFFF"; ctx.fillRect(0, 0, PW, PH);
+    pages.push(c);
+    y = M;
+  };
+  const fit = (s, max) => {
+    s = String(s);
+    if(!max || ctx.measureText(s).width <= max) return s;
+    while(s.length > 1 && ctx.measureText(s + "…").width > max) s = s.slice(0, -1);
+    return s + "…";
+  };
+  const text = (s, x, yy, o) => {
+    o = o || {};
+    ctx.font = `${o.w || 400} ${o.pt || 12}px ${FONT}`;
+    ctx.fillStyle = o.color || C.ink;
+    ctx.textAlign = o.align || "left";
+    ctx.textBaseline = "alphabetic";
+    const str = fit(s, o.max);
+    ctx.fillText(str, x, yy);
+    return ctx.measureText(str).width;
+  };
+  const rule = (yy, color, h) => { ctx.fillStyle = color || C.rule; ctx.fillRect(M, yy, W, h || 0.6); };
+  const num = (v, x, yy, dec, bold) => text(fmt(v, dec), x, yy, { pt: 12, w: bold ? 700 : 400, align: "right", color: Math.abs(v) < 0.005 ? C.faint : C.ink });
+  const tag = (label, x, yy, bg, fg) => {
+    ctx.font = `700 10px ${FONT}`;
+    const w = ctx.measureText(label).width + 8;
+    ctx.fillStyle = bg; ctx.beginPath();
+    if(ctx.roundRect) ctx.roundRect(x, yy - 10, w, 13, 3); else ctx.rect(x, yy - 10, w, 13);
+    ctx.fill();
+    text(label, x + 4, yy, { pt: 10, w: 700, color: fg });
+    return w;
+  };
+
+  // ---------- 抬頭 ----------
+  newPage();
+  text(title, M, y + 15, { pt: 16, w: 700, max: W - 200 });
+  if(groupName) text(groupName, M, y + 33, { pt: 10, color: C.muted, max: W - 200 });
+  const meta = [
+    [t("stmt.metaPeriod"), `${pairStmtDate(d.from, true)} – ${pairStmtDate(d.to, true)}`],
+    [t("stmt.metaCur"), curLabel],
+    [t("stmt.metaTime"), exportStr]
+  ];
+  ctx.font = `400 10px ${FONT}`;
+  const xVal = M + W - Math.max(...meta.map(([, v]) => ctx.measureText(v).width));
+  meta.forEach(([k, v], i) => {
+    text(k, xVal - 10, y + 10 + i * 14, { pt: 10, color: C.muted, align: "right" });
+    text(v, xVal, y + 10 + i * 14, { pt: 10 });
+  });
+  y += 48;
+  rule(y, C.ink, 1.4);
+  y += 22;
+
+  // ---------- 摘要 ----------
+  const sx = M + W - cAmt - 8; // 跟明細表的金額欄對齊
+  text(t("stmt.summary"), M, y + 12, { pt: 14, w: 700 });
+  y += 22;
+  text(t("stmt.colItem2"), M, y + 13, { pt: 12, w: 700, color: C.muted });
+  text(t("stmt.colOwes", { a: d.A, b: d.B }), sx, y + 13, { pt: 12, w: 700, color: C.muted, align: "right", max: cAmt - 10 });
+  text(t("stmt.colOwes", { a: d.B, b: d.A }), xB, y + 13, { pt: 12, w: 700, color: C.muted, align: "right", max: cAmt - 10 });
+  y += 20; rule(y, C.ink, 0.8);
+  [[t("stmt.openBal"), d.openA, d.openB], [t("stmt.periodAdv"), summ.advA, summ.advB], [t("stmt.periodRepay"), summ.repA, summ.repB]].forEach(([label, a, b]) => {
+    text(label, M, y + 16, { pt: 12 });
+    num(a, sx, y + 16, decA); num(b, xB, y + 16, decB);
+    y += 22; rule(y);
+  });
+  text(t("stmt.endBal"), M, y + 17, { pt: 12, w: 700 });
+  num(d.endA, sx, y + 17, decA, true); num(d.endB, xB, y + 17, decB, true);
+  y += 24; rule(y, C.ink, 1.4);
+  y += 12;
+  // 結算方框
+  const clear = Math.abs(d.net) < 0.005;
+  ctx.strokeStyle = C.ink; ctx.lineWidth = 1;
+  ctx.strokeRect(M + 0.5, y + 0.5, W - 1, 32);
+  const payer = d.net > 0 ? d.A : d.B, payee = d.net > 0 ? d.B : d.A;
+  text(clear ? t("stmt.settleClear") : t("stmt.settleTo", { a: payer, b: payee }), M + 12, y + 21, { pt: 12, w: 700, max: W - 160 });
+  text(SYM + fmt(Math.abs(d.net), Math.max(decA, decB)), M + W - 12, y + 21, { pt: 14, w: 700, align: "right" });
+  y += 32 + 26;
+
+  // ---------- 往來明細 ----------
+  const drawHead = () => {
+    ctx.fillStyle = C.head; ctx.fillRect(M, y, W, 24);
+    const o = { pt: 12, w: 700, color: C.muted };
+    text("#", xNo, y + 16, o);
+    text(t("stmt.colDate"), xDate, y + 16, o);
+    text(t("stmt.colDesc"), xDesc, y + 16, o);
+    text(t("stmt.colOwes", { a: d.A, b: d.B }), xA, y + 16, Object.assign({ align: "right", max: cAmt - 10 }, o));
+    text(t("stmt.colOwes", { a: d.B, b: d.A }), xB, y + 16, Object.assign({ align: "right", max: cAmt - 10 }, o));
+    y += 24;
+  };
+  let runA = d.openA, runB = d.openB;
+  const carryRow = (label) => {
+    rule(y, C.ink, 0.8);
+    text(label, xDesc, y + 16, { pt: 12, w: 700 });
+    num(runA, xA, y + 16, decA, true); num(runB, xB, y + 16, decB, true);
+    y += 24;
+  };
+  text(t("stmt.detailHeading"), M, y + 12, { pt: 14, w: 700 });
+  y += 22;
+  drawHead();
+  const SUBH = 24;
+  let zebra = false, anyFlag = false;
+  const rowsAll = [];
+  if(Math.abs(d.openA) >= 0.005 || Math.abs(d.openB) >= 0.005) rowsAll.push({ opening: true, a: d.openA, b: d.openB });
+  d.rows.forEach(r => rowsAll.push(r));
+  rowsAll.forEach((r, i) => {
+    const two = !r.opening && !!r.sub;
+    const h = two ? 34 : 24;
+    if(y + h + SUBH > bottom){
+      carryRow(t("stmt.carryOut"));
+      newPage();
+      drawHead();
+      text(t("stmt.carryIn"), xDesc, y + 16, { pt: 12, w: 700, color: C.muted });
+      num(runA, xA, y + 16, decA); num(runB, xB, y + 16, decB);
+      y += 24;
+      zebra = false;
+    }
+    if(zebra){ ctx.fillStyle = C.zebra; ctx.fillRect(M, y, W, h); }
+    zebra = !zebra;
+    if(r.opening){
+      text(t("stmt.opening"), xDesc, y + 16, { pt: 12, color: C.muted });
+      // 期初已含在累計裡，不再加
+    } else {
+      const n = rowsAll.filter(x => !x.opening).indexOf(r) + 1;
+      text(String(n), xNo, y + 16, { pt: 10, color: C.muted });
+      text(pairStmtDate(r.date, true), xDate, y + 16, { pt: 12 });
+      let nameMax = cDesc - 10 - (r.flag ? 70 : 0);
+      const w = text(r.name, xDesc, y + 16, { pt: 12, max: nameMax });
+      if(r.flag){
+        anyFlag = true;
+        const pending = r.flagKind === "pending";
+        tag((pending ? r.flag + "＊" : r.flag), xDesc + w + 6, y + 15.5, pending ? C.amberBg : C.redBg, pending ? C.amber : C.red);
+      }
+      if(two) text(r.sub, xDesc, y + 29, { pt: 10, color: C.muted, max: cDesc - 10 });
+      runA = r2(runA + r.a); runB = r2(runB + r.b);
+    }
+    const ny = y + (two ? 21 : 16);
+    num(r.a, xA, ny, decA); num(r.b, xB, ny, decB);
+    y += h;
+    if(i < rowsAll.length - 1) rule(y);
+  });
+  // 合計
+  if(y + 26 > bottom){ newPage(); drawHead(); }
+  rule(y, C.ink, 0.8);
+  text(t("stmt.total"), xDesc, y + 17, { pt: 12, w: 700 });
+  num(d.endA, xA, y + 17, decA, true); num(d.endB, xB, y + 17, decB, true);
+  y += 25;
+  rule(y, C.ink, 1.4);
+  y += 16;
+
+  // ---------- 註記 ----------
+  const notes = [];
+  if(anyFlag) notes.push(t("stmt.noteFlag"));
+  notes.push(t("stmt.noteBasis"));
+  if(y + notes.length * 14 + 6 > bottom) newPage();
+  notes.forEach((n, i) => text((i === 0 ? t("stmt.notePrefix") : "　　") + n, M, y + 10 + i * 14, { pt: 10, color: C.muted, max: W }));
+
+  // ---------- 頁尾 ----------
+  pages.forEach((c, i) => {
+    ctx = c.getContext("2d");
+    ctx.fillStyle = C.box; ctx.fillRect(M, PH - 40, W, 0.6);
+    text(`Splitbill・${title}`, M, PH - 25, { pt: 10, color: C.muted, max: W - 140 });
+    text(t("stmt.pageOf", { n: i + 1, total: pages.length }), PW - M, PH - 25, { pt: 10, color: C.muted, align: "right" });
+  });
+  return pages;
+}
+// 把整頁畫布包成 PDF（每頁一張 JPEG，鋪滿 A4）
+function buildJpegPdf(canvases){
+  const PW = 595.28, PH = 841.89;
+  const enc = s => { const u = new Uint8Array(s.length); for(let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i) & 255; return u; };
+  const parts = []; let len = 0; const offsets = [];
+  const push = u => { parts.push(u); len += u.length; };
+  const obj = (id, chunks) => {
+    offsets[id] = len;
+    push(enc(id + " 0 obj\n"));
+    (Array.isArray(chunks) ? chunks : [enc(chunks)]).forEach(push);
+    push(enc("\nendobj\n"));
+  };
+  push(enc("%PDF-1.4\n%\xE2\xE3\xCF\xD3\n"));
+  obj(1, "<< /Type /Catalog /Pages 2 0 R >>");
+  obj(2, `<< /Type /Pages /Kids [${canvases.map((_, i) => (3 + 3 * i) + " 0 R").join(" ")}] /Count ${canvases.length} >>`);
+  canvases.forEach((c, i) => {
+    const pid = 3 + 3 * i, cid = 4 + 3 * i, iid = 5 + 3 * i;
+    const jpg = enc(atob(c.toDataURL("image/jpeg", 0.92).split(",")[1]));
+    obj(pid, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PW} ${PH}] /Resources << /XObject << /Im${i} ${iid} 0 R >> >> /Contents ${cid} 0 R >>`);
+    const cs = `q ${PW} 0 0 ${PH} 0 0 cm /Im${i} Do Q`;
+    obj(cid, `<< /Length ${cs.length} >>\nstream\n${cs}\nendstream`);
+    obj(iid, [enc(`<< /Type /XObject /Subtype /Image /Width ${c.width} /Height ${c.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpg.length} >>\nstream\n`), jpg, enc("\nendstream")]);
+  });
+  const xref = len, size = 3 + 3 * canvases.length;
+  let tail = `xref\n0 ${size}\n0000000000 65535 f \n`;
+  for(let id = 1; id < size; id++) tail += String(offsets[id]).padStart(10, "0") + " 00000 n \n";
+  push(enc(tail + `trailer\n<< /Size ${size} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`));
+  return new Blob(parts, { type: "application/pdf" });
+}
+function pairStmtFileBase(){
+  const S = window.__sbPairStmt;
+  const title = t("stmt.heading", { a: memberById[S.debtorId] || "?", b: memberById[S.creditorId] || "?" });
+  return `${title}_${CURRENCY}_${sbIsoDay(new Date())}`.replace(/[\\/:*?"<>|\s]+/g, "_");
 }
 function openPairStatement(){
   const modal = document.getElementById("pairStatementModal");
@@ -8566,26 +8841,31 @@ function openPairStatement(){
     renderPairStatement();
   }));
   ["pairStmtFrom", "pairStmtTo"].forEach(id => document.getElementById(id)?.addEventListener("change", renderPairStatement));
-  const copyBtn = document.getElementById("pairStmtCopyBtn");
-  copyBtn?.addEventListener("click", async ()=>{
-    const text = pairStatementText();
-    if(!text) return;
-    await copyToClipboard(text);
-    if(window.showToast) showToast(t("stmt.copied"));
+  const pdfBtn = document.getElementById("pairStmtPdfBtn");
+  pdfBtn?.addEventListener("click", async ()=>{
+    const pages = pairStatementPdfPages();
+    if(!pages.length) return;
+    pdfBtn.disabled = true;
+    try{
+      await sbDownloadBlob(buildJpegPdf(pages), pairStmtFileBase() + ".pdf");
+    }catch(e){
+      console.error("對帳單 PDF 產生失敗：", e);
+      await sbAlert(t("stmt.pdfFailed"), t("settings.errorTitle"));
+    } finally {
+      pdfBtn.disabled = false;
+    }
   });
-  const shareBtn = document.getElementById("pairStmtShareBtn");
-  shareBtn?.addEventListener("click", async ()=>{
+  const imgBtn = document.getElementById("pairStmtImgBtn");
+  imgBtn?.addEventListener("click", async ()=>{
     const canvas = pairStatementCanvas();
     if(!canvas) return;
-    shareBtn.disabled = true;
+    imgBtn.disabled = true;
     try{
       const blob = await new Promise(res => canvas.toBlob(res, "image/png"));
       if(!blob){ await sbAlert(t("currency.imageGenFailed"), t("settings.errorTitle")); return; }
-      const S = window.__sbPairStmt;
-      const title = t("stmt.heading", { a: memberById[S.debtorId] || "?", b: memberById[S.creditorId] || "?" });
-      await sbShareImageBlob(blob, `${title}_${CURRENCY}_${sbIsoDay(new Date())}.png`.replace(/[\\/:*?"<>|\s]+/g, "_"), title);
+      await sbDownloadBlob(blob, pairStmtFileBase() + ".png");
     } finally {
-      shareBtn.disabled = false;
+      imgBtn.disabled = false;
     }
   });
 })();
