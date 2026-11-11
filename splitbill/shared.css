@@ -11206,3 +11206,15 @@ html body #pairStatementModal .pair-stmt-card{ display:flex !important; flex-dir
 html body #pairStatementModal .pair-stmt-body{ flex:1 1 auto; min-height:0; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
 html body #pairStatementModal .pair-stmt-table thead th{ position:sticky; top:0; z-index:1; background:var(--card); }
 html body #pairStatementModal .pair-stmt-actions{ flex:none; }
+/* 首頁「今天」：還款確認直接在卡片上按 */
+html body .sb-today-rc .sb-today-text{ color:inherit; text-decoration:none; border-radius:6px; }
+html body .sb-today-rc .sb-today-text:hover b{ text-decoration:underline; text-underline-offset:3px; }
+html body .sb-today-rc .sb-today-text:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; }
+html body .sb-today-rc-acts{ display:flex; gap:8px; flex:none; }
+html body .sb-today-rc-acts .rc-btn{ min-height:36px; white-space:nowrap; }
+@media (max-width: 560px){
+  html body .sb-today-rc .sb-today-row{ flex-wrap:wrap; row-gap:8px; padding-bottom:10px; }
+  html body .sb-today-rc .sb-today-text{ flex:1 1 calc(100% - 48px); }
+  html body .sb-today-rc-acts{ width:100%; padding-left:48px; }
+  html body .sb-today-rc-acts .rc-btn{ flex:1; justify-content:center; }
+}

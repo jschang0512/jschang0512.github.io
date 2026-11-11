@@ -30,13 +30,13 @@
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=599a4d1bd5">
-<link rel="stylesheet" href="shared.css?v=6f69467044">
+<link rel="stylesheet" href="shared.css?v=84d5e0714c">
 <script src="holiday.js?v=2816c2cc17"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="i18n.js?v=5bc99d90b2"></script>
 <script src="currencies.js?v=1fe139e56b"></script>
 <script src="motion.js?v=c960fb49b3"></script>
-<script src="version.js?v=84ac78d92b"></script>
+<script src="version.js?v=41cfea7f89"></script>
 <script src="notif-text.js?v=6e6a6d9174"></script>
 <script src="shared-ui.js?v=6756a5811a"></script>
 <script src="theme.js?v=01d7c0a8c1" defer></script>
@@ -1485,15 +1485,46 @@ renderNavLinks();
       const { data: pend, error: pendErr } = await sb.from("repayments").select("id,from_member,amount,currency,payment_date")
         .eq("group_id", myMember.group_id).eq("to_member", myMember.id).eq("confirm_status", "pending")
         .order("payment_date", { ascending: false }).limit(5);
-      if(!pendErr) (pend || []).forEach(r => {
-        rows.unshift(row(`currency.html?c=${encodeURIComponent(r.currency)}&openRepayment=${encodeURIComponent(r.id)}`, "wallet",
-          t("rc.todayTitle", { name: memberById[r.from_member] || "?", amount: money(r.currency, r.amount) }),
-          r.payment_date || "", t("rc.todayAct"), true));
+      // 直接在這裡按「收到了／還沒收到」；點文字才跳到那筆還款
+      if(!pendErr) (pend || []).slice().reverse().forEach(r => {
+        rows.unshift(`<li class="sb-today-rc" data-rid="${escapeHtml(r.id)}"><div class="sb-today-row is-urgent">
+          <span class="sb-today-ico"><span class="sb-ico" style="--ico:var(--ico-wallet)" aria-hidden="true"></span></span>
+          <a class="sb-today-text" href="currency.html?c=${encodeURIComponent(r.currency)}&openRepayment=${encodeURIComponent(r.id)}">
+            <b>${escapeHtml(t("rc.todayTitle", { name: memberById[r.from_member] || "?", amount: money(r.currency, r.amount) }))}</b>
+            <small>${escapeHtml(r.payment_date || "")}</small>
+          </a>
+          <span class="sb-today-rc-acts">
+            <button type="button" class="rc-btn is-yes" data-v="confirmed"><span class="sb-ico" style="--ico:var(--ico-check)" aria-hidden="true"></span>${escapeHtml(t("rc.gotIt"))}</button>
+            <button type="button" class="rc-btn" data-v="disputed">${escapeHtml(t("rc.notYet"))}</button>
+          </span>
+        </div></li>`);
       });
     }catch(e){}
     list.innerHTML = rows.join("");
     syncTodayCard();
   }
+  // 今天卡片上的收款確認按鈕（清單會重畫，事件綁在清單上一次就好）
+  (function bindTodayConfirm(){
+    const list = document.getElementById("todayList");
+    if(!list) return;
+    list.addEventListener("click", async (e)=>{
+      const btn = e.target.closest(".sb-today-rc .rc-btn");
+      if(!btn) return;
+      const li = btn.closest(".sb-today-rc");
+      li.querySelectorAll(".rc-btn").forEach(b => { b.disabled = true; });
+      const { data, error } = await sb.from("repayments").update({ confirm_status: btn.dataset.v })
+        .eq("id", li.dataset.rid).select("id,confirm_status").maybeSingle();
+      if(error || !data || data.confirm_status !== btn.dataset.v){
+        li.querySelectorAll(".rc-btn").forEach(b => { b.disabled = false; });
+        if(window.showToast) showToast(t("rc.failed"));
+        return;
+      }
+      if(window.showToast) showToast(t(btn.dataset.v === "confirmed" ? "rc.doneOk" : "rc.doneNo"));
+      if(window.sbCollapseEl) await window.sbCollapseEl(li);
+      li.remove();
+      syncTodayCard();
+    });
+  })();
   function syncTodayCard(){
     const card = document.getElementById("todayCard");
     const list = document.getElementById("todayList");
