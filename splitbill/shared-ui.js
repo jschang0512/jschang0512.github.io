@@ -1702,6 +1702,8 @@ document.addEventListener("click", e => {
 // 選了不關就彈回原位。
 // ============================================================
 (function initSheetSwipe(){
+  // v983 起手機彈出視窗改成置中，不再從底部滑上來，往下拖關閉也一起停用
+  if(true) return;
   const mq = window.matchMedia("(max-width: 767px)");
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
   const EXCLUDE = ".sb-bottom-sheet, .sb-dialog-modal, #recoveryModal, #receiptLightboxModal, #avatarCropModal";
