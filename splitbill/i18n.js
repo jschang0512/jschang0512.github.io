@@ -1484,6 +1484,8 @@ const I18N = {
     "nav.mainLabel": "主要導覽",
 
     "nav.currencies": "幣別",
+    "stmt.colorNote": "紅字＝這一筆讓欠款增加，綠字＝減少。",
+    "stmt.cumNote": "右邊兩欄是每一筆之後的累計欠款；這一筆的金額寫在品項下方。",
     "stmt.summary": "摘要",
     "stmt.colItem2": "項目",
     "stmt.colDate": "日期",
@@ -1494,8 +1496,6 @@ const I18N = {
     "stmt.endBal": "期末餘額",
     "stmt.settleTo": "結算：{a} 應付 {b}",
     "stmt.settleClear": "結算：兩清",
-    "stmt.carryOut": "小計（轉下頁）",
-    "stmt.carryIn": "承上頁",
     "stmt.metaPeriod": "對帳期間",
     "stmt.metaCur": "幣別",
     "stmt.metaTime": "輸出時間",
@@ -1947,7 +1947,7 @@ let currentLang = detectDefaultLang();
 // 用 document.write 插一個同步載入的 <script>（同網域，瀏覽器不會擋）。版本號沿用
 // i18n.js 自己的 ?v=，換版時一起換新。切換語言本來就會整頁重新整理（見 setLang）。
 // 日文、英文翻譯檔各自的內容指紋，由 scripts/stamp-assets.js 自動填，不要手改
-const SB_LANG_V = {"en": "42fd67141e", "ja": "d164e7765a"};
+const SB_LANG_V = {"en": "c6adc4a125", "ja": "0b52787525"};
 (function loadLangDict(){
   if(currentLang === "zh-Hant" || I18N[currentLang]) return;
   const self = document.currentScript;

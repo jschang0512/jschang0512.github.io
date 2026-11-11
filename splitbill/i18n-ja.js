@@ -1459,6 +1459,8 @@ I18N["ja"] = {
     "nav.mainLabel": "メインナビゲーション",
 
     "nav.currencies": "通貨",
+    "stmt.colorNote": "赤字は残高の増加、緑字は減少です。",
+    "stmt.cumNote": "右の 2 列は各取引後の累計残高です。その取引の金額は項目の下に表示しています。",
     "stmt.summary": "概要",
     "stmt.colItem2": "項目",
     "stmt.colDate": "日付",
@@ -1469,8 +1471,6 @@ I18N["ja"] = {
     "stmt.endBal": "期末残高",
     "stmt.settleTo": "精算：{a} → {b}",
     "stmt.settleClear": "精算：貸し借りなし",
-    "stmt.carryOut": "小計（次頁へ）",
-    "stmt.carryIn": "前頁より",
     "stmt.metaPeriod": "対象期間",
     "stmt.metaCur": "通貨",
     "stmt.metaTime": "出力日時",

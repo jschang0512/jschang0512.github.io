@@ -1459,6 +1459,8 @@ I18N["en"] = {
     "nav.mainLabel": "Main navigation",
 
     "nav.currencies": "Currencies",
+    "stmt.colorNote": " Red means the balance went up with that entry; green means it went down.",
+    "stmt.cumNote": "The two right columns show the running balance after each entry; each entry's own amount is under its name.",
     "stmt.summary": "Summary",
     "stmt.colItem2": "Item",
     "stmt.colDate": "Date",
@@ -1469,8 +1471,6 @@ I18N["en"] = {
     "stmt.endBal": "Closing balance",
     "stmt.settleTo": "Settle up: {a} pays {b}",
     "stmt.settleClear": "Settle up: all square",
-    "stmt.carryOut": "Subtotal (carried forward)",
-    "stmt.carryIn": "Brought forward",
     "stmt.metaPeriod": "Period",
     "stmt.metaCur": "Currency",
     "stmt.metaTime": "Exported",

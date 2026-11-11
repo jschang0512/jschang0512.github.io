@@ -8400,7 +8400,7 @@ function pairStmtData(){
       if(r.confirm_status === "pending"){ flag = t("stmt.pendingMark"); flagKind = "pending"; }
       else if(r.confirm_status === "disputed"){ flag = t("stmt.disputedMark"); flagKind = "disputed"; }
     }
-    return { type: ev.type, date: ev.date || "", name, sub, flag, flagKind, a, b };
+    return { type: ev.type, date: ev.date || "", name, sub, flag, flagKind, a, b, balA: r2(ev.balanceForward), balB: r2(ev.balanceReverse) };
   });
   const endA = last.balanceForward, endB = last.balanceReverse;
   const dates = evs.map(ev => ev.date).filter(Boolean).sort();
@@ -8446,7 +8446,12 @@ function renderPairStatement(){
   }
   actions.forEach(b => { b.disabled = false; });
   const withYear = d.from.slice(0, 4) !== d.to.slice(0, 4) || d.from.slice(0, 4) !== String(new Date().getFullYear());
-  const cellTd = v => { const c = pairStmtCell(v); return `<td class="${c.cls}">${c.txt}</td>`; };
+  // 兩欄寫累計欠款；這一筆讓欠款變多→紅字、變少→綠字、沒動到→淡灰
+  const cellTd = (v, delta) => {
+    const c = pairStmtCell(v);
+    const dir = delta === true ? "" : delta > 0.004 ? " is-up" : delta < -0.004 ? " is-down" : " is-same";
+    return `<td class="${c.cls}${dir}">${c.txt}</td>`;
+  };
   const hasOpen = Math.abs(d.openA) >= 0.005 || Math.abs(d.openB) >= 0.005;
   const rangeLabel = t(pairStmtRange === "all" ? "stmt.all" : pairStmtRange === "custom" ? "stmt.custom" : "stmt.round");
   body.innerHTML = `
@@ -8455,14 +8460,15 @@ function renderPairStatement(){
         <b>${escapeHtml(t("stmt.heading", { a: d.A, b: d.B }))}</b><span>${escapeHtml(CURRENCY)}</span>
       </div>
       <div class="pair-stmt-period">${escapeHtml(pairStmtDate(d.from, true))} – ${escapeHtml(pairStmtDate(d.to, true))} · ${escapeHtml(rangeLabel)} · ${escapeHtml(t("stmt.count", { n: d.rows.length }))}</div>
+      <div class="pair-stmt-cumnote">${escapeHtml(t("stmt.cumNote") + t("stmt.colorNote"))}</div>
       <table class="pair-stmt-table">
         <colgroup><col class="c-item"><col class="c-amt"><col class="c-amt"></colgroup>
         <thead><tr><th scope="col">${escapeHtml(t("stmt.colItem"))}</th><th scope="col">${pairStmtOwesHead(d.A, d.B)}</th><th scope="col">${pairStmtOwesHead(d.B, d.A)}</th></tr></thead>
         <tbody>
-          ${hasOpen ? `<tr class="is-open"><td>${escapeHtml(t("stmt.opening"))}</td>${cellTd(d.openA)}${cellTd(d.openB)}</tr>` : ""}
-          ${d.rows.map(r => `<tr><td><span class="pair-stmt-name"><span class="pair-stmt-date">${escapeHtml(pairStmtDate(r.date, withYear))}</span> ${escapeHtml(r.name)}</span>${r.sub || r.flag ? `<small>${escapeHtml(r.sub)}${r.flag ? ` <em class="pair-stmt-flag">${escapeHtml(r.flag)}</em>` : ""}</small>` : ""}</td>${cellTd(r.a)}${cellTd(r.b)}</tr>`).join("")}
+          ${hasOpen ? `<tr class="is-open"><td>${escapeHtml(t("stmt.opening"))}</td>${cellTd(d.openA, true)}${cellTd(d.openB, true)}</tr>` : ""}
+          ${d.rows.map(r => `<tr><td><span class="pair-stmt-name"><span class="pair-stmt-date">${escapeHtml(pairStmtDate(r.date, withYear))}</span> ${escapeHtml(r.name)}</span>${r.sub || r.flag ? `<small>${escapeHtml(r.sub)}${r.flag ? ` <em class="pair-stmt-flag">${escapeHtml(r.flag)}</em>` : ""}</small>` : ""}</td>${cellTd(r.balA, r.a)}${cellTd(r.balB, r.b)}</tr>`).join("")}
         </tbody>
-        <tfoot><tr><th scope="row">${escapeHtml(t("stmt.total"))}</th><td>${formatAmt(d.endA)}</td><td>${formatAmt(d.endB)}</td></tr></tfoot>
+        <tfoot><tr><th scope="row">${escapeHtml(t("stmt.endBal"))}</th><td>${formatAmt(d.endA)}</td><td>${formatAmt(d.endB)}</td></tr></tfoot>
       </table>
       <div class="pair-stmt-settle${Math.abs(d.net) < 0.005 ? " is-clear" : ""}"><span>${escapeHtml(t("stmt.settle"))}</span><b>${escapeHtml(pairStmtSettle(d))}</b></div>
     </div>`;
@@ -8478,7 +8484,7 @@ function pairStatementCanvas(){
   const hasOpen = Math.abs(d.openA) >= 0.005 || Math.abs(d.openB) >= 0.005;
   const W = 560, PAD = 24, innerW = W - PAD * 2;
   const colAmt = 128, colItem = innerW - colAmt * 2;
-  const headH = 88, theadH = 36, rowH = 50, openH = 36, footH = 40, settleH = 56;
+  const headH = 104, theadH = 36, rowH = 50, openH = 36, footH = 40, settleH = 56;
   const tableH = theadH + (hasOpen ? openH : 0) + d.rows.length * rowH + footH;
   const H = headH + tableH + 14 + settleH + PAD;
   const dpr = Math.max(window.devicePixelRatio || 1, 3);
@@ -8503,6 +8509,8 @@ function pairStatementCanvas(){
   ctx.fillText(CURRENCY, W - PAD, 40);
   ctx.textAlign = "left";
   ctx.fillText(`${pairStmtDate(d.from, true)} – ${pairStmtDate(d.to, true)} · ${t("stmt.count", { n: d.rows.length })}`, PAD, 64);
+  ctx.font = `500 12px ${FONT}`;
+  ctx.fillText(fit(t("stmt.cumNote"), innerW), PAD, 84);
 
   // 表格卡片
   const tx = PAD, ty = headH;
@@ -8518,11 +8526,12 @@ function pairStatementCanvas(){
   ctx.fillText(fit(t("stmt.colOwes", { a: d.B, b: d.A }), colAmt - 18), xAmtB, y + 23);
   y += theadH;
   const hr = () => { ctx.fillStyle = C.line; ctx.fillRect(tx + 1, y, innerW - 2, 1); };
-  const amt = (v, x, yy, bold) => {
+  const amt = (v, x, yy, bold, delta) => {
     const c = pairStmtCell(v);
+    const same = delta !== undefined && Math.abs(delta) < 0.005;
     ctx.textAlign = "right";
-    ctx.font = `${bold ? 700 : 600} 14px ${FONT}`;
-    ctx.fillStyle = c.cls === "is-zero" ? C.faint : c.cls === "is-minus" ? C.positive : C.ink;
+    ctx.font = `${bold ? 700 : same ? 500 : 600} 14px ${FONT}`;
+    ctx.fillStyle = delta > 0.004 ? C.negative : delta < -0.004 ? C.positive : c.cls === "is-zero" ? C.faint : same ? C.muted : C.ink;
     ctx.fillText(c.txt, x, yy);
   };
   if(hasOpen){
@@ -8541,13 +8550,13 @@ function pairStatementCanvas(){
       ctx.font = `500 12px ${FONT}`; ctx.fillStyle = r.flag ? C.negative : C.muted;
       ctx.fillText(fit(sub, colItem - 20), tx + 14, y + 40);
     }
-    amt(r.a, xAmtA, y + 29); amt(r.b, xAmtB, y + 29);
+    amt(r.balA, xAmtA, y + 29, false, r.a); amt(r.balB, xAmtB, y + 29, false, r.b);
     y += rowH;
   });
   ctx.fillStyle = C.tint; ctx.fillRect(tx + 1, y, innerW - 2, footH - 1);
   hr();
   ctx.textAlign = "left"; ctx.font = `700 14px ${FONT}`; ctx.fillStyle = C.ink;
-  ctx.fillText(t("stmt.total"), tx + 14, y + 26);
+  ctx.fillText(t("stmt.endBal"), tx + 14, y + 26);
   ctx.textAlign = "right";
   ctx.fillText(formatAmt(d.endA), xAmtA, y + 26);
   ctx.fillText(formatAmt(d.endB), xAmtB, y + 26);
@@ -8592,7 +8601,7 @@ function pairStatementPdfPages(){
   const PW = 595.28, PH = 841.89, M = 42, S = 3;
   const FONT = `Arial, "Microsoft JhengHei", "微軟正黑體", "PingFang TC", "Noto Sans TC", sans-serif`;
   const C = { ink: "#1C1B22", muted: "#6B6A75", faint: "#B4B3BC", rule: "#E3E2E9", box: "#D9D8E0",
-    head: "#F1F2F6", zebra: "#FAFAFC", amberBg: "#FAEEDA", amber: "#633806", redBg: "#FCEBEB", red: "#A32D2D" };
+    head: "#F1F2F6", zebra: "#FAFAFC", up: "#C62838", down: "#07843B", amberBg: "#FAEEDA", amber: "#633806", redBg: "#FCEBEB", red: "#A32D2D" };
   const W = PW - M * 2;
   const cNo = 24, cDate = 74, cAmt = 104, cDesc = W - cNo - cDate - cAmt * 2;
   const xNo = M + 6, xDate = M + cNo, xDesc = xDate + cDate, xA = M + W - cAmt - 8, xB = M + W - 8;
@@ -8614,8 +8623,8 @@ function pairStatementPdfPages(){
   // 同一欄只要有小數，整欄都顯示兩位
   // 臺幣這類本來不顯示小數，但分攤後真的有小數時照實寫，各列加起來才會等於合計
   const hasFrac = list => list.some(v => Math.abs(v - Math.round(v)) > 0.004);
-  const decA = hasFrac([d.openA, d.endA, summ.advA, summ.repA].concat(d.rows.map(r => r.a))) ? 2 : 0;
-  const decB = hasFrac([d.openB, d.endB, summ.advB, summ.repB].concat(d.rows.map(r => r.b))) ? 2 : 0;
+  const decA = hasFrac([d.openA, d.endA, summ.advA, summ.repA].concat(d.rows.map(r => r.balA))) ? 2 : 0;
+  const decB = hasFrac([d.openB, d.endB, summ.advB, summ.repB].concat(d.rows.map(r => r.balB))) ? 2 : 0;
   const fmt = (v, dec) => {
     if(Math.abs(v) < 0.005) return "0";
     return (v < 0 ? "−" : "") + Math.abs(v).toLocaleString("en-US", { minimumFractionDigits: dec, maximumFractionDigits: dec });
@@ -8649,7 +8658,11 @@ function pairStatementPdfPages(){
     return ctx.measureText(str).width;
   };
   const rule = (yy, color, h) => { ctx.fillStyle = color || C.rule; ctx.fillRect(M, yy, W, h || 0.6); };
-  const num = (v, x, yy, dec, bold) => text(fmt(v, dec), x, yy, { pt: 12, w: bold ? 700 : 400, align: "right", color: Math.abs(v) < 0.005 ? C.faint : C.ink });
+  const num = (v, x, yy, dec, bold, delta) => {
+    const same = delta !== undefined && Math.abs(delta) < 0.005;
+    const color = delta > 0.004 ? C.up : delta < -0.004 ? C.down : Math.abs(v) < 0.005 ? C.faint : same ? C.muted : C.ink;
+    return text(fmt(v, dec), x, yy, { pt: 12, w: bold || (delta !== undefined && !same) ? 700 : 400, align: "right", color });
+  };
   const tag = (label, x, yy, bg, fg) => {
     ctx.font = `700 10px ${FONT}`;
     const w = ctx.measureText(label).width + 8;
@@ -8716,17 +8729,9 @@ function pairStatementPdfPages(){
     text(t("stmt.colOwes", { a: d.B, b: d.A }), xB, y + 16, Object.assign({ align: "right", max: cAmt - 10 }, o));
     y += 24;
   };
-  let runA = d.openA, runB = d.openB;
-  const carryRow = (label) => {
-    rule(y, C.ink, 0.8);
-    text(label, xDesc, y + 16, { pt: 12, w: 700 });
-    num(runA, xA, y + 16, decA, true); num(runB, xB, y + 16, decB, true);
-    y += 24;
-  };
   text(t("stmt.detailHeading"), M, y + 12, { pt: 14, w: 700 });
   y += 22;
   drawHead();
-  const SUBH = 24;
   let zebra = false, anyFlag = false;
   const rowsAll = [];
   if(Math.abs(d.openA) >= 0.005 || Math.abs(d.openB) >= 0.005) rowsAll.push({ opening: true, a: d.openA, b: d.openB });
@@ -8734,13 +8739,10 @@ function pairStatementPdfPages(){
   rowsAll.forEach((r, i) => {
     const two = !r.opening && !!r.sub;
     const h = two ? 34 : 24;
-    if(y + h + SUBH > bottom){
-      carryRow(t("stmt.carryOut"));
+    // 兩欄本來就是累計，換頁時只要重畫表頭
+    if(y + h > bottom){
       newPage();
       drawHead();
-      text(t("stmt.carryIn"), xDesc, y + 16, { pt: 12, w: 700, color: C.muted });
-      num(runA, xA, y + 16, decA); num(runB, xB, y + 16, decB);
-      y += 24;
       zebra = false;
     }
     if(zebra){ ctx.fillStyle = C.zebra; ctx.fillRect(M, y, W, h); }
@@ -8760,17 +8762,17 @@ function pairStatementPdfPages(){
         tag((pending ? r.flag + "＊" : r.flag), xDesc + w + 6, y + 15.5, pending ? C.amberBg : C.redBg, pending ? C.amber : C.red);
       }
       if(two) text(r.sub, xDesc, y + 29, { pt: 10, color: C.muted, max: cDesc - 10 });
-      runA = r2(runA + r.a); runB = r2(runB + r.b);
     }
     const ny = y + (two ? 21 : 16);
-    num(r.a, xA, ny, decA); num(r.b, xB, ny, decB);
+    if(r.opening){ num(r.a, xA, ny, decA); num(r.b, xB, ny, decB); }
+    else { num(r.balA, xA, ny, decA, false, r.a); num(r.balB, xB, ny, decB, false, r.b); }
     y += h;
     if(i < rowsAll.length - 1) rule(y);
   });
   // 合計
   if(y + 26 > bottom){ newPage(); drawHead(); }
   rule(y, C.ink, 0.8);
-  text(t("stmt.total"), xDesc, y + 17, { pt: 12, w: 700 });
+  text(t("stmt.endBal"), xDesc, y + 17, { pt: 12, w: 700 });
   num(d.endA, xA, y + 17, decA, true); num(d.endB, xB, y + 17, decB, true);
   y += 25;
   rule(y, C.ink, 1.4);
@@ -8779,6 +8781,7 @@ function pairStatementPdfPages(){
   // ---------- 註記 ----------
   const notes = [];
   if(anyFlag) notes.push(t("stmt.noteFlag"));
+  notes.push(t("stmt.cumNote") + t("stmt.colorNote"));
   notes.push(t("stmt.noteBasis"));
   if(y + notes.length * 14 + 6 > bottom) newPage();
   notes.forEach((n, i) => text((i === 0 ? t("stmt.notePrefix") : "　　") + n, M, y + 10 + i * 14, { pt: 10, color: C.muted, max: W }));
