@@ -8,6 +8,31 @@
 // ============================================================
 window.SB_RELEASE_NOTES = [
   {
+    version: "987",
+    date: "2026-11-12",
+    "zh-Hant": [
+      "還了一部分，派派也會鼓勵你，還會顯示已經還了多少",
+      "連續一段時間沒有拖欠，標題旁會出現「零欠款第 N 天」",
+      "同時欠好幾個人時，派派卡片下方可以一筆一筆看",
+      "別人欠你的，派派會顯示已經幫你催了幾次；錢回來時也會告訴你",
+      "臺幣、日幣的金額不再顯示小數"
+    ],
+    "ja": [
+      "一部だけ返しても、パイパイが褒めてくれます。返した金額も表示",
+      "しばらく返済の遅れがないと、タイトル横に「借りなし N 日目」",
+      "複数の人に借りがあるときは、パイパイのカードから 1 件ずつ確認できます",
+      "相手の借りについては、これまで何回催促したかを表示。返ってきたら教えてくれます",
+      "台湾ドル・円の金額は小数を表示しなくなりました"
+    ],
+    "en": [
+      "Pay part of a debt and Pie cheers you on, showing how much you've paid",
+      "Go a while without overdue debts and “Day N debt-free” appears next to the title",
+      "Owe several people? Step through them one by one from Pie's card",
+      "For money owed to you, Pie shows how many times it has nudged them, and tells you when it comes back",
+      "TWD and JPY amounts no longer show decimals"
+    ]
+  },
+  {
     version: "984",
     date: "2026-11-11",
     "zh-Hant": [

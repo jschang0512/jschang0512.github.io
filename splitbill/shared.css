@@ -11086,3 +11086,20 @@ html body .ledger-more-btn{
 }
 html body .ledger-more-btn:hover{ border-color:var(--btn-primary); background:color-mix(in srgb, var(--btn-primary) 6%, transparent); }
 html body .ledger-more-btn:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; }
+
+/* ===== 派派 v987：部分還款進度、還有幾筆、催款次數、零欠款天數 ===== */
+html body .sb-nag-progress{ height:8px; margin:4px 0 6px; border-radius:999px; background:color-mix(in srgb, var(--ink) 10%, transparent); overflow:hidden; }
+html body .sb-nag-progress i{ display:block; height:100%; border-radius:inherit; background:var(--positive-text); transform-origin:left; animation:sbNagGrow .7s cubic-bezier(.16,1,.3,1) .15s both; }
+@keyframes sbNagGrow{ from{ transform:scaleX(0); } }
+html body .card #nagCard .sb-nag.is-progress, html body .sb-nag.is-progress{ background:color-mix(in srgb, var(--positive-text) 9%, transparent); }
+html body .sb-nag-more{ display:inline-flex; align-items:center; gap:4px; margin-top:10px; padding:4px 0; border:0; background:none; color:var(--btn-primary); font:inherit; font-size:13.5px; font-weight:600; cursor:pointer; }
+html body .sb-nag-more::after{ content:"›"; font-size:16px; line-height:1; }
+html body .sb-nag-more:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; border-radius:6px; }
+html body .sb-nag-nudged{ margin-top:-6px; }
+html body .sb-title-streak{
+  display:inline-flex; align-items:center; flex:none; margin-left:2px; padding:3px 9px; border-radius:999px;
+  background:color-mix(in srgb, var(--positive-text) 14%, transparent); color:var(--positive-text);
+  font-size:12px; font-weight:700; line-height:1.3; white-space:nowrap;
+}
+@media (max-width: 767px){ html body .sb-title-streak{ font-size:11px; padding:2px 7px; } }
+@media (prefers-reduced-motion: reduce){ html body .sb-nag-progress i{ animation:none; } }

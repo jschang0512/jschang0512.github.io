@@ -1489,6 +1489,20 @@ const I18N = {
     "nav.mainLabel": "主要導覽",
 
     "nav.currencies": "幣別",
+    "nag.progress1": "還了一部分耶，有進步。{name}那邊還剩 {left}。",
+    "nag.progress2": "看到你開始還了，很好。還差 {left} 就跟{name}兩清。",
+    "nag.progress3": "{paid} 已經還了！剩下的 {left} 也一起處理掉吧。",
+    "nag.progressSub": "已還 {paid}／原本 {total}",
+    "nag.progressPay": "把剩下的還完",
+    "nag.progressOk": "好",
+    "nag.moreDebts": "還有 {n} 筆也拖很久",
+    "nag.streak": "零欠款第 {n} 天",
+    "nag.streakTitle": "連續 {n} 天沒有拖欠，繼續保持",
+    "nag.nudgedCount": "已經幫你催了 {n} 次・上次是{when}",
+    "nag.nudgedLast": "上次催是{when}",
+    "nag.whenToday": "今天",
+    "nag.whenDaysAgo": " {n} 天前",
+    "nag.yayNudged": "催了 {n} 次，{name}的 {amount} 終於回來了！",
     "msg.tooManyAttempts": "嘗試太多次了，請 10 分鐘後再試",
     "currency.ledgerShowMore": "顯示更早的 {n} 筆",
     "shared.deleteAllNotif": "全部刪除",
@@ -1860,7 +1874,7 @@ let currentLang = detectDefaultLang();
 // 用 document.write 插一個同步載入的 <script>（同網域，瀏覽器不會擋）。版本號沿用
 // i18n.js 自己的 ?v=，換版時一起換新。切換語言本來就會整頁重新整理（見 setLang）。
 // 日文、英文翻譯檔各自的內容指紋，由 scripts/stamp-assets.js 自動填，不要手改
-const SB_LANG_V = {"en": "de451caa67", "ja": "469ee1e803"};
+const SB_LANG_V = {"en": "d675b40240", "ja": "d0ad79efe3"};
 (function loadLangDict(){
   if(currentLang === "zh-Hant" || I18N[currentLang]) return;
   const self = document.currentScript;

@@ -2114,7 +2114,8 @@ const SB_NAG_MOOD = {
   "nag.creditor1": "sinister", "nag.creditor2": "angry", "nag.creditor3": "smirk", "nag.creditor4": "sinister",
   "nag.roast1": "smirk", "nag.roast2": "sideeye", "nag.roast3": "stare", "nag.roast4": "angry",
   "nag.peek1": "stare", "nag.peek2": "sideeye", "nag.peek3": "smirk",
-  "nag.yay1": "joy", "nag.yay2": "joy", "nag.yay3": "joy", "nag.yayOwed1": "joy", "nag.yayOwed2": "joy"
+  "nag.yay1": "joy", "nag.yay2": "joy", "nag.yay3": "joy", "nag.yayOwed1": "joy", "nag.yayOwed2": "joy",
+  "nag.yayNudged": "joy", "nag.progress1": "sweet", "nag.progress2": "smile", "nag.progress3": "sweet"
 };
 
 // 使用者自己選的派派模式：off 關閉／gentle 溫和／normal 正常（預設）。只存在這台裝置。
@@ -2179,8 +2180,12 @@ function sbNagPickKey(prefixes, gentle){
 }
 
 function sbNagMoney(amount, currency){
+  // 照幣別的小數位：臺幣、日幣這類不顯示小數，美金、港幣最多兩位
   const meta = (typeof CURRENCIES !== "undefined" ? CURRENCIES : []).find(c => c.code === currency);
-  return (meta ? meta.symbol : currency + " ") + (typeof formatAmt === "function" ? formatAmt(amount) : Math.round(amount));
+  const digits = meta && typeof meta.decimals === "number" ? meta.decimals : 2;
+  const num = Number(amount) || 0;
+  const txt = (digits === 0 ? Math.round(num) : num).toLocaleString("zh-TW", { minimumFractionDigits: 0, maximumFractionDigits: digits });
+  return (meta ? meta.symbol : currency + " ") + txt;
 }
 
 // 標題旁的 logo：派派有話要說時變成帶表情的派派，點了展開那張卡片；沒事時恢復成一般 logo
@@ -2205,17 +2210,66 @@ function sbNagSetLogo(level, mood, onClick){
   row.classList.add("has-pie");
 }
 
-// 把派派畫進 el。opts：{ myId, expenses, repayments, nameOf(id), onPay(item), onNudge(item),
-//   surface（"home" 或 "cur:TWD"，一天各自只完整出現一次）, scope（幣別頁傳 "TWD"；首頁不傳＝全部幣別）, expand }
+// 「我」催過誰幾次（my_debt_reminder_stats）：同一次開頁只查一次，催完款會清掉重查。
+// 資料庫還沒有這支程式時回傳空的，派派就只是不顯示次數。
+function sbNagLoadNudgeStats(sb){
+  if(!sb) return Promise.resolve({});
+  if(!window.__sbNudgeStatsReq){
+    window.__sbNudgeStatsReq = sb.rpc("my_debt_reminder_stats").then(({ data, error }) => {
+      const map = {};
+      if(!error) (data || []).forEach(r => { map[r.debtor_member_id + "|" + r.currency] = r; });
+      return map;
+    }).catch(() => ({}));
+  }
+  return window.__sbNudgeStatsReq;
+}
+window.sbNagLoadNudgeStats = sbNagLoadNudgeStats;
+
+// 標題旁的「零欠款第 N 天」小標籤（少於 3 天不顯示）
+function sbNagSetStreak(n){
+  const row = document.querySelector(".app-header .title-row");
+  if(!row) return;
+  let chip = row.querySelector(".sb-title-streak");
+  if(!(n >= 3)){ if(chip) chip.remove(); return; }
+  if(!chip){
+    chip = document.createElement("span");
+    chip.className = "sb-title-streak";
+    const h1 = row.querySelector("h1");
+    if(h1) h1.after(chip); else row.appendChild(chip);
+  }
+  chip.textContent = t("nag.streak", { n });
+  chip.title = t("nag.streakTitle", { n });
+}
+
+// 把派派畫進 el。opts：{ myId, expenses, repayments, nameOf(id), onPay(item), onNudge(item), sb,
+//   surface（"home" 或 "cur:TWD"，一天各自只完整出現一次）, scope（幣別頁傳 "TWD"；首頁不傳＝全部幣別）, expand, pickKey }
 function sbRenderNag(el, opts){
   if(!el) return;
   const mode = sbNagMode();
   const clear = () => { el.innerHTML = ""; el.hidden = true; };
-  if(mode === "off"){ clear(); sbNagSetLogo(null); window.__sbNagCurrent = null; window.__sbNagItems = []; return; }
+  if(mode === "off"){ clear(); sbNagSetLogo(null); sbNagSetStreak(0); window.__sbNagCurrent = null; window.__sbNagItems = []; return; }
   const gentle = mode === "gentle";
   const today = sbNagToday();
   const items = sbNagItems(opts.myId, opts.expenses, opts.repayments);
   window.__sbNagItems = items;
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const tinyFor = code => { const meta = (typeof CURRENCIES !== "undefined" ? CURRENCIES : []).find(c => c.code === code); return meta && meta.decimals === 0 ? 0.5 : 0.01; };
+
+  // ---- 零欠款連續天數：只有你欠人的、拖到派派會出來唸的才算破功 ----
+  // 只在看得到全部幣別的首頁更新；幣別頁只讀，這個幣別有拖欠就先不顯示
+  const overdue = items.filter(x => x.iOwe && x.score >= SB_NAG_LEVELS[0]);
+  if(!opts.scope && (opts.expenses || []).length){
+    if(overdue.length) sbNagStore.set("sb-nag-clean-since", null);
+    else if(!sbNagStore.get("sb-nag-clean-since", null)) sbNagStore.set("sb-nag-clean-since", today);
+  }
+  const cleanSince = sbNagStore.get("sb-nag-clean-since", null);
+  const streakDays = !overdue.length && cleanSince ? sbNagDayNum(today) - sbNagDayNum(cleanSince) : 0;
+  sbNagSetStreak(streakDays);
+  // 沒有派派要講的話：連續天數夠的話 logo 換成開心的派派，否則恢復一般 logo
+  const restingLogo = () => {
+    if(streakDays >= 3) sbNagSetLogo(0, "joy", () => { if(window.showToast) showToast(t("nag.streakTitle", { n: streakDays })); });
+    else sbNagSetLogo(null);
+  };
 
   // ---- 還清了：派派唸過的那筆不見了，就開心一次 ----
   // 只檢查這次資料涵蓋的幣別（幣別頁只有自己那個幣別）；資料是空的（可能讀取失敗）就不判斷，免得誤報
@@ -2230,11 +2284,12 @@ function sbRenderNag(el, opts){
       const tr = tracked[cleared[0]];
       cleared.forEach(k => { delete tracked[k]; try { localStorage.removeItem("sb-nag-" + k); } catch(e){} });
       sbNagStore.set("sb-nag-track", tracked);
-      const lineKey = sbNagPickKey([tr.iOwe ? "nag.yay" : "nag.yayOwed"], false);
+      // 催過的錢回來了：講出催了幾次
+      const lineKey = !tr.iOwe && tr.nudged > 0 ? "nag.yayNudged" : sbNagPickKey([tr.iOwe ? "nag.yay" : "nag.yayOwed"], false);
       el.hidden = false;
       el.innerHTML = '<div class="card sb-nag is-yay" role="status">'
         + '<div class="sb-nag-pie">' + sbPieMascotSVG(0, "joy") + '</div>'
-        + '<div class="sb-nag-body"><p class="sb-nag-line">' + escapeHtml(t(lineKey, { name: tr.name, amount: tr.amountText })) + '</p>'
+        + '<div class="sb-nag-body"><p class="sb-nag-line">' + escapeHtml(t(lineKey, { name: tr.name, amount: tr.amountText, n: tr.nudged || 0 })) + '</p>'
         + '<div class="sb-nag-actions"><button type="button" class="sbf-primary sb-nag-ok">' + escapeHtml(t("nag.yayOk")) + '</button></div></div></div>';
       sbNagSetLogo(0, "joy", () => el.scrollIntoView({ behavior: "smooth", block: "center" }));
       el.querySelector(".sb-nag-ok").addEventListener("click", () => {
@@ -2245,19 +2300,69 @@ function sbRenderNag(el, opts){
     }
   }
 
-  let it = sbNagFind(opts.myId, opts.expenses, opts.repayments, items);
+  // ---- 還了一部分：比上次派派看到的少，但還沒還清 ----
+  // 每一筆記著派派看過的最高金額（peak）跟上一次的金額（last）；變少了就鼓勵一次（一天最多一次）
+  const progressShown = window.__sbNagProgress || (window.__sbNagProgress = {});
+  let progress = null;
+  items.forEach(x => {
+    const tr = tracked[x.key];
+    if(!x.iOwe || !tr || tr.since !== x.since) return;
+    const last = typeof tr.last === "number" ? tr.last : x.amount;
+    const peak = Math.max(typeof tr.peak === "number" ? tr.peak : last, x.amount);
+    if(!progress && x.amount < last - tinyFor(x.currency) && (progressShown[x.key] || sbNagStore.get("sb-nag-progress-" + x.key, null) !== today)){
+      progress = { it: x, peak, name: tr.name };
+    }
+    tr.last = x.amount;
+    tr.peak = peak;
+  });
+  if(!progress){
+    const keep = Object.keys(progressShown).find(k => items.some(x => x.key === k));
+    if(keep){ const x = items.find(y => y.key === keep); const tr = tracked[keep]; if(tr) progress = { it: x, peak: tr.peak, name: tr.name }; }
+  }
+  sbNagStore.set("sb-nag-track", tracked);
+  if(progress && !opts.pickKey){
+    const x = progress.it;
+    progressShown[x.key] = true;
+    sbNagStore.set("sb-nag-progress-" + x.key, today);
+    const paid = Math.max(0, progress.peak - x.amount);
+    const vars = { name: progress.name || opts.nameOf(x.creditor) || "?", left: sbNagMoney(x.amount, x.currency), paid: sbNagMoney(paid, x.currency), total: sbNagMoney(progress.peak, x.currency) };
+    const lineKey = sbNagPickKey(["nag.progress"], false);
+    const mood = SB_NAG_MOOD[lineKey] || "sweet";
+    const pct = progress.peak > 0 ? Math.round(paid / progress.peak * 100) : 0;
+    el.hidden = false;
+    el.innerHTML = '<div class="card sb-nag is-progress" role="status">'
+      + '<div class="sb-nag-pie">' + sbPieMascotSVG(Math.min(sbNagLevel(x.score), 1), mood) + '</div>'
+      + '<div class="sb-nag-body"><p class="sb-nag-line">' + escapeHtml(t(lineKey, vars)) + '</p>'
+      + '<div class="sb-nag-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '"><i style="width:' + pct + '%"></i></div>'
+      + '<p class="sb-nag-sub">' + escapeHtml(t("nag.progressSub", vars)) + '</p>'
+      + '<div class="sb-nag-actions">'
+      + '<button type="button" class="sbf-primary sb-nag-go">' + escapeHtml(t("nag.progressPay")) + '</button>'
+      + '<button type="button" class="sb-nag-later">' + escapeHtml(t("nag.progressOk")) + '</button>'
+      + '</div></div></div>';
+    sbNagSetLogo(Math.min(sbNagLevel(x.score), 1), mood, () => el.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" }));
+    el.querySelector(".sb-nag-go").addEventListener("click", () => opts.onPay(x));
+    el.querySelector(".sb-nag-later").addEventListener("click", () => {
+      delete progressShown[x.key];
+      el.querySelector(".sb-nag").classList.add("is-leaving");
+      setTimeout(() => sbRenderNag(el, Object.assign({}, opts, { expand: false })), 220);
+    });
+    return;
+  }
+
+  let it = opts.pickKey ? items.find(x => x.key === opts.pickKey) || null : null;
+  if(!it) it = sbNagFind(opts.myId, opts.expenses, opts.repayments, items);
   window.__sbNagCurrent = it && it.iOwe ? it : null;
   // 欠的錢都按了「明天再說」：今天不再跳出來，但還沒還，logo 維持派派（斜眼瞪你），點了再叫出來
   let held = false;
   if(!it){
-    const owed = items.filter(x => x.iOwe && x.score >= SB_NAG_LEVELS[0]).sort((a, b) => b.score - a.score)[0];
-    if(!owed){ clear(); sbNagSetLogo(null); return; }
+    const owed = overdue.slice().sort((a, b) => b.score - a.score)[0];
+    if(!owed){ clear(); restingLogo(); return; }
     if(!opts.peekSnoozed){
       clear();
       const heldLevel = gentle ? Math.min(sbNagLevel(owed.score), 2) : sbNagLevel(owed.score);
       sbNagSetLogo(heldLevel, "sideeye", () => {
         sbRenderNag(el, Object.assign({}, opts, { expand: true, peekSnoozed: true }));
-        setTimeout(() => el.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" }), 30);
+        setTimeout(() => el.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" }), 30);
       });
       return;
     }
@@ -2268,8 +2373,10 @@ function sbRenderNag(el, opts){
   const amount = sbNagMoney(it.amount, it.currency);
   const other = it.iOwe ? it.creditor : it.debtor;
   const name = opts.nameOf(other) || "?";
-  // 記下派派唸過哪一筆，之後還清了才知道要開心
-  tracked[it.key] = { since: it.since, currency: it.currency, iOwe: it.iOwe, name, amountText: amount };
+  // 記下派派唸過哪一筆，之後還清了才知道要開心；還了一部分也看得出來
+  const prevTr = tracked[it.key] && tracked[it.key].since === it.since ? tracked[it.key] : {};
+  tracked[it.key] = Object.assign({}, prevTr, { since: it.since, currency: it.currency, iOwe: it.iOwe, name, amountText: amount,
+    last: it.amount, peak: Math.max(prevTr.peak || 0, it.amount) });
   if(it.iOwe) window.__sbNagCurrent = Object.assign({}, it, { name });
   sbNagStore.set("sb-nag-track", tracked);
 
@@ -2290,12 +2397,16 @@ function sbRenderNag(el, opts){
 
   // 外幣在灰字補上「約 NT$…」；只有真的有匯率（即時或內建表）才換算
   const rate = it.currency !== "TWD" && ((window.cachedExchangeRates || {})[it.currency] || (window.DEFAULT_RATES_TO_TWD || {})[it.currency]);
-  const approx = rate ? t("nag.approx", { twd: "NT$" + (typeof formatAmt === "function" ? formatAmt(Math.round(it.amount * rate)) : Math.round(it.amount * rate)) }) : "";
+  const approx = rate ? t("nag.approx", { twd: sbNagMoney(Math.round(it.amount * rate), "TWD") }) : "";
   const sub = t(it.iOwe ? "nag.subOwe" : "nag.subOwed", Object.assign({}, vars, { amount: amount + approx }));
+
+  // 同時欠好幾個人：卡片底下說還有幾筆，點了換下一筆（依嚴重程度）
+  const queue = it.iOwe ? overdue.filter(x => { const s = sbNagStore.get("sb-nag-" + x.key, null); return x.key === it.key || !(s && s.until > today); }).sort((a, b) => b.score - a.score) : [];
+  const moreCount = queue.length > 1 ? queue.length - 1 : 0;
 
   // 一天只完整出現一次（每個頁面各自算）；其餘時間縮在標題旁的 logo，點了才展開
   const seenKey = "sb-nag-seen-" + (opts.surface || "home");
-  const expand = () => { sbRenderNag(el, Object.assign({}, opts, { expand: true })); setTimeout(() => el.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" }), 30); };
+  const expand = () => { sbRenderNag(el, Object.assign({}, opts, { expand: true })); setTimeout(() => el.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" }), 30); };
   sbNagSetLogo(level, mood, expand);
   // 這次開頁已經完整出現過的，頁面重畫（資料更新、即時同步）時維持展開，不要自己縮回去
   const shownThisVisit = window.__sbNagFullShown || (window.__sbNagFullShown = {});
@@ -2306,16 +2417,19 @@ function sbRenderNag(el, opts){
   if(!it.iOwe) sbNagStore.set("sb-nag-asked-" + it.key, today);
 
   el.hidden = false;
-  el.innerHTML = '<div class="card sb-nag lv-' + level + (it.iOwe ? "" : " is-creditor") + '" role="status">'
+  el.innerHTML = '<div class="card sb-nag lv-' + level + (it.iOwe ? "" : " is-creditor") + '" role="status" data-key="' + escapeHtml(it.key) + '">'
     + '<div class="sb-nag-pie" title="' + escapeHtml(t("nag.mascotName")) + '">' + sbPieMascotSVG(level, mood) + '</div>'
     + '<div class="sb-nag-body">'
     + '<p class="sb-nag-line">' + escapeHtml(line) + '</p>'
     // 台詞已經講了金額，下面那行灰字就不重複（外幣例外，要看換算）
     + (line.includes(amount) && !approx ? '' : '<p class="sb-nag-sub">' + escapeHtml(sub) + '</p>')
+    + (it.iOwe ? '' : '<p class="sb-nag-sub sb-nag-nudged" hidden></p>')
     + '<div class="sb-nag-actions">'
     + '<button type="button" class="sbf-primary sb-nag-go">' + escapeHtml(t(it.iOwe ? "nag.pay" : "nag.nudge")) + '</button>'
     + '<button type="button" class="sb-nag-later">' + escapeHtml(t(it.iOwe ? "nag.snooze" : "nag.later")) + '</button>'
-    + '</div></div></div>';
+    + '</div>'
+    + (moreCount ? '<button type="button" class="sb-nag-more">' + escapeHtml(t("nag.moreDebts", { n: moreCount })) + '</button>' : '')
+    + '</div></div>';
   el.querySelector(".sb-nag-go").addEventListener("click", () => (it.iOwe ? opts.onPay : opts.onNudge)(it));
   el.querySelector(".sb-nag-later").addEventListener("click", () => {
     if(it.iOwe && !held){
@@ -2324,8 +2438,34 @@ function sbRenderNag(el, opts){
       sbNagStore.set("sb-nag-" + it.key, { until: sbIsoDay(d), count: count + 1, since: it.since });
     }
     el.querySelector(".sb-nag").classList.add("is-leaving");
-    setTimeout(() => sbRenderNag(el, Object.assign({}, opts, { expand: false, peekSnoozed: false })), 220);
+    setTimeout(() => sbRenderNag(el, Object.assign({}, opts, { expand: false, peekSnoozed: false, pickKey: null })), 220);
   });
+  const moreBtn = el.querySelector(".sb-nag-more");
+  if(moreBtn) moreBtn.addEventListener("click", () => {
+    const idx = queue.findIndex(x => x.key === it.key);
+    const next = queue[(idx + 1) % queue.length];
+    sbRenderNag(el, Object.assign({}, opts, { expand: true, pickKey: next.key }));
+  });
+
+  // 別人欠你的：顯示已經幫你催了幾次（從資料庫的催款紀錄算），也記下來，錢回來時派派會提
+  if(!it.iOwe && opts.sb){
+    sbNagLoadNudgeStats(opts.sb).then(map => {
+      const r = map[it.debtor + "|" + it.currency];
+      const p = el.querySelector('.sb-nag[data-key="' + it.key + '"] .sb-nag-nudged');
+      if(!r || !p || !r.sent_at) return;
+      const lastDay = sbIsoDay(new Date(r.sent_at));
+      if(lastDay < it.since) return; // 上一輪欠款催的，不算
+      const ago = sbNagDayNum(today) - sbNagDayNum(lastDay);
+      const when = ago <= 0 ? t("nag.whenToday") : t("nag.whenDaysAgo", { n: ago });
+      const counted = r.sent_count && r.first_sent_at && sbIsoDay(new Date(r.first_sent_at)) >= it.since;
+      p.textContent = counted ? t("nag.nudgedCount", { n: r.sent_count, when }) : t("nag.nudgedLast", { when });
+      p.hidden = false;
+      if(counted){
+        const tr2 = sbNagStore.get("sb-nag-track", {});
+        if(tr2[it.key]){ tr2[it.key].nudged = r.sent_count; sbNagStore.set("sb-nag-track", tr2); }
+      }
+    });
+  }
 }
 window.sbRenderNag = sbRenderNag;
 

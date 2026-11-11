@@ -4608,11 +4608,13 @@
     btn.disabled = true;
     btn.textContent = t("currency.sendingEllipsis");
 
-    const { data, error } = await sb.rpc("send_debt_reminder", {
-      p_debtor_member_id: debtorId,
-      p_amount: amt,
-      p_currency: CURRENCY
-    });
+    const nagItem = (window.__sbNagItems || []).find(x => x.creditor === creditorId && x.debtor === debtorId && x.currency === CURRENCY);
+    const baseArgs = { p_debtor_member_id: debtorId, p_amount: amt, p_currency: CURRENCY };
+    let { data, error } = await sb.rpc("send_debt_reminder", nagItem ? Object.assign({ p_since: nagItem.since }, baseArgs) : baseArgs);
+    if(error && nagItem && (error.code === "PGRST202" || /p_since|function/i.test(error.message || ""))){
+      ({ data, error } = await sb.rpc("send_debt_reminder", baseArgs));
+    }
+    if(!error && data === "OK") window.__sbNudgeStatsReq = null; // 派派的「催了幾次」重新查
 
     btn.disabled = false;
     btn.textContent = originalText;
@@ -4732,7 +4734,7 @@
     if(!banner || !myMember || typeof sbRenderNag !== "function") return;
     sbRenderNag(banner, {
       myId: myMember.id, expenses, repayments,
-      nameOf: id => memberById[id],
+      nameOf: id => memberById[id], sb,
       surface: "cur:" + CURRENCY, scope: CURRENCY,
       onPay: it => openPairFromNag(it.debtor, it.creditor),
       onNudge: it => openPairFromNag(it.debtor, it.creditor)
