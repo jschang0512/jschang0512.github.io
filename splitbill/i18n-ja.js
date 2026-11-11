@@ -1464,6 +1464,7 @@ I18N["ja"] = {
     "nav.mainLabel": "メインナビゲーション",
 
     "nav.currencies": "通貨",
+    "msg.tooManyAttempts": "試行回数が多すぎます。10 分後にもう一度お試しください",
     "currency.ledgerShowMore": "さらに前の {n} 件を表示",
     "shared.deleteAllNotif": "すべて削除",
     "shared.deleteAllNotifConfirm": "通知をすべて削除しますか？元に戻せません。",
