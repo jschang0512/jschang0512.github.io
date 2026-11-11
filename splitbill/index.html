@@ -131,7 +131,7 @@
 <script src="i18n.js?v=9e5878f5df"></script>
 <script src="currencies.js?v=1fe139e56b"></script>
 <script src="motion.js?v=c960fb49b3"></script>
-<script src="version.js?v=f536b20744"></script>
+<script src="version.js?v=47fcd042b6"></script>
 <script src="notif-text.js?v=f501aac2ce"></script>
 <script src="shared-ui.js?v=7b15810a59"></script>
 <script src="theme.js?v=01d7c0a8c1" defer></script>
@@ -742,10 +742,9 @@ function removeFlashGuard(){
   async function resolveLoginIdentifier(input){
     const trimmed = (input || "").trim();
     if(!trimmed) return null;
-    if(trimmed.includes("@")) return trimmed;
-    const { data, error } = await sb.rpc("email_for_username", { p_username: trimmed });
-    if(error) return null;
-    return data || null;
+    // 帳號名稱改由 auth-username 在伺服器端處理（email_for_username 已不開放給瀏覽器），
+    // 這裡只處理直接輸入信箱的情況；帳號名稱走到這裡代表伺服器連不上，當作登入失敗。
+    return trimmed.includes("@") ? trimmed : null;
   }
 
   // ---------- 帳號名稱登入／重設密碼：交給伺服器做（auth-username） ----------
