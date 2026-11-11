@@ -8,6 +8,28 @@
 // ============================================================
 window.SB_RELEASE_NOTES = [
   {
+    version: "982",
+    date: "2026-11-11",
+    "zh-Hant": [
+      "App 開著時有新通知，會從上方滑出提示，點一下直接打開那一筆",
+      "首頁的未讀提示直接顯示最新那則的內容",
+      "點還款、活動的通知會直接打開那筆還款或那場活動",
+      "通知清單依今天、昨天、這週分段，可以載入更多，也可以一次全部刪除；打開清單鈴鐺紅點就會清掉"
+    ],
+    "ja": [
+      "アプリを開いているときに新しい通知が来ると上からお知らせが出て、タップでその記録を開けます",
+      "ホームの未読のお知らせに最新の通知の内容を表示",
+      "返済やイベントの通知をタップすると、その返済やイベントが直接開きます",
+      "通知一覧を今日・昨日・今週で区切り、さらに読み込み・すべて削除に対応。一覧を開くとベルの赤い点が消えます"
+    ],
+    "en": [
+      "When a new notification arrives while the app is open, a banner slides in from the top; tap it to open that entry",
+      "The unread banner on Home now shows the latest notification itself",
+      "Tapping a repayment or event notification opens that repayment or event",
+      "The notification list is grouped into Today, Yesterday and This week, can load more, and has Delete all; opening it clears the red dot on the bell"
+    ]
+  },
+  {
     version: "981",
     date: "2026-11-11",
     "zh-Hant": [

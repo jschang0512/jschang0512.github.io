@@ -1489,6 +1489,15 @@ const I18N = {
     "nav.mainLabel": "主要導覽",
 
     "nav.currencies": "幣別",
+    "shared.deleteAllNotif": "全部刪除",
+    "shared.deleteAllNotifConfirm": "要刪除所有通知嗎？刪掉就沒辦法復原。",
+    "shared.unreadMore": "還有 {n} 則",
+    "shared.notifToday": "今天",
+    "shared.notifYesterday": "昨天",
+    "shared.notifThisWeek": "這週",
+    "shared.notifEarlier": "更早",
+    "shared.notifLoadMore": "載入更多",
+    "shared.notifTargetGone": "這筆紀錄已經不存在了",
     "login.rememberMe": "記住我（90 天內不用重新登入）",
     "settings.notSet": "未設定",
     "settings.noEmailShort": "還沒設定信箱",
@@ -1849,7 +1858,7 @@ let currentLang = detectDefaultLang();
 // 用 document.write 插一個同步載入的 <script>（同網域，瀏覽器不會擋）。版本號沿用
 // i18n.js 自己的 ?v=，換版時一起換新。切換語言本來就會整頁重新整理（見 setLang）。
 // 日文、英文翻譯檔各自的內容指紋，由 scripts/stamp-assets.js 自動填，不要手改
-const SB_LANG_V = {"en": "d6f155c71e", "ja": "97d1dfdde2"};
+const SB_LANG_V = {"en": "366a6ed8d6", "ja": "10cc0a6981"};
 (function loadLangDict(){
   if(currentLang === "zh-Hant" || I18N[currentLang]) return;
   const self = document.currentScript;

@@ -657,5 +657,21 @@
     }
     try{ localStorage.setItem("splitbill-events-seen-" + myMember.group_id, new Date().toISOString()); }catch(e){}
     sbEnablePullToRefresh(load);
+    // 從通知點進來的（?open=活動id）：捲到那張活動卡、閃一下；已結束的活動先把「過去的活動」展開
+    const openId = new URLSearchParams(location.search).get("open");
+    if(openId){
+      const card = document.querySelector('.ev-card[data-id="' + CSS.escape(openId) + '"]');
+      if(card){
+        const past = card.closest("details");
+        if(past) past.open = true;
+        setTimeout(()=>{
+          card.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+          card.classList.add("sb-flash");
+          setTimeout(()=> card.classList.remove("sb-flash"), 2400);
+        }, 200);
+      } else if(window.showToast){
+        showToast(t("shared.notifTargetGone"));
+      }
+    }
   })();
 })();

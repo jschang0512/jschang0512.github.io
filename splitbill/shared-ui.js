@@ -629,6 +629,7 @@ async function initNotificationBell(sb, myMember){
       <div class="calc-header notif-card-head">
         <span class="calc-header-name" id="notifModalTitle">${t("shared.notifLabel")}</span>
         <button type="button" class="link-btn" id="notifMarkAllReadBtn">${t("shared.markAllRead")}</button>
+        <button type="button" class="link-btn notif-del-all" id="notifDeleteAllBtn">${t("shared.deleteAllNotif")}</button>
         <button type="button" class="calc-close" id="notifCloseBtn" aria-label="${t("common.close")}">✕</button>
       </div>
       <div class="notif-panel-list" id="notifPanelList"></div>
@@ -640,6 +641,7 @@ async function initNotificationBell(sb, myMember){
   const badge = document.getElementById("notifBadge");
   const listEl = document.getElementById("notifPanelList");
   const markAllBtn = document.getElementById("notifMarkAllReadBtn");
+  const delAllBtn = document.getElementById("notifDeleteAllBtn");
 
   function notifTimeAgo(iso){
     const diffMs = Date.now() - new Date(iso).getTime();
@@ -655,12 +657,22 @@ async function initNotificationBell(sb, myMember){
     return new Date(iso).toLocaleDateString(locale);
   }
 
+  // 「看過」跟「已讀」分開：打開通知清單就算看過，鈴鐺紅點和首頁橫幅清掉；
+  // 還沒點開的那幾則在清單裡照樣留著未讀的藍點。看過的時間記在這台裝置。
+  const SEEN_KEY = "sb-notif-seen-" + myMember.id;
+  const getSeen = () => { try{ return localStorage.getItem(SEEN_KEY) || ""; }catch(e){ return ""; } };
+  const markSeen = () => { try{ localStorage.setItem(SEEN_KEY, new Date().toISOString()); }catch(e){} };
+
   async function refreshBadge(){
-    const { count, error } = await sb
-      .from("notifications")
-      .select("id", { count: "exact", head: true })
+    let q = sb.from("notifications")
+      .select("id,type,title,body,params", { count: "exact" })
       .eq("member_id", myMember.id)
-      .eq("is_read", false);
+      .eq("is_read", false)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    const seen = getSeen();
+    if(seen) q = q.gt("created_at", seen);
+    const { data, count, error } = await q;
     if(error){
       // 故意不要把「查詢失敗」悄悄當成「0 則通知」處理掉——不然這張表
       // 建錯、RLS 設錯之類的真問題，畫面上永遠只會顯示正常的 0，完全
@@ -673,12 +685,12 @@ async function initNotificationBell(sb, myMember){
       badge.textContent = n > 99 ? "99+" : String(n);
       badge.classList.toggle("hidden", n === 0);
     }
-    renderUnreadAlert(n);
+    renderUnreadAlert(n, data && data[0]);
   }
 
-  // 「我的款項」上方的未讀提示：幣別頁放在餘額橫幅前，總覽頁放在「我的款項」卡片標題前。
-  // 點一下捲回頂端、打開通知面板；沒有未讀就整條拿掉。
-  function renderUnreadAlert(n){
+  // 首頁／幣別頁上方的未讀提示：直接顯示最新那一則的內容，後面標「還有幾則」。
+  // 點一下捲回頂端、打開通知清單；沒有新的就整條拿掉。
+  function renderUnreadAlert(n, latest){
     const balance = document.getElementById("myBalance");
     const amtTitle = document.querySelector('#myAmtList')?.closest(".card")?.querySelector("h2");
     const slot = document.getElementById("homeAlertSlot") || document.getElementById("curAlertSlot"); // 首頁／幣別頁專門留的位置
@@ -693,14 +705,21 @@ async function initNotificationBell(sb, myMember){
       el.className = "unread-notif-alert";
       el.addEventListener("click", (e)=>{
         e.stopPropagation(); // 不然冒泡到 document 的「點外面就關面板」會馬上又關掉
-        window.scrollTo({ top: 0, behavior: "smooth" });
-        if(bellBtn && !isOpen()) bellBtn.click();
+        openPanel();
       });
-      // 幣別頁：放在「我的款項」橫幅正下方（最重要的數字先看到）；總覽頁：放在「我的款項」卡片標題前
       if(slot) slot.appendChild(el);
       else if(balance) balance.after(el); else anchor.parentNode.insertBefore(el, anchor);
     }
-    el.textContent = n === 1 ? t("shared.unreadNotifAlertOne") : t("shared.unreadNotifAlert", { n: n > 99 ? "99+" : n });
+    if(latest){
+      const txt = notifText(latest);
+      el.classList.add("has-preview");
+      el.innerHTML = `<span class="una-text"><b>${escapeHtml(txt.title)}</b><small>${escapeHtml(txt.body)}</small></span>`
+        + (n > 1 ? `<span class="una-more">${escapeHtml(t("shared.unreadMore", { n: n - 1 > 98 ? "99+" : n - 1 }))}</span>` : "");
+      el.setAttribute("aria-label", n === 1 ? t("shared.unreadNotifAlertOne") : t("shared.unreadNotifAlert", { n: n > 99 ? "99+" : n }));
+    } else {
+      el.classList.remove("has-preview");
+      el.textContent = n === 1 ? t("shared.unreadNotifAlertOne") : t("shared.unreadNotifAlert", { n: n > 99 ? "99+" : n });
+    }
   }
 
   // 新通知（2026-10 起）帶 params：文字交給 notif-text.js 依目前語言組。
@@ -714,101 +733,197 @@ async function initNotificationBell(sb, myMember){
   const NOTIF_KIND = { expenses_insert: "add", expenses_update: "edit", recurring_generated: "repeat",
     repayments_insert: "repay", repayments_update: "repay", debt_reminder: "remind", event_created: "add",
     recurring_upcoming: "repeat", recurring_need_amount: "repeat" };
+  const NOTIF_ICON = { add: "receipt", edit: "pencil", repeat: "repeat", repay: "swap", remind: "bell", other: "bell" };
 
-  async function loadList(){
-    listEl.innerHTML = `<p class="filter-hint">${t("common.loading")}</p>`;
-    const { data, error } = await sb
-      .from("notifications")
-      .select("id,type,title,body,params,is_read,created_at,related_table,related_id")
-      .eq("member_id", myMember.id)
-      .order("created_at", { ascending: false })
-      .limit(30);
-    if(error){
-      console.error("讀取通知清單失敗：", error);
-      listEl.innerHTML = `<p class="filter-hint">${t("shared.notifLoadFailed")}</p>`;
-      return;
+  // 點通知：跳到對應的那一筆（支出、還款、固定支出、活動、催款的那個人）
+  async function openNotif(n){
+    const table = n.related_table, id = n.related_id;
+    const enc = encodeURIComponent;
+    if(table === "expenses" && id){
+      const { data: exp } = await sb.from("expenses").select("currency").eq("id", id).maybeSingle();
+      if(exp && exp.currency) location.href = `currency.html?c=${enc(exp.currency)}&openExpense=${enc(id)}`;
+      else if(window.showToast) showToast(t("shared.notifTargetGone"));
+    } else if(table === "repayments" && id){
+      const { data: rep } = await sb.from("repayments").select("currency").eq("id", id).maybeSingle();
+      if(rep && rep.currency) location.href = `currency.html?c=${enc(rep.currency)}&openRepayment=${enc(id)}`;
+      else if(window.showToast) showToast(t("shared.notifTargetGone"));
+    } else if(table === "recurring_expenses" && id){
+      location.href = `recurring.html?${n.type === "recurring_need_amount" ? "fill" : "show"}=${enc(id)}`;
+    } else if(table === "events"){
+      location.href = "events.html" + (id ? "?open=" + enc(id) : "");
+    } else if(n.type === "debt_reminder" && id && n.params && n.params.currency){
+      location.href = `currency.html?c=${enc(n.params.currency)}&pay=${enc(id)}`;
     }
-    if(!data || !data.length){
-      listEl.innerHTML = `<p class="filter-hint">${t("shared.noNotifications")}</p>`;
-      return;
-    }
-    listEl.innerHTML = data.map(n => { const txt = notifText(n); return `
-      <div class="notif-item notif-kind-${NOTIF_KIND[n.type] || "other"}${n.is_read ? "" : " unread"}${n.related_table && n.related_id ? " notif-item-linked" : ""}" data-id="${n.id}" data-type="${escapeHtml(n.type || "")}" data-related-table="${n.related_table || ""}" data-related-id="${n.related_id || ""}">
-        <div class="notif-item-main">
+  }
+  async function markRead(id){
+    await sb.from("notifications").update({ is_read: true }).eq("id", id);
+  }
+
+  // 通知清單：依「今天／昨天／這週／更早」分段，一次 30 則，捲到底可以載入更多
+  const PAGE = 30;
+  let rows = [];
+  let hasMore = false;
+  function dayBucket(iso){
+    const d = new Date(iso), now = new Date();
+    const start = x => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+    const diff = Math.round((start(now) - start(d)) / 86400000);
+    if(diff <= 0) return "today";
+    if(diff === 1) return "yesterday";
+    if(diff < 7) return "week";
+    return "earlier";
+  }
+  const BUCKET_KEY = { today: "shared.notifToday", yesterday: "shared.notifYesterday", week: "shared.notifThisWeek", earlier: "shared.notifEarlier" };
+  function itemHTML(n){
+    const txt = notifText(n);
+    const kind = NOTIF_KIND[n.type] || "other";
+    return `<div class="notif-item notif-kind-${kind}${n.is_read ? "" : " unread"}${n.related_table && n.related_id ? " notif-item-linked" : ""}" data-id="${n.id}">
+        <span class="notif-item-ico" aria-hidden="true">${sbIcon(NOTIF_ICON[kind] || "bell")}</span>
+        <div class="notif-item-main" role="button" tabindex="0">
           <div class="notif-item-title">${n.is_read ? "" : '<span class="notif-unread-dot"></span>'}${escapeHtml(txt.title)}</div>
           <div class="notif-item-body">${escapeHtml(txt.body)}</div>
           <div class="notif-item-time">${notifTimeAgo(n.created_at)}</div>
         </div>
         <button type="button" class="notif-item-del" data-id="${n.id}" title="${t("shared.deleteNotifTitle")}" aria-label="${t("settings.delete")}">✕</button>
-      </div>
-    `; }).join("");
-    listEl.querySelectorAll(".notif-item-main").forEach(el=>{
-      el.addEventListener("click", async ()=>{
-        const item = el.closest(".notif-item");
-        if(item.classList.contains("unread")){
-          item.classList.remove("unread");
-          await sb.from("notifications").update({ is_read: true }).eq("id", item.dataset.id);
-          refreshBadge();
-        }
-        // related_table/related_id 有值的話，點通知直接跳到對應內容，不用只能
-        // 標已讀、自己再去找是哪一筆——目前只有「週期性支出自動記錄」這個通知
-        // 類型會填這兩欄，其他類型（例如催款提醒）沒有就維持原本單純標已讀的行為。
-        const relatedTable = item.dataset.relatedTable;
-        const relatedId = item.dataset.relatedId;
-        if(relatedTable === "expenses" && relatedId){
-          const { data: exp } = await sb.from("expenses").select("currency").eq("id", relatedId).maybeSingle();
-          if(exp && exp.currency){
-            location.href = `currency.html?c=${encodeURIComponent(exp.currency)}&openExpense=${encodeURIComponent(relatedId)}`;
-          }
-        } else if(relatedTable === "recurring_expenses" && relatedId){
-          location.href = `recurring.html?${item.dataset.type === "recurring_need_amount" ? "fill" : "show"}=${encodeURIComponent(relatedId)}`;
-        } else if(relatedTable === "events"){
-          location.href = "events.html";
-        }
-      });
+      </div>`;
+  }
+  function renderList(){
+    if(!rows.length){
+      listEl.innerHTML = `<p class="filter-hint">${t("shared.noNotifications")}</p>`;
+      markAllBtn.classList.add("hidden");
+      delAllBtn.classList.add("hidden");
+      return;
+    }
+    markAllBtn.classList.toggle("hidden", !rows.some(n => !n.is_read));
+    delAllBtn.classList.remove("hidden");
+    let last = "", html = "";
+    rows.forEach(n => {
+      const b = dayBucket(n.created_at);
+      if(b !== last){ html += `<div class="notif-group-label">${escapeHtml(t(BUCKET_KEY[b]))}</div>`; last = b; }
+      html += itemHTML(n);
     });
-    listEl.querySelectorAll(".notif-item-del").forEach(btn=>{
-      btn.addEventListener("click", async (e)=>{
-        e.stopPropagation();
-        const item = btn.closest(".notif-item");
-        const wasUnread = item.classList.contains("unread");
-        if(window.sbCollapseEl) await window.sbCollapseEl(item);
-        item.remove();
-        await sb.from("notifications").delete().eq("id", btn.dataset.id);
-        if(wasUnread) refreshBadge();
-        if(!listEl.querySelector(".notif-item")){
-          listEl.innerHTML = `<p class="filter-hint">${t("shared.noNotifications")}</p>`;
-        }
-      });
-    });
+    if(hasMore) html += `<button type="button" class="notif-load-more" id="notifLoadMore">${escapeHtml(t("shared.notifLoadMore"))}</button>`;
+    listEl.innerHTML = html;
+  }
+  async function loadList(more){
+    if(!more){ rows = []; listEl.innerHTML = `<p class="filter-hint">${t("common.loading")}</p>`; }
+    const { data, error } = await sb
+      .from("notifications")
+      .select("id,type,title,body,params,is_read,created_at,related_table,related_id")
+      .eq("member_id", myMember.id)
+      .order("created_at", { ascending: false })
+      .range(rows.length, rows.length + PAGE - 1);
+    if(error){
+      console.error("讀取通知清單失敗：", error);
+      if(!more) listEl.innerHTML = `<p class="filter-hint">${t("shared.notifLoadFailed")}</p>`;
+      return;
+    }
+    rows = rows.concat(data || []);
+    hasMore = (data || []).length === PAGE;
+    renderList();
   }
 
+  // 清單裡的點擊統一在這裡處理（清單會重畫，不用每次重綁）
+  listEl.addEventListener("click", async (e)=>{
+    if(e.target.closest("#notifLoadMore")){ e.target.closest("#notifLoadMore").disabled = true; await loadList(true); return; }
+    const del = e.target.closest(".notif-item-del");
+    const item = e.target.closest(".notif-item");
+    if(!item) return;
+    const n = rows.find(r => String(r.id) === item.dataset.id);
+    if(del){
+      e.stopPropagation();
+      if(window.sbCollapseEl) await window.sbCollapseEl(item);
+      rows = rows.filter(r => r !== n);
+      await sb.from("notifications").delete().eq("id", del.dataset.id);
+      renderList();
+      if(n && !n.is_read) refreshBadge();
+      return;
+    }
+    if(!e.target.closest(".notif-item-main") || !n) return;
+    if(!n.is_read){
+      n.is_read = true;
+      item.classList.remove("unread");
+      item.querySelector(".notif-unread-dot")?.remove();
+      await markRead(n.id);
+      refreshBadge();
+    }
+    openNotif(n);
+  });
+  listEl.addEventListener("keydown", (e)=>{
+    if((e.key === "Enter" || e.key === " ") && e.target.classList.contains("notif-item-main")){ e.preventDefault(); e.target.click(); }
+  });
+
+  function openPanel(){
+    panel.classList.add("show");
+    markSeen();
+    refreshBadge();
+    loadList(false);
+  }
   if(bellBtn){
     bellBtn.addEventListener("click", (e)=>{
       e.stopPropagation();
-      panel.classList.add("show");
-      loadList();
+      openPanel();
     });
   }
   document.getElementById("notifCloseBtn").addEventListener("click", ()=> panel.classList.remove("show"));
-  if(markAllBtn){
-    markAllBtn.addEventListener("click", async ()=>{
-      await sb.from("notifications").update({ is_read: true }).eq("member_id", myMember.id).eq("is_read", false);
-      listEl.querySelectorAll(".notif-item.unread").forEach(el => el.classList.remove("unread"));
+  markAllBtn.addEventListener("click", async ()=>{
+    await sb.from("notifications").update({ is_read: true }).eq("member_id", myMember.id).eq("is_read", false);
+    rows.forEach(n => { n.is_read = true; });
+    renderList();
+    refreshBadge();
+  });
+  delAllBtn.addEventListener("click", async ()=>{
+    const ok = await sbConfirm(t("shared.deleteAllNotifConfirm"));
+    if(!ok) return;
+    const { error } = await sb.from("notifications").delete().eq("member_id", myMember.id);
+    if(error){ console.error("刪除通知失敗：", error); return; }
+    rows = []; hasMore = false;
+    renderList();
+    refreshBadge();
+  });
+
+  // App 開著時有新通知：從上方滑出一則提示，點了直接打開那一筆，幾秒後自己收起來
+  function showNotifToast(n){
+    if(isOpen()) return;
+    document.getElementById("sbNotifToast")?.remove();
+    const txt = notifText(n);
+    const kind = NOTIF_KIND[n.type] || "other";
+    const el = document.createElement("div");
+    el.id = "sbNotifToast";
+    el.className = "sb-notif-toast notif-kind-" + kind;
+    el.setAttribute("role", "status");
+    el.innerHTML = `<button type="button" class="sb-notif-toast-main">
+        <span class="notif-item-ico" aria-hidden="true">${sbIcon(NOTIF_ICON[kind] || "bell")}</span>
+        <span class="sb-notif-toast-text"><b>${escapeHtml(txt.title)}</b><small>${escapeHtml(txt.body)}</small></span>
+      </button>
+      <button type="button" class="sb-notif-toast-x" aria-label="${escapeHtml(t("common.close"))}">✕</button>`;
+    document.body.appendChild(el);
+    let timer = null;
+    const hide = () => { clearTimeout(timer); el.classList.add("is-leaving"); setTimeout(()=> el.remove(), 260); };
+    const arm = () => { clearTimeout(timer); timer = setTimeout(hide, 6000); };
+    el.addEventListener("pointerenter", ()=> clearTimeout(timer));
+    el.addEventListener("pointerleave", arm);
+    el.querySelector(".sb-notif-toast-x").addEventListener("click", hide);
+    el.querySelector(".sb-notif-toast-main").addEventListener("click", async ()=>{
+      hide();
+      await markRead(n.id);
       refreshBadge();
+      if(n.related_table || n.type === "debt_reminder") openNotif(n); else openPanel();
     });
+    arm();
   }
 
   refreshBadge();
-  window.__sbBell = { memberId: myMember.id, refresh: refreshBadge };
+  window.__sbBell = { memberId: myMember.id, refresh: refreshBadge, open: openPanel, toast: showNotifToast };
 
-  // 即時更新未讀數字：這個帳號一有新通知寫進來就重新算一次角標，
-  // 面板開著的話順便重畫清單，不用手動重新整理頁面才看得到。
+  // 即時更新：新通知跳提示、更新角標；別台裝置標已讀／刪掉時這裡的數字也跟著變
   sb.channel("notif-" + myMember.id)
-    .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `member_id=eq.${myMember.id}` }, () => {
+    .on("postgres_changes", { event: "INSERT", schema: "public", table: "notifications", filter: `member_id=eq.${myMember.id}` }, (payload) => {
       refreshBadge();
-      if(isOpen()) loadList();
+      if(isOpen()) loadList(false);
+      else if(payload && payload.new) showNotifToast(payload.new);
     })
+    .on("postgres_changes", { event: "UPDATE", schema: "public", table: "notifications", filter: `member_id=eq.${myMember.id}` }, () => refreshBadge())
+    .on("postgres_changes", { event: "DELETE", schema: "public", table: "notifications" }, () => refreshBadge())
     .subscribe();
 }
 

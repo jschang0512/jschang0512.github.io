@@ -1044,6 +1044,28 @@
       if(targetExp) showExpenseDebtDetail(targetExp);
     }
 
+    // 從通知點還款跳過來的（?openRepayment=還款id）
+    const openRepaymentId = new URLSearchParams(location.search).get("openRepayment");
+    if(openRepaymentId){
+      const histTab = document.querySelector('.app-tab[data-tab="history"]');
+      if(histTab) histTab.click();
+      switchHistoryTab("repay");
+      const units = groupRepayments(lastFilteredRepayments || []);
+      const idx = units.findIndex(u => u.items.some(r => r.id === openRepaymentId));
+      if(idx >= 0){
+        repaymentPage = Math.floor(idx / historyPageSize);
+        renderRepaymentHistory(lastFilteredRepayments);
+      }
+      setTimeout(()=>{
+        const row = [...document.querySelectorAll("#repaymentHistory [data-rid]")].find(x => x.dataset.rid.split(" ").includes(openRepaymentId));
+        if(row){
+          row.scrollIntoView({ block: "center", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+          row.classList.add("sb-flash");
+          setTimeout(()=> row.classList.remove("sb-flash"), 2400);
+        }
+      }, 350);
+    }
+
     // 首頁快速記帳成功後按「編輯」跳過來的（?editExpense=支出id）
     const editExpenseId = new URLSearchParams(location.search).get("editExpense");
     if(editExpenseId){
@@ -4262,7 +4284,7 @@
           const canEdit = isRepaymentParty(a, myId);
           const isXcur = isXcurStr(a.offset_group) || isXcurStr(a.note);
           const xcurId = isXcur ? (a.offset_group || extractXcurId(a.note)) : null;
-          return `<div class="exp-item">
+          return `<div class="exp-item" data-rid="${a.id} ${b ? b.id : ""}">
             <div class="exp-cat-badge" style="background:color-mix(in srgb, #5C7CFA 12%, var(--card));"><span class="sb-ico" style="--ico:var(--ico-swap)" aria-hidden="true"></span></div>
             <div class="exp-main">
               <div class="exp-desc">${highlightSearchMatch(memberById[a.from_member] || "?", searchKw)} ↔ ${highlightSearchMatch(memberById[a.to_member] || "?", searchKw)} ${t("currency.mutualOffset")}${isXcur ? `<span class="xcur-badge">${t("currency.convertedToTwd")}</span>` : ""}</div>
@@ -4279,7 +4301,7 @@
         const isXcur = isXcurStr(r.note) || isXcurStr(r.offset_group);
         const xcurId = isXcur ? (r.offset_group || extractXcurId(r.note)) : null;
         const cleanNote = cleanXcurText(r.note);
-        return `<div class="exp-item">
+        return `<div class="exp-item" data-rid="${r.id}">
           <div class="exp-cat-badge" style="background:color-mix(in srgb, #40C057 12%, var(--card));"><span class="sb-ico" style="--ico:var(--ico-wallet)" aria-hidden="true"></span></div>
           <div class="exp-main">
             <div class="exp-desc">${t("currency.repayFromTo", {from: highlightSearchMatch(memberById[r.from_member] || "?", searchKw), to: highlightSearchMatch(memberById[r.to_member] || "?", searchKw)})}${isXcur ? `<span class="xcur-badge">${t("currency.convertedToTwd")}</span>` : ""}</div>
