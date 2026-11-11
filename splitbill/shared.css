@@ -10961,3 +10961,8 @@ html body .about-footer-links a{ display:inline-block; padding:10px 6px; }
 /* 首頁工具列：兩顆平分整排，跟下面滿版的橫幅、卡片對齊 */
 html body .home-tools{ display:grid; grid-auto-flow:column; grid-auto-columns:minmax(0,1fr); gap:10px; }
 html body .home-tools a{ justify-content:center; min-height:44px; border-radius:14px; }
+
+/* 登入頁：記住我 */
+html body .login-card .login-remember{ display:flex; align-items:center; gap:10px; margin:14px 0 0; padding:4px 0; font-size:14px; font-weight:500; text-transform:none; letter-spacing:0; color:var(--ink); cursor:pointer; -webkit-tap-highlight-color:transparent; }
+html body .login-card .login-remember input{ flex:none; width:20px; height:20px; margin:0; accent-color:var(--btn-primary); cursor:pointer; }
+html body .login-card .login-remember + .btn{ margin-top:12px; }

@@ -8,6 +8,22 @@
 // ============================================================
 window.SB_RELEASE_NOTES = [
   {
+    version: "980",
+    date: "2026-11-11",
+    "zh-Hant": [
+      "打開 App 直接進首頁，不會再先閃過登入頁",
+      "登入頁新增「記住我」：勾選的話 90 天內不用重新登入；在別人的電腦上可以取消勾選，關掉瀏覽器就自動登出"
+    ],
+    "ja": [
+      "アプリを開くとすぐホームが表示され、ログイン画面が一瞬出ることはなくなりました",
+      "ログイン画面に「ログイン状態を保持」を追加：オンなら 90 日間ログイン不要。他人のパソコンではオフにすると、ブラウザを閉じたときに自動でログアウトします"
+    ],
+    "en": [
+      "Opening the app now takes you straight to Home, without flashing the sign-in page first",
+      "New “Keep me signed in” on the sign-in page: stay signed in for 90 days, or untick it on a shared computer to be signed out when the browser closes"
+    ]
+  },
+  {
     version: "979",
     date: "2026-11-11",
     "zh-Hant": [

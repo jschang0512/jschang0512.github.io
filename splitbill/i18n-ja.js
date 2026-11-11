@@ -1464,6 +1464,7 @@ I18N["ja"] = {
     "nav.mainLabel": "メインナビゲーション",
 
     "nav.currencies": "通貨",
+    "login.rememberMe": "ログイン状態を保持（90 日間）",
     "settings.notSet": "未設定",
     "settings.noEmailShort": "メール未設定",
     "settings.nicknameShort": "ニックネーム",

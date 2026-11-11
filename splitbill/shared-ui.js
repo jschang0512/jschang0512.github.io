@@ -114,14 +114,25 @@ async function renderWhoamiGroupSwitcher(sb, currentUser, myMember, getDisplayNa
 // 還開著撐過一次 5 分鐘的檢查），時間就往後推，不會單純因為帳號用得久就
 // 被踢出；真的超過 14 天完全沒有任何動作才會被登出。----------
 const LOGIN_TIME_KEY = "sb_login_time";
-const SESSION_DURATION_MS = 14 * 24 * 60 * 60 * 1000;
+const SESSION_DURATION_MS = 90 * 24 * 60 * 60 * 1000;
+// 「記住我」：存在這台裝置。沒設定過（舊用戶）當作有勾。
+// 沒勾的人靠一個不設期限的 cookie（sb_alive）判斷：瀏覽器／App 關掉就消失，下次打開要重新登入。
+// index.html <head> 的快速跳轉也照同一套規則判斷，改這裡要一起改那邊。
+function sbRememberMe(){
+  try{ return localStorage.getItem("sb_remember") !== "0"; }catch(e){ return true; }
+}
+function sbSessionAlive(){
+  return /(?:^|;\s*)sb_alive=1/.test(document.cookie || "");
+}
 function isSessionExpired(){
   const loginTime = Number(localStorage.getItem(LOGIN_TIME_KEY));
   if(!loginTime) return false;
+  if(!sbRememberMe() && !sbSessionAlive()) return true;
   return (Date.now() - loginTime > SESSION_DURATION_MS);
 }
 function refreshLoginTime(){
   localStorage.setItem(LOGIN_TIME_KEY, String(Date.now()));
+  try{ document.cookie = "sb_alive=1; path=/; SameSite=Lax" + (location.protocol === "https:" ? "; Secure" : ""); }catch(e){}
 }
 
 // ---------- 成員名單：summary.html / currency.html(app.js) / settings.html

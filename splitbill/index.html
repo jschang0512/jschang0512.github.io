@@ -26,10 +26,31 @@
     // 防閃爍機制：如果看起來已經登入過，先把登入表單藏起來，
     // boot() 確認 session 真的有效後會直接跳轉，不會讓使用者看到登入表單閃一下。
     // 如果 session 其實已經失效，boot() 會把 flashGuard 樣式標籤移除，登入表單正常顯示。
+    // 規則跟 shared-ui.js 的 isSessionExpired() 一樣：勾「記住我」90 天、沒勾就看瀏覽器關掉前的 sb_alive cookie。
     var loginTime = Number(localStorage.getItem("sb_login_time"));
-    var isExpired = !loginTime || (Date.now() - loginTime > 12 * 60 * 60 * 1000);
+    var remember = localStorage.getItem("sb_remember") !== "0";
+    var alive = /(?:^|;\s*)sb_alive=1/.test(document.cookie || "");
+    var isExpired = !loginTime || (Date.now() - loginTime > 90 * 24 * 60 * 60 * 1000) || (!remember && !alive);
     if (!isExpired) {
       document.write('<style id="flashGuard">#loginScreen{display:none !important;}</style>');
+    }
+
+    // 快速跳轉：這台裝置有有效的登入，就不等 Supabase、不畫登入頁，直接去首頁（或原本要去的頁面）。
+    // 首頁會再確認一次登入；萬一其實失效了會被導回來，這時 15 秒內不再快速跳轉，免得兩頁來回跳
+    // （例如還沒有群組的人要留在這頁選群組）。OAuth 導回、忘記密碼、?stay=1 都走原本的流程。
+    var hasToken = false;
+    for (var i = 0; i < localStorage.length; i++) {
+      if (/^sb-.+-auth-token$/.test(localStorage.key(i) || "")) { hasToken = true; break; }
+    }
+    var special = /access_token|refresh_token|type=recovery|error/.test(location.hash) || params.get("code") || params.get("stay") || params.get("error");
+    var lastFast = Number(sessionStorage.getItem("sb_fast_redirect")) || 0;
+    if (!isExpired && hasToken && !special && Date.now() - lastFast > 15000) {
+      sessionStorage.setItem("sb_fast_redirect", String(Date.now()));
+      var want = localStorage.getItem("splitbill-post-login-redirect");
+      var target = (want && /^[a-zA-Z0-9_.\-]+\.html(\?[^\s]*)?$/.test(want)) ? want : "summary.html";
+      localStorage.removeItem("splitbill-post-login-redirect");
+      document.documentElement.style.visibility = "hidden";
+      location.replace(target);
     }
   }catch(e){}
 })();
@@ -103,16 +124,16 @@
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=599a4d1bd5">
-<link rel="stylesheet" href="shared.css?v=c0daeb36d9">
+<link rel="stylesheet" href="shared.css?v=8371b6060a">
 <script src="holiday.js?v=2816c2cc17"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad&render=explicit" async defer></script>
-<script src="i18n.js?v=36b382561c"></script>
+<script src="i18n.js?v=bdb63a21a3"></script>
 <script src="currencies.js?v=1fe139e56b"></script>
 <script src="motion.js?v=c960fb49b3"></script>
-<script src="version.js?v=90296503d7"></script>
+<script src="version.js?v=95c7b21459"></script>
 <script src="notif-text.js?v=f501aac2ce"></script>
-<script src="shared-ui.js?v=96e783ee82"></script>
+<script src="shared-ui.js?v=8bb2ac7103"></script>
 <script src="theme.js?v=01d7c0a8c1" defer></script>
 <script src="app-banner.js?v=c400decf5d" defer></script>
 <script>
@@ -228,6 +249,10 @@ if("serviceWorker" in navigator){
           <input type="password" id="authPasswordConfirm" class="hidden" data-i18n-placeholder="login.passwordConfirmPlaceholder" placeholder="再輸入一次密碼">
           <button type="button" class="pw-toggle-btn hidden" data-i18n-title="login.showPassword" aria-label="顯示密碼"><span class="sb-ico" style="--ico:var(--ico-eye)" aria-hidden="true"></span></button>
         </div>
+        <label class="login-remember" for="authRemember">
+          <input type="checkbox" id="authRemember" checked>
+          <span data-i18n="login.rememberMe">記住我（90 天內不用重新登入）</span>
+        </label>
         <button class="btn" id="authSubmitBtn" data-i18n="common.login">登入</button>
         <button type="button" class="link-btn" id="authForgotPwBtn" data-i18n="login.forgotPassword">忘記密碼？</button>
         <div class="msg" id="authMsg"></div>
@@ -391,6 +416,16 @@ function resolveRedirectTarget(){
   if(r && /^[a-zA-Z0-9_.\-]+\.html(\?[^\s]*)?$/.test(r)) return r;
   return "summary.html";
 }
+// 「記住我」勾選框：選擇存在這台裝置，帳密登入跟 Google／Discord 登入都照這個
+(function(){
+  function setup(){
+    const box = document.getElementById("authRemember");
+    if(!box) return;
+    box.checked = localStorage.getItem("sb_remember") !== "0";
+    box.addEventListener("change", ()=> localStorage.setItem("sb_remember", box.checked ? "1" : "0"));
+  }
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", setup); else setup();
+})();
 function removeFlashGuard(){
   const g = document.getElementById("flashGuard");
   if(g) g.remove();

@@ -1464,6 +1464,7 @@ I18N["en"] = {
     "nav.mainLabel": "Main navigation",
 
     "nav.currencies": "Currencies",
+    "login.rememberMe": "Keep me signed in for 90 days",
     "settings.notSet": "Not set",
     "settings.noEmailShort": "No email yet",
     "settings.nicknameShort": "My nickname",
