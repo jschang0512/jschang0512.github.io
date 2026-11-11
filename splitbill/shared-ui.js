@@ -2093,9 +2093,25 @@ function sbRenderNag(el, opts){
     }
   }
 
-  const it = sbNagFind(opts.myId, opts.expenses, opts.repayments, items);
+  let it = sbNagFind(opts.myId, opts.expenses, opts.repayments, items);
   window.__sbNagCurrent = it && it.iOwe ? it : null;
-  if(!it){ clear(); sbNagSetLogo(null); return; }
+  // 欠的錢都按了「明天再說」：今天不再跳出來，但還沒還，logo 維持派派（斜眼瞪你），點了再叫出來
+  let held = false;
+  if(!it){
+    const owed = items.filter(x => x.iOwe && x.score >= SB_NAG_LEVELS[0]).sort((a, b) => b.score - a.score)[0];
+    if(!owed){ clear(); sbNagSetLogo(null); return; }
+    if(!opts.peekSnoozed){
+      clear();
+      const heldLevel = gentle ? Math.min(sbNagLevel(owed.score), 2) : sbNagLevel(owed.score);
+      sbNagSetLogo(heldLevel, "sideeye", () => {
+        sbRenderNag(el, Object.assign({}, opts, { expand: true, peekSnoozed: true }));
+        setTimeout(() => el.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" }), 30);
+      });
+      return;
+    }
+    it = owed;
+    held = true;
+  }
 
   const amount = sbNagMoney(it.amount, it.currency);
   const other = it.iOwe ? it.creditor : it.debtor;
@@ -2150,13 +2166,13 @@ function sbRenderNag(el, opts){
     + '</div></div></div>';
   el.querySelector(".sb-nag-go").addEventListener("click", () => (it.iOwe ? opts.onPay : opts.onNudge)(it));
   el.querySelector(".sb-nag-later").addEventListener("click", () => {
-    if(it.iOwe){
+    if(it.iOwe && !held){
       // 欠人的：明天再出現，而且記一次
       const d = new Date(); d.setDate(d.getDate() + 1);
       sbNagStore.set("sb-nag-" + it.key, { until: sbIsoDay(d), count: count + 1, since: it.since });
     }
     el.querySelector(".sb-nag").classList.add("is-leaving");
-    setTimeout(() => sbRenderNag(el, Object.assign({}, opts, { expand: false })), 220);
+    setTimeout(() => sbRenderNag(el, Object.assign({}, opts, { expand: false, peekSnoozed: false })), 220);
   });
 }
 window.sbRenderNag = sbRenderNag;
