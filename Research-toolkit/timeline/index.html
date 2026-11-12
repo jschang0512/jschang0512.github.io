@@ -18,7 +18,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../shared/style.css?v=20261113b">
+<link rel="stylesheet" href="../shared/style.css?v=20261112a">
 <style>
   .trow3 { display: grid; grid-template-columns: 90px 90px minmax(0, 1fr); gap: 6px; align-items: end; margin-top: 6px; }
   .trow4 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, .9fr) 34px 34px; gap: 6px; align-items: end; margin-top: 6px; }
@@ -86,6 +86,7 @@
       <div id="rows"></div>
       <button class="small" id="addRow" data-en="+ Add row">＋ 新增一列</button>
       <button type="button" class="small" id="toCohortflow" style="margin-left:6px" title="把篩選、納入、洗除、排除各列的細項變成 Cohort 流程圖的排除步驟" data-en-title="Turn the screening, inclusion, washout and exclusion rows into exclusion steps of the Cohort flowchart" data-en="Send criteria to the Cohort flowchart →">把納入／排除條件帶入 Cohort 流程圖 →</button>
+      <button type="button" class="small" id="toExposure" style="margin-left:6px" title="把暴露、比較組藥名與 as-treated 追蹤的 grace period 帶入暴露定義示意圖" data-en-title="Send the drug names and the as-treated grace period to the Exposure Definition Diagram" data-en="Send exposure to the Exposure diagram →">把暴露定義帶入暴露定義示意圖 →</button>
     </div>
 
     <div class="card">
@@ -195,7 +196,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261025g"></script>
+<script src="../shared/common.js?v=20261112a"></script>
 <script>
 const T = RT.t;
 const KEY = 'timeline5';
@@ -1300,6 +1301,22 @@ function designCheck() {
     : warn.map((m) => `<div class="msg">⚠ ${RT.esc(m)}</div>`).join('') + note.map((m) => `<div class="msg info">ℹ ${RT.esc(m)}</div>`).join('');
   return warn.length;
 }
+
+/* ---------------- send the exposure definition to the Exposure Definition Diagram ---------------- */
+document.getElementById('toExposure').onclick = () => {
+  const text = S.rows.map((r) => [r.label, r.details, r.win].join(' ')).join('\n');
+  // "discontinuation + 30", "30-day grace period", "grace period of 30 days"
+  const m = /discontinuation\s*\+\s*(\d+)/i.exec(text) || /(\d+)[\s-]*days?\s+grace/i.exec(text) || /grace(?:\s+period)?\s*(?:of|=|:)?\s*(\d+)/i.exec(text);
+  const st = RT.study.get();
+  const expo = S.rows.find((r) => r.kind === 'expo');
+  const data = {
+    grace: m ? Number(m[1]) : null, switchEnds: /switch/i.test(text) ? true : null,
+    exposure: st.exposure || '', comparator: st.comparator || '', expoDetails: expo ? String(expo.details || '').trim() : '', at: Date.now(),
+  };
+  if (data.grace === null && !data.exposure && !data.comparator) { RT.toast(T('時間軸裡沒有 grace period，研究資訊也還沒填暴露／比較組', 'The timeline has no grace period and the study details have no exposure or comparator yet'), 6000); return; }
+  try { localStorage.setItem('rt:handoff-timeline-expo', JSON.stringify(data)); } catch (e) { /* ignore */ }
+  location.href = '../exposure/index.html?from=timeline';
+};
 
 /* ---------------- send inclusion / exclusion criteria to the Cohort flowchart ---------------- */
 document.getElementById('toCohortflow').onclick = () => {

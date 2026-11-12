@@ -204,6 +204,7 @@ button:disabled { opacity: .55; cursor: not-allowed; transform: none; }
 .export-legible.good { color: var(--ok-text); }
 .export-legible.near { color: var(--warn-text); }
 .export-legible.bad { color: var(--danger); font-weight: 700; }
+.export-overlap { font-size: 12.5px; grid-column: 1 / -1; color: var(--warn-text); }
 .ex-issues { font-size: 12.5px; font-weight: 700; color: var(--warn-text); }
 .export { display: grid; grid-template-columns: minmax(120px, 1.4fr) 1fr 1fr 1fr; gap: 8px; align-items: end; }
 @media (max-width: 640px) { .export { grid-template-columns: 1fr 1fr; } }

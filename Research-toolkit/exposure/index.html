@@ -18,7 +18,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../shared/style.css?v=20261113b">
+<link rel="stylesheet" href="../shared/style.css?v=20261112a">
 <style>
   .pt .block-head input { flex: 1; }
   .pt textarea { font-family: var(--font-mono); font-size: 13px; }
@@ -100,7 +100,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261025g"></script>
+<script src="../shared/common.js?v=20261112a"></script>
 <script>
 const T = RT.t;
 const KEY = 'exposure1';
@@ -422,6 +422,36 @@ RT.applyState = (o) => { S = RT.merge(DEF, o); syncInputs(); update(); };
 syncInputs();
 render();
 hist.push();
+// the exposure definition sent from the Study Design Timeline
+(() => {
+  if (new URLSearchParams(location.search).get('from') !== 'timeline') return;
+  let h = null;
+  try { h = JSON.parse(localStorage.getItem('rt:handoff-timeline-expo') || 'null'); localStorage.removeItem('rt:handoff-timeline-expo'); } catch (e) { /* ignore */ }
+  history.replaceState(null, '', location.pathname);
+  if (!h) return;
+  const done = [];
+  // no patients yet: start from the illustrative ones, so the rules have something to show
+  if (!S.pts.some((p) => String(p.disp || '').trim())) { document.getElementById('btnExample').click(); done.push(T('載入示範病人', 'loaded the illustrative patients')); }
+  if (h.grace !== null && h.grace !== undefined) {
+    S.grace = h.grace; S.endRule = 'grace';
+    S.footnote = String(S.footnote || '').replace(/\d+-day grace period/g, `${h.grace}-day grace period`);
+    done.push(T(`grace period ${h.grace} 天`, `a ${h.grace}-day grace period`));
+  }
+  if (h.switchEnds) { S.censorSwitch = true; done.push(T('換藥即結束暴露', 'a switch ends exposure')); }
+  const old = drugsInUse(), map = {};
+  if (old[0] && h.exposure && old[0] !== h.exposure) map[old[0]] = h.exposure;
+  if (old[1] && h.comparator && old[1] !== h.comparator) map[old[1]] = h.comparator;
+  if (Object.keys(map).length) {
+    S.pts.forEach((p) => {
+      p.disp = String(p.disp).split('\n').map((line) => { const c = line.split(','); if (c.length >= 3 && map[c[2].trim()]) c[2] = ' ' + map[c[2].trim()]; return c.join(','); }).join('\n');
+      p.label = Object.entries(map).reduce((l, [a, b]) => l.split(a).join(b), p.label);
+    });
+    S.footnote = Object.entries(map).reduce((l, [a, b]) => l.split(a).join(b), String(S.footnote || ''));
+    done.push(T(`藥名改為 ${Object.values(map).join('、')}`, `drug names set to ${Object.values(map).join(', ')}`));
+  }
+  syncInputs(); update();
+  RT.toast(done.length ? T(`已從時間軸帶入：${done.join('；')}（按 ↶ 可復原）`, `From the timeline: ${done.join('; ')} (↶ to undo)`) : T('時間軸沒有可帶入的暴露設定', 'Nothing to bring in from the timeline'), 7000);
+})();
 </script>
 </body>
 </html>

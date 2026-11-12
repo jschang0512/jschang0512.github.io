@@ -6,7 +6,7 @@
  */
 (function () {
   const RT = (window.RT = {});
-  RT.VERSION = '-菘 v3.-';
+  RT.VERSION = 'v3.1 (2026-11-12)';
   RT.DEV = { name: '張家菘', email: 'js.chang0512@gmail.com' };
 
   /* ---------- i18n ---------- */
@@ -987,6 +987,35 @@
   /**
    * Render the export controls into `host`. getFig() → {svg, w, h, scene, font}
    */
+  /**
+   * Overlaps in a drawn figure: text on text, and thin lines running through text.
+   * Returns null when the figure is not laid out (e.g. a hidden tab), else [{a, b?, boxes: [[x, y, w, h] in figure units]}].
+   */
+  RT.findOverlaps = (svg) => {
+    const sr = svg.getBoundingClientRect();
+    const vb = svg.viewBox && svg.viewBox.baseVal;
+    if (!sr.width || !vb || !vb.width) return null;
+    const k = sr.width / vb.width;   // screen px per figure unit
+    const box = (el) => { const r = el.getBoundingClientRect(); return { l: (r.left - sr.left) / k, t: (r.top - sr.top) / k, r: (r.right - sr.left) / k, b: (r.bottom - sr.top) / k }; };
+    const live = (el) => !el.closest('.edit-ui') && !el.closest('defs') && !el.closest('marker') && !el.closest('clipPath');
+    const texts = [...svg.querySelectorAll('text')].filter((t) => live(t) && t.textContent.trim())
+      .map((t) => ({ ...box(t), s: t.textContent.trim() })).filter((o) => o.r > o.l);
+    const out = [], xy = (o) => [o.l, o.t, o.r - o.l, o.b - o.t];
+    // text on text: a real overlap, not two lines of one paragraph touching
+    for (let i = 0; i < texts.length; i++) for (let j = i + 1; j < texts.length; j++) {
+      const a = texts[i], b = texts[j];
+      const w = Math.min(a.r, b.r) - Math.max(a.l, b.l), h = Math.min(a.b, b.b) - Math.max(a.t, b.t);
+      if (w > 2 && h > 0.3 * Math.min(a.b - a.t, b.b - b.t)) out.push({ a: a.s, b: b.s, boxes: [xy(a), xy(b)] });
+    }
+    // thin lines (axes, leader lines, arrows, hairlines) through the middle of a text
+    const thin = [...svg.querySelectorAll('line, polyline, path, rect')].filter(live).map(box)
+      .filter((o) => (o.r - o.l < 2.5 && o.b - o.t > 6) || (o.b - o.t < 2.5 && o.r - o.l > 6));
+    texts.forEach((tx) => {
+      const h = tx.b - tx.t, inner = { l: tx.l + 2, r: tx.r - 2, t: tx.t + h * 0.28, b: tx.b - h * 0.28 };
+      if (thin.some((o) => o.l < inner.r && o.r > inner.l && o.t < inner.b && o.b > inner.t)) out.push({ a: tx.s, boxes: [xy(tx)] });
+    });
+    return out;
+  };
   RT.exportPanel = (host, getFig, baseName, opts = {}) => {
     const saved = RT.load('export', { fmt: 'png', dpi: '300', dpiC: 300, widthCm: '', gray: false });
     host.innerHTML = `
@@ -1011,6 +1040,7 @@
         </div>
         <div class="export-info"></div>
         <div class="export-legible"></div>
+        <div class="export-overlap" hidden></div>
         <div class="btns">
           <button class="primary ex-go">${RT.t('下載', 'Download')}</button>
           <span class="ex-issues" hidden></span>
@@ -1120,6 +1150,43 @@
         RT.toast(RT.t('已複製 PNG 到剪貼簿', 'PNG copied to clipboard'));
       } catch (e) { RT.toast(RT.t('無法複製到剪貼簿：', 'Could not copy to clipboard: ') + (e.message || e), 6000); }
     };
+    // text that runs into other text or a line in the drawn preview (measured in the browser, so it also
+    // catches long labels typed by the user)
+    const preview = opts.preview || document.getElementById('preview');
+    if (preview && 'MutationObserver' in window) {
+      let timer = 0, marking = false, last = [];
+      const ov = $('.export-overlap');
+      const show = () => {
+        const svg = preview.querySelector('svg');
+        const found = svg ? RT.findOverlaps(svg) : null;
+        if (found === null) return;   // not laid out (hidden tab): keep the last result
+        last = found;
+        ov.hidden = !found.length;
+        if (!found.length) { ov.innerHTML = ''; return; }
+        const q = (t) => `「${t.length > 18 ? t.slice(0, 17) + '…' : t}」`;
+        const one = (o) => (o.b ? RT.t(`${q(o.a)}與${q(o.b)}`, `${q(o.a)} and ${q(o.b)}`) : RT.t(`${q(o.a)}被線條穿過`, `a line runs through ${q(o.a)}`));
+        ov.innerHTML = '';
+        ov.append(RT.t(`⚠ 圖中有 ${found.length} 處文字重疊：`, `⚠ ${found.length} ${found.length === 1 ? 'place where text overlaps' : 'places where text overlaps'}: `) +
+          found.slice(0, 3).map(one).join(RT.t('；', '; ')) + (found.length > 3 ? RT.t(' 等', ' …') : '') +
+          RT.t('。可縮短文字、加大圖寬或調整位置。', '. Shorten the text, widen the figure or move it.'));
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'small'; b.style.marginLeft = '8px';
+        b.textContent = RT.t('在預覽中標出', 'Mark them in the preview');
+        b.onclick = () => {
+          const sv = preview.querySelector('svg'); if (!sv) return;
+          marking = true;
+          sv.querySelectorAll('.ov-mark').forEach((g) => g.remove());
+          const g = RT.svgEl('g', { class: 'edit-ui ov-mark', 'pointer-events': 'none' });
+          last.forEach((o) => o.boxes.forEach(([x, y, w, h]) => g.appendChild(RT.svgEl('rect', { x: x - 2, y: y - 2, width: w + 4, height: h + 4, fill: 'rgba(214,69,69,0.12)', stroke: '#D64545', 'stroke-width': 1.5, 'stroke-dasharray': '4 2', rx: 3 }))));
+          sv.appendChild(g);
+          preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          setTimeout(() => { marking = false; }, 0);
+        };
+        ov.appendChild(b);
+      };
+      new MutationObserver(() => { if (marking) return; clearTimeout(timer); timer = setTimeout(show, 250); }).observe(preview, { childList: true, subtree: true });
+      setTimeout(show, 300);
+    }
     const setIssues = (n) => {
       const el = $('.ex-issues');
       el.hidden = !n;

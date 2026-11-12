@@ -18,7 +18,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../shared/style.css?v=20261113b">
+<link rel="stylesheet" href="../shared/style.css?v=20261112a">
 <style>
   .frow .block-head input { flex: 1; }
   .frow .nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
@@ -98,6 +98,7 @@
         <label class="check"><input type="checkbox" data-k="showP"> <span data-en="P value">P 值</span></label><textarea rows="2" data-k="hP" aria-label="P value column heading"></textarea>
         <label class="check"><input type="checkbox" data-k="showEv"> <span data-en="E-value">E-value</span></label><textarea rows="2" data-k="hEv" aria-label="E-value column heading"></textarea>
       </div>
+      <div id="robBox" class="rob-box"></div>
       <div data-show="showEv">
         <p class="hint" data-en="E-value for the estimate, with the E-value for the confidence interval in brackets (VanderWeele &amp; Ding 2017). Calculated by the tool from the numbers in each row.">估計值的 E-value，括號內為信賴區間的 E-value（VanderWeele &amp; Ding 2017），由本工具依每列的數字計算。</p>
         <label class="check"><input type="checkbox" data-k="evCommon"> <span data-en="Common outcome (≥ 15%): convert OR / HR to approximate risk ratios first">結果常見（≥ 15%）：OR／HR 先換算為約略風險比</span></label>
@@ -133,7 +134,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261025g"></script>
+<script src="../shared/common.js?v=20261112a"></script>
 <script>
 const T = RT.t;
 const KEY = 'forest1';
@@ -144,7 +145,7 @@ const DEF = {
   title: '', footnote: '', measure: 'HR', scale: 'log', nullV: 1, xmin: '', xmax: '', ticks: '', dec: 2, axisLabel: '',
   favL: 'Favours treatment', favR: 'Favours control',
   hLabel: 'Subgroup', showC1: true, hC1: 'Treatment\nevents/N', showC2: true, hC2: 'Control\nevents/N', showEst: true, hEst: '', showP: false, hP: 'P for\ninteraction', showW: false, hW: 'Weight\n(%)', sizeBy: 'fixed', showEv: false, hEv: 'E-value\n(CI)', evCommon: false,
-  rows: [row()], plotW: 280, rowSp: 1.9, marker: 8, ciW: 1.3, color: '#000000', sumColor: '#000000', refDash: true,
+  rows: [row()], rob: null, showRob: true, plotW: 280, rowSp: 1.9, marker: 8, ciW: 1.3, color: '#000000', sumColor: '#000000', refDash: true,
   st: { ...RT.STYLE_DEF, fontSize: 12 },
 };
 const REFS = [
@@ -168,7 +169,22 @@ RT.studyCard(document.getElementById('study'), ['exposure', 'comparator', 'outco
     RT.toast(T('已套用（按 ↶ 可復原）', 'Applied (↶ to undo)'));
   },
 });
-function syncInputs() { RT.syncForm(form, S); renderRows(); }
+function syncInputs() { RT.syncForm(form, S); renderRows(); renderRobBox(); }
+// risk of bias brought in from RoB 2 / ROBINS-I: a switch, where it came from, and a way to remove it
+function renderRobBox() {
+  const host = document.getElementById('robBox');
+  if (!S.rob) {
+    host.innerHTML = `<p class="hint" style="margin:8px 0 0">${T('偏誤風險欄：在 RoB 2 或 ROBINS-I 按「帶入森林圖 →」，各研究的燈號就會出現在對應列的右邊。', 'Risk-of-bias columns: press “Add to the forest plot →” in RoB 2 or ROBINS-I and each study’s dots appear to the right of its row.')}</p>`;
+    return;
+  }
+  const n = S.rows.filter((r) => r.rob).length;
+  host.innerHTML = `<label class="check" style="margin-top:8px"><input type="checkbox" id="robOn"> <span>${T(`偏誤風險（${RT.esc(S.rob.tool)}，${n} 列有判斷）`, `Risk of bias (${RT.esc(S.rob.tool)}, ${n} ${n === 1 ? 'row' : 'rows'} judged)`)}</span></label>
+    <button type="button" class="small" id="robDrop">${T('移除偏誤風險欄', 'Remove the risk-of-bias columns')}</button>`;
+  const on = host.querySelector('#robOn');
+  on.checked = S.showRob !== false;
+  on.onchange = () => { S.showRob = on.checked; update(); };
+  host.querySelector('#robDrop').onclick = () => { S.rob = null; S.rows.forEach((r) => { delete r.rob; }); renderRobBox(); update(); RT.toast(T('已移除偏誤風險欄（按 ↶ 可復原）', 'Risk-of-bias columns removed (↶ to undo)')); };
+}
 RT.bindForm(form, () => S, (k) => {
   if (k === 'measure') { [S.scale, S.nullV] = MEAS[S.measure] || ['log', 1]; RT.syncForm(form, S); }
   update();
@@ -330,18 +346,29 @@ function build() {
   });
   let x = M;
   cols.forEach((c) => { c.x = x; x += c.w + gap; });
+  const rob = S.rob && S.showRob !== false && S.rows.some((r) => r.rob) ? S.rob : null;
+  const robCodes = rob ? [...rob.codes, 'overall'] : [];
+  const robR = fs * 0.55, robCw = rob ? Math.max(robR * 2 + fs * 0.45, ...rob.codes.map((c) => RT.textWidth(c, fs * 0.92, true) + 6)) : 0;
+  const robOvW = rob ? Math.max(robCw, RT.textWidth('Overall', fs * 0.92, true) + 6) : 0;
+  const robX0 = x, robX = (i) => robX0 + i * robCw + (i === rob.codes.length ? fs * 0.6 + robOvW / 2 - robCw / 2 : 0) + robCw / 2;
+  if (rob) x += rob.codes.length * robCw + fs * 0.6 + robOvW + gap;
   const W = x - gap + M;
   RT.beginScene();
   let body = '', y = M;
   if (S.title && S.title.trim()) { body += RT.rich([{ runs: [{ t: S.title, bold: true, size: fs * 1.1, color: ink }] }], M, y, { lh: fs * 1.5 }); y += fs * 1.9; }
   // headings, bottom-aligned
-  const nHead = Math.max(1, ...cols.map((c) => String(c.head || '').split('\n').length));
+  const nHead = Math.max(rob ? 2 : 1, ...cols.map((c) => String(c.head || '').split('\n').length));
   cols.forEach((c) => {
     if (c.plot || !c.head) return;
     const lines = String(c.head).split('\n');
     const ax0 = c.anchor === 'middle' ? c.x + c.w / 2 : c.x;
     body += RT.rich(lines.map((t) => ({ runs: [{ t, bold: true, size: fs, color: ink }] })), ax0, y + (nHead - lines.length) * headLH, { lh: headLH, anchor: c.anchor });
   });
+  if (rob) {
+    const yl = y + (nHead - 1) * headLH;
+    body += RT.rich([{ runs: [{ t: 'Risk of bias', bold: true, size: fs, color: ink }] }], (robX(0) + robX(robCodes.length - 1)) / 2, yl - headLH, { lh: headLH, anchor: 'middle' });
+    robCodes.forEach((c, i) => { body += RT.rich([{ runs: [{ t: c === 'overall' ? 'Overall' : c, bold: true, size: fs * 0.92, color: ink }] }], robX(i), yl, { lh: headLH, anchor: 'middle' }); });
+  }
   y += nHead * headLH + fs * 0.35;
   body += RT.line([[M, y], [W - M, y]], { color: ink, sw: 1 });
   const y0 = y + fs * 0.3;
@@ -364,6 +391,10 @@ function build() {
       if (!t) return;
       const ax0 = c.anchor === 'middle' ? c.x + c.w / 2 : c.x + (c.label && r.ind ? ind : 0);
       body += RT.rich([{ runs: [{ t, bold: bold(r), size: fs, color: ink }] }], ax0, top, { lh: rowH, anchor: c.anchor });
+    });
+    if (rob && r.rob) robCodes.forEach((c, k) => {
+      const v = r.rob[c], j = v && rob.judg[v];
+      body += RT.circle(robX(k), yc, robR, j ? { fill: j.color, stroke: rob.gray ? '#555' : 'none', sw: 0.8, text: j.sym, color: j.fg, size: robR * 1.25 } : { fill: '#FFFFFF', stroke: '#C9CED6', sw: 0.8 });
     });
     if (!usable(r)) return;
     const [e, lo, hi] = vals(r);
@@ -399,6 +430,24 @@ function build() {
     if (S.favR) body += RT.rich([{ runs: [{ t: S.favR + ' →', size: fs * 0.92, color: ink }] }], xn + pad, y, { lh: fs * 1.35, anchor: 'start' });
     y += fs * 1.45;
   }
+  if (rob) {
+    // what the codes mean, then one dot per judgement
+    y += fs * 0.6;
+    const legW = Math.max(W, plot.x + plot.w + M) - 2 * M;
+    const lb = RT.box([{ text: `Risk of bias (${rob.tool}): ` + rob.codes.map((c) => `${c}, ${rob.names[c] || c}`).join('; ') + '.' }], legW, { size: fs * 0.85, pad: 0, padX: 0, align: 'left', fill: 'none', stroke: 'none', color: ink, lh: 1.3 });
+    body += RT.drawBox(lb, M, y);
+    y += lb.h + fs * 0.35;
+    let lx = M;
+    const used = new Set(S.rows.flatMap((r) => (r.rob ? robCodes.map((c) => r.rob[c]) : [])).filter(Boolean));
+    Object.entries(rob.judg).filter(([v]) => used.has(v)).forEach(([v, j]) => {
+      const tw = RT.textWidth(j.label, fs * 0.85) + robR * 2 + fs;
+      if (lx > M && lx + tw > M + legW) { lx = M; y += fs * 1.35; }
+      body += RT.circle(lx + robR, y + fs * 0.6, robR, { fill: j.color, stroke: rob.gray ? '#555' : 'none', sw: 0.8, text: j.sym, color: j.fg, size: robR * 1.25 });
+      body += RT.rich([{ runs: [{ t: j.label, size: fs * 0.85, color: ink }] }], lx + robR * 2 + 4, y, { lh: fs * 1.2 });
+      lx += tw;
+    });
+    y += fs * 1.35;
+  }
   if (S.footnote && S.footnote.trim()) {
     y += fs * 0.4;
     const fb = RT.box([{ text: S.footnote }], Math.max(W, plot.x + plot.w + M) - 2 * M, { size: fs * 0.85, pad: 0, padX: 0, align: 'left', fill: 'none', stroke: 'none', color: ink, lh: 1.3 });
@@ -411,9 +460,10 @@ function build() {
 const docxTable = () => {
   RT.applyStyle(S.st);
   const cols = columns().filter((c) => !c.plot);
+  if (S.rob && S.showRob !== false && S.rows.some((r) => r.rob)) [...S.rob.codes, 'overall'].forEach((c) => cols.push({ head: c === 'overall' ? 'Overall RoB' : c, anchor: 'middle', text: (r) => (r.rob && r.rob[c] && S.rob.judg[r.rob[c]] ? S.rob.judg[r.rob[c]].sym : '') }));
   return RT.buildDocxTable({
     title: S.title, note: S.footnote, headers: cols.map((c) => String(c.head || '').replace(/\n/g, ' ')),
-    widths: cols.map((c) => (c.label ? 3 : 1.6)),
+    widths: cols.map((c) => (c.label ? 3 : c.head && String(c.head).length <= 4 ? 0.8 : 1.6)),
     rows: S.rows.map((r) => cols.map((c, i) => ({ text: (i === 0 && r.ind ? '    ' : '') + String(c.text(r) ?? ''), bold: r.head || r.sum, align: c.anchor === 'middle' ? 'center' : undefined }))),
     sizePt: Math.max(8, Math.min(12, (Number(S.st.fontSize) || 12) * 0.8)), headerFill: 'FFFFFF',
   });
@@ -433,6 +483,10 @@ function checks() {
     if (!(v[1] <= v[0] && v[0] <= v[2])) out.push(T(`${name}的估計值不在 CI 之間（下限 ≤ 估計值 ≤ 上限）`, `${name}: the estimate is not between its limits (lower ≤ estimate ≤ upper)`));
     else if (v[1] < ax.a || v[2] > ax.b) out.push(T(`${name}的 CI 超出座標範圍，已用箭頭表示`, `${name}: the CI runs past the axis and is drawn with an arrow`));
   });
+  if (S.rob && S.showRob !== false) {
+    const miss = S.rows.filter((r) => !r.head && !r.sum && String(r.label || '').trim() && !r.rob);
+    if (miss.length && miss.length < S.rows.length) out.push(T(`偏誤風險：${miss.slice(0, 3).map((r) => `「${r.label}」`).join('、')}${miss.length > 3 ? ' 等' : ''}沒有對應的判斷（名稱要和 ${S.rob.tool} 的研究名稱相同）`, `Risk of bias: ${miss.slice(0, 3).map((r) => `“${r.label}”`).join(', ')}${miss.length > 3 ? ' …' : ''} ${miss.length === 1 ? 'has' : 'have'} no judgement (the name must match the study name in ${S.rob.tool})`));
+  }
   if (S.sizeBy === 'weight') {
     const miss = S.rows.filter((r) => usable(r) && !r.sum && !(RT.num(r.w) > 0)).length;
     if (miss) out.push(T(`標記大小依權重，但有 ${miss} 列沒有填權重（以固定大小畫出）`, `Markers are sized by weight, but ${miss} ${miss === 1 ? 'row has' : 'rows have'} no weight (drawn at the fixed size)`));
@@ -512,6 +566,30 @@ RT.applyState = (o) => { S = RT.merge(DEF, o); syncInputs(); update(); };
 syncInputs();
 render();
 hist.push();
+// risk-of-bias judgements sent from RoB 2 / ROBINS-I: matched to rows by study name, the rest added as new rows
+(() => {
+  if (new URLSearchParams(location.search).get('from') !== 'rob') return;
+  let h = null;
+  try { h = JSON.parse(localStorage.getItem('rt:handoff-rob') || 'null'); localStorage.removeItem('rt:handoff-rob'); } catch (e) { /* ignore */ }
+  history.replaceState(null, '', location.pathname);
+  if (!h || !h.studies) return;
+  const norm = (t) => String(t || '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '');
+  S.rows.forEach((r) => { delete r.rob; });
+  S.rows = S.rows.filter((r) => r.head || r.sum || String(r.label || '').trim() || [r.est, r.lo, r.hi].some((v) => String(v ?? '').trim()));
+  let matched = 0, added = 0;
+  h.studies.forEach((st) => {
+    const hit = S.rows.find((r) => !r.head && !r.sum && !r.rob && norm(r.label) === norm(st.name));
+    if (hit) { hit.rob = st.j; matched++; return; }
+    const at = S.rows.length && S.rows[S.rows.length - 1].sum ? S.rows.length - 1 : S.rows.length;
+    S.rows.splice(at, 0, row({ label: st.name, rob: st.j }));
+    added++;
+  });
+  if (!S.rows.length) S.rows = [row()];
+  S.rob = { tool: h.tool, codes: h.codes, names: h.names, judg: h.judg, gray: !!h.gray };
+  S.showRob = true;
+  syncInputs(); update();
+  RT.toast(T(`已帶入 ${h.tool} 判斷：對應到 ${matched} 列${added ? `，新增 ${added} 列（請填估計值與 CI）` : ''}（按 ↶ 可復原）`, `${h.tool} judgements added: ${matched} ${matched === 1 ? 'row' : 'rows'} matched${added ? `, ${added} new ${added === 1 ? 'row' : 'rows'} added (fill in the estimates and CIs)` : ''} (↶ to undo)`), 7000);
+})();
 </script>
 </body>
 </html>

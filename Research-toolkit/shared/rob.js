@@ -182,6 +182,18 @@
       if (!sel.dataset.compact) { sel.dataset.compact = '1'; sel.addEventListener('mousedown', () => labelMode(sel, true)); sel.addEventListener('focus', () => labelMode(sel, true)); sel.addEventListener('blur', () => labelMode(sel, false)); }
       labelMode(sel, false);
     }
+    document.getElementById('toForest').onclick = () => {
+      const studies = S.studies.filter((st) => String(st.name || '').trim());
+      if (!studies.length) { RT.toast(T('還沒有研究可以帶入', 'No studies to send yet')); return; }
+      const doms = domains(), judg = {};
+      cfg.judgments.forEach((j) => { const c = colorOf(j.v); judg[j.v] = { sym: j.sym, label: j.label, color: c, fg: textOn(c) }; });
+      const data = {
+        tool: cfg.short, codes: doms.map((d) => d.code), names: Object.fromEntries(doms.map((d) => [d.code, d.name])), judg, gray: S.palette === 'gray',
+        studies: studies.map((st) => ({ name: String(st.name).trim(), j: { ...st.j, overall: effOverall(st) || '' } })), at: Date.now(),
+      };
+      try { localStorage.setItem('rt:handoff-rob', JSON.stringify(data)); } catch (e) { /* ignore */ }
+      location.href = '../forestplot/index.html?from=rob';
+    };
     document.getElementById('addStudy').onclick = () => { S.studies.push({ name: '', j: {}, sup: {}, overall: 'auto', result: '', w: '' }); renderGrid(); update(); };
     document.getElementById('pasteStudies').onclick = async () => {
       const codes = domains().map((d) => d.code);
@@ -550,7 +562,7 @@
         <h2><span class="step-no">2</span> <span data-en="Judgements per study">各研究判斷</span></h2>
         <p class="hint" data-en="Pick a judgement for each domain; the overall is calculated (you can override it). ▾ adds the result assessed, a weight and the support text.">每個 domain 選一個判斷，整體判斷會自動計算，可手動覆蓋。按 ▾ 填評估的結果、權重與判斷理由。</p>
         <div id="grid"></div>
-        <div class="btns" style="margin-top:8px"><button class="small" id="addStudy" data-en="+ Add study">＋ 新增研究</button><button class="small" id="pasteStudies" data-en="Paste from Excel…">從 Excel 貼上…</button></div>
+        <div class="btns" style="margin-top:8px"><button class="small" id="addStudy" data-en="+ Add study">＋ 新增研究</button><button class="small" id="pasteStudies" data-en="Paste from Excel…">從 Excel 貼上…</button><button class="small" id="toForest" title="在森林圖每一列右邊加上各 domain 與整體判斷的燈號（依研究名稱對應）" data-en-title="Add each domain and the overall judgement as coloured dots to the right of the matching forest plot rows (matched by study name)" data-en="Add to the forest plot →">帶入森林圖 →</button></div>
         <div class="rob-legend" id="legend"></div>
       </div>
       <div class="card">
