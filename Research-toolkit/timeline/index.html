@@ -18,16 +18,16 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../shared/style.css?v=20261025c">
+<link rel="stylesheet" href="../shared/style.css?v=20261113b">
 <style>
   .trow3 { display: grid; grid-template-columns: 90px 90px minmax(0, 1fr); gap: 6px; align-items: end; margin-top: 6px; }
   .trow4 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, .9fr) 34px 34px; gap: 6px; align-items: end; margin-top: 6px; }
   .trow3 .lbl, .trow4 .lbl { margin-bottom: 2px; }
-  .trow4 select { padding: 6px 4px; font-size: 12.5px; }
+  .trow4 select { padding: 6px 8px; font-size: 12.5px; }
   .block textarea + textarea { margin-top: 6px; }
   .tpl-grid { display: block; }
   .tpl-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; }
-  .tpl { text-align: left; white-space: normal; flex-direction: column; align-items: flex-start; gap: 3px; padding: 7px 9px; height: 100%; }
+  .tpl { text-align: left; white-space: normal; flex-direction: column; align-items: flex-start; gap: 3px; padding: 10px 12px; height: 100%; }
   .tpl b { font-size: 12.5px; }
   .tpl span.d { font-size: 12.5px; color: var(--muted); font-weight: 400; }
   .tpl-group { font-size: 12.5px; font-weight: 700; color: var(--muted); margin: 10px 0 4px; }
@@ -69,6 +69,7 @@
           <li data-en="<b>Randomised trials</b>: CONSORT flow diagram + SPIRIT schedule of enrolment, interventions and assessments."><b>隨機對照試驗</b>：CONSORT 流程圖＋SPIRIT 收案／介入／評估時程表。</li>
           <li data-en="<b>Cross-sectional studies</b>: no time windows — a selection flowchart is enough (Cohort flow tool)."><b>橫斷研究</b>：沒有時間窗，用選取流程圖即可（可用 Cohort 流程圖工具）。</li>
           <li data-en="<b>Interrupted time series / difference-in-differences</b>: calendar-time plots of the outcome with the intervention date marked."><b>中斷時間序列／差異中的差異</b>：以日曆時間為橫軸畫結果趨勢並標示介入日。</li>
+          <li data-en="<b>Case-control and self-controlled designs</b> (nested case-control, case-crossover, SCCS): this tool only covers cohort designs."><b>病例對照與自身對照設計</b>（巢式病例對照、case-crossover、SCCS）：本工具只涵蓋世代研究設計。</li>
           <li data-en="<b>Systematic reviews</b>: PRISMA flow diagram (PRISMA tool)."><b>系統性回顧</b>：PRISMA 流程圖（PRISMA 工具）。</li>
           <li data-en="<b>Diagnostic accuracy studies</b>: STARD flow diagram."><b>診斷準確度研究</b>：STARD 流程圖。</li>
         </ul>
@@ -84,6 +85,7 @@
       <p class="hint" data-en="Start and end are days relative to Day 0 (e.g. −365, 0); blank = open end. Hover a field for the label syntax.">起訖填相對 Day 0 的天數（例：−365、0），留空＝開放端點。游標移到欄位上可看標示寫法。</p>
       <div id="rows"></div>
       <button class="small" id="addRow" data-en="+ Add row">＋ 新增一列</button>
+      <button type="button" class="small" id="toCohortflow" style="margin-left:6px" title="把篩選、納入、洗除、排除各列的細項變成 Cohort 流程圖的排除步驟" data-en-title="Turn the screening, inclusion, washout and exclusion rows into exclusion steps of the Cohort flowchart" data-en="Send criteria to the Cohort flowchart →">把納入／排除條件帶入 Cohort 流程圖 →</button>
     </div>
 
     <div class="card">
@@ -115,7 +117,7 @@
         <label class="field"><span data-en="Layout">版面</span><select data-k="style">
           <option value="block" data-en="Block (text inside bars)">區塊式（文字在色條內）</option>
           <option value="classic" data-en="Classic (label column)">經典（左側標籤欄）</option>
-          <option value="track" data-en="Single track (case-crossover, SCCS)">單軌時間線（case-crossover、SCCS）</option></select></label>
+          <option value="track" data-en="Single track (pregnancy cohorts)">單軌時間線（懷孕世代）</option></select></label>
         <label class="field"><span data-en="Time scale">時間比例</span><select data-k="scale">
           <option value="sqrt" data-en="Square root (moderate)">平方根（適中壓縮）</option>
           <option value="linear" data-en="Linear (true proportions)">線性（實際比例）</option>
@@ -183,6 +185,12 @@
 
   <section class="preview-col">
     <div class="paper" id="preview"></div>
+    <p class="hint drag-hint" data-en="Tip: drag either end of a window on the figure to change its days, or drag the middle to move the whole window. Click it and use the arrow keys for one day at a time (Shift = 10).">小技巧：在圖上拖曳時間窗的兩端可改天數，拖曳中間可整段移動；點一下後也可以用方向鍵一天一天調（Shift＝10 天）。</p>
+    <div class="card" id="designCheck">
+      <h2 data-en="Design check">設計檢查</h2>
+      <p class="hint" data-en="Common timing problems in cohort designs, checked against the follow-up start. A warning is not always an error — some designs do this on purpose; say so in the Methods.">依追蹤起點檢查世代研究常見的時間錯誤。提醒不一定是錯，有些設計是刻意的，請在 Methods 說明。</p>
+      <div id="dcList"></div>
+    </div>
     <div class="card" id="export"></div>
   </section>
 </main>
@@ -238,22 +246,6 @@ const THEMES = {
 /* ---------------- study-design templates (content only) ---------------- */
 const row = (o) => Object.assign({ label: '', details: '', s: '', e: '0', win: '', kind: 'other', shape: 'bar', color: '', pos: 'auto', tcolor: '' }, o);
 const TEMPLATES = {
-  t2dm: {
-    zh: 'T2DM 世代（time-at-risk）', en: 'T2DM cohort (time-at-risk)', dzh: '參考圖範例：篩選、納入／排除、共變項、風險期', den: 'Reference figure: screening, inclusion/exclusion, covariates, risk windows',
-    fit: 'good', nzh: '資料庫世代研究正是這種圖的原本用途。', nen: 'Database cohort studies are exactly what this diagram was designed for.',
-    scale: 'sqrt', unit: 'Days', openL: '- ∞', openR: 'Censor/ Events', day0Title: 'Index date', day0Text: 'Day [0]', footnote: '',
-    rows: [
-      row({ kind: 'screen', label: 'Initial qualification screening window', details: 'T2DM diagnosis between 2009-01-01 and 2019-12-31', s: '', e: '0' }),
-      row({ kind: 'incl', label: 'Inclusion Assessment window', details: '1. Aged > 40y\n2. T2DM with complications: neurological, renal, cardiovascular disease.', s: '0', e: '0' }),
-      row({ kind: 'excl', label: 'Exclusion Assessment window', details: '1. T1DM\n2. T2DM without chronic complications\n3. No previous visit history\n4. Dementia diagnosis\n5. No DM treatment', s: '', e: '0' }),
-      row({ kind: 'cov', label: 'Demographic factors collection window', s: '0', e: '0' }),
-      row({ kind: 'cov', label: 'Preexisting comorbidities collection window', s: '', e: '0' }),
-      row({ kind: 'cov', label: 'Long-term medication collection window', s: '-180', e: '0' }),
-      row({ kind: 'cov', label: 'Lab test result collection window', s: '-365', e: '0' }),
-      row({ kind: 'fu', label: '5-year time-at-risk window', s: '0', e: '1825', win: 'Day [0, Censor/ Events]' }),
-      row({ kind: 'fu', label: '10-year time-at-risk window', s: '0', e: '3650', win: 'Day [0, Censor/ Events]' }),
-    ],
-  },
   acnu: {
     zh: 'New-user active comparator', en: 'New-user, active comparator', dzh: 'Washout、排除、共變項、追蹤', den: 'Washout, exclusions, covariates, follow-up',
     fit: 'good', nzh: '藥物流行病學最常見的設計；此圖是慣用呈現。', nen: 'The most common pharmacoepidemiology design; this diagram is the usual presentation.',
@@ -319,34 +311,6 @@ const TEMPLATES = {
       row({ kind: 'fu', label: 'Follow-up from landmark', s: '181', e: '' }),
     ],
   },
-  tte: {
-    zh: '目標試驗模擬（Target trial emulation）', en: 'Target trial emulation', dzh: '資格、分派、追蹤起點對齊於 time zero', den: 'Eligibility, assignment and follow-up aligned at time zero',
-    fit: 'ok', nzh: '請搭配 target trial 規格表（eligibility、treatment strategies、assignment、time zero、follow-up、outcome、causal contrast、analysis plan），這張圖只補充說明 time zero 對齊；若使用 cloning 或 sequential trials，此圖無法完整表達。', nen: 'Pair it with the target-trial specification table (eligibility, treatment strategies, assignment, time zero, follow-up, outcome, causal contrast, analysis plan); the diagram only illustrates time-zero alignment and cannot fully show cloning or sequential trials.',
-    scale: 'sqrt', unit: 'Days', openL: 'all available data', openR: 'end of follow-up*', day0Title: 'Time zero', day0Text: 'Eligibility met, treatment strategy assigned, follow-up starts',
-    footnote: '* Earliest of outcome, death, loss to follow-up, deviation from the assigned strategy (per-protocol), or administrative end.',
-    refLines: [{ t: '30', label: 'End of grace period' }],
-    rows: [
-      row({ kind: 'incl', label: 'Eligibility assessment window', details: 'Inclusion criteria of the target trial', s: '-365', e: '0' }),
-      row({ kind: 'wash', label: 'Washout window', details: 'No prior use of the treatments compared', s: '-365', e: '-1' }),
-      row({ kind: 'cov', label: 'Baseline covariate assessment window', s: '-365', e: '0' }),
-      row({ kind: 'expo', label: 'Treatment initiation grace period', s: '0', e: '30' }),
-      row({ kind: 'fu', label: 'Follow-up window', s: '0', e: '' }),
-    ],
-  },
-  ncc: {
-    zh: '巢式病例對照（Nested case-control）', en: 'Nested case-control', dzh: 'Day 0＝病例事件日／對照配對日', den: 'Day 0 = case event date / matched control date',
-    fit: 'ok', nzh: '暴露回溯窗很適合用此圖；risk-set sampling 與配對過程請另以選取流程圖呈現（可用 Cohort 流程圖工具）。', nen: 'Good for the exposure look-back windows; show risk-set sampling and matching in a separate selection flowchart (Cohort flow tool).',
-    scale: 'sqrt', unit: 'Days', openL: 'cohort entry', openR: '', day0Title: 'Index date', day0Text: 'Outcome date for cases; same follow-up time for matched controls',
-    footnote: 'Exposure assessed before the index date with a lag window to reduce protopathic bias.',
-    rows: [
-      row({ kind: 'screen', label: 'Cohort follow-up before index date', s: '', e: '0', win: 'Cohort entry → index date' }),
-      row({ kind: 'excl', label: 'Exclusion assessment window', details: 'Prior history of the outcome', s: '', e: '-1' }),
-      row({ kind: 'expo', label: 'Exposure assessment window', s: '-365', e: '-31' }),
-      row({ kind: 'wash', label: 'Lag window', details: 'Exposure ignored', s: '-30', e: '-1' }),
-      row({ kind: 'cov', label: 'Covariate assessment window', s: '-365', e: '-1' }),
-      row({ kind: 'out', label: 'Outcome (case) / matched index (control)', s: '0', e: '0' }),
-    ],
-  },
   pregLmp: {
     zh: '懷孕世代（Day 0＝LMP）', en: 'Pregnancy cohort (Day 0 = LMP)', dzh: '孕前、各孕期暴露、分娩、嬰兒追蹤', den: 'Pre-pregnancy, trimester exposure, delivery, infant follow-up',
     fit: 'ok', nzh: '孕期界線取決於每位孕婦的孕期長度，圖中是典型孕週位置（T1 < 14 週、T2 14–27 週、T3 ≥ 28 週）；請在註腳說明孕期如何估計。', nen: 'Trimester boundaries depend on each pregnancy’s gestational length; positions shown are typical (T1 < 14 wk, T2 14–27 wk, T3 ≥ 28 wk). State how gestational age was estimated.',
@@ -376,35 +340,6 @@ const TEMPLATES = {
       row({ kind: 'fu', label: 'Infant follow-up', s: '1', e: '365' }),
     ],
   },
-  cco: {
-    zh: '病例交叉（Case-crossover）', en: 'Case-crossover', dzh: '單軌：同一病人的危險期 vs 對照期', den: 'Single track: hazard vs control windows in one person',
-    fit: 'good', layout: 'track', nzh: '以單軌時間線呈現同一病人：事件日在 Day 0，往前標出危險期、洗除期與對照期；對照窗數量與間隔請依研究設定。', nen: 'A single track for one person: event at Day 0, with hazard, washout and control windows before it; set the number and spacing of control windows for your study.',
-    scale: 'linear', unit: 'Days', openL: '', openR: '', day0Title: 'Day 0', day0Text: 'Outcome event',
-    footnote: 'Exposure in the hazard window is compared with exposure in earlier control windows of the same person; washout gaps avoid carry-over between windows.',
-    rows: [
-      row({ kind: 'other', label: 'Control window 2', s: '-67', e: '-61' }),
-      row({ kind: 'wash', label: 'Washout', s: '-60', e: '-38' }),
-      row({ kind: 'other', label: 'Control window 1', s: '-37', e: '-31' }),
-      row({ kind: 'wash', label: 'Washout', s: '-30', e: '-8' }),
-      row({ kind: 'expo', label: 'Hazard window', s: '-7', e: '-1' }),
-      row({ kind: 'out', label: 'Event', shape: 'event', s: '0', e: '0', win: '' }),
-    ],
-  },
-  sccs: {
-    zh: '自身對照病例系列（SCCS）', en: 'Self-controlled case series (SCCS)', dzh: '單軌：觀察期切成 baseline／pre-exposure／risk', den: 'Single track: observation split into baseline / pre-exposure / risk',
-    fit: 'good', layout: 'track', nzh: '以單軌時間線呈現單一個體的觀察期被切成 baseline、pre-exposure 與 risk 期；只納入病例，觀察期常以年齡或日曆時間界定，事件可落在任何期段。', nen: 'A single track for one individual: the observation period is split into baseline, pre-exposure and risk periods; only cases are included, observation is often defined by age or calendar time, and events may fall in any period.',
-    scale: 'linear', unit: 'Days', openL: '', openR: '', day0Title: 'Day 0', day0Text: 'Exposure (e.g. vaccination)',
-    footnote: 'Incidence of events in the risk period is compared with that in baseline periods within the same individuals. Day 0 (the exposure day) is usually analysed as a separate period or included in the risk period — state which.',
-    rows: [
-      row({ kind: 'screen', label: 'Observation period', shape: 'bracket', s: '-180 (start of observation)', e: '365 (end of observation)' }),
-      row({ kind: 'other', label: 'Baseline', s: '-180', e: '-15' }),
-      row({ kind: 'wash', label: 'Pre-exposure', s: '-14', e: '-1' }),
-      row({ kind: 'expo', label: 'Risk period', s: '1', e: '42' }),
-      row({ kind: 'other', label: 'Baseline', s: '43', e: '365' }),
-      row({ kind: 'out', label: 'Event', shape: 'event', s: '20', e: '20', win: '' }),
-      row({ kind: 'out', label: 'Event', shape: 'event', s: '210', e: '210', win: '' }),
-    ],
-  },
 };
 
 /* conventional presentation + calendar-time study period for each design */
@@ -414,19 +349,7 @@ const CAL = (o = {}) => Object.assign({ on: true, title: 'Study period (calendar
   { label: 'Cohort entry (accrual) period', start: '2009-01-01', end: '2019-12-31', kind: 'screen', shape: 'bar' },
   { label: 'End of follow-up', start: '2020-12-31', end: '', kind: 'fu', shape: 'event' },
 ] }, o);
-const CASE_CAL = (label) => CAL({ on: false, rows: [
-  { label: 'Data available', start: '2008-01-01', end: '2020-12-31', kind: 'other', shape: 'bar' },
-  { label, start: '2010-01-01', end: '2020-12-31', kind: 'out', shape: 'bar' },
-] });
-Object.assign(TEMPLATES.t2dm, { conv: { theme: 'schneeweiss' }, cal: CAL({ on: false, rows: [
-  { label: 'Data available', start: '2008-01-01', end: '2020-12-31', kind: 'other', shape: 'bar' },
-  { label: 'T2DM diagnosis (cohort entry) period', start: '2009-01-01', end: '2019-12-31', kind: 'screen', shape: 'bar' },
-  { label: 'End of follow-up', start: '2020-12-31', end: '', kind: 'fu', shape: 'event' },
-] }) });
-for (const id of ['acnu', 'itt', 'general', 'latency', 'landmark', 'tte']) Object.assign(TEMPLATES[id], { conv: { theme: 'schneeweiss' }, cal: CAL() });
-Object.assign(TEMPLATES.ncc, { conv: { theme: 'schneeweiss', day0Pos: 80 }, cal: CASE_CAL('Case (index) dates') });
-Object.assign(TEMPLATES.cco, { conv: { theme: 'track' }, cal: CASE_CAL('Event dates of included cases') });
-Object.assign(TEMPLATES.sccs, { conv: { theme: 'track' }, cal: CASE_CAL('Observation periods of cases') });
+for (const id of ['acnu', 'itt', 'general', 'latency', 'landmark']) Object.assign(TEMPLATES[id], { conv: { theme: 'schneeweiss' }, cal: CAL() });
 // pregnancy: conventional single gestational axis in weeks
 Object.assign(TEMPLATES.pregLmp, {
   layout: 'track', unit: 'Weeks', conv: { theme: 'track' },
@@ -460,7 +383,7 @@ const DEF = {
   useConv: true, d0Top: false, cal: CAL({ on: false }),
   style: 'block', palette: 'pastel', scale: 'sqrt', unit: 'Days', openL: '- ∞', openR: 'Censor/ Events',
   st: { font: 'Arial', fontCustom: '', fontSize: 15, lh: 1.3 },
-  day0Title: 'Index date', day0Text: 'Day [0]', footnote: '', rows: [], refLines: [], tpl: 't2dm',
+  day0Title: 'Index date', day0Text: 'Day [0]', footnote: '', rows: [], refLines: [], tpl: 'acnu',
   labelW: 240, plotW: 560, barH: 24, blockW: 1100, day0Pos: 48, rowGap: 7, padX: 18, indent: 20, labelAlign: 'left',
   barR: 0, barBW: 0, barBC: '#333333', titleBold: true, winItalic: false, trackTicks: true,
   d0Color: '#BFBFBF', d0W: 9, d0Dash: 'solid', refColor: '#555555', axisColor: '#263238', axisW: 4, titleScale: 1.6, bgColor: '#F2F2F2', bgOn: true, axis: true,
@@ -493,18 +416,17 @@ function applyPalette(S) {
   const pal = (PALETTES[S.palette] || PALETTES.bold).c;
   S.rows.forEach((r) => { r.color = pal[r.kind] || pal.other; });
 }
-loadTemplate(DEF, 't2dm');
+loadTemplate(DEF, 'acnu');
 let S = RT.load(KEY, DEF);
 
 /* ---------------- form ---------------- */
 const form = document.getElementById('form');
 document.getElementById('fontFields').innerHTML = RT.styleFieldsHTML(['font', 'fontSize', 'lh']);
-document.getElementById('refs').innerHTML = RT.refsHTML([RT.REFS.schneeweiss, RT.REFS.acnu, RT.REFS.tte, RT.REFS.tteJama, RT.REFS.cco, RT.REFS.sccs, RT.REFS.okabe, RT.REFS.record, RT.REFS.libs], [T('設計圖依 Schneeweiss 等人（2019）的架構繪製，並非其官方範本的複製；時間窗括號 [a, b] 表示含起訖兩端的天數。', 'Diagrams follow the framework of Schneeweiss et al. (2019) but are not copies of their official templates; brackets [a, b] denote inclusive day ranges.')]);
+document.getElementById('refs').innerHTML = RT.refsHTML([RT.REFS.schneeweiss, RT.REFS.acnu, RT.REFS.okabe, RT.REFS.record, RT.REFS.libs], [T('設計圖依 Schneeweiss 等人（2019）的架構繪製，並非其官方範本的複製；時間窗括號 [a, b] 表示含起訖兩端的天數。', 'Diagrams follow the framework of Schneeweiss et al. (2019) but are not copies of their official templates; brackets [a, b] denote inclusive day ranges.')]);
 const fitBadge = (f) => (f === 'good' ? `<span class="fit good">${T('常用', 'Common')}</span>` : `<span class="fit ok">${T('可用，需搭配', 'Usable, pair with')}</span>`);
 const TPL_GROUPS = [
-  [T('世代研究', 'Cohort designs'), ['t2dm', 'acnu', 'itt', 'general', 'latency', 'landmark', 'tte']],
-  [T('以病例為基礎', 'Case-based designs'), ['ncc', 'cco', 'sccs']],
-  [T('懷孕', 'Pregnancy'), ['pregLmp', 'pregDel']],
+  [T('世代研究', 'Cohort designs'), ['acnu', 'itt', 'general', 'latency', 'landmark']],
+  [T('懷孕世代', 'Pregnancy cohorts'), ['pregLmp', 'pregDel']],
 ];
 {
   const listed = new Set(TPL_GROUPS.flatMap((g) => g[1]));
@@ -697,12 +619,16 @@ function collect() {
 }
 const rowEnds = (r) => { const s = ep(r.s).n; let e = ep(r.e).n; if (r.shape === 'event') e = s; return { s, e }; };
 /** vertical reference lines with small labels at the top */
-function drawRefs(X, yTop, yBot, fs) {
+function drawRefs(X, yTop, yBot, fs, rightEdge = Infinity) {
   let out = '';
   refs().forEach((rf) => {
     const x = X(rf.t);
     out += RT.line([[x, yTop], [x, yBot]], { color: S.refColor || '#555', sw: 1.2, dash: '5 4', dashType: 'dash' });
-    if (rf.label) out += RT.rich([{ runs: [{ t: rf.label, size: fs * 0.85, italic: true, color: S.refColor || '#555' }] }], x + 4, yTop - fs * 0.1, { lh: fs * 1.1 });
+    if (!rf.label) return;
+    // label to the right of the line; if that would run past the figure edge, put it on the left instead
+    const w = RT.textWidth(rf.label, fs * 0.85, false, true);
+    const flip = x + 4 + w > rightEdge;
+    out += RT.rich([{ runs: [{ t: rf.label, size: fs * 0.85, italic: true, color: S.refColor || '#555' }] }], flip ? x - 4 : x + 4, yTop - fs * 0.1, { lh: fs * 1.1, anchor: flip ? 'end' : 'start' });
   });
   return out;
 }
@@ -770,16 +696,24 @@ function buildBlock() {
     const color = fillOf(colorOf(r));
     const need = natural(r);
     let inside = r.pos === 'in' || (r.pos !== 'out' && need + 2 * padX <= xe - xs);
-    let side = null;
+    let side = null, avail = 0;
     if (!inside) {
-      // outside: prefer the side away from Day 0, else whichever side has room, else wrap inside the bar
+      // outside: prefer the side away from Day 0, then the side towards Day 0 (text must stop before the
+      // Day 0 line), else wrap the text into whichever space is widest — the text never runs past that space,
+      // so it cannot cross the Day 0 line, the figure edge or its own bar
       const leftSide = xe <= x0 + LINE;
       const spaceOut = leftSide ? xs - left - padX : W - M - xe - padX;
-      const spaceIn = leftSide ? x0 - LINE / 2 - xe - padX : xs - (x0 + LINE / 2) - padX;
-      if (spaceOut >= need || (spaceOut >= 120 && spaceOut >= spaceIn)) side = leftSide ? 'L' : 'R';
-      else if (spaceIn >= Math.min(need, 160)) side = leftSide ? 'R' : 'L';
-      else if (r.pos !== 'out' && xe - xs >= 90) inside = true;
-      else side = leftSide ? 'L' : 'R';
+      const spaceIn = leftSide ? x0 - LINE / 2 - xe - padX * 1.5 : xs - (x0 + LINE / 2) - padX * 1.5;
+      const spaceBar = r.pos !== 'out' ? xe - xs - 2 * padX : -1;
+      const outS = leftSide ? 'L' : 'R', inS = leftSide ? 'R' : 'L';
+      if (spaceOut >= need) { side = outS; avail = spaceOut; }
+      else if (spaceIn >= need) { side = inS; avail = spaceIn; }
+      else {
+        const best = Math.max(spaceOut, spaceIn, spaceBar);
+        if (best === spaceBar && spaceBar >= 60) inside = true;
+        else if (best === spaceOut || spaceIn < 60) { side = outS; avail = Math.max(60, spaceOut); }
+        else { side = inS; avail = spaceIn; }
+      }
     }
     let L, tx;
     if (inside) {
@@ -788,8 +722,7 @@ function buildBlock() {
       tx = xs + padX;
     } else {
       const tcol = r.tcolor || (lum(color) > 0.8 ? dark : color);
-      const avail = side === 'L' ? xs - left - padX : W - M - xe - padX;
-      L = layout(r, Math.max(120, avail), tcol, dark);
+      L = layout(r, avail, tcol, dark);
       tx = side === 'L' ? Math.max(left, xs - padX - L.width) : Math.min(xe + padX, W - M - L.width);
     }
     const h = Math.max(L.height + 2 * padY, fs * 2);
@@ -809,7 +742,7 @@ function buildBlock() {
     body += RT.rect(r.xs, r.y, r.xe - r.xs, r.h, { fill: r.color, radius: Math.min(Number(S.barR) || 0, r.h / 2, (r.xe - r.xs) / 2), stroke: bw > 0 ? S.barBC : 'none', sw: bw });
     body += RT.rich(r.L.lines, r.tx, r.y + (r.h - r.L.height) / 2, { lh });
   });
-  body += drawRefs(X, topBox ? lineTop + 4 : M * 0.3, axisY, fs);
+  body += drawRefs(X, topBox ? lineTop + 4 : M * 0.3, axisY, fs, W - M);
   let H = axisY;
   if (S.axis) body += RT.arrow([[left, axisY], [W - M, axisY]], { color: S.axisColor, sw: Number(S.axisW) || 4, head: 4 + (Number(S.axisW) || 4) * 3.5 });
   const tfs = fs * (Number(S.titleScale) || 1.6);
@@ -865,17 +798,29 @@ function buildClassic() {
     else if (xe - xs < 12) { const c = (xs + xe) / 2; xs = c - 6; xe = c + 6; }
     const win = S.showWin ? winOf(r) : '';
     const tw = win ? RT.textWidth(win, wfs, false, wi) : 0;
-    let place = 'none';
+    let place = 'none', bx = null;
     if (win) {
+      // vertical lines the label must not cross: Day 0 (drawn under the bars, so only outside them) and
+      // the reference lines (drawn on top of everything)
+      const refX = refs().map((rf) => X(rf.t));
+      const crosses = (l, rr, lines) => lines.some((o) => o > l - 3 && o < rr + 3);
       const fits = tw + 12 <= xe - xs - (s === null ? 12 : 0) - (e === null ? 12 : 0);
-      if (r.pos === 'in' || (r.pos !== 'out' && fits)) place = 'in';
-      else if (xs >= X(0) - 1 && xe + 6 + tw <= x1 + 110) place = 'right';
-      else if (xe <= X(0) + 1 && xs - 6 - tw >= x0) place = 'left';
-      else place = 'below';
+      const cx = (xs + xe) / 2;
+      if ((r.pos === 'in' || (r.pos !== 'out' && fits)) && (r.pos === 'in' || !crosses(cx - tw / 2, cx + tw / 2, refX))) place = 'in';
+      else if (xs >= X(0) - 1 && xe + 6 + tw <= x1 + 110 && !crosses(xe + 6, xe + 6 + tw, refX)) place = 'right';
+      else if (xe <= X(0) + 1 && xs - 6 - tw >= x0 && !crosses(xs - 6 - tw, xs - 6, refX)) place = 'left';
+      else {
+        // under the bar: centred if that is clear, otherwise the nearest spot that clears every line
+        place = 'below';
+        const lines = [X(0), ...refX], lo = x0, hi = x1 + 110 - tw;
+        const want = Math.max(lo, Math.min(hi, cx - tw / 2));
+        const cands = [want, xs, xe - tw, ...lines.flatMap((o) => [o + 6, o - 6 - tw])].map((v) => Math.max(lo, Math.min(hi, v)));
+        bx = cands.filter((v) => !crosses(v, v + tw, lines)).sort((a, b) => Math.abs(a - want) - Math.abs(b - want))[0] ?? want;
+      }
     }
     const barBlock = BH + (place === 'below' ? wfs * 1.4 + 4 : 0);
     const rh = Math.max(lb.h, barBlock) + 8 + (Number(S.rowGap) || 0);
-    R0.push({ y, rh, lb, xs, xe, s, e, win, tw, place, color: fillOf(colorOf(r)) });
+    R0.push({ y, rh, lb, xs, xe, s, e, win, tw, place, bx, color: fillOf(colorOf(r)) });
     y += rh;
   });
   const bottomY = y;
@@ -902,16 +847,16 @@ function buildClassic() {
       if (r.place === 'in') body += RT.rich(line(inCol), (r.xs + r.xe) / 2, ty, { lh: wfs * 1.3, anchor: 'middle' });
       else if (r.place === 'right') { body += RT.rich(line('#000'), r.xe + 6, ty, { lh: wfs * 1.3 }); maxX = Math.max(maxX, r.xe + 6 + r.tw + M); }
       else if (r.place === 'left') body += RT.rich(line('#000'), r.xs - 6, ty, { lh: wfs * 1.3, anchor: 'end' });
-      else { const cx = Math.max(x0 + r.tw / 2, Math.min(x1 - r.tw / 2, (r.xs + r.xe) / 2)); body += RT.rich(line('#000'), cx, bb + 2, { lh: wfs * 1.3, anchor: 'middle' }); }
+      else { body += RT.rich(line('#000'), r.bx, bb + 2, { lh: wfs * 1.3 }); maxX = Math.max(maxX, r.bx + r.tw + M); }
     }
   });
   const d0w = Number(S.d0W) || 1.2;
   body = RT.line([[hx, topY], [hx, bottomY]], { color: S.d0Color, sw: d0w, dash: dashOf(d0w), dashType: S.d0Dash }) + body;   // under the bars
-  body += drawRefs(X, topY + 4, bottomY, fs);
+  body += drawRefs(X, topY + 4, bottomY, fs, Math.max(maxX, x1 + M) - M);
   return { W: Math.max(maxX, x1 + M), H: bottomY, body, bg: '#FFFFFF' };
 }
 
-/* ---------------- single-track style (case-crossover, SCCS…) ---------------- */
+/* ---------------- single-track style (pregnancy cohorts) ---------------- */
 function buildTrack() {
   const fs = Number(S.st.fontSize) || 14, lhK = Number(S.st.lh) || 1.3, lh = fs * lhK, sfs = fs * 0.86;
   const W = Number(S.blockW) || 1100, M = 16, left = M + 6, right = W - M - 12;
@@ -934,7 +879,31 @@ function buildTrack() {
     return { lines, w: Math.max(10, ...lines.map((l) => runW(l.runs))), h: lines.length * lh };
   };
   const clampX = (cx, w) => Math.max(M, Math.min(W - M - w, cx - w / 2));
-  const place = (lv, x0, x1) => { let i = 0; while (lv[i] !== undefined && lv[i] > x0 - 12) i++; lv[i] = x1; return i; };
+  // levels: a label goes on the lowest level where it overlaps nothing on that level, its leader line
+  // (at cx, through every level below it) crosses no label, and no leader of a label already placed higher
+  // runs through it
+  const place = (placed, x0, x1, cx) => {
+    const free = (i) => placed.every((p) => p.lvl !== i || x1 + 12 <= p.x0 || x0 - 12 >= p.x1);
+    const leaderOk = (i) => placed.every((p) =>
+      (p.lvl >= i || !(cx > p.x0 - 4 && cx < p.x1 + 4)) &&
+      (p.lvl <= i || !(p.cx > x0 - 4 && p.cx < x1 + 4)));
+    const top = placed.length + 1;   // one level per label is always enough
+    let lvl = -1;
+    for (let i = 0; i <= top && lvl < 0; i++) if (free(i) && leaderOk(i)) lvl = i;
+    // no level keeps every leader clear (a leader would have to pass a label below it): just avoid overlaps
+    for (let i = 0; i <= top && lvl < 0; i++) if (free(i)) lvl = i;
+    placed.push({ lvl, x0, x1, cx });
+    return lvl;
+  };
+  // a label must not sit on the Day 0 line or a reference line: move it beside the nearest one
+  const vlines = () => [X(0), ...refs().map((rf) => X(rf.t))];
+  const clearX = (cx, w) => {
+    const want = clampX(cx, w), lines = vlines();
+    const hits = (l) => lines.some((o) => o > l - 4 && o < l + w + 4);
+    if (!hits(want)) return want;
+    const cands = lines.flatMap((o) => [o + 8, o - 8 - w]).map((v) => Math.max(M, Math.min(W - M - w, v))).filter((v) => !hits(v));
+    return cands.sort((a, b) => Math.abs(a - want) - Math.abs(b - want))[0] ?? want;
+  };
 
   const bars = [], above = [];
   S.rows.forEach((r) => {
@@ -956,13 +925,14 @@ function buildTrack() {
     if (r.shape !== 'bracket') TL.bars.push({ i: S.rows.indexOf(r), xs, xe, y: null, h: null, s, e });
   });
   // above the track: brackets first (outer), then events; greedy levels
-  const upLv = [], upH = [];
+  const upLv = [], upH = [];   // upLv: placed labels above the track
   above.sort((a, b) => (a.type === b.type ? 0 : a.type === 'bracket' ? 1 : -1));
   above.forEach((it) => {
     const cx = it.type === 'event' ? it.x : (it.xs + it.xe) / 2;
-    it.lx = clampX(cx, it.L.w);
+    it.lx = clearX(cx, it.L.w);
     const x0 = it.type === 'bracket' ? Math.min(it.xs, it.lx) : it.lx, x1 = it.type === 'bracket' ? Math.max(it.xe, it.lx + it.L.w) : it.lx + it.L.w;
-    it.lvl = place(upLv, x0, x1);
+    // brackets have no leader line; events draw one straight down from the label to the marker
+    it.lvl = place(upLv, x0, x1, it.type === 'event' ? it.x : -1e9);
     upH[it.lvl] = Math.max(upH[it.lvl] || 0, it.L.h + (it.type === 'bracket' ? 14 : 16));
   });
   const tfs = fs * Math.min(Number(S.titleScale) || 1.3, 1.4);
@@ -978,12 +948,43 @@ function buildTrack() {
   const tickH = S.trackTicks ? sfs * 1.3 + 6 : 4;
   // below: bar labels (unless inside)
   const dnLv = [], dnH = [];
-  bars.forEach((b) => {
+  [...bars].sort((a, b) => (a.xe - a.xs) - (b.xe - b.xs)).forEach((b) => {
     const inside = b.r.pos === 'in' && b.L.w + 12 <= b.xe - b.xs;
     b.inside = inside;
     if (inside || b.r.pos === 'hide') return;
-    b.lx = clampX((b.xs + b.xe) / 2, b.L.w);
-    b.lvl = place(dnLv, b.lx, b.lx + b.L.w);
+    const mid = (b.xs + b.xe) / 2, lo = b.xs + 3, hi = b.xe - 3, w = b.L.w;
+    // leader candidates along the bar: the middle, its ends, and just beside every label already placed
+    const cands = [mid, lo, hi, ...dnLv.flatMap((q) => [q.x0 - 6, q.x1 + 6])]
+      .map((v) => Math.max(lo, Math.min(hi, v))).filter((v, i, a) => a.indexOf(v) === i)
+      .sort((a, c) => Math.abs(a - mid) - Math.abs(c - mid));
+    const fits = (i, cx, x0) => dnLv.every((q) =>
+      (q.lvl !== i || x0 + w + 12 <= q.x0 || x0 - 12 >= q.x1) &&
+      (q.lvl >= i || !(cx > q.x0 - 4 && cx < q.x1 + 4)) &&
+      (q.lvl <= i || !(q.cx > x0 - 4 && q.cx < x0 + w + 4)));
+    let got = null;
+    for (let i = 0; i <= dnLv.length + 1 && !got; i++) for (const cx of cands) { const x0 = clampX(cx, w); if (fits(i, cx, x0)) { got = { i, cx, x0 }; break; } }
+    // nothing fits: try sliding the labels that sit in the way (on a level above) sideways, just clear of this
+    // leader, keeping their own leader inside them
+    if (!got) {
+      const okAt = (q, nx) => {
+        const qw = q.x1 - q.x0;
+        if (nx < M || nx + qw > W - M || q.cx < nx + 2 || q.cx > nx + qw - 2) return false;
+        return dnLv.every((o) => o === q ||
+          ((o.lvl !== q.lvl || nx + qw + 12 <= o.x0 || nx - 12 >= o.x1) &&
+           (o.lvl <= q.lvl || !(o.cx > nx - 4 && o.cx < nx + qw + 4))));
+      };
+      for (let i = 1; i <= dnLv.length + 1 && !got; i++) for (const cx of cands) {
+        const x0 = clampX(cx, w);
+        if (!dnLv.every((q) => (q.lvl !== i || x0 + w + 12 <= q.x0 || x0 - 12 >= q.x1) && (q.lvl <= i || !(q.cx > x0 - 4 && q.cx < x0 + w + 4)))) continue;
+        const blockers = dnLv.filter((q) => q.lvl < i && cx > q.x0 - 4 && cx < q.x1 + 4);
+        const moves = blockers.map((q) => { const qw = q.x1 - q.x0; const nx = q.cx < cx ? cx - 6 - qw : cx + 6; return okAt(q, nx) ? [q, nx] : null; });
+        if (moves.some((m) => !m)) continue;
+        moves.forEach(([q, nx]) => { const qw = q.x1 - q.x0; q.x0 = nx; q.x1 = nx + qw; if (q.bar) q.bar.lx = nx; });
+        got = { i, cx, x0 };
+      }
+    }
+    if (!got) { b.lx = clampX(mid, w); b.cx = mid; b.lvl = place(dnLv, b.lx, b.lx + w, mid); dnLv[dnLv.length - 1].bar = b; }
+    else { b.lx = got.x0; b.cx = got.cx; b.lvl = got.i; dnLv.push({ lvl: got.i, x0: got.x0, x1: got.x0 + w, cx: got.cx, bar: b }); }
     dnH[b.lvl] = Math.max(dnH[b.lvl] || 0, b.L.h + 8);
   });
   let yb = trackBot + tickH + 4;
@@ -1000,8 +1001,9 @@ function buildTrack() {
   if (sub) title.push({ t: (title.length ? ': ' : '') + sub, size: fs, color: '#000' });
   if (title.length) body += RT.rich([{ runs: title }], Math.max(M, Math.min(W - M - runW(title), x0 - runW(title) / 2)), M, { lh: tfs * 1.2 });
   const d0w = Math.min(Number(S.d0W) || 1.5, 4);
-  body += RT.line([[x0, M + tfs * 1.25], [x0, trackBot + tickH]], { color: S.d0Color, sw: d0w, dash: dashOf(d0w), dashType: S.d0Dash });
-  body += drawRefs(X, M + tfs * 1.25 + (hasRefs ? 2 : 0), trackBot + tickH, fs);
+  const lineBot = trackBot + (S.trackTicks ? 4 : tickH);
+  body += RT.line([[x0, M + tfs * 1.25], [x0, lineBot]], { color: S.d0Color, sw: d0w, dash: dashOf(d0w), dashType: S.d0Dash });
+  body += drawRefs(X, M + tfs * 1.25 + (hasRefs ? 2 : 0), lineBot, fs, W - M);
   // axis
   if (S.axis) body += RT.arrow([[left, trackMid], [W - M, trackMid]], { color: S.axisColor, sw: Math.min(Number(S.axisW) || 2, 3), head: 12 });
   else body += RT.line([[left, trackMid], [right, trackMid]], { color: S.axisColor, sw: 1.5 });
@@ -1014,19 +1016,23 @@ function buildTrack() {
       const lines = b.L.lines.slice(0, 1).map((l) => ({ runs: l.runs.map((r) => ({ ...r, color: tc })) }));
       body += RT.rich(lines, (b.xs + b.xe) / 2, trackMid - lh / 2, { lh, anchor: 'middle' });
     } else if (b.lvl !== undefined) {
-      const cx = (b.xs + b.xe) / 2, top = dnTop[b.lvl];
+      const cx = b.cx ?? (b.xs + b.xe) / 2, top = dnTop[b.lvl];
       if (b.lvl > 0 || Math.abs(b.lx + b.L.w / 2 - cx) > 2) body += RT.line([[cx, trackBot + 1], [cx, top - 2]], { color: '#9AA0A6', sw: 0.8 });
       body += RT.rich(b.L.lines, b.lx + b.L.w / 2, top, { lh, anchor: 'middle' });
     }
   });
   // ticks
   if (S.trackTicks) {
-    let last = -1e9;
-    tickVals.forEach((v) => {
-      const x = X(v);
-      body += RT.line([[x, trackBot], [x, trackBot + 4]], { color: soft, sw: 0.8 });
-      const t = fmtT(v), w = RT.textWidth(t, sfs * 0.95);
-      if (x - w / 2 > last + 4) { body += RT.rich([{ runs: [{ t, size: sfs * 0.95, color: soft }] }], x, trackBot + 5, { lh: sfs * 1.2, anchor: 'middle' }); last = x + w / 2; }
+    const taken = [];
+    tickVals.forEach((v) => { const x = X(v); body += RT.line([[x, trackBot], [x, trackBot + 4]], { color: soft, sw: 0.8 }); });
+    // 0 first, then the two ends, then the rest; a number is skipped if it would touch one already drawn
+    const order = [...tickVals].sort((a, b) => (a === 0 ? -1 : b === 0 ? 1 : 0) || ((b === tickVals[0] || b === tickVals[tickVals.length - 1]) - (a === tickVals[0] || a === tickVals[tickVals.length - 1])));
+    order.forEach((v) => {
+      const x = X(v), t = fmtT(v), w = RT.textWidth(t, sfs * 0.95), l = x - w / 2, r = x + w / 2;
+      if (taken.some(([a, b]) => l < b + 4 && r > a - 4)) return;
+      if (bars.some((b) => b.lvl !== undefined && !b.inside && (b.lvl > 0 || Math.abs(b.lx + b.L.w / 2 - (b.cx ?? (b.xs + b.xe) / 2)) > 2) && (b.cx ?? (b.xs + b.xe) / 2) > l - 2 && (b.cx ?? (b.xs + b.xe) / 2) < r + 2)) return;
+      taken.push([l, r]);
+      body += RT.rich([{ runs: [{ t, size: sfs * 0.95, color: soft }] }], x, trackBot + 5, { lh: sfs * 1.2, anchor: 'middle' });
     });
   }
   // above items
@@ -1039,7 +1045,9 @@ function buildTrack() {
       body += RT.line([[it.xs, ly + 6], [it.xs, ly], [it.xe, ly], [it.xe, ly + 6]], { color: col, sw: 1.6 });
     } else {
       const mk = 8, ty = trackTop - 2;
-      if (top + it.L.h + 2 < ty - mk * 1.3 - 2) body += RT.line([[it.x, top + it.L.h + 2], [it.x, ty - mk * 1.3 - 1]], { color: '#9AA0A6', sw: 0.8 });
+      const lcx = Math.max(it.lx + 2, Math.min(it.lx + it.L.w - 2, it.x));
+      if (Math.abs(lcx - it.x) > 2) body += RT.line([[lcx, top + it.L.h + 2], [it.x, ty - mk * 1.3 - 1]], { color: '#9AA0A6', sw: 0.8 });
+      else if (top + it.L.h + 2 < ty - mk * 1.3 - 2) body += RT.line([[it.x, top + it.L.h + 2], [it.x, ty - mk * 1.3 - 1]], { color: '#9AA0A6', sw: 0.8 });
       body += RT.poly([[it.x - mk, ty - mk * 1.3], [it.x + mk, ty - mk * 1.3], [it.x, ty]], { fill: it.c, stroke: lum(it.c) > 0.85 ? dark : 'none', sw: 0.8 });
     }
   });
@@ -1142,6 +1150,11 @@ function decorate() {
   if (!svg || !TL.X) return;
   const g = RT.svgEl('g', { class: 'edit-ui' });
   TL.bars.forEach((b) => {
+    // 兩端都是數字時，中間可以整段拖動
+    if (b.s !== null && b.e !== null && b.xe - b.xs > 16 && S.rows[b.i] && S.rows[b.i].shape !== 'event') {
+      g.appendChild(RT.svgEl('rect', { x: b.xs + 6, y: b.y, width: b.xe - b.xs - 12, height: b.h, fill: 'transparent', class: 'move', 'data-row': b.i, 'data-move': 1,
+        role: 'slider', tabindex: 0, 'aria-label': T(`${S.rows[b.i]?.label || '時間窗'}：整段移動（${b.s} 到 ${b.e}）`, `${S.rows[b.i]?.label || 'Window'}: move the whole window (${b.s} to ${b.e})`) }));
+    }
     [['s', b.s, b.xs], ['e', b.e, b.xe]].forEach(([end, v, x]) => {
       if (v === null) return;   // an open end has no day to drag
       g.appendChild(RT.svgEl('rect', { x: x - 5, y: b.y, width: 10, height: b.h, fill: 'transparent', class: 'resize', 'data-row': b.i, 'data-end': end,
@@ -1149,7 +1162,7 @@ function decorate() {
     });
   });
   if (tlDrag) {
-    const t = `${unitOne()} ${fmtT(tlDrag.t)}`, w = RT.textWidth(t, 13) + 12;
+    const t = tlDrag.move ? `${unitOne()} [${fmtT(rowEnds(S.rows[tlDrag.i]).s)}, ${fmtT(rowEnds(S.rows[tlDrag.i]).e)}]` : `${unitOne()} ${fmtT(tlDrag.t)}`, w = RT.textWidth(t, 13) + 12;
     g.appendChild(RT.svgEl('rect', { x: tlDrag.x - w / 2, y: tlDrag.y - 26, width: w, height: 20, rx: 4, fill: '#222' }));
     const tx = RT.svgEl('text', { x: tlDrag.x, y: tlDrag.y - 12, 'text-anchor': 'middle', 'font-size': 13, fill: '#fff' });
     tx.textContent = t; g.appendChild(tx);
@@ -1158,6 +1171,16 @@ function decorate() {
 }
 const redraw = () => { fig = build(); preview.innerHTML = fig.svg; decorate(); };
 preview.addEventListener('pointerdown', (e) => {
+  const mv = e.target.closest && e.target.closest('[data-move]');
+  if (mv) {
+    const i = Number(mv.dataset.row), b = TL.bars.find((x) => x.i === i), { s, e: en } = rowEnds(S.rows[i]);
+    const [px] = RT.figPoint(preview, fig, e);
+    tlDrag = { i, move: true, s0: s, e0: en, d0: null, px0: px, y: b ? b.y : 0, x: b ? (b.xs + b.xe) / 2 : px, t: s, X: TL.X };
+    tlDrag.d0 = dayAt(px);
+    preview.setPointerCapture(e.pointerId);
+    e.preventDefault();
+    return;
+  }
   const h = e.target.closest && e.target.closest('[data-end]');
   if (!h) return;
   const i = Number(h.dataset.row), end = h.dataset.end, b = TL.bars.find((x) => x.i === i);
@@ -1167,6 +1190,18 @@ preview.addEventListener('pointerdown', (e) => {
 });
 preview.addEventListener('pointermove', (e) => {
   if (!tlDrag) return;
+  if (tlDrag.move) {
+    const [mx] = RT.figPoint(preview, fig, e), r = S.rows[tlDrag.i];
+    const d = dayAt(mx) - tlDrag.d0;
+    const ns = tlDrag.s0 + d;
+    if (ns === tlDrag.t) return;
+    tlDrag.t = ns;
+    r.s = withDay(r.s, ns); r.e = withDay(r.e, tlDrag.e0 + d);
+    redraw();
+    const b = TL.bars.find((x) => x.i === tlDrag.i);
+    if (b) { tlDrag.x = (b.xs + b.xe) / 2; tlDrag.y = b.y; preview.querySelector('.edit-ui')?.remove(); decorate(); }
+    return;
+  }
   const [px] = RT.figPoint(preview, fig, e), r = S.rows[tlDrag.i];
   let t = dayAt(px);
   // a window cannot end before it starts
@@ -1185,8 +1220,18 @@ preview.addEventListener('pointerup', endTl);
 preview.addEventListener('pointercancel', endTl);
 // keyboard: arrow keys move the focused end by one day (Shift: 10)
 preview.addEventListener('keydown', (e) => {
-  const h = e.target.closest && e.target.closest('[data-end]');
   const d = { ArrowLeft: -1, ArrowRight: 1, ArrowDown: -1, ArrowUp: 1 }[e.key];
+  const mv = e.target.closest && e.target.closest('[data-move]');
+  if (mv && d) {
+    e.preventDefault();
+    const i = Number(mv.dataset.row), r = S.rows[i], k = d * (e.shiftKey ? 10 : 1), { s, e: en } = rowEnds(r);
+    r.s = withDay(r.s, s + k); r.e = withDay(r.e, en + k);
+    redraw();
+    preview.querySelector(`[data-row="${i}"][data-move]`)?.focus({ preventScroll: true });
+    syncInputs(); update();
+    return;
+  }
+  const h = e.target.closest && e.target.closest('[data-end]');
   if (!h || !d) return;
   e.preventDefault();
   const i = Number(h.dataset.row), end = h.dataset.end, r = S.rows[i];
@@ -1200,6 +1245,84 @@ preview.addEventListener('keydown', (e) => {
   syncInputs(); update();
 });
 
+/* ---------------- design check ---------------- */
+// 以「追蹤起點」為界：篩選、納入、排除、洗除、共變項與暴露的資訊，都應該在追蹤開始前就確定；
+// 用到追蹤開始後的資訊，會造成 immortal time 或依未來資訊選人／調整。回傳警告數（提醒不算）。
+function designCheck() {
+  const warn = [], note = [];
+  const U = S.unit.toLowerCase(), u1 = U.replace(/s$/, '');
+  const name = (r, i) => `${T('第 ', 'Row ')}${i + 1}${T(' 列', '')}「${(r.label || T('未命名', 'untitled')).split('\n')[0]}」`;
+  const fuRows = S.rows.filter((r) => r.kind === 'fu' && r.shape !== 'bracket');
+  const fuStarts = fuRows.map((r) => ep(r.s).n).filter((n) => n !== null);
+  const tFU = fuStarts.length ? Math.min(...fuStarts) : null;
+  if (!fuRows.length) note.push(T('沒有「追蹤／風險期」列：通常需要標出追蹤從哪一天開始、到什麼時候結束。', 'No follow-up row: the figure usually shows when follow-up starts and ends.'));
+  const lim = tFU ?? 1;   // 沒有追蹤列時，以 Day 1 當作追蹤起點來檢查
+  const KN = { screen: T('篩選', 'screening'), incl: T('納入條件', 'inclusion criteria'), excl: T('排除條件', 'exclusion criteria'), wash: T('洗除期', 'washout'), cov: T('共變項', 'covariates'), expo: T('暴露', 'exposure') };
+  S.rows.forEach((r, i) => {
+    if (r.shape === 'bracket') return;
+    const { s, e } = rowEnds(r);
+    if (s !== null && e !== null && s > e) warn.push(T(`${name(r, i)}：起點 ${s} 晚於終點 ${e}。`, `${name(r, i)}: starts at ${s}, after its end ${e}.`));
+    if (r.kind === 'fu') {
+      if (s !== null && s < 0) warn.push(T(`${name(r, i)}：追蹤從 Day ${s} 開始，早於 Day 0。追蹤應從 Day 0 或之後開始，否則會把 cohort entry 前的時間算進追蹤（immortal time）。`, `${name(r, i)}: follow-up starts on Day ${s}, before Day 0. Start follow-up on or after Day 0, or time before cohort entry is counted (immortal time).`));
+      return;
+    }
+    if (!KN[r.kind]) return;
+    // 開放終點＝一路到追蹤結束；數字終點落在追蹤起點當天或之後
+    const late = e === null ? true : e >= lim;
+    if (!late) return;
+    const at = e === null ? T('一直到追蹤結束', 'until the end of follow-up') : `Day ${e}`;
+    if (r.kind === 'expo') {
+      warn.push(T(`${name(r, i)}：暴露分類用到 ${at} 的資訊，但追蹤從 Day ${lim} 開始。追蹤期間的前段被當成「已暴露」，會產生 immortal time bias。可以把追蹤起點延到暴露窗結束（landmark），或把暴露當成隨時間改變的變數。`,
+        `${name(r, i)}: exposure is classified using information up to ${at}, but follow-up starts on Day ${lim}. Early follow-up is counted as exposed, which creates immortal time bias. Start follow-up when the exposure window ends (landmark) or treat exposure as time-varying.`));
+    } else if (r.kind === 'cov') {
+      warn.push(T(`${name(r, i)}：共變項評估到 ${at}，已在追蹤開始（Day ${lim}）之後。追蹤後測到的變數可能受暴露影響（中介因子），調整它會偏誤；共變項通常只用 Day 0 以前（含當天）的資料。`,
+        `${name(r, i)}: covariates are assessed up to ${at}, after follow-up starts (Day ${lim}). Variables measured after baseline can be affected by exposure (mediators) and adjusting for them biases the estimate; covariates usually use data up to Day 0.`));
+    } else if (r.kind === 'wash') {
+      warn.push(T(`${name(r, i)}：洗除期延伸到 ${at}。洗除期是確認「之前沒用過」，應在開始用藥（Day 0）之前結束，否則新使用者自己也會被排除。`,
+        `${name(r, i)}: the washout extends to ${at}. A washout confirms no prior use and should end before treatment starts (Day 0); otherwise the new users themselves are excluded.`));
+    } else {
+      warn.push(T(`${name(r, i)}：${KN[r.kind]}用到 ${at} 的資訊，已在追蹤開始（Day ${lim}）之後。依未來發生的事選人，會造成 immortal time 或選擇偏誤；若是 landmark 設計，請把追蹤起點設在 landmark 之後。`,
+        `${name(r, i)}: ${KN[r.kind]} use information up to ${at}, after follow-up starts (Day ${lim}). Selecting people on what happens later causes immortal time or selection bias; in a landmark design, start follow-up after the landmark.`));
+    }
+  });
+  // 追蹤晚於 Day 1 開始：中間這段發生事件或死亡的人怎麼處理？
+  if (tFU !== null && tFU > 1) {
+    // 其他列（可以是好幾列首尾相接，例如三個孕期）合起來有沒有蓋住 Day 1 到追蹤起點前一天
+    const iv = S.rows.filter((r) => r.kind !== 'fu').map(rowEnds).filter((x) => x.s !== null && x.e !== null).sort((a, b) => a.s - b.s);
+    let reach = 0;
+    iv.forEach((x) => { if (x.s <= reach + 1) reach = Math.max(reach, x.e); });
+    const covered = reach >= tFU - 1;
+    if (!covered) note.push(T(`追蹤從 Day ${tFU} 開始：Day 1 到 Day ${tFU - 1} 之間發生事件或死亡的人怎麼處理？建議加一列（例如誘導期或 landmark 前排除）並在 Methods 說明。`, `Follow-up starts on Day ${tFU}: how are people with the event or death between Day 1 and Day ${tFU - 1} handled? Add a row (e.g. induction period or exclusion before the landmark) and explain it in the Methods.`));
+  }
+  const host = document.getElementById('dcList');
+  host.innerHTML = !warn.length && !note.length
+    ? `<div class="msg ok">✓ ${RT.esc(T('沒有發現常見的時間設計問題。', 'No common timing problems found.'))}</div>`
+    : warn.map((m) => `<div class="msg">⚠ ${RT.esc(m)}</div>`).join('') + note.map((m) => `<div class="msg info">ℹ ${RT.esc(m)}</div>`).join('');
+  return warn.length;
+}
+
+/* ---------------- send inclusion / exclusion criteria to the Cohort flowchart ---------------- */
+document.getElementById('toCohortflow').onclick = () => {
+  const lines = (r) => String(r.details || '').split('\n').map((x) => x.replace(/^\s*(\d+[.)]|[•\-–])\s*/, '').trim()).filter(Boolean);
+  const first = (r) => String(r.label || '').split('\n')[0].trim();
+  const screen = S.rows.find((r) => r.kind === 'screen');
+  const steps = [];
+  S.rows.filter((r) => r.kind === 'incl').forEach((r) => {
+    const ls = lines(r);
+    steps.push({ text: 'Patients meeting the inclusion criteria', reasons: (ls.length ? ls : [first(r) || 'Inclusion criteria']).map((t) => ({ t: 'Did not meet: ' + t.replace(/^([A-Z])(?=[a-z])/, (m) => m.toLowerCase()), n: '' })) });
+  });
+  const exRows = S.rows.filter((r) => r.kind === 'wash' || r.kind === 'excl');
+  if (exRows.length) {
+    const reasons = exRows.flatMap((r) => { const ls = lines(r); return ls.length ? ls : [r.kind === 'wash' ? 'Prior use during the washout window' : (first(r) || 'Exclusion criterion')]; });
+    steps.push({ text: 'Study cohort', reasons: reasons.map((t) => ({ t, n: '' })) });
+  } else if (steps.length) steps[steps.length - 1].text = 'Study cohort';
+  if (!steps.length) { RT.toast(T('沒有「納入」、「洗除」或「排除」列可以帶入', 'No inclusion, washout or exclusion rows to send'), 5000); return; }
+  const st = RT.study.get();
+  const data = { start: screen ? [first(screen), ...lines(screen)].filter(Boolean).join(': ') : '', steps, exposure: st.exposure || '', comparator: st.comparator || '', at: Date.now() };
+  try { localStorage.setItem('rt:handoff-timeline', JSON.stringify(data)); } catch (e) { /* ignore */ }
+  location.href = '../cohortflow/index.html?from=timeline';
+};
+
 function render() {
   try {
     const keep = preview.contains(document.activeElement) && document.activeElement.dataset && document.activeElement.dataset.end ? [document.activeElement.dataset.row, document.activeElement.dataset.end] : null;
@@ -1212,6 +1335,7 @@ function render() {
     preview.innerHTML = `<div class="msg">⚠ ${RT.esc(e.message)}</div>`;
   }
   document.querySelectorAll('#rows [data-f="win"]').forEach((el, i) => { if (S.rows[i]) el.placeholder = autoWin(S.rows[i]); });
+  exporter.setIssues(designCheck());
   exporter.refresh();
   RT.save(KEY, S);
 }

@@ -18,7 +18,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../shared/style.css?v=20261025c">
+<link rel="stylesheet" href="../shared/style.css?v=20261113b">
 <style>
   .step-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
   /* exclusions inside a group sit indented between the two boxes they connect */
@@ -636,6 +636,19 @@ RT.applyState = (o) => { S = RT.merge(DEF, o); syncInputs(); update(); };
 syncInputs();
 render();
 hist.push();
+// inclusion / exclusion criteria sent from the Study Design Timeline
+(() => {
+  if (new URLSearchParams(location.search).get('from') !== 'timeline') return;
+  let h = null;
+  try { h = JSON.parse(localStorage.getItem('rt:handoff-timeline') || 'null'); localStorage.removeItem('rt:handoff-timeline'); } catch (e) { /* ignore */ }
+  history.replaceState(null, '', location.pathname);
+  if (!h || !Array.isArray(h.steps) || !h.steps.length) return;
+  if (h.start) S.start = { ...S.start, text: h.start, n: '' };
+  S.steps = h.steps.map((x) => step({ text: x.text, reasons: x.reasons.length ? x.reasons : [{ t: '', n: '' }] }));
+  if (h.exposure && h.comparator) S.groups = [{ boxes: [{ text: h.exposure + ' users', n: '' }] }, { boxes: [{ text: h.comparator + ' users', n: '' }] }];
+  syncInputs(); update();
+  RT.toast(T('已把時間軸的納入／排除條件帶入，請填上各步驟人數（按 ↶ 可復原）', 'Criteria from the timeline added — fill in the numbers for each step (↶ to undo)'), 7000);
+})();
 </script>
 </body>
 </html>

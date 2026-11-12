@@ -175,7 +175,7 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 button.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); color: var(--accent-ink); }
 button.icon { padding: 4px 0; width: 30px; justify-content: center; color: var(--muted); }
 button.icon:hover { color: var(--danger); border-color: var(--danger); }
-button.small { padding: 3px 9px; font-size: 12.5px; }
+button.small { padding: 6px 12px; font-size: 12.5px; }
 button:disabled { opacity: .55; cursor: not-allowed; transform: none; }
 .btns { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .topbar .btns .grp { display: inline-flex; gap: 6px; align-items: center; }
@@ -274,3 +274,9 @@ summary .step-no { margin-inline: 2px 6px; }
 /* preview overlays for direct editing */
 .paper .edit-ui [data-hit] { cursor: pointer; }
 .paper .edit-ui .resize { cursor: ew-resize; }
+/* timeline: drag the middle of a window to move it; design-check notes */
+.paper .edit-ui .move { cursor: grab; }
+.paper .edit-ui .move:active { cursor: grabbing; }
+.paper .edit-ui .move:focus-visible, .paper .edit-ui .resize:focus-visible { outline: 2px solid var(--accent, #2E5C8A); outline-offset: 1px; }
+.drag-hint { margin: 6px 2px 10px; }
+.msg.info { background: var(--panel-2); color: var(--muted); }
