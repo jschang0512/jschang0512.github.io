@@ -193,7 +193,7 @@ function todayIndex(){
     current = current === "dark" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", current);
     try{ localStorage.setItem(KEY, current); }catch(e){}
-    document.querySelectorAll('[data-act="theme"] .lbl').forEach(el=> el.textContent = label());
+    document.querySelectorAll('[data-act="theme"] .lbl').forEach(el=> el.textContent = label().replace("模式", ""));
   };
   window.tripThemeLabel = label;
   // no saved choice: follow the phone when it switches
@@ -201,7 +201,7 @@ function todayIndex(){
     try{ if(localStorage.getItem(KEY)) return; }catch(err){}
     current = e.matches ? "dark" : "light";
     document.documentElement.setAttribute("data-theme", current);
-    document.querySelectorAll('[data-act="theme"] .lbl').forEach(el=> el.textContent = label());
+    document.querySelectorAll('[data-act="theme"] .lbl').forEach(el=> el.textContent = label().replace("模式", ""));
   });
 })();
 
@@ -486,20 +486,65 @@ function buildNav(){
   return `<div class="daytabs-scroll">${dayTabs}</div>`;
 }
 function buildUtilBar(){
+  // each page: icon, name, and a short status line (filled in by refreshMenuStatus when the menu opens)
+  const item = (page, icon, label, extra = "")=> `<button class="util-btn" data-page="${page}"${extra}><span class="u-ic">${SB_ICON[icon]}</span><span class="u-tx"><span class="u-l">${label}</span><span class="u-s" data-sub="${page}"></span></span></button>`;
+  const tool = (act, icon, label)=> `<button class="util-btn util-act" data-act="${act}">${SB_ICON[icon]}<span class="lbl">${label}</span></button>`;
   return `
-    <button class="util-btn" data-page="days">每日行程</button>
-    <button class="util-btn" data-page="flights">航班</button>
-    <button class="util-btn" data-page="packing">待辦清單</button>
-    <button class="util-btn" data-page="contacts">住宿與聯絡</button>
-    <button class="util-btn" data-page="weather">天氣</button>
-    ${TRIP.food ? `<button class="util-btn" data-page="food">美食地圖</button>` : ""}
-    <button class="util-btn" data-page="driving">租車自駕</button>
-    <button class="util-btn" data-page="quake">地震</button>
-    <a class="util-btn" href="https://jschang0512.github.io/splitbill/" target="_blank" rel="noopener">旅費分帳 ${SB_ICON.arrowOut}</a>
-    <div class="util-sep" role="presentation"></div>
-    <button class="util-btn util-act" data-act="print">${SB_ICON.print}<span>列印／存 PDF</span></button>
-    <button class="util-btn util-act" data-act="ics">${SB_ICON.calendar}<span>加入行事曆</span></button>
-    <button class="util-btn util-act" data-act="theme">${SB_ICON.moon}<span class="lbl">${window.tripThemeLabel ? tripThemeLabel() : "深色模式"}</span></button>`;
+    <div class="util-grp" role="presentation">行程</div>
+    ${item("days", "days", "每日行程", ' style="grid-column:1 / -1"')}
+    ${item("flights", "plane", "航班")}
+    ${item("contacts", "bed", "住宿與聯絡")}
+    <div class="util-grp" role="presentation">出發前</div>
+    ${item("packing", "checklist", "待辦清單")}
+    ${item("weather", "cloud", "天氣")}
+    <div class="util-grp" role="presentation">在當地</div>
+    ${TRIP.food ? item("food", "food", "美食地圖") : ""}
+    ${item("driving", "car", "租車自駕")}
+    ${item("quake", "quake", "地震")}
+    <a class="util-btn" href="https://jschang0512.github.io/splitbill/" target="_blank" rel="noopener"><span class="u-ic">${SB_ICON.coins}</span><span class="u-tx"><span class="u-l">旅費分帳 ${SB_ICON.arrowOut}</span><span class="u-s">開新分頁</span></span></a>
+    <div class="util-grp" role="presentation">工具</div>
+    <div class="util-tools">
+      ${tool("print", "print", "列印")}
+      ${tool("ics", "calendar", "行事曆")}
+      ${tool("theme", "moon", window.tripThemeLabel ? tripThemeLabel().replace("模式", "") : "深色")}
+    </div>`;
+}
+// the status line under each menu item, read fresh every time the menu opens
+function refreshMenuStatus(){
+  const set = (page, text)=>{ const el = document.querySelector(`[data-sub="${page}"]`); if(el) el.textContent = text || ""; };
+  const t = todayIndex(), d = Number(lastDayPage);
+  set("days", document.documentElement.classList.contains("all-days") ? `全部 ${days.length} 天並排`
+    : t >= 0 ? `今天 DAY ${String(t + 1).padStart(2, "0")}・${days[t].theme}` : `DAY ${String(d + 1).padStart(2, "0")}・${days[d] ? days[d].theme : ""}`);
+  // next flight still ahead (dates come from the labels, times are local)
+  let flight = "";
+  if(typeof FLIGHTS !== "undefined"){
+    const dep = new Date(TRIP.departISO), now = new Date();
+    const list = FLIGHTS.flatMap(fd=> (fd.entries || []).map(f=>{
+      const m = String(fd.date).match(/(\d+)\/(\d+)/), hm = String(f.dep || "").match(/(\d{1,2}):(\d{2})/);
+      if(!m || !hm) return null;
+      let y = dep.getFullYear(); if(Number(m[1]) < dep.getMonth() + 1) y += 1;
+      return { at: new Date(y, Number(m[1]) - 1, Number(m[2]), Number(hm[1]), Number(hm[2])), f, label: `${m[1]}/${m[2]}` };
+    })).filter(Boolean).sort((a, b)=> a.at - b.at);
+    const next = list.find(x=> x.at > now);
+    flight = !list.length ? "尚未訂票" : next ? `下一班 ${next.label} ${next.f.flight} ${next.f.dep}` : "航班都已結束";
+  }
+  set("flights", flight);
+  const tonight = t >= 0 && days[t].hotel ? days[t].hotel : "";
+  set("contacts", tonight ? `今晚：${tonight}` : (typeof LODGING !== "undefined" && LODGING.length ? `${LODGING.length} 間住宿` : ""));
+  const boxes = document.querySelectorAll("#page-packing input[type=checkbox]");
+  const done = document.querySelectorAll("#page-packing input[type=checkbox]:checked").length;
+  set("packing", boxes.length ? `${done} / ${boxes.length} 完成` : "");
+  const pk = document.querySelector('[data-page="packing"] .u-tx');
+  if(pk && boxes.length){
+    let bar = pk.querySelector(".u-bar");
+    if(!bar){ bar = document.createElement("span"); bar.className = "u-bar"; bar.innerHTML = "<i></i>"; pk.appendChild(bar); }
+    bar.firstChild.style.width = Math.round(done / boxes.length * 100) + "%";
+  }
+  const c0 = typeof WEATHER_CITIES !== "undefined" ? WEATHER_CITIES[0] : null, w = c0 && wxState[c0.key];
+  set("weather", w && w.current ? `${c0.name.split(/[／\/]/)[0]} ${Math.round(w.current.temperature_2m)}°・${wmoInfo(w.current.weather_code)[1]}` : (typeof WEATHER_CITIES !== "undefined" ? `${WEATHER_CITIES.length} 個城市` : ""));
+  set("food", TRIP.food ? `${TRIP.food.city || ""}美食・伴手禮` : "");
+  set("driving", "取還車・注意事項");
+  set("quake", "最近的地震");
 }
 function buildFoodPage(){
   const areaBlocks = FOOD_AREAS.map((a,ai)=>{
@@ -801,14 +846,28 @@ document.getElementById("utilBar").innerHTML = buildUtilBar();
   bar.after(util);
   util.after(nav);
   util.hidden = true; nav.hidden = true;
-  if(home) util.appendChild(home);
+  if(home) (util.querySelector(".util-tools") || util).appendChild(home);
   const btn = bar.querySelector(".sb-menu-btn"), cur = bar.querySelector(".sb-day-cur");
   // two dropdowns share the space under the bar; opening one closes the other
   const panels = [[util, btn], [nav, cur]];
   const setOpen = (panel)=>{
     panels.forEach(([p, b])=>{ const open = p === panel; p.hidden = !open; b.setAttribute("aria-expanded", String(open)); });
     document.documentElement.classList.toggle("menu-open", !!panel);
+    if(panel === util){
+      refreshMenuStatus();
+      // computers: a panel under the menu button, not a full-width sheet
+      util.style.left = BOARD_MQ.matches ? Math.round(btn.getBoundingClientRect().left) + "px" : "";
+      (util.querySelector(".util-btn.active") || util.querySelector(".util-btn"))?.focus({preventScroll: true});
+    }
   };
+  // arrow keys move through the menu
+  util.addEventListener("keydown", (e)=>{
+    if(!["ArrowDown", "ArrowUp", "ArrowRight", "ArrowLeft", "Home", "End"].includes(e.key)) return;
+    const items = [...util.querySelectorAll(".util-btn, .home-link")];
+    const i = items.indexOf(document.activeElement);
+    const n = e.key === "Home" ? 0 : e.key === "End" ? items.length - 1 : (i + (e.key === "ArrowDown" || e.key === "ArrowRight" ? 1 : -1) + items.length) % items.length;
+    items[n]?.focus(); e.preventDefault();
+  });
   btn.addEventListener("click", ()=> setOpen(util.hidden ? util : null));
   cur.addEventListener("click", ()=> setOpen(nav.hidden ? nav : null));
   bar.querySelectorAll(".sb-step").forEach(s=> s.addEventListener("click", ()=>{
@@ -1282,7 +1341,7 @@ function activatePage(page, {jump=true, dir=null}={}){
   }
   try{ history.replaceState(null, "", "#" + (isExtra ? page : "day-" + page)); }catch(e){}
   const lbl = document.querySelector(".sb-menu-lbl");
-  if(lbl) lbl.textContent = isExtra ? btn.textContent.trim() : "選單";
+  if(lbl) lbl.textContent = isExtra ? (btn.querySelector(".u-l")?.textContent || btn.textContent).trim() : "選單";
   const back = document.querySelector(".sb-back");
   if(back){ back.hidden = !isExtra; back.textContent = "‹ 回到 DAY " + String(Number(lastDayPage) + 1).padStart(2, "0"); }
   // computers: every day at once, or one day with its map
