@@ -159,3 +159,9 @@ html body.rc-page{ margin:0; min-height:100dvh; background:var(--rc-night-2); co
   .rc-slide .rc-rise{ opacity:1; }
   .rc-slide.is-on .rc-rise, .rc-slide.is-on .rc-disk, .rc-slide.is-on .rc-rank-bar i, .rc-slide.is-on .rc-month i{ animation:none; }
 }
+
+/* 派派旁白：每張卡片底下一句 */
+.rc-pai{ display:flex; align-items:center; gap:10px; margin:18px 0 0; padding:8px 14px 8px 8px; border-radius:16px; background:rgba(255,255,255,.14); font-size:14px; font-weight:600; line-height:1.45; text-align:left; max-width:340px; }
+.rc-pai .sb-pie{ flex:none; width:36px; height:36px; }
+.is-light-slide .rc-pai, .rc-slide.is-cream .rc-pai, .rc-slide.is-mist .rc-pai{ background:rgba(35,37,79,.07); }
+.rc-final-title + .rc-pai{ margin:6px 0 14px; }

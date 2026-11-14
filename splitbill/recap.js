@@ -258,6 +258,14 @@
       : `<span class="${cls}" style="background:${getAvatarColor(name)}">${escapeHtml(name.slice(0, 1))}</span>`;
   }
 
+  // 派派旁白：每張卡片底下一句（派派提醒關掉時不顯示）
+  function pai(key, vars, mood){
+    if(typeof sbPieMascotSVG !== "function" || (window.sbNagMode && sbNagMode() === "off")) return "";
+    const k = t(key) === key ? null : key;
+    if(!k) return "";
+    return `<p class="rc-pai rc-rise" style="--i:6">${sbPieMascotSVG(0, mood || "smile")}<span>${escapeHtml(t(k, vars || {}))}</span></p>`;
+  }
+
   function slideHTML(cls, turn, body, attrs){
     return `<section class="rc-slide ${cls}" ${attrs || ""}>${disk(turn)}<div class="rc-body">${body}</div></section>`;
   }
@@ -279,6 +287,7 @@
       <p class="rc-big rc-rise" style="--i:1" data-count="${Math.round(stats.total)}" data-code="${base}">${escapeHtml(moneyText(base, stats.total))}</p>
       <p class="rc-detail rc-rise" style="--i:2">${t("recap.totalDetail", { count:`<b>${stats.count}</b>`, days:`<b>${stats.days.size}</b>` })}</p>
       ${noteHTML}
+      ${pai(stats.count >= 200 ? "recap.paiTotalMany" : "recap.paiTotal", { count: stats.count }, "sweet")}
     `));
 
     const perDay = stats.total / daysInYearSoFar(year);
@@ -286,6 +295,7 @@
       <p class="rc-label rc-rise">${escapeHtml(t("recap.avgLabel"))}</p>
       <p class="rc-big rc-rise" style="--i:1">${escapeHtml(moneyText(base, perDay))}</p>
       <p class="rc-detail rc-rise" style="--i:2">${t("recap.avgDetail", { amount:`<b>${escapeHtml(moneyText(base, stats.total / stats.count))}</b>` })}</p>
+      ${pai("recap.paiAvg", {}, "smirk")}
     `));
 
     const top = stats.catList[0];
@@ -299,6 +309,7 @@
         <span class="rc-rank-name">${escapeHtml(c.meta.name)}</span><span class="rc-rank-amt">${escapeHtml(moneyText(base, c.amount))}</span>
         <span class="rc-rank-bar"><i style="--w:${(c.amount / top.amount).toFixed(3)}"></i></span>
       </li>`).join("")}</ol>` : ""}
+      ${pai("recap.paiCat", { cat: top.meta.name }, "sideeye")}
     `, `style="--cat:${top.meta.color}"`));
 
     if(stats.topTitle.count >= 3){
@@ -320,7 +331,8 @@
         <p class="rc-big is-name rc-rise" style="--i:2">${escapeHtml(name)}</p>
         <p class="rc-detail rc-rise" style="--i:3">${t(partner.meal ? "recap.partnerFoodDetail" : "recap.partnerAllDetail", { count:`<b>${partner.count}</b>` })}</p>
         <p class="rc-detail rc-rise" style="--i:4">${t("recap.partnerPeople", { n:`<b>${Object.keys(stats.all).length}</b>` })}</p>
-      `));
+        ${pai("recap.paiPartner", { name }, "sweet")}
+    `));
       ctx.partnerName = name;
     }
 
@@ -391,6 +403,7 @@
       <p class="rc-big rc-rise" style="--i:1">${escapeHtml(moneyText(base, p.myShare))}</p>
       <p class="rc-detail rc-rise" style="--i:2"><b>${escapeHtml(p.title)}</b></p>
       <p class="rc-detail rc-rise" style="--i:3">${escapeHtml(formatDate(p.date))}</p>
+      ${pai("recap.paiPriciest", {}, "shock")}
     `));
 
     // 那天只有最貴的那一筆的話，跟上一張講的是同一件事，不用重複
@@ -408,6 +421,7 @@
       <p class="rc-big is-name rc-rise" style="--i:1">${escapeHtml(monthName(peak))}</p>
       <p class="rc-detail rc-rise" style="--i:2">${t("recap.monthDetail", { amount:`<b>${escapeHtml(moneyText(base, peakAmt))}</b>` })}</p>
       <div class="rc-months rc-rise" style="--i:3" aria-hidden="true">${stats.months.map((v, i) => `<div class="rc-month${i === peak ? " is-peak" : ""}" style="--i:${i}"><i style="--h:${(v / peakAmt).toFixed(3)};--i:${i}"></i><span>${i + 1}</span></div>`).join("")}</div>
+      ${pai("recap.paiMonth", { month: monthName(peak) }, "stare")}
     `));
 
     const peakDay = stats.weekdays.indexOf(Math.max(...stats.weekdays));
@@ -451,7 +465,8 @@
         <p class="rc-big rc-rise" style="--i:1">${escapeHtml(t("recap.repayValue", { n: stats.repayCount }))}</p>
         <p class="rc-detail rc-rise" style="--i:2">${t("recap.repayDetail", { sent:`<b>${escapeHtml(moneyText(base, stats.repaySent))}</b>`, received:`<b>${escapeHtml(moneyText(base, stats.repayReceived))}</b>` })}</p>
         ${topOf(stats.repayWith) ? `<p class="rc-detail rc-rise" style="--i:3">${t("recap.repayWith", { name:`<b>${escapeHtml(memberById[topOf(stats.repayWith).id])}</b>` })}</p>` : ""}
-      `));
+        ${pai("recap.paiRepay", {}, "joy")}
+    `));
     }
 
     const finalRows = [
@@ -471,8 +486,11 @@
       { ...SHARE_TONES.rose, label:t("recap.monthLabel"), value:monthName(peak), sub:t("recap.monthDetail", { amount:moneyText(base, peakAmt) }) }
     ];
     const canShare = !!(navigator.canShare && navigator.share);
+    const finalKey = stats.repayCount > 0 ? "recap.paiFinalGood" : stats.count >= 100 ? "recap.paiFinalBusy" : "recap.paiFinal";
+    ctx.paiLine = typeof sbPieMascotSVG === "function" && !(window.sbNagMode && sbNagMode() === "off") ? t(finalKey, { name: myName }) : "";
     out.push(slideHTML("is-final", 330, `
       <h2 class="rc-final-title rc-rise">${escapeHtml(t("recap.finalTitle", { name: myName, year }))}</h2>
+      ${pai(finalKey, { name: myName }, "joy").replace("--i:6", "--i:1")}
       <dl class="rc-final-list rc-rise" style="--i:1">${finalRows.map(([k, v]) => `<div><dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd></div>`).join("")}</dl>
       <div class="rc-actions rc-rise" style="--i:2">
         ${canShare ? `<button type="button" class="rc-btn" id="rcShareBtn">${sbIcon("upload")}${escapeHtml(t("recap.share"))}</button>` : ""}
@@ -535,6 +553,16 @@
       c.fillStyle = s.color;
       c.fill();
       start += sweep;
+    });
+  }
+
+  function loadPaiImage(){
+    if(typeof sbPieStandaloneSVG !== "function") return Promise.resolve(null);
+    return new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(sbPieStandaloneSVG(0, "joy"));
     });
   }
 
@@ -606,7 +634,18 @@
 
     // 下方四格：跟回顧卡片同一套底色
     const gap = 24, tileW = (INNER - gap) / 2;
-    const tilesTop = pieTop + radius * 2 + 104;
+    // 圓餅下面一條：派派和她的年度總評（派派提醒關掉時不畫）
+    const paiImg = ctx.paiLine ? await loadPaiImage() : null;
+    const tilesTop = pieTop + radius * 2 + (paiImg ? 196 : 104);
+    if(paiImg){
+      const sy = pieTop + radius * 2 + 64, size = 96;
+      c.drawImage(paiImg, PAD, sy, size, size);
+      c.fillStyle = INK;
+      c.textBaseline = "middle";
+      fitFont(c, ctx.paiLine, 700, 40, INNER - size - 28);
+      c.fillText(ctx.paiLine, PAD + size + 28, sy + size / 2 + 2);
+      c.textBaseline = "alphabetic";
+    }
     const tileH = (H - PAD - tilesTop - gap) / 2;
     ctx.tiles.forEach((tile, i) => {
       const x = PAD + (i % 2) * (tileW + gap);

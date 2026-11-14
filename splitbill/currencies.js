@@ -951,7 +951,7 @@ function renderAvatarHTML(memberOrName, sizeClass = "avatar-sm"){
 // 記帳／還款成功的彈出視窗：列出這筆的內容，要按「確認」或「編輯」才關閉。
 // rows 是 [{ label, value }]，要列人的話給 people（成員物件陣列）；onEdit 不給就不顯示編輯按鈕。關閉時發出
 // splitbill-record-closed，節日彩蛋會等這個視窗關了才播。
-function showRecordSuccess({ title, headline, amount, rows = [], onEdit = null, targetListEl = null, nag = false }){
+function showRecordSuccess({ title, headline, amount, rows = [], onEdit = null, targetListEl = null, nag = false, pai = null }){
   const overlay = document.createElement("div");
   overlay.className = "sb-record-overlay";
   const pop = document.createElement("div");
@@ -970,8 +970,10 @@ function showRecordSuccess({ title, headline, amount, rows = [], onEdit = null, 
       <button type="button" class="sb-record-ok">${escapeHtml(t("record.confirm"))}</button>
     </div>`;
   // 你還欠人錢卻又記了一筆帳：派派在成功畫面吐槽一句（一天最多一次，見 shared-ui.js 的 sbNagRoast）
+  // 沒被吐槽的話，派派看情況講一句：大筆支出嚇一跳、這個月第幾筆（paipai.js 的 recordLine）
   if(nag && typeof window.sbNagRoast === "function"){
-    const roast = window.sbNagRoast();
+    const roast = window.sbNagRoast() || (pai && window.sbPai ? window.sbPai.recordLine(pai) : null);
+    if(roast && roast.mood === "shock" && window.sbPai) window.sbPai.buzz(25);
     if(roast){
       pop.querySelector(".sb-record-actions").insertAdjacentHTML("beforebegin",
         '<div class="sb-record-nag">' + window.sbPieMascotSVG(roast.level, roast.mood) + '<p>' + escapeHtml(roast.line) + '</p></div>');

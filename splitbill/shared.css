@@ -11233,3 +11233,101 @@ html body .pair-stmt-cumnote{ font-size:12px; color:var(--ink-soft); margin:-4px
 /* 對帳單：欠款變多紅字、變少綠字 */
 html body .pair-stmt-table td.is-up{ color:var(--negative-text, #D0283F); font-weight:700; }
 html body .pair-stmt-table td.is-down{ color:var(--positive-text); font-weight:700; }
+
+/* ===== 派派 v993：常駐、說話泡泡、縮成一行、空白頁、圖鑑、節日配件、互動 ===== */
+html body .sb-pie{ overflow:visible; }
+/* 沒事時偶爾眨眼（只動五官那一組），睡覺時 zz 慢慢飄 */
+html body .sb-title-pie.is-idle .sb-pie.mood-smile .sb-pie-face{ transform-box:fill-box; transform-origin:50% 40%; animation:sbPaiBlink 6s steps(1, end) 1.5s infinite; }
+@keyframes sbPaiBlink{ 0%, 96%{ transform:none } 97%, 99%{ transform:scaleY(.15) } }
+html body .sb-pie-zz{ animation:sbPaiZz 2.8s ease-in-out infinite; }
+@keyframes sbPaiZz{ 0%, 100%{ opacity:.55; transform:translate(0, 1px) } 50%{ opacity:1; transform:translate(1px, -1px) } }
+/* 標題旁的派派可以往下拖，放手彈回去；點太多下會裂開抖一下 */
+html body .sb-title-pie{ touch-action:none; position:relative; }
+html body .sb-title-pie.is-spring{ transition:transform .5s cubic-bezier(.34, 1.56, .64, 1); }
+html body .sb-title-pie.is-cracked .sb-pie{ animation:sbPaiShake .4s cubic-bezier(.36, .07, .19, .97) both; }
+@keyframes sbPaiShake{ 20%, 60%{ transform:translateX(-2px) } 40%, 80%{ transform:translateX(2px) } }
+
+/* 說話泡泡：派派正下方，箭頭對著她 */
+html body .sb-pai-bubble{
+  position:absolute; z-index:950; max-width:min(280px, calc(100vw - 24px)); box-sizing:border-box;
+  display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:14px;
+  /* 卡片色在深色模式是半透明的，墊一層頁面底色，泡泡才不會透出後面的字 */
+  background:linear-gradient(var(--card), var(--card)) var(--bg-canvas, #fff); color:var(--ink); border:1px solid var(--card-border, var(--line));
+  box-shadow:0 6px 20px rgba(16, 14, 30, .14); cursor:pointer;
+  animation:sbPaiPop .24s cubic-bezier(.16, 1, .3, 1) both; transform-origin:var(--arrow, 50%) 0;
+}
+html body .sb-pai-bubble::before{
+  content:""; position:absolute; top:-6px; left:calc(var(--arrow, 50%) - 6px); width:10px; height:10px;
+  background:linear-gradient(var(--card), var(--card)) var(--bg-canvas, #fff); border-left:1px solid var(--card-border, var(--line)); border-top:1px solid var(--card-border, var(--line));
+  transform:rotate(45deg);
+}
+html body .sb-pai-bubble p{ margin:0; font-size:14px; font-weight:600; line-height:1.45; }
+html body .sb-pai-bubble-act{
+  flex:none; min-height:32px; padding:0 12px; border:0; border-radius:10px; white-space:nowrap; cursor:pointer;
+  background:var(--btn-primary); color:#fff; font:inherit; font-size:13px; font-weight:700;
+}
+html body .sb-pai-bubble-act:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; }
+html body .sb-pai-bubble.is-out{ animation:sbPaiOut .18s ease-in both; }
+@keyframes sbPaiPop{ from{ opacity:0; transform:translateY(-4px) scale(.94) } to{ opacity:1; transform:none } }
+@keyframes sbPaiOut{ to{ opacity:0; transform:translateY(-4px) scale(.96) } }
+
+/* 「我的款項」裡縮成一行 */
+html body .sb-nag-slim{
+  display:flex; align-items:center; gap:10px; width:100%; min-height:40px; margin:0; padding:6px 12px 6px 8px; box-sizing:border-box;
+  border:0; border-radius:12px; cursor:pointer; text-align:left; font:inherit; color:var(--ink);
+  background:color-mix(in srgb, var(--btn-primary) 8%, transparent);
+}
+html body .sb-nag-slim.lv-3, html body .sb-nag-slim.lv-4{ background:color-mix(in srgb, var(--negative-text) 9%, transparent); }
+html body .sb-nag-slim .sb-pie{ flex:none; width:28px; height:28px; }
+html body .sb-nag-slim-text{ flex:1; min-width:0; font-size:13.5px; font-weight:600; line-height:1.4; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+html body .sb-nag-slim-chev{ flex:none; font-size:18px; line-height:1; color:var(--ink-soft); }
+html body .sb-nag-slim:hover{ background:color-mix(in srgb, var(--btn-primary) 13%, transparent); }
+html body .sb-nag-slim:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; }
+html body .card #nagCard:has(.sb-nag-slim){ margin:0 0 10px; }
+
+/* 往來明細：他欠你的時候，派派站你這邊（綠色） */
+html body .sb-pair-peek.is-creditor{ background:color-mix(in srgb, var(--positive-text) 9%, transparent); }
+
+/* 空白頁、全部結清 */
+html body .debt-empty-state.has-pie .debt-empty-icon{ background:none; box-shadow:none; width:64px; height:64px; }
+html body .debt-empty-state.has-pie .debt-empty-icon .sb-pie{ width:64px; height:64px; }
+html body .sb-empty-pie{ display:block; width:60px; height:60px; margin:0 auto 6px; }
+html body .sb-empty-pie .sb-pie{ width:100%; height:100%; }
+html body .sb-settled-pie{ display:inline-block; width:30px; height:30px; margin-right:8px; vertical-align:middle; }
+html body .sb-settled-pie .sb-pie{ width:100%; height:100%; animation:sbPieHop .7s cubic-bezier(.16,1,.3,1) .2s both; }
+
+/* 載入超過 2 秒：派派轉圈 */
+html body .sb-pai-loading{ display:flex; align-items:center; justify-content:center; gap:10px; padding:6px 0 10px; font-size:13px; font-weight:600; color:var(--ink-soft); }
+html body .sb-pai-loading .sb-pie{ width:30px; height:30px; animation:sbPaiSpin 1.4s cubic-bezier(.65, 0, .35, 1) infinite; }
+@keyframes sbPaiSpin{ to{ transform:rotate(360deg) } }
+
+/* 設定頁：派派圖鑑 */
+html body details.sb-pai-dex{ display:block; padding:0; }
+html body .sb-pai-dex > summary{
+  display:grid; grid-template-columns:minmax(0,1fr) auto; column-gap:12px; align-items:center;
+  min-height:52px; padding:9px var(--sbs-pad) 9px calc(var(--sbs-pad) + 44px); cursor:pointer; list-style:none;
+}
+html body .sb-pai-dex > summary::-webkit-details-marker{ display:none; }
+html body .sb-pai-dex > summary:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:-2px; border-radius:10px; }
+html body .sb-pai-dex-grid{
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(72px, 1fr)); gap:8px;
+  margin:0; padding:4px var(--sbs-pad) 14px; list-style:none;
+}
+html body .sb-pai-dex-grid li{ display:flex; flex-direction:column; align-items:center; gap:4px; padding:8px 4px; border-radius:12px; background:color-mix(in srgb, var(--btn-primary) 6%, transparent); text-align:center; }
+html body .sb-pai-dex-grid .sb-pie{ width:44px; height:44px; }
+html body .sb-pai-dex-grid li span:last-child{ font-size:12px; font-weight:600; color:var(--ink-soft); line-height:1.3; }
+html body .sb-pai-dex-grid li.is-locked{ background:color-mix(in srgb, var(--ink) 5%, transparent); }
+html body .sb-pai-dex-q{ display:grid; place-items:center; width:44px; height:44px; border-radius:50%; background:color-mix(in srgb, var(--ink) 10%, transparent); font-size:20px; font-weight:800; color:var(--ink-soft); }
+
+@media (prefers-reduced-motion: reduce){
+  html body .sb-title-pie .sb-pie, html body .sb-pie-zz, html body .sb-pai-loading .sb-pie,
+  html body .sb-settled-pie .sb-pie, html body .sb-title-pie.is-cracked .sb-pie,
+  html body .sb-title-pie.is-idle .sb-pie.mood-smile .sb-pie-face{ animation:none !important; }
+  html body .sb-title-pie.is-spring{ transition:none; }
+  html body .sb-pai-bubble, html body .sb-pai-bubble.is-out{ animation-name:sbQuickFade; animation-duration:.15s; }
+}
+@media (prefers-reduced-motion: reduce){ html body .sb-pai-bubble.is-out{ animation:none; opacity:0; } }
+/* 通知清單空白：派派打瞌睡 */
+html body .sb-notif-empty{ display:flex; flex-direction:column; align-items:center; gap:6px; padding:22px 12px 18px; text-align:center; }
+html body .sb-notif-empty .sb-pie{ width:56px; height:56px; }
+html body .sb-notif-empty p{ margin:0; font-size:14px; font-weight:600; color:var(--ink-soft); }

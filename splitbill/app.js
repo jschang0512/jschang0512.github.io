@@ -2153,6 +2153,7 @@
         const myShare = myMember && (shares || []).find(s => s.member_id === myMember.id);
         window.showRecordSuccess({
           nag: true,
+          pai: myMember ? { id: savedExpense.id, amount, currency: CURRENCY, myId: myMember.id, expenses: cachedExpenses || [] } : null,
           title: t("record.expenseTitle"),
           headline: itemTitle || t("currency.newExpenseDefaultDesc"),
           amount: SYM + formatAmt(amount),
@@ -3733,9 +3734,11 @@
   }
 
   // escapeHtml() / enhanceSelect() 移到全站共用的 shared-ui.js 了。
-  function emptyStateHTML(icon, title, text){
-    return `<div class="debt-empty-state">
-      <div class="debt-empty-icon">${icon}</div>
+  // pie：沒帳、沒還款、沒收據這種「還沒開始」的空白頁換成派派（派派提醒關掉時照舊用圖示）
+  function emptyStateHTML(icon, title, text, pie){
+    const usePie = pie && typeof window.sbPieMascotSVG === "function" && (!window.sbNagMode || window.sbNagMode() !== "off");
+    return `<div class="debt-empty-state${usePie ? " has-pie" : ""}">
+      <div class="debt-empty-icon">${usePie ? window.sbPieMascotSVG(0, pie) : icon}</div>
       <div class="debt-empty-title">${title}</div>
       <div class="debt-empty-text">${text}</div>
     </div>`;
@@ -3753,7 +3756,7 @@
   function renderReceiptGalleryEmpty(){
     const grid = document.getElementById("receiptGalleryGrid");
     const loadMoreBtn = document.getElementById("receiptGalleryLoadMoreBtn");
-    if(grid) grid.innerHTML = emptyStateHTML(sbIcon("camera"), t("currency.receiptGalleryEmpty"), t("currency.receiptGalleryEmptyDesc"));
+    if(grid) grid.innerHTML = emptyStateHTML(sbIcon("camera"), t("currency.receiptGalleryEmpty"), t("currency.receiptGalleryEmptyDesc"), "sleep");
     if(loadMoreBtn) loadMoreBtn.classList.add("hidden");
   }
 
@@ -4053,7 +4056,7 @@
     if(!expenses.length){
       el.innerHTML = cachedExpenses.length
         ? emptyStateHTML(sbIcon("search"), t("currency.noFilterMatchTitle"), t("currency.noFilterMatchDesc"))
-        : emptyStateHTML(sbIcon("receipt"), t("currency.noExpensesTitle"), t("currency.noExpensesDesc"));
+        : emptyStateHTML(sbIcon("receipt"), t("currency.noExpensesTitle"), t("currency.noExpensesDesc"), "sweet");
       return;
     }
     const totalPages = Math.ceil(expenses.length / historyPageSize);
@@ -4208,7 +4211,7 @@
     if(!repayments.length){
       el.innerHTML = cachedRepayments.length
         ? emptyStateHTML(sbIcon("search"), t("currency.noFilterMatchTitle"), t("currency.noFilterMatchDesc"))
-        : emptyStateHTML(sbIcon("wallet"), t("currency.noRepaymentsTitle"), t("currency.noRepaymentsDesc"));
+        : emptyStateHTML(sbIcon("wallet"), t("currency.noRepaymentsTitle"), t("currency.noRepaymentsDesc"), "smile");
       return;
     }
     const units = groupRepayments(repayments);
@@ -4701,7 +4704,13 @@
       onPay: it => openPairFromNag(it.debtor, it.creditor),
       onNudge: it => openPairFromNag(it.debtor, it.creditor)
     });
+    // 派派在這個幣別講一件事（兩清了、別人欠你多少、這個月分到多少）；一次開頁只講一次
+    if(!paiCurDone && window.sbPai){
+      paiCurDone = true;
+      window.sbPai.curMoments({ currency: CURRENCY, label: CURRENCY_LABEL, myId: myMember.id, expenses, repayments });
+    }
   }
+  let paiCurDone = false;
   // 打開兩個人之間的往來明細（裡面有記錄還款、複製轉帳資訊、提醒對方），並捲過去
   function openPairFromNag(debtorId, creditorId){
     const summaryTab = document.querySelector('#mainAppTabs .app-tab[data-tab="summary"]');
@@ -7583,9 +7592,11 @@ function showPairDetail(
 
   el.innerHTML = html;
 
-  // 打開「你欠他錢」的那個人時，派派在明細上方探頭補一句
-  if(myMember && debtorId === myMember.id && typeof window.sbNagPeekHTML === "function"){
-    const peek = window.sbNagPeekHTML(creditorId, CURRENCY, memberById[creditorId] || "?");
+  // 打開「你欠他錢」或「他欠你錢」的那個人時，派派在明細上方探頭補一句
+  if(myMember && (debtorId === myMember.id || creditorId === myMember.id) && typeof window.sbNagPeekHTML === "function"){
+    const theyOwe = creditorId === myMember.id;
+    const other = theyOwe ? debtorId : creditorId;
+    const peek = window.sbNagPeekHTML(other, CURRENCY, memberById[other] || "?", theyOwe);
     const hdr = el.querySelector(".debt-detail-header");
     if(peek && hdr) hdr.insertAdjacentHTML("afterend", peek);
   }

@@ -3,10 +3,38 @@
 //
 // 要發公告就在最上面加一筆，version 填這次 version.js 的 APP_VERSION。
 // 只是小修、不用特別說的版本不必加——沒有新公告就不會跳。
-// 同一個人跳過好幾版時，會把中間每一版的公告合在一起顯示（最新的在上）。
+// 同一個人跳過好幾版時，也只顯示最新那一則。
 // 三種語言都要寫；某種語言漏寫會改用中文。
 // ============================================================
 window.SB_RELEASE_NOTES = [
+  {
+    version: "993",
+    date: "2026-11-14",
+    "zh-Hant": [
+      "派派常駐在標題旁：沒事時打瞌睡、眨眼，點她會說一句話；連點、往下拖都有反應",
+      "派派會看時機冒泡泡：打招呼、有人還你錢、活動前一天和結束後、固定支出快到、月初、節日（還會戴配件）",
+      "欠款提醒看過後縮成一行，不再整個消失；往來明細裡對方欠你時派派也會幫你說話",
+      "記帳成功會說這個月第幾筆，大筆支出會嚇一跳；空白頁、全部結清、年度回顧都有派派",
+      "設定頁新增「派派圖鑑」，收集你看過的表情",
+      "幣別頁也會冒泡泡；年度回顧的分享圖有派派；首頁「今天」改名「今日待辦」；更新公告只顯示最新一版"
+    ],
+    "ja": [
+      "パイパイがタイトルの横に常駐。ふだんは居眠りやまばたき、タップでひとこと。連打や下に引っぱるのにも反応します",
+      "あいさつ、返済が届いたとき、イベントの前日と終了後、固定費の前日、月初、祝日（小物つき）に吹き出しで知らせます",
+      "返済のリマインドは一度見たら 1 行に縮み、消えなくなりました。相手があなたに借りているときも明細でひとこと",
+      "記録すると今月何件目かを教えてくれて、大きな支出にはびっくり。空の画面、全部精算済み、年間まとめにも登場",
+      "設定に「パイパイ図鑑」を追加。見た表情を集められます",
+      "通貨ページでも吹き出しが出ます。年間まとめの共有画像にパイパイが登場。ホームの「今日」は「今日のやること」に。お知らせは最新版だけ表示します"
+    ],
+    "en": [
+      "Pie now lives next to the title: dozing and blinking when idle, with a line when you tap. Try tapping fast or pulling her down",
+      "Pie pops up a bubble at the right moments: greetings, repayments to you, the day before and after events, upcoming recurring bills, the start of the month, and holidays (with a hat)",
+      "The debt reminder shrinks to one line after you have seen it instead of disappearing. Pie also speaks up when someone owes you",
+      "After logging, Pie tells you which number it is this month and reacts to big spends. She also shows up on empty pages, when all is settled, and in your year recap",
+      "New Pie collection in Settings to collect the faces you have seen",
+      "Pie also speaks up on currency pages and appears on the year recap share image. Today on Home is now To do today, and update notes show only the latest version"
+    ]
+  },
   {
     version: "989",
     date: "2026-11-12",

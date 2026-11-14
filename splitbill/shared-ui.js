@@ -794,7 +794,10 @@ async function initNotificationBell(sb, myMember){
   }
   function renderList(){
     if(!rows.length){
-      listEl.innerHTML = `<p class="filter-hint">${t("shared.noNotifications")}</p>`;
+      // 沒有通知：派派打瞌睡（派派提醒關掉時照舊一行字）
+      listEl.innerHTML = window.sbNagMode && sbNagMode() !== "off"
+        ? `<div class="sb-notif-empty">${sbPieMascotSVG(0, "sleep")}<p>${escapeHtml(t("pai.notifEmpty"))}</p></div>`
+        : `<p class="filter-hint">${t("shared.noNotifications")}</p>`;
       markAllBtn.classList.add("hidden");
       delAllBtn.classList.add("hidden");
       return;
@@ -1631,7 +1634,7 @@ window.sbRecurAdvance = sbRecurAdvance;
 // 每台裝置記住看過的版本（localStorage）。APP_VERSION 變了，就去讀 release-notes.js，
 // 有比上次看過的版本更新的公告才跳一次；跳出來的當下就記成看過，之後不再出現。
 // 只在登入後的頁面跳（登入頁、條款、關於不跳）；別的彈窗開著就等它關掉再跳。
-// 這台裝置從沒記過（第一次用、或這個功能剛上線）只顯示最新那一則。
+// 不管跳過幾版，都只顯示最新那一則（中間版本的公告不合在一起）。
 // ============================================================
 const SB_SEEN_VERSION_KEY = "splitbill-seen-version";
 function sbLoadReleaseNotes(){
@@ -1696,7 +1699,7 @@ window.sbRenderLatestNotes = sbRenderLatestNotes;
 
   window.addEventListener("load", () => setTimeout(async () => {
     const notes = (await sbLoadReleaseNotes()).filter(n => Number(n.version) <= Number(APP_VERSION));
-    const fresh = seen == null ? notes.slice(0, 1) : notes.filter(n => Number(n.version) > Number(seen));
+    const fresh = notes.slice(0, 1).filter(n => seen == null || Number(n.version) > Number(seen));
     if(!fresh.length){ markSeen(); return; }
     let tries = 0;
     (function attempt(){
@@ -2075,9 +2078,34 @@ function sbNagWeight(amount, currency){
 
 // 一整顆派長出臉。level 決定派本身（3 = 出現裂痕、4 = 裂開掉一片），mood 決定表情（跟著台詞走）。
 // 線條類的五官都是「白線＋深色描邊」，淺色、深色模式的派上都看得清楚。
-const SB_PIE_MOODS = ["smile", "sweet", "sideeye", "stare", "smirk", "angry", "furious", "shock", "cry", "sob", "sinister", "dead", "joy"];
-function sbPieMascotSVG(level, mood){
+const SB_PIE_MOODS = ["smile", "sweet", "sideeye", "stare", "smirk", "angry", "furious", "shock", "cry", "sob", "sinister", "dead", "joy", "sleep"];
+// 看過哪些表情（設定頁的派派圖鑑用）。preview＝設定頁、圖鑑自己畫的，不算看過
+function sbPaiMarkSeen(mood){
+  try {
+    const seen = JSON.parse(localStorage.getItem("sb-pai-seen") || "[]");
+    if(!seen.includes(mood)){ seen.push(mood); localStorage.setItem("sb-pai-seen", JSON.stringify(seen)); }
+  } catch(e){}
+}
+// 節日當天派派頭上的小配件（跟著 holiday.js 掛在 <html> 的 data-holiday）
+function sbPieAccessory(){
+  const id = document.documentElement.getAttribute("data-holiday");
+  const g = body => '<g class="sb-pie-acc" aria-hidden="true">' + body + '</g>';
+  switch(id){
+    case "christmas": return g('<path d="M19 12 Q30 -3 46 8 L50 14 Q34 6 19 12 Z" fill="#D8343A"/><rect x="17" y="10" width="31" height="5" rx="2.5" fill="#fff" stroke="#D9D6E8" stroke-width=".6"/><circle cx="51" cy="15" r="3.2" fill="#fff" stroke="#D9D6E8" stroke-width=".6"/>');
+    case "newyear": return g('<path d="M25 11 L32 -6 L39 11 Z" fill="#E3C675"/><path d="M27.5 5 L36.5 5 M29.5 0 L34.5 0" stroke="#8C6A12" stroke-width="1.6"/><circle cx="32" cy="-6" r="2.4" fill="#C0272D"/>');
+    case "lunar": return g('<rect x="25" y="-2" width="14" height="14" rx="1.5" transform="rotate(45 32 5)" fill="#C0272D"/><path d="M29 5 H35 M32 2 V8" stroke="#E0A526" stroke-width="1.6" stroke-linecap="round"/>');
+    case "lantern": return g('<path d="M32 -4 V1" stroke="#7A3A12" stroke-width="1.2"/><ellipse cx="32" cy="6" rx="7" ry="6" fill="#E0442E"/><path d="M28 1.6 H36 M28 10.4 H36" stroke="#E0A526" stroke-width="1.6"/><path d="M32 12 V15" stroke="#E0A526" stroke-width="1.2"/>');
+    case "valentine": return g('<path d="M44 12 C40 7 44 2 48 5 C52 2 56 7 52 12 L48 16 Z" fill="#E4466F"/>');
+    case "dragonboat": return g('<path d="M9 18 Q32 4 55 18" stroke="#D8343A" stroke-width="3.4" fill="none" stroke-linecap="round"/><path d="M53 17 l6 3 M53 17 l5 -2" stroke="#D8343A" stroke-width="2" stroke-linecap="round"/>');
+    case "qixi": return g('<path d="M47 3 l1.8 4 l4.2 .6 l-3 3 l.8 4.2 l-3.8 -2 l-3.8 2 l.8 -4.2 l-3 -3 l4.2 -.6 Z" fill="#F2C94C"/><circle cx="15" cy="8" r="1.4" fill="#F2C94C"/>');
+    case "midautumn": return g('<path d="M22 12 Q18 -2 23 -3 Q27 -2 27 11 Z M37 11 Q37 -2 41 -3 Q46 -2 42 12 Z" fill="#F6F2FA" stroke="#C9C2DA" stroke-width=".8"/><path d="M23.4 9 Q22 2 23.4 0 M40.6 9 Q42 2 40.6 0" stroke="#F4A7C0" stroke-width="1.6" stroke-linecap="round" fill="none"/>');
+    case "halloween": return g('<path d="M12 13 Q32 7 52 13 Q32 15 12 13 Z" fill="#2E2340"/><path d="M22 12 L33 -7 L42 11 Z" fill="#2E2340"/><path d="M23.5 9 Q33 6 41 8.5" stroke="#F08A24" stroke-width="2" fill="none"/>');
+    default: return "";
+  }
+}
+function sbPieMascotSVG(level, mood, preview){
   if(!SB_PIE_MOODS.includes(mood)) mood = ["smile", "smile", "sideeye", "cry", "dead"][Math.min(4, Math.max(0, level))];
+  if(!preview) sbPaiMarkSeen(mood);
   const top = '<path d="M32 33 L9.48 20 A26 26 0 0 1 54.52 20 Z" fill="var(--logo-3)"/>';
   const right = '<path d="M32 33 L54.52 20 A26 26 0 0 1 32 59 Z" fill="var(--logo-2)"/>';
   const leftPath = '<path d="M32 33 L32 59 A26 26 0 0 1 9.48 20 Z" fill="var(--logo-1)"/>';
@@ -2123,12 +2151,31 @@ function sbPieMascotSVG(level, mood){
     sob:      browsSad + eyesSadClosed + streams + ln("M24 44 q2 -2 4 0 t4 0 t4 0 t4 0"),
     sinister: browsAngry + eyesHappy + grin,
     dead:     eyesX + mouthO(4.4, 3.4),
+    sleep:    ln("M20 31.5 Q24 34 28 31.5 M36 31.5 Q40 34 44 31.5") + ln("M28.5 42 Q32 44 35.5 42") + '<g class="sb-pie-zz">' + ln("M46 8 h5 l-5 6 h5 M53 1 h3.4 l-3.4 4 h3.4") + '</g>',
     joy:      eyesHappy + blush + '<path class="sb-pie-white" d="M23.5 38 Q32 49 40.5 38 Z"/>' + '<path class="sb-pie-spark" d="M11 14 l1.4 3 l3 1.4 l-3 1.4 l-1.4 3 l-1.4 -3 l-3 -1.4 l3 -1.4 Z M53 10 l1 2.2 l2.2 1 l-2.2 1 l-1 2.2 l-1 -2.2 l-2.2 -1 l2.2 -1 Z"/>'
   };
   return '<svg class="sb-pie lv-' + level + ' mood-' + mood + '" viewBox="0 0 64 64" aria-hidden="true">' + top + right + left
-    + '<g class="sb-pie-seam">' + seams + '</g>' + crack + faces[mood] + '</svg>';
+    + '<g class="sb-pie-seam">' + seams + '</g>' + crack + '<g class="sb-pie-face">' + faces[mood] + '</g>' + sbPieAccessory() + '</svg>';
 }
 window.sbPieMascotSVG = sbPieMascotSVG;
+// 派派畫成一張獨立的 SVG（不靠網頁的 CSS），給 canvas 畫分享圖用。顏色用淺色主題的三色。
+function sbPieStandaloneSVG(level, mood){
+  const logo = { "--logo-1": "#636AB1", "--logo-2": "#8E95D6", "--logo-3": "#C7CAF0" };
+  try {
+    const cs = getComputedStyle(document.documentElement);
+    Object.keys(logo).forEach(k => { const v = cs.getPropertyValue(k).trim(); if(v && !document.documentElement.matches('[data-theme="dark"]')) logo[k] = v; });
+  } catch(e){}
+  const css = ".sb-pie-seam path{stroke:#fff;stroke-opacity:.3;stroke-width:1;fill:none}.sb-pie-crack{stroke:#26215C;stroke-opacity:.55;stroke-width:1.4;fill:none}"
+    + ".sb-pie-white{fill:#fff;stroke:#26215C;stroke-width:.8}.sb-pie-ink{fill:#26215C}.sb-pie-brow{stroke:#26215C;stroke-width:2;stroke-linecap:round;fill:none}"
+    + ".sb-pie-tear{fill:#7FB2EA}.sb-pie-mouth-o{stroke:#26215C;stroke-width:4.2;stroke-linecap:round;fill:none}.sb-pie-mouth{stroke:#fff;stroke-width:2.4;stroke-linecap:round;fill:none}"
+    + ".sb-pie-ring{stroke:#fff;stroke-width:.9}.sb-pie-teeth{stroke:#26215C;stroke-width:1;fill:none}.sb-pie-vein{stroke:#E24B4A;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;fill:none}"
+    + ".sb-pie-cheek{fill:#E24B4A;opacity:.55}.sb-pie-blush{fill:#F4A7C0;opacity:.75}.sb-pie-spark{fill:#EF9F27}";
+  return sbPieMascotSVG(level, mood, true)
+    .replace(/var\((--logo-[123])\)/g, (m, k) => logo[k])
+    .replace('<svg class="', '<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" class="')
+    .replace('aria-hidden="true">', 'aria-hidden="true" overflow="visible"><style>' + css + '</style>');
+}
+window.sbPieStandaloneSVG = sbPieStandaloneSVG;
 
 // 每一句台詞配的表情（各語言共用）
 const SB_NAG_MOOD = {
@@ -2215,11 +2262,13 @@ function sbNagMoney(amount, currency){
 }
 
 // 標題旁的 logo：派派有話要說時變成帶表情的派派，點了展開那張卡片；沒事時恢復成一般 logo
-function sbNagSetLogo(level, mood, onClick){
+// 派派提醒沒關的話，沒事時也不會變回一般 logo，而是打瞌睡／微笑的派派（paipai.js）
+function sbNagSetLogo(level, mood, onClick, idle){
   const row = document.querySelector(".app-header .title-row");
   const logo = row && row.querySelector(".app-logo");
   if(!row || !logo) return;
   let btn = row.querySelector(".sb-title-pie");
+  if(level == null && sbNagMode() !== "off" && window.sbPai){ window.sbPai.idleLogo(); return; }
   if(level == null){ row.classList.remove("has-pie"); if(btn) btn.remove(); return; }
   if(!btn){
     btn = document.createElement("button");
@@ -2229,10 +2278,16 @@ function sbNagSetLogo(level, mood, onClick){
   }
   const size = Math.round(logo.getBoundingClientRect().width) || 32;
   btn.style.width = btn.style.height = (size + 8) + "px";
-  btn.setAttribute("aria-label", t("nag.logoAria"));
-  btn.title = t("nag.logoAria");
+  const label = t(idle ? "pai.logoAria" : "nag.logoAria");
+  btn.setAttribute("aria-label", label);
+  btn.title = label;
   btn.innerHTML = sbPieMascotSVG(level, mood);
-  btn.onclick = onClick;
+  btn.dataset.mood = mood || "";
+  btn.dataset.level = String(level);
+  delete btn.dataset.baseMood; delete btn.dataset.baseLevel;
+  btn.classList.toggle("is-idle", !!idle);
+  btn.onclick = window.sbPai ? () => window.sbPai.tap(btn, onClick) : onClick;
+  if(window.sbPai) window.sbPai.enableDrag(btn);
   row.classList.add("has-pie");
 }
 
@@ -2437,7 +2492,16 @@ function sbRenderNag(el, opts){
   // 這次開頁已經完整出現過的，頁面重畫（資料更新、即時同步）時維持展開，不要自己縮回去
   const shownThisVisit = window.__sbNagFullShown || (window.__sbNagFullShown = {});
   const surfaceId = opts.surface || "home";
-  if(!opts.expand && !shownThisVisit[surfaceId] && sbNagStore.get(seenKey, null) === today){ clear(); return; }
+  // 今天已經完整看過了：不再整張出現，縮成一行（派派小圖＋一句話），點了再展開
+  if(!opts.expand && !shownThisVisit[surfaceId] && sbNagStore.get(seenKey, null) === today){
+    el.hidden = false;
+    el.innerHTML = '<button type="button" class="sb-nag-slim lv-' + level + (it.iOwe ? "" : " is-creditor") + '" aria-expanded="false">'
+      + sbPieMascotSVG(Math.min(level, 3), mood)
+      + '<span class="sb-nag-slim-text">' + escapeHtml(t(it.iOwe ? "pai.slimOwe" : "pai.slimOwed", vars)) + '</span>'
+      + '<span class="sb-nag-slim-chev" aria-hidden="true">›</span></button>';
+    el.querySelector(".sb-nag-slim").addEventListener("click", () => sbRenderNag(el, Object.assign({}, opts, { expand: true })));
+    return;
+  }
   shownThisVisit[surfaceId] = true;
   sbNagStore.set(seenKey, today);
   if(!it.iOwe) sbNagStore.set("sb-nag-asked-" + it.key, today);
@@ -2508,16 +2572,17 @@ function sbNagRoast(){
 }
 window.sbNagRoast = sbNagRoast;
 
-// 往來明細裡探頭：打開「你欠他錢」的那個人時，派派在旁邊補一句
-function sbNagPeekHTML(creditorId, currency, name){
+// 往來明細裡探頭：打開「你欠他錢」的那個人時派派補一句；打開「他欠你錢」的那個人時也會幫你說話
+Object.assign(SB_NAG_MOOD, { "nag.peekOwed1": "smirk", "nag.peekOwed2": "sideeye", "nag.peekOwed3": "sweet" });
+function sbNagPeekHTML(otherId, currency, name, theyOwe){
   if(sbNagMode() === "off") return "";
-  const it = (window.__sbNagItems || []).find(x => x.iOwe && x.creditor === creditorId && x.currency === currency && x.score >= SB_NAG_LEVELS[0]);
+  const it = (window.__sbNagItems || []).find(x => (theyOwe ? !x.iOwe && x.debtor === otherId : x.iOwe && x.creditor === otherId) && x.currency === currency && x.score >= SB_NAG_LEVELS[0]);
   if(!it) return "";
   const gentle = sbNagMode() === "gentle";
-  const lineKey = sbNagPickKey(["nag.peek"], gentle);
+  const lineKey = sbNagPickKey([theyOwe ? "nag.peekOwed" : "nag.peek"], gentle);
   if(!lineKey) return "";
-  const level = gentle ? Math.min(sbNagLevel(it.score), 2) : sbNagLevel(it.score);
-  return '<div class="sb-pair-peek">' + sbPieMascotSVG(Math.min(level, 2), SB_NAG_MOOD[lineKey])
+  const level = theyOwe ? 0 : gentle ? Math.min(sbNagLevel(it.score), 2) : sbNagLevel(it.score);
+  return '<div class="sb-pair-peek' + (theyOwe ? " is-creditor" : "") + '">' + sbPieMascotSVG(Math.min(level, 2), SB_NAG_MOOD[lineKey])
     + '<p>' + escapeHtml(t(lineKey, { name, amount: sbNagMoney(it.amount, it.currency), days: it.days })) + '</p></div>';
 }
 window.sbNagPeekHTML = sbNagPeekHTML;
@@ -2537,7 +2602,7 @@ window.sbNagPeekHTML = sbNagPeekHTML;
         b.classList.toggle("is-on", on);
         b.setAttribute("aria-checked", String(on));
       });
-      if(icon) icon.innerHTML = sbPieMascotSVG(mode === "normal" ? 2 : 1, mode === "off" ? "stare" : mode === "gentle" ? "sweet" : "smirk");
+      if(icon) icon.innerHTML = sbPieMascotSVG(mode === "normal" ? 2 : 1, mode === "off" ? "stare" : mode === "gentle" ? "sweet" : "smirk", true);
       if(hint) hint.textContent = t(mode === "off" ? "nag.settingHintOff" : mode === "gentle" ? "nag.settingHintGentle" : "nag.settingHint");
     };
     seg.addEventListener("click", e => {
