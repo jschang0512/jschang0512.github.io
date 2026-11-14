@@ -185,7 +185,7 @@ function todayIndex(){
     return (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
   }
 
-  let current = "light";   // the storybook look is light only
+  let current = "light";   // the modern look is light only for now
   document.documentElement.setAttribute("data-theme", current);
 
   function init(){
@@ -778,6 +778,11 @@ async function loadQuakes(){
     mapEl.innerHTML = `<div class="wx-error">地震資料載入失敗，請確認網路連線後重新整理頁面。</div>`;
   }
 }
+// a small line above the title: where and how long (TRIP.eyebrow overrides the key)
+(function heroEyebrow(){
+  const h = document.querySelector("header.hero");
+  if(h && !h.hasAttribute("data-eyebrow")) h.setAttribute("data-eyebrow", (TRIP.eyebrow || TRIP.key) + " · " + days.length + " days");
+})();
 (function heroArt(){
   const art = window.TRIP_ART && window.TRIP_ART[TRIP.key];
   const h1 = document.querySelector("header.hero h1.title");
@@ -1036,6 +1041,15 @@ function buildDayMap(idx){
   map.fitBounds(latlngs, {padding:[24,24]});
 
   dayMaps[idx] = map;
+  // the layout changes size between phone, tablet and computer: redraw and refit when the box does
+  if(window.ResizeObserver){
+    let w = el.clientWidth, h = el.clientHeight;
+    new ResizeObserver(()=>{
+      if(!el.clientWidth || (el.clientWidth === w && el.clientHeight === h)) return;
+      w = el.clientWidth; h = el.clientHeight;
+      map.invalidateSize(); map.fitBounds(latlngs, {padding:[24,24]});
+    }).observe(el);
+  }
 }
 const EXTRA_PAGES = ["contacts","flights","driving","weather","quake","packing"].concat(TRIP.food ? ["food"] : []);
 const EXTRA_PAGE_META = {

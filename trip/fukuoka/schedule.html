@@ -6,7 +6,7 @@
 (function(){
   try{
     var t = localStorage.getItem("kyushu-theme");
-    t = "light";   // storybook theme: light only
+    t = "light";   // modern theme: light only
     document.documentElement.setAttribute("data-theme", t);
   }catch(e){}
 })();
@@ -21,8 +21,8 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <link rel="stylesheet" href="../engine/trip.css">
 <link rel="stylesheet" href="theme.css">
-<link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../engine/storybook.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../engine/modern.css">
 </head>
 <body>
 

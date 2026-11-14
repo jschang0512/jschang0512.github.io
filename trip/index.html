@@ -10,115 +10,110 @@
 <title>行程總覽</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  /* 日系繪本風 — same palette and frames as the trip pages (engine/storybook.css) */
+  /* modern — same palette, type and cards as the trip pages (engine/modern.css) */
   :root {
     color-scheme: light;
-    --paper: #FFFCF6; --card: #FFFFFF; --ink: #3E3A39; --ink-soft: #66605D; --hair: #E6DCCB;
-    --coral: #F2A497; --yellow: #F6D27A; --mizu: #A8D3E6; --green: #B9DAA5; --wash: #FBF3E6;
-    --frame: 3px solid var(--ink); --r: 24px;
-    --font: "Huninn", "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    --paper: #F5F6F8; --card: #FFFFFF; --ink: #15181D; --ink-soft: #5E6570; --ink-faint: #8A919C;
+    --line: #E3E6EB; --hair: #EDEFF2; --fill: #F0F2F5;
+    --shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 2px 10px rgba(16, 24, 40, .04);
+    --shadow-up: 0 2px 4px rgba(16, 24, 40, .05), 0 12px 32px rgba(16, 24, 40, .09);
+    --font: "Inter", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
+    --ease: cubic-bezier(.16, 1, .3, 1);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { background: var(--paper); overflow-x: clip; }
   body { color: var(--ink); font-family: var(--font); line-height: 1.6; -webkit-font-smoothing: antialiased; }
-  :focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
-  ::selection { background: var(--yellow); }
+  :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+  ::selection { background: #DCE3F0; }
 
-  header { max-width: 640px; margin: 0 auto; padding: 28px 16px 8px; text-align: center; }
-  .hero-art { width: 150px; margin: 0 auto 6px; }
-  .hero-art svg { display: block; width: 100%; height: auto; overflow: visible; }
-  h1 { font-weight: 400; font-size: clamp(34px, 9vw, 46px); line-height: 1.15; letter-spacing: .02em; }
+  header { max-width: 640px; margin: 0 auto; padding: 40px 16px 4px; }
+  .eyebrow { color: var(--ink-faint); font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+  h1 { margin-top: 4px; font-weight: 700; font-size: clamp(30px, 8vw, 42px); line-height: 1.15; letter-spacing: -.01em; }
   .lead { margin-top: 6px; color: var(--ink-soft); font-size: 15px; }
 
-  main { max-width: 640px; margin: 0 auto; padding: 16px 16px 40px; }
-  /* section headings: plain text, same as the trip pages */
-  .group-label { margin: 22px 0 10px; font-size: 15px; letter-spacing: .02em; }
+  main { max-width: 640px; margin: 0 auto; padding: 8px 16px 40px; }
+  .group-label { margin: 26px 0 10px; color: var(--ink-soft); font-size: 12.5px; font-weight: 600; letter-spacing: .06em; }
   .group-label[hidden] { display: none; }
-  .trips { display: grid; gap: 16px; }
+  .trips { display: grid; gap: 14px; }
 
+  /* each card: a cover with the destination set large in the trip's colour, then the facts */
   .trip-card {
+    --c: #33518A;
     display: block; color: var(--ink); text-decoration: none; background: var(--card);
-    border: var(--frame); border-radius: var(--r); overflow: hidden;
-    transition: transform .2s ease-out, background-color .15s ease-out;
+    border: 1px solid var(--line); border-radius: 20px; overflow: hidden; box-shadow: var(--shadow);
+    transition: transform .3s var(--ease), box-shadow .3s var(--ease);
   }
-  .trip-card:hover { transform: translateY(-3px); }
-  .trip-card:active { transform: translateY(1px); }
-  .trip-art { border-bottom: var(--frame); background: var(--paper); }
-  .trip-art svg { display: block; width: 100%; height: auto; }
+  .trip-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-up); }
+  .trip-card:active { transform: translateY(0); }
+  .trip-cover {
+    position: relative; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px;
+    min-height: 118px; padding: 16px 18px; overflow: hidden;
+    background: color-mix(in srgb, var(--c) 9%, #FFFFFF); border-bottom: 1px solid color-mix(in srgb, var(--c) 14%, #FFFFFF);
+  }
+  .trip-place { color: var(--c); font-size: clamp(34px, 11vw, 52px); font-weight: 700; line-height: .95; letter-spacing: -.03em; text-transform: uppercase; overflow-wrap: anywhere; min-width: 0; }
+  .trip-len { flex: none; text-align: right; color: var(--c); line-height: 1.1; }
+  .trip-len b { display: block; font-size: 28px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .trip-len span { font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; opacity: .8; }
   .trip-body { padding: 14px 18px 16px; }
-  .trip-tags { display: flex; flex-wrap: wrap; gap: 6px; }
-  .tag { display: inline-block; padding: 1px 10px; border: 2px solid var(--ink); border-radius: 999px; font-size: 12.5px; background: var(--wash); }
-  .tag.status { background: var(--coral); }
-  .tag.draft { background: var(--yellow); }
-  .trip-title { margin-top: 8px; font-size: 26px; line-height: 1.25; }
-  .trip-dates { margin-top: 2px; font-size: 15px; }
-  .trip-route { margin-top: 2px; color: var(--ink-soft); font-size: 14px; }
-  /* the whole card is the link: the call to action is a quiet line, not another pill */
-  .trip-cta { display: block; margin-top: 10px; padding-top: 10px; border-top: 2px dashed var(--hair); font-size: 15px; text-align: right; }
-  .trip-card:hover .trip-cta { text-decoration: underline; text-decoration-color: var(--coral); text-decoration-thickness: 3px; text-underline-offset: 4px; }
-  .trip-card.past .tag.status { background: var(--wash); }
+  .trip-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
   .trip-tags:empty { display: none; }
+  .tag { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 999px; font-size: 12.5px; font-weight: 600; background: var(--fill); color: var(--ink-soft); }
+  .tag.status { background: var(--c); color: #FFFFFF; }
+  .tag.draft { background: #FFF4DC; color: #8A5A00; }
+  .trip-card.past .tag.status { background: var(--fill); color: var(--ink-soft); }
+  .trip-title { font-size: 21px; font-weight: 700; line-height: 1.3; letter-spacing: -.01em; }
+  .trip-dates { margin-top: 2px; font-size: 14.5px; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .trip-route { margin-top: 2px; color: var(--ink-soft); font-size: 14px; }
+  /* the whole card is the link: the call to action is a quiet line */
+  .trip-cta { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--hair); color: var(--c); font-size: 14px; font-weight: 600; }
+  .trip-cta .arrow { display: inline-block; transition: transform .3s var(--ease); }
+  .trip-card:hover .trip-cta .arrow { transform: translateX(4px); }
+  .trip-card.past .trip-cover { filter: saturate(.55); }
 
-  /* phone: the trips come first, the drawings stay but get smaller */
   @media (max-width: 600px) {
-    header { padding: 18px 16px 0; }
-    .hero-art { width: 96px; margin-bottom: 2px; }
-    h1 { font-size: 28px; }
-    .lead { margin-top: 2px; font-size: 14px; }
-    main { padding-top: 4px; }
-    .group-label { margin-top: 16px; }
-    /* full width, a slightly shorter strip: only a little sky is trimmed, the ground and sea stay */
-    .trip-art svg { height: 158px; }
-    .trip-body { padding: 12px 16px 12px; }
-    .trip-title { font-size: 22px; margin-top: 6px; }
-    .trip-tags:empty + .trip-title { margin-top: 0; }
+    header { padding: 28px 16px 0; }
+    .trip-cover { min-height: 104px; padding: 14px 16px; }
+    .trip-body { padding: 12px 16px 14px; }
+    .trip-title { font-size: 19px; }
   }
 
-  footer { text-align: center; padding: 8px 16px 32px; color: var(--ink-soft); font-size: 13px; }
+  /* computers: a wider page, trips two across */
+  @media (min-width: 900px) {
+    header, main { max-width: 1040px; }
+    header { padding: 56px 24px 4px; }
+    main { padding: 8px 24px 56px; }
+    .trips { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
+    .trip-cover { min-height: 140px; }
+    /* a trip alone in its group spans the row: cover on the left, facts on the right */
+    .trips > .trip-card:only-child { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
+    .trips > .trip-card:only-child .trip-cover { min-height: 0; border-bottom: 0; border-right: 1px solid color-mix(in srgb, var(--c) 14%, #FFFFFF); padding: 22px 24px; }
+    .trips > .trip-card:only-child .trip-body { display: flex; flex-direction: column; padding: 22px 26px; }
+    .trips > .trip-card:only-child .trip-title { font-size: 23px; }
+    .trips > .trip-card:only-child .trip-cta { margin-top: auto; }
+  }
 
-  /* the header art floats a little */
-  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-  @keyframes drift { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(8px); } }
-  .hero-art .plane { animation: float 3.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
-  .hero-art .cloud { animation: drift 8s ease-in-out infinite; }
-  .trip-art .sb-float { animation: float 4.5s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
-  .trip-art .sb-bob { animation: float 3.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
-  .trip-art .sb-drift { animation: drift 9s ease-in-out infinite; }
+  footer { padding: 8px 16px 32px; color: var(--ink-faint); font-size: 13px; text-align: center; }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
-    .trip-card:hover, .trip-card:active { transform: none; }
+    .trip-card:hover, .trip-card:active, .trip-card:hover .trip-cta .arrow { transform: none; }
   }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="hero-art" aria-hidden="true">
-    <svg viewBox="0 0 150 110" xmlns="http://www.w3.org/2000/svg">
-      <g class="cloud"><path d="M8 34 C8 26 16 23 22 26 C25 19 37 18 40 26 C47 24 52 29 50 34 Z" fill="#FFFFFF" stroke="#3E3A39" stroke-width="3" stroke-linejoin="round"/></g>
-      <g class="plane">
-        <path d="M86 22 L132 14 Q142 13 140 20 L94 34 Z" fill="#A8D3E6" stroke="#3E3A39" stroke-width="3" stroke-linejoin="round"/>
-        <path d="M108 20 L100 6 L110 6 L122 18 Z M98 30 L92 40 L100 40 L110 28 Z" fill="#F2A497" stroke="#3E3A39" stroke-width="3" stroke-linejoin="round"/>
-      </g>
-      <rect x="40" y="52" width="66" height="50" rx="12" fill="#F6D27A" stroke="#3E3A39" stroke-width="3"/>
-      <path d="M60 52 V44 Q60 38 66 38 H80 Q86 38 86 44 V52" fill="none" stroke="#3E3A39" stroke-width="3" stroke-linecap="round"/>
-      <path d="M40 74 H106" stroke="#3E3A39" stroke-width="3"/>
-      <rect x="62" y="68" width="22" height="12" rx="4" fill="#F2A497" stroke="#3E3A39" stroke-width="3"/>
-      <circle cx="52" cy="104" r="4" fill="#3E3A39"/><circle cx="94" cy="104" r="4" fill="#3E3A39"/>
-    </svg>
-  </div>
+  <div class="eyebrow">Trips</div>
   <h1>行程總覽</h1>
   <p class="lead">選一趟旅行，看每天的安排</p>
 </header>
 
 <main>
-  <!-- data-start / data-end drive the order and the status tag; data-art picks the illustration (engine/illustrations.js) -->
+  <!-- data-start / data-end drive the order and the status tag; data-place is the cover word, --c the trip's colour (its theme.css --accent-text) -->
   <div class="group-label" id="upcomingLabel">即將出發</div>
   <div class="trips" id="upcoming">
-    <a class="trip-card" href="niigata/schedule.html" data-start="2027-07-30" data-end="2027-08-09" data-art="joetsu">
-      <div class="trip-art" aria-hidden="true"></div>
+    <a class="trip-card" href="niigata/schedule.html" data-start="2027-07-30" data-end="2027-08-09" data-place="Joetsu" style="--c:#33518A">
       <div class="trip-body">
         <div class="trip-tags"><span class="tag draft">尚未定案</span></div>
         <div class="trip-title">上越行程表（暫）</div>
@@ -131,8 +126,7 @@
 
   <div class="group-label" id="pastLabel">已結束</div>
   <div class="trips" id="past">
-    <a class="trip-card" href="fukuoka/schedule.html" data-start="2026-08-18" data-end="2026-08-25" data-art="kyushu">
-      <div class="trip-art" aria-hidden="true"></div>
+    <a class="trip-card" href="fukuoka/schedule.html" data-start="2026-08-18" data-end="2026-08-25" data-place="Kyushu" style="--c:#C2445F">
       <div class="trip-body">
         <div class="trip-tags"></div>
         <div class="trip-title">九州行程表</div>
@@ -146,9 +140,8 @@
 
 <footer>旅行紀錄</footer>
 
-<script src="engine/illustrations.js"></script>
 <script>
-// Each card gets its trip's illustration; trips are sorted by date, finished ones under 「已結束」
+// Each card gets a cover (place + number of days); trips are sorted by date, finished ones under 「已結束」
 (function trips(){
   const DAY = 86400000;
   const now = new Date(); now.setHours(0, 0, 0, 0);
@@ -156,25 +149,26 @@
   const up = document.getElementById("upcoming"), past = document.getElementById("past");
   const cards = [...document.querySelectorAll(".trip-card[data-start]")];
   cards.forEach((c) => {
-    const art = window.TRIP_ART && window.TRIP_ART[c.dataset.art];
-    if (art) {
-      c.querySelector(".trip-art").innerHTML = art;
-      c.querySelector(".trip-art svg").setAttribute("preserveAspectRatio", "xMidYMax slice");
-    }
-    else c.querySelector(".trip-art").remove();
     const start = d(c.dataset.start), end = d(c.dataset.end);
+    const len = Math.round((end - start) / DAY) + 1;
+    const cover = document.createElement("div");
+    cover.className = "trip-cover";
+    cover.setAttribute("aria-hidden", "true");
+    cover.innerHTML = `<div class="trip-place"></div><div class="trip-len"><b>${len}</b><span>days</span></div>`;
+    cover.querySelector(".trip-place").textContent = c.dataset.place || "";
+    c.prepend(cover);
     const tag = document.createElement("span");
     tag.className = "tag status";
     const cta = c.querySelector(".trip-cta");
     if (end < now) {
       c.classList.add("past");
       tag.textContent = "已結束";
-      cta.textContent = "回顧行程 →";
+      cta.innerHTML = '回顧行程 <span class="arrow">→</span>';
     } else {
       c.classList.remove("past");
       const days = Math.round((start - now) / DAY);
       tag.textContent = start <= now ? "旅行中" : days === 1 ? "明天出發" : `${days} 天後出發`;
-      cta.textContent = "查看行程 →";
+      cta.innerHTML = '查看行程 <span class="arrow">→</span>';
     }
     c.querySelector(".trip-tags").prepend(tag);
   });
