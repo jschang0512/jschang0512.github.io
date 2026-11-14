@@ -30,16 +30,16 @@
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=599a4d1bd5">
-<link rel="stylesheet" href="shared.css?v=16c860c3cf">
+<link rel="stylesheet" href="shared.css?v=2ffc0fcdce">
 <script src="holiday.js?v=2816c2cc17"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
-<script src="i18n.js?v=1d18b62e8a"></script>
+<script src="i18n.js?v=3a91543fef"></script>
 <script src="currencies.js?v=7c67460b0e"></script>
 <script src="motion.js?v=c960fb49b3"></script>
-<script src="version.js?v=cd1c6b1a7a"></script>
+<script src="version.js?v=e4f30cbca7"></script>
 <script src="notif-text.js?v=6e6a6d9174"></script>
-<script src="shared-ui.js?v=69538a60a6"></script>
-<script src="paipai.js?v=6147044892"></script>
+<script src="shared-ui.js?v=06020b1c45"></script>
+<script src="paipai.js?v=d376b3ab85"></script>
 <script src="theme.js?v=01d7c0a8c1" defer></script>
 <script src="app-banner.js?v=c400decf5d" defer></script>
 <script>
@@ -1262,19 +1262,23 @@ renderNavLinks();
       window.memberRows = memberRows;
       initQuickExpenseModal();
 
-      // 同時並行讀取餘額、支出與還款紀錄（大幅縮短載入時間）
-      const [allTime, expRes, repRes] = await Promise.all([
-        loadBalances(null),
-        sb.from("expenses").select("*").eq("group_id", myMember.group_id).order("created_at", { ascending:false }),
-        sb.from("repayments").select("*").eq("group_id", myMember.group_id).order("created_at", { ascending:false })
-      ]);
-
-      if(allTime){
-        renderMyAmtList(allTime);
-        balanceChartData = allTime;
-        renderBalanceCurrencyMenu(activeCurrencyCodes());
-        renderBalanceChart();
-      }
+      // 同時並行讀取餘額、支出與還款紀錄。餘額最小、最先回來，先畫出來，
+      // 不用等整份支出紀錄下載完；不靠支出的活動、留言板、固定支出也一起先發出去。
+      const balReq = loadBalances(null).then(allTime => {
+        if(allTime){
+          renderMyAmtList(allTime);
+          balanceChartData = allTime;
+          renderBalanceCurrencyMenu(activeCurrencyCodes());
+          renderBalanceChart();
+        }
+      });
+      const expReq = sb.from("expenses").select("*").eq("group_id", myMember.group_id).order("created_at", { ascending:false });
+      repaymentsReq = sb.from("repayments").select("*").eq("group_id", myMember.group_id).order("created_at", { ascending:false });
+      loadOpenEvents();
+      loadFeedback().catch(e => console.error("loadFeedback error:", e));
+      // 派派的大小事要用到固定支出和支出，兩個都讀完再講
+      const recurringReq = renderRecurringOverview().catch(e => console.error("renderRecurringOverview error:", e));
+      const [, expRes, repRes] = await Promise.all([balReq, expReq, repaymentsReq]);
 
       window.cachedExpenses = expRes.data || [];
       window.cachedRepayments = repRes.data || [];
@@ -1292,10 +1296,7 @@ renderNavLinks();
       renderEventsEntry();
       sbEnablePullToRefresh(refreshSummary);
 
-      // 非核心功能在背景非同步執行
-      loadFeedback().catch(e => console.error("loadFeedback error:", e));
-      // 派派的大小事要用到固定支出，等它讀完再講
-      renderRecurringOverview().catch(e => console.error("renderRecurringOverview error:", e)).finally(() => renderPaiMoments());
+      recurringReq.finally(() => renderPaiMoments());
       subscribeRealtime();
       sbRetirePush(sb); // 只用站內通知，取消這台裝置以前登記的推播
       // 背景偵測城市/國家變化
@@ -1329,9 +1330,10 @@ renderNavLinks();
 
   // 下拉重新整理：跟登入時載入的是同一批資料
   async function refreshSummary(){
+    repaymentsReq = sb.from("repayments").select("*").eq("group_id", myMember.group_id).order("created_at", { ascending:false });
     const [expRes, repRes] = await Promise.all([
       sb.from("expenses").select("*").eq("group_id", myMember.group_id).order("created_at", { ascending:false }),
-      sb.from("repayments").select("*").eq("group_id", myMember.group_id).order("created_at", { ascending:false })
+      repaymentsReq
     ]);
     if(expRes.data){ window.cachedExpenses = expRes.data; window.allGroupExpenses = expRes.data; }
     if(repRes.data){ window.cachedRepayments = repRes.data; window.allGroupRepayments = repRes.data; }
@@ -1388,6 +1390,8 @@ renderNavLinks();
   // 進活動頁就清掉。活動資料表讀不到時入口保持隱藏。
   // 首頁的「活動」捷徑和「今天」卡片都要進行中的活動，同一次載入共用一個請求
   let openEventsReq = null, openEventsAt = 0;
+  // 首頁這次載入的整份還款紀錄（「今天」卡片的待確認還款從這裡挑，不用再查一次）
+  let repaymentsReq = null;
   function loadOpenEvents(){
     if(!openEventsReq || Date.now() - openEventsAt > 3000){
       openEventsAt = Date.now();
@@ -1517,9 +1521,9 @@ renderNavLinks();
     }catch(e){}
     // 別人替我記的還款，等我確認收到（資料庫還沒有這個欄位時查不到，略過）
     try{
-      const { data: pend, error: pendErr } = await sb.from("repayments").select("id,from_member,amount,currency,payment_date")
-        .eq("group_id", myMember.group_id).eq("to_member", myMember.id).eq("confirm_status", "pending")
-        .order("payment_date", { ascending: false }).limit(5);
+      const { data: allRep, error: pendErr } = await (repaymentsReq || sb.from("repayments").select("*").eq("group_id", myMember.group_id));
+      const pend = (allRep || []).filter(r => r.to_member === myMember.id && r.confirm_status === "pending")
+        .sort((a, b) => String(b.payment_date || "").localeCompare(String(a.payment_date || ""))).slice(0, 5);
       // 直接在這裡按「收到了／還沒收到」；點文字才跳到那筆還款
       if(!pendErr) (pend || []).slice().reverse().forEach(r => {
         rows.unshift(`<li class="sb-today-rc" data-rid="${escapeHtml(r.id)}"><div class="sb-today-row is-urgent">

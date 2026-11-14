@@ -132,13 +132,13 @@
       btn.dataset.baseMood = btn.dataset.mood || "smile";
       btn.dataset.baseLevel = btn.dataset.level || "0";
     }
-    btn.innerHTML = sbPieMascotSVG(level || 0, mood);
+    btn.innerHTML = sbPieMascotSVG(level || 0, mood, false, { weather: true });
     clearTimeout(moodTimer);
     moodTimer = setTimeout(() => restoreMood(btn), hold || 4500);
   }
   function restoreMood(btn){
     if(!btn || btn.dataset.baseMood == null) return;
-    btn.innerHTML = sbPieMascotSVG(Number(btn.dataset.baseLevel) || 0, btn.dataset.baseMood, true);
+    btn.innerHTML = sbPieMascotSVG(Number(btn.dataset.baseLevel) || 0, btn.dataset.baseMood, true, { weather: true });
     delete btn.dataset.baseMood; delete btn.dataset.baseLevel;
   }
 
@@ -266,6 +266,9 @@
     // 6. 節日當天
     const hol = document.documentElement.getAttribute("data-holiday");
     if(hol && has("pai.holiday." + hol) && once("hol-" + hol + "-" + T)) list.push({ key: "hol-" + hol + "-" + T, mood: "sweet", text: t("pai.holiday." + hol) });
+    // 6.5 天氣：下雨、很熱、很冷，一天講一次
+    const wx = typeof sbPaiWeatherKind === "function" ? sbPaiWeatherKind() : "";
+    if(wx && has("pai.weather." + wx) && once("wx-" + T)) list.push({ key: "wx-" + T, mood: wx === "hot" ? "shock" : wx === "cold" ? "cry" : "stare", text: t("pai.weather." + wx) });
     // 7. 群組 7 天以上沒有新帳（三天問一次）
     const last = (ctx.expenses || []).reduce((m, e) => (e.expense_date || "") > m ? e.expense_date : m, "");
     if(last && dayNum(T) - dayNum(last) >= 7 && once("idle", 3)) list.push({ key: "idle", mood: "stare", text: t("pai.noRecord", { days: dayNum(T) - dayNum(last) }) });
@@ -316,9 +319,57 @@
   addEventListener("offline", () => { if(mode() === "off") return; idleLogo(); say(t("pai.offline"), { mood: "cry" }); });
   addEventListener("online", () => { if(mode() === "off") return; say(t("pai.online"), { mood: "joy" }); setTimeout(idleLogo, 4600); });
 
+  // ---------- 天氣：沿用首頁定位存下的經緯度，一小時查一次 Open-Meteo ----------
+  // 下雨撐傘、30 度以上流汗、12 度以下或下雪戴毛帽（配件畫在 shared-ui.js 的 sbPieWeatherSVG）
+  const WX_RAIN = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82, 95, 96, 99];
+  const WX_SNOW = [71, 73, 75, 77, 85, 86];
+  async function loadWeather(){
+    const old = store.get("sb-pai-weather", null);
+    if(old && Date.now() - old.ts < 3600 * 1000) return;
+    const loc = store.get("sb_location_weather_cache", null);
+    const info = loc && loc.info;
+    if(!info || info.lat == null || info.lon == null || !navigator.onLine) return;
+    try {
+      const ctrl = new AbortController();
+      setTimeout(() => ctrl.abort(), 5000);
+      const lat = Number(info.lat).toFixed(2), lon = Number(info.lon).toFixed(2);
+      const r = await fetch("https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon + "&current=temperature_2m,weather_code&timezone=auto", { signal: ctrl.signal });
+      if(!r.ok) return;
+      const d = await r.json();
+      const c = d && d.current;
+      if(!c || c.temperature_2m == null) return;
+      const code = Number(c.weather_code), temp = Number(c.temperature_2m);
+      const kind = WX_RAIN.includes(code) ? "rain" : WX_SNOW.includes(code) || temp <= 12 ? "cold" : temp >= 30 ? "hot" : "";
+      store.set("sb-pai-weather", { ts: Date.now(), kind, temp: Math.round(temp), code });
+      if(kind !== ((old && Date.now() - old.ts < 3 * 3600 * 1000) ? old.kind : "")) refreshHeader();
+    } catch(e){}
+  }
+  // 標題旁的派派重畫一次（沒在講話時）
+  function refreshHeader(){
+    const btn = headerPie();
+    if(!btn || btn.dataset.baseMood != null) return;
+    btn.innerHTML = sbPieMascotSVG(Number(btn.dataset.level) || 0, btn.dataset.mood || "smile", true, { weather: true });
+  }
+
+  // ---------- 衣櫃：看過的表情夠了就解鎖新衣服，解鎖時講一聲 ----------
+  function checkUnlock(){
+    if(typeof SB_PIE_OUTFITS === "undefined") return;
+    const n = sbPaiSeenCount();
+    const open = SB_PIE_OUTFITS.filter(o => n >= o.need);
+    const known = store.get("sb-pai-unlocked", null);
+    if(known == null){ store.set("sb-pai-unlocked", open.length); return; } // 第一次：不補講以前的
+    if(open.length <= known) return;
+    store.set("sb-pai-unlocked", open.length);
+    const o = open[open.length - 1];
+    say(t("pai.outfitUnlocked", { item: t("pai.outfit." + o.id) }), { mood: "joy", hold: 6000,
+      action: document.getElementById("paiDex") ? null : { label: t("pai.outfitGo"), fn: () => { location.href = "settings.html#paiDex"; } } });
+  }
+
   function boot(){
     if(mode() === "off") return;
     if(!headerPie()) idleLogo();
+    loadWeather();
+    setTimeout(checkUnlock, 2500);
     watchLoading();
     // 活動頁沒有活動時，空白頁的圖示換成派派
     const ee = document.querySelector("#eventEmpty > .sb-ico");
@@ -344,10 +395,42 @@
         + '<span class="sbs-hint">' + escapeHtml(t("pai.dexHint", { n: got, left: all.length - got })) + '</span></span>'
         + '<span class="sbs-ctl"><span class="sbs-val">' + got + ' / ' + all.length + '</span></span></summary>'
         + '<ul class="sb-pai-dex-grid">' + all.map(m => seen.includes(m)
-          ? '<li title="' + escapeHtml(t("pai.mood." + m)) + '">' + sbPieMascotSVG(m === "dead" ? 4 : m === "sob" ? 3 : 0, m, true) + '<span>' + escapeHtml(t("pai.mood." + m)) + '</span></li>'
-          : '<li class="is-locked"><span class="sb-pai-dex-q" aria-hidden="true">?</span><span>' + escapeHtml(t("pai.dexLocked")) + '</span></li>').join("") + '</ul>';
+          ? '<li title="' + escapeHtml(t("pai.mood." + m)) + '">' + sbPieMascotSVG(m === "dead" ? 4 : m === "sob" ? 3 : 0, m, true, { outfit: "none" }) + '<span>' + escapeHtml(t("pai.mood." + m)) + '</span></li>'
+          : '<li class="is-locked"><span class="sb-pai-dex-q" aria-hidden="true">?</span><span>' + escapeHtml(t("pai.dexLocked")) + '</span></li>').join("") + '</ul>'
+        + wardrobeHTML(got);
       wrap.open = open;
     };
+    // 衣櫃：「不穿」＋五件衣服，沒解鎖的顯示還差幾種表情
+    function wardrobeHTML(got){
+      const cur = sbPaiOutfit() || "none";
+      const items = [{ id: "none", need: 0 }].concat(SB_PIE_OUTFITS);
+      return '<p class="sb-pai-wd-title">' + escapeHtml(t("pai.wardrobe")) + '</p><div class="sb-pai-wd" role="radiogroup" aria-label="' + escapeHtml(t("pai.wardrobe")) + '">'
+        + items.map(o => {
+          const locked = got < o.need;
+          const label = t(o.id === "none" ? "pai.outfitNone" : "pai.outfit." + o.id);
+          return '<button type="button" role="radio" class="sb-pai-wd-item' + (locked ? " is-locked" : "") + '" data-outfit="' + o.id + '" aria-checked="' + (cur === o.id) + '"' + (locked ? ' disabled' : '') + '>'
+            + (locked ? '<span class="sb-pai-dex-q" aria-hidden="true">?</span>' : sbPieMascotSVG(0, "smile", true, { outfit: o.id }))
+            + '<span>' + escapeHtml(locked ? t("pai.outfitNeed", { n: o.need - got }) : label) + '</span></button>';
+        }).join("") + '</div>';
+    }
+    wrap.addEventListener("click", e => {
+      const b = e.target.closest(".sb-pai-wd-item");
+      if(!b || b.disabled) return;
+      const id = b.dataset.outfit;
+      try { if(id === "none") localStorage.removeItem("sb-pai-outfit"); else localStorage.setItem("sb-pai-outfit", id); } catch(err){}
+      render();
+      idleLogo();
+      say(t(id === "none" ? "pai.outfitOff" : "pai.outfitOn", { item: t("pai.outfit." + id) }), { mood: id === "none" ? "smile" : "joy" });
+    });
+    // 從泡泡的「去換」過來：切到偏好設定分頁、打開圖鑑
+    if(location.hash === "#paiDex"){
+      wrap.open = true;
+      setTimeout(() => {
+        const tab = document.querySelector('[data-settings-tab="prefs"]');
+        if(tab) tab.click();
+        wrap.scrollIntoView({ block: "center" });
+      }, 300);
+    }
     render();
     document.addEventListener("splitbill-lang-changed", render);
     wrap.addEventListener("toggle", () => { if(wrap.open) render(); });
@@ -386,6 +469,9 @@
 
   // ---------- 震動：App 和支援的 Android 瀏覽器才會震，減少動態時不震 ----------
   function buzz(pattern){
+    // 使用者還沒點過頁面時瀏覽器不准震動（還會在主控台報錯），直接略過
+    const ua = navigator.userActivation;
+    if(ua && !ua.hasBeenActive) return;
     try { if(!reduced() && navigator.vibrate) navigator.vibrate(pattern); } catch(e){}
   }
 

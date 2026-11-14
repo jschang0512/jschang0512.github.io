@@ -165,3 +165,15 @@ html body.rc-page{ margin:0; min-height:100dvh; background:var(--rc-night-2); co
 .rc-pai .sb-pie{ flex:none; width:36px; height:36px; }
 .is-light-slide .rc-pai, .rc-slide.is-cream .rc-pai, .rc-slide.is-mist .rc-pai{ background:rgba(35,37,79,.07); }
 .rc-final-title + .rc-pai{ margin:6px 0 14px; }
+
+/* 記帳時段：24 根細長條，只標 0／6／12／18 點 */
+.rc-months.is-hours{ grid-template-columns:repeat(24,minmax(0,1fr)); gap:3px; }
+.rc-months.is-hours .rc-month i{ border-radius:3px 3px 1px 1px; }
+.rc-months.is-hours .rc-month span{ font-size:11px; text-align:left; white-space:nowrap; }
+/* 年度稱號：戴皇冠的派派 */
+.rc-award{ margin:0 0 6px; }
+.rc-award-pie{ display:inline-block; width:96px; height:96px; }
+.rc-award-pie .sb-pie{ width:100%; height:100%; overflow:visible; }
+.rc-slide.is-on .rc-award-pie{ animation:rcAwardPop .7s var(--rc-ease) .25s both; }
+@keyframes rcAwardPop{ from{ transform:scale(.6) rotate(-8deg); opacity:0 } to{ transform:none; opacity:1 } }
+@media (prefers-reduced-motion: reduce){ .rc-slide.is-on .rc-award-pie{ animation:none; } }

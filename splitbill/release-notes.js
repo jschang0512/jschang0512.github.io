@@ -8,6 +8,41 @@
 // ============================================================
 window.SB_RELEASE_NOTES = [
   {
+    version: "995",
+    date: "2026-11-15",
+    "zh-Hant": [
+      "派派有衣櫃了：看過越多表情，解鎖越多衣服（蝴蝶結、墨鏡、圍巾、貝雷帽、皇冠），在設定的派派圖鑑裡換",
+      "派派會看天氣：下雨撐傘、太熱流汗、很冷戴毛帽，還會提醒你帶傘",
+      "年度回顧多了「最常記帳的時段」、「跟誰一起花最多」，最後還有派派頒給你的年度稱號，分享圖上也看得到"
+    ],
+    "ja": [
+      "パイパイにクローゼットができました。表情を見るほど服が増えます（リボン、サングラス、マフラー、ベレー帽、王冠）。設定のパイパイ図鑑で着替えられます",
+      "パイパイが天気に合わせて変わります。雨なら傘、暑いと汗、寒いとニット帽。傘のリマインドも",
+      "年間まとめに「いちばん記録している時間」「いちばん一緒にお金を使った人」と、パイパイからの今年の称号を追加。共有画像にも入ります"
+    ],
+    "en": [
+      "Pie has a wardrobe: see more of her faces to unlock outfits (bow, shades, scarf, beret, crown). Change them in the Pie collection in Settings",
+      "Pie follows the weather: an umbrella when it rains, sweat when it is hot, a beanie when it is cold, plus a reminder to bring an umbrella",
+      "Your year recap now shows when you log the most, who you spent the most with, and an award from Pie, which also appears on the share image"
+    ]
+  },
+  {
+    version: "994",
+    date: "2026-11-15",
+    "zh-Hant": [
+      "首頁開得更快：欠款金額先出來，不用等全部的帳讀完；少查一次資料",
+      "年度回顧分享圖上的派派墊了一個淺色圓底，在深色背景上看得更清楚"
+    ],
+    "ja": [
+      "ホームの表示が速くなりました。すべての記録を読み込む前に残高を先に表示します",
+      "年間まとめの共有画像で、パイパイの後ろに明るい丸を敷いて見やすくしました"
+    ],
+    "en": [
+      "Home opens faster: your balances show before all expenses finish loading, with one fewer request",
+      "Pie on the year recap share image now sits on a light circle so she stands out on the dark background"
+    ]
+  },
+  {
     version: "993",
     date: "2026-11-14",
     "zh-Hant": [

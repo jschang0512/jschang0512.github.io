@@ -2086,8 +2086,63 @@ function sbPaiMarkSeen(mood){
     if(!seen.includes(mood)){ seen.push(mood); localStorage.setItem("sb-pai-seen", JSON.stringify(seen)); }
   } catch(e){}
 }
+// 派派的衣櫃：看過幾種表情就解鎖一件，選了之後到處都戴著
+const SB_PIE_OUTFITS = [
+  { id: "bow", need: 0 }, { id: "shades", need: 4 }, { id: "scarf", need: 7 }, { id: "beret", need: 10 }, { id: "crown", need: 14 }
+];
+function sbPaiSeenCount(){
+  try { return JSON.parse(localStorage.getItem("sb-pai-seen") || "[]").filter(m => SB_PIE_MOODS.includes(m)).length; } catch(e){ return 0; }
+}
+// 目前穿的那件（還沒解鎖或沒選就是空的）
+function sbPaiOutfit(){
+  let id = "";
+  try { id = localStorage.getItem("sb-pai-outfit") || ""; } catch(e){}
+  const o = SB_PIE_OUTFITS.find(x => x.id === id);
+  return o && sbPaiSeenCount() >= o.need ? id : "";
+}
+// 墨鏡在這幾個表情戴在眼睛上，其他表情推到頭頂，表情才看得到
+const SB_PIE_SHADES_ON = ["smile", "sweet", "smirk", "sinister", "joy"];
+function sbPieOutfitSVG(id, mood){
+  const g = body => '<g class="sb-pie-acc sb-pie-outfit" aria-hidden="true">' + body + '</g>';
+  const lens = 'fill="#1E1B3A" stroke="#0E0C22" stroke-width=".8"';
+  switch(id){
+    case "bow": return g('<path d="M45 9 L39 4.5 Q37.5 9 39 13.5 Z M45 9 L51 4.5 Q52.5 9 51 13.5 Z" fill="#E4466F"/><circle cx="45" cy="9" r="2.3" fill="#C42E57"/>');
+    case "shades": return SB_PIE_SHADES_ON.includes(mood)
+      ? g('<rect x="16.5" y="26.5" width="13.5" height="9" rx="3.6" ' + lens + '/><rect x="34" y="26.5" width="13.5" height="9" rx="3.6" ' + lens + '/><path d="M30 29.5 Q32 28 34 29.5" stroke="#0E0C22" stroke-width="1.4" fill="none"/><path d="M18.5 28.5 l3 0 M36 28.5 l3 0" stroke="#fff" stroke-opacity=".55" stroke-width="1.2" stroke-linecap="round"/>')
+      : g('<g transform="translate(0 -18) rotate(-6 32 30)"><rect x="18" y="27" width="12" height="7.5" rx="3.2" ' + lens + '/><rect x="34" y="27" width="12" height="7.5" rx="3.2" ' + lens + '/><path d="M30 29.8 Q32 28.6 34 29.8" stroke="#0E0C22" stroke-width="1.3" fill="none"/></g>');
+    case "scarf": return g('<path d="M12 47 Q32 58 52 47 L54 52 Q32 64 10 52 Z" fill="#E0442E"/><path d="M16 49.5 l1.5 4.6 M22 51.8 l1 4.8 M28 52.8 l.4 5 M34 52.8 l-.4 5 M40 51.8 l-1 4.8 M46 49.5 l-1.5 4.6" stroke="#fff" stroke-opacity=".45" stroke-width="1.2"/><path d="M44 53 L48 64 L53 62 L49 51.5 Z" fill="#C7352A"/>');
+    case "beret": return g('<path d="M12 13 Q14 1 34 1 Q52 2 50 12 Q34 9 12 13 Z" fill="#3B3F86"/><path d="M12 13 Q34 9 50 12" stroke="#2A2D66" stroke-width="2" fill="none" stroke-linecap="round"/><path d="M32 1 L33 -3" stroke="#3B3F86" stroke-width="2.2" stroke-linecap="round"/>');
+    case "crown": return g('<path d="M20 12 L19 -1 L25.5 5 L32 -4 L38.5 5 L45 -1 L44 12 Z" fill="#F2C94C" stroke="#C99A1E" stroke-width=".9" stroke-linejoin="round"/><circle cx="32" cy="7" r="1.9" fill="#E24B4A"/><circle cx="24.5" cy="8.4" r="1.3" fill="#5BA7E0"/><circle cx="39.5" cy="8.4" r="1.3" fill="#5BA7E0"/>');
+    default: return "";
+  }
+}
+// 天氣配件（只有標題旁那顆派派戴）：sb-pai-weather 由 paipai.js 一小時查一次，超過三小時就當作不知道
+function sbPaiWeatherKind(){
+  try {
+    const w = JSON.parse(localStorage.getItem("sb-pai-weather") || "null");
+    return w && Date.now() - w.ts < 3 * 3600 * 1000 ? (w.kind || "") : "";
+  } catch(e){ return ""; }
+}
+function sbPieWeatherSVG(kind){
+  const g = body => '<g class="sb-pie-acc sb-pie-wx is-' + kind + '" aria-hidden="true">' + body + '</g>';
+  switch(kind){
+    case "rain": return g('<path d="M30 6 Q44 -14 62 2 Q58 0 55 3 Q52 0 48.5 3.4 Q45 .8 41.5 4.6 Q37.5 2.6 34.5 6.8 Q32.5 5 30 6 Z" fill="#5BA7E0" stroke="#3E7FB8" stroke-width=".8" stroke-linejoin="round"/><path d="M46 -4 L57 40 Q58 44 61 43" stroke="#4A3B2A" stroke-width="1.7" fill="none" stroke-linecap="round"/><path class="sb-pie-drop" d="M8 16 q-1.6 3 0 3.6 q1.6 -.6 0 -3.6 Z M4 30 q-1.6 3 0 3.6 q1.6 -.6 0 -3.6 Z" fill="#7FB2EA"/>');
+    case "hot": return g('<path class="sb-pie-drop" d="M49.5 15 q-3 5.4 0 6.6 q3 -1.2 0 -6.6 Z M54.5 22 q-2.2 4 0 4.8 q2.2 -.8 0 -4.8 Z" fill="#7FB2EA" stroke="#fff" stroke-width=".6"/><circle cx="57" cy="4" r="4.4" fill="#F2B544"/><path d="M57 -3 v2.2 M57 9 v2.2 M50 4 h2.2 M61.8 4 h2.2 M52 -1 l1.5 1.5 M60.5 7.5 l1.5 1.5 M62 -1 l-1.5 1.5 M53.5 7.5 l-1.5 1.5" stroke="#F2B544" stroke-width="1.2" stroke-linecap="round"/>');
+    case "cold": return g('<path d="M10 17 Q11 -2 32 -2 Q53 -2 54 17 Z" fill="#5A7FD6"/><rect x="8.5" y="13" width="47" height="6.5" rx="3.2" fill="#3F5FB4"/><path d="M14 14.2 v4 M19 14.2 v4 M24 14.2 v4 M29 14.2 v4 M34 14.2 v4 M39 14.2 v4 M44 14.2 v4 M49 14.2 v4" stroke="#fff" stroke-opacity=".35" stroke-width="1"/><circle cx="32" cy="-3.5" r="4.4" fill="#F6F2FA" stroke="#C9C2DA" stroke-width=".8"/>');
+    default: return "";
+  }
+}
+// 配件只戴一件：節日 → 天氣（只有標題旁）→ 衣櫃。opts.outfit 指定時（衣櫃預覽）就照指定的畫
+function sbPieAccessory(mood, opts){
+  opts = opts || {};
+  const hol = sbPieHolidaySVG();
+  if(hol && opts.outfit == null) return hol;
+  if(opts.weather){ const w = sbPieWeatherSVG(sbPaiWeatherKind()); if(w) return w; }
+  const outfit = opts.outfit != null ? opts.outfit : sbPaiOutfit();
+  return outfit && outfit !== "none" ? sbPieOutfitSVG(outfit, mood) : "";
+}
 // 節日當天派派頭上的小配件（跟著 holiday.js 掛在 <html> 的 data-holiday）
-function sbPieAccessory(){
+function sbPieHolidaySVG(){
   const id = document.documentElement.getAttribute("data-holiday");
   const g = body => '<g class="sb-pie-acc" aria-hidden="true">' + body + '</g>';
   switch(id){
@@ -2103,7 +2158,8 @@ function sbPieAccessory(){
     default: return "";
   }
 }
-function sbPieMascotSVG(level, mood, preview){
+// opts：{ weather:true 戴天氣配件（標題旁那顆）, outfit:"bow"… 指定衣服、"none" 不穿 }
+function sbPieMascotSVG(level, mood, preview, opts){
   if(!SB_PIE_MOODS.includes(mood)) mood = ["smile", "smile", "sideeye", "cry", "dead"][Math.min(4, Math.max(0, level))];
   if(!preview) sbPaiMarkSeen(mood);
   const top = '<path d="M32 33 L9.48 20 A26 26 0 0 1 54.52 20 Z" fill="var(--logo-3)"/>';
@@ -2155,7 +2211,7 @@ function sbPieMascotSVG(level, mood, preview){
     joy:      eyesHappy + blush + '<path class="sb-pie-white" d="M23.5 38 Q32 49 40.5 38 Z"/>' + '<path class="sb-pie-spark" d="M11 14 l1.4 3 l3 1.4 l-3 1.4 l-1.4 3 l-1.4 -3 l-3 -1.4 l3 -1.4 Z M53 10 l1 2.2 l2.2 1 l-2.2 1 l-1 2.2 l-1 -2.2 l-2.2 -1 l2.2 -1 Z"/>'
   };
   return '<svg class="sb-pie lv-' + level + ' mood-' + mood + '" viewBox="0 0 64 64" aria-hidden="true">' + top + right + left
-    + '<g class="sb-pie-seam">' + seams + '</g>' + crack + '<g class="sb-pie-face">' + faces[mood] + '</g>' + sbPieAccessory() + '</svg>';
+    + '<g class="sb-pie-seam">' + seams + '</g>' + crack + '<g class="sb-pie-face">' + faces[mood] + '</g>' + sbPieAccessory(mood, opts) + '</svg>';
 }
 window.sbPieMascotSVG = sbPieMascotSVG;
 // 派派畫成一張獨立的 SVG（不靠網頁的 CSS），給 canvas 畫分享圖用。顏色用淺色主題的三色。
@@ -2176,6 +2232,10 @@ function sbPieStandaloneSVG(level, mood){
     .replace('aria-hidden="true">', 'aria-hidden="true" overflow="visible"><style>' + css + '</style>');
 }
 window.sbPieStandaloneSVG = sbPieStandaloneSVG;
+window.SB_PIE_OUTFITS = SB_PIE_OUTFITS;
+window.sbPaiOutfit = sbPaiOutfit;
+window.sbPaiSeenCount = sbPaiSeenCount;
+window.sbPieWeatherSVG = sbPieWeatherSVG;
 
 // 每一句台詞配的表情（各語言共用）
 const SB_NAG_MOOD = {
@@ -2281,7 +2341,7 @@ function sbNagSetLogo(level, mood, onClick, idle){
   const label = t(idle ? "pai.logoAria" : "nag.logoAria");
   btn.setAttribute("aria-label", label);
   btn.title = label;
-  btn.innerHTML = sbPieMascotSVG(level, mood);
+  btn.innerHTML = sbPieMascotSVG(level, mood, false, { weather: true });
   btn.dataset.mood = mood || "";
   btn.dataset.level = String(level);
   delete btn.dataset.baseMood; delete btn.dataset.baseLevel;

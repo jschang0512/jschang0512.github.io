@@ -150,7 +150,7 @@
   }
 
   function computeStats(rows, repayments, feedback, year, myId, memberById, conv){
-    const stats = { total:0, count:0, days:new Set(), months:Array(12).fill(0), weekdays:Array(7).fill(0), byDay:{}, titles:{}, currencies:new Set(), cats:{}, food:{}, all:{}, priciest:null, first:null, paidCount:0, paidForOthers:0, repayCount:0, repaySent:0, repayReceived:0, repayWith:{}, travel:{}, helpers:{}, fronted:{}, lively:null, messages:0, myMessages:0, talkers:{} };
+    const stats = { total:0, count:0, days:new Set(), months:Array(12).fill(0), weekdays:Array(7).fill(0), byDay:{}, titles:{}, currencies:new Set(), cats:{}, food:{}, all:{}, priciest:null, first:null, paidCount:0, paidForOthers:0, repayCount:0, repaySent:0, repayReceived:0, repayWith:{}, travel:{}, helpers:{}, fronted:{}, lively:null, messages:0, myMessages:0, talkers:{}, hours:Array(24).fill(0), logged:0, late:0, withAmt:{} };
     rows.forEach(r => {
       if(!r.expense_date || !r.expense_date.startsWith(String(year))) return;
       const rate = conv.toBase[r.currency];
@@ -182,9 +182,19 @@
       const payers = (Array.isArray(r.payers) ? r.payers : []).filter(p => Number(p.amount) > 0);
       const paidTotal = payers.reduce((sum, p) => sum + Number(p.amount), 0);
       const myPaid = payers.filter(p => p.member_id === myId).reduce((sum, p) => sum + Number(p.amount), 0);
+      // 自己記的帳是幾點記的（固定支出是系統自動產生的，不算）
+      if(r.created_by === myId && r.created_at && !/\[recurring:/.test(r.description || "")){
+        const h = new Date(r.created_at).getHours();
+        if(!isNaN(h)){
+          stats.hours[h] += 1;
+          stats.logged += 1;
+          if(h >= 22 || h < 4) stats.late += 1;
+        }
+      }
       shares.forEach(s => {
         if(s.member_id === myId || !(Number(s.amount) > 0) || !memberById[s.member_id]) return;
         stats.all[s.member_id] = (stats.all[s.member_id] || 0) + 1;
+        stats.withAmt[s.member_id] = (stats.withAmt[s.member_id] || 0) + myShare;
         if(isMeal) stats.food[s.member_id] = (stats.food[s.member_id] || 0) + 1;
         if(isTravel) stats.travel[s.member_id] = (stats.travel[s.member_id] || 0) + 1;
         // 多人一起付的帳，依各自付的比例算誰墊了誰的份額
@@ -239,6 +249,29 @@
     stats.topTitle = Object.values(stats.titles).sort((a, b) => b.count - a.count || b.amount - a.amount)[0];
     stats.streak = longestStreak(stats.days);
     return stats;
+  }
+
+  // 派派頒的年度稱號：照順序挑第一個符合的
+  function pickAward(stats){
+    const top = stats.catList[0] ? stats.catList[0].meta.type : "";
+    const weekend = stats.weekdays[0] + stats.weekdays[6];
+    const pct = (a, b) => Math.round(a / b * 100);
+    if(stats.logged >= 10 && stats.late / stats.logged >= 0.25) return { id: "night", vars: { pct: pct(stats.late, stats.logged) } };
+    if(stats.count >= 200) return { id: "logger", vars: { n: stats.count } };
+    if(TRAVEL_TYPES.includes(top)) return { id: "travel", vars: { pct: pct(stats.catList[0].amount, stats.total) } };
+    if(top === "food" || top === "drink") return { id: "foodie", vars: { pct: pct(stats.catList[0].amount, stats.total) } };
+    if(stats.repayCount >= 5 && stats.repaySent > 0) return { id: "repay", vars: { n: stats.repayCount } };
+    if(stats.paidForOthers >= stats.total * 0.3) return { id: "host", vars: { pct: pct(stats.paidForOthers, stats.total) } };
+    if(weekend > stats.total / 2) return { id: "weekend", vars: { pct: pct(weekend, stats.total) } };
+    return { id: "steady", vars: { days: stats.days.size } };
+  }
+  function hourName(h){
+    // 中文說「晚上 9 點」比 toLocaleTimeString 的「下午9時」自然
+    if(getLang() === "zh-Hant"){
+      const part = h < 5 ? "凌晨" : h < 11 ? "早上" : h < 13 ? "中午" : h < 18 ? "下午" : "晚上";
+      return part + " " + (h % 12 || 12) + " 點";
+    }
+    return new Date(2000, 0, 1, h).toLocaleTimeString(recapLocale(), { hour: "numeric" });
   }
 
   function topOf(counts){
@@ -334,6 +367,17 @@
         ${pai("recap.paiPartner", { name }, "sweet")}
     `));
       ctx.partnerName = name;
+    }
+
+    const spender = topOf(stats.withAmt);
+    if(spender && partner && spender.id !== partner.id){
+      out.push(slideHTML("is-wine", 80, `
+        ${faceHTML(ctx, spender.id, "rc-avatar rc-rise")}
+        <p class="rc-label rc-rise" style="--i:1">${escapeHtml(t("recap.spendWithLabel"))}</p>
+        <p class="rc-big is-name rc-rise" style="--i:2">${escapeHtml(memberById[spender.id])}</p>
+        <p class="rc-detail rc-rise" style="--i:3">${t("recap.spendWithDetail", { amount:`<b>${escapeHtml(moneyText(base, stats.withAmt[spender.id]))}</b>` })}</p>
+        ${pai("recap.paiSpendWith", { name: memberById[spender.id] }, "smirk")}
+      `));
     }
 
     const crew = Object.keys(stats.all).sort((a, b) => stats.all[b] - stats.all[a]).slice(0, 3);
@@ -433,6 +477,19 @@
       <div class="rc-months is-week rc-rise" style="--i:3" aria-hidden="true">${stats.weekdays.map((v, i) => `<div class="rc-month${i === peakDay ? " is-peak" : ""}" style="--i:${i}"><i style="--h:${(v / peakDayAmt).toFixed(3)};--i:${i}"></i><span>${escapeHtml(weekdayName(i, "narrow"))}</span></div>`).join("")}</div>
     `));
 
+    if(stats.logged >= 10){
+      const peakHour = stats.hours.indexOf(Math.max(...stats.hours));
+      const peakHourN = stats.hours[peakHour];
+      const lateish = peakHour >= 22 || peakHour < 4;
+      out.push(slideHTML("is-ocean", 230, `
+        <p class="rc-label rc-rise">${escapeHtml(t("recap.hourLabel"))}</p>
+        <p class="rc-big is-name rc-rise" style="--i:1">${escapeHtml(hourName(peakHour))}</p>
+        <p class="rc-detail rc-rise" style="--i:2">${t("recap.hourDetail", { n:`<b>${stats.logged}</b>`, count:`<b>${peakHourN}</b>` })}</p>
+        <div class="rc-months is-hours rc-rise" style="--i:3" aria-hidden="true">${stats.hours.map((v, i) => `<div class="rc-month${i === peakHour ? " is-peak" : ""}" style="--i:${i}"><i style="--h:${(v / peakHourN).toFixed(3)};--i:${i}"></i><span>${i % 6 === 0 ? i : ""}</span></div>`).join("")}</div>
+        ${pai(lateish ? "recap.paiHourLate" : "recap.paiHour", {}, lateish ? "sleep" : "smile")}
+      `));
+    }
+
     if(stats.streak.len >= 3){
       out.push(slideHTML("is-pine", 110, `
         <p class="rc-label rc-rise">${escapeHtml(t("recap.streakLabel"))}</p>
@@ -469,7 +526,17 @@
     `));
     }
 
+    const award = pickAward(stats);
+    ctx.award = t("recap.award." + award.id);
+    out.push(slideHTML("is-plum", 20, `
+      <p class="rc-label rc-rise">${escapeHtml(t("recap.awardLabel"))}</p>
+      <p class="rc-award rc-rise" style="--i:1"><span class="rc-award-pie">${typeof sbPieMascotSVG === "function" ? sbPieMascotSVG(0, "joy", true, { outfit: "crown" }) : ""}</span></p>
+      <p class="rc-big is-name rc-rise" style="--i:2">${escapeHtml(ctx.award)}</p>
+      <p class="rc-detail rc-rise" style="--i:3">${escapeHtml(t("recap.awardWhy." + award.id, award.vars))}</p>
+    `));
+
     const finalRows = [
+      [t("recap.awardShort"), ctx.award],
       [t("recap.finalTotal"), moneyText(base, stats.total)],
       [t("recap.catLabel"), top.meta.name],
       ctx.partnerName ? [t(partner.meal ? "recap.partnerFoodLabel" : "recap.partnerAllLabel"), ctx.partnerName] : null,
@@ -598,7 +665,7 @@
     const yearBase = 186 + c.measureText(yearText).actualBoundingBoxAscent;
     c.fillText(yearText, PAD + c.measureText(yearText).actualBoundingBoxLeft, yearBase);
 
-    const title = t("recap.coverTitle", { name: ctx.myName });
+    const title = t("recap.coverTitle", { name: ctx.myName }) + (ctx.award ? "・" + ctx.award : "");
     c.fillStyle = INK;
     fitFont(c, title, 700, 52, INNER);
     c.fillText(title, PAD, yearBase + 104);
@@ -639,7 +706,12 @@
     const tilesTop = pieTop + radius * 2 + (paiImg ? 196 : 104);
     if(paiImg){
       const sy = pieTop + radius * 2 + 64, size = 96;
-      c.drawImage(paiImg, PAD, sy, size, size);
+      // 深藍底上派派會糊掉：墊一個奶油色圓底
+      c.fillStyle = "#F6EEDF";
+      c.beginPath();
+      c.arc(PAD + size / 2, sy + size / 2, size / 2, 0, Math.PI * 2);
+      c.fill();
+      c.drawImage(paiImg, PAD + 10, sy + 10, size - 20, size - 20);
       c.fillStyle = INK;
       c.textBaseline = "middle";
       fitFont(c, ctx.paiLine, 700, 40, INNER - size - 28);

@@ -11331,3 +11331,23 @@ html body .sb-pai-dex-q{ display:grid; place-items:center; width:44px; height:44
 html body .sb-notif-empty{ display:flex; flex-direction:column; align-items:center; gap:6px; padding:22px 12px 18px; text-align:center; }
 html body .sb-notif-empty .sb-pie{ width:56px; height:56px; }
 html body .sb-notif-empty p{ margin:0; font-size:14px; font-weight:600; color:var(--ink-soft); }
+
+/* 設定頁：派派衣櫃（圖鑑下面）。選中的那件有外框 */
+html body .sb-pai-wd-title{ margin:0; padding:2px var(--sbs-pad) 8px; font-size:13px; font-weight:700; color:var(--ink); }
+html body .sb-pai-wd{ display:grid; grid-template-columns:repeat(auto-fill, minmax(72px, 1fr)); gap:8px; padding:0 var(--sbs-pad) 16px; }
+html body .sb-pai-wd-item{
+  display:flex; flex-direction:column; align-items:center; gap:4px; min-height:44px; padding:10px 4px 8px; border-radius:12px;
+  border:1.5px solid transparent; background:color-mix(in srgb, var(--btn-primary) 6%, transparent); color:var(--ink-soft);
+  font:inherit; font-size:12px; font-weight:600; line-height:1.3; text-align:center; cursor:pointer;
+  transition:background-color .18s cubic-bezier(.16,1,.3,1), border-color .18s cubic-bezier(.16,1,.3,1);
+}
+html body .sb-pai-wd-item .sb-pie{ width:44px; height:44px; }
+html body .sb-pai-wd-item:hover:not(:disabled){ background:color-mix(in srgb, var(--btn-primary) 12%, transparent); }
+html body .sb-pai-wd-item:active:not(:disabled){ transform:translateY(1px); }
+html body .sb-pai-wd-item:focus-visible{ outline:2px solid var(--btn-primary); outline-offset:2px; }
+html body .sb-pai-wd-item[aria-checked="true"]{ border-color:var(--btn-primary); background:color-mix(in srgb, var(--btn-primary) 14%, transparent); color:var(--ink); }
+html body .sb-pai-wd-item.is-locked{ background:color-mix(in srgb, var(--ink) 5%, transparent); cursor:not-allowed; opacity:.75; }
+/* 天氣：雨滴和汗慢慢往下掉 */
+html body .sb-title-pie .sb-pie-drop{ animation:sbPaiDrop 1.8s cubic-bezier(.65,0,.35,1) infinite; }
+@keyframes sbPaiDrop{ 0%{ transform:translateY(-2px); opacity:0 } 30%{ opacity:1 } 100%{ transform:translateY(6px); opacity:0 } }
+@media (prefers-reduced-motion: reduce){ html body .sb-title-pie .sb-pie-drop{ animation:none; } html body .sb-pai-wd-item{ transition:none; } }
