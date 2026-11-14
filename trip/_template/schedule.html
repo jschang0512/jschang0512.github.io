@@ -8,7 +8,7 @@
 (function(){
   try{
     var t = localStorage.getItem("mytrip-theme");
-    t = "light";   // modern theme: light only
+    if(t !== "dark" && t !== "light") t = (window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
     document.documentElement.setAttribute("data-theme", t);
   }catch(e){}
 })();
@@ -86,7 +86,7 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="../engine/trip-core.js"></script>
-<script src="../engine/illustrations.js"></script>
+<script src="../engine/icons.js"></script>
 <script src="data.js"></script>
 <script src="../engine/trip.js"></script>
 </body>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-Hant" data-theme="light">
+<html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -21,6 +21,16 @@
     --shadow-up: 0 2px 4px rgba(16, 24, 40, .05), 0 12px 32px rgba(16, 24, 40, .09);
     --font: "Inter", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
     --ease: cubic-bezier(.16, 1, .3, 1);
+  }
+  /* night: follows the phone setting */
+  @media (prefers-color-scheme: dark) {
+    :root { color-scheme: dark; --paper: #0F1115; --card: #181B21; --ink: #ECEEF2; --ink-soft: #A3AAB5; --ink-faint: #767E8A; --line: #2A2F37; --hair: #22262D; --fill: #1F232A;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3); --shadow-up: 0 8px 24px rgba(0, 0, 0, .45); }
+    :root .trip-card { --c-ink: color-mix(in srgb, var(--c) 55%, #FFFFFF); }
+    :root .trip-cover, :root .trips > .trip-card:only-child .trip-cover { background: color-mix(in srgb, var(--c) 22%, var(--card)); border-color: color-mix(in srgb, var(--c) 30%, var(--card)); }
+    :root .trip-place, :root .trip-len, :root .trip-cta { color: var(--c-ink); }
+    :root .tag.draft { background: #33290F; color: #F2C66D; }
+    ::selection { background: #2F3B52; }
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { background: var(--paper); overflow-x: clip; }
@@ -179,6 +189,8 @@
   document.getElementById("upcomingLabel").hidden = !up.children.length;
   document.getElementById("pastLabel").hidden = !past.children.length;
 })();
+// keep the trip pages for offline use (see sw.js)
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) navigator.serviceWorker.register("sw.js").catch(() => {});
 </script>
 </body>
 </html>

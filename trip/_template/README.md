@@ -20,7 +20,7 @@
    - 填 `TRIP` 設定：目的地、日期、出發時間、地震範圍等。
    - 填行程：`days`、`INFO`、`COORDS`、`FLIGHTS`、`PACKING`、`WEATHER_CITIES`。
    - 每個地點名稱同時是 `INFO` 和 `COORDS` 的 key，也是 Google 地圖的搜尋字。名稱拼錯就不會出現地圖上的點。
-4. 想換顏色就改 `theme.css`。主要是 `--accent`（主色）和 `--accent-text`（文字用的深色版），以及對應的 `--tint*`。
+4. 想換顏色就改 `theme.css`。新樣式只用 `--accent-text` 當主色（深色模式用 `:root[data-theme="dark"]` 裡那一個，要選較亮的顏色），交通方式的顏色是 `--rail`、`--bus` 等。
 5. 在 `trip/index.html` 加一張卡片，用 `data-start`、`data-end` 標日期，頁面會自動排序並顯示狀態：
 
    ```html
@@ -33,10 +33,17 @@
    </a>
    ```
 
+## 內建功能
+
+- 離線：看過的行程頁、資料和地圖範圍會存在手機裡（`trip/sw.js`）。改了 `sw.js` 的檔案清單時，把裡面的 `VERSION` 加一。
+- 選單裡有「列印／存 PDF」、「加入行事曆」（下載 .ics）、「深色模式」。
+- 電腦版（寬度 1024px 以上）預設把每一天並排顯示，頂部可切換成「單日＋地圖」。
+
 ## 選用功能
 
 功能開關都在 `TRIP` 裡：
 
+- `tz: "+09:00"`：行程時間所在的時區，加入行事曆時用；不填就是日本時間 +09:00。
 - `sun: true`：每天顯示日出、日落時間。
 - `food: { city: "福岡" }`：加上美食・伴手禮頁，資料寫在 `FOOD_AREAS`，格式可以參考 `../fukuoka/data.js`。
 - `contactsGate: { question, answer }`：打開聯絡資訊前要先答題。

@@ -3,7 +3,7 @@
    Each trip folder has schedule.html (page shell), theme.css (colours)
    and data.js (TRIP settings + the itinerary). This file only reads
    those globals; nothing here is specific to one trip.
-   Load order: leaflet → engine/trip-core.js → data.js → engine/trip.js
+   Load order: leaflet → engine/trip-core.js → engine/icons.js → data.js → engine/trip.js
    ============================================================ */
 
 // Header subtitle typewriter: types the destination list, pauses,
@@ -185,25 +185,24 @@ function todayIndex(){
     return (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light";
   }
 
-  let current = "light";   // the modern look is light only for now
+  let current = getPreferred();
   document.documentElement.setAttribute("data-theme", current);
-
-  function init(){
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "theme-toggle";
-    btn.setAttribute("aria-label", "切換深色／淺色模式");
-    btn.textContent = current === "dark" ? "☀️" : "🌙";
-    btn.addEventListener("click", ()=>{
-      current = current === "dark" ? "light" : "dark";
-      document.documentElement.setAttribute("data-theme", current);
-      btn.textContent = current === "dark" ? "☀️" : "🌙";
-      try{ localStorage.setItem(KEY, current); }catch(e){}
-    });
-    document.body.appendChild(btn);
-  }
-  if(document.body) init();
-  else document.addEventListener("DOMContentLoaded", init);
+  const label = ()=> current === "dark" ? "淺色模式" : "深色模式";
+  // the menu button (built later) calls this; a saved choice wins over the phone's setting from then on
+  window.toggleTripTheme = ()=>{
+    current = current === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", current);
+    try{ localStorage.setItem(KEY, current); }catch(e){}
+    document.querySelectorAll('[data-act="theme"] .lbl').forEach(el=> el.textContent = label());
+  };
+  window.tripThemeLabel = label;
+  // no saved choice: follow the phone when it switches
+  if(window.matchMedia) matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change", (e)=>{
+    try{ if(localStorage.getItem(KEY)) return; }catch(err){}
+    current = e.matches ? "dark" : "light";
+    document.documentElement.setAttribute("data-theme", current);
+    document.querySelectorAll('[data-act="theme"] .lbl').forEach(el=> el.textContent = label());
+  });
 })();
 
 function renderRow(item){
@@ -496,7 +495,11 @@ function buildUtilBar(){
     ${TRIP.food ? `<button class="util-btn" data-page="food">美食地圖</button>` : ""}
     <button class="util-btn" data-page="driving">租車自駕</button>
     <button class="util-btn" data-page="quake">地震</button>
-    <a class="util-btn" href="https://jschang0512.github.io/splitbill/" target="_blank" rel="noopener">旅費分帳 ${SB_ICON.arrowOut}</a>`;
+    <a class="util-btn" href="https://jschang0512.github.io/splitbill/" target="_blank" rel="noopener">旅費分帳 ${SB_ICON.arrowOut}</a>
+    <div class="util-sep" role="presentation"></div>
+    <button class="util-btn util-act" data-act="print">${SB_ICON.print}<span>列印／存 PDF</span></button>
+    <button class="util-btn util-act" data-act="ics">${SB_ICON.calendar}<span>加入行事曆</span></button>
+    <button class="util-btn util-act" data-act="theme">${SB_ICON.moon}<span class="lbl">${window.tripThemeLabel ? tripThemeLabel() : "深色模式"}</span></button>`;
 }
 function buildFoodPage(){
   const areaBlocks = FOOD_AREAS.map((a,ai)=>{
@@ -733,7 +736,7 @@ async function loadQuakes(){
     }).setView(TRIP.quake.center, 7);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors',
-      subdomains: 'abc', maxZoom: 19
+      subdomains: 'abc', maxZoom: 19, crossOrigin: ''
     }).addTo(map);
 
     if(!valid.length){
@@ -783,16 +786,6 @@ async function loadQuakes(){
   const h = document.querySelector("header.hero");
   if(h && !h.hasAttribute("data-eyebrow")) h.setAttribute("data-eyebrow", (TRIP.eyebrow || TRIP.key) + " · " + days.length + " days");
 })();
-(function heroArt(){
-  const art = window.TRIP_ART && window.TRIP_ART[TRIP.key];
-  const h1 = document.querySelector("header.hero h1.title");
-  if(!art || !h1) return;
-  const box = document.createElement("div");
-  box.className = "hero-art";
-  box.setAttribute("aria-hidden", "true");
-  box.innerHTML = art;
-  h1.before(box);
-})();
 const main = document.getElementById("main");
 main.innerHTML = days.map(buildPage).join("") + buildContactsPage() + buildFlightsPage() + buildDrivingPage() + buildWeatherPage() + buildQuakePage() + (TRIP.food ? buildFoodPage() : "") + buildPackingPage();
 document.getElementById("dayNav").innerHTML = buildNav();
@@ -803,7 +796,7 @@ document.getElementById("utilBar").innerHTML = buildUtilBar();
   const nav = document.getElementById("dayNav"), util = document.getElementById("utilBar"), home = document.querySelector(".home-link");
   const bar = document.createElement("div");
   bar.className = "sb-top";
-  bar.innerHTML = `<button type="button" class="sb-menu-btn" aria-expanded="false" aria-controls="utilBar"><svg class="sb-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span class="sb-menu-lbl">選單</span></button><div class="sb-daypick"><button type="button" class="sb-step" data-step="-1" aria-label="前一天">‹</button><button type="button" class="sb-day-cur" aria-expanded="false" aria-controls="dayNav"><span class="sb-day-num"></span><span class="sb-day-lbl"></span></button><button type="button" class="sb-step" data-step="1" aria-label="後一天">›</button></div><button type="button" class="sb-back" hidden></button>`;
+  bar.innerHTML = `<button type="button" class="sb-menu-btn" aria-expanded="false" aria-controls="utilBar"><svg class="sb-ic" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg><span class="sb-menu-lbl">選單</span></button><div class="sb-daypick"><button type="button" class="sb-step" data-step="-1" aria-label="前一天">‹</button><button type="button" class="sb-day-cur" aria-expanded="false" aria-controls="dayNav"><span class="sb-day-num"></span><span class="sb-day-lbl"></span></button><button type="button" class="sb-step" data-step="1" aria-label="後一天">›</button></div><div class="sb-title"><b>${document.querySelector("h1.title")?.textContent.trim() || ""}</b><span>${TRIP.dateRange || ""}</span></div><div class="sb-strip" role="tablist" aria-label="跳到某一天">${days.map((d,i)=>`<button type="button" data-day="${i}"><span class="n">DAY ${String(i+1).padStart(2,"0")}</span><span class="t">${d.theme}</span></button>`).join("")}</div><button type="button" class="sb-back" hidden></button><button type="button" class="sb-view" hidden></button>`;
   document.body.prepend(bar);
   bar.after(util);
   util.after(nav);
@@ -831,6 +824,12 @@ document.getElementById("utilBar").innerHTML = buildUtilBar();
     if(open){ setOpen(null); open[1].focus(); }
   });
   bar.querySelector(".sb-back").addEventListener("click", ()=> activatePage(lastDayPage));
+  bar.querySelector(".sb-strip").addEventListener("click", (e)=>{ const b = e.target.closest("[data-day]"); if(b) activatePage(b.dataset.day); });
+  bar.querySelector(".sb-view").addEventListener("click", ()=>{
+    viewPref = viewPref === "all" ? "one" : "all";
+    try{ localStorage.setItem(VIEW_KEY, viewPref); }catch(e){}
+    activatePage(lastDayPage, {jump:false});
+  });
 })();
 
 // ---- Scroll reveal for cards ----
@@ -998,7 +997,7 @@ function buildDayMap(idx){
   }).setView([stops[0].lat, stops[0].lng], 11);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors',
-    subdomains: 'abc', maxZoom: 19
+    subdomains: 'abc', maxZoom: 19, crossOrigin: ''
   }).addTo(map);
 
   const latlngs = stops.map(s=>[s.lat,s.lng]);
@@ -1177,7 +1176,7 @@ function renderInlineMap(slot, lat, lng, label, gmapsUrl){
   slot.innerHTML = `<div class="food-map-canvas"></div><a class="maplink food-map-gmaps" href="${gmapsUrl}" target="_blank" rel="noopener">📍 在 Google Maps 開啟</a>`;
   const canvas = slot.querySelector(".food-map-canvas");
   const map = L.map(canvas, { zoomControl:false, attributionControl:false }).setView([lat,lng], 16);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { subdomains:'abc', maxZoom:19 }).addTo(map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { subdomains:'abc', maxZoom:19, crossOrigin:'' }).addTo(map);
   L.marker([lat,lng]).addTo(map).bindPopup(label);
 }
 function updateBottomNav(page, isExtra){
@@ -1225,6 +1224,13 @@ document.getElementById("moreSheet").addEventListener("click", (e)=>{
 });
 const REDUCED = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
 let lastDayPage = "0";   // where "每日行程" in the top menu returns to
+// computers show every day side by side (全部天數); 單日 keeps the one-day page with its map
+const BOARD_MQ = window.matchMedia ? matchMedia("(min-width: 1024px)") : { matches:false, addEventListener(){} };
+const VIEW_KEY = TRIP.key + "-view";
+let viewPref = "all";
+try{ viewPref = localStorage.getItem(VIEW_KEY) || "all"; }catch(e){}
+let boardSunLoaded = false;
+function inBoard(){ return document.documentElement.classList.contains("all-days"); }
 // on today's page: fade what is over, mark what comes next
 function markNext(idx){
   const page = document.getElementById("day-" + idx);
@@ -1279,6 +1285,23 @@ function activatePage(page, {jump=true, dir=null}={}){
   if(lbl) lbl.textContent = isExtra ? btn.textContent.trim() : "選單";
   const back = document.querySelector(".sb-back");
   if(back){ back.hidden = !isExtra; back.textContent = "‹ 回到 DAY " + String(Number(lastDayPage) + 1).padStart(2, "0"); }
+  // computers: every day at once, or one day with its map
+  const board = BOARD_MQ.matches && viewPref === "all" && !isExtra;
+  document.documentElement.classList.toggle("all-days", board);
+  const view = document.querySelector(".sb-view");
+  if(view){ view.hidden = isExtra; view.innerHTML = viewPref === "all" ? `${SB_ICON.single}單日＋地圖` : `${SB_ICON.grid}全部天數`; }
+  document.querySelectorAll(".sb-strip [data-day]").forEach(b=>{ const on = b.dataset.day === String(lastDayPage); b.classList.toggle("active", on); b.setAttribute("aria-selected", String(on)); });
+  if(board){
+    const t = todayIndex();
+    if(t >= 0) markNext(t);
+    main.querySelectorAll('.day-page[id^="day-"] .reveal:not(.revealed)').forEach(r=>r.classList.add("revealed"));
+    if(TRIP.sun && !boardSunLoaded){ boardSunLoaded = true; days.forEach((_, i)=> loadSunTimes(i)); }
+    // bring the chosen day's column into view, and its chip in the strip
+    main.scrollTo({left: Math.max(0, el.offsetLeft - main.offsetLeft - 24), behavior: jump && !REDUCED ? "smooth" : "auto"});
+    document.querySelector(`.sb-strip [data-day="${lastDayPage}"]`)?.scrollIntoView({inline:"nearest", block:"nearest"});
+    if(jump) window.scrollTo({top: 0, behavior: "auto"});
+    return;
+  }
   if(!isExtra) markNext(Number(page));
   el.querySelectorAll(".reveal:not(.revealed)").forEach(r=>r.classList.add("revealed"));
   if(dir === "next") el.classList.add("slide-next");
@@ -1520,6 +1543,104 @@ function pageFromHash(){
   if(t >= 0) setInterval(()=>{ if(document.getElementById("day-" + t)?.classList.contains("active")) markNext(t); }, 60000);
 })();
 window.addEventListener("hashchange", ()=> activatePage(pageFromHash()));
+// crossing 1024px switches between the board and the one-day page
+BOARD_MQ.addEventListener?.("change", ()=>{ const cur = pageFromHash(); activatePage(EXTRA_PAGES.includes(cur) ? cur : lastDayPage, {jump:false}); });
+// in the board, the strip follows the column you scroll to
+main.addEventListener("scroll", ()=>{
+  if(!inBoard()) return;
+  clearTimeout(main._spy);
+  main._spy = setTimeout(()=>{
+    const cols = [...main.querySelectorAll('.day-page[id^="day-"]')];
+    const left = main.scrollLeft + 40;
+    const hit = cols.find(c=> c.offsetLeft - main.offsetLeft + c.offsetWidth > left) || cols[0];
+    const idx = hit ? hit.id.replace("day-", "") : lastDayPage;
+    if(idx === lastDayPage) return;
+    lastDayPage = idx;
+    cols.forEach(c=> c.classList.toggle("active", c === hit));
+    document.querySelectorAll(".sb-strip [data-day]").forEach(b=>{ const on = b.dataset.day === idx; b.classList.toggle("active", on); b.setAttribute("aria-selected", String(on)); });
+    document.querySelector(`.sb-strip [data-day="${idx}"]`)?.scrollIntoView({inline:"nearest", block:"nearest"});
+    try{ history.replaceState(null, "", "#day-" + idx); }catch(e){}
+  }, 120);
+}, {passive:true});
+
+/* ---------- menu tools: print, calendar file, dark mode ---------- */
+document.getElementById("utilBar").addEventListener("click", (e)=>{
+  const b = e.target.closest("[data-act]");
+  if(!b) return;
+  if(b.dataset.act === "theme") toggleTripTheme();
+  else if(b.dataset.act === "print") setTimeout(()=> window.print(), 50);
+  else if(b.dataset.act === "ics") downloadICS();
+});
+// print shows every day: make sure nothing is still waiting to fade in
+// and always prints in the light colours, whatever the screen uses
+let themeBeforePrint = null;
+window.addEventListener("beforeprint", ()=>{
+  main.querySelectorAll(".reveal:not(.revealed)").forEach(r=>r.classList.add("revealed"));
+  themeBeforePrint = document.documentElement.getAttribute("data-theme");
+  document.documentElement.setAttribute("data-theme", "light");
+});
+window.addEventListener("afterprint", ()=>{ if(themeBeforePrint) document.documentElement.setAttribute("data-theme", themeBeforePrint); themeBeforePrint = null; });
+
+// a calendar file: one all-day event per day (the plan in the notes), plus timed stops and flights
+function downloadICS(){
+  const pad = (n)=> String(n).padStart(2, "0");
+  const ymd = (d)=> d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate());
+  const utc = (d)=> d.getUTCFullYear() + pad(d.getUTCMonth() + 1) + pad(d.getUTCDate()) + "T" + pad(d.getUTCHours()) + pad(d.getUTCMinutes()) + "00Z";
+  const txt = (v)=> String(v || "").replace(/<[^>]+>/g, "").replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/([,;])/g, "\\$1");
+  const tz = TRIP.tz || "+09:00";   // local times in data.js are the destination's
+  const at = (day, hm, off)=>{ const m = String(hm || "").match(/(\d{1,2}):(\d{2})/); if(!day || !m) return null; return new Date(`${day.getFullYear()}-${pad(day.getMonth()+1)}-${pad(day.getDate())}T${pad(m[1])}:${m[2]}:00${off}`); };
+  const off = (s)=>{ const m = String(s || "").match(/UTC([+-])(\d{1,2})(?::?(\d{2}))?/); return m ? `${m[1]}${pad(m[2])}:${m[3] || "00"}` : tz; };
+  const dateOf = (label)=>{ const dep = new Date(TRIP.departISO), m = String(label || "").match(/(\d+)\/(\d+)/); if(!m) return null; let y = dep.getFullYear(); if(Number(m[1]) < dep.getMonth() + 1) y += 1; return new Date(y, Number(m[1]) - 1, Number(m[2])); };
+  const title = (document.querySelector("h1.title")?.textContent || TRIP.key).trim();
+  const stamp = utc(new Date());
+  const ev = [];
+  const push = (uid, lines)=> ev.push(["BEGIN:VEVENT", `UID:${TRIP.key}-${uid}@trip`, `DTSTAMP:${stamp}`, ...lines, "END:VEVENT"]);
+  days.forEach((d, i)=>{
+    const day = tripDayDate(i); if(!day) return;
+    const next = new Date(day); next.setDate(next.getDate() + 1);
+    const plan = (d.items || []).map((it)=>
+      it.type === "section" ? `【${it.label}】`
+      : it.type === "transit" ? `${it.ft || ""} ${it.from} → ${it.tt || ""} ${it.to}${it.line ? "（" + it.line + "）" : ""}`
+      : it.type === "activity" ? `${it.time ? it.time + " " : ""}${it.text}`
+      : it.type === "note" ? it.text : "").filter(Boolean);
+    push(`day${i}`, [`DTSTART;VALUE=DATE:${ymd(day)}`, `DTEND;VALUE=DATE:${ymd(next)}`, `SUMMARY:${txt(`DAY ${i + 1}｜${d.theme}`)}`,
+      `DESCRIPTION:${txt([d.route, d.hotel ? "住宿：" + d.hotel : "", "", ...plan].filter((x, k)=> x || k === 2).join("\n"))}`, "TRANSP:TRANSPARENT"]);
+    (d.items || []).forEach((it, k)=>{
+      if(it.type !== "activity" || !it.time) return;
+      const start = at(day, it.time, tz); if(!start) return;
+      push(`day${i}-${k}`, [`DTSTART:${utc(start)}`, `DTEND:${utc(new Date(start.getTime() + 3600000))}`, `SUMMARY:${txt(it.text)}`, ...(it.map ? [`LOCATION:${txt(it.map)}`] : [])]);
+    });
+  });
+  (typeof FLIGHTS !== "undefined" ? FLIGHTS : []).forEach((fd, i)=> (fd.entries || []).forEach((f, k)=>{
+    const day = dateOf(fd.date); const dep = at(day, f.dep, off(f.depTz)); if(!dep) return;
+    let arr = at(day, f.arr, off(f.arrTz)); if(arr && arr <= dep) arr = new Date(arr.getTime() + 86400000);
+    push(`flight${i}-${k}`, [`DTSTART:${utc(dep)}`, `DTEND:${utc(arr || new Date(dep.getTime() + 7200000))}`, `SUMMARY:${txt(`✈ ${f.flight} ${f.from.split("・")[0]} → ${f.to.split("・")[0]}`)}`,
+      `DESCRIPTION:${txt(`${f.airline}・${f.aircraft || ""}\n${f.from} → ${f.to}${f.link ? "\n" + f.link : ""}`)}`, `LOCATION:${txt(f.from)}`,
+      "BEGIN:VALARM", "ACTION:DISPLAY", "DESCRIPTION:航班", "TRIGGER:-PT3H", "END:VALARM"]);
+  }));
+  // lines longer than 75 bytes are folded (RFC 5545)
+  const fold = (line)=>{ const out = []; let cur = "", bytes = 0; for(const ch of line){ const b = new TextEncoder().encode(ch).length; if(bytes + b > 73){ out.push(cur); cur = " "; bytes = 1; } cur += ch; bytes += b; } out.push(cur); return out.join("\r\n"); };
+  const ics = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//trip//schedule//ZH", "CALSCALE:GREGORIAN", "METHOD:PUBLISH", `X-WR-CALNAME:${txt(title)}`, ...ev.flat(), "END:VCALENDAR"].map(fold).join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([ics], {type: "text/calendar;charset=utf-8"}));
+  a.download = `${TRIP.key}-trip.ics`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=> URL.revokeObjectURL(a.href), 4000);
+  showToast(`已下載行事曆檔（${ev.length} 個事件），打開即可加入行事曆`);
+}
+
+/* ---------- offline: keep the pages, data and viewed map tiles on the phone ---------- */
+if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){
+  navigator.serviceWorker?.register("../sw.js", {scope: "../"}).catch(()=>{});
+}
+(function offlineBadge(){
+  const b = document.createElement("div");
+  b.className = "offline-badge"; b.hidden = navigator.onLine !== false; b.setAttribute("role", "status");
+  b.textContent = "離線中：顯示上次存下的行程";
+  document.body.appendChild(b);
+  window.addEventListener("offline", ()=> b.hidden = false);
+  window.addEventListener("online", ()=> b.hidden = true);
+})();
 
 // swipe left/right anywhere on the page to switch days (not just via the
 // bottom nav) — ignored while touching a Leaflet map, so map panning still
@@ -1539,6 +1660,7 @@ window.addEventListener("hashchange", ()=> activatePage(pageFromHash()));
 
   target.addEventListener("touchend", (e)=>{
     if(!tracking) return;
+    if(inBoard()){ tracking = false; return; }
     tracking = false;
     const touch = e.changedTouches[0];
     const dx = touch.clientX - startX;
