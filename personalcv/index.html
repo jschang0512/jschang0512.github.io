@@ -733,7 +733,8 @@
     <div class="meta">
       <!-- Looks like plain text: the owner's shortcut to edit this page in Pages CMS -->
       <a id="footer-updated" class="quiet-link" href="https://app.pagescms.org/" rel="nofollow noopener"></a>
-      <span>&copy; <span id="footer-year">{{ cv.footer.updated | slice: 0, 4 }}</span> Chia-Sung (Bruce) Chang · Pharmacoepidemiology &amp; Evidence Synthesis</span>
+      <!-- the name is a quiet way into the conference card (card/) -->
+      <span>&copy; <span id="footer-year">{{ cv.footer.updated | slice: 0, 4 }}</span> <a class="quiet-link" href="card/" rel="nofollow">Chia-Sung (Bruce) Chang</a> · Pharmacoepidemiology &amp; Evidence Synthesis</span>
     </div>
   </div>
 </footer>
