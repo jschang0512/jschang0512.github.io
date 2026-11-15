@@ -256,6 +256,21 @@
   .pills { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
   .pill { font-size: var(--text-sm); color: var(--line); background: var(--tint); border-radius: var(--radius-sm); padding: var(--space-2xs) var(--space-sm); line-height: 1.4; box-shadow: inset 0 0 0 1px var(--wash); }
 
+  /* Today's note: a glazed tile with a cobalt rule, one or two sentences */
+  .tidbit { margin-top: var(--space-2xl); max-width: 46rem; padding: var(--space-md) var(--space-lg) var(--space-lg); border-radius: var(--radius-plaque); background: var(--tint); box-shadow: inset 0 0 0 1px var(--wash); }
+  .tidbit-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2xs) var(--space-sm); }
+  .tidbit-top h3 { font-family: var(--font-serif); font-size: var(--text-md); font-weight: 900; color: var(--line); }
+  .tidbit-meta { font-size: var(--text-sm); color: var(--muted); font-variant-numeric: tabular-nums; }
+  .tidbit-next { margin-left: auto; align-self: center; min-height: 34px; padding: var(--space-2xs) var(--space-sm); border-radius: var(--radius-sm); border: 1px solid var(--wash); background: var(--glaze); font-size: var(--text-sm); font-weight: 700; color: var(--line); white-space: nowrap; transition: border-color var(--dur-micro) var(--ease-out), background-color var(--dur-micro) var(--ease-out); }
+  .tidbit-next:hover { border-color: var(--line); }
+  .tidbit-next:active { background: var(--tint); }
+  .tidbit-body { margin-top: var(--space-sm); max-width: 65ch; color: var(--ink); line-height: 1.75; transition: opacity var(--dur-short) var(--ease-out); }
+  .tidbit-body.is-swapping { opacity: 0; }
+  .tidbit-body strong { font-family: var(--font-serif); font-weight: 900; color: var(--line); margin-right: 0.4em; }
+  .tidbit-link { font-weight: 700; color: var(--line); text-decoration: underline; text-decoration-color: var(--wash); text-underline-offset: 3px; white-space: nowrap; }
+  .tidbit-link:hover { text-decoration-color: var(--line); }
+  @media (pointer: coarse) { .tidbit-next { min-height: 44px; } }
+
   /* Research map: three columns joined by curves; picking a method or area lights its path through the work */
   .about.has-map { grid-template-columns: minmax(0, 1fr); }
   .about.has-map .stack { display: none; }
@@ -285,6 +300,9 @@
   .rmap .node.out.on { border-color: var(--line); background: var(--tint); }
   .rmap .node.chip.on:not([aria-pressed="true"]) { border-color: var(--line); background: var(--tint); }
   .rmap.has-focus .node:not(.on) { opacity: 0.4; }
+  .rmap-more button { display: inline-flex; align-items: center; min-height: 40px; padding: var(--space-xs) var(--space-md); border-radius: var(--radius-sm); border: 1px dashed var(--wash); font-size: var(--text-sm); font-weight: 700; color: var(--line); transition: border-color var(--dur-micro) var(--ease-out), background-color var(--dur-micro) var(--ease-out); }
+  .rmap-more button:hover { border-color: var(--line); }
+  .rmap-more button:active { background: var(--tint); }
   .rmap-status { margin-top: var(--space-md); min-height: 1.65em; font-size: var(--text-sm); font-weight: 700; color: var(--line); }
 
   /* Tools: an inverted panel, white painting on cobalt */
@@ -633,6 +651,14 @@
         </div>
       </div>
     </div>
+    <aside class="tidbit" id="tidbit" aria-labelledby="tidbit-h" hidden>
+      <div class="tidbit-top">
+        <h3 id="tidbit-h"><span class="zh">今日小知識</span><span class="en">Today's note</span><span class="ja">今日のひとこと</span></h3>
+        <span class="tidbit-meta" id="tidbit-meta"></span>
+        <button type="button" class="tidbit-next" id="tidbit-next"><span class="zh">換一則</span><span class="en">Another</span><span class="ja">別の話題</span></button>
+      </div>
+      <p class="tidbit-body" id="tidbit-body" aria-live="polite"></p>
+    </aside>
     <div class="rmap" id="research-map" hidden></div>
     <div class="tools" id="tools">
       <div>
@@ -706,7 +732,7 @@
     <a class="btn primary" id="footer-email" href="mailto:{{ cv.profile.email }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg><span class="zh">寄信聯絡</span><span class="en">Email me</span><span class="ja">メールで連絡</span></a>
     <div class="meta">
       <!-- Looks like plain text: the owner's shortcut to edit this page in Pages CMS -->
-      <a id="footer-updated" class="quiet-link" href="https://app.pagescms.org/jschang0512/jschang0512.github.io/main/content/site" rel="nofollow noopener"></a>
+      <a id="footer-updated" class="quiet-link" href="https://app.pagescms.org/" rel="nofollow noopener"></a>
       <span>&copy; <span id="footer-year">{{ cv.footer.updated | slice: 0, 4 }}</span> Chia-Sung (Bruce) Chang · Pharmacoepidemiology &amp; Evidence Synthesis</span>
     </div>
   </div>
@@ -874,6 +900,36 @@
     return html + '</ol></section></div>';
   }
 
+  /* ---------- Today's note: one pharmacy / methods note a day, written in Pages CMS ---------- */
+  var TIDBIT = null;
+  var TIDBIT_KIND = { pharmacy: { zh: '臨床藥學', en: 'Clinical pharmacy', ja: '臨床薬学' }, methods: { zh: '流行病學方法', en: 'Epidemiology', ja: '疫学の方法' } };
+  function renderTidbit(c){
+    var items = list(c.tidbits).filter(function(t){ return filled(t.text); }), box = $('tidbit');
+    if(!items.length){ box.hidden = true; return; }
+    // the same note for everyone on the same Taipei day
+    var day = Math.floor((Date.now() + 8 * 3600e3) / 864e5);
+    TIDBIT = { items: items, i: day % items.length };
+    $('tidbit-next').hidden = items.length < 2;
+    showTidbit();
+    box.hidden = false;
+  }
+  function showTidbit(){
+    var t = TIDBIT.items[TIDBIT.i], now = new Date(Date.now() + 8 * 3600e3);
+    var date = (now.getUTCMonth() + 1) + '/' + now.getUTCDate();
+    $('tidbit-meta').innerHTML = (TIDBIT_KIND[t.kind] ? tr(TIDBIT_KIND[t.kind]) + ' · ' : '') + esc(date);
+    var url = safeUrl(t.link) || (/^\/[^\/]/.test(String(t.link || '')) ? String(t.link) : '');
+    $('tidbit-body').innerHTML = (filled(t.term) ? '<strong>' + tr(t.term) + '</strong>' : '') + tr(t.text) +
+      (url ? ' <a class="tidbit-link" href="' + esc(url) + '"' + (/^https?:/i.test(url) && url.indexOf(location.host) < 0 ? ' target="_blank" rel="noopener"' : '') + '><span class="zh">延伸閱讀</span><span class="en">Read more</span><span class="ja">詳しく</span> →</a>' : '');
+  }
+  document.addEventListener('click', function(e){
+    if(!TIDBIT || !e.target.closest('#tidbit-next')) return;
+    TIDBIT.i = (TIDBIT.i + 1) % TIDBIT.items.length;
+    var body = $('tidbit-body');
+    if(REDUCE_MOTION){ showTidbit(); return; }
+    body.classList.add('is-swapping');
+    setTimeout(function(){ showTidbit(); body.classList.remove('is-swapping'); }, 160);
+  });
+
   /* ---------- Research map: methods → outputs → therapeutic areas ---------- */
   // Papers and awards are linked through their "methods" / "areas" fields (names typed in Pages CMS);
   // tools are linked here. A name matches a label in any language, or the start of one ("腫瘤學" → "腫瘤學（CDK4/6 抑制劑）").
@@ -910,31 +966,49 @@
       add({ href: t.href, title: t.title, methods: t.methods, areas: t.areas, meta: '<b>' + tr(t.kind) + '</b>' + (t.sub ? ' · ' + tr(t.sub) : '') });
     });
     list(posts).forEach(function(p){
-      add({ href: String(p.url || '').replace(/^\/+/, ''), title: p.title, plain: true, methods: p.tags, areas: p.tags,
+      add({ href: String(p.url || '').replace(/^\/+/, ''), title: p.title, plain: true, post: true, methods: p.tags, areas: p.tags,
         meta: '<b>' + tr({ zh: '文章', en: 'Post', ja: '記事' }) + '</b> · ' + esc(String(p.date || '').replace(/-/g, '.')) });
     });
     var box = $('research-map');
     if(!O.length || !M.length){ box.hidden = true; document.querySelector('.about').classList.remove('has-map'); MAP = null; return; }
-    MAP = { M: M, A: A, O: O, pinned: null };
+    MAP = { M: M, A: A, O: O, pinned: null, showPosts: false };
+    var nPosts = O.filter(function(o){ return o.post; }).length;
 
     function chip(kind, lab, i){
       return '<li><button type="button" class="node chip" data-k="' + kind + '" data-i="' + i + '" aria-pressed="false">' + tr(lab) + '</button></li>';
     }
     box.innerHTML =
       '<div class="rmap-head"><h3><span class="zh">研究地圖</span><span class="en">Research map</span><span class="ja">研究マップ</span></h3>' +
-      '<p><span class="zh">點一個方法或領域，看看相關的論文、發表與工具</span><span class="en">Pick a method or an area to see the papers, talks and tools that go with it</span><span class="ja">方法や領域を選ぶと、関連する論文・発表・ツールが表示されます</span></p></div>' +
+      '<p><span class="zh">點一個方法或領域，看看相關的論文、發表、工具與文章</span><span class="en">Pick a method or an area to see the papers, talks, tools and posts that go with it</span><span class="ja">方法や領域を選ぶと、関連する論文・発表・ツール・記事が表示されます</span></p></div>' +
       '<div class="rmap-grid" id="rmap-grid"><svg class="rmap-lines" id="rmap-lines" aria-hidden="true"></svg>' +
         '<div class="rmap-col" data-col="m"><h4><span class="zh">方法學</span><span class="en">Methods</span><span class="ja">方法論</span></h4><ul>' + M.map(function(l, i){ return chip('m', l, i); }).join('') + '</ul></div>' +
         '<div class="rmap-col" data-col="o"><h4><span class="zh">研究成果</span><span class="en">Work</span><span class="ja">成果</span></h4><ul>' + O.map(function(o, i){
           var title = o.plain ? esc(o.title) : tr(o.title);
-          return '<li><a class="node out" data-k="o" data-i="' + i + '" href="' + esc(o.href) + '"' + (o.plain ? ' title="' + esc(o.title) + '"' : '') + '><span class="t">' + title + '</span><span class="k">' + o.meta + '</span></a></li>';
-        }).join('') + '</ul></div>' +
+          return '<li' + (o.post ? ' class="is-post" hidden' : '') + '><a class="node out" data-k="o" data-i="' + i + '" href="' + esc(o.href) + '"' + (o.plain ? ' title="' + esc(o.title) + '"' : '') + '><span class="t">' + title + '</span><span class="k">' + o.meta + '</span></a></li>';
+        }).join('') +
+        // posts stay folded until a method / area is picked, or the reader asks for all of them
+        (nPosts ? '<li class="rmap-more"><button type="button" id="rmap-more" aria-expanded="false">' +
+          tr({ zh: '＋ 顯示 ' + nPosts + ' 篇相關文章', en: '+ Show ' + nPosts + ' related post' + (nPosts > 1 ? 's' : ''), ja: '＋ 関連記事 ' + nPosts + ' 件を表示' }) + '</button></li>' : '') +
+        '</ul></div>' +
         '<div class="rmap-col" data-col="a"><h4><span class="zh">治療領域</span><span class="en">Therapeutic areas</span><span class="ja">臨床応用領域</span></h4><ul>' + A.map(function(l, i){ return chip('a', l, i); }).join('') + '</ul></div>' +
       '</div><p class="rmap-status" id="rmap-status" aria-live="polite"></p>';
     box.hidden = false;
     document.querySelector('.about').classList.add('has-map');
     bindMap();
     drawMapLines();
+  }
+  // Posts show when the reader opened them all, or when they go with the picked method / area
+  function mapPosts(){
+    var box = $('research-map'), pin = MAP.pinned, rel = pin ? mapRelated(pin.k, pin.i) : null;
+    box.querySelectorAll('li.is-post').forEach(function(li){
+      var j = li.firstChild.dataset.i;
+      li.hidden = !(MAP.showPosts || (rel && rel.o[j]));
+    });
+    var more = $('rmap-more');
+    if(more){
+      more.setAttribute('aria-expanded', String(MAP.showPosts));
+      more.classList.toggle('is-open', MAP.showPosts);
+    }
   }
   // Which nodes and edges go with the focused node
   function mapRelated(k, i){
@@ -976,11 +1050,23 @@
     grid.addEventListener('focusin', function(e){ var n = e.target.closest('.node'); if(n) mapFocus(n.dataset.k, n.dataset.i); });
     grid.addEventListener('focusout', function(e){ if(!grid.contains(e.relatedTarget)) restore(); });
     grid.addEventListener('click', function(e){
+      if(e.target.closest('#rmap-more')){
+        MAP.showPosts = !MAP.showPosts;
+        var more = $('rmap-more'), n = MAP.O.filter(function(o){ return o.post; }).length;
+        more.innerHTML = MAP.showPosts
+          ? tr({ zh: '－ 收起文章', en: '− Hide posts', ja: '－ 記事を閉じる' })
+          : tr({ zh: '＋ 顯示 ' + n + ' 篇相關文章', en: '+ Show ' + n + ' related post' + (n > 1 ? 's' : ''), ja: '＋ 関連記事 ' + n + ' 件を表示' });
+        mapPosts();
+        drawMapLines();
+        return;
+      }
       var b = e.target.closest('button.node');
       if(!b) return;
       var k = b.dataset.k, i = +b.dataset.i, same = MAP.pinned && MAP.pinned.k === k && MAP.pinned.i === i;
       MAP.pinned = same ? null : { k: k, i: i };
       box.querySelectorAll('button.node').forEach(function(x){ x.setAttribute('aria-pressed', String(!same && x === b)); });
+      mapPosts();
+      drawMapLines();
       restore();
       mapStatus();
     });
@@ -996,7 +1082,7 @@
     if(!MAP || !svg) return;
     if(getComputedStyle(svg).display === 'none'){ svg.innerHTML = ''; return; }
     var g = $('rmap-grid').getBoundingClientRect(), box = $('research-map');
-    function rect(k, i){ var n = box.querySelector('.node[data-k="' + k + '"][data-i="' + i + '"]'); return n ? n.getBoundingClientRect() : null; }
+    function rect(k, i){ var n = box.querySelector('.node[data-k="' + k + '"][data-i="' + i + '"]'), r = n && n.getBoundingClientRect(); return r && r.width ? r : null; }
     function curve(a, b){
       var x1 = a.right - g.left, y1 = a.top + a.height / 2 - g.top, x2 = b.left - g.left, y2 = b.top + b.height / 2 - g.top, mx = (x1 + x2) / 2;
       return 'M' + x1.toFixed(1) + ' ' + y1.toFixed(1) + 'C' + mx.toFixed(1) + ' ' + y1.toFixed(1) + ' ' + mx.toFixed(1) + ' ' + y2.toFixed(1) + ' ' + x2.toFixed(1) + ' ' + y2.toFixed(1);
@@ -1060,6 +1146,7 @@
     $('research-areas').innerHTML = list(r.areas).map(function(m){ return '<span class="pill">' + tr(m) + '</span>'; }).join('');
 
     $('cv-body').innerHTML = renderTimeline(c);
+    renderTidbit(c);
     renderMap(c, []);
 
     $('publication-list').innerHTML = list(c.publications).map(function(pub, i){
@@ -1126,10 +1213,14 @@
         .then(function(res){ return res.ok ? res.json() : []; })
         .then(function(posts){
           renderLatest(posts);
-          if(list(posts).length) renderMap(CONTENT, posts); // tagged posts join the research map
           revealAll('#blog .sec-head, .latest-card', true);
           initScrollSpy();
         })
+        .catch(function(){})
+        .then(function(){ return fetch('posts-all.json', { cache: 'no-cache' }); })
+        .then(function(res){ return res && res.ok ? res.json() : []; })
+        // every post whose tags name a method or an area joins the research map
+        .then(function(all){ if(list(all).length) renderMap(CONTENT, all); })
         .catch(function(){});
     })
     .catch(function(err){ console.error('content.json', err); showLoadError(); });

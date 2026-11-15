@@ -152,6 +152,53 @@ content:
               - name: ja
                 label: "日本語"
                 type: string
+      - name: tidbits
+        label: "今日小知識"
+        description: "CV「研究方向」下方每天輪流顯示一則；清單是空的就不顯示"
+        type: object
+        list:
+          collapsible:
+            collapsed: true
+            summary: "{index}. {kind}"
+        fields:
+          - name: kind
+            label: "主題"
+            type: select
+            options:
+              values:
+                - name: pharmacy
+                  label: "臨床藥學"
+                - name: methods
+                  label: "流行病學方法"
+          - name: term
+            label: "名詞（粗體顯示在最前面）"
+            type: object
+            fields:
+              - name: zh
+                label: "中文"
+                type: string
+              - name: en
+                label: English
+                type: string
+              - name: ja
+                label: "日本語"
+                type: string
+          - name: text
+            label: "說明（一兩句話）"
+            type: object
+            fields:
+              - name: zh
+                label: "中文"
+                type: text
+              - name: en
+                label: English
+                type: text
+              - name: ja
+                label: "日本語"
+                type: text
+          - name: link
+            label: "延伸閱讀連結（選填，文章、論文或外部網址）"
+            type: string
       - name: education
         label: "學歷"
         type: object
