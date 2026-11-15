@@ -345,6 +345,16 @@ content:
           - name: link
             label: "論文連結（選填，例如 DOI 網址）"
             type: string
+          - name: methods
+            label: "研究地圖：相關方法學（選填）"
+            description: "填「研究方向 › 方法學標籤」裡的名稱，例如 Meta-Analysis；CV 的研究地圖會把它們連起來"
+            type: string
+            list: true
+          - name: areas
+            label: "研究地圖：相關治療領域（選填）"
+            description: "填「治療領域標籤」的名稱或開頭，例如 腫瘤學"
+            type: string
+            list: true
       - name: awards
         label: "獎項與學術活動"
         type: object
@@ -404,6 +414,16 @@ content:
               - name: ja
                 label: "日本語"
                 type: string
+          - name: methods
+            label: "研究地圖：相關方法學（選填）"
+            description: "填「研究方向 › 方法學標籤」裡的名稱，例如 Meta-Analysis；CV 的研究地圖會把它們連起來"
+            type: string
+            list: true
+          - name: areas
+            label: "研究地圖：相關治療領域（選填）"
+            description: "填「治療領域標籤」的名稱或開頭，例如 腫瘤學"
+            type: string
+            list: true
       - name: sections
         label: "區塊標題與選單"
         type: object
@@ -719,6 +739,10 @@ content:
               label: "活動紀錄"
             - name: essays
               label: "隨筆"
+      - name: series
+        label: "系列（選填）"
+        description: "同一系列的文章填一模一樣的名稱，例如 NMA 入門；文章上方會出現系列目錄，文末的上一篇／下一篇會照系列順序（依發布時間）"
+        type: string
       - name: tags
         label: "標籤"
         type: string

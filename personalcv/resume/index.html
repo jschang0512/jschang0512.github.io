@@ -1,0 +1,303 @@
+---
+sitemap: false
+---
+<!DOCTYPE html>
+<html lang="zh-Hant" data-lang="zh" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>張家菘 Chia-Sung (Bruce) Chang — CV</title>
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://jschang0512.github.io/personalcv/">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<script src="/personalcv/assets/cv-data.js?v=20261116"></script>
+<script>
+  document.documentElement.setAttribute('data-theme', CV.initialTheme());
+  CV.applyLang(CV.initialLang());
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@800&family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  /* One-page résumé printed from content.json. The sheet is always tin-glaze paper with cobalt ink, in both themes;
+   * only the desk around it follows dark mode. */
+  :root {
+    --desk:      oklch(94.5% 0.014 255);
+    --desk-ink:  oklch(25% 0.075 266);
+    --desk-line: oklch(80% 0.075 262);
+    --paper:     oklch(99% 0.004 95);
+    --ink:       oklch(25% 0.060 266);
+    --muted:     oklch(42% 0.050 266);
+    --cobalt:    oklch(38% 0.170 266);
+    --cobalt-hover: oklch(46% 0.190 266);
+    --on-cobalt: oklch(98% 0.006 95);
+    --rule:      oklch(84% 0.050 262);
+    --tint:      oklch(95% 0.022 262);
+    --focus:     oklch(46% 0.200 266);
+    --shadow:    oklch(30% 0.080 266 / 0.16);
+
+    --font-display: "Cinzel", "Noto Serif TC", "Noto Serif JP", ui-serif, Georgia, serif;
+    --font-serif:   "Noto Serif TC", "Noto Serif JP", ui-serif, Georgia, serif;
+    --font-body:    "Noto Sans TC", "Noto Sans JP", "PingFang TC", "Microsoft JhengHei", ui-sans-serif, system-ui, sans-serif;
+
+    --space-2xs: 0.25rem; --space-xs: 0.5rem; --space-sm: 0.75rem; --space-md: 1rem; --space-lg: 1.5rem; --space-xl: 2.5rem;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --dur-micro: 120ms;
+    --radius: 6px;
+    /* the sheet's own type scale, in pt so screen and paper match; fit() steps --fs down if the page overflows */
+    --fs: 9.6pt;
+  }
+  :root:not([data-theme="light"]) { color-scheme: light; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --desk: oklch(20% 0.055 266); --desk-ink: oklch(95% 0.012 250); --desk-line: oklch(38% 0.090 266); --shadow: oklch(5% 0.02 266 / 0.5); --focus: oklch(84% 0.120 82); }
+  }
+  :root[data-theme="dark"] { --desk: oklch(20% 0.055 266); --desk-ink: oklch(95% 0.012 250); --desk-line: oklch(38% 0.090 266); --shadow: oklch(5% 0.02 266 / 0.5); --focus: oklch(84% 0.120 82); }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { overflow-x: clip; }
+  body { background: var(--desk); color: var(--desk-ink); font-family: var(--font-body); -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  ::selection { background: var(--tint); color: var(--ink); }
+  .zh, .en, .ja { display: none; }
+  html[data-lang="zh"] .zh, html[data-lang="en"] .en, html[data-lang="ja"] .ja { display: inline; }
+
+  /* ---------- Toolbar (screen only) ---------- */
+  .tools { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: var(--space-sm); flex-wrap: wrap;
+    max-width: calc(210mm + 2 * var(--space-lg)); margin-inline: auto; padding: var(--space-md) var(--space-lg);
+    background: var(--desk); border-bottom: 1px solid var(--desk-line); }
+  .back { display: inline-flex; align-items: center; gap: var(--space-2xs); font-size: 0.875rem; font-weight: 700; white-space: nowrap; padding: var(--space-xs) var(--space-2xs); }
+  .back svg { width: 16px; height: 16px; fill: currentColor; }
+  .back:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .langs { margin-left: auto; display: inline-flex; gap: var(--space-2xs); }
+  .langs button, .print { height: 36px; padding-inline: var(--space-sm); border-radius: 4px; border: 1px solid var(--desk-line); font-size: 0.8125rem; white-space: nowrap;
+    transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out); }
+  .langs button:hover { border-color: currentColor; }
+  .langs button[aria-pressed="true"] { background: var(--desk-ink); border-color: var(--desk-ink); color: var(--desk); font-weight: 700; }
+  .print { display: inline-flex; align-items: center; gap: var(--space-xs); height: 36px; padding-inline: var(--space-md); background: var(--cobalt); border-color: var(--cobalt); color: var(--on-cobalt); font-weight: 700; }
+  .print:hover { background: var(--cobalt-hover); border-color: var(--cobalt-hover); }
+  .print:active { transform: translateY(1px); }
+  .print svg { width: 16px; height: 16px; fill: currentColor; }
+  .hint { width: 100%; font-size: 0.75rem; color: var(--desk-ink); opacity: 0.8; }
+
+  /* ---------- The sheet: A4 ---------- */
+  .desk { padding: var(--space-lg) var(--space-lg) var(--space-xl); }
+  .sheet { width: 210mm; min-height: 297mm; margin-inline: auto; background: var(--paper); color: var(--ink);
+    padding: 15mm 16mm 12mm; box-shadow: 0 8px 28px var(--shadow), 0 1px 3px var(--shadow);
+    font-size: var(--fs); line-height: 1.5; display: flex; flex-direction: column; }
+  /* phones: the sheet scales down as a whole so the print layout is what you see */
+  .fit-wrap { width: 210mm; transform-origin: top left; }
+
+  .head { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4mm 8mm; align-items: end; padding-bottom: 3.5mm; border-bottom: 2px solid var(--cobalt); }
+  .name { font-family: var(--font-serif); font-weight: 900; font-size: 2.6em; line-height: 1.05; color: var(--cobalt); letter-spacing: 0.08em; }
+  html[data-lang="en"] .name { font-family: var(--font-display); font-weight: 800; letter-spacing: 0.02em; font-size: 2.3em; }
+  .alt { margin-top: 1.2mm; font-family: var(--font-serif); font-weight: 700; font-size: 1.15em; color: var(--ink); }
+  .badge { margin-top: 0.6mm; color: var(--muted); }
+  .contact { list-style: none; display: grid; gap: 0.6mm; text-align: right; font-size: 0.95em; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .contact b { font-weight: 700; color: var(--cobalt); margin-right: 1.5mm; font-size: 0.85em; letter-spacing: 0.04em; }
+  .summary { margin-top: 4mm; color: var(--ink); text-wrap: pretty; }
+  .summary strong { color: var(--cobalt); font-weight: 700; }
+
+  .sec { margin-top: 5mm; display: grid; grid-template-columns: 27mm minmax(0, 1fr); column-gap: 5mm; }
+  .sec > h2 { font-family: var(--font-serif); font-size: 1.12em; font-weight: 900; line-height: 1.35; color: var(--cobalt); padding-top: 1.6mm; border-top: 1px solid var(--cobalt); letter-spacing: 0.04em; }
+  html[data-lang="en"] .sec > h2 { letter-spacing: 0.01em; }
+  .items { border-top: 1px solid var(--rule); }
+  .it { display: grid; grid-template-columns: 26mm minmax(0, 1fr); column-gap: 4mm; padding-block: 1.6mm; break-inside: avoid; }
+  .it + .it { border-top: 1px dotted var(--rule); }
+  .it .d { font-weight: 700; color: var(--cobalt); font-variant-numeric: tabular-nums lining-nums; font-size: 0.92em; padding-top: 0.15em; }
+  .it .t { font-weight: 700; }
+  .it .s { color: var(--muted); }
+  .it .n { color: var(--muted); font-size: 0.92em; }
+  .it .seal { display: inline-block; margin-top: 0.6mm; font-size: 0.88em; color: var(--cobalt); border: 1px solid var(--rule); border-radius: 999px; padding: 0 2.2mm; }
+  /* publications: a numbered reference list */
+  .refs { list-style: none; border-top: 1px solid var(--rule); counter-reset: ref; }
+  .refs li { counter-increment: ref; display: grid; grid-template-columns: 6mm minmax(0, 1fr); padding-block: 1.6mm; break-inside: avoid; }
+  .refs li + li { border-top: 1px dotted var(--rule); }
+  .refs li::before { content: counter(ref) "."; font-weight: 700; color: var(--cobalt); font-variant-numeric: tabular-nums; }
+  .refs .au strong { color: var(--ink); font-weight: 700; text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 2px; }
+  .refs .ti { font-weight: 700; }
+  .refs .jo { font-style: italic; }
+  .refs .meta { color: var(--muted); }
+  .refs .st { font-style: normal; font-weight: 700; color: var(--cobalt); }
+  .refs a { color: var(--cobalt); word-break: break-all; }
+  .skills { border-top: 1px solid var(--rule); padding-top: 1.6mm; display: grid; gap: 1mm; }
+  .skills b { color: var(--cobalt); margin-right: 2mm; }
+
+  .foot { margin-top: auto; padding-top: 5mm; display: flex; justify-content: space-between; gap: 4mm; flex-wrap: wrap; font-size: 0.85em; color: var(--muted); }
+  .foot::before { content: ""; flex-basis: 100%; height: 1px; background: var(--rule); margin-bottom: 1.6mm; }
+
+  .msg { max-width: 40rem; margin: var(--space-xl) auto; padding: var(--space-md) var(--space-lg); border-radius: var(--radius); background: var(--paper); color: var(--ink); font-weight: 700; }
+  [hidden] { display: none !important; }
+
+  @media (max-width: 640px) {
+    .tools { padding-inline: var(--space-md); }
+    .langs { margin-left: 0; }
+    .print { margin-left: auto; }
+    .desk { padding-inline: var(--space-md); }
+  }
+  @media (pointer: coarse) { .langs button, .print { height: 44px; } }
+  @media (prefers-reduced-motion: reduce) { * { transition-duration: 1ms !important; } }
+
+  @page { size: A4; margin: 0; }
+  @media print {
+    html, body { background: none; }
+    .tools, .msg { display: none !important; }
+    .desk { padding: 0; }
+    .fit-wrap { transform: none !important; width: auto; height: auto !important; }
+    .sheet { box-shadow: none; margin: 0; width: 210mm; height: 297mm; min-height: 0; overflow: hidden; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<div class="tools">
+  <a class="back" href="/personalcv/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg><span class="zh">回到 CV</span><span class="en">Back to CV</span><span class="ja">CV に戻る</span></a>
+  <div class="langs" role="group" aria-label="Language">
+    <button type="button" data-lang="zh" lang="zh-Hant">中文</button>
+    <button type="button" data-lang="en" lang="en">English</button>
+    <button type="button" data-lang="ja" lang="ja">日本語</button>
+  </div>
+  <button type="button" class="print" id="btn-print"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg><span class="zh">下載 PDF</span><span class="en">Download PDF</span><span class="ja">PDF を保存</span></button>
+  <p class="hint"><span class="zh">在列印視窗選「另存為 PDF」，紙張 A4、邊界「無」。</span><span class="en">In the print dialog choose “Save as PDF”, paper A4, margins “None”.</span><span class="ja">印刷画面で「PDF に保存」、用紙 A4、余白「なし」を選んでください。</span></p>
+</div>
+
+<div class="desk">
+  <div class="fit-wrap" id="fit-wrap"><article class="sheet" id="sheet" aria-live="polite"></article></div>
+  <p class="msg" id="msg" hidden><span class="zh">履歷內容載入失敗，請重新整理頁面。</span><span class="en">Could not load the CV. Please refresh the page.</span><span class="ja">履歴書を読み込めませんでした。ページを再読み込みしてください。</span></p>
+</div>
+
+<script>
+  var DATA = null, LANG = document.documentElement.getAttribute('data-lang');
+  var L = {
+    zh: { edu: '學歷', exp: '經歷', pubs: '學術著作', awards: '獎項與學術活動', skills: '研究專長', methods: '方法學', areas: '應用領域', updated: '更新於 ', file: '張家菘_履歷' },
+    en: { edu: 'Education', exp: 'Experience', pubs: 'Publications', awards: 'Awards & Activities', skills: 'Research', methods: 'Methods', areas: 'Areas', updated: 'Updated ', file: 'Chia-Sung_Chang_CV' },
+    ja: { edu: '学歴', exp: '職歴', pubs: '業績', awards: '受賞・学術活動', skills: '研究分野', methods: '方法論', areas: '対象領域', updated: '更新日：', file: '張家菘_履歴書' }
+  };
+  function p(v){ return CV.esc(CV.pick(v, LANG)); }
+
+  function rows(items){
+    return '<div class="items">' + CV.list(items).map(function(it){
+      return '<div class="it"><span class="d">' + p(it.dates) + '</span><div>' +
+        '<div class="t">' + p(it.title) + '</div>' +
+        '<div class="s">' + p(it.institution) + '</div>' +
+        (CV.pick(it.note, LANG) ? '<div class="n">' + p(it.note) + '</div>' : '') +
+        (CV.pick(it.certificate, LANG) ? '<span class="seal">' + p(it.certificate) + '</span>' : '') +
+      '</div></div>';
+    }).join('') + '</div>';
+  }
+  function sec(title, body){ return '<section class="sec"><h2>' + CV.esc(title) + '</h2><div>' + body + '</div></section>'; }
+
+  function render(){
+    var c = DATA, t = L[LANG], pr = c.profile || {}, r = c.research || {};
+    var contact = [];
+    if(pr.email) contact.push('<li><a href="mailto:' + CV.esc(pr.email) + '">' + CV.esc(pr.email) + '</a></li>');
+    if(CV.safeUrl(pr.orcid)) contact.push('<li><b>ORCID</b><a href="' + CV.esc(pr.orcid) + '">' + CV.esc(CV.shortUrl(pr.orcid).replace(/^orcid\.org\//, '')) + '</a></li>');
+    if(CV.safeUrl(pr.linkedin)) contact.push('<li><b>LinkedIn</b><a href="' + CV.esc(pr.linkedin) + '">' + CV.esc(CV.shortUrl(pr.linkedin).replace(/^linkedin\.com\/in\//, '')) + '</a></li>');
+    contact.push('<li><a href="https://jschang0512.github.io/personalcv/">jschang0512.github.io/personalcv</a></li>');
+
+    // English shows the romanised name only; zh/ja put the romanised name under the Han one
+    var nameMain = CV.pick(pr.name, LANG), nameAlt = LANG === 'en' ? '' : CV.pick(pr.name, 'en');
+    var html = '<header class="head"><div>' +
+        '<h1 class="name">' + CV.esc(nameMain) + '</h1>' +
+        '<div class="alt">' + (nameAlt ? CV.esc(nameAlt) + ' · ' : '') + p(pr.subtitle) + '</div>' +
+        (CV.pick(pr.badge, LANG) ? '<div class="badge">' + p(pr.badge) + '</div>' : '') +
+      '</div><ul class="contact">' + contact.join('') + '</ul></header>';
+    if(CV.pick(r.summary, LANG)) html += '<p class="summary">' + CV.md(CV.pick(r.summary, LANG)) + '</p>';
+    if(CV.list(c.education).length) html += sec(t.edu, rows(c.education));
+    if(CV.list(c.experience).length) html += sec(t.exp, rows(c.experience));
+
+    var pubs = CV.list(c.publications);
+    if(pubs.length){
+      html += sec(t.pubs, '<ol class="refs">' + pubs.map(function(pub){
+        var st = CV.STATUS[pub.status], url = CV.safeUrl(pub.link);
+        var au = pub.authors ? '<span class="au">' + CV.esc(pub.authors).replace(/Chia-Sung Chang/g, '<strong>Chia-Sung Chang</strong>') + '.</span> ' : '';
+        var tail = [];
+        if(pub.year) tail.push(CV.esc(pub.year));
+        if(CV.pick(pub.role, LANG)) tail.push(p(pub.role));
+        return '<li><div>' + au + '<span class="ti">' + CV.esc(pub.title) + '.</span> ' +
+          '<span class="jo">' + CV.esc(pub.journal) + '</span>' +
+          (tail.length ? '<span class="meta">. ' + tail.join(' · ') + '</span>' : '') +
+          (pub.status && pub.status !== 'published' && st ? ' <span class="st">(' + CV.esc(st[LANG]) + ')</span>' : '') +
+          (url ? '<div><a href="' + CV.esc(url) + '">' + CV.esc(url.replace(/^https?:\/\/(dx\.)?doi\.org\//, 'doi:')) + '</a></div>' : '') +
+        '</div></li>';
+      }).join('') + '</ol>');
+    }
+    var awards = CV.list(c.awards);
+    if(awards.length){
+      html += sec(t.awards, '<div class="items">' + awards.map(function(a){
+        // the kicker reads "Award · Spring 2026": the date goes in the date column, the kind in front of the detail
+        var parts = CV.pick(a.kicker, LANG).split(/\s*[·・]\s*/).filter(Boolean), kind = '', when = '';
+        if(parts.length > 1){ kind = parts[0]; when = parts.slice(1).join(' '); }
+        else if(/\d/.test(parts[0] || '')){ when = parts[0] || ''; } else { kind = parts[0] || ''; }
+        var detail = [kind, CV.pick(a.detail, LANG)].filter(Boolean).map(CV.esc).join(' · ');
+        return '<div class="it"><span class="d">' + CV.esc(when) + '</span><div><div class="t">' + p(a.title) + '</div>' +
+          (detail ? '<div class="s">' + detail + '</div>' : '') + '</div></div>';
+      }).join('') + '</div>');
+    }
+    var meth = CV.list(r.methods).map(p).filter(Boolean), areas = CV.list(r.areas).map(p).filter(Boolean);
+    if(meth.length || areas.length){
+      html += sec(t.skills, '<div class="skills">' +
+        (meth.length ? '<div><b>' + t.methods + '</b>' + meth.join(' · ') + '</div>' : '') +
+        (areas.length ? '<div><b>' + t.areas + '</b>' + areas.join(' · ') + '</div>' : '') + '</div>');
+    }
+    var upd = (c.footer || {}).updated;
+    html += '<footer class="foot"><span>' + CV.esc(CV.pick(pr.name, 'en')) + ' · CV</span><span>' + (upd ? t.updated + CV.esc(CV.fmtDate(upd, LANG)) : '') + '</span></footer>';
+
+    var sheet = document.getElementById('sheet');
+    sheet.innerHTML = html;
+    fit();
+    document.title = t.file.replace(/_/g, ' ');
+    document.querySelectorAll('.langs button').forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === LANG)); });
+  }
+
+  // Keep it to one A4 page: step the type down until the content fits 297mm
+  function fit(){
+    var sheet = document.getElementById('sheet');
+    var size = 9.6;
+    sheet.style.setProperty('--fs', size + 'pt');
+    var limit = sheet.offsetWidth * 297 / 210; // layout size: the sheet is laid out at true A4 width even when scaled
+    sheet.style.minHeight = '0';
+    while(sheet.scrollHeight > limit + 1 && size > 7.6){
+      size = Math.round((size - 0.2) * 10) / 10;
+      sheet.style.setProperty('--fs', size + 'pt');
+    }
+    sheet.style.minHeight = '';
+    scaleToScreen();
+  }
+  // Narrow screens: shrink the whole sheet to the screen width instead of reflowing it
+  function scaleToScreen(){
+    var wrap = document.getElementById('fit-wrap'), sheet = document.getElementById('sheet');
+    wrap.style.transform = ''; wrap.style.height = '';
+    var avail = wrap.parentNode.clientWidth - parseFloat(getComputedStyle(wrap.parentNode).paddingLeft) - parseFloat(getComputedStyle(wrap.parentNode).paddingRight);
+    var w = sheet.offsetWidth;
+    if(avail < w){
+      var s = avail / w;
+      wrap.style.transform = 'scale(' + s + ')';
+      wrap.style.height = (sheet.offsetHeight * s) + 'px';
+    } else {
+      wrap.style.marginInline = 'auto';
+    }
+  }
+
+  document.querySelectorAll('.langs button').forEach(function(b){
+    b.addEventListener('click', function(){
+      LANG = CV.applyLang(b.getAttribute('data-lang'), true);
+      if(DATA) render();
+    });
+  });
+  document.getElementById('btn-print').addEventListener('click', function(){ window.print(); });
+  window.addEventListener('resize', function(){ if(DATA) scaleToScreen(); });
+  // print from the browser menu as well: undo the phone scaling for paper
+  window.addEventListener('beforeprint', function(){ var w = document.getElementById('fit-wrap'); w.style.transform = ''; w.style.height = ''; });
+  window.addEventListener('afterprint', function(){ if(DATA) scaleToScreen(); });
+
+  CV.load().then(function(c){
+    DATA = c;
+    render();
+    if(document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ fit(); });
+  }).catch(function(e){ console.error(e); document.getElementById('msg').hidden = false; });
+</script>
+</body>
+</html>

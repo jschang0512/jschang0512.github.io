@@ -47,6 +47,22 @@
   <p class="notice"><span class="zh">本文原發表於</span><span class="en">Originally published at</span><span class="ja">初出：</span> <a href="{{ page.canonical_url }}" target="_blank" rel="noopener">{{ page.canonical_url | split: '/' | slice: 2 | first }}</a></p>
   {% endif %}
 
+  {%- comment -%} Series: posts sharing the same "series" name, oldest first {%- endcomment -%}
+  {% assign s_idx = -1 %}
+  {% if page.series and page.series != "" %}
+  {% assign series_posts = site.posts | where: "series", page.series | sort: "date" %}
+  {% for p in series_posts %}{% if p.url == page.url %}{% assign s_idx = forloop.index0 %}{% endif %}{% endfor %}
+  {% if series_posts.size > 1 and s_idx >= 0 %}
+  <details class="series" id="series">
+    <summary><span class="series-name"><span class="zh">系列</span><span class="en">Series</span><span class="ja">シリーズ</span>「{{ page.series }}」</span><span class="series-pos"><span class="zh">第 {{ s_idx | plus: 1 }} / {{ series_posts.size }} 篇</span><span class="en">Part {{ s_idx | plus: 1 }} of {{ series_posts.size }}</span><span class="ja">全 {{ series_posts.size }} 回中 第 {{ s_idx | plus: 1 }} 回</span></span></summary>
+    <ol>
+      {% for p in series_posts %}<li>{% if forloop.index0 == s_idx %}<span aria-current="page">{{ p.title }}</span>{% else %}<a href="{{ p.url | relative_url }}">{{ p.title }}</a>{% endif %}</li>
+      {% endfor %}
+    </ol>
+  </details>
+  {% else %}{% assign s_idx = -1 %}{% endif %}
+  {% endif %}
+
   {% if page.toc %}
   <details class="toc" id="toc" open>
     <summary><span class="zh">目錄</span><span class="en">Contents</span><span class="ja">目次</span></summary>
@@ -97,13 +113,33 @@
     </div>
   </div>
 
-  {% if page.previous or page.next %}
-  <nav class="pager" aria-label="More posts">
-    {% if page.previous %}
-    <a class="prev" href="{{ page.previous.url | relative_url }}"><small><span class="zh">上一篇</span><span class="en">Previous</span><span class="ja">前の記事</span></small><span class="t">{{ page.previous.title }}</span></a>
+  {%- comment -%}
+    Previous / next: within the series when the post is part of one, otherwise within its category;
+    when that leaves nothing (only post in its category), across all posts (Jekyll's page.previous / page.next).
+  {%- endcomment -%}
+  {% assign pg_prev = nil %}{% assign pg_next = nil %}{% assign pg_ctx = "" %}
+  {% if s_idx >= 0 %}
+    {% assign pg_ctx = "series" %}
+    {% if s_idx > 0 %}{% assign i = s_idx | minus: 1 %}{% assign pg_prev = series_posts[i] %}{% endif %}
+    {% assign i = s_idx | plus: 1 %}{% if i < series_posts.size %}{% assign pg_next = series_posts[i] %}{% endif %}
+  {% elsif page.category and page.category != "" %}
+    {% assign pg_ctx = "category" %}
+    {% assign cat_posts = site.posts | where: "category", page.category %}
+    {% assign c_idx = -1 %}
+    {% for p in cat_posts %}{% if p.url == page.url %}{% assign c_idx = forloop.index0 %}{% endif %}{% endfor %}
+    {% if c_idx >= 0 %}
+      {% assign i = c_idx | plus: 1 %}{% if i < cat_posts.size %}{% assign pg_prev = cat_posts[i] %}{% endif %}
+      {% if c_idx > 0 %}{% assign i = c_idx | minus: 1 %}{% assign pg_next = cat_posts[i] %}{% endif %}
     {% endif %}
-    {% if page.next %}
-    <a class="next" href="{{ page.next.url | relative_url }}"><small><span class="zh">下一篇</span><span class="en">Next</span><span class="ja">次の記事</span></small><span class="t">{{ page.next.title }}</span></a>
+  {% endif %}
+  {% unless pg_prev or pg_next %}{% assign pg_ctx = "" %}{% assign pg_prev = page.previous %}{% assign pg_next = page.next %}{% endunless %}
+  {% if pg_prev or pg_next %}
+  <nav class="pager" aria-label="More posts">
+    {% if pg_prev %}
+    <a class="prev" href="{{ pg_prev.url | relative_url }}"><small><span class="zh">上一篇</span><span class="en">Previous</span><span class="ja">前の記事</span>{% if pg_ctx == "series" %} · <span class="zh">本系列</span><span class="en">this series</span><span class="ja">このシリーズ</span>{% elsif pg_ctx == "category" %} · {% include category-name.html key=page.category %}{% endif %}</small><span class="t">{{ pg_prev.title }}</span></a>
+    {% endif %}
+    {% if pg_next %}
+    <a class="next" href="{{ pg_next.url | relative_url }}"><small><span class="zh">下一篇</span><span class="en">Next</span><span class="ja">次の記事</span>{% if pg_ctx == "series" %} · <span class="zh">本系列</span><span class="en">this series</span><span class="ja">このシリーズ</span>{% elsif pg_ctx == "category" %} · {% include category-name.html key=page.category %}{% endif %}</small><span class="t">{{ pg_next.title }}</span></a>
     {% endif %}
   </nav>
   {% endif %}

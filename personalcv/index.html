@@ -206,7 +206,7 @@
   .hero-main .tags { display: none; }
   .hero .creds { margin-top: var(--space-md); padding-block: var(--space-sm); font-size: var(--text-sm); line-height: 1.5; }
   /* Stage: the cut-out portrait in front of a tiled cobalt medallion */
-  .stage { grid-area: stage; justify-self: center; position: relative; width: min(100%, 470px); aspect-ratio: 1 / 1.08; min-height: 320px; margin-top: calc(var(--name) * -0.55); }
+  .stage { grid-area: stage; justify-self: center; position: relative; width: min(100%, 470px); aspect-ratio: 1 / 1.08; min-height: 320px; margin-top: calc(var(--name) * -0.22); }
   .medallion { position: absolute; z-index: 0; left: 50%; bottom: 7%; width: 86%; aspect-ratio: 1; transform: translateX(-50%); border-radius: 50%; background: var(--band); overflow: hidden; box-shadow: 0 0 0 10px var(--glaze-2), 0 0 0 11px var(--line); }
   .medallion::before { content: ""; position: absolute; inset: 0; background: var(--band-line); -webkit-mask: var(--m-tile) center / 58px 58px; mask: var(--m-tile) center / 58px 58px; }
   .stage img { position: absolute; z-index: 2; left: 50%; bottom: 0; width: 112%; height: auto; aspect-ratio: 1; transform: translateX(-50%); object-fit: contain; object-position: bottom; }
@@ -255,6 +255,37 @@
   .card h3 { font-family: var(--font-serif); font-size: var(--text-base); font-weight: 700; letter-spacing: 0.02em; color: var(--line); margin-bottom: var(--space-xs); }
   .pills { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
   .pill { font-size: var(--text-sm); color: var(--line); background: var(--tint); border-radius: var(--radius-sm); padding: var(--space-2xs) var(--space-sm); line-height: 1.4; box-shadow: inset 0 0 0 1px var(--wash); }
+
+  /* Research map: three columns joined by curves; picking a method or area lights its path through the work */
+  .about.has-map { grid-template-columns: minmax(0, 1fr); }
+  .about.has-map .stack { display: none; }
+  .rmap { margin-top: var(--space-2xl); }
+  .rmap-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-2xs) var(--space-lg); margin-bottom: var(--space-lg); }
+  .rmap-head h3 { font-family: var(--font-serif); font-size: var(--text-xl); font-weight: 900; line-height: 1.2; color: var(--line); }
+  .rmap-head p { font-size: var(--text-sm); color: var(--muted); }
+  .rmap-grid { position: relative; display: grid; grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.5fr) minmax(0, 0.85fr); column-gap: clamp(3rem, 7vw, 6.5rem); align-items: center; }
+  .rmap-lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+  .rmap-lines path { fill: none; stroke: var(--wash); stroke-width: 1.5; transition: stroke var(--dur-short) var(--ease-out), opacity var(--dur-short) var(--ease-out); }
+  .rmap.has-focus .rmap-lines path { opacity: 0.35; }
+  .rmap .rmap-lines path.on { stroke: var(--line); stroke-width: 2; opacity: 1; }
+  .rmap-col { position: relative; z-index: 1; min-width: 0; }
+  .rmap-col h4 { font-size: var(--text-sm); font-weight: 700; color: var(--muted); margin-bottom: var(--space-sm); }
+  .rmap-col ul { list-style: none; display: grid; gap: var(--space-sm); }
+  .node { transition: opacity var(--dur-short) var(--ease-out), background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out); }
+  .node.chip { width: 100%; min-height: 40px; padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm); background: var(--glaze); border: 1px solid var(--wash); text-align: left; font-size: var(--text-sm); font-weight: 700; line-height: 1.35; color: var(--line); }
+  .node.chip:hover { border-color: var(--line); }
+  .node.chip:active { background: var(--tint); }
+  .node.chip[aria-pressed="true"] { background: var(--fill); border-color: var(--fill); color: var(--fill-ink); }
+  .node.out { display: grid; gap: var(--space-3xs); padding: var(--space-sm) var(--space-md); border-radius: var(--radius-plaque); background: var(--glaze); border: 1px solid var(--wash); }
+  .node.out:hover { border-color: var(--line); }
+  .node.out .t { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: var(--text-sm); font-weight: 700; line-height: 1.45; color: var(--ink); }
+  .node.out .k { font-size: var(--text-sm); line-height: 1.4; color: var(--muted); }
+  .node.out .k b { font-weight: 700; color: var(--line); }
+  .node.out .k i { font-style: italic; }
+  .rmap .node.out.on { border-color: var(--line); background: var(--tint); }
+  .rmap .node.chip.on:not([aria-pressed="true"]) { border-color: var(--line); background: var(--tint); }
+  .rmap.has-focus .node:not(.on) { opacity: 0.4; }
+  .rmap-status { margin-top: var(--space-md); min-height: 1.65em; font-size: var(--text-sm); font-weight: 700; color: var(--line); }
 
   /* Tools: an inverted panel, white painting on cobalt */
   .tools { position: relative; margin-top: var(--space-2xl); padding: var(--space-xl); border-radius: var(--radius-plaque); background: var(--band); color: var(--band-ink); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: var(--space-lg) var(--space-2xl); }
@@ -336,6 +367,32 @@
   #cv .row::before { content: ""; position: absolute; top: calc(var(--space-sm) + 0.45rem); left: calc(var(--rail) - 6px); width: 12px; height: 12px; border-radius: 50%; background: var(--glaze-2); border: 2px solid var(--line); }
   #cv .row:first-child::before { background: var(--line); }
   #cv .row .seal { background: var(--glaze); }
+
+  /* Timeline: one rail, years on the left, newest at the top. Spans (study, work) get a ring;
+   * outputs (papers, awards) get a small cobalt tile. The rail fills in as you scroll. */
+  .tl { --year: 7.5rem; --gap: var(--space-xl); --rail-x: calc(var(--year) + var(--gap) / 2); position: relative; max-width: 60rem; }
+  .tl-rail { position: absolute; top: var(--space-xs); bottom: var(--space-md); left: calc(var(--rail-x) - 1px); width: 2px; background: var(--wash); }
+  .tl-draw { position: absolute; inset: 0; background: var(--line); transform-origin: 50% 0; transform: scaleY(0); }
+  .tl-year { display: grid; grid-template-columns: var(--year) minmax(0, 1fr); column-gap: var(--gap); }
+  .tl-year + .tl-year { margin-top: var(--space-lg); }
+  .tl-year > h3 { position: sticky; top: 64px; align-self: start; text-align: right; padding-top: var(--space-xs);
+    font-family: var(--font-serif); font-size: var(--text-xl); font-weight: 900; line-height: 1.2; color: var(--line); font-variant-numeric: tabular-nums lining-nums; }
+  .tl-year > ol { list-style: none; }
+  .tl-it { position: relative; display: grid; gap: var(--space-3xs); padding-block: var(--space-sm) var(--space-md); }
+  .tl-it + .tl-it { border-top: 1px solid var(--wash); }
+  .tl-it::before { content: ""; position: absolute; top: calc(var(--space-sm) + 0.5rem); left: calc(var(--gap) / -2 - 6px); width: 12px; height: 12px; border-radius: 50%; background: var(--glaze-2); border: 2px solid var(--line); }
+  .tl-it.is-now::before { background: var(--line); }
+  .tl-it.is-mark::before { left: calc(var(--gap) / -2 - 5px); width: 10px; height: 10px; border: 0; border-radius: 2px; background: var(--line); transform: rotate(45deg); box-shadow: 0 0 0 3px var(--glaze-2); }
+  .tl-t { font-size: var(--text-md); font-weight: 700; line-height: 1.35; color: var(--ink); }
+  .tl-it.is-mark .tl-t { font-size: var(--text-base); line-height: 1.5; max-width: 68ch; }
+  a.tl-t { justify-self: start; text-decoration: underline; text-decoration-color: transparent; text-underline-offset: 3px; text-decoration-thickness: 1px; transition: text-decoration-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out); }
+  a.tl-t:hover { color: var(--line); text-decoration-color: var(--line); }
+  .tl-s { color: var(--muted); }
+  .tl-m { font-size: var(--text-sm); color: var(--muted); }
+  .tl-m b { font-weight: 700; color: var(--line); font-variant-numeric: tabular-nums lining-nums; }
+  .tl-m i { font-style: italic; color: var(--ink); }
+  .tl-n { font-size: var(--text-sm); color: var(--muted); max-width: 68ch; }
+  .tl-it .seal { justify-self: start; margin-top: var(--space-2xs); font-size: var(--text-sm); color: var(--line); padding: var(--space-2xs) var(--space-sm); border-radius: 999px; border: 1px solid var(--wash); line-height: 1.4; background: var(--glaze); }
   .honors { gap: var(--space-md); }
   .honor { border-top: 0; padding: var(--space-lg); border-radius: var(--radius-plaque); background: var(--tint); }
   .honor .ic { background: var(--glaze); }
@@ -399,7 +456,7 @@
     .hero { --name: clamp(3.6rem, 13vw, 7rem); grid-template-columns: minmax(0, 1fr); grid-template-areas: "name" "stage" "main"; justify-items: center; text-align: center; padding-top: var(--space-md); padding-bottom: var(--space-xl); }
     html[data-lang="en"] .hero { --name: clamp(2rem, 7vw, 3.4rem); }
     html[data-lang="en"] .hero h1 { white-space: normal; max-width: 12em; }
-    .stage { width: min(100%, 21rem); aspect-ratio: 1 / 1; min-height: 0; margin-top: calc(var(--name) * -0.7); border-bottom: 1px solid var(--line); }
+    .stage { width: min(100%, 21rem); aspect-ratio: 1 / 1; min-height: 0; margin-top: calc(var(--name) * -0.38); border-bottom: 1px solid var(--line); }
     .stage img { width: 100%; }
     .hero-main { display: flex; flex-direction: column; align-items: center; padding: var(--space-lg) 0 0; max-width: 40rem; }
     .hero-main .cta { order: 1; margin-top: var(--space-md); } .hero-main .pitch { order: 2; } .hero .creds { order: 3; text-align: center; }
@@ -417,6 +474,12 @@
     .bar nav a { flex-shrink: 0; }
     .bar nav.has-more { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 3rem), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 3rem), transparent); }
     .tools, .tool-links { grid-template-columns: minmax(0, 1fr); }
+    /* map without curves: methods, then areas, then the work they lead to */
+    .rmap-grid { grid-template-columns: minmax(0, 1fr); row-gap: var(--space-lg); }
+    .rmap-lines { display: none; }
+    .rmap-col[data-col="m"] { order: 1; } .rmap-col[data-col="a"] { order: 2; } .rmap-col[data-col="o"] { order: 3; }
+    .rmap-col[data-col="m"] ul, .rmap-col[data-col="a"] ul { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+    .rmap-col[data-col="m"] .node.chip, .rmap-col[data-col="a"] .node.chip { width: auto; }
     .about, .two, .honors { grid-template-columns: minmax(0, 1fr); }
     .latest { grid-template-columns: minmax(0, 1fr); }
   }
@@ -440,6 +503,13 @@
     #cv .col > div::before { left: 5px; }
     #cv .row { padding-left: var(--space-lg); }
     #cv .row::before { left: 0; top: calc(var(--space-sm) + 0.3rem); }
+    .tl { --gap: var(--space-lg); --rail-x: 6px; }
+    .tl-year { grid-template-columns: minmax(0, 1fr); }
+    .tl-year > h3 { position: static; text-align: left; padding: 0 0 0 var(--gap); font-size: var(--text-md); }
+    .tl-year > ol { padding-left: var(--gap); }
+    .tl-it::before { left: calc(var(--rail-x) - var(--gap) - 6px); }
+    .tl-it.is-mark::before { left: calc(var(--rail-x) - var(--gap) - 5px); }
+    .tl-t { font-size: var(--text-base); }
     .honor { padding: var(--space-md); }
     .pub { grid-template-columns: 2.5rem minmax(0, 1fr); gap: var(--space-2xs) var(--space-md); }
     .pub .no { width: 2.5rem; font-size: var(--text-base); grid-row: 1 / span 2; }
@@ -452,6 +522,10 @@
   @media (max-width: 360px) {
     .langs button { min-width: 0; font-size: var(--text-sm); }
     .controls { gap: var(--space-2xs); }
+  }
+  /* four icon buttons and three languages don't fit one line on the narrowest phones: languages drop to a second row */
+  @media (max-width: 400px) {
+    .controls { flex-wrap: wrap; justify-content: flex-end; row-gap: var(--space-xs); }
   }
   @media (pointer: coarse) {
     .hero .cta .btn { height: 44px; } .hero .cta .btn.icon { width: 44px; }
@@ -466,6 +540,8 @@
     .closing .mail { border-bottom: 0; }
       .tools, .closing-card { background: none; color: inherit; }
     #cv { background: none; box-shadow: none; }
+    .tl-draw { transform: none !important; }
+    .tl-year > h3 { position: static; }
     section, .pub, .honor { break-inside: avoid; }
   }
 </style>
@@ -489,6 +565,10 @@
       {%- if cv.profile.toolkit %}<a href="{{ cv.profile.toolkit }}" class="nav-ext"><span class="zh">小工具</span><span class="en">Toolkit</span><span class="ja">ツール</span></a>{% endif -%}
     </nav>
     <div class="controls">
+      <a class="ctl" id="btn-resume" href="resume/" aria-label="PDF 履歷">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zM8 13h8v2H8zm0 3h8v2H8zm0-6h3v2H8z"/></svg>
+        <span class="lbl-share"><span class="zh">PDF 履歷</span><span class="en">CV (PDF)</span><span class="ja">履歴書 PDF</span></span>
+      </a>
       <button type="button" class="ctl" id="btn-share" onclick="shareLink()" aria-label="Share">
         <svg viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/></svg>
         <span class="lbl-share"><span class="zh">分享</span><span class="en">Share</span><span class="ja">共有</span></span>
@@ -552,6 +632,7 @@
         </div>
       </div>
     </div>
+    <div class="rmap" id="research-map" hidden></div>
     <div class="tools" id="tools">
       <div>
         <h3><span class="zh">工具與教學</span><span class="en">Tools &amp; Tutorials</span><span class="ja">ツールとチュートリアル</span></h3>
@@ -572,7 +653,8 @@
 
   <section id="cv" class="panel">
     <div class="sec-head" data-section="cv" data-index="02">{% assign s = cv.sections.cv %}<h2>{% include cv-tr.html v=s.title %}</h2>{% if s.subtitle %}<p>{% include cv-tr.html v=s.subtitle %}</p>{% endif %}</div>
-    <div class="two">
+    {%- comment -%} Pre-rendered as two columns for search engines; the script replaces it with the timeline. {%- endcomment -%}
+    <div id="cv-body"><div class="two">
       <div class="col" id="education">
         <h3><span class="zh">學歷</span><span class="en">Education</span><span class="ja">学歴</span></h3>
         <div id="education-list">{% for it in cv.education %}{% include cv-row.html it=it %}{% endfor %}</div>
@@ -581,7 +663,7 @@
         <h3><span class="zh">經歷</span><span class="en">Experience</span><span class="ja">経歴</span></h3>
         <div id="experience-list">{% for it in cv.experience %}{% include cv-row.html it=it %}{% endfor %}</div>
       </div>
-    </div>
+    </div></div>
   </section>
 
   <section id="publications" class="panel">
@@ -720,6 +802,233 @@
     }).join('');
   }
 
+  /* ---------- Timeline: education, experience, publications and awards on one rail, newest first ---------- */
+  // Order comes from the dates already written in each entry ("2025.11 – 至今", "獎項 · 2026 春", year "2025");
+  // a season stands in for a month, and an entry with no year stays in its own section only.
+  var SEASON = [[/春|spring/i, 4], [/夏|暑|summer/i, 7], [/秋|autumn|fall/i, 10], [/冬|winter/i, 12]];
+  function whenOf(v){
+    var best = null;
+    LANGS.some(function(l){
+      var s = pick(v, l), m = /(\d{4})(?:\s*[.\/年-]\s*(\d{1,2})(?!\d))?/.exec(s);
+      if(!m) return false;
+      var mo = m[2] ? +m[2] : 0;
+      if(!mo){ SEASON.some(function(x){ if(x[0].test(s)){ mo = x[1]; return true; } return false; }); }
+      best = { y: +m[1], key: +m[1] * 100 + (mo || 6) };
+      return true;
+    });
+    return best;
+  }
+  var TL_KIND = {
+    edu: { zh: '學歷', en: 'Education', ja: '学歴' },
+    exp: { zh: '經歷', en: 'Experience', ja: '経歴' },
+    pub: { zh: '論文', en: 'Publication', ja: '論文' }
+  };
+  function renderTimeline(c){
+    var items = [], thisYear = new Date().getFullYear();
+    function add(kind, when, html, extra){ if(when){ items.push({ kind: kind, when: when, html: html, cls: extra || '', i: items.length }); } }
+    [['edu', c.education], ['exp', c.experience]].forEach(function(pair){
+      list(pair[1]).forEach(function(it){
+        // ongoing: "至今 / present", "（在學）", or a range that ends this year or later ("2025 – 2027")
+        var d = pick(it.dates, 'zh'), years = d.match(/\d{4}/g) || [];
+        var ongoing = /至今|present|現在|在學|在学/i.test(d + ' ' + pick(it.title, 'zh')) || (years.length > 1 && +years[years.length - 1] >= thisYear);
+        add(pair[0], whenOf(it.dates),
+          '<span class="tl-t">' + tr(it.title) + '</span>' +
+          '<span class="tl-s">' + tr(it.institution) + '</span>' +
+          '<span class="tl-m"><b>' + tr(it.dates) + '</b> · ' + tr(TL_KIND[pair[0]]) + '</span>' +
+          (filled(it.note) ? '<span class="tl-n">' + tr(it.note) + '</span>' : '') +
+          (filled(it.certificate) ? '<span class="seal">' + tr(it.certificate) + '</span>' : ''),
+          'is-span' + (ongoing ? ' is-now' : ''));
+      });
+    });
+    list(c.publications).forEach(function(pub){
+      add('pub', whenOf(pub.year),
+        '<a class="tl-t tl-pub" href="#publications">' + esc(pub.title) + '</a>' +
+        '<span class="tl-m"><b>' + tr(TL_KIND.pub) + '</b> · <i>' + esc(pub.journal) + '</i>' + (filled(pub.role) ? ' · ' + tr(pub.role) : '') + '</span>',
+        'is-mark');
+    });
+    list(c.awards).forEach(function(a){
+      add('award', whenOf(a.kicker),
+        '<a class="tl-t" href="#honors">' + tr(a.title) + '</a>' +
+        (filled(a.detail) ? '<span class="tl-s">' + tr(a.detail) + '</span>' : '') +
+        '<span class="tl-m"><b>' + tr(a.kicker) + '</b></span>',
+        'is-mark');
+    });
+    // Nothing dated: keep the two plain columns
+    if(!items.length){
+      return '<div class="two"><div class="col"><h3><span class="zh">學歷</span><span class="en">Education</span><span class="ja">学歴</span></h3><div>' + renderRows(c.education) + '</div></div>' +
+        '<div class="col"><h3><span class="zh">經歷</span><span class="en">Experience</span><span class="ja">経歴</span></h3><div>' + renderRows(c.experience) + '</div></div></div>';
+    }
+    var rank = { edu: 0, exp: 1, pub: 2, award: 3 };
+    items.sort(function(a, b){ return (b.when.key - a.when.key) || (rank[a.kind] - rank[b.kind]) || (a.i - b.i); });
+    var html = '<div class="tl"><span class="tl-rail" aria-hidden="true"><span class="tl-draw" id="tl-draw"></span></span>', year = null;
+    items.forEach(function(it){
+      if(it.when.y !== year){
+        if(year !== null) html += '</ol></section>';
+        year = it.when.y;
+        html += '<section class="tl-year" aria-label="' + year + '"><h3>' + year + '</h3><ol>';
+      }
+      html += '<li class="tl-it ' + it.cls + '">' + it.html + '</li>';
+    });
+    return html + '</ol></section></div>';
+  }
+
+  /* ---------- Research map: methods → outputs → therapeutic areas ---------- */
+  // Papers and awards are linked through their "methods" / "areas" fields (names typed in Pages CMS);
+  // tools are linked here. A name matches a label in any language, or the start of one ("腫瘤學" → "腫瘤學（CDK4/6 抑制劑）").
+  var MAP_TOOLS = [
+    { href: '/Research-toolkit/', title: { zh: 'Research Toolkit' }, kind: { zh: '工具', en: 'Tool', ja: 'ツール' }, sub: { zh: 'PRISMA、RoB 2、ROBINS-I、DAG', en: 'PRISMA, RoB 2, ROBINS-I, DAG', ja: 'PRISMA、RoB 2、ROBINS-I、DAG' }, methods: ['Real-World Evidence', 'Meta-Analysis', 'Target Trial Emulation'] },
+    { href: '/NMA/', title: { zh: 'Bayesian NMA' }, kind: { zh: '教學', en: 'Tutorial', ja: 'チュートリアル' }, sub: { zh: 'R · multinma' }, methods: ['Bayesian NMA', 'Meta-Analysis'] }
+  ];
+  var MAP = null;
+  function normKey(s){ return String(s || '').toLowerCase().replace(/[\s\-_·・,，、()（）\/]/g, ''); }
+  function matchLabels(labels, keys){
+    var out = [];
+    list(keys).forEach(function(k){
+      var nk = normKey(k);
+      if(!nk) return;
+      labels.forEach(function(lab, i){
+        if(out.indexOf(i) >= 0) return;
+        if(LANGS.some(function(l){ var nl = normKey(pick(lab, l)); return nl && (nl === nk || (nk.length >= 2 && nl.indexOf(nk) === 0)); })) out.push(i);
+      });
+    });
+    return out;
+  }
+  function renderMap(c, posts){
+    var r = c.research || {}, M = list(r.methods).filter(filled), A = list(r.areas).filter(filled), O = [];
+    function add(o){ o.m = matchLabels(M, o.methods); o.a = matchLabels(A, o.areas); if(o.m.length || o.a.length) O.push(o); }
+    list(c.publications).forEach(function(pub){
+      var st = STATUS[pub.status];
+      add({ href: '#publications', title: pub.title, plain: true, methods: pub.methods, areas: pub.areas,
+        meta: '<b>' + tr({ zh: '論文', en: 'Paper', ja: '論文' }) + '</b>' + (pub.status && pub.status !== 'published' && st ? ' · ' + tr(st) : '') + ' · <i>' + esc(pub.journal) + '</i>' + (has(pub.year) ? ' ' + esc(pub.year) : '') });
+    });
+    list(c.awards).forEach(function(a){
+      add({ href: '#honors', title: a.title, methods: a.methods, areas: a.areas, meta: '<b>' + tr(a.kicker) + '</b>' });
+    });
+    MAP_TOOLS.forEach(function(t){
+      add({ href: t.href, title: t.title, methods: t.methods, areas: t.areas, meta: '<b>' + tr(t.kind) + '</b>' + (t.sub ? ' · ' + tr(t.sub) : '') });
+    });
+    list(posts).forEach(function(p){
+      add({ href: String(p.url || '').replace(/^\/+/, ''), title: p.title, plain: true, methods: p.tags, areas: p.tags,
+        meta: '<b>' + tr({ zh: '文章', en: 'Post', ja: '記事' }) + '</b> · ' + esc(String(p.date || '').replace(/-/g, '.')) });
+    });
+    var box = $('research-map');
+    if(!O.length || !M.length){ box.hidden = true; document.querySelector('.about').classList.remove('has-map'); MAP = null; return; }
+    MAP = { M: M, A: A, O: O, pinned: null };
+
+    function chip(kind, lab, i){
+      return '<li><button type="button" class="node chip" data-k="' + kind + '" data-i="' + i + '" aria-pressed="false">' + tr(lab) + '</button></li>';
+    }
+    box.innerHTML =
+      '<div class="rmap-head"><h3><span class="zh">研究地圖</span><span class="en">Research map</span><span class="ja">研究マップ</span></h3>' +
+      '<p><span class="zh">點一個方法或領域，看看相關的論文、發表與工具</span><span class="en">Pick a method or an area to see the papers, talks and tools that go with it</span><span class="ja">方法や領域を選ぶと、関連する論文・発表・ツールが表示されます</span></p></div>' +
+      '<div class="rmap-grid" id="rmap-grid"><svg class="rmap-lines" id="rmap-lines" aria-hidden="true"></svg>' +
+        '<div class="rmap-col" data-col="m"><h4><span class="zh">方法學</span><span class="en">Methods</span><span class="ja">方法論</span></h4><ul>' + M.map(function(l, i){ return chip('m', l, i); }).join('') + '</ul></div>' +
+        '<div class="rmap-col" data-col="o"><h4><span class="zh">研究成果</span><span class="en">Work</span><span class="ja">成果</span></h4><ul>' + O.map(function(o, i){
+          var title = o.plain ? esc(o.title) : tr(o.title);
+          return '<li><a class="node out" data-k="o" data-i="' + i + '" href="' + esc(o.href) + '"' + (o.plain ? ' title="' + esc(o.title) + '"' : '') + '><span class="t">' + title + '</span><span class="k">' + o.meta + '</span></a></li>';
+        }).join('') + '</ul></div>' +
+        '<div class="rmap-col" data-col="a"><h4><span class="zh">治療領域</span><span class="en">Therapeutic areas</span><span class="ja">臨床応用領域</span></h4><ul>' + A.map(function(l, i){ return chip('a', l, i); }).join('') + '</ul></div>' +
+      '</div><p class="rmap-status" id="rmap-status" aria-live="polite"></p>';
+    box.hidden = false;
+    document.querySelector('.about').classList.add('has-map');
+    bindMap();
+    drawMapLines();
+  }
+  // Which nodes and edges go with the focused node
+  function mapRelated(k, i){
+    var o = MAP.O, rel = { m: {}, a: {}, o: {} };
+    if(k === 'o'){ rel.o[i] = 1; o[i].m.forEach(function(x){ rel.m[x] = 1; }); o[i].a.forEach(function(x){ rel.a[x] = 1; }); return rel; }
+    rel[k][i] = 1;
+    o.forEach(function(x, j){
+      if(x[k].indexOf(i) < 0) return;
+      rel.o[j] = 1;
+      (k === 'm' ? x.a : x.m).forEach(function(y){ rel[k === 'm' ? 'a' : 'm'][y] = 1; });
+    });
+    return rel;
+  }
+  function mapFocus(k, i){
+    var box = $('research-map');
+    var rel = k ? mapRelated(k, +i) : null;
+    box.classList.toggle('has-focus', !!rel);
+    box.querySelectorAll('.node').forEach(function(n){
+      n.classList.toggle('on', !!rel && !!rel[n.dataset.k][n.dataset.i]);
+    });
+    box.querySelectorAll('#rmap-lines path').forEach(function(p){
+      var on = !!rel && !!rel.o[p.dataset.o] && (p.dataset.m != null ? !!rel.m[p.dataset.m] : !!rel.a[p.dataset.a]);
+      p.classList.toggle('on', on);
+    });
+  }
+  function mapStatus(){
+    var el = $('rmap-status'), pin = MAP.pinned;
+    if(!pin){ el.innerHTML = ''; return; }
+    var lab = (pin.k === 'm' ? MAP.M : MAP.A)[pin.i], n = Object.keys(mapRelated(pin.k, pin.i).o).length;
+    el.innerHTML = tr(lab) + (n
+      ? tr({ zh: '：' + n + ' 項相關成果', en: ': ' + n + ' related item' + (n > 1 ? 's' : ''), ja: '：関連する成果 ' + n + ' 件' })
+      : tr({ zh: '：還沒有公開成果，研究進行中', en: ': nothing published yet, work in progress', ja: '：公開された成果はまだありません（研究中）' }));
+  }
+  function bindMap(){
+    var box = $('research-map'), grid = $('rmap-grid');
+    function restore(){ mapFocus(MAP.pinned && MAP.pinned.k, MAP.pinned && MAP.pinned.i); }
+    grid.addEventListener('mouseover', function(e){ var n = e.target.closest('.node'); if(n) mapFocus(n.dataset.k, n.dataset.i); });
+    grid.addEventListener('mouseleave', restore);
+    grid.addEventListener('focusin', function(e){ var n = e.target.closest('.node'); if(n) mapFocus(n.dataset.k, n.dataset.i); });
+    grid.addEventListener('focusout', function(e){ if(!grid.contains(e.relatedTarget)) restore(); });
+    grid.addEventListener('click', function(e){
+      var b = e.target.closest('button.node');
+      if(!b) return;
+      var k = b.dataset.k, i = +b.dataset.i, same = MAP.pinned && MAP.pinned.k === k && MAP.pinned.i === i;
+      MAP.pinned = same ? null : { k: k, i: i };
+      box.querySelectorAll('button.node').forEach(function(x){ x.setAttribute('aria-pressed', String(!same && x === b)); });
+      restore();
+      mapStatus();
+    });
+    grid.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && MAP.pinned){ var b = grid.querySelector('button.node[aria-pressed="true"]'); if(b) b.click(); }
+    });
+    if('ResizeObserver' in window){ new ResizeObserver(function(){ drawMapLines(); }).observe(grid); }
+    else window.addEventListener('resize', drawMapLines);
+  }
+  // Curves from each method to its outputs and from each output to its areas (wide screens only)
+  function drawMapLines(){
+    var svg = $('rmap-lines');
+    if(!MAP || !svg) return;
+    if(getComputedStyle(svg).display === 'none'){ svg.innerHTML = ''; return; }
+    var g = $('rmap-grid').getBoundingClientRect(), box = $('research-map');
+    function rect(k, i){ var n = box.querySelector('.node[data-k="' + k + '"][data-i="' + i + '"]'); return n ? n.getBoundingClientRect() : null; }
+    function curve(a, b){
+      var x1 = a.right - g.left, y1 = a.top + a.height / 2 - g.top, x2 = b.left - g.left, y2 = b.top + b.height / 2 - g.top, mx = (x1 + x2) / 2;
+      return 'M' + x1.toFixed(1) + ' ' + y1.toFixed(1) + 'C' + mx.toFixed(1) + ' ' + y1.toFixed(1) + ' ' + mx.toFixed(1) + ' ' + y2.toFixed(1) + ' ' + x2.toFixed(1) + ' ' + y2.toFixed(1);
+    }
+    var out = '';
+    MAP.O.forEach(function(o, j){
+      var ro = rect('o', j);
+      if(!ro) return;
+      o.m.forEach(function(i){ var r = rect('m', i); if(r) out += '<path data-o="' + j + '" data-m="' + i + '" d="' + curve(r, ro) + '"/>'; });
+      o.a.forEach(function(i){ var r = rect('a', i); if(r) out += '<path data-o="' + j + '" data-a="' + i + '" d="' + curve(ro, r) + '"/>'; });
+    });
+    svg.setAttribute('viewBox', '0 0 ' + g.width.toFixed(1) + ' ' + g.height.toFixed(1));
+    svg.innerHTML = out;
+    var pin = MAP.pinned;
+    mapFocus(pin && pin.k, pin && pin.i);
+  }
+
+  // The rail fills in as you read down the timeline
+  function initTimelineDraw(){
+    var draw = $('tl-draw');
+    if(!draw) return;
+    if(REDUCE_MOTION){ draw.style.transform = 'none'; return; }
+    var tl = draw.closest('.tl'), ticking = false;
+    function update(){
+      var r = tl.getBoundingClientRect(), vh = window.innerHeight;
+      var p = Math.max(0, Math.min(1, (vh * 0.7 - r.top) / Math.max(1, r.height)));
+      draw.style.transform = 'scaleY(' + p.toFixed(4) + ')';
+      ticking = false;
+    }
+    window.addEventListener('scroll', function(){ if(!ticking){ ticking = true; requestAnimationFrame(update); } }, { passive: true });
+    window.addEventListener('resize', update);
+    update();
+  }
+
   function render(c){
     var p = c.profile || {};
     $('hero-badge').innerHTML = tr(p.badge);
@@ -748,8 +1057,8 @@
     $('research-methods').innerHTML = list(r.methods).map(function(m){ return '<span class="pill">' + tr(m) + '</span>'; }).join('');
     $('research-areas').innerHTML = list(r.areas).map(function(m){ return '<span class="pill">' + tr(m) + '</span>'; }).join('');
 
-    $('education-list').innerHTML = renderRows(c.education);
-    $('experience-list').innerHTML = renderRows(c.experience);
+    $('cv-body').innerHTML = renderTimeline(c);
+    renderMap(c, []);
 
     $('publication-list').innerHTML = list(c.publications).map(function(pub, i){
       var st = STATUS[pub.status] || STATUS.draft;
@@ -815,6 +1124,7 @@
         .then(function(res){ return res.ok ? res.json() : []; })
         .then(function(posts){
           renderLatest(posts);
+          if(list(posts).length) renderMap(CONTENT, posts); // tagged posts join the research map
           revealAll('#blog .sec-head, .latest-card', true);
           initScrollSpy();
         })
@@ -921,8 +1231,9 @@
   function initMotion(){
     revealAll('.sec-head', false);
     revealAll('.about > .card, .stack > .card, .col > h3', true);
-    revealAll('.row', true);
+    revealAll('.row, .tl-it', true);
     revealAll('.pub, .honor', true);
+    initTimelineDraw();
     revealAll('.closing blockquote', false);
     initStickyNav();
     initScrollSpy();
@@ -956,9 +1267,9 @@
   }
   // Labels that live in attributes, so they cannot use the zh/en/ja spans
   var A11Y = {
-    zh: { theme: '深色模式', copy: '複製 email', share: '分享', copied: '已複製 email：' },
-    en: { theme: 'Dark mode', copy: 'Copy email address', share: 'Share', copied: 'Email address copied: ' },
-    ja: { theme: 'ダークモード', copy: 'メールアドレスをコピー', share: '共有', copied: 'メールアドレスをコピーしました：' }
+    zh: { theme: '深色模式', copy: '複製 email', share: '分享', copied: '已複製 email：', resume: 'PDF 履歷' },
+    en: { theme: 'Dark mode', copy: 'Copy email address', share: 'Share', copied: 'Email address copied: ', resume: 'CV as PDF' },
+    ja: { theme: 'ダークモード', copy: 'メールアドレスをコピー', share: '共有', copied: 'メールアドレスをコピーしました：', resume: '履歴書 PDF' }
   };
   function setLang(lang, chosen){
     var root = document.documentElement;
@@ -972,6 +1283,9 @@
     });
     $('btn-theme').setAttribute('aria-label', A11Y[lang].theme);
     $('btn-share').setAttribute('aria-label', A11Y[lang].share);
+    $('btn-resume').setAttribute('aria-label', A11Y[lang].resume);
+    if(MAP) requestAnimationFrame(drawMapLines); // labels change length, so the curves move
+    $('btn-resume').href = 'resume/' + (lang !== 'zh' ? '?lang=' + lang : ''); // open the résumé in the language being read
     if(chosen){
       try{ localStorage.setItem('cv-lang', lang); }catch(e){}
       // keep the address bar shareable in the language being read

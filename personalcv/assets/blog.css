@@ -222,6 +222,21 @@ html[data-theme="dark"] .chip.active { color: var(--bg); }
 .toc a { color: var(--ink-2); }
 .toc a:hover { color: var(--mint-ink); }
 .toc + .prose { padding-top: 32px; }
+/* Series: where this post sits in a run of posts; collapsed to one line until opened */
+.series { margin-top: 36px; border: 1px solid var(--line); border-radius: 12px; background: var(--soft); }
+.series summary { cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; padding: 14px 20px; list-style: none; }
+.series summary::-webkit-details-marker { display: none; }
+.series summary::after { content: ""; width: 12px; height: 7px; background: var(--mint-ink); clip-path: polygon(0 0, 50% 64%, 100% 0, 100% 36%, 50% 100%, 0 36%); margin-left: auto; align-self: center; transition: transform .2s; }
+.series[open] summary::after { transform: rotate(180deg); }
+.series-name { font-family: var(--serif); font-weight: 700; font-size: 15px; color: var(--ink); }
+.series-pos { font-size: 13px; font-weight: 700; color: var(--mint-ink); font-variant-numeric: tabular-nums; }
+.series ol { margin: 0 20px 16px; padding: 12px 0 0 22px; border-top: 1px solid var(--line); display: grid; gap: 6px; font-size: 14.5px; }
+.series li::marker { color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.series a { color: var(--ink-2); text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 3px; }
+.series a:hover { color: var(--mint-ink); text-decoration-color: currentColor; }
+.series [aria-current="page"] { font-weight: 700; color: var(--ink); }
+.series + .toc { margin-top: 16px; }
+.series + .prose { padding-top: 32px; }
 .prose h2, .prose h3 { scroll-margin-top: 16px; }
 .attachments { border-top: 1px solid var(--line); padding: 28px 0 8px; }
 .attachments h2 { font-size: 18px; font-weight: 800; margin-bottom: 14px; }

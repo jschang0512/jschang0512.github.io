@@ -1,0 +1,233 @@
+---
+sitemap: false
+---
+<!DOCTYPE html>
+<html lang="zh-Hant" data-lang="zh" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>張家菘 Bruce Chang</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#1b2f8f">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<script src="/personalcv/assets/cv-data.js?v=20261116"></script>
+<script>
+  document.documentElement.setAttribute('data-theme', CV.initialTheme());
+  CV.applyLang(CV.initialLang());
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@800&family=Noto+Serif+TC:wght@700;900&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  /* A conference card held out on a phone: one cobalt field, a tin-glaze plate for the QR code so any camera reads it. */
+  :root {
+    --band:       oklch(36% 0.160 266);
+    --band-ink:   oklch(97.5% 0.008 95);
+    --band-muted: oklch(88% 0.040 262);
+    --band-line:  oklch(55% 0.150 264);
+    --band-hover: oklch(43% 0.175 266);
+    --plate:      oklch(99% 0.004 95);
+    --qr:         oklch(20% 0.070 266);
+    --focus:      oklch(86% 0.130 82);
+
+    --font-display: "Cinzel", "Noto Serif TC", "Noto Serif JP", ui-serif, Georgia, serif;
+    --font-serif:   "Noto Serif TC", "Noto Serif JP", ui-serif, Georgia, serif;
+    --font-body:    "Noto Sans TC", "Noto Sans JP", "PingFang TC", "Microsoft JhengHei", ui-sans-serif, system-ui, sans-serif;
+
+    --space-2xs: 0.25rem; --space-xs: 0.5rem; --space-sm: 0.75rem; --space-md: 1rem; --space-lg: 1.5rem; --space-xl: 2.5rem;
+    --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    --dur-micro: 120ms; --dur-long: 420ms;
+    --radius: 6px;
+    --frieze-h: 22px;
+    --m-frieze: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 24' width='32' height='24'%3E%3Cpath d='M0 1.5h32M0 22.5h32' stroke='black' stroke-width='1.5'/%3E%3Cpath d='M16 5c2.6 3 2.6 4.5 0 7-2.6-2.5-2.6-4 0-7zm0 14c2.6-3 2.6-4.5 0-7-2.6 2.5-2.6 4 0 7zM9 12c3-2.6 4.5-2.6 7 0-2.5 2.6-4 2.6-7 0zm14 0c-3-2.6-4.5-2.6-7 0 2.5 2.6 4 2.6 7 0z'/%3E%3Ccircle cx='0' cy='12' r='2.6'/%3E%3Ccircle cx='32' cy='12' r='2.6'/%3E%3Cpath d='M3 5.5q5 0 6 6.5M29 5.5q-5 0-6 6.5M3 18.5q5 0 6-6.5M29 18.5q-5 0-6-6.5' fill='none' stroke='black' stroke-width='1.1'/%3E%3C/svg%3E");
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --band: oklch(30% 0.130 266); --band-hover: oklch(36% 0.140 266); --band-line: oklch(48% 0.130 264); }
+  }
+  :root[data-theme="dark"] { --band: oklch(30% 0.130 266); --band-hover: oklch(36% 0.140 266); --band-line: oklch(48% 0.130 264); }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { overflow-x: clip; }
+  html { background: var(--band); }
+  body { min-height: 100svh; background: var(--band); color: var(--band-ink); font-family: var(--font-body); -webkit-font-smoothing: antialiased;
+    display: flex; flex-direction: column; align-items: center; padding: max(var(--space-md), env(safe-area-inset-top)) var(--space-md) max(var(--space-lg), env(safe-area-inset-bottom)); }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+  ::selection { background: var(--band-ink); color: var(--band); }
+  .zh, .en, .ja { display: none; }
+  html[data-lang="zh"] .zh, html[data-lang="en"] .en, html[data-lang="ja"] .ja { display: inline; }
+  [hidden] { display: none !important; }
+
+  .frieze { width: min(100%, 26rem); height: var(--frieze-h); background: var(--band-line); -webkit-mask: var(--m-frieze) repeat-x center / auto 100%; mask: var(--m-frieze) repeat-x center / auto 100%; flex-shrink: 0; }
+  .top { width: min(100%, 26rem); display: flex; justify-content: flex-end; gap: var(--space-2xs); margin-bottom: var(--space-sm); }
+  .top button { height: 32px; padding-inline: var(--space-sm); border-radius: 4px; border: 1px solid var(--band-line); font-size: 0.8125rem; color: var(--band-muted); white-space: nowrap;
+    transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out); }
+  .top button:hover { color: var(--band-ink); border-color: var(--band-ink); }
+  .top button[aria-pressed="true"] { background: var(--band-ink); border-color: var(--band-ink); color: var(--band); font-weight: 700; }
+
+  .card { width: min(100%, 26rem); display: flex; flex-direction: column; align-items: center; text-align: center; padding-block: var(--space-lg) var(--space-md); }
+  .photo { width: 104px; height: 104px; border-radius: 50%; object-fit: cover; background: var(--band-line); outline: 1px solid var(--band-muted); outline-offset: 3px; }
+  h1 { margin-top: var(--space-md); font-family: var(--font-serif); font-weight: 900; font-size: 2.25rem; line-height: 1.1; letter-spacing: 0.12em; margin-right: -0.12em; }
+  html[data-lang="en"] h1 { font-family: var(--font-display); font-weight: 800; font-size: 1.75rem; letter-spacing: 0.02em; margin-right: 0; text-wrap: balance; }
+  .alt { margin-top: var(--space-2xs); font-family: var(--font-display); font-weight: 800; font-size: 1rem; letter-spacing: 0.04em; color: var(--band-muted); }
+  .role { margin-top: var(--space-sm); font-size: 0.9375rem; color: var(--band-muted); text-wrap: balance; }
+  .role b { color: var(--band-ink); font-weight: 700; }
+
+  .plate { margin-top: var(--space-lg); padding: 6px; border-radius: var(--radius); background: var(--plate); }
+  .plate svg { display: block; width: min(64vw, 240px); height: auto; aspect-ratio: 1; }
+  .plate svg path { stroke: var(--qr); }
+  .scan { margin-top: var(--space-sm); font-size: 0.8125rem; color: var(--band-muted); }
+
+  .actions { margin-top: var(--space-lg); width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-sm); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs); height: 48px; padding-inline: var(--space-md); border-radius: var(--radius);
+    border: 1px solid var(--band-ink); font-weight: 700; white-space: nowrap;
+    transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out); }
+  .btn svg { width: 17px; height: 17px; fill: currentColor; flex-shrink: 0; }
+  .btn.primary { background: var(--band-ink); color: var(--band); }
+  .btn.primary:hover { background: var(--band-muted); }
+  .btn:not(.primary):hover { background: var(--band-hover); }
+  .btn:active { transform: translateY(1px); }
+
+  .links { margin-top: var(--space-lg); display: flex; flex-wrap: wrap; justify-content: center; gap: var(--space-2xs) var(--space-md); font-size: 0.875rem; }
+  .links a { color: var(--band-muted); padding-block: var(--space-2xs); border-bottom: 1px solid var(--band-line); transition: color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out); }
+  .links a:hover { color: var(--band-ink); border-color: var(--band-ink); }
+  .status { min-height: 1.5em; margin-top: var(--space-sm); font-size: 0.8125rem; color: var(--band-ink); }
+  .bottom { margin-top: auto; }
+
+  @media (max-width: 360px) {
+    .actions { grid-template-columns: minmax(0, 1fr); }
+    h1 { font-size: 1.9rem; }
+  }
+  @media (min-height: 760px) { .card { padding-top: var(--space-xl); } }
+  @media (prefers-reduced-motion: no-preference) {
+    .plate { animation: rise var(--dur-long) var(--ease-out) 80ms both; }
+    @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  }
+</style>
+</head>
+<body>
+<div class="frieze" aria-hidden="true"></div>
+<div class="top" role="group" aria-label="Language">
+  <button type="button" data-lang="zh" lang="zh-Hant">中文</button>
+  <button type="button" data-lang="en" lang="en">EN</button>
+  <button type="button" data-lang="ja" lang="ja">日本語</button>
+</div>
+
+<main class="card">
+  <img class="photo" id="photo" src="/personalcv/media/profile/photo.jpg" alt="" width="104" height="104">
+  <h1 id="name">張家菘</h1>
+  <p class="alt" id="alt">Chia-Sung (Bruce) Chang</p>
+  <p class="role" id="role"></p>
+
+  <div class="plate">
+    <!-- QR code for https://jschang0512.github.io/personalcv/ (error correction M); the viewBox keeps a 4-module quiet zone inside the plate -->
+    <svg viewBox="-4 -4 37 37" shape-rendering="crispEdges" role="img" aria-label="QR code: jschang0512.github.io/personalcv"><path fill="none" d="M0 0.5h7m2 0h2m1 0h1m3 0h1m2 0h2m1 0h7M0 1.5h1m5 0h1m3 0h1m4 0h1m4 0h1m1 0h1m5 0h1M0 2.5h1m1 0h3m1 0h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h1m3 0h1m1 0h3m1 0h1M0 3.5h1m1 0h3m1 0h1m1 0h1m2 0h1m1 0h2m2 0h1m1 0h1m2 0h1m1 0h3m1 0h1M0 4.5h1m1 0h3m1 0h1m1 0h3m2 0h1m2 0h5m1 0h1m1 0h3m1 0h1M0 5.5h1m5 0h1m1 0h3m3 0h3m1 0h1m1 0h1m1 0h1m5 0h1M0 6.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M8 7.5h1m3 0h1m3 0h1m1 0h3M0 8.5h1m1 0h5m2 0h2m1 0h3m2 0h1m4 0h5M0 9.5h1m2 0h3m1 0h1m2 0h1m5 0h1m2 0h6m3 0h1M3 10.5h4m1 0h2m1 0h3m1 0h2m4 0h1m2 0h1M4 11.5h2m1 0h2m1 0h1m1 0h1m1 0h1m4 0h2m4 0h1m1 0h1M1 12.5h2m1 0h1m1 0h1m1 0h2m1 0h7m1 0h1m5 0h2M0 13.5h3m1 0h1m3 0h3m1 0h1m1 0h1m1 0h1m1 0h2m1 0h4m3 0h1M0 14.5h1m4 0h2m2 0h7m1 0h2m3 0h2m1 0h2M0 15.5h1m4 0h1m2 0h1m2 0h2m5 0h2m1 0h2m1 0h1m2 0h1M2 16.5h1m1 0h1m1 0h1m4 0h1m1 0h1m1 0h4m1 0h1m4 0h2M0 17.5h1m2 0h3m1 0h2m1 0h1m1 0h2m2 0h4m1 0h4m1 0h1m1 0h1M0 18.5h1m1 0h2m1 0h4m3 0h6m2 0h1m2 0h1m2 0h1M0 19.5h1m1 0h3m2 0h5m2 0h3m1 0h1m3 0h1m1 0h1m2 0h1M0 20.5h1m5 0h2m2 0h1m4 0h1m1 0h1m2 0h5m1 0h3M8 21.5h3m2 0h1m2 0h5m3 0h5M0 22.5h7m2 0h1m2 0h4m2 0h3m1 0h1m1 0h3M0 23.5h1m5 0h1m1 0h3m1 0h2m1 0h1m4 0h1m3 0h1M0 24.5h1m1 0h3m1 0h1m1 0h1m3 0h1m1 0h4m2 0h5m1 0h3M0 25.5h1m1 0h3m1 0h1m1 0h1m3 0h1m3 0h4m1 0h1m1 0h1m1 0h4M0 26.5h1m1 0h3m1 0h1m1 0h1m1 0h1m2 0h5m1 0h1m2 0h6M0 27.5h1m5 0h1m3 0h3m1 0h1m1 0h1m2 0h3m3 0h1m1 0h1M0 28.5h7m1 0h2m2 0h2m3 0h2m2 0h1m4 0h1"/></svg>
+  </div>
+  <p class="scan"><span class="zh">用相機掃描，打開我的 CV</span><span class="en">Scan with your camera to open my CV</span><span class="ja">カメラで読み取ると CV が開きます</span></p>
+
+  <div class="actions">
+    <button type="button" class="btn primary" id="btn-vcf"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2H6zm9 4c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg><span class="zh">存到通訊錄</span><span class="en">Save contact</span><span class="ja">連絡先に保存</span></button>
+    <button type="button" class="btn" id="btn-copy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.9 12a3.1 3.1 0 0 1 3.1-3.1h4V7H7a5 5 0 0 0 0 10h4v-1.9H7A3.1 3.1 0 0 1 3.9 12zM8 13h8v-2H8v2zm9-6h-4v1.9h4a3.1 3.1 0 0 1 0 6.2h-4V17h4a5 5 0 0 0 0-10z"/></svg><span class="zh">複製連結</span><span class="en">Copy link</span><span class="ja">リンクをコピー</span></button>
+  </div>
+  <p class="status" id="status" role="status" aria-live="polite"></p>
+
+  <nav class="links" id="links" aria-label="Links">
+    <a href="/personalcv/" id="link-cv"><span class="zh">完整 CV</span><span class="en">Full CV</span><span class="ja">CV 全文</span></a>
+  </nav>
+</main>
+<div class="frieze bottom" aria-hidden="true"></div>
+
+<script>
+  var DATA = null, LANG = document.documentElement.getAttribute('data-lang');
+  var CV_URL = 'https://jschang0512.github.io/personalcv/';
+  var MSG = {
+    zh: { copied: '已複製 CV 連結', saved: '已下載聯絡人檔案，打開就能加入通訊錄', fail: '資料載入失敗，請重新整理' },
+    en: { copied: 'CV link copied', saved: 'Contact file downloaded. Open it to add to your contacts', fail: 'Could not load. Please refresh' },
+    ja: { copied: 'CV のリンクをコピーしました', saved: '連絡先ファイルを保存しました。開くと連絡先に追加できます', fail: '読み込めませんでした。再読み込みしてください' }
+  };
+  function cvUrl(){ return CV_URL + (LANG !== 'zh' ? '?lang=' + LANG : ''); }
+  function say(s){ var el = document.getElementById('status'); el.textContent = ''; setTimeout(function(){ el.textContent = s; }, 30); }
+
+  function render(){
+    var c = DATA, pr = c.profile || {}, now = CV.list(c.experience)[0];
+    var main = CV.pick(pr.name, LANG), en = CV.pick(pr.name, 'en');
+    document.getElementById('name').textContent = main;
+    var alt = document.getElementById('alt');
+    alt.textContent = en; alt.hidden = LANG === 'en' || !en || en === main;
+    if(pr.photo) document.getElementById('photo').src = pr.photo;
+    var role = [];
+    if(CV.pick(pr.badge, LANG)) role.push('<b>' + CV.esc(CV.pick(pr.badge, LANG)) + '</b>');
+    if(now) role.push(CV.esc(CV.pick(now.institution, LANG)) + ' ' + CV.esc(CV.pick(now.title, LANG)));
+    document.getElementById('role').innerHTML = role.join('<br>');
+
+    var links = ['<a href="' + CV.esc(cvUrl().replace(CV_URL, '/personalcv/')) + '" id="link-cv">' + document.getElementById('link-cv').innerHTML + '</a>'];
+    if(CV.safeUrl(pr.orcid)) links.push('<a href="' + CV.esc(pr.orcid) + '" target="_blank" rel="noopener">ORCID</a>');
+    if(CV.safeUrl(pr.linkedin)) links.push('<a href="' + CV.esc(pr.linkedin) + '" target="_blank" rel="noopener">LinkedIn</a>');
+    if(pr.email) links.push('<a href="mailto:' + CV.esc(pr.email) + '">' + CV.esc(pr.email) + '</a>');
+    document.getElementById('links').innerHTML = links.join('');
+    document.title = main + (alt.hidden ? '' : ' ' + en);
+    document.querySelectorAll('.top button').forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === LANG)); });
+  }
+
+  // vCard 3.0, only what the CV already shows publicly
+  function vcf(){
+    var c = DATA, pr = c.profile || {}, now = CV.list(c.experience)[0];
+    function e(s){ return String(s || '').replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/([,;])/g, '\\$1'); }
+    var en = CV.pick(pr.name, 'en'), zh = CV.pick(pr.name, 'zh');
+    // "Chia-Sung (Bruce) Chang" -> family Chang, given Chia-Sung, nickname Bruce
+    var m = /^(.*?)\s*(?:\(([^)]*)\))?\s+(\S+)$/.exec(en) || [];
+    var given = (m[1] || en).trim(), nick = (m[2] || '').trim(), family = (m[3] || '').trim();
+    var lines = ['BEGIN:VCARD', 'VERSION:3.0',
+      'N:' + e(family) + ';' + e(given) + ';;;',
+      'FN:' + e(LANG === 'en' || !zh || zh === en ? en : zh + ' ' + en)];
+    if(nick) lines.push('NICKNAME:' + e(nick));
+    if(now){ lines.push('ORG:' + e(CV.pick(now.institution, LANG))); lines.push('TITLE:' + e(CV.pick(now.title, LANG))); }
+    if(pr.email) lines.push('EMAIL;TYPE=INTERNET:' + e(pr.email));
+    lines.push('URL:' + CV_URL);
+    if(CV.safeUrl(pr.orcid)) lines.push('item1.URL:' + pr.orcid, 'item1.X-ABLabel:ORCID');
+    if(CV.safeUrl(pr.linkedin)) lines.push('item2.URL:' + pr.linkedin, 'item2.X-ABLabel:LinkedIn', 'X-SOCIALPROFILE;TYPE=linkedin:' + pr.linkedin);
+    if(CV.pick(pr.badge, LANG)) lines.push('NOTE:' + e(CV.pick(pr.badge, LANG)));
+    lines.push('END:VCARD');
+    return lines.join('\r\n') + '\r\n';
+  }
+  document.getElementById('btn-vcf').addEventListener('click', function(){
+    if(!DATA) return;
+    var blob = new Blob([vcf()], { type: 'text/vcard;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'Chia-Sung-Chang.vcf';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+    say(MSG[LANG].saved);
+  });
+  document.getElementById('btn-copy').addEventListener('click', function(){
+    var url = cvUrl();
+    function done(){ say(MSG[LANG].copied); }
+    if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done).catch(function(){ fallback(url); done(); });
+    else { fallback(url); done(); }
+  });
+  function fallback(t){
+    var ta = document.createElement('textarea'); ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); }catch(e){} ta.remove();
+  }
+  document.querySelectorAll('.top button').forEach(function(b){
+    b.addEventListener('click', function(){ LANG = CV.applyLang(b.getAttribute('data-lang'), true); if(DATA) render(); });
+  });
+
+  // Keep the screen awake while the card is being shown, so the QR code doesn't dim away mid-scan
+  var lock = null;
+  function wake(){
+    if(!('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
+    navigator.wakeLock.request('screen').then(function(l){ lock = l; }).catch(function(){});
+  }
+  document.addEventListener('visibilitychange', function(){ if(document.visibilityState === 'visible' && !lock) wake(); if(document.visibilityState !== 'visible') lock = null; });
+  wake();
+
+  CV.load().then(function(c){ DATA = c; render(); }).catch(function(e){ console.error(e); say(MSG[LANG].fail); });
+  document.querySelectorAll('.top button').forEach(function(b){ b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === LANG)); });
+</script>
+</body>
+</html>

@@ -175,7 +175,13 @@
       "status": "published",
       "year": "2025",
       "authors": "Hsiang-Ying Wu, Chia-Sung Chang, Wei-Hong Cheng, Jin-Hua Chen, Yuan-Hung Wang",
-      "link": "https://doi.org/10.1080/07853890.2025.2557509"
+      "link": "https://doi.org/10.1080/07853890.2025.2557509",
+      "methods": [
+        "Meta-Analysis"
+      ],
+      "areas": [
+        "腫瘤學"
+      ]
     },
     {
       "title": "Efficacy, safety, and timing of everolimus with calcineurin inhibitor reduction or withdrawal in liver transplantation: a systematic review and meta-analysis",
@@ -185,7 +191,13 @@
         "en": "Second author",
         "ja": "第二著者"
       },
-      "status": "review"
+      "status": "review",
+      "methods": [
+        "Meta-Analysis"
+      ],
+      "areas": [
+        "移植醫學"
+      ]
     }
   ],
   "awards": [
@@ -239,7 +251,13 @@
       },
       "detail": {
         "zh": "Real-world effectiveness of CDK4/6 inhibitors on HR+/HER2- metastatic and non-metastatic high recurrence-risk breast cancer"
-      }
+      },
+      "methods": [
+        "Real-World Evidence"
+      ],
+      "areas": [
+        "腫瘤學"
+      ]
     },
     {
       "icon": "mic",
@@ -257,7 +275,13 @@
         "zh": "中華民國製藥發展協會（TPMDA）· 藥價政策變革下的產業應對與資料驅動決策研討會",
         "en": "Taiwan Pharmaceutical Manufacture and Development Association · Symposium on Pricing Policy & Data-Driven Decisions",
         "ja": "中華民国製薬発展協会 · 薬価政策とデータ駆動型意思決定シンポジウム"
-      }
+      },
+      "methods": [
+        "Real-World Evidence"
+      ],
+      "areas": [
+        "腫瘤學"
+      ]
     }
   ],
   "sections": {
@@ -288,6 +312,11 @@
         "zh": "學歷與經歷",
         "en": "Education & Experience",
         "ja": "学歴・経歴"
+      },
+      "subtitle": {
+        "zh": "學歷、經歷、論文與獎項，依時間排列",
+        "en": "Study, work, papers and awards in order of time",
+        "ja": "学歴・経歴・論文・受賞を時系列で"
       }
     },
     "publications": {
@@ -343,6 +372,6 @@
       "en": "“Building the rigorous evidence base between prescription and outcome — from meta-analysis to real-world data research.”",
       "ja": "「処方と臨床アウトカムの間にエビデンスの基盤を築く——メタアナリシスからリアルワールドデータ研究へ。」"
     },
-    "updated": "2026-10-24"
+    "updated": "2026-11-16"
   }
 }
