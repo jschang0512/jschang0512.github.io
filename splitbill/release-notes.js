@@ -8,6 +8,25 @@
 // ============================================================
 window.SB_RELEASE_NOTES = [
   {
+    version: "996",
+    date: "2026-11-15",
+    "zh-Hant": [
+      "還沒註冊的朋友可以先加進群組一起記帳：設定 › 群組 ›「還沒註冊的成員」輸入名字就好",
+      "朋友之後註冊、用邀請碼加入時，第一個畫面會問「你是誰？」，選了之後經建群人同意，之前的帳就全部算到他身上；72 小時內認錯了可以取消",
+      "沒有欠款的未註冊成員，群組裡任何人都可以刪除"
+    ],
+    "ja": [
+      "まだ登録していない友だちも先にグループに追加して記録できます。設定 › グループ ›「まだ登録していないメンバー」で名前を入れるだけ",
+      "友だちがあとで登録して招待コードで参加すると、最初に「あなたはどなた？」と聞かれます。選んでグループの作成者が承認すると、それまでの記録が引き継がれます。間違えても 72 時間以内なら取り消せます",
+      "精算済みの未登録メンバーは、グループの誰でも削除できます"
+    ],
+    "en": [
+      "Add friends who have not signed up yet and split with them right away: Settings › Group › Members not signed up yet",
+      "When they sign up and join with the invite code, the first screen asks which one they are. Once the group creator approves, everything recorded for them becomes theirs, and a wrong claim can be undone within 72 hours",
+      "Anyone in the group can remove an unregistered member who is all settled"
+    ]
+  },
+  {
     version: "995",
     date: "2026-11-15",
     "zh-Hant": [

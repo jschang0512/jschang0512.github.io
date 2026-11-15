@@ -198,7 +198,7 @@ async function loadGroupMembers(sb, currentUser, showLeftMembers){
 
   let MEMBERS = [];
   try {
-    let query = sb.from("members").select("id,user_id,group_id,name,nickname,email,avatar_url,payment_accounts_visible,shown_currencies,left_at,account_deleted_at,groups(name)").order("name");
+    let query = sb.from("members").select("id,user_id,group_id,name,nickname,email,avatar_url,payment_accounts_visible,shown_currencies,left_at,account_deleted_at,merged_into,groups(name)").order("name");
     if(activeGroupId) query = query.eq("group_id", activeGroupId);
     const { data, error } = await query;
     if(error){
@@ -208,6 +208,8 @@ async function loadGroupMembers(sb, currentUser, showLeftMembers){
     } else {
       MEMBERS = data || [];
     }
+    // 被認領合併掉的「還沒註冊的成員」：帳都搬走了，不用再出現在任何清單
+    MEMBERS = MEMBERS.filter(m => !m.merged_into);
   } catch(e){
     console.error("讀取 members 異常：", e);
     MEMBERS = [];
@@ -732,8 +734,9 @@ async function initNotificationBell(sb, myMember){
   }
   const NOTIF_KIND = { expenses_insert: "add", expenses_update: "edit", recurring_generated: "repeat",
     repayments_insert: "repay", repayments_update: "repay", debt_reminder: "remind", event_created: "add",
-    recurring_upcoming: "repeat", recurring_need_amount: "repeat", expense_comment: "comment", repayment_disputed: "remind" };
-  const NOTIF_ICON = { add: "receipt", edit: "pencil", repeat: "repeat", repay: "swap", remind: "bell", comment: "message", other: "bell" };
+    recurring_upcoming: "repeat", recurring_need_amount: "repeat", expense_comment: "comment", repayment_disputed: "remind",
+    member_claim_request: "claim", member_claim_approved: "claim", member_claim_rejected: "claim", member_claim_done: "claim", member_claim_undone: "claim" };
+  const NOTIF_ICON = { add: "receipt", edit: "pencil", repeat: "repeat", repay: "swap", remind: "bell", comment: "message", claim: "users", other: "bell" };
   // 別人替我記的還款，通知上直接放「收到了／還沒收到」（還款 id → 目前狀態）
   let notifRepayStatus = {};
 
@@ -751,6 +754,8 @@ async function initNotificationBell(sb, myMember){
       else if(window.showToast) showToast(t("shared.notifTargetGone"));
     } else if(table === "recurring_expenses" && id){
       location.href = `recurring.html?${n.type === "recurring_need_amount" ? "fill" : "show"}=${enc(id)}`;
+    } else if(table === "member_claims"){
+      location.href = "settings.html#claim";
     } else if(table === "events"){
       location.href = "events.html" + (id ? "?open=" + enc(id) : "");
     } else if(n.type === "debt_reminder" && id && n.params && n.params.currency){

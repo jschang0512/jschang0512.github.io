@@ -114,7 +114,12 @@
       eventNew: "{actor}開了新活動", eventBody: "{desc}・{date}",
       recurSoon: "明天會自動記錄「{desc}」", recurNeed: "{desc}該填金額了", recurNeedBody: "這期金額不固定，點開填好就會記帳",
       cmtNew: "{actor}在「{desc}」留言", cmtAsk: "{actor}對「{desc}」有疑問",
-      disputed: "{to}說還沒收到這筆還款", disputedBody: "{date} {amount}・確認一下有沒有轉成功，或修改這筆還款"
+      disputed: "{to}說還沒收到這筆還款", disputedBody: "{date} {amount}・確認一下有沒有轉成功，或修改這筆還款",
+      claimReq: "{actor}說自己是「{ph}」", claimReqBody: "確認是本人就按同意",
+      claimOk: "你現在就是「{ph}」了", claimOkBody: "之前記在「{ph}」的帳都算到你身上了",
+      claimNo: "建群人沒有同意你認領「{ph}」", claimNoBody: "可以先跟建群人確認一下",
+      claimDone: "{actor}認領了「{ph}」", claimDoneBody: "之前記在「{ph}」的帳都算到{actor}身上了・72 小時內可以取消",
+      claimUndo: "{actor}取消認領「{ph}」", claimUndoBody: "「{ph}」的帳已經還原"
     },
     "ja": {
       someone: "誰か", item: "支出",
@@ -130,7 +135,12 @@
       eventNew: "{actor}さんがイベントを作成しました", eventBody: "{desc}・{date}",
       recurSoon: "明日「{desc}」を自動記録します", recurNeed: "{desc}の金額を入力してください", recurNeedBody: "今回の金額は毎回変わります。入力すると記録されます",
       cmtNew: "{actor}さんが「{desc}」にコメントしました", cmtAsk: "{actor}さんが「{desc}」について質問しています",
-      disputed: "{to}さんはこの返済をまだ受け取っていないそうです", disputedBody: "{date} {amount}・送金できているか確認するか、返済を修正してください"
+      disputed: "{to}さんはこの返済をまだ受け取っていないそうです", disputedBody: "{date} {amount}・送金できているか確認するか、返済を修正してください",
+      claimReq: "{actor}さんが「{ph}」は自分だと言っています", claimReqBody: "本人なら承認してください",
+      claimOk: "あなたが「{ph}」になりました", claimOkBody: "「{ph}」の記録はすべてあなたのものになりました",
+      claimNo: "「{ph}」の引き継ぎは承認されませんでした", claimNoBody: "グループの作成者に確認してみてください",
+      claimDone: "{actor}さんが「{ph}」を引き継ぎました", claimDoneBody: "「{ph}」の記録は{actor}さんのものになりました・72 時間以内なら取り消せます",
+      claimUndo: "{actor}さんが「{ph}」の引き継ぎを取り消しました", claimUndoBody: "「{ph}」の記録を元に戻しました"
     },
     "en": {
       someone: "Someone", item: "Expense",
@@ -146,7 +156,12 @@
       eventNew: "{actor} created an event", eventBody: "{desc} · {date}",
       recurSoon: "\"{desc}\" will be recorded tomorrow", recurNeed: "Time to enter the amount for {desc}", recurNeedBody: "This one changes each period. Enter it and it gets recorded",
       cmtNew: "{actor} commented on \"{desc}\"", cmtAsk: "{actor} has a question about \"{desc}\"",
-      disputed: "{to} says this repayment hasn't arrived", disputedBody: "{date} {amount} · Check the transfer went through, or edit the repayment"
+      disputed: "{to} says this repayment hasn't arrived", disputedBody: "{date} {amount} · Check the transfer went through, or edit the repayment",
+      claimReq: "{actor} says they're \"{ph}\"", claimReqBody: "Approve it if that's really them",
+      claimOk: "You're now \"{ph}\"", claimOkBody: "Everything recorded for \"{ph}\" is now yours",
+      claimNo: "Your claim to \"{ph}\" wasn't approved", claimNoBody: "Check with the group creator",
+      claimDone: "{actor} claimed \"{ph}\"", claimDoneBody: "Everything recorded for \"{ph}\" now belongs to {actor} · can be undone within 72 hours",
+      claimUndo: "{actor} undid the claim on \"{ph}\"", claimUndoBody: "\"{ph}\" is back as it was"
     }
   };
 
@@ -161,7 +176,7 @@
       amount: money(p.amount, cur), old: p.old_amount != null ? money(p.old_amount, cur) : "",
       share: money(round(p.share || 0), cur), paid: money(round(p.paid || 0), cur),
       diff: money(Math.abs(round((p.paid || 0) - (p.share || 0))), cur),
-      text: p.text || ""
+      text: p.text || "", ph: p.ph || "?"
     };
     const f = (tpl) => tpl.replace(/\{(\w+)\}/g, (m, k) => (k in vals ? vals[k] : m));
 
@@ -204,6 +219,11 @@
         return { title: f(p.kind === "not_involved" || p.kind === "wrong_amount" ? L.cmtAsk : L.cmtNew), body: vals.text };
       case "repayment_disputed":
         return { title: f(L.disputed), body: f(L.disputedBody) };
+      case "member_claim_request": return { title: f(L.claimReq), body: f(L.claimReqBody) };
+      case "member_claim_approved": return { title: f(L.claimOk), body: f(L.claimOkBody) };
+      case "member_claim_rejected": return { title: f(L.claimNo), body: f(L.claimNoBody) };
+      case "member_claim_done": return { title: f(L.claimDone), body: f(L.claimDoneBody) };
+      case "member_claim_undone": return { title: f(L.claimUndo), body: f(L.claimUndoBody) };
     }
     return null;
   }

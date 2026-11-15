@@ -30,17 +30,18 @@
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=599a4d1bd5">
-<link rel="stylesheet" href="shared.css?v=2ffc0fcdce">
+<link rel="stylesheet" href="shared.css?v=82b0d7ff21">
 <script src="holiday.js?v=2816c2cc17"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js" defer></script>
-<script src="i18n.js?v=3a91543fef"></script>
+<script src="i18n.js?v=7211bc730f"></script>
 <script src="currencies.js?v=7c67460b0e"></script>
 <script src="motion.js?v=c960fb49b3"></script>
-<script src="version.js?v=e4f30cbca7"></script>
-<script src="notif-text.js?v=6e6a6d9174"></script>
-<script src="shared-ui.js?v=06020b1c45"></script>
+<script src="version.js?v=44e491e4ea"></script>
+<script src="notif-text.js?v=aa30591492"></script>
+<script src="shared-ui.js?v=b56ec5fc9c"></script>
 <script src="paipai.js?v=d376b3ab85"></script>
+<script src="claim.js?v=6fed58526b"></script>
 <script src="theme.js?v=01d7c0a8c1" defer></script>
 <script src="app-banner.js?v=c400decf5d" defer></script>
 <script>
@@ -367,6 +368,11 @@ if("serviceWorker" in navigator){
           </button>
         </div>
 
+        <h2 class="sbs-label" data-i18n="claim.sectionTitle">還沒註冊的成員</h2>
+        <div class="sbs-list">
+          <div class="sbs-block" id="claimSection"></div>
+        </div>
+
         <div id="groupManageSection" class="hidden">
           <h2 class="sbs-label" data-i18n="settings.manageMembers">建立者專屬：管理成員</h2>
           <div class="sbs-list">
@@ -618,6 +624,7 @@ if(backBtn){
   }
 
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  window.sb = sb; // claim.js 要用
 
   function friendlyAuthErr(error){
     const msg = (error && error.message) || "";
@@ -938,7 +945,8 @@ if(backBtn){
       if(!code){ msg.textContent = t("settings.msg.enterInviteCode"); msg.className = "msg error"; return; }
       settingsJoinGroupBtn.disabled = true;
       msg.textContent = t("settings.msg.joining"); msg.className = "msg";
-      const { error } = await sb.rpc("join_group", { p_invite_code: code, p_member_name: myMember.accountName });
+      const { data: joinedGroupId, error } = await sb.rpc("join_group", { p_invite_code: code, p_member_name: myMember.accountName });
+      if(!error && joinedGroupId){ try { localStorage.setItem("sb-claim-ask", joinedGroupId); } catch(e){} } // 首頁問「你是誰？」
       if(error){
         settingsJoinGroupBtn.disabled = false;
         msg.textContent = t("settings.msg.joinFailed", { msg: friendlyGroupErr(error.message) }); msg.className = "msg error";
@@ -2270,6 +2278,7 @@ if(backBtn){
       // 其餘背景資料並行載入，不阻塞主畫面
       Promise.allSettled([
         renderSettingsGroupSection(),
+        window.sbClaim ? window.sbClaim.renderSettings() : null,
         renderLinkedIdentities(),
         updateNotifyBtnState(),
         (async ()=>{

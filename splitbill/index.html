@@ -124,16 +124,16 @@
 <link rel="preconnect" href="https://ofevarwtqzvzrvhbanmf.supabase.co" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css?v=599a4d1bd5">
-<link rel="stylesheet" href="shared.css?v=2ffc0fcdce">
+<link rel="stylesheet" href="shared.css?v=82b0d7ff21">
 <script src="holiday.js?v=2816c2cc17"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad&render=explicit" async defer></script>
-<script src="i18n.js?v=3a91543fef"></script>
+<script src="i18n.js?v=7211bc730f"></script>
 <script src="currencies.js?v=7c67460b0e"></script>
 <script src="motion.js?v=c960fb49b3"></script>
-<script src="version.js?v=e4f30cbca7"></script>
-<script src="notif-text.js?v=6e6a6d9174"></script>
-<script src="shared-ui.js?v=06020b1c45"></script>
+<script src="version.js?v=44e491e4ea"></script>
+<script src="notif-text.js?v=aa30591492"></script>
+<script src="shared-ui.js?v=b56ec5fc9c"></script>
 <script src="theme.js?v=01d7c0a8c1" defer></script>
 <script src="app-banner.js?v=c400decf5d" defer></script>
 <script>
@@ -1106,7 +1106,8 @@ function removeFlashGuard(){
       msg.textContent = t("msg.joining"); msg.className = "msg";
       if(!(await ensureUsername(name, msg, revealGroupChoiceUsername))) return;
       pendingMemberName = name;
-      const { error } = await sb.rpc("join_group", { p_invite_code: code, p_member_name: name });
+      const { data: joinedGroupId, error } = await sb.rpc("join_group", { p_invite_code: code, p_member_name: name });
+      if(!error && joinedGroupId){ try { localStorage.setItem("sb-claim-ask", joinedGroupId); localStorage.removeItem(REDIRECT_KEY); } catch(e){} } // 加入後先回首頁問 // 首頁問「你是誰？」
       if(error){ msg.textContent = t("msg.joinFailed", { msg: friendlyGroupErr(error.message) }); msg.className = "msg error"; return; }
       localStorage.removeItem(PENDING_NAME_KEY);
       msg.textContent = t("msg.joinSuccess"); msg.className = "msg ok";

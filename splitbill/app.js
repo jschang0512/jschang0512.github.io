@@ -7558,7 +7558,8 @@ function showPairDetail(
     }
 
     if(remainingDebt > 0.01){
-      const canRemind = myMember && creditorId === myMember.id && debtorId !== myMember.id;
+      const debtorRow = MEMBERS.find(m => m.id === debtorId);
+      const canRemind = myMember && creditorId === myMember.id && debtorId !== myMember.id && !(debtorRow && !debtorRow.user_id);
       html += `
         <div class="debt-repay-action-wrap" style="display:flex;flex-direction:column;gap:8px;">
           <button type="button" class="btn btn-repay-direct" id="matrixDetailRepayBtn" data-debtor="${debtorId}" data-creditor="${creditorId}" data-amt="${remainingDebt}">
