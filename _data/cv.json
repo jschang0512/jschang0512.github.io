@@ -81,7 +81,7 @@
         "ja": "台北医学大学 臨床医学研究所"
       },
       "certificate": {
-        "zh": "學程證書：健康科技評估與轉譯資訊學",
+        "zh": "醫療科技評估學分學程",
         "en": "Program Certificate: HTA & Translational Informatics",
         "ja": "プログラム修了証：医療技術評価・トランスレーショナル情報学"
       }
@@ -101,7 +101,7 @@
         "ja": "台北医学大学 薬学部薬学科"
       },
       "certificate": {
-        "zh": "人工智慧微學程證書",
+        "zh": "人工智慧微學程",
         "en": "Mini-Program Certificate in Artificial Intelligence",
         "ja": "人工知能マイクロプログラム修了証"
       }
@@ -123,6 +123,9 @@
         "zh": "臺北醫學大學附設醫院 藥劑部",
         "en": "Taipei Medical University Hospital · Department of Pharmacy",
         "ja": "台北医学大学附属病院 薬剤部"
+      },
+      "note": {
+        "zh": "處方調劑、審核、交付/ 疑義處方處理 /特殊藥品衛教"
       }
     },
     {
