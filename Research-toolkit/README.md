@@ -11,7 +11,7 @@ Browser-based figure tools for research papers. Everything runs in the browser �
 | Forest plot | `forestplot/` |
 | E-value calculator (unmeasured confounding) | `evalue/` |
 | Effect sizes & sample size: sample size, NNT/NNH, OR → RR, SE from a CI | `effectsize/` |
-| Submission & project tracker (account needed; sign-up by invite code; data in its own Supabase project) | `submissions/` |
+| Submission & project tracker: projects with IRB / data milestones, submission rounds, reviewer comments and response letters (account needed; sign-up by invite code; its own Supabase project) | `submissions/` |
 | Causal diagram (DAG) with back-door path check | `dag/` |
 | Treatment pathway Sankey diagram | `sankey/` |
 | Exposure definition diagram | `exposure/` |
@@ -32,4 +32,4 @@ Interface in Traditional Chinese and English. Figures export to PNG, TIFF, JPG, 
 
 張家菘 — questions, bug reports and suggestions: [js.chang0512@gmail.com](mailto:js.chang0512@gmail.com)
 
-Version: v3.2 (2026-11-17)
+Version: v3.3 (2026-11-19)
