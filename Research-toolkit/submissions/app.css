@@ -281,3 +281,10 @@ dialog form { display: flex; flex-direction: column; max-height: inherit; margin
 .seg a[aria-selected="true"] { background: var(--panel); color: var(--ink); box-shadow: 0 1px 3px var(--shadow); }
 label.ms { position: relative; }
 label.ms:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lk-rows { display: grid; gap: 6px; margin-bottom: 4px; }
+.lk-row { display: grid; grid-template-columns: 9rem minmax(0, 1fr) 38px; gap: 6px; }
+.lk-row select, .lk-row input { min-height: 40px; padding: 6px 10px; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--panel); width: 100%; }
+@media (max-width: 480px) { .lk-row { grid-template-columns: minmax(0, 1fr) 38px; } .lk-row input { grid-column: 1; grid-row: 2; } .lk-row button { grid-row: 1 / span 2; grid-column: 2; } }
+.doi-panel .card { background: var(--panel-2); }
+a.chip { text-decoration: none; }
+a.chip:hover { background: var(--accent); color: var(--accent-ink); }

@@ -166,7 +166,8 @@
         <a class="metric" href="#/papers"><span>${T('修改中', 'Revising')}</span><b>${revising}</b></a>
         <a class="metric" href="#/papers"><span>${T('已接受・已發表', 'Accepted & published')}</span><b>${done}</b></a>
       </div>` +
-      `<h2 class="sec-title">${T('接下來', 'Up next')} <small>${T('60 天內的截止日、IRB 到期、等太久的審查、待回覆的意見', 'Deadlines and IRB expiry in 60 days, long reviews, comments to answer')}</small></h2>` + agendaHTML(agenda());
+      `<h2 class="sec-title">${T('接下來', 'Up next')} <small>${T('60 天內的截止日、IRB 到期、等太久的審查、待回覆的意見', 'Deadlines and IRB expiry in 60 days, long reviews, comments to answer')}</small></h2>` + agendaHTML(agenda()) +
+      `<a class="ag" href="#/stats" style="margin-top:18px;grid-template-columns:minmax(0,1fr) auto"><span class="what"><b>${T('年度統計', 'Year by year')}</b><small>${T('每年投稿、接受、發表與審查天數', 'Submissions, acceptances, publications and review times per year')}</small></span><span class="chev">${ic('chev')}</span></a>`;
   }
 
   function projectCard(p, on) {
@@ -258,6 +259,7 @@
       return `<div class="round"><div class="round-head"><b>${T(`第 ${i} 輪`, `Round ${i}`)}</b><span class="muted">${esc(r.journal)}</span><button class="btn ghost sm" data-act="edit-round" data-id="${r.id}">${ic('edit')}${T('編輯', 'Edit')}</button></div>` +
         `<div class="trail">${trail.join('<span class="arrow">→</span>')}</div>` +
         (cs.length ? `<div class="trail"><a href="#/paper/${p.id}/reviews?round=${r.id}">${T(`審稿意見 ${cs.length} 條，已處理 ${cs.length - openCount(r.id)} 條`, `${cs.length} reviewer comments, ${cs.length - openCount(r.id)} done`)}</a></div>` : '') +
+        (Array.isArray(r.links) && r.links.length ? `<div class="trail">${r.links.map((l) => `<a class="chip" href="${esc(/^https?:\/\//i.test(l.url) ? l.url : 'https://' + l.url)}" target="_blank" rel="noopener">${esc(LINK_KIND()[l.kind] || l.kind)} ↗</a>`).join('')}</div>` : '') +
         (r.notes ? `<div class="note">${esc(r.notes)}</div>` : '') + '</div>';
     }).join('');
   }
@@ -349,8 +351,10 @@
       fields: [
         { name: 'name', label: T('姓名（論文上的寫法）', 'Name (as printed)'), required: true, max: 200, full: true, placeholder: 'Chia-Sung Chang' },
         { name: 'affiliation', label: T('單位（多個單位用分號隔開）', 'Affiliations (separate with semicolons)'), type: 'textarea', rows: 2, max: 1000, full: true },
+        { name: 'degree', label: T('學位（選填）', 'Degree (optional)'), max: 60, placeholder: 'Ph.D.' },
         { name: 'orcid', label: 'ORCID', max: 60, placeholder: '0000-0000-0000-0000' },
-        { name: 'email', label: 'Email', type: 'email', max: 300 },
+        { name: 'email', label: 'Email', type: 'email', max: 300, full: true },
+        { name: 'contact', label: T('署名的地址與電話（選填，當通訊作者時放在 cover letter）', 'Address and phone for signatures (optional, used when corresponding)'), type: 'textarea', rows: 3, max: 1000, full: true, placeholder: 'No.250 Wu-Hsing Street, Taipei 11031, Taiwan.\nTel: +886-2-…\nFax: +886-2-…' },
       ],
       onSave: async (row) => { const s = await save('people', row, person && person.id); if (!s) return false; toast(T('已儲存', 'Saved')); await refresh(); if (then) then(s); },
       onDelete: person && (async () => {
@@ -431,9 +435,9 @@
     const head = `<div class="card" style="margin-bottom:12px"><div class="row" style="justify-content:space-between"><div><b>${journal ? esc(journal) : T('還沒設定目標期刊', 'No target journal yet')}</b>` +
       (j ? `<div class="muted small">${[j.word_limit ? T(`全文 ${j.word_limit} 字`, `${j.word_limit} words`) : '', j.abstract_limit ? T(`摘要 ${j.abstract_limit} 字`, `abstract ${j.abstract_limit}`) : '', j.guideline || '', j.url ? `<a href="${esc(j.url)}" target="_blank" rel="noopener">${T('投稿網址', 'Submission site')}</a>` : ''].filter(Boolean).join(' · ')}</div>` : (journal ? `<div class="muted small"><a href="#/journal/${encodeURIComponent(journal)}">${T('填這家期刊的字數限制', 'Add this journal’s limits')}</a></div>` : '')) +
       `</div><button class="btn sm" data-act="edit-paper" data-id="${p.id}">${T('改目標期刊', 'Change journal')}</button></div></div>`;
-    if (!cl) return head + `<div class="empty">${T('投稿前逐項檢查：字數、報告指引、cover letter、各種聲明。清單可以在「我的」改成你習慣的版本。', 'Go through the checklist before you submit: word counts, guideline, cover letter, statements. Edit the list under “Me”.')}<br><button class="btn primary" data-act="start-check" data-id="${p.id}">${T('開始檢查', 'Start checklist')}</button></div>`;
+    if (!cl) return head + `<div class="empty">${T('投稿前逐項檢查：字數、報告指引、cover letter、各種聲明。清單可以在「我的」改成你習慣的版本。', 'Go through the checklist before you submit: word counts, guideline, cover letter, statements. Edit the list under “Me”.')}<br><span class="row" style="justify-content:center"><button class="btn primary" data-act="start-check" data-id="${p.id}">${T('開始檢查', 'Start checklist')}</button><button class="btn" data-act="cover" data-id="${p.id}">Cover letter</button></span></div>`;
     const done = cl.items.filter((x) => x.done).length;
-    return head + `<div class="row" style="justify-content:space-between;margin-bottom:8px"><b>${T(`已完成 ${done}/${cl.items.length}`, `${done}/${cl.items.length} done`)}</b><span class="row"><button class="btn sm" data-act="start-check" data-id="${p.id}">${T('開始新一輪', 'Start over')}</button>${done === cl.items.length ? `<button class="btn sm primary" data-act="new-round" data-id="${p.id}">${ic('plus')}${T('記錄投稿', 'Record submission')}</button>` : ''}</span></div>` +
+    return head + `<div class="row" style="justify-content:space-between;margin-bottom:8px"><b>${T(`已完成 ${done}/${cl.items.length}`, `${done}/${cl.items.length} done`)}</b><span class="row"><button class="btn sm" data-act="cover" data-id="${p.id}">Cover letter</button><button class="btn sm" data-act="start-check" data-id="${p.id}">${T('開始新一輪', 'Start over')}</button>${done === cl.items.length ? `<button class="btn sm primary" data-act="new-round" data-id="${p.id}">${ic('plus')}${T('記錄投稿', 'Record submission')}</button>` : ''}</span></div>` +
       `<div class="list">${cl.items.map((it, i) => `<label class="ms${it.done ? ' done' : ''}" style="cursor:pointer"><input type="checkbox" data-act="check-item" data-id="${p.id}" data-i="${i}" ${it.done ? 'checked' : ''} style="position:absolute;opacity:0;width:1px;height:1px"><span class="tick">${it.done ? ic('check') : ''}</span><span><h4>${esc(it.text)}</h4><span class="meta">${itemHint(it.text, p)}</span></span><span></span></label>`).join('')}</div>`;
   }
   async function startChecklist(p) {
@@ -531,6 +535,8 @@
           : `<p class="muted small">${T('加一次以後，每篇論文都能直接選，產生作者列和 CRediT 貢獻聲明。', 'Add people once and pick them on any paper for author lines and CRediT statements.')}</p>`) + '</div>' +
       `<div class="card"><h3>${T('投稿檢查清單範本', 'Checklist template')}</h3><p class="muted small" style="margin-bottom:8px">${T('一行一項。之後每篇論文「開始檢查」時會用這份清單。', 'One item per line. Every paper’s checklist starts from this list.')}</p>
         <form id="f-template"><textarea class="inp" name="items" rows="10">${esc(template().join('\n'))}</textarea><div class="row" style="margin-top:8px"><button class="btn sm primary" type="submit">${T('儲存範本', 'Save template')}</button><button class="btn sm ghost" type="button" data-act="reset-template">${T('還原預設', 'Restore default')}</button></div></form></div>` +
+      `<div class="card"><h3>${T('Cover letter 範本', 'Cover letter template')}</h3><p class="muted small" style="margin-bottom:8px">${T('可用的欄位：', 'Fields: ')}${COVER_FIELDS}。${T('某一行的欄位全是空的，那一行會自動省略。', 'A line whose fields are all empty is left out.')}</p>
+        <form id="f-cover"><textarea class="inp" name="tpl" rows="12" style="font-family:var(--mono);font-size:12.5px">${esc(coverTemplate())}</textarea><div class="row" style="margin-top:8px"><button class="btn sm primary" type="submit">${T('儲存範本', 'Save template')}</button><button class="btn sm ghost" type="button" data-act="reset-cover">${T('還原預設', 'Restore default')}</button></div></form></div>` +
       `<div class="card"><h3>${T('資料備份', 'Backup')}</h3><p class="muted small" style="margin-bottom:10px">${T('下載你所有的專案、論文、投稿輪次、審稿意見、截止日、期刊和共同作者。Excel 方便閱讀；JSON 可以用來還原。', 'Download every project, paper, round, reviewer comment, deadline, journal and co-author. Excel is for reading; JSON can restore.')}</p>
         <div class="d-actions" style="margin-top:0"><button class="btn sm" data-act="export-xlsx">${ic('doc')}${T('下載 Excel', 'Download Excel')}</button><button class="btn sm" data-act="export-json">${ic('doc')}${T('下載 JSON', 'Download JSON')}</button><button class="btn sm" data-act="import-json">${T('從 JSON 還原…', 'Restore from JSON…')}</button></div></div>` +
       (ADMIN ? `<div class="card" id="admin"><h3>${T('邀請碼', 'Invite codes')}</h3><p class="muted small" style="margin-bottom:10px">${T('只有管理員看得到。邀請碼只在產生時顯示一次。', 'Only admins see this. A code is shown once, when it is made.')}</p>
@@ -571,6 +577,7 @@
       if (wide) { split = true; html = `<div class="pane-list">${listJournals(name)}</div><div class="pane-detail">${name ? detailJournal(name) : emptyPane(T('選一家期刊查看', 'Pick a journal'))}</div>`; }
       else html = name ? detailJournal(name) : listJournals();
     } else if (a === 'deadlines') html = pageDeadlines();
+    else if (a === 'stats') { section = ''; html = pageStats(); }
     else if (a === 'me') html = pageMe();
     else { section = ''; html = pageHome(); }
     const y = window.scrollY;
@@ -589,13 +596,14 @@
 
   /* ---------------- generic form dialog ---------------- */
   // fields: [{name, label, type: text|textarea|date|select|number|checkbox|email|url, options, required, max, full, help, placeholder}]
-  function formDialog({ title, fields, values = {}, saveLabel, onSave, onDelete, deleteLabel }) {
+  function formDialog({ title, fields, values = {}, saveLabel, onSave, onDelete, deleteLabel, afterOpen }) {
     const dlg = document.createElement('dialog');
     const field = (f) => {
       const v = values[f.name] ?? f.value ?? '', req = f.required ? ' required' : '', id = 'fd-' + f.name;
       let input;
       if (f.type === 'textarea') input = `<textarea id="${id}" name="${f.name}"${req}${f.max ? ` maxlength="${f.max}"` : ''} rows="${f.rows || 3}"${f.placeholder ? ` placeholder="${esc(f.placeholder)}"` : ''}>${esc(v)}</textarea>`;
       else if (f.type === 'select') input = `<select id="${id}" name="${f.name}"${req}>${f.options.map(([k, l]) => `<option value="${esc(k)}"${String(k) === String(v) ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
+      else if (f.type === 'links') return `<div class="f full" data-links="${f.name}"><span>${esc(f.label)}</span><div class="lk-rows"></div><button type="button" class="link" data-add-link>＋ ${T('新增連結', 'Add a link')}</button>${f.help ? `<div class="help">${esc(f.help)}</div>` : ''}</div>`;
       else if (f.type === 'checkbox') return `<label class="f ${f.full ? 'full' : ''}" style="display:flex;gap:8px;align-items:center"><input type="checkbox" name="${f.name}" style="width:auto;min-height:0"${v ? ' checked' : ''}> ${esc(f.label)}</label>`;
       else input = `<input id="${id}" name="${f.name}" type="${f.type || 'text'}"${req}${f.max ? ` maxlength="${f.max}"` : ''} value="${esc(v)}"${f.placeholder ? ` placeholder="${esc(f.placeholder)}"` : ''}${f.type === 'number' ? ' inputmode="numeric"' : ''}${f.suggest ? ` list="dl-${f.name}" autocomplete="off"` : ''}>` + (f.suggest ? `<datalist id="dl-${f.name}">${f.suggest.map((x) => `<option value="${esc(x)}">`).join('')}</datalist>` : '');
       return `<label class="f ${f.full ? 'full' : ''}" for="${id}"><span>${esc(f.label)}</span>${input}${f.help ? `<div class="help">${esc(f.help)}</div>` : ''}</label>`;
@@ -604,12 +612,14 @@
       `<div class="dlg-foot">${onDelete ? `<button type="button" class="btn danger" data-del>${ic('trash')}${esc(deleteLabel || T('刪除', 'Delete'))}</button>` : ''}<span class="spacer"></span><button class="btn" value="cancel" formnovalidate>${T('取消', 'Cancel')}</button><button class="btn primary" value="save">${esc(saveLabel || T('儲存', 'Save'))}</button></div></form>`;
     document.body.appendChild(dlg);
     const form = dlg.querySelector('form');
+    fields.filter((f) => f.type === 'links').forEach((f) => { const box = form.querySelector(`[data-links="${f.name}"]`); (values[f.name] || []).forEach((l) => addLinkRow(box, l)); box.querySelector('[data-add-link]').onclick = () => addLinkRow(box, {}, true); });
     form.addEventListener('submit', async (e) => {
       if (!e.submitter || e.submitter.value !== 'save') return;
       e.preventDefault();
       if (!form.reportValidity()) return;
       const row = {};
-      fields.forEach((f) => { const el = form.elements[f.name]; if (!el) return; row[f.name] = f.type === 'checkbox' ? el.checked : (el.value.trim() === '' ? null : (f.type === 'number' ? Number(el.value) : el.value.trim())); });
+      fields.filter((f) => f.type === 'links').forEach((f) => { row[f.name] = Array.from(form.querySelectorAll(`[data-links="${f.name}"] .lk-row`)).map((r) => ({ kind: r.querySelector('select').value, url: r.querySelector('input').value.trim() })).filter((l) => l.url); });
+      fields.forEach((f) => { if (f.type === 'links') return; const el = form.elements[f.name]; if (!el) return; row[f.name] = f.type === 'checkbox' ? el.checked : (el.value.trim() === '' ? null : (f.type === 'number' ? Number(el.value) : el.value.trim())); });
       e.submitter.disabled = true;
       const ok = await onSave(row);
       e.submitter.disabled = false;
@@ -618,7 +628,16 @@
     if (onDelete) dlg.querySelector('[data-del]').onclick = async () => { if (await onDelete()) dlg.close(); };
     dlg.addEventListener('close', () => dlg.remove());
     dlg.showModal();
+    if (afterOpen) afterOpen(dlg, form);
     return dlg;
+  }
+  const LINK_KIND = () => ({ manuscript: T('稿件', 'Manuscript'), response: T('回覆信', 'Response letter'), cover: 'Cover letter', supplement: T('補充資料', 'Supplement'), figures: T('圖表', 'Figures'), other: T('其他', 'Other') });
+  function addLinkRow(box, l, focus) {
+    const row = document.createElement('div'); row.className = 'lk-row';
+    row.innerHTML = `<select aria-label="${T('類型', 'Kind')}">${Object.entries(LINK_KIND()).map(([k, v]) => `<option value="${k}"${k === (l.kind || 'manuscript') ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select><input type="url" maxlength="1000" placeholder="https://…" value="${esc(l.url || '')}" aria-label="URL"><button type="button" class="btn ghost icon" aria-label="${T('移除', 'Remove')}">✕</button>`;
+    row.querySelector('button').onclick = () => row.remove();
+    box.querySelector('.lk-rows').appendChild(row);
+    if (focus) row.querySelector('input').focus();
   }
 
   /* ---------------- editors ---------------- */
@@ -662,6 +681,7 @@
     });
   }
   function editPaper(p, projectId) {
+    let pendingAuthors = null;
     formDialog({
       title: p ? T('編輯論文', 'Edit paper') : T('新增論文', 'New paper'), values: p || { status: 'drafting', project_id: projectId || '' },
       fields: [
@@ -677,7 +697,8 @@
         { name: 'doi', label: 'DOI', max: 300, full: true, placeholder: '10.xxxx/...' },
         { name: 'notes', label: T('備註', 'Notes'), type: 'textarea', max: 10000, full: true },
       ],
-      onSave: async (row) => { const s = await save('papers', row, p && p.id); if (!s) return false; toast(T('已儲存', 'Saved')); await refresh(); if (!p) location.hash = '#/paper/' + s.id; },
+      afterOpen: (dlg, form) => doiLookup(dlg, form, (list) => { pendingAuthors = list; }),
+      onSave: async (row) => { const s = await save('papers', row, p && p.id); if (!s) return false; if (pendingAuthors) await importAuthors(s.id, pendingAuthors); toast(T('已儲存', 'Saved')); await refresh(); if (!p) location.hash = '#/paper/' + s.id; },
       onDelete: p && (async () => {
         if (!confirm(T(`要刪除「${paperName(p)}」和它的所有投稿紀錄、審稿意見嗎？刪除後無法復原。`, `Delete “${paperName(p)}” with all its rounds and reviewer comments? This cannot be undone.`))) return false;
         if (!(await remove('papers', p.id))) return false;
@@ -698,6 +719,7 @@
         { name: 'decision_on', label: T('收到結果', 'Decision received'), type: 'date' },
         { name: 'response_on', label: T('送出回覆', 'Response sent'), type: 'date', help: T('修改後重新送審的日期', 'When the revision went back') },
         { name: 'notes', label: T('編輯的信、其他紀錄', 'Editor’s letter, other notes'), type: 'textarea', max: 10000, full: true },
+        { name: 'links', label: T('檔案連結（選填）', 'File links (optional)'), type: 'links', help: T('貼上雲端硬碟的分享連結，例如這一輪送出的稿件和回覆信。', 'Paste share links from your cloud storage, e.g. the manuscript and response sent this round.') },
       ],
       onSave: async (row) => {
         if (!r) row.paper_id = p.id;
@@ -853,6 +875,15 @@
         if (c.changes) body += para(run('Changes: ', { b: true }) + run(c.changes), { after: 240, ind: 360 });
       });
     });
+    return makeDocx(body);
+  }
+  const DOCX = {
+    x: (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, ''),
+    run: (t, o = {}) => String(t).split('\n').map((line, i) => `<w:r><w:rPr>${o.b ? '<w:b/>' : ''}${o.i ? '<w:i/>' : ''}${o.sz ? `<w:sz w:val="${o.sz}"/><w:szCs w:val="${o.sz}"/>` : ''}${o.color ? `<w:color w:val="${o.color}"/>` : ''}</w:rPr>${i ? '<w:br/>' : ''}<w:t xml:space="preserve">${DOCX.x(line)}</w:t></w:r>`).join(''),
+    para: (runs, o = {}) => `<w:p><w:pPr><w:spacing w:before="${o.before || 0}" w:after="${o.after ?? 120}"/>${o.ind ? `<w:ind w:left="${o.ind}"/>` : ''}</w:pPr>${runs}</w:p>`,
+  };
+  async function makeDocx(body) {
+    await loadJSZip();
     const doc = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${body}<w:sectPr><w:pgSz w:w="11906" w:h="16838"/><w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="567" w:footer="567" w:gutter="0"/></w:sectPr></w:body></w:document>`;
     const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri" w:cs="Calibri" w:eastAsia="Microsoft JhengHei"/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="120" w:line="276" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style></w:styles>`;
     const zip = new window.JSZip();
@@ -862,6 +893,159 @@
     zip.file('word/document.xml', doc);
     zip.file('word/styles.xml', styles);
     return zip.generateAsync({ type: 'blob', mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+  }
+
+  /* ---------------- DOI → Crossref ---------------- */
+  // Only the DOI leaves the browser: Crossref is the public registry of scholarly metadata.
+  const cleanDoi = (v) => String(v || '').trim().replace(/^https?:\/\/(dx\.)?doi\.org\//i, '').replace(/^doi:\s*/i, '').trim();
+  async function crossref(doi) {
+    const r = await fetch('https://api.crossref.org/works/' + encodeURIComponent(doi), { headers: { Accept: 'application/json' } });
+    if (r.status === 404) throw new Error(T('Crossref 找不到這個 DOI。請確認有沒有打錯，或文章還沒正式出版。', 'Crossref has no record of this DOI. Check it, or the article may not be out yet.'));
+    if (!r.ok) throw new Error(T('Crossref 暫時無法連線，請稍後再試。', 'Crossref is not reachable right now. Try again later.'));
+    const m = (await r.json()).message || {};
+    const strip = (t) => String(t || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+    const dp = (m['published-print'] || m['published-online'] || m.issued || {})['date-parts'];
+    const authors = (m.author || []).filter((a) => a.family || a.name).map((a) => ({ name: a.name || [a.given, a.family].filter(Boolean).join(' '), affiliation: (a.affiliation || []).map((x) => x.name).filter(Boolean).join('; '), orcid: a.ORCID ? String(a.ORCID).replace(/^https?:\/\/orcid\.org\//i, '') : '' }));
+    return { title: strip((m.title || [])[0]), journal: strip((m['container-title'] || [])[0]), year: dp && dp[0] && dp[0][0] ? String(dp[0][0]) : '', authors };
+  }
+  function doiLookup(dlg, form, setAuthors) {
+    const input = form.elements.doi; if (!input) return;
+    const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'btn sm'; btn.textContent = T('查詢', 'Look up');
+    const wrap = document.createElement('div'); wrap.className = 'row'; wrap.style.flexWrap = 'nowrap';
+    input.parentNode.insertBefore(wrap, input); wrap.appendChild(input); wrap.appendChild(btn);
+    const panel = document.createElement('div'); panel.className = 'doi-panel'; wrap.parentNode.appendChild(panel);
+    btn.onclick = async () => {
+      const doi = cleanDoi(input.value);
+      if (!/^10\.\d{3,9}\/\S+$/.test(doi)) { panel.innerHTML = `<p class="msg">${T('DOI 的格式應該像 10.1080/07853890.2025.2557509', 'A DOI looks like 10.1080/07853890.2025.2557509')}</p>`; return; }
+      input.value = doi; btn.disabled = true; panel.innerHTML = `<p class="muted small">${T('查詢中…', 'Looking up…')}</p>`;
+      let c; try { c = await crossref(doi); } catch (e) { panel.innerHTML = `<p class="msg">${esc(e.message)}</p>`; btn.disabled = false; return; } finally { btn.disabled = false; }
+      const authorsLine = c.authors.map((a) => a.name).join(', ');
+      const rows = [['title', T('標題', 'Title'), c.title], ['target_journal', T('期刊', 'Journal'), c.journal], ['year', T('年份', 'Year'), c.year], ['authors', T('作者列', 'Authors'), authorsLine]].filter((r) => r[2]);
+      panel.innerHTML = `<div class="card" style="margin:4px 0 12px"><p class="small" style="margin-bottom:8px"><b>${T('從 Crossref 找到', 'Found on Crossref')}</b> · ${T('勾選要更新的欄位', 'tick what to update')}</p>` +
+        rows.map(([k, label, v]) => { const cur = (form.elements[k] && form.elements[k].value.trim()) || ''; const same = cur === v; return `<label class="f" style="display:flex;gap:8px;align-items:flex-start;margin-bottom:8px"><input type="checkbox" data-k="${k}" style="width:auto;min-height:0;margin-top:4px"${same ? ' disabled' : ' checked'}><span style="color:var(--ink)"><b>${label}</b> ${esc(v)}<br><small class="muted">${same ? T('和目前相同', 'same as now') : cur ? T('目前：', 'Now: ') + esc(cur.length > 120 ? cur.slice(0, 120) + '…' : cur) : T('目前空白', 'empty now')}</small></span></label>`; }).join('') +
+        (c.authors.length ? `<label class="f" style="display:flex;gap:8px;align-items:flex-start"><input type="checkbox" data-authors style="width:auto;min-height:0;margin-top:4px"><span style="color:var(--ink)">${T(`同時把 ${c.authors.length} 位作者加進共同作者通訊錄和這篇的作者名單`, `Also add the ${c.authors.length} authors to your co-authors and this paper's author list`)}<br><small class="muted">${T('已經在通訊錄的同名作者不會重複建立；單位與 ORCID 來自 Crossref。', 'People already in your list are reused; affiliation and ORCID come from Crossref.')}</small></span></label>` : '') +
+        `<button type="button" class="btn sm primary" data-apply>${T('套用勾選的項目', 'Apply ticked items')}</button></div>`;
+      panel.querySelector('[data-apply]').onclick = () => {
+        panel.querySelectorAll('input[data-k]:checked').forEach((cb) => { const k = cb.dataset.k, v = rows.find((r) => r[0] === k)[2]; if (form.elements[k]) form.elements[k].value = v; });
+        const a = panel.querySelector('[data-authors]'); setAuthors(a && a.checked ? c.authors : null);
+        panel.innerHTML = `<p class="msg ok">${T('已填入，按「儲存」後生效。', 'Filled in. Press Save to keep it.')}</p>`;
+      };
+    };
+  }
+  // add Crossref authors to the directory (reusing people with the same name) and to the paper, in order, after any already there
+  async function importAuthors(paperId, list) {
+    const norm = (n) => n.trim().toLowerCase().replace(/\s+/g, ' ');
+    const have = authorsOf(paperId).map((a) => a.person_id);
+    let pos = Math.max(0, ...authorsOf(paperId).map((a) => a.position));
+    for (const a of list) {
+      let person = D.people.find((x) => norm(x.name) === norm(a.name));
+      if (!person) { person = await save('people', { name: a.name.slice(0, 200), affiliation: a.affiliation ? a.affiliation.slice(0, 1000) : null, orcid: a.orcid || null }); if (!person) return; D.people.push(person); }
+      if (have.includes(person.id)) continue;
+      const row = await save('authors', { paper_id: paperId, person_id: person.id, position: ++pos }); if (!row) return;
+      have.push(person.id);
+    }
+  }
+
+  /* ---------------- cover letter ---------------- */
+  const ARTICLE_TYPES = ['Original Article', 'Brief Report', 'Research Letter', 'Systematic Review and Meta-analysis', 'Review', 'Short Communication'];
+  const DEFAULT_COVER = [
+    '{{date}}', '',
+    '{{editor_name}}', '{{editor_title}}', '{{journal}}', '',
+    '{{salutation}}', '',
+    'We are submitting a manuscript entitled “{{title}}” to be considered for publication in {{journal}}.', '',
+    '{{findings}}', '',
+    '{{significance}}', '',
+    'We believe that this work is scientifically valid, and all authors have sufficiently contributed to data collection, analysis and manuscript preparation. The authors declare no conflict of interest in association with this work.', '',
+    'This manuscript is not currently under consideration for publication elsewhere. All authors have read and approved this manuscript. Thank you for your consideration, and we look forward to hearing from you soon.', '',
+    'Sincerely Yours,', '',
+    '{{corresponding}}', '{{affiliation}}', '{{contact}}', 'E-mail: {{email}}',
+  ].join('\n');
+  const COVER_FIELDS = '{{date}} {{editor_name}} {{editor_title}} {{journal}} {{salutation}} {{title}} {{type}} {{a_type}} {{findings}} {{significance}} {{corresponding}} {{affiliation}} {{contact}} {{email}}';
+  // "Nov. 18, 2026"
+  const letterDate = (d) => { const m = ['Jan.', 'Feb.', 'Mar.', 'Apr.', 'May', 'June', 'July', 'Aug.', 'Sept.', 'Oct.', 'Nov.', 'Dec.']; return `${m[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`; };
+  const coverTemplate = () => (SETTINGS && SETTINGS.cover_template) || DEFAULT_COVER;
+  function coverText(p, v) {
+    const corr = authorsOf(p.id).map((a) => ({ a, person: byId('people', a.person_id) })).find((x) => x.a.corresponding && x.person);
+    const type = (v.type || 'Original Article').trim();
+    const editorName = (v.editor_name || '').trim();
+    const fill = { date: letterDate(new Date()), editor_name: editorName, editor_title: editorName ? ((v.editor_title || '').trim() || 'Editor-in-Chief') : '',
+      salutation: (v.editor || '').trim() || 'Dear Editor:', title: p.title, type, a_type: (/^[aeiou]/i.test(type) ? 'an ' : 'a ') + type, journal: (v.journal || '').trim() || '[journal]', findings: (v.findings || '').trim(), significance: (v.significance || '').trim(),
+      corresponding: corr ? corr.person.name + (corr.person.degree ? ', ' + corr.person.degree : '') : '', affiliation: corr ? String(corr.person.affiliation || '').split(';')[0].trim() : '',
+      contact: corr && corr.person.contact ? corr.person.contact.trim() : '', email: corr && corr.person.email ? corr.person.email : '' };
+    // a line whose fields are all empty is left out, so an unknown fax or e-mail never leaves "E-mail:" behind
+    const out = coverTemplate().split('\n').map((line) => {
+      const keys = [...line.matchAll(/\{\{(\w+)\}\}/g)].map((m) => m[1]).filter((k) => k in fill);
+      if (keys.length && keys.every((k) => !fill[k])) return null;
+      return line.replace(/\{\{(\w+)\}\}/g, (m, k) => (k in fill ? fill[k] : m));
+    }).filter((l) => l !== null).join('\n');
+    return out.replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim() + '\n';
+  }
+  function coverDialog(p) {
+    const lr = lastRound(p.id);
+    const v = Object.assign({ journal: (['reject', 'desk_reject'].includes(lr && lr.decision) ? '' : lr && lr.journal) || p.target_journal || '', type: 'Original Article', editor_name: '', editor_title: '', editor: '', findings: '', significance: '' }, p.cover || {});
+    if (!v.journal) v.journal = p.target_journal || '';
+    const dlg = document.createElement('dialog'); dlg.style.width = 'min(44rem, calc(100vw - 24px))';
+    dlg.innerHTML = `<form method="dialog"><div class="dlg-head">Cover letter</div><div class="dlg-body"><div class="form-grid">
+      <label class="f"><span>${T('期刊', 'Journal')}</span><input name="journal" maxlength="300" value="${esc(v.journal)}" list="dl-cv-j"><datalist id="dl-cv-j">${allJournalNames().map((x) => `<option value="${esc(x)}">`).join('')}</datalist></label>
+      <label class="f"><span>${T('文章類型', 'Article type')}</span><input name="type" maxlength="100" value="${esc(v.type)}" list="dl-cv-t"><datalist id="dl-cv-t">${ARTICLE_TYPES.map((x) => `<option value="${x}">`).join('')}</datalist></label>
+      <label class="f"><span>${T('收件編輯（選填）', 'Editor’s name (optional)')}</span><input name="editor_name" maxlength="200" value="${esc(v.editor_name)}" placeholder="Nina Ditsch, MD, PhD"></label>
+      <label class="f"><span>${T('職稱（空白就用 Editor-in-Chief）', 'Title (blank = Editor-in-Chief)')}</span><input name="editor_title" maxlength="200" value="${esc(v.editor_title)}" placeholder="Editor-in-Chief"></label>
+      <label class="f full"><span>${T('稱呼（空白就用 Dear Editor:）', 'Salutation (blank = Dear Editor:)')}</span><input name="editor" maxlength="200" value="${esc(v.editor)}" placeholder="Dear Editor:"></label>
+      <label class="f full"><span>${T('主要發現（英文）', 'Main findings')}</span><textarea name="findings" rows="3" maxlength="3000">${esc(v.findings)}</textarea></label>
+      <label class="f full"><span>${T('資料來源與重要性（英文）', 'Data source and why it matters')}</span><textarea name="significance" rows="3" maxlength="3000">${esc(v.significance)}</textarea></label>
+      <label class="f full"><span>${T('信件內容（可以直接修改）', 'Letter (you can edit it here)')}</span><textarea name="out" class="letter" style="min-height:16rem"></textarea></label>
+    </div>${authorsOf(p.id).some((a) => a.corresponding) ? '' : `<p class="muted small">${T('在「資料 › 作者與 CRediT」勾選通訊作者，署名（姓名、學位、單位、地址電話、E-mail）會自動帶入。', 'Mark the corresponding author under Details › Authors to fill in the signature (name, degree, affiliation, address and phone, e-mail).')}</p>`}</div>
+      <div class="dlg-foot"><button type="button" class="btn" data-copy>${ic('copy')}${T('複製', 'Copy')}</button><button type="button" class="btn" data-docx>${ic('doc')}${T('匯出 Word', 'Export Word')}</button><span class="spacer"></span><button class="btn" value="cancel" formnovalidate>${T('關閉', 'Close')}</button><button class="btn primary" value="save">${T('儲存內容', 'Save inputs')}</button></div></form>`;
+    document.body.appendChild(dlg);
+    const form = dlg.querySelector('form'), out = form.elements.out;
+    let edited = false;
+    const vals = () => ({ journal: form.elements.journal.value, type: form.elements.type.value, editor_name: form.elements.editor_name.value, editor_title: form.elements.editor_title.value, editor: form.elements.editor.value, findings: form.elements.findings.value, significance: form.elements.significance.value });
+    const update = () => { if (!edited) out.value = coverText(p, vals()); };
+    update();
+    ['journal', 'type', 'editor_name', 'editor_title', 'editor', 'findings', 'significance'].forEach((n) => form.elements[n].addEventListener('input', update));
+    out.addEventListener('input', () => { edited = true; });
+    dlg.querySelector('[data-copy]').onclick = () => navigator.clipboard.writeText(out.value).then(() => toast(T('已複製', 'Copied')), () => toast(T('無法複製', 'Could not copy')));
+    dlg.querySelector('[data-docx]').onclick = async () => {
+      try { const body = out.value.split('\n').map((line) => DOCX.para(DOCX.run(line), { after: line ? 120 : 0 })).join(''); download(await makeDocx(body), `cover_letter_${(p.short_title || 'paper').replace(/[^\w\-]+/g, '_').slice(0, 40)}.docx`); }
+      catch (e) { toast(T('匯出失敗：', 'Export failed: ') + e.message, 6000); }
+    };
+    form.addEventListener('submit', async (e) => {
+      if (!e.submitter || e.submitter.value !== 'save') return;
+      e.preventDefault();
+      if (await save('papers', { cover: vals() }, p.id)) { p.cover = vals(); toast(T('已儲存，下次打開會記得', 'Saved for next time')); }
+    });
+    dlg.addEventListener('close', () => dlg.remove());
+    dlg.showModal();
+  }
+
+  /* ---------------- yearly numbers ---------------- */
+  function yearStats() {
+    const years = {}, Y = (y) => (years[y] = years[y] || { newPapers: 0, submissions: 0, accepted: 0, published: 0, rejected: 0, desk: 0, firstDays: [], newProjects: 0, milestones: 0 });
+    const yr = (d) => (d ? +String(d).slice(0, 4) : null);
+    D.papers.forEach((p) => { const rs = roundsOf(p.id); if (rs.length) Y(yr(rs[0].submitted_on)).newPapers++; if (p.status === 'published' && /^\d{4}$/.test(p.year || '')) Y(+p.year).published++; });
+    const firstOf = {};
+    D.rounds.forEach((r) => { const k = r.paper_id + '|' + normJ(r.journal); if (!firstOf[k]) firstOf[k] = r; });
+    Object.values(firstOf).forEach((r) => { const y = Y(yr(r.submitted_on)); y.submissions++; if (r.decision_on && r.decision !== 'pending') { const d = days(parseDate(r.submitted_on), parseDate(r.decision_on)); if (d >= 0) y.firstDays.push(d); } });
+    D.rounds.forEach((r) => { const y = yr(r.decision_on || r.submitted_on); if (r.decision === 'accept') Y(y).accepted++; if (r.decision === 'reject') Y(y).rejected++; if (r.decision === 'desk_reject') { Y(y).rejected++; Y(y).desk++; } });
+    D.projects.forEach((p) => { Y(yr(p.start_date || p.created_at)).newProjects++; });
+    D.milestones.forEach((m) => { if (m.done_on) Y(yr(m.done_on)).milestones++; });
+    const med = (a) => { if (!a.length) return null; const s = a.slice().sort((x, y) => x - y), m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : Math.round((s[m - 1] + s[m]) / 2); };
+    return Object.keys(years).filter((k) => k !== 'null').map(Number).sort((a, b) => b - a).map((y) => ({ year: y, ...years[y], median: med(years[y].firstDays) }));
+  }
+  const STAT_COLS = () => [['newPapers', T('新投稿論文', 'New papers submitted')], ['submissions', T('投稿次數（含轉投）', 'Submissions (incl. new journals)')], ['accepted', T('接受', 'Accepted')], ['published', T('發表', 'Published')], ['rejected', T('被拒', 'Rejected')], ['desk', 'Desk reject'], ['median', T('第一次結果中位數（天）', 'First decision, median (days)')], ['newProjects', T('新開的專案', 'New projects')], ['milestones', T('完成的里程碑', 'Milestones done')]];
+  function pageStats() {
+    const rows = yearStats(), cur = rows[0];
+    return ph(T('年度統計', 'Year by year'), { back: '#/', actions: rows.length ? `<button class="btn sm" data-act="stats-xlsx">${ic('doc')}${T('下載 Excel', 'Download Excel')}</button>` : '' }) +
+      `<p class="muted small" style="margin-bottom:12px">${T('數字全部來自你自己的紀錄：投稿依第一輪的投稿日、接受和被拒依收到結果的日期、發表依論文的發表年份計算。', 'All numbers come from your own records: submissions by the first submission date, decisions by the date received, publications by the paper’s year.')}</p>` +
+      (cur ? `<h2 class="sec-title">${cur.year}</h2><div class="metrics">${STAT_COLS().slice(0, 8).map(([k, l]) => `<div class="metric"><span>${l}</span><b>${cur[k] === null ? '—' : cur[k]}</b></div>`).join('')}</div>` +
+        `<h2 class="sec-title">${T('各年度', 'All years')}</h2><div class="tbl-wrap"><table class="codes"><thead><tr><th>${T('年', 'Year')}</th>${STAT_COLS().map(([, l]) => `<th>${l}</th>`).join('')}</tr></thead><tbody>${rows.map((r) => `<tr><td><b>${r.year}</b></td>${STAT_COLS().map(([k]) => `<td>${r[k] === null ? '—' : r[k]}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`
+        : `<div class="empty">${T('記錄投稿後，這裡會依年份統計。', 'Once you record submissions, yearly numbers appear here.')}</div>`);
+  }
+  async function statsXlsx() {
+    try { await loadXlsx(); } catch (e) { toast(T('無法載入 Excel 元件，請檢查網路', 'Could not load the Excel library; check your connection'), 5000); return; }
+    const rows = yearStats().map((r) => { const o = { [T('年', 'Year')]: r.year }; STAT_COLS().forEach(([k, l]) => { o[l] = r[k] === null ? '' : r[k]; }); return o; });
+    const wb = window.XLSX.utils.book_new(); window.XLSX.utils.book_append_sheet(wb, window.XLSX.utils.json_to_sheet(rows), T('年度統計', 'Year by year'));
+    download(new Blob([window.XLSX.write(wb, { bookType: 'xlsx', type: 'array' })], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `submission_stats_${stamp()}.xlsx`);
   }
 
   /* ---------------- citation details (the site owner's go to the CV through Pages CMS) ---------------- */
@@ -885,19 +1069,19 @@
   const COLS = {
     projects: ['id', 'title', 'short_title', 'stage', 'role', 'collaborators', 'start_date', 'target_date', 'notes', 'created_at', 'updated_at'],
     milestones: ['id', 'project_id', 'title', 'kind', 'due', 'done_on', 'expires_on', 'ref', 'notes', 'created_at'],
-    papers: ['id', 'project_id', 'title', 'short_title', 'authors', 'my_role', 'status', 'target_journal', 'deadline', 'doi', 'year', 'notes', 'checklist', 'created_at', 'updated_at'],
-    rounds: ['id', 'paper_id', 'journal', 'submitted_on', 'decision', 'decision_on', 'response_on', 'notes', 'created_at'],
+    papers: ['id', 'project_id', 'title', 'short_title', 'authors', 'my_role', 'status', 'target_journal', 'deadline', 'doi', 'year', 'notes', 'checklist', 'cover', 'created_at', 'updated_at'],
+    rounds: ['id', 'paper_id', 'journal', 'submitted_on', 'decision', 'decision_on', 'response_on', 'notes', 'links', 'created_at'],
     comments: ['id', 'round_id', 'reviewer', 'seq', 'comment', 'response', 'changes', 'status', 'created_at', 'updated_at'],
     deadlines: ['id', 'title', 'kind', 'due', 'url', 'done', 'notes', 'created_at'],
     journals: ['id', 'name', 'word_limit', 'abstract_limit', 'apc', 'url', 'guideline', 'notes', 'created_at'],
-    people: ['id', 'name', 'affiliation', 'orcid', 'email', 'created_at'],
+    people: ['id', 'name', 'degree', 'affiliation', 'orcid', 'email', 'contact', 'created_at'],
     authors: ['id', 'paper_id', 'person_id', 'position', 'corresponding', 'roles', 'created_at'],
   };
   const pick = (row, cols) => { const o = {}; cols.forEach((c) => { if (row[c] !== undefined) o[c] = row[c]; }); return o; };
   const stamp = () => localISO(new Date()).replace(/-/g, '');
   function exportJson() {
     const data = {}; Object.keys(COLS).forEach((k) => { data[k] = D[k].map((r) => pick(r, COLS[k])); });
-    data.settings = SETTINGS ? { checklist_template: SETTINGS.checklist_template } : null;
+    data.settings = SETTINGS ? { checklist_template: SETTINGS.checklist_template, cover_template: SETTINGS.cover_template } : null;
     download(new Blob([JSON.stringify({ app: 'submission-tracker', version: 1, exportedAt: new Date().toISOString(), data }, null, 2)], { type: 'application/json' }), `submission_tracker_${stamp()}.json`);
     toast(T('已下載 JSON 備份', 'JSON backup downloaded'));
   }
@@ -916,7 +1100,7 @@
       [T('審稿意見', 'Reviewer comments'), D.comments.map((c) => { const r = byId('rounds', c.round_id) || {}; return { [T('論文', 'Paper')]: pName(r.paper_id), [T('輪次', 'Round')]: r.id ? roundNo(r) : '', [T('期刊', 'Journal')]: r.journal, [T('誰', 'From')]: c.reviewer, [T('編號', 'No.')]: c.seq, [T('意見', 'Comment')]: c.comment, [T('回覆', 'Response')]: c.response, [T('修改位置', 'Changes')]: c.changes, [T('狀態', 'Status')]: C_STATUS()[c.status] }; })],
       [T('截止日', 'Deadlines'), D.deadlines.map((d) => ({ [T('名稱', 'Name')]: d.title, [T('類型', 'Kind')]: DL_KIND()[d.kind], [T('截止日', 'Due')]: d.due, [T('網址', 'Link')]: d.url, [T('完成', 'Done')]: d.done ? '✓' : '', [T('備註', 'Notes')]: d.notes }))],
       [T('期刊', 'Journals'), D.journals.map((j) => ({ [T('名稱', 'Name')]: j.name, [T('全文字數上限', 'Word limit')]: j.word_limit, [T('摘要字數上限', 'Abstract limit')]: j.abstract_limit, [T('報告指引', 'Guideline')]: j.guideline, APC: j.apc, [T('投稿網址', 'Site')]: j.url, [T('備註', 'Notes')]: j.notes }))],
-      [T('共同作者', 'Co-authors'), D.people.map((x) => ({ [T('姓名', 'Name')]: x.name, [T('單位', 'Affiliation')]: x.affiliation, ORCID: x.orcid, Email: x.email }))],
+      [T('共同作者', 'Co-authors'), D.people.map((x) => ({ [T('姓名', 'Name')]: x.name, [T('學位', 'Degree')]: x.degree, [T('單位', 'Affiliation')]: x.affiliation, ORCID: x.orcid, Email: x.email, [T('地址與電話', 'Address and phone')]: x.contact }))],
       [T('作者名單', 'Authorship'), D.authors.slice().sort((a, b) => (a.paper_id > b.paper_id ? 1 : a.paper_id < b.paper_id ? -1 : a.position - b.position)).map((a) => ({ [T('論文', 'Paper')]: pName(a.paper_id), [T('順序', 'Order')]: a.position, [T('姓名', 'Name')]: (byId('people', a.person_id) || {}).name, [T('通訊作者', 'Corresponding')]: a.corresponding ? '✓' : '', CRediT: (a.roles || []).map((k) => (CREDIT.find((c) => c[0] === k) || [k, k])[1]).join('; ') }))],
     ];
     const wb = window.XLSX.utils.book_new();
@@ -976,7 +1160,7 @@
         for (let i = 0; i < rows.length; i += 200) { const r = await sb.from(TABLE[k]).insert(rows.slice(i, i + 200)); if (r.error) throw r.error; }
         total += rows.length;
       }
-      if (d.settings && (replace || !SETTINGS)) { const r = await sb.from('research_settings').upsert({ owner: USER.id, checklist_template: d.settings.checklist_template || null }); if (r.error) throw r.error; }
+      if (d.settings && (replace || !SETTINGS)) { const r = await sb.from('research_settings').upsert({ owner: USER.id, checklist_template: d.settings.checklist_template || null, cover_template: d.settings.cover_template || null }); if (r.error) throw r.error; }
       await refresh();
       toast(T(`還原完成，共 ${total} 筆`, `Restored ${total} records`), 4000);
     } catch (e) { console.error(e); await refresh(); return fail(e); }
@@ -984,11 +1168,18 @@
 
   /* ---------------- "Me" page bindings ---------------- */
   function bindMe() {
+    $('f-cover').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const tpl = e.target.tpl.value.trim();
+      const r = await sb.from('research_settings').upsert({ owner: USER.id, checklist_template: SETTINGS ? SETTINGS.checklist_template : null, cover_template: tpl || null, updated_at: new Date().toISOString() }).select().single();
+      if (r.error) { toast(T('儲存失敗：', 'Could not save: ') + r.error.message, 6000); return; }
+      SETTINGS = r.data; toast(T('範本已儲存', 'Template saved'));
+    });
     $('f-template').addEventListener('submit', async (e) => {
       e.preventDefault();
       const items = e.target.items.value.split('\n').map((x) => x.trim()).filter(Boolean).slice(0, 60);
       if (!items.length) { toast(T('清單至少要有一項', 'Keep at least one item')); return; }
-      const r = await sb.from('research_settings').upsert({ owner: USER.id, checklist_template: items, updated_at: new Date().toISOString() }).select().single();
+      const r = await sb.from('research_settings').upsert({ owner: USER.id, checklist_template: items, cover_template: SETTINGS ? SETTINGS.cover_template : null, updated_at: new Date().toISOString() }).select().single();
       if (r.error) { toast(T('儲存失敗：', 'Could not save: ') + r.error.message, 6000); return; }
       SETTINGS = r.data; toast(T('範本已儲存', 'Template saved'));
     });
@@ -1060,8 +1251,11 @@
       case 'start-check': return startChecklist(byId('papers', id));
       case 'new-journal': return editJournal(null);
       case 'edit-journal': return editJournal(b.dataset.name);
-      case 'reset-template': { const r = await sb.from('research_settings').upsert({ owner: USER.id, checklist_template: null, updated_at: new Date().toISOString() }).select().single(); if (!r.error) { SETTINGS = r.data; render(true); toast(T('已還原預設清單', 'Default list restored')); } return; }
+      case 'reset-template': { const r = await sb.from('research_settings').upsert({ owner: USER.id, checklist_template: null, cover_template: SETTINGS ? SETTINGS.cover_template : null, updated_at: new Date().toISOString() }).select().single(); if (!r.error) { SETTINGS = r.data; render(true); toast(T('已還原預設清單', 'Default list restored')); } return; }
       case 'export-xlsx': return exportXlsx();
+      case 'cover': return coverDialog(byId('papers', id));
+      case 'stats-xlsx': return statsXlsx();
+      case 'reset-cover': { const r = await sb.from('research_settings').upsert({ owner: USER.id, checklist_template: SETTINGS ? SETTINGS.checklist_template : null, cover_template: null, updated_at: new Date().toISOString() }).select().single(); if (!r.error) { SETTINGS = r.data; render(true); toast(T('已還原預設範本', 'Default template restored')); } return; }
       case 'export-json': return exportJson();
       case 'import-json': return importJson();
       case 'expand': { const el = document.querySelector(`#cm-${id} .cm-text`); el.classList.remove('clamp'); b.remove(); return; }
