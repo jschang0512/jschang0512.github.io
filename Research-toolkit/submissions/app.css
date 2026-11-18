@@ -288,3 +288,23 @@ label.ms:has(input:focus-visible) { outline: 2px solid var(--accent); outline-of
 .doi-panel .card { background: var(--panel-2); }
 a.chip { text-decoration: none; }
 a.chip:hover { background: var(--accent); color: var(--accent-ink); }
+/* to-dos */
+.quick { display: grid; grid-template-columns: minmax(0, 1fr) 9.5rem auto; gap: 8px; margin-bottom: 4px; }
+.quick .inp { min-height: 44px; }
+@media (max-width: 480px) { .quick { grid-template-columns: minmax(0, 1fr) auto; } .quick input[type=date] { grid-column: 1; grid-row: 2; } .quick .btn { grid-row: 1 / span 2; grid-column: 2; } }
+.todos { display: grid; gap: 6px; }
+.todo { display: grid; grid-template-columns: 44px minmax(0, 1fr) 40px; align-items: center; border-radius: var(--r); background: var(--panel); border: 1px solid var(--line); }
+.todo .tick { justify-self: center; width: 24px; height: 24px; padding: 0; border-radius: 50%; border: 2px solid var(--faint); background: none; display: grid; place-items: center; color: var(--panel); transition: background-color .12s var(--ease), border-color .12s var(--ease); }
+.todo .tick:hover { border-color: var(--ok); }
+.todo .tick .ic { width: 14px; height: 14px; stroke-width: 3; }
+.todo.done .tick { background: var(--ok); border-color: var(--ok); }
+.todo-main { min-width: 0; border: 0; background: none; padding: 10px 4px 10px 0; text-align: left; display: grid; gap: 1px; color: inherit; }
+.todo-main b { font-weight: 700; font-size: 14.5px; overflow-wrap: anywhere; }
+.todo-main small { font-size: 12.5px; color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; }
+.todo-main small .ic { width: 13px; height: 13px; vertical-align: -2px; }
+.todo-main .warn { color: var(--warn); font-weight: 700; }
+.todo-main .late { color: var(--bad); font-weight: 700; }
+.todo.done .todo-main b { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--faint); font-weight: 400; }
+.todo .star { border: 0; background: none; font-size: 18px; color: var(--faint); width: 40px; height: 40px; }
+.todo .star.on { color: var(--warn); }
+.todo .star:hover { color: var(--warn); }

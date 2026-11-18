@@ -48,6 +48,8 @@
     folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
     file: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
     cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
+    todo: '<rect x="3" y="3" width="18" height="18" rx="5"/><path d="M8 12.5l3 3 5-6.5"/>',
+    repeat: '<path d="M17 2l3 3-3 3"/><path d="M4 11V9a4 4 0 0 1 4-4h12M7 22l-3-3 3-3"/><path d="M20 13v2a4 4 0 0 1-4 4H4"/>',
     user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
     plus: '<path d="M12 5v14M5 12h14"/>', back: '<path d="M15 18l-6-6 6-6"/>', chev: '<path d="M9 6l6 6-6 6"/>',
     check: '<path d="M5 12l5 5 9-10"/>', edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/>', copy: '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>',
@@ -57,10 +59,10 @@
 
   /* ---------------- data ---------------- */
   let USER = null, ADMIN = false;
-  let D = { projects: [], milestones: [], papers: [], rounds: [], comments: [], deadlines: [], journals: [], people: [], authors: [] };
+  let D = { projects: [], milestones: [], papers: [], rounds: [], comments: [], deadlines: [], journals: [], people: [], authors: [], todos: [] };
   let SETTINGS = null;
-  const TABLE = { projects: 'research_projects', milestones: 'research_milestones', papers: 'research_papers', rounds: 'research_rounds', comments: 'research_comments', deadlines: 'research_deadlines', journals: 'research_journals', people: 'research_people', authors: 'research_paper_authors' };
-  const ORDER = { projects: ['updated_at', false], milestones: ['created_at', true], papers: ['updated_at', false], rounds: ['submitted_on', true], comments: ['seq', true], deadlines: ['due', true], journals: ['name', true], people: ['name', true], authors: ['position', true] };
+  const TABLE = { projects: 'research_projects', milestones: 'research_milestones', papers: 'research_papers', rounds: 'research_rounds', comments: 'research_comments', deadlines: 'research_deadlines', journals: 'research_journals', people: 'research_people', authors: 'research_paper_authors', todos: 'research_todos' };
+  const ORDER = { projects: ['updated_at', false], milestones: ['created_at', true], papers: ['updated_at', false], rounds: ['submitted_on', true], comments: ['seq', true], deadlines: ['due', true], journals: ['name', true], people: ['name', true], authors: ['position', true], todos: ['created_at', true] };
   async function loadAll() {
     const keys = Object.keys(TABLE);
     const res = await Promise.all(keys.map((k) => sb.from(TABLE[k]).select('*').order(ORDER[k][0], { ascending: ORDER[k][1] })).concat([sb.from('research_settings').select('*')]));
@@ -123,6 +125,7 @@
         else if (w.days !== null && w.days >= REVISION_DAYS) push(null, { nudge: true, title: paperName(p), sub: T(`修改意見已收到 ${w.days} 天，還沒送出回覆`, `Reviews arrived ${w.days} days ago; response not sent yet`), href: '#/paper/' + p.id });
       }
     });
+    D.todos.forEach((td) => { if (td.done_at || !td.due) return; const due = parseDate(td.due); if (days(t, due) <= 0) push(due, { title: (td.starred ? '★ ' : '') + td.title, sub: T('待辦', 'To-do'), href: '#/todos' }); });
     items.sort((a, b) => (a.nudge === b.nudge ? (a.date || 0) - (b.date || 0) : a.nudge ? -1 : 1));
     return items;
   }
@@ -138,7 +141,7 @@
   /* ---------------- shell ---------------- */
   const NAV = () => [
     ['', 'home', T('總覽', 'Home')], ['projects', 'folder', T('專案', 'Projects')], ['papers', 'file', T('論文', 'Papers')],
-    ['deadlines', 'cal', T('截止日', 'Deadlines')], ['me', 'user', T('我的', 'Me')],
+    ['todos', 'todo', T('待辦', 'To-dos')], ['me', 'user', T('我的', 'Me')],
   ];
   function renderNav(section) {
     const nudges = agenda().filter((a) => a.nudge || a.left <= 7).length;
@@ -207,6 +210,7 @@
       (ms.length ? `<div class="list">${ms.map(msRow).join('')}</div>` : `<div class="empty">${T('例如：IRB 送審、IRB 核准（填有效期限，到期前 60 天會提醒）、健保資料申請、主要分析完成。', 'For example: IRB submitted, IRB approved (add the expiry date for a 60-day reminder), data access granted, main analysis done.')}</div>`) +
       `<h2 class="sec-title">${T('這個專案的論文', 'Papers in this project')}<button class="btn sm right" data-act="new-paper" data-project="${p.id}">${ic('plus')}${T('論文', 'Paper')}</button></h2>` +
       (papers.length ? `<div class="list">${papers.map((x) => paperCard(x, false, true)).join('')}</div>` : `<div class="empty">${T('還沒有論文。', 'No papers yet.')}</div>`) +
+      todoBlock({ project: p.id }) +
       (p.notes ? `<h2 class="sec-title">${T('筆記', 'Notes')}</h2><div class="notes">${esc(p.notes)}</div>` : '');
   }
 
@@ -293,7 +297,7 @@
     const pr = p.project_id && byId('projects', p.project_id);
     const rows = [[T('標題', 'Title'), p.title], [T('專案', 'Project'), pr ? (pr.short_title || pr.title) : ''], [T('目標期刊', 'Target journal'), p.target_journal], [T('作者列', 'Authors'), p.authors], [T('作者序', 'Authorship'), p.my_role], [T('年份', 'Year'), p.year], ['DOI', p.doi], [T('自訂截止日', 'Own deadline'), ymd(p.deadline)], [T('備註', 'Notes'), p.notes]].filter((x) => x[1]);
     return `<div class="d-actions"><button class="btn sm" data-act="edit-paper" data-id="${p.id}">${ic('edit')}${T('編輯', 'Edit')}</button><button class="btn sm" data-act="cite" data-id="${p.id}">${ADMIN ? T('更新到 CV', 'Update CV') : T('書目資料', 'Citation details')}</button></div>` +
-      `<dl class="kv" style="margin-top:10px">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}</dl>` + authorsSection(p);
+      `<dl class="kv" style="margin-top:10px">${rows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}</dl>` + todoBlock({ paper: p.id }) + authorsSection(p);
   }
 
   /* ---------------- co-authors and CRediT ---------------- */
@@ -510,12 +514,95 @@
     });
   }
 
+  /* ---------------- to-dos ---------------- */
+  const REPEAT = () => ({ none: T('不重複', 'Once'), daily: T('每天', 'Daily'), weekly: T('每週', 'Weekly'), monthly: T('每月', 'Monthly') });
+  const todosSeg = (which) => `<div class="seg" role="tablist" style="margin-bottom:12px"><a role="tab" href="#/todos" aria-selected="${which === 'todos'}">${T('待辦', 'To-dos')}</a><a role="tab" href="#/deadlines" aria-selected="${which === 'deadlines'}">${T('截止日', 'Deadlines')}</a></div>`;
+  function dueLabel(d) {
+    if (!d) return T('沒有日期', 'No date');
+    const left = days(today(), parseDate(d));
+    if (left === 0) return `<span class="warn">${T('今天', 'Today')}</span>`;
+    if (left === 1) return T('明天', 'Tomorrow');
+    if (left < 0) return `<span class="late">${T(`已過 ${-left} 天`, `${-left} d overdue`)}</span>`;
+    return md(d);
+  }
+  function todoRow(t, opts = {}) {
+    const meta = [];
+    if (!t.done_at) meta.push(dueLabel(t.due)); else meta.push(T(`完成於 ${md(localISO(new Date(t.done_at)))}`, `Done ${md(localISO(new Date(t.done_at)))}`));
+    if (t.repeat !== 'none') meta.push(`${ic('repeat')}${esc(REPEAT()[t.repeat])}`);
+    const pr = !opts.inProject && t.project_id && byId('projects', t.project_id), pa = !opts.inPaper && t.paper_id && byId('papers', t.paper_id);
+    if (pr) meta.push(esc(pr.short_title || pr.title)); if (pa) meta.push(esc(paperName(pa)));
+    if (t.notes) meta.push(T('有備註', 'notes'));
+    return `<div class="todo${t.done_at ? ' done' : ''}" id="todo-${t.id}"><button type="button" class="tick" data-act="todo-done" data-id="${t.id}" aria-label="${t.done_at ? T('改回未完成', 'Mark not done') : T('完成', 'Done')}" aria-pressed="${!!t.done_at}">${t.done_at ? ic('check') : ''}</button>` +
+      `<button type="button" class="todo-main" data-act="edit-todo" data-id="${t.id}"><b>${esc(t.title)}</b><small>${meta.join(' · ')}</small></button>` +
+      `<button type="button" class="star${t.starred ? ' on' : ''}" data-act="todo-star" data-id="${t.id}" aria-label="${T('重要', 'Important')}" aria-pressed="${t.starred}">${t.starred ? '★' : '☆'}</button></div>`;
+  }
+  const byStarDue = (a, b) => (b.starred - a.starred) || ((parseDate(a.due) || Infinity) - (parseDate(b.due) || Infinity)) || (a.created_at > b.created_at ? 1 : -1);
+  function pageTodos() {
+    const t = today(), open = D.todos.filter((x) => !x.done_at), done = D.todos.filter((x) => x.done_at).sort((a, b) => (a.done_at < b.done_at ? 1 : -1));
+    const g = { late: [], now: [], later: [], none: [] };
+    open.forEach((x) => { if (!x.due) g.none.push(x); else { const l = days(t, parseDate(x.due)); g[l < 0 ? 'late' : l === 0 ? 'now' : 'later'].push(x); } });
+    const block = (label, arr) => (arr.length ? `<h2 class="sec-title">${label} <small>${arr.length}</small></h2><div class="todos">${arr.sort(byStarDue).map((x) => todoRow(x)).join('')}</div>` : '');
+    return ph(T('待辦', 'To-dos')) + todosSeg('todos') +
+      `<form class="quick" id="f-todo" autocomplete="off"><input class="inp" name="title" maxlength="300" placeholder="${T('＋ 新增待辦…', '+ Add a to-do…')}" aria-label="${T('新增待辦', 'New to-do')}"><input class="inp" type="date" name="due" aria-label="${T('日期（選填）', 'Date (optional)')}"><button class="btn primary" type="submit">${T('加入', 'Add')}</button></form>` +
+      (open.length ? block(T('已過期', 'Overdue'), g.late) + block(T('今天', 'Today'), g.now) + block(T('之後', 'Coming up'), g.later) + block(T('沒有日期', 'No date'), g.none)
+        : `<div class="empty" style="margin-top:12px">${T('不管是不是跟研究有關，想到要做的事就丟進來。可以設日期、標星號、每天／每週／每月重複。', 'Anything you need to do, research or not. Add a date, star it, or make it repeat daily, weekly or monthly.')}</div>`) +
+      (done.length ? `<details class="fold"><summary>${T('已完成', 'Done')} (${done.length})</summary><div class="todos">${done.slice(0, 60).map((x) => todoRow(x)).join('')}</div>${done.length > 60 ? `<p class="muted small">${T('只顯示最近 60 項；全部可以從「我的 › 資料備份」下載。', 'Showing the latest 60; download everything from Me › Backup.')}</p>` : ''}</details>` : '');
+  }
+  function todoBlock(link) {
+    const list = D.todos.filter((x) => !x.done_at && (link.project ? x.project_id === link.project : x.paper_id === link.paper)).sort(byStarDue);
+    return `<h2 class="sec-title">${T('待辦', 'To-dos')}<button class="btn sm right" data-act="new-todo" ${link.project ? `data-project="${link.project}"` : `data-paper="${link.paper}"`}>${ic('plus')}${T('待辦', 'To-do')}</button></h2>` +
+      (list.length ? `<div class="todos">${list.map((x) => todoRow(x, { inProject: !!link.project, inPaper: !!link.paper })).join('')}</div>` : `<p class="muted small">${T('沒有未完成的待辦。', 'No open to-dos.')}</p>`);
+  }
+  function editTodo(t, link = {}) {
+    formDialog({
+      title: t ? T('編輯待辦', 'Edit to-do') : T('新增待辦', 'New to-do'),
+      values: t || { repeat: 'none', project_id: link.project || '', paper_id: link.paper || '' },
+      fields: [
+        { name: 'title', label: T('要做什麼', 'What'), required: true, max: 300, full: true },
+        { name: 'due', label: T('日期（選填）', 'Date (optional)'), type: 'date' },
+        { name: 'repeat', label: T('重複', 'Repeat'), type: 'select', options: opt(REPEAT()), help: T('重複的待辦完成後，會自動產生下一次。', 'When a repeating to-do is done, the next one is created.') },
+        { name: 'starred', label: T('重要（排在最前面）', 'Important (listed first)'), type: 'checkbox', full: true },
+        { name: 'project_id', label: T('專案（選填）', 'Project (optional)'), type: 'select', options: [['', T('（不屬於任何專案）', '(none)')], ...D.projects.map((x) => [x.id, x.short_title || x.title])] },
+        { name: 'paper_id', label: T('論文（選填）', 'Paper (optional)'), type: 'select', options: [['', T('（不屬於任何論文）', '(none)')], ...D.papers.map((x) => [x.id, paperName(x)])] },
+        { name: 'notes', label: T('備註', 'Notes'), type: 'textarea', max: 5000, full: true },
+      ],
+      onSave: async (row) => {
+        if (row.repeat !== 'none' && !row.due) row.due = localISO(today());
+        if (!(await save('todos', row, t && t.id))) return false;
+        toast(T('已儲存', 'Saved')); await refresh();
+      },
+      onDelete: t && (async () => { if (!confirm(T(`要刪除「${t.title}」嗎？`, `Delete “${t.title}”?`))) return false; if (!(await remove('todos', t.id))) return false; toast(T('已刪除', 'Deleted')); await refresh(); return true; }),
+    });
+  }
+  // next date for a repeating to-do: one step from its date, and never in the past
+  function nextDue(due, repeat) {
+    const step = (d) => { const x = new Date(d); if (repeat === 'daily') x.setDate(x.getDate() + 1); else if (repeat === 'weekly') x.setDate(x.getDate() + 7); else { const day = x.getDate(); x.setDate(1); x.setMonth(x.getMonth() + 1); x.setDate(Math.min(day, new Date(x.getFullYear(), x.getMonth() + 1, 0).getDate())); } return x; };
+    let n = step(parseDate(due) || today()); const t = today();
+    while (n < t) n = step(n);
+    return localISO(n);
+  }
+  async function toggleTodo(t) {
+    if (t.done_at) {
+      // undoing a repeating to-do also takes back the next one it created, if that is still open
+      if (t.next_id) { const nx = byId('todos', t.next_id); if (nx && !nx.done_at) await remove('todos', nx.id); }
+      if (await save('todos', { done_at: null, next_id: null }, t.id)) await refresh();
+      return;
+    }
+    let nextId = null;
+    if (t.repeat !== 'none') {
+      const nx = await save('todos', { title: t.title, notes: t.notes, starred: t.starred, repeat: t.repeat, project_id: t.project_id, paper_id: t.paper_id, due: nextDue(t.due, t.repeat) });
+      if (!nx) return; nextId = nx.id;
+      toast(T(`完成！下一次：${md(nx.due)}`, `Done. Next: ${md(nx.due)}`));
+    }
+    if (await save('todos', { done_at: new Date().toISOString(), next_id: nextId }, t.id)) await refresh();
+  }
+
   function pageDeadlines() {
     const t = today();
     const up = D.deadlines.filter((d) => !d.done && days(t, parseDate(d.due)) >= -1), past = D.deadlines.filter((d) => d.done || days(t, parseDate(d.due)) < -1).reverse();
     const row = (d) => { const left = days(t, parseDate(d.due)); const cls = d.done ? '' : left < 0 ? 'late' : left <= 7 ? 'soon' : '';
       return `<a class="ag" href="#" data-act="edit-deadline" data-id="${d.id}"><span class="when ${cls}">${d.done ? T('已完成', 'Done') : left === 0 ? T('今天', 'Today') : left < 0 ? T('已過期', 'Past') : T(`剩 ${left} 天`, `In ${left} d`)}<small>${ymd(d.due)}</small></span><span class="what"><b>${esc(d.title)}</b><small>${esc(DL_KIND()[d.kind])}${d.url ? ' · ' + esc(d.url.replace(/^https?:\/\//, '').slice(0, 40)) : ''}</small></span><span class="chev">${ic('chev')}</span></a>`; };
-    return ph(T('截止日', 'Deadlines'), { actions: `<button class="btn primary sm" data-act="new-deadline">${ic('plus')}${T('截止日', 'Deadline')}</button>` }) +
+    return ph(T('截止日', 'Deadlines'), { actions: `<button class="btn primary sm" data-act="new-deadline">${ic('plus')}${T('截止日', 'Deadline')}</button>` }) + todosSeg('deadlines') +
       (up.length ? `<div class="agenda">${up.map(row).join('')}</div>` : `<div class="empty">${T('研討會摘要、計畫申請等截止日記在這裡，60 天內會出現在總覽。', 'Conference abstracts, grants and other deadlines go here; they show on Home within 60 days.')}</div>`) +
       (past.length ? `<details class="fold"><summary>${T('完成或過期', 'Done or past')} (${past.length})</summary><div class="agenda">${past.map(row).join('')}</div></details>` : '');
   }
@@ -576,7 +663,8 @@
       const name = a === 'journal' ? decodeURIComponent(b) : '';
       if (wide) { split = true; html = `<div class="pane-list">${listJournals(name)}</div><div class="pane-detail">${name ? detailJournal(name) : emptyPane(T('選一家期刊查看', 'Pick a journal'))}</div>`; }
       else html = name ? detailJournal(name) : listJournals();
-    } else if (a === 'deadlines') html = pageDeadlines();
+    } else if (a === 'deadlines') { section = 'todos'; html = pageDeadlines(); }
+    else if (a === 'todos') html = pageTodos();
     else if (a === 'stats') { section = ''; html = pageStats(); }
     else if (a === 'me') html = pageMe();
     else { section = ''; html = pageHome(); }
@@ -1073,6 +1161,7 @@
     rounds: ['id', 'paper_id', 'journal', 'submitted_on', 'decision', 'decision_on', 'response_on', 'notes', 'links', 'created_at'],
     comments: ['id', 'round_id', 'reviewer', 'seq', 'comment', 'response', 'changes', 'status', 'created_at', 'updated_at'],
     deadlines: ['id', 'title', 'kind', 'due', 'url', 'done', 'notes', 'created_at'],
+    todos: ['id', 'title', 'notes', 'due', 'done_at', 'starred', 'repeat', 'next_id', 'project_id', 'paper_id', 'created_at'],
     journals: ['id', 'name', 'word_limit', 'abstract_limit', 'apc', 'url', 'guideline', 'notes', 'created_at'],
     people: ['id', 'name', 'degree', 'affiliation', 'orcid', 'email', 'contact', 'created_at'],
     authors: ['id', 'paper_id', 'person_id', 'position', 'corresponding', 'roles', 'created_at'],
@@ -1098,6 +1187,7 @@
       [T('論文', 'Papers'), D.papers.map((p) => ({ [T('標題', 'Title')]: p.title, [T('簡稱', 'Short name')]: p.short_title, [T('狀態', 'Status')]: STATUS()[p.status], [T('專案', 'Project')]: jName(p.project_id), [T('目標期刊', 'Target journal')]: p.target_journal, [T('作者列', 'Authors')]: p.authors, [T('作者序', 'Authorship')]: p.my_role, [T('年份', 'Year')]: p.year, DOI: p.doi, [T('備註', 'Notes')]: p.notes }))],
       [T('投稿輪次', 'Rounds'), D.rounds.map((r) => ({ [T('論文', 'Paper')]: pName(r.paper_id), [T('第幾輪', 'Round')]: roundNo(r), [T('期刊', 'Journal')]: r.journal, [T('投稿日', 'Submitted')]: r.submitted_on, [T('結果', 'Decision')]: DECISION()[r.decision], [T('收到結果', 'Decision on')]: r.decision_on, [T('送出回覆', 'Response sent')]: r.response_on, [T('備註', 'Notes')]: r.notes }))],
       [T('審稿意見', 'Reviewer comments'), D.comments.map((c) => { const r = byId('rounds', c.round_id) || {}; return { [T('論文', 'Paper')]: pName(r.paper_id), [T('輪次', 'Round')]: r.id ? roundNo(r) : '', [T('期刊', 'Journal')]: r.journal, [T('誰', 'From')]: c.reviewer, [T('編號', 'No.')]: c.seq, [T('意見', 'Comment')]: c.comment, [T('回覆', 'Response')]: c.response, [T('修改位置', 'Changes')]: c.changes, [T('狀態', 'Status')]: C_STATUS()[c.status] }; })],
+      [T('待辦', 'To-dos'), D.todos.map((t) => ({ [T('名稱', 'Name')]: t.title, [T('日期', 'Date')]: t.due, [T('重複', 'Repeat')]: REPEAT()[t.repeat], [T('重要', 'Important')]: t.starred ? '★' : '', [T('專案', 'Project')]: jName(t.project_id), [T('論文', 'Paper')]: pName(t.paper_id), [T('完成時間', 'Done at')]: t.done_at ? t.done_at.slice(0, 16).replace('T', ' ') : '', [T('備註', 'Notes')]: t.notes }))],
       [T('截止日', 'Deadlines'), D.deadlines.map((d) => ({ [T('名稱', 'Name')]: d.title, [T('類型', 'Kind')]: DL_KIND()[d.kind], [T('截止日', 'Due')]: d.due, [T('網址', 'Link')]: d.url, [T('完成', 'Done')]: d.done ? '✓' : '', [T('備註', 'Notes')]: d.notes }))],
       [T('期刊', 'Journals'), D.journals.map((j) => ({ [T('名稱', 'Name')]: j.name, [T('全文字數上限', 'Word limit')]: j.word_limit, [T('摘要字數上限', 'Abstract limit')]: j.abstract_limit, [T('報告指引', 'Guideline')]: j.guideline, APC: j.apc, [T('投稿網址', 'Site')]: j.url, [T('備註', 'Notes')]: j.notes }))],
       [T('共同作者', 'Co-authors'), D.people.map((x) => ({ [T('姓名', 'Name')]: x.name, [T('學位', 'Degree')]: x.degree, [T('單位', 'Affiliation')]: x.affiliation, ORCID: x.orcid, Email: x.email, [T('地址與電話', 'Address and phone')]: x.contact }))],
@@ -1116,7 +1206,7 @@
       let obj; try { obj = JSON.parse(await file.text()); } catch (e) { toast(T('這不是有效的 JSON 檔', 'This is not a valid JSON file'), 5000); return; }
       if (!obj || obj.app !== 'submission-tracker' || !obj.data) { toast(T('這不是這個系統匯出的備份檔', 'This is not a backup from this tracker'), 5000); return; }
       const d = obj.data, count = (k) => (Array.isArray(d[k]) ? d[k].length : 0);
-      const summary = T(`備份日期 ${String(obj.exportedAt || '').slice(0, 10)}：專案 ${count('projects')}、論文 ${count('papers')}、投稿輪次 ${count('rounds')}、審稿意見 ${count('comments')}、截止日 ${count('deadlines')}、期刊 ${count('journals')}、共同作者 ${count('people')}。`, `Backup from ${String(obj.exportedAt || '').slice(0, 10)}: ${count('projects')} projects, ${count('papers')} papers, ${count('rounds')} rounds, ${count('comments')} comments, ${count('deadlines')} deadlines, ${count('journals')} journals, ${count('people')} co-authors.`);
+      const summary = T(`備份日期 ${String(obj.exportedAt || '').slice(0, 10)}：專案 ${count('projects')}、論文 ${count('papers')}、投稿輪次 ${count('rounds')}、審稿意見 ${count('comments')}、截止日 ${count('deadlines')}、待辦 ${count('todos')}、期刊 ${count('journals')}、共同作者 ${count('people')}。`, `Backup from ${String(obj.exportedAt || '').slice(0, 10)}: ${count('projects')} projects, ${count('papers')} papers, ${count('rounds')} rounds, ${count('comments')} comments, ${count('deadlines')} deadlines, ${count('todos')} to-dos, ${count('journals')} journals, ${count('people')} co-authors.`);
       formDialog({
         title: T('從備份還原', 'Restore from backup'), saveLabel: T('開始還原', 'Restore'), values: { mode: 'add' },
         fields: [
@@ -1136,7 +1226,7 @@
     const fail = (e) => { toast(T('還原中斷：', 'Restore stopped: ') + (e.message || e), 8000); return false; };
     try {
       if (replace) {
-        for (const k of ['authors', 'comments', 'rounds', 'papers', 'milestones', 'projects', 'deadlines', 'journals', 'people']) {
+        for (const k of ['todos', 'authors', 'comments', 'rounds', 'papers', 'milestones', 'projects', 'deadlines', 'journals', 'people']) {
           const r = await sb.from(TABLE[k]).delete().eq('owner', USER.id); if (r.error) throw r.error;
         }
       }
@@ -1153,6 +1243,7 @@
         ['rounds', (r) => (map[r.paper_id] ? { ...r, id: nid(r.id), paper_id: map[r.paper_id] } : null)],
         ['comments', (r) => (map[r.round_id] ? { ...r, id: nid(r.id), round_id: map[r.round_id] } : null)],
         ['deadlines', (r) => ({ ...r, id: nid(r.id) })],
+        ['todos', (r) => ({ ...r, id: nid(r.id), next_id: r.next_id ? nid(r.next_id) : null, project_id: r.project_id ? map[r.project_id] || null : null, paper_id: r.paper_id ? map[r.paper_id] || null : null })],
       ];
       let total = 0;
       for (const [k, fix] of plan) {
@@ -1235,6 +1326,10 @@
       case 'new-round': return editRound(id);
       case 'edit-round': return editRound(null, byId('rounds', id));
       case 'new-deadline': return editDeadline();
+      case 'new-todo': return editTodo(null, { project: b.dataset.project, paper: b.dataset.paper });
+      case 'edit-todo': return editTodo(byId('todos', id));
+      case 'todo-done': { b.disabled = true; await toggleTodo(byId('todos', id)); return; }
+      case 'todo-star': { const t = byId('todos', id); if (await save('todos', { starred: !t.starred }, id)) await refresh(); return; }
       case 'edit-deadline': return editDeadline(byId('deadlines', id));
       case 'new-comment': return editComment(id);
       case 'edit-comment': { const c = byId('comments', id); return editComment(c.round_id, c); }
@@ -1272,6 +1367,17 @@
       case 'toggle-code': { const { error } = await sb.rpc('set_invite_disabled', { p_id: id, p_disabled: b.dataset.off === '1' }); if (error) toast(friendly(error), 5000); else loadCodes(); return; }
       default:
     }
+  });
+  // quick add on the to-do page
+  document.addEventListener('submit', async (e) => {
+    if (e.target.id !== 'f-todo') return;
+    e.preventDefault();
+    const f = e.target, title = f.title.value.trim();
+    if (!title) { f.title.focus(); return; }
+    const btn = f.querySelector('[type=submit]'); btn.disabled = true;
+    const s = await save('todos', { title, due: f.due.value || null });
+    btn.disabled = false;
+    if (s) { await refresh(); const inp = $('f-todo') && $('f-todo').title; if (inp) inp.focus(); }
   });
   document.addEventListener('change', async (e) => {
     const el = e.target, act = el.dataset && el.dataset.act; if (!act || !USER) return;
