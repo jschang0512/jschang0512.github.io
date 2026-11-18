@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/Research-toolkit/icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/Research-toolkit/icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/Research-toolkit/icons/apple-touch-icon.png">
+<title data-en="Effect Sizes &amp; Sample Size · Research Toolkit">效果量與樣本數 · Research Toolkit</title>
+<meta name="description" content="研究統計小工具：兩組比例與平均的樣本數、NNT／NNH（含信賴區間）、OR 換算 RR、從信賴區間回推標準誤與 p 值，附可貼進論文的句子與 Word 結果表。">
+<link rel="canonical" href="https://jschang0512.github.io/Research-toolkit/effectsize/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Research Toolkit">
+<meta property="og:title" content="效果量與樣本數 · Research Toolkit">
+<meta property="og:description" content="樣本數、NNT／NNH、OR 換算 RR、從信賴區間回推標準誤：附可貼進論文的句子與 Word 結果表。">
+<meta property="og:url" content="https://jschang0512.github.io/Research-toolkit/effectsize/">
+<meta property="og:image" content="https://jschang0512.github.io/assets/og/research-toolkit.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../shared/style.css?v=20261117a">
+<style>
+  .seg { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .seg label { position: relative; text-align: center; font-size: 13px; padding: 8px 10px; cursor: pointer; background: var(--panel-2); border-right: 1px solid var(--border); line-height: 1.3; transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out); }
+  .seg label:last-child { border-right: 0; }
+  .seg label:hover { color: var(--accent); }
+  .seg input { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); border: 0; }
+  .seg label:has(input:checked) { background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+  .seg label:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: -2px; }
+  @media (max-width: 520px) { .seg { grid-template-columns: repeat(2, minmax(0, 1fr)); } .seg label:nth-child(2) { border-right: 0; } .seg label:nth-child(-n+2) { border-bottom: 1px solid var(--border); } }
+  .grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  @media (max-width: 640px) { .grid3 { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+  .unit { position: relative; display: block; }
+  .unit input { padding-right: 2em; }
+  .unit::after { content: attr(data-unit); position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 13px; pointer-events: none; }
+  .sub-seg { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-bottom: 10px; font-size: 13.5px; }
+  .sub-seg label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+  .erow { display: grid; grid-template-columns: minmax(0, 1.6fr) repeat(4, minmax(0, 1fr)) 30px; gap: 6px; align-items: end; margin-bottom: 6px; }
+  .erow.se { grid-template-columns: minmax(0, 1.4fr) 5.5rem repeat(4, minmax(0, 1fr)) 30px; }
+  @media (max-width: 640px) {
+    .erow, .erow.se { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 30px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+    .erow > :first-child { grid-column: 1 / -1; }
+    .erow .icon { grid-column: 3; grid-row: 2; }
+  }
+  .big { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px; margin-bottom: 8px; }
+  .big .v { font-family: var(--font-display); font-size: 30px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums lining-nums; color: var(--text); }
+  .big .k { font-size: 12.5px; color: var(--muted); display: block; }
+  .facts { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 4px; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+  .facts b { font-weight: 700; }
+  .sentence { margin: 10px 0 6px; padding: 10px 12px; border-radius: 7px; background: var(--panel-2); font-size: 13.5px; line-height: 1.6; }
+  .copyrow { display: flex; flex-wrap: wrap; gap: 6px; }
+  .res-tbl { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .res-tbl th { font-size: 12px; font-weight: 600; color: var(--muted); text-align: right; padding: 0 6px 6px; border-bottom: 1px solid var(--border); }
+  .res-tbl td { padding: 6px; border-bottom: 1px solid var(--border); text-align: right; }
+  .res-tbl th:first-child, .res-tbl td:first-child { text-align: left; padding-left: 0; }
+  .res-tbl tr:last-child td { border-bottom: 0; }
+  .res-tbl td.err { text-align: left; color: var(--warn-text); }
+  .tbl-wrap { overflow-x: auto; }
+  .formula { font-family: var(--font-mono); font-size: 12.5px; background: var(--panel-2); border-radius: 6px; padding: 8px 10px; overflow-x: auto; white-space: pre; margin: 6px 0 0; }
+  details.how > summary { font-size: 13px; color: var(--muted); }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="back" href="../index.html" data-en="← Home">← 工具首頁</a>
+  <h1 data-en="Effect sizes &amp; sample size">效果量與樣本數</h1>
+  <span class="sub" data-en="Sample size, NNT, OR → RR, SE from a CI">樣本數、NNT、OR 換算 RR、從 CI 回推 SE</span>
+  <span class="spacer"></span>
+  <div class="btns">
+    <button class="small" id="btnUndo" title="復原 (Ctrl+Z)" data-en-title="Undo (Ctrl+Z)">↶</button>
+    <button class="small" id="btnRedo" title="重做 (Ctrl+Y)" data-en-title="Redo (Ctrl+Y)">↷</button>
+    <button class="small" id="btnSaveJson" data-en="Save project">儲存專案</button>
+    <button class="small" id="btnLoadJson" data-en="Import project">匯入專案</button>
+    <button class="small" id="btnExample" data-en="Example">範例</button>
+    <button class="small" id="btnReset" data-en="Clear">清空</button>
+  </div>
+</header>
+
+<main class="tool">
+  <section id="form">
+    <div class="card">
+      <div class="seg" role="radiogroup" id="modeSeg" aria-label="計算項目">
+        <label><input type="radio" name="mode" value="n"><span data-en="Sample size">樣本數</span></label>
+        <label><input type="radio" name="mode" value="nnt"><span>NNT / NNH</span></label>
+        <label><input type="radio" name="mode" value="or"><span data-en="OR → RR">OR 換算 RR</span></label>
+        <label><input type="radio" name="mode" value="se"><span data-en="CI → SE">CI 回推 SE</span></label>
+      </div>
+    </div>
+
+    <!-- ===== sample size ===== -->
+    <div class="card" data-show="mode=n">
+      <h2><span class="step-no">1</span> <span data-en="Outcome">結果類型</span></h2>
+      <div class="sub-seg">
+        <label><input type="radio" name="nType" value="prop"> <span data-en="Two proportions (e.g. event rate)">兩組比例（例如事件發生率）</span></label>
+        <label><input type="radio" name="nType" value="mean"> <span data-en="Two means (continuous outcome)">兩組平均（連續變項）</span></label>
+      </div>
+      <div class="grid2" data-show="n.type=prop">
+        <label class="field"><span data-en="Group 1 (e.g. intervention) proportion">組 1（例如介入組）比例</span><span class="unit" data-unit="%"><input data-k="n.p1" inputmode="decimal"></span></label>
+        <label class="field"><span data-en="Group 2 (e.g. control) proportion">組 2（例如對照組）比例</span><span class="unit" data-unit="%"><input data-k="n.p2" inputmode="decimal"></span></label>
+      </div>
+      <label class="check" data-show="n.type=prop"><input type="checkbox" data-k="n.cc"> <span data-en="Continuity correction (Fleiss; more conservative)">連續性校正（Fleiss，較保守）</span></label>
+      <div class="grid2" data-show="n.type=mean">
+        <label class="field"><span data-en="Expected difference in means">預期的平均差</span><input data-k="n.diff" inputmode="decimal"></label>
+        <label class="field"><span data-en="Standard deviation (common)">標準差（兩組共同）</span><input data-k="n.sd" inputmode="decimal"></label>
+      </div>
+    </div>
+    <div class="card" data-show="mode=n">
+      <h2><span class="step-no">2</span> <span data-en="Design">設計</span></h2>
+      <div class="grid2">
+        <label class="field"><span data-en="Two-sided α">雙尾 α</span><select data-k="n.alpha"><option value="0.05">0.05</option><option value="0.01">0.01</option><option value="0.1">0.10</option></select></label>
+        <label class="field"><span data-en="Power">檢定力</span><select data-k="n.power"><option value="0.8">80%</option><option value="0.85">85%</option><option value="0.9">90%</option><option value="0.95">95%</option></select></label>
+        <label class="field"><span data-en="Group 2 size ÷ group 1 size">組 2 人數 ÷ 組 1 人數</span><input data-k="n.k" inputmode="decimal" placeholder="1"></label>
+        <label class="field"><span data-en="Expected loss to follow-up">預期流失率</span><span class="unit" data-unit="%"><input data-k="n.drop" inputmode="decimal" placeholder="0"></span></label>
+      </div>
+    </div>
+
+    <!-- ===== NNT ===== -->
+    <div class="card" data-show="mode=nnt">
+      <h2><span class="step-no">1</span> <span data-en="What you have">手上的資料</span></h2>
+      <div class="sub-seg">
+        <label><input type="radio" name="nntSrc" value="counts"> <span data-en="Events and totals in each group">兩組的事件數與人數</span></label>
+        <label><input type="radio" name="nntSrc" value="ratio"> <span data-en="A ratio (RR, OR or HR) and the control risk">比值（RR、OR、HR）＋對照組風險</span></label>
+      </div>
+      <p class="hint" data-en="The outcome is something you want to prevent (e.g. death, readmission). Group 1 is the treated or exposed group.">結果是想要避免的事件（例如死亡、再住院）。組 1 是治療組或暴露組。</p>
+      <div data-show="nnt.src=counts">
+        <div class="grid2">
+          <label class="field"><span data-en="Group 1 (treated): events">組 1（治療）事件數</span><input data-k="nnt.e1" inputmode="numeric"></label>
+          <label class="field"><span data-en="Group 1: total">組 1 總人數</span><input data-k="nnt.n1" inputmode="numeric"></label>
+          <label class="field"><span data-en="Group 0 (control): events">組 0（對照）事件數</span><input data-k="nnt.e0" inputmode="numeric"></label>
+          <label class="field"><span data-en="Group 0: total">組 0 總人數</span><input data-k="nnt.n0" inputmode="numeric"></label>
+        </div>
+      </div>
+      <div data-show="nnt.src=ratio">
+        <div class="grid3">
+          <label class="field"><span data-en="Measure">效果量</span><select data-k="nnt.type"><option value="RR">RR</option><option value="OR">OR</option><option value="HR">HR</option></select></label>
+          <label class="field"><span data-en="Estimate">估計值</span><input data-k="nnt.est" inputmode="decimal"></label>
+          <label class="field"><span data-en="Control-group risk">對照組風險</span><span class="unit" data-unit="%"><input data-k="nnt.cer" inputmode="decimal"></span></label>
+          <label class="field"><span data-en="Lower 95% CI">95% CI 下限</span><input data-k="nnt.lo" inputmode="decimal"></label>
+          <label class="field"><span data-en="Upper 95% CI">95% CI 上限</span><input data-k="nnt.hi" inputmode="decimal"></label>
+          <label class="field" data-show="nnt.type=HR"><span data-en="Time point (e.g. 5 years)">時間點（例如 5 年）</span><input data-k="nnt.when"></label>
+        </div>
+        <p class="hint" data-show="nnt.type=HR" data-en="For HR, enter the control group's risk of the event by the time point (1 − survival); the treated survival is taken as S₀^HR.">HR 請輸入對照組在該時間點的累積事件風險（1 − 存活率）；治療組存活率以 S₀^HR 推算。</p>
+      </div>
+      <label class="field" style="max-width:12rem" data-show="nnt.src=counts"><span data-en="Confidence level">信賴水準</span><select data-k="nnt.level"><option value="0.95">95%</option><option value="0.9">90%</option><option value="0.99">99%</option></select></label>
+    </div>
+
+    <!-- ===== OR → RR ===== -->
+    <div class="card" data-show="mode=or">
+      <h2><span class="step-no">1</span> <span data-en="Odds ratios">勝算比</span></h2>
+      <p class="hint" data-en="Baseline risk: the outcome risk in the reference (unexposed / control) group. When it is below about 10%, the OR is already close to the RR.">基準風險：參考組（未暴露或對照組）的結果發生率。低於約 10% 時，OR 本來就接近 RR。</p>
+      <div id="orRows"></div>
+      <button class="small" id="addOr" data-en="+ Add estimate">＋ 新增估計值</button>
+    </div>
+
+    <!-- ===== CI → SE ===== -->
+    <div class="card" data-show="mode=se">
+      <h2><span class="step-no">1</span> <span data-en="Estimates with confidence intervals">估計值與信賴區間</span></h2>
+      <p class="hint" data-en="Ratios (RR, OR, HR) are handled on the log scale, differences (MD, RD) as they are. Enter n for a single group's mean to also get its SD.">比值（RR、OR、HR）以對數尺度計算，差值（MD、RD）直接計算。若是單一組的平均值，填入 n 可同時回推 SD。</p>
+      <div id="seRows"></div>
+      <button class="small" id="addSe" data-en="+ Add estimate">＋ 新增估計值</button>
+      <label class="field" style="max-width:12rem;margin-top:10px"><span data-en="Confidence level of the intervals">信賴區間的水準</span><select data-k="se.level"><option value="0.95">95%</option><option value="0.9">90%</option><option value="0.99">99%</option></select></label>
+    </div>
+
+    <div class="card" id="refs"></div>
+  </section>
+
+  <section class="preview-col">
+    <div class="card"><h2 data-en="Results">結果</h2><div id="results" aria-live="polite"></div></div>
+    <div class="msgs" id="msgs"></div>
+    <div class="card">
+      <h2 data-en="Export">匯出</h2>
+      <div class="copyrow">
+        <button id="btnDocx" data-en="Word results table">Word 結果表</button>
+        <button id="btnTsv" title="複製成以 Tab 分隔的表格，可直接貼進 Excel 或 RevMan" data-en-title="Copy as a tab-separated table to paste into Excel or RevMan" data-en="Copy table">複製表格</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="../shared/common.js?v=20261117a"></script>
+<script src="stats.js?v=20261117a"></script>
+<script>
+const T = RT.t;
+const KEY = 'effectsize1';
+const orRow = (o = {}) => ({ label: '', or: '', lo: '', hi: '', p0: '', ...o });
+const seRow = (o = {}) => ({ label: '', kind: 'ratio', est: '', lo: '', hi: '', n: '', ...o });
+const DEF = {
+  mode: 'n',
+  n: { type: 'prop', p1: '', p2: '', cc: false, diff: '', sd: '', alpha: '0.05', power: '0.8', k: '', drop: '' },
+  nnt: { src: 'counts', e1: '', n1: '', e0: '', n0: '', type: 'RR', est: '', lo: '', hi: '', cer: '', when: '', level: '0.95' },
+  or: { rows: [orRow()] },
+  se: { rows: [seRow()], level: '0.95' },
+};
+const REFS = [
+  'Fleiss JL, Levin B, Paik MC. <i>Statistical Methods for Rates and Proportions</i>. 3rd ed. Hoboken: Wiley; 2003. Chapter 4 (sample size for two proportions).',
+  'Chow SC, Shao J, Wang H, Lokhnygina Y. <i>Sample Size Calculations in Clinical Research</i>. 3rd ed. Boca Raton: CRC Press; 2017.',
+  'Altman DG. Confidence intervals for the number needed to treat. <i>BMJ</i> 1998;317:1309–12. <a href="https://doi.org/10.1136/bmj.317.7168.1309" target="_blank" rel="noopener">doi:10.1136/bmj.317.7168.1309</a>',
+  'Altman DG, Andersen PK. Calculating the number needed to treat for trials where the outcome is time to an event. <i>BMJ</i> 1999;319:1492–5. <a href="https://doi.org/10.1136/bmj.319.7223.1492" target="_blank" rel="noopener">doi:10.1136/bmj.319.7223.1492</a>',
+  'Zhang J, Yu KF. What’s the relative risk? A method of correcting the odds ratio in cohort studies of common outcomes. <i>JAMA</i> 1998;280:1690–1. <a href="https://doi.org/10.1001/jama.280.19.1690" target="_blank" rel="noopener">doi:10.1001/jama.280.19.1690</a>',
+  'McNutt LA, Wu C, Xue X, Hafner JP. Estimating the relative risk in cohort studies and clinical trials of common outcomes. <i>Am J Epidemiol</i> 2003;157:940–3. <a href="https://doi.org/10.1093/aje/kwg074" target="_blank" rel="noopener">doi:10.1093/aje/kwg074</a>',
+  'Altman DG, Bland JM. How to obtain the P value from a confidence interval. <i>BMJ</i> 2011;343:d2304. <a href="https://doi.org/10.1136/bmj.d2304" target="_blank" rel="noopener">doi:10.1136/bmj.d2304</a>',
+  'Higgins JPT, Thomas J, Chandler J, et al., eds. <i>Cochrane Handbook for Systematic Reviews of Interventions</i>, chapter 6: Choosing effect measures and computing estimates of effect. <a href="https://training.cochrane.org/handbook/current/chapter-06" target="_blank" rel="noopener">training.cochrane.org/handbook</a>',
+];
+let S = RT.load(KEY, DEF);
+
+/* ---------------- helpers ---------------- */
+const N = RT.num;
+const pct = (v) => { const x = N(v); return x === null ? null : x / 100; };
+const fx = (x, d = 2) => (x === null || x === undefined || !Number.isFinite(x) ? '—' : Number(x).toFixed(d));
+const fp = (x, d = 1) => (x === null || !Number.isFinite(x) ? '—' : (x * 100).toFixed(d) + '%');
+const fP = (p) => (p < 0.001 ? '<0.001' : p.toFixed(3));
+const up = (x) => (Number.isFinite(x) ? Math.ceil(x - 1e-9) : Infinity);
+const levelPct = (l) => Math.round(Number(l) * 100);
+
+/* ---------------- calculations per tab ---------------- */
+function calcN() {
+  const n = S.n, alpha = Number(n.alpha), power = Number(n.power);
+  const k = N(n.k) > 0 ? N(n.k) : 1, drop = pct(n.drop) ?? 0;
+  let r;
+  if (n.type === 'prop') {
+    const p1 = pct(n.p1), p2 = pct(n.p2);
+    if (p1 === null || p2 === null) return null;
+    if (!(p1 > 0 && p1 < 1 && p2 > 0 && p2 < 1)) return { err: T('比例要介於 0% 和 100% 之間', 'Proportions must be between 0% and 100%') };
+    if (p1 === p2) return { err: T('兩組比例相同，沒有要偵測的差異', 'The two proportions are equal: there is no difference to detect') };
+    r = ES.nTwoProportions({ p1, p2, alpha, power, k, cc: !!n.cc });
+    r.p1 = p1; r.p2 = p2;
+  } else {
+    const diff = N(n.diff), sd = N(n.sd);
+    if (diff === null || sd === null) return null;
+    if (!(sd > 0) || diff === 0) return { err: T('平均差不能是 0，標準差要大於 0', 'The difference cannot be 0 and the SD must be above 0') };
+    r = ES.nTwoMeans({ diff, sd, alpha, power, k });
+    r.diff = diff; r.sd = sd;
+  }
+  if (drop >= 1 || drop < 0) return { err: T('流失率要小於 100%', 'Loss to follow-up must be below 100%') };
+  const a1 = up(r.n1), a2 = up(a1 * k - 1e-9); // keep the allocation ratio on whole people
+  return { ...r, type: n.type, alpha, power, k, drop, a1, a2, b1: up(ES.inflate(a1, drop)), b2: up(ES.inflate(a2, drop)) };
+}
+function calcNnt() {
+  const s = S.nnt, level = Number(s.level);
+  if (s.src === 'counts') {
+    const v = [s.e1, s.n1, s.e0, s.n0].map(N);
+    if (v.some((x) => x === null)) return null;
+    const r = ES.nntFromCounts({ e1: v[0], n1: v[1], e0: v[2], n0: v[3], level });
+    return r ? { ...r, level, src: 'counts' } : { err: T('事件數要介於 0 和總人數之間', 'Events must be between 0 and the group total') };
+  }
+  const est = N(s.est), cer = pct(s.cer), lo = N(s.lo), hi = N(s.hi);
+  if (est === null || cer === null) return null;
+  if (!(est > 0)) return { err: T('比值要大於 0', 'The ratio must be greater than 0') };
+  if (!(cer > 0 && cer < 1)) return { err: T('對照組風險要介於 0% 和 100% 之間', 'The control risk must be between 0% and 100%') };
+  if (lo !== null && hi !== null && !(lo > 0 && lo <= est && est <= hi)) return { err: T('信賴區間要包含估計值，且都大於 0', 'The interval must contain the estimate and be above 0') };
+  const r = ES.nntFromRatio({ type: s.type, est, lo, hi, cer });
+  return { ...r, level: 0.95, src: 'ratio', cer, type: s.type, est, lo: r.lo, hi: r.hi, rlo: lo, rhi: hi };
+}
+function calcOr(row) {
+  const or = N(row.or), p0 = pct(row.p0), lo = N(row.lo), hi = N(row.hi);
+  if (or === null || p0 === null) return null;
+  if (!(or > 0)) return { err: T('OR 要大於 0', 'The OR must be greater than 0') };
+  if (!(p0 >= 0 && p0 < 1)) return { err: T('基準風險要介於 0% 和 100% 之間', 'Baseline risk must be between 0% and 100%') };
+  if (lo !== null && hi !== null && !(lo > 0 && lo <= or && or <= hi)) return { err: T('信賴區間要包含 OR，且都大於 0', 'The interval must contain the OR and be above 0') };
+  return { or, p0, lo, hi, rr: ES.orToRr(or, p0), rlo: lo !== null ? ES.orToRr(lo, p0) : null, rhi: hi !== null ? ES.orToRr(hi, p0) : null };
+}
+function calcSe(row) {
+  const est = N(row.est), lo = N(row.lo), hi = N(row.hi), n = N(row.n);
+  if (lo === null || hi === null) return null;
+  const ratio = row.kind === 'ratio';
+  if (!(lo < hi)) return { err: T('下限要小於上限', 'The lower limit must be below the upper limit') };
+  if (ratio && !(lo > 0)) return { err: T('比值的信賴區間要大於 0', 'Ratio limits must be greater than 0') };
+  if (ratio && est !== null && !(est > 0)) return { err: T('比值要大於 0', 'The ratio must be greater than 0') };
+  return { ...ES.seFromCi({ ratio, est, lo, hi, level: Number(S.se.level), n: !ratio && n > 1 ? n : undefined }), ratio, est, lo, hi };
+}
+
+/* ---------------- result sentences ---------------- */
+function sentN(r) {
+  const extra = r.drop > 0;
+  const tot = r.a1 + r.a2, totB = r.b1 + r.b2;
+  const allocEn = r.k === 1 ? '' : ` (allocation ratio ${fx(r.k, 2)}:1)`, allocZh = r.k === 1 ? '' : `（組 2 : 組 1 = ${fx(r.k, 2)} : 1）`;
+  if (r.type === 'prop') {
+    return {
+      en: `Assuming an event proportion of ${fp(r.p1)} in group 1 and ${fp(r.p2)} in group 2, ${r.a1}${r.k === 1 ? ' participants per group' : ` participants in group 1 and ${r.a2} in group 2`} (${tot} in total)${allocEn} would provide ${Math.round(r.power * 100)}% power to detect this difference at a two-sided α of ${r.alpha}${r.cc ? ', with continuity correction' : ''}.${extra ? ` Allowing for ${fp(r.drop, 0)} loss to follow-up, ${totB} participants (${r.b1}${r.k === 1 ? ' per group' : ` and ${r.b2}`}) will be enrolled.` : ''}`,
+      zh: `假設組 1 的事件比例為 ${fp(r.p1)}、組 2 為 ${fp(r.p2)}，在雙尾 α = ${r.alpha}${r.cc ? '、使用連續性校正' : ''}的條件下，${r.k === 1 ? `每組需 ${r.a1} 人` : `組 1 需 ${r.a1} 人、組 2 需 ${r.a2} 人`}（共 ${tot} 人）${allocZh}，才有 ${Math.round(r.power * 100)}% 的檢定力偵測此差異。${extra ? `考量 ${fp(r.drop, 0)} 的流失率，預計收案 ${totB} 人（${r.k === 1 ? `每組 ${r.b1} 人` : `組 1 ${r.b1} 人、組 2 ${r.b2} 人`}）。` : ''}`,
+    };
+  }
+  return {
+    en: `To detect a difference in means of ${fx(Math.abs(r.diff), 2)} (standard deviation ${fx(r.sd, 2)}; standardised difference ${fx(r.d, 2)}) with ${Math.round(r.power * 100)}% power at a two-sided α of ${r.alpha}, ${r.a1}${r.k === 1 ? ' participants per group' : ` participants in group 1 and ${r.a2} in group 2`} (${tot} in total)${allocEn} are required.${extra ? ` Allowing for ${fp(r.drop, 0)} loss to follow-up, ${totB} participants will be enrolled.` : ''}`,
+    zh: `為了在雙尾 α = ${r.alpha} 下，以 ${Math.round(r.power * 100)}% 的檢定力偵測 ${fx(Math.abs(r.diff), 2)} 的平均差（標準差 ${fx(r.sd, 2)}，標準化差異 ${fx(r.d, 2)}），${r.k === 1 ? `每組需 ${r.a1} 人` : `組 1 需 ${r.a1} 人、組 2 需 ${r.a2} 人`}（共 ${tot} 人）${allocZh}。${extra ? `考量 ${fp(r.drop, 0)} 的流失率，預計收案 ${totB} 人。` : ''}`,
+  };
+}
+// NNT with its interval, written as Altman (1998) suggests: "NNTB 7 (4 to 28)" or "NNTB 20 (NNTH 14 to ∞ to NNTB 6)"
+function nntParts(r) {
+  const main = { label: r.benefit ? 'NNTB' : 'NNTH', value: Number.isFinite(r.nnt) ? up(r.nnt) : '∞' };
+  if (!r.ends) return { main, ci: null };
+  const [a, b] = r.ends.map((e) => ({ label: e.benefit ? 'NNTB' : 'NNTH', value: Number.isFinite(e.value) ? up(e.value) : '∞' }));
+  if (r.spansZero) {
+    const harm = a.label === 'NNTH' ? a : b, ben = a.label === 'NNTB' ? a : b;
+    return { main, ci: { en: `NNTH ${harm.value} to ∞ to NNTB ${ben.value}`, zh: `NNTH ${harm.value} 到 ∞ 到 NNTB ${ben.value}` } };
+  }
+  const lo = Math.min(Number(a.value), Number(b.value)), hi = Math.max(Number(a.value), Number(b.value));
+  return { main, ci: { en: `${lo} to ${hi}`, zh: `${lo} 到 ${hi}` } };
+}
+function sentNnt(r) {
+  const P = nntParts(r), lv = levelPct(r.level);
+  const ardTxt = (x) => fp(Math.abs(x));
+  const dir = r.benefit ? ['absolute risk reduction', '絕對風險降低'] : ['absolute risk increase', '絕對風險增加'];
+  const ci = r.lo !== null && r.lo !== undefined && r.hi !== null && r.hi !== undefined;
+  const ardCi = ci ? ` (${lv}% CI ${fp(r.lo)} to ${fp(r.hi)})` : '';
+  const ardCiZh = ci ? `（${lv}% CI ${fp(r.lo)} 到 ${fp(r.hi)}）` : '';
+  const nntCi = P.ci ? ` (${lv}% CI ${P.ci.en})` : '', nntCiZh = P.ci ? `（${lv}% CI ${P.ci.zh}）` : '';
+  const what = P.main.label === 'NNTB' ? ['number needed to treat to benefit', '需治療人數（獲益）'] : ['number needed to treat to harm', '需治療人數（傷害）'];
+  let pre = '', preZh = '';
+  if (r.src === 'counts') {
+    pre = `The risk was ${fp(r.p1)} in the treated group and ${fp(r.p0)} in the control group. `;
+    preZh = `治療組的風險為 ${fp(r.p1)}，對照組為 ${fp(r.p0)}。`;
+  } else {
+    const when = S.nnt.type === 'HR' && S.nnt.when ? S.nnt.when : '';
+    pre = `Applying the ${r.type} of ${fx(r.est)}${r.rlo != null && r.rhi != null ? ` (95% CI ${fx(r.rlo)} to ${fx(r.rhi)})` : ''} to a control-group risk of ${fp(r.cer)}${when ? ` at ${when}` : ''} gives an expected risk of ${fp(r.treated)} with treatment. `;
+    preZh = `將 ${r.type} ${fx(r.est)}${r.rlo != null && r.rhi != null ? `（95% CI ${fx(r.rlo)} 到 ${fx(r.rhi)}）` : ''}套用到對照組風險 ${fp(r.cer)}${when ? `（${when}）` : ''}，治療組的預期風險為 ${fp(r.treated)}。`;
+  }
+  return {
+    en: `${pre}The ${dir[0]} was ${ardTxt(r.ard)}${ardCi}, corresponding to a ${what[0]} (${P.main.label}) of ${P.main.value}${nntCi}.${r.spansZero ? ' The confidence interval includes no difference.' : ''}`,
+    zh: `${preZh}${dir[1]} ${ardTxt(r.ard)}${ardCiZh}，${what[1]}（${P.main.label}）為 ${P.main.value}${nntCiZh}。${r.spansZero ? '信賴區間包含「沒有差異」。' : ''}`,
+  };
+}
+function sentOr(row, c) {
+  const name = row.label ? ` for ${row.label}` : '';
+  const ci = c.rlo !== null && c.rhi !== null;
+  return {
+    en: `The odds ratio${name} of ${fx(c.or)}${ci ? ` (95% CI ${fx(c.lo)} to ${fx(c.hi)})` : ''} corresponds to an approximate risk ratio of ${fx(c.rr)}${ci ? ` (${fx(c.rlo)} to ${fx(c.rhi)})` : ''}, assuming an outcome risk of ${fp(c.p0)} in the reference group (Zhang and Yu, 1998).`,
+    zh: `${row.label ? `${row.label}的` : ''}勝算比 ${fx(c.or)}${ci ? `（95% CI ${fx(c.lo)} 到 ${fx(c.hi)}）` : ''}，在參考組結果風險為 ${fp(c.p0)} 的假設下，約相當於風險比 ${fx(c.rr)}${ci ? `（${fx(c.rlo)} 到 ${fx(c.rhi)}）` : ''}（Zhang & Yu, 1998）。`,
+  };
+}
+
+/* ---------------- results tables (shared by the panel, Word and the copied table) ---------------- */
+function model() {
+  if (S.mode === 'n') {
+    const r = calcN();
+    if (!r || r.err) return null;
+    const rows = [
+      [T('組 1', 'Group 1'), String(r.a1), r.drop > 0 ? String(r.b1) : '—'],
+      [T('組 2', 'Group 2'), String(r.a2), r.drop > 0 ? String(r.b2) : '—'],
+      [T('合計', 'Total'), String(r.a1 + r.a2), r.drop > 0 ? String(r.b1 + r.b2) : '—'],
+    ];
+    const note = r.type === 'prop'
+      ? `Two proportions (${fp(r.p1)} vs ${fp(r.p2)}), two-sided α ${r.alpha}, power ${Math.round(r.power * 100)}%, normal approximation (Fleiss 2003)${r.cc ? ' with continuity correction' : ''}.`
+      : `Two means (difference ${fx(Math.abs(r.diff))}, SD ${fx(r.sd)}, d = ${fx(r.d)}), two-sided α ${r.alpha}, power ${Math.round(r.power * 100)}%, t-based iteration.`;
+    return { heads: [T('組別', 'Group'), T('所需人數', 'Required'), T(`含 ${fp(r.drop, 0)} 流失`, `With ${fp(r.drop, 0)} loss`)], rows, widths: [30, 35, 35], note };
+  }
+  if (S.mode === 'nnt') {
+    const r = calcNnt();
+    if (!r || r.err) return null;
+    const P = nntParts(r), lv = levelPct(r.level);
+    const rows = [
+      [r.benefit ? T('絕對風險降低', 'Absolute risk reduction') : T('絕對風險增加', 'Absolute risk increase'), fp(Math.abs(r.ard)), r.lo != null && r.hi != null ? `${fp(r.lo)} to ${fp(r.hi)}` : '—'],
+      [P.main.label, String(P.main.value), P.ci ? P.ci.en : '—'],
+    ];
+    return { heads: [T('指標', 'Measure'), T('估計值', 'Estimate'), `${lv}% CI`], rows, widths: [40, 25, 35], note: 'NNT rounded up to the next whole number; confidence interval by inverting the risk-difference interval (Altman 1998).' };
+  }
+  if (S.mode === 'or') {
+    const rows = S.or.rows.map((row, i) => ({ row, i, c: calcOr(row) })).filter((x) => x.c && !x.c.err)
+      .map(({ row, i, c }) => [row.label || `Estimate ${i + 1}`, `${fx(c.or)}${c.lo !== null && c.hi !== null ? ` (${fx(c.lo)}–${fx(c.hi)})` : ''}`, fp(c.p0), `${fx(c.rr)}${c.rlo !== null ? ` (${fx(c.rlo)}–${fx(c.rhi)})` : ''}`]);
+    if (!rows.length) return null;
+    return { heads: [T('分析', 'Analysis'), 'OR (95% CI)', T('基準風險', 'Baseline risk'), T('約略 RR (95% CI)', 'Approximate RR (95% CI)')], rows, widths: [30, 24, 16, 30], note: 'Risk ratios approximated from odds ratios with the method of Zhang and Yu (1998); intervals converted the same way are approximate (McNutt et al. 2003).' };
+  }
+  const rows = S.se.rows.map((row, i) => ({ row, i, c: calcSe(row) })).filter((x) => x.c && !x.c.err).map(({ row, i, c }) => [
+    row.label || `Estimate ${i + 1}`, c.ratio ? 'ratio' : 'difference',
+    c.est !== null ? (c.ratio ? fx(Math.log(c.est), 4) : fx(c.est, 4)) : fx(c.centre, 4), fx(c.se, 4), c.est !== null ? fP(c.p) : '—', c.sd !== undefined ? fx(c.sd, 3) : '—']);
+  if (!rows.length) return null;
+  return { heads: [T('分析', 'Analysis'), T('尺度', 'Scale'), T('估計值（比值取 ln）', 'Estimate (ln for ratios)'), 'SE', 'p', 'SD'], rows, widths: [26, 12, 20, 14, 12, 16], note: `SE = (upper − lower) / (2 × ${fx(ES.qnorm(1 - (1 - Number(S.se.level)) / 2), 3)}), on the log scale for ratios; p from z = estimate / SE (Altman & Bland 2011). SD = √n × (upper − lower) / (2 × t) for a single group’s mean (Cochrane Handbook 6.5.2.2).` };
+}
+
+/* ---------------- results panel ---------------- */
+function copyBtns(id) {
+  return `<div class="copyrow"><button class="small" data-copy="en" data-id="${id}">${T('複製英文句子', 'Copy English sentence')}</button><button class="small" data-copy="zh" data-id="${id}">${T('複製中文句子', 'Copy Chinese sentence')}</button></div>`;
+}
+const SENT = {};
+function renderResults() {
+  const host = document.getElementById('results');
+  const empty = (zh, en) => { host.innerHTML = `<p class="hint" style="margin:0">${T(zh, en)}</p>`; };
+  const errBox = (e) => { host.innerHTML = `<div class="msg">⚠ ${RT.esc(e)}</div>`; };
+  Object.keys(SENT).forEach((k) => delete SENT[k]);
+  if (S.mode === 'n') {
+    const r = calcN();
+    if (!r) return empty(S.n.type === 'prop' ? '輸入兩組比例後顯示所需人數。' : '輸入平均差與標準差後顯示所需人數。', S.n.type === 'prop' ? 'Enter the two proportions to see the sample size.' : 'Enter the difference and the SD to see the sample size.');
+    if (r.err) return errBox(r.err);
+    SENT.n = sentN(r);
+    host.innerHTML = `<div class="big">
+        <div><span class="k">${r.k === 1 ? T('每組', 'Per group') : T('組 1 / 組 2', 'Group 1 / group 2')}</span><span class="v">${r.k === 1 ? r.a1 : `${r.a1} / ${r.a2}`}</span></div>
+        <div><span class="k">${T('合計', 'Total')}</span><span class="v">${r.a1 + r.a2}</span></div>
+        ${r.drop > 0 ? `<div><span class="k">${T(`含 ${fp(r.drop, 0)} 流失要收`, `Enrol, with ${fp(r.drop, 0)} loss`)}</span><span class="v">${r.b1 + r.b2}</span></div>` : ''}
+      </div>
+      <ul class="facts">
+        ${r.type === 'mean' ? `<li>${T('標準化差異', 'Standardised difference')} d = <b>${fx(r.d)}</b> · ${T('常態近似每組', 'normal approximation per group')} ${up(r.nNormal)}</li>` : `<li>${T('絕對差異', 'Absolute difference')} <b>${fp(Math.abs(r.p1 - r.p2))}</b>${r.cc ? ' · ' + T('已做連續性校正', 'continuity corrected') : ''}</li>`}
+      </ul>
+      <p class="sentence">${RT.esc(SENT.n[RT.lang === 'en' ? 'en' : 'zh'])}</p>${copyBtns('n')}
+      <details class="how"><summary>${T('公式', 'Formula')}</summary><p class="formula">${r.type === 'prop'
+        ? 'n₁ = [z₁₋α/₂ √(p̄q̄(1+1/k)) + z₁₋β √(p₁q₁ + p₂q₂/k)]² / (p₁ − p₂)²\np̄ = (p₁ + k·p₂)/(1 + k),  n₂ = k·n₁' + (r.cc ? '\nn₁′ = n₁/4 · [1 + √(1 + 2(k+1)/(k·n₁·|p₁ − p₂|))]²' : '')
+        : 'n₁ = (1 + 1/k) · (t₁₋α/₂,df + t₁₋β,df)² · σ² / Δ²\ndf = n₁ + n₂ − 2 (solved by iteration),  n₂ = k·n₁'}${r.drop > 0 ? '\nenrol = n / (1 − loss)' : ''}</p></details>`;
+    return;
+  }
+  if (S.mode === 'nnt') {
+    const r = calcNnt();
+    if (!r) return empty(S.nnt.src === 'counts' ? '輸入兩組的事件數與人數。' : '輸入比值與對照組風險。', S.nnt.src === 'counts' ? 'Enter events and totals for both groups.' : 'Enter the ratio and the control-group risk.');
+    if (r.err) return errBox(r.err);
+    const P = nntParts(r), lv = levelPct(r.level);
+    SENT.nnt = sentNnt(r);
+    host.innerHTML = `<div class="big">
+        <div><span class="k">${P.main.label === 'NNTB' ? T('需治療人數（獲益）', 'Number needed to treat to benefit') : T('需治療人數（傷害）', 'Number needed to treat to harm')}</span><span class="v">${P.main.label} ${P.main.value}</span></div>
+        <div><span class="k">${r.benefit ? T('絕對風險降低', 'Absolute risk reduction') : T('絕對風險增加', 'Absolute risk increase')}</span><span class="v">${fp(Math.abs(r.ard))}</span></div>
+      </div>
+      <ul class="facts">
+        ${P.ci ? `<li>${lv}% CI（NNT）<b>${RT.esc(RT.lang === 'en' ? P.ci.en : P.ci.zh)}</b></li>` : ''}
+        ${r.lo != null && r.hi != null ? `<li>${lv}% CI（${T('風險差', 'risk difference')}）${fp(r.lo)} ${T('到', 'to')} ${fp(r.hi)}</li>` : ''}
+        <li>${T('精確值', 'Unrounded')} ${fx(r.nnt, 1)} · ${T('NNT 一律無條件進位', 'NNTs are rounded up')}</li>
+      </ul>
+      <p class="sentence">${RT.esc(SENT.nnt[RT.lang === 'en' ? 'en' : 'zh'])}</p>${copyBtns('nnt')}
+      <details class="how"><summary>${T('公式', 'Formula')}</summary><p class="formula">ARD = risk₀ − risk₁,  NNT = 1 / |ARD|\nCI: 1 / (ARD limits)   (Altman 1998)\nRR: risk₁ = CER·RR\nOR: risk₁ = OR·CER / (1 − CER + OR·CER)\nHR: risk₁ = 1 − (1 − CER)^HR   (Altman & Andersen 1999)</p></details>`;
+    return;
+  }
+  const m = model();
+  const rowsSrc = S.mode === 'or' ? S.or.rows.map((row) => calcOr(row)) : S.se.rows.map((row) => calcSe(row));
+  const errs = rowsSrc.map((c, i) => (c && c.err ? `${i + 1}. ${c.err}` : null)).filter(Boolean);
+  if (!m && !errs.length) return empty(S.mode === 'or' ? '輸入 OR 與基準風險後顯示換算結果。' : '輸入信賴區間後顯示 SE 與 p 值。', S.mode === 'or' ? 'Enter an OR and the baseline risk.' : 'Enter a confidence interval to see the SE and p value.');
+  let html = errs.map((e) => `<div class="msg">⚠ ${RT.esc(e)}</div>`).join('');
+  if (m) html += `<div class="tbl-wrap"><table class="res-tbl"><thead><tr>${m.heads.map((h) => `<th>${RT.esc(h)}</th>`).join('')}</tr></thead><tbody>${m.rows.map((r) => `<tr>${r.map((c) => `<td>${RT.esc(c)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  if (S.mode === 'or') {
+    S.or.rows.forEach((row, i) => { const c = calcOr(row); if (c && !c.err) SENT['or' + i] = sentOr(row, c); });
+    const ids = Object.keys(SENT);
+    if (ids.length) html += `<p class="sentence">${RT.esc(SENT[ids[0]][RT.lang === 'en' ? 'en' : 'zh'])}</p>${copyBtns(ids[0])}${ids.length > 1 ? `<p class="hint">${T('只顯示第一筆的句子；Word 結果表包含全部。', 'Only the first sentence is shown; the Word table has every row.')}</p>` : ''}`;
+    html += `<details class="how"><summary>${T('公式', 'Formula')}</summary><p class="formula">RR ≈ OR / (1 − P₀ + P₀·OR)   (Zhang & Yu 1998)</p></details>`;
+  } else {
+    html += `<details class="how"><summary>${T('公式', 'Formula')}</summary><p class="formula">SE = (U − L) / (2·z),  z = ${fx(ES.qnorm(1 - (1 - Number(S.se.level)) / 2), 3)}  (ratios: ln U, ln L)\np = 2·(1 − Φ(|estimate| / SE))\nSD = √n · (U − L) / (2·t₁₋α/₂, n−1)</p></details>`;
+  }
+  host.innerHTML = html;
+}
+document.getElementById('results').addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-copy]');
+  if (!b) return;
+  try { await navigator.clipboard.writeText(SENT[b.dataset.id][b.dataset.copy]); RT.toast(T('已複製', 'Copied')); }
+  catch (err) { RT.toast(T('無法複製到剪貼簿', 'Could not copy to the clipboard'), 4000); }
+});
+
+/* ---------------- warnings ---------------- */
+function warnings() {
+  const out = [];
+  if (S.mode === 'n') {
+    const r = calcN();
+    if (r && !r.err && r.type === 'prop' && (r.a1 * Math.min(r.p1, r.p2) < 5 || r.a2 * Math.min(r.p1, r.p2) < 5)) out.push(T('預期事件數很少，常態近似可能不準，建議改用精確法（例如 Fisher）估計。', 'Few expected events: the normal approximation may be off; consider an exact method (e.g. Fisher).'));
+  }
+  if (S.mode === 'nnt') {
+    const r = calcNnt();
+    if (r && !r.err && r.src === 'ratio' && S.nnt.type === 'OR' && r.cer > 0.1) out.push(T('OR 搭配常見結果時，推算的治療組風險依賴這個基準風險；請確認基準風險來自相同族群。', 'With an OR and a common outcome the treated risk depends on this baseline risk; make sure it comes from the same population.'));
+    if (r && !r.err && r.src === 'ratio' && S.nnt.type === 'HR' && !S.nnt.when) out.push(T('HR 換算的 NNT 只在特定時間點成立，請填寫時間點（例如 5 年）。', 'An NNT from an HR holds at one time point: fill in the time point (e.g. 5 years).'));
+  }
+  if (S.mode === 'or') {
+    S.or.rows.forEach((row, i) => { const c = calcOr(row); if (c && !c.err && c.p0 < 0.1) out.push(T(`第 ${i + 1} 筆的基準風險低於 10%，OR 已接近 RR，換算差異很小。`, `Row ${i + 1}: baseline risk below 10%, so the OR is already close to the RR.`)); });
+    if (S.or.rows.some((row) => { const c = calcOr(row); return c && !c.err && c.rlo !== null; })) out.push(T('用同一公式換算校正後 OR 的信賴區間只是近似，可能偏窄（McNutt 2003）；能取得原始資料時，建議直接用 log-binomial 或 modified Poisson 估計 RR。', 'Converting the interval of an adjusted OR this way is approximate and may be too narrow (McNutt 2003); with the data at hand, estimate the RR directly with log-binomial or modified Poisson regression.'));
+  }
+  if (S.mode === 'se') {
+    S.se.rows.forEach((row, i) => { const c = calcSe(row); if (c && !c.err && c.est !== null && c.symmetric > 0.1) out.push(T(`第 ${i + 1} 筆的估計值不在區間中央（${c.ratio ? '對數尺度' : '原尺度'}），請確認尺度或數字是否正確。`, `Row ${i + 1}: the estimate is not centred in its interval (${c.ratio ? 'log' : 'natural'} scale); check the scale or the numbers.`)); });
+  }
+  return out;
+}
+
+/* ---------------- repeated rows (OR → RR, CI → SE) ---------------- */
+function renderOrRows() {
+  const host = document.getElementById('orRows');
+  host.innerHTML = '';
+  S.or.rows.forEach((row, i) => {
+    const el = RT.h(`<div class="erow">
+      <label><span class="lbl">${T('分析名稱', 'Analysis')}</span><input data-f="label" placeholder="${T('例如：主要分析', 'e.g. Primary analysis')}"></label>
+      <label><span class="lbl">OR</span><input data-f="or" inputmode="decimal"></label>
+      <label><span class="lbl">${T('下限', 'Lower')}</span><input data-f="lo" inputmode="decimal"></label>
+      <label><span class="lbl">${T('上限', 'Upper')}</span><input data-f="hi" inputmode="decimal"></label>
+      <label><span class="lbl">${T('基準風險 %', 'Baseline %')}</span><input data-f="p0" inputmode="decimal"></label>
+      <button class="icon" data-a="del" aria-label="${T('刪除', 'Remove')}">✕</button></div>`);
+    el.querySelectorAll('[data-f]').forEach((inp) => { inp.value = row[inp.dataset.f] ?? ''; inp.oninput = () => { row[inp.dataset.f] = inp.value; update(); }; });
+    el.querySelector('[data-a="del"]').onclick = () => { if (S.or.rows.length > 1) S.or.rows.splice(i, 1); else S.or.rows[0] = orRow(); renderOrRows(); update(); };
+    host.appendChild(el);
+  });
+}
+function renderSeRows() {
+  const host = document.getElementById('seRows');
+  host.innerHTML = '';
+  S.se.rows.forEach((row, i) => {
+    const el = RT.h(`<div class="erow se">
+      <label><span class="lbl">${T('分析名稱', 'Analysis')}</span><input data-f="label" placeholder="${T('例如：研究 A', 'e.g. Study A')}"></label>
+      <label><span class="lbl">${T('尺度', 'Scale')}</span><select data-f="kind"><option value="ratio">${T('比值', 'Ratio')}</option><option value="diff">${T('差值／平均', 'Difference / mean')}</option></select></label>
+      <label><span class="lbl">${T('估計值', 'Estimate')}</span><input data-f="est" inputmode="decimal"></label>
+      <label><span class="lbl">${T('下限', 'Lower')}</span><input data-f="lo" inputmode="decimal"></label>
+      <label><span class="lbl">${T('上限', 'Upper')}</span><input data-f="hi" inputmode="decimal"></label>
+      <label${row.kind === 'ratio' ? ' hidden' : ''} data-nwrap><span class="lbl">n</span><input data-f="n" inputmode="numeric" placeholder="${T('選填', 'optional')}"></label>
+      <button class="icon" data-a="del" aria-label="${T('刪除', 'Remove')}">✕</button></div>`);
+    el.querySelectorAll('[data-f]').forEach((inp) => {
+      inp.value = row[inp.dataset.f] ?? '';
+      inp.oninput = () => { row[inp.dataset.f] = inp.value; if (inp.dataset.f === 'kind') el.querySelector('[data-nwrap]').hidden = inp.value === 'ratio'; update(); };
+    });
+    el.querySelector('[data-a="del"]').onclick = () => { if (S.se.rows.length > 1) S.se.rows.splice(i, 1); else S.se.rows[0] = seRow(); renderSeRows(); update(); };
+    host.appendChild(el);
+  });
+}
+document.getElementById('addOr').onclick = () => { S.or.rows.push(orRow({ p0: S.or.rows[S.or.rows.length - 1]?.p0 || '' })); renderOrRows(); update(); document.querySelectorAll('#orRows [data-f="label"]').forEach((x, i, a) => i === a.length - 1 && x.focus()); };
+document.getElementById('addSe').onclick = () => { S.se.rows.push(seRow({ kind: S.se.rows[S.se.rows.length - 1]?.kind || 'ratio' })); renderSeRows(); update(); document.querySelectorAll('#seRows [data-f="label"]').forEach((x, i, a) => i === a.length - 1 && x.focus()); };
+
+/* ---------------- radios (mode, outcome type, NNT source) ---------------- */
+const RADIOS = { mode: 'mode', nType: 'n.type', nntSrc: 'nnt.src' };
+function syncRadios() { Object.entries(RADIOS).forEach(([name, path]) => document.querySelectorAll(`input[name="${name}"]`).forEach((r) => { r.checked = r.value === RT.getPath(S, path); })); }
+document.addEventListener('change', (e) => {
+  const path = RADIOS[e.target.name];
+  if (!path) return;
+  RT.setPath(S, path, e.target.value);
+  RT.syncVisibility(form, S);
+  update();
+});
+
+/* ---------------- export ---------------- */
+const NAME = { n: 'sample_size', nnt: 'nnt', or: 'or_to_rr', se: 'se_from_ci' };
+document.getElementById('btnDocx').onclick = async () => {
+  const m = model();
+  if (!m) { RT.toast(T('還沒有可匯出的結果', 'No results to export yet')); return; }
+  try {
+    RT.applyStyle(RT.STYLE_DEF || {});
+    const blob = await RT.buildDocxTable({ headers: m.heads, widths: m.widths, rows: m.rows.map((r) => r.map((t, i) => ({ text: t, align: i ? 'center' : undefined }))), note: m.note, sizePt: 10, headerFill: 'FFFFFF' });
+    RT.download(blob, NAME[S.mode] + '.docx');
+  } catch (e) { RT.toast(String(e.message || e), 6000); }
+};
+document.getElementById('btnTsv').onclick = async () => {
+  const m = model();
+  if (!m) { RT.toast(T('還沒有可複製的結果', 'Nothing to copy yet')); return; }
+  const tsv = [m.heads, ...m.rows].map((r) => r.join('\t')).join('\n');
+  try { await navigator.clipboard.writeText(tsv); RT.toast(T('已複製表格，可貼進 Excel', 'Table copied; paste it into Excel')); }
+  catch (e) { RT.toast(T('無法複製到剪貼簿', 'Could not copy to the clipboard'), 4000); }
+};
+
+/* ---------------- wiring ---------------- */
+const form = document.getElementById('form');
+document.getElementById('modeSeg').setAttribute('aria-label', T('計算項目', 'Calculation'));
+document.getElementById('refs').innerHTML = RT.refsHTML(REFS);
+RT.bindForm(form, () => S, () => update());
+function syncInputs() { syncRadios(); renderOrRows(); renderSeRows(); RT.syncForm(form, S); }
+const hist = RT.history(() => S, (s) => { S = s; syncInputs(); render(); });
+function render() {
+  renderResults();
+  document.getElementById('msgs').innerHTML = warnings().map((m) => `<div class="msg">⚠ ${RT.esc(m)}</div>`).join('');
+  RT.save(KEY, S);
+}
+const update = RT.debounce(() => { render(); hist.push(); }, 80);
+
+document.getElementById('btnUndo').onclick = hist.undo;
+document.getElementById('btnRedo').onclick = hist.redo;
+// examples are fictional numbers, one per tab
+document.getElementById('btnExample').onclick = () => {
+  if (S.mode === 'n') S.n = { ...DEF.n, type: S.n.type, p1: '10', p2: '20', diff: '0.5', sd: '1', drop: '10' };
+  else if (S.mode === 'nnt') S.nnt = { ...DEF.nnt, src: S.nnt.src, e1: '15', n1: '100', e0: '30', n0: '100', type: 'HR', est: '0.80', lo: '0.70', hi: '0.92', cer: '25', when: T('5 年', '5 years') };
+  else if (S.mode === 'or') S.or.rows = [orRow({ label: 'Primary analysis', or: '2.00', lo: '1.50', hi: '2.70', p0: '20' }), orRow({ label: 'Women only', or: '1.60', lo: '1.10', hi: '2.30', p0: '25' })];
+  else S.se.rows = [seRow({ label: 'Study A', kind: 'ratio', est: '0.78', lo: '0.69', hi: '0.88' }), seRow({ label: 'Study B', kind: 'diff', est: '-2.1', lo: '-3.4', hi: '-0.8' }), seRow({ label: 'Study C (one group mean)', kind: 'diff', est: '12.0', lo: '10.5', hi: '13.5', n: '40' })];
+  syncInputs(); update();
+  RT.toast(T('已載入範例（虛構數字，僅供示範；按 ↶ 可復原）', 'Example loaded (fictional numbers, for illustration; ↶ to undo)'));
+};
+document.getElementById('btnReset').onclick = () => {
+  if (S.mode === 'n') S.n = { ...structuredClone(DEF.n), type: S.n.type };
+  else if (S.mode === 'nnt') S.nnt = { ...structuredClone(DEF.nnt), src: S.nnt.src };
+  else if (S.mode === 'or') S.or = structuredClone(DEF.or);
+  else S.se = structuredClone(DEF.se);
+  syncInputs(); update();
+  RT.toast(T('已清空這一頁（按 ↶ 可復原）', 'This tab cleared (↶ to undo)'));
+};
+RT.currentState = () => S;
+RT.applyState = (o) => { S = RT.merge(DEF, o); syncInputs(); update(); };
+
+// ?tab=nnt etc. opens a tab directly
+(() => { const t = new URLSearchParams(location.search).get('tab'); if (t && ['n', 'nnt', 'or', 'se'].includes(t)) S.mode = t; })();
+syncInputs();
+render();
+hist.push();
+</script>
+</body>
+</html>

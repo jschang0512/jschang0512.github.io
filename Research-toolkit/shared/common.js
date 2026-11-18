@@ -6,7 +6,7 @@
  */
 (function () {
   const RT = (window.RT = {});
-  RT.VERSION = 'v3.1 (2026-11-12)';
+  RT.VERSION = 'v3.2 (2026-11-17)';
   RT.DEV = { name: '張家菘', email: 'js.chang0512@gmail.com' };
 
   /* ---------- i18n ---------- */

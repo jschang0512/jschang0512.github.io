@@ -10,6 +10,7 @@ Browser-based figure tools for research papers. Everything runs in the browser �
 | Figure DPI & format converter | `figureconvert/` |
 | Forest plot | `forestplot/` |
 | E-value calculator (unmeasured confounding) | `evalue/` |
+| Effect sizes & sample size: sample size, NNT/NNH, OR → RR, SE from a CI | `effectsize/` |
 | Causal diagram (DAG) with back-door path check | `dag/` |
 | Treatment pathway Sankey diagram | `sankey/` |
 | Exposure definition diagram | `exposure/` |
@@ -30,4 +31,4 @@ Interface in Traditional Chinese and English. Figures export to PNG, TIFF, JPG, 
 
 張家菘 — questions, bug reports and suggestions: [js.chang0512@gmail.com](mailto:js.chang0512@gmail.com)
 
-Version: -菘 v3.-
+Version: v3.2 (2026-11-17)
