@@ -1,0 +1,10 @@
+{
+  "appId": "io.github.jschang0512.tracker",
+  "appName": "投稿與專案追蹤",
+  "webDir": "www",
+  "server": {
+    "url": "https://jschang0512.github.io/Research-toolkit/submissions/",
+    "cleartext": false,
+    "androidScheme": "https"
+  }
+}

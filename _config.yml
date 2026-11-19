@@ -24,6 +24,7 @@ exclude:
   - PRODUCT.md
   - DESIGN.md
   - .impeccable
+  - Research-toolkit/submissions/native
 
 markdown: kramdown
 kramdown:

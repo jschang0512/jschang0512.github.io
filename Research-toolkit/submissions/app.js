@@ -616,7 +616,7 @@
           <div class="full"><button class="btn sm" type="submit">${T('變更密碼', 'Change password')}</button></div>
         </form></div>` +
       `<div class="card"><h3>${T('語言與外觀', 'Language')}</h3><div class="seg" style="max-width:16rem" role="tablist"><button type="button" data-act="lang" data-lang="zh" aria-selected="${LANG === 'zh'}">中文</button><button type="button" data-act="lang" data-lang="en" aria-selected="${LANG === 'en'}">English</button></div>
-        <p class="muted small" style="margin-top:10px">${T('手機上可以從瀏覽器選單「加到主畫面」，之後像 App 一樣打開。深色模式跟著系統設定。', 'On a phone, use “Add to Home Screen” in the browser menu to open it like an app. Dark mode follows your system.')}</p></div>` +
+        <p class="muted small" style="margin-top:10px">${NATIVE ? T('深色模式跟著系統設定。', 'Dark mode follows your system.') : T('Android 可以安裝 App（「其他」裡的「下載 Android App」）；iPhone 用 Safari 的「分享 › 加入主畫面」。深色模式跟著系統設定。', 'On Android, install the app (Android app, under More); on iPhone use Safari’s Share › Add to Home Screen. Dark mode follows your system.')}</p></div>` +
       `<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 style="margin:0">${T('共同作者', 'Co-authors')}</h3><button class="btn sm" data-act="new-person">${ic('plus')}${T('新增', 'Add')}</button></div>` +
         (D.people.length ? `<div class="list">${D.people.map((x) => `<button type="button" class="ms" data-act="edit-person" data-id="${x.id}" style="grid-template-columns:minmax(0,1fr) auto"><span><h4>${esc(x.name)}</h4><span class="meta">${esc([x.affiliation, x.orcid].filter(Boolean).join(' · '))}</span></span><span class="chev">${ic('chev')}</span></button>`).join('')}</div>`
           : `<p class="muted small">${T('加一次以後，每篇論文都能直接選，產生作者列和 CRediT 貢獻聲明。', 'Add people once and pick them on any paper for author lines and CRediT statements.')}</p>`) + '</div>' +
@@ -633,7 +633,7 @@
           <label class="f"><span>${T('有效天數', 'Valid for (days)')}</span><input name="days" type="number" min="1" max="3650" value="30" inputmode="numeric"></label>
           <div class="full"><button class="btn primary sm" type="submit">${T('產生邀請碼', 'Make a code')}</button></div>
         </form><div id="newcode"></div><div class="tbl-wrap" style="margin-top:12px"><table class="codes"><thead><tr><th>${T('代碼', 'Code')}</th><th>${T('給誰', 'For')}</th><th>${T('已使用', 'Used')}</th><th>${T('到期', 'Expires')}</th><th></th></tr></thead><tbody id="codes"><tr><td colspan="5" class="muted">…</td></tr></tbody></table></div></div>` : '') +
-      `<div class="card"><h3>${T('其他', 'More')}</h3><div class="d-actions" style="margin-top:0"><a class="btn sm" href="../index.html">← Research Toolkit</a><button class="btn sm" data-act="logout">${T('登出', 'Sign out')}</button></div>
+      `<div class="card"><h3>${T('其他', 'More')}</h3><div class="d-actions" style="margin-top:0"><a class="btn sm" href="../index.html">← Research Toolkit</a>${NATIVE ? '' : `<a class="btn sm" href="${APK_URL}" download>${T('下載 Android App', 'Android app')}</a>`}<button class="btn sm" data-act="logout">${T('登出', 'Sign out')}</button></div>
         <p class="muted small" style="margin:12px 0 8px">${T('刪除帳號會一併刪除你存的所有專案、論文、審稿意見和截止日，無法復原。', 'Deleting your account removes every project, paper, reviewer comment and deadline you saved. This cannot be undone.')}</p>
         <button class="btn sm danger" data-act="delete-account">${ic('trash')}${T('刪除我的帳號', 'Delete my account')}</button></div>`;
   }
@@ -939,7 +939,22 @@
     dlg.addEventListener('close', () => dlg.remove());
     dlg.showModal();
   }
-  function download(blob, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
+  // In the Android app a WebView cannot save downloads: the file is written to the app's cache and handed to the share sheet
+  const NATIVE = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform());
+  async function download(blob, name) {
+    if (NATIVE && window.Capacitor.Plugins && window.Capacitor.Plugins.Filesystem && window.Capacitor.Plugins.Share) {
+      try {
+        const data = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = rej; r.readAsDataURL(blob); });
+        const { Filesystem, Share } = window.Capacitor.Plugins;
+        const w = await Filesystem.writeFile({ path: name, data, directory: 'CACHE' });
+        await Share.share({ title: name, url: w.uri, dialogTitle: T('儲存或傳送檔案', 'Save or send the file') });
+      } catch (e) { if (!/cancel/i.test(String(e && e.message))) toast(T('無法輸出檔案：', 'Could not export the file: ') + (e.message || e), 6000); }
+      return;
+    }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }
+  const IS_ANDROID = /android/i.test(navigator.userAgent || '');
+  const APK_URL = 'tracker.apk';
   let jszipPromise = null;
   function loadJSZip() {
     if (window.JSZip) return Promise.resolve();
@@ -1428,6 +1443,7 @@
     authMsg('');
   }
   function paintAuth() {
+    const apk = $('auth-apk'); if (apk) { apk.hidden = NATIVE || !IS_ANDROID; apk.textContent = T('下載 Android App', 'Get the Android app'); }
     document.documentElement.lang = LANG === 'en' ? 'en' : 'zh-Hant';
     $('auth-title').textContent = tt('appName'); $('auth-sub').textContent = tt('appSub');
     $('tab-in').textContent = tt('signIn'); $('tab-up').textContent = tt('createAccount');
