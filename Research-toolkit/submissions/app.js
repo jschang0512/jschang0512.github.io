@@ -72,10 +72,10 @@
 
   /* ---------------- data ---------------- */
   let USER = null, ADMIN = false;
-  let D = { projects: [], milestones: [], papers: [], rounds: [], comments: [], deadlines: [], journals: [], people: [], authors: [], todos: [] };
+  let D = { projects: [], milestones: [], papers: [], rounds: [], comments: [], deadlines: [], journals: [], people: [], authors: [], todos: [], peer: [] };
   let SETTINGS = null;
-  const TABLE = { projects: 'research_projects', milestones: 'research_milestones', papers: 'research_papers', rounds: 'research_rounds', comments: 'research_comments', deadlines: 'research_deadlines', journals: 'research_journals', people: 'research_people', authors: 'research_paper_authors', todos: 'research_todos' };
-  const ORDER = { projects: ['updated_at', false], milestones: ['created_at', true], papers: ['updated_at', false], rounds: ['submitted_on', true], comments: ['seq', true], deadlines: ['due', true], journals: ['name', true], people: ['name', true], authors: ['position', true], todos: ['created_at', true] };
+  const TABLE = { projects: 'research_projects', milestones: 'research_milestones', papers: 'research_papers', rounds: 'research_rounds', comments: 'research_comments', deadlines: 'research_deadlines', journals: 'research_journals', people: 'research_people', authors: 'research_paper_authors', todos: 'research_todos', peer: 'research_peer_reviews' };
+  const ORDER = { projects: ['updated_at', false], milestones: ['created_at', true], papers: ['updated_at', false], rounds: ['submitted_on', true], comments: ['seq', true], deadlines: ['due', true], journals: ['name', true], people: ['name', true], authors: ['position', true], todos: ['created_at', true], peer: ['created_at', false] };
   async function loadAll() {
     const keys = Object.keys(TABLE);
     const res = await Promise.all(keys.map((k) => sb.from(TABLE[k]).select('*').order(ORDER[k][0], { ascending: ORDER[k][1] })).concat([sb.from('research_settings').select('*')]));
@@ -110,6 +110,9 @@
     if (['admin_return', 'major', 'minor'].includes(lr.decision) && !lr.response_on) return { kind: 'revise', days: lr.decision_on ? days(parseDate(lr.decision_on), t) : null, journal: lr.journal, round: lr };
     return null;
   }
+  const REVISE = ['admin_return', 'major', 'minor'];
+  // days left to send a revision back, when the journal gave a date
+  function revisionLeft(p) { const lr = lastRound(p.id); return lr && REVISE.includes(lr.decision) && !lr.response_on && lr.revision_due ? { left: days(today(), parseDate(lr.revision_due)), due: lr.revision_due, round: lr } : null; }
   function openCount(roundId) { return commentsOf(roundId).filter((c) => c.status === 'todo' || c.status === 'draft').length; }
   // the round whose reviewer comments are being worked on: the latest one with a revision decision, else the latest
   function workingRound(paperId) {
@@ -130,6 +133,8 @@
     });
     D.papers.forEach((p) => {
       if (p.deadline && !['accepted', 'pre_proof', 'published', 'rejected', 'withdrawn'].includes(p.status)) { const due = parseDate(p.deadline), left = days(t, due); if (left >= -30 && left <= SOON_DAYS) push(due, { title: paperName(p), sub: T('自訂截止日', 'Own deadline'), href: '#/paper/' + p.id }); }
+      const rv = revisionLeft(p);
+      if (rv && rv.left >= -30 && rv.left <= SOON_DAYS) push(parseDate(rv.due), { title: paperName(p), sub: T(`修改稿交回期限 · ${rv.round.journal}`, `Revision due · ${rv.round.journal}`), href: `#/paper/${p.id}/reviews` });
       const w = waitInfo(p);
       if (w && w.kind === 'review' && w.days >= WAIT_DAYS) push(null, { nudge: true, title: paperName(p), sub: T(`${w.journal} 已審查 ${w.days} 天，可以寫信詢問進度`, `${w.journal} has had it ${w.days} days; consider asking about progress`), href: '#/paper/' + p.id });
       if (w && w.kind === 'revise') {
@@ -138,6 +143,7 @@
         else if (w.days !== null && w.days >= REVISION_DAYS) push(null, { nudge: true, title: paperName(p), sub: T(`修改意見已收到 ${w.days} 天，還沒送出回覆`, `Reviews arrived ${w.days} days ago; response not sent yet`), href: '#/paper/' + p.id });
       }
     });
+    D.peer.forEach((r) => { if (!['invited', 'accepted'].includes(r.status) || !r.due) return; const due = parseDate(r.due), left = days(t, due); if (left >= -30 && left <= SOON_DAYS) push(due, { title: T(`審稿：${r.journal}`, `Review for ${r.journal}`), sub: [r.status === 'invited' ? T('還沒回覆邀請', 'Invitation not answered yet') : '', r.manuscript || r.ms_id || ''].filter(Boolean).join(' · '), href: '#/reviewing' }); });
     D.todos.forEach((td) => { if (td.done_at || !td.due) return; const due = parseDate(td.due); if (days(t, due) <= 0) push(due, { todo: true, title: (td.starred ? '★ ' : '') + td.title, sub: T('待辦', 'To-do'), href: '#/todos' }); });
     items.sort((a, b) => (a.nudge === b.nudge ? (a.date || 0) - (b.date || 0) : a.nudge ? -1 : 1));
     return items;
@@ -189,7 +195,7 @@
     const paperRow = (p) => {
       const at = Math.max(0, PAPER_STEPS.indexOf(p.status === 'submitted' ? 'submitted' : p.status)), lr = lastRound(p.id), w = waitInfo(p);
       const wr = workingRound(p.id), open = wr && ['admin_return', 'major', 'minor'].includes(wr.decision) ? openCount(wr.id) : 0;
-      const sub = [lr ? esc(lr.journal) : (p.target_journal ? esc(p.target_journal) : ''), w && w.kind === 'review' ? T(`已等 ${w.days} 天`, `${w.days} d waiting`) : '', open ? T(`${open} 條意見待回覆`, `${open} comments to answer`) : ''].filter(Boolean).join(' · ');
+      const sub = [lr ? esc(lr.journal) : (p.target_journal ? esc(p.target_journal) : ''), w && w.kind === 'review' ? T(`已等 ${w.days} 天`, `${w.days} d waiting`) : '', open ? T(`${open} 條意見待回覆`, `${open} comments to answer`) : '', (() => { const rv = revisionLeft(p); return rv ? (rv.left >= 0 ? T(`剩 ${rv.left} 天交回`, `${rv.left} d to send back`) : T(`交回期限已過 ${-rv.left} 天`, `revision ${-rv.left} d overdue`)) : ''; })()].filter(Boolean).join(' · ');
       return `<a class="prog" href="#/paper/${p.id}"><div class="prog-head"><b>${esc(paperName(p))}</b><span class="chip ${STATUS_CHIP[p.status]}">${esc(STATUS()[p.status])} ${at + 1}/${PAPER_STEPS.length}</span></div>` +
         bar(PAPER_STEPS.length, at, PAPER_STEP_LABEL()) + `<small>${sub || '&nbsp;'}</small></a>`;
     };
@@ -210,7 +216,7 @@
   }
 
   // everything with a date: deadlines, milestones, IRB expiry, own paper deadlines, open to-dos
-  const EV_KIND = () => ({ dl: T('截止日', 'Deadline'), ms: T('里程碑', 'Milestone'), irb: T('到期', 'Expiry'), paper: T('論文', 'Paper'), todo: T('待辦', 'To-do') });
+  const EV_KIND = () => ({ dl: T('截止日', 'Deadline'), ms: T('里程碑', 'Milestone'), irb: T('到期', 'Expiry'), paper: T('論文', 'Paper'), peer: T('審稿', 'Reviewing'), todo: T('待辦', 'To-do') });
   function calEvents() {
     const ev = {}, add = (date, o) => { if (!date) return; (ev[date] = ev[date] || []).push(o); };
     D.deadlines.forEach((d) => { if (!d.done) add(d.due, { kind: 'dl', title: d.title, sub: DL_KIND()[d.kind], href: '#/deadlines' }); });
@@ -221,6 +227,8 @@
       if (m.expires_on) add(m.expires_on, { kind: 'irb', title: T(`${m.title} 到期`, `${m.title} expires`), sub: pn, href: '#/project/' + pr.id });
     });
     D.papers.forEach((p) => { if (p.deadline && !['accepted', 'pre_proof', 'published', 'rejected', 'withdrawn'].includes(p.status)) add(p.deadline, { kind: 'paper', title: paperName(p), sub: T('自訂截止日', 'Own deadline'), href: '#/paper/' + p.id }); });
+    D.papers.forEach((p) => { const rv = revisionLeft(p); if (rv) add(rv.due, { kind: 'paper', title: T(`交回修改稿：${paperName(p)}`, `Revision due: ${paperName(p)}`), sub: rv.round.journal, href: `#/paper/${p.id}/reviews` }); });
+    D.peer.forEach((r) => { if (['invited', 'accepted'].includes(r.status) && r.due) add(r.due, { kind: 'peer', title: T(`審稿：${r.journal}`, `Review for ${r.journal}`), sub: r.manuscript || r.ms_id || '', href: '#/reviewing' }); });
     D.todos.forEach((x) => { if (!x.done_at && x.due) add(x.due.slice(0, 10), { kind: 'todo', title: (x.starred ? '★ ' : '') + x.title, sub: x.repeat && x.repeat !== 'none' ? REPEAT()[x.repeat] : '', href: '#/todos' }); });
     return ev;
   }
@@ -341,6 +349,7 @@
     const pr = p.project_id && byId('projects', p.project_id), w = waitInfo(p), lr = lastRound(p.id);
     const meta = [`<span class="chip ${STATUS_CHIP[p.status]}">${esc(STATUS()[p.status])}</span>`];
     if (lr) meta.push(esc(lr.journal)); if (w && w.kind === 'review') meta.push(T(`已等 ${w.days} 天`, `${w.days} days waiting`));
+    const rvl = revisionLeft(p); if (rvl) meta.push(`<span class="${rvl.left < 0 ? 'late' : rvl.left <= 14 ? 'warn' : ''}">${rvl.left >= 0 ? T(`修改稿 ${md(rvl.due)} 前交回（剩 ${rvl.left} 天）`, `Revision due ${md(rvl.due)} (${rvl.left} d)`) : T(`修改稿期限已過 ${-rvl.left} 天`, `Revision ${-rvl.left} d overdue`)}</span>`);
     if (pr) meta.push(`<a href="#/project/${pr.id}">${esc(pr.short_title || pr.title)}</a>`);
     const tabs = [['timeline', T('時間軸', 'Timeline')], ['prep', T('投稿準備', 'Checklist')], ['reviews', T('審稿往來', 'Reviews')], ['info', T('資料', 'Details')]];
     let body = '';
@@ -406,7 +415,7 @@
       (open ? `<div class="rvi-body"><div class="cm-text">${esc(c.comment)}</div>` +
         `<label for="resp-${c.id}"><span>${T('你的回覆', 'Your response')}</span><span class="saved" id="saved-${c.id}">${T('已儲存', 'Saved')}</span></label><textarea class="inp" id="resp-${c.id}" data-act="response" data-id="${c.id}" rows="3" maxlength="20000" placeholder="${T('寫下你的回覆，例如：已補充 30 與 60 天的敏感度分析…', 'Your reply, e.g. We added sensitivity analyses with 30 and 60 days…')}">${esc(c.response || '')}</textarea>` +
         `<label for="chg-${c.id}" style="margin-top:8px"><span>${T('修改位置（選填，會放進回覆信）', 'Where it changed (optional, goes into the letter)')}</span></label><input class="inp" id="chg-${c.id}" data-act="changes" data-id="${c.id}" maxlength="2000" value="${esc(c.changes || '')}" placeholder="${T('例如：p.5, L120–128; Table S4', 'e.g. p.5, L120–128; Table S4')}">` +
-        `<div class="rvi-foot"><select data-act="comment-status" data-id="${c.id}" aria-label="${T('狀態', 'Status')}">${Object.entries(C_STATUS()).map(([k, l]) => `<option value="${k}"${k === c.status ? ' selected' : ''}>${l}</option>`).join('')}</select><button class="btn ghost sm" data-act="edit-comment" data-id="${c.id}">${ic('edit')}${T('編輯意見', 'Edit comment')}</button></div></div>` : '') + '</div>';
+        `<div class="rvi-foot"><select data-act="comment-status" data-id="${c.id}" aria-label="${T('狀態', 'Status')}">${Object.entries(C_STATUS()).map(([k, l]) => `<option value="${k}"${k === c.status ? ' selected' : ''}>${l}</option>`).join('')}</select><button class="btn sm" data-act="reuse-answer" data-id="${c.id}">${T('從回覆庫帶入', 'Reuse a reply')}</button><button class="btn ghost sm" data-act="edit-comment" data-id="${c.id}">${ic('edit')}${T('編輯意見', 'Edit comment')}</button></div></div>` : '') + '</div>';
   }
   const reviewerOrder = (a, b) => { const k = (s) => (/^editor/i.test(s) ? -1 : (parseInt((s.match(/\d+/) || [999])[0], 10))); return k(a) - k(b) || a.localeCompare(b); };
   const reviewerNo = (name) => (/^editor/i.test(name) ? 'E' : ((name.match(/\d+/) || [''])[0] || name.slice(0, 1).toUpperCase()));
@@ -572,7 +581,7 @@
   }
 
   /* ---------------- journals: your own notes, and numbers from your own submissions ---------------- */
-  const papersSeg = (which) => `<div class="seg" role="tablist" style="margin-bottom:6px"><a role="tab" class="seg-a" href="#/papers" aria-selected="${which === 'papers'}">${T('論文', 'Papers')}</a><a role="tab" class="seg-a" href="#/journals" aria-selected="${which === 'journals'}">${T('期刊', 'Journals')}</a></div>`;
+  const papersSeg = (which) => `<div class="seg" role="tablist" style="margin-bottom:6px">${[['papers', T('論文', 'Papers')], ['journals', T('期刊', 'Journals')], ['reviewing', T('我審的稿', 'Reviewing')], ['answers', T('回覆庫', 'Answers')]].map(([k, l]) => `<a role="tab" class="seg-a" href="#/${k}" aria-selected="${which === k}">${l}</a>`).join('')}</div>`;
   function journalStats(name) {
     const rs = D.rounds.filter((r) => normJ(r.journal) === normJ(name));
     const papers = [...new Set(rs.map((r) => r.paper_id))];
@@ -724,6 +733,110 @@
       (past.length ? `<details class="fold"><summary>${T('完成或過期', 'Done or past')} (${past.length})</summary><div class="agenda">${past.map(row).join('')}</div></details>` : '');
   }
 
+  /* ---------------- reviews I do for journals ---------------- */
+  const PR_STATUS = () => ({ invited: T('受邀', 'Invited'), accepted: T('審稿中', 'Reviewing'), submitted: T('已交出', 'Submitted'), declined: T('婉拒', 'Declined') });
+  const PR_CHIP = { invited: 'warn', accepted: 'violet', submitted: 'ok', declined: 'dim' };
+  const PR_REC = () => ({ accept: 'Accept', minor: 'Minor revision', major: 'Major revision', reject: 'Reject' });
+  function peerRow(r) {
+    const t = today(), open = ['invited', 'accepted'].includes(r.status), left = r.due ? days(t, parseDate(r.due)) : null;
+    const when = open ? (left === null ? T('沒有期限', 'No date') : left < 0 ? T(`已過 ${-left} 天`, `${-left} d late`) : left === 0 ? T('今天', 'Today') : T(`剩 ${left} 天`, `In ${left} d`)) : r.status === 'submitted' ? ymd(r.submitted_on) : T('婉拒', 'Declined');
+    const cls = open && left !== null ? (left < 0 ? 'late' : left <= 3 ? 'soon' : '') : '';
+    const sub = [r.manuscript, r.ms_id, r.round > 1 ? T(`第 ${r.round} 輪`, `Round ${r.round}`) : '', r.recommendation ? PR_REC()[r.recommendation] : ''].filter(Boolean).map(esc).join(' · ');
+    return `<a class="ag" href="#" data-act="edit-peer" data-id="${r.id}"><span class="when ${cls}"${open ? '' : ' style="color:var(--muted)"'}>${when}${open && r.due ? `<small>${md(r.due)}</small>` : ''}</span><span class="what"><b>${esc(r.journal)}</b><small>${open ? `<span class="chip ${PR_CHIP[r.status]}">${esc(PR_STATUS()[r.status])}</span> ` : ''}${sub || '&nbsp;'}</small></span><span class="chev">${ic('chev')}</span></a>`;
+  }
+  // "Peer reviewer for" lines for a CV: completed reviews, by journal, overall and per year
+  function peerCv() {
+    const done = D.peer.filter((r) => r.status === 'submitted');
+    const tally = (arr) => { const m = {}; arr.forEach((r) => { m[r.journal] = (m[r.journal] || 0) + 1; }); return Object.entries(m).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])); };
+    const line = (arr) => tally(arr).map(([j, n]) => (n > 1 ? `${j} (${n})` : j)).join('; ');
+    const years = [...new Set(done.map((r) => (r.submitted_on || r.created_at || '').slice(0, 4)).filter(Boolean))].sort().reverse();
+    return { n: done.length, all: done.length ? 'Peer reviewer for: ' + line(done) + '.' : '', years: years.map((y) => { const a = done.filter((r) => (r.submitted_on || r.created_at || '').startsWith(y)); return `${y}: ${a.length} review${a.length > 1 ? 's' : ''} — ${line(a)}`; }) };
+  }
+  function pageReviewing() {
+    const open = D.peer.filter((r) => ['invited', 'accepted'].includes(r.status)).sort((a, b) => (parseDate(a.due) || Infinity) - (parseDate(b.due) || Infinity));
+    const done = D.peer.filter((r) => r.status === 'submitted').sort((a, b) => ((a.submitted_on || '') < (b.submitted_on || '') ? 1 : -1));
+    const declined = D.peer.filter((r) => r.status === 'declined');
+    const cv = peerCv();
+    return ph(T('我審的稿', 'Reviewing for journals'), { actions: `<button class="btn primary sm" data-act="new-peer">${ic('plus')}${T('審稿邀請', 'Invitation')}</button>` }) + papersSeg('reviewing') +
+      (D.peer.length ? '' : `<div class="empty" style="margin-top:12px">${T('期刊請你審稿時記一筆：哪本期刊、期限、交出日期。期限會出現在行事曆，年底可以複製一段「Peer reviewer for …」放進 CV。', 'Log each invitation to review: journal, due date, when you sent it. Due dates go on the calendar, and you can copy a “Peer reviewer for …” line for your CV.')}</div>`) +
+      (open.length ? `<h2 class="sec-title">${T('進行中', 'In progress')} <small>${open.length}</small></h2><div class="agenda">${open.map(peerRow).join('')}</div>` : '') +
+      (cv.n ? `<h2 class="sec-title">${T('放進 CV', 'For your CV')} <small>${T(`已完成 ${cv.n} 次審稿`, `${cv.n} completed reviews`)}</small></h2><div class="card"><p class="cv-line" id="peer-cv">${esc(cv.all)}</p><ul class="cv-years">${cv.years.map((y) => `<li>${esc(y)}</li>`).join('')}</ul><div class="row" style="margin-top:8px"><button class="btn sm" data-act="copy-peer-cv">${ic('copy')}${T('複製', 'Copy')}</button></div></div>` : '') +
+      (done.length ? `<h2 class="sec-title">${T('已交出', 'Submitted')} <small>${done.length}</small></h2><div class="agenda">${done.map(peerRow).join('')}</div>` : '') +
+      (declined.length ? `<details class="fold"><summary>${T('婉拒', 'Declined')} (${declined.length})</summary><div class="agenda">${declined.map(peerRow).join('')}</div></details>` : '');
+  }
+  function editPeer(r) {
+    formDialog({
+      title: r ? T('編輯審稿紀錄', 'Edit review') : T('新增審稿邀請', 'New invitation to review'),
+      values: r || { status: 'invited', round: 1, invited_on: localISO(today()) },
+      fields: [
+        { name: 'journal', label: T('期刊', 'Journal'), required: true, max: 300, suggest: allJournalNames() },
+        { name: 'status', label: T('狀態', 'Status'), type: 'select', options: opt(PR_STATUS()) },
+        { name: 'manuscript', label: T('稿件標題（選填）', 'Manuscript title (optional)'), max: 500, full: true },
+        { name: 'ms_id', label: T('稿件編號（選填）', 'Manuscript ID (optional)'), max: 100 },
+        { name: 'round', label: T('第幾輪', 'Round'), type: 'number' },
+        { name: 'invited_on', label: T('受邀日', 'Invited'), type: 'date' },
+        { name: 'due', label: T('審稿期限', 'Due'), type: 'date' },
+        { name: 'submitted_on', label: T('交出日', 'Submitted'), type: 'date' },
+        { name: 'recommendation', label: T('你的建議（選填）', 'Your recommendation (optional)'), type: 'select', options: [['', '—'], ...opt(PR_REC())] },
+        { name: 'notes', label: T('備註', 'Notes'), type: 'textarea', max: 10000, full: true },
+      ],
+      onSave: async (row) => {
+        if (!row.round || row.round < 1) row.round = 1;
+        if (row.status === 'submitted' && !row.submitted_on) row.submitted_on = localISO(today());
+        if (!(await save('peer', row, r && r.id))) return false; toast(T('已儲存', 'Saved')); await refresh();
+      },
+      onDelete: r && (async () => { if (!confirm(T(`要刪除這筆 ${r.journal} 的審稿紀錄嗎？`, `Delete this review for ${r.journal}?`))) return false; if (!(await remove('peer', r.id))) return false; toast(T('已刪除', 'Deleted')); await refresh(); return true; }),
+    });
+  }
+
+  /* ---------------- answers: every response written so far, searchable and reusable ---------------- */
+  const STOP = new Set('the and for that with this are was were from have has not but please authors author should would could also more than into which their there these those about your study table figure manuscript paper data results result analysis'.split(' '));
+  const words = (t) => [...new Set(String(t || '').toLowerCase().match(/[a-z][a-z\-]{3,}|[\u4e00-\u9fff]{2,}/g) || [])].filter((w) => !STOP.has(w));
+  function answerPool(exceptId) {
+    return D.comments.filter((c) => c.response && c.response.trim() && c.id !== exceptId).map((c) => { const r = byId('rounds', c.round_id) || {}, p = r.paper_id && byId('papers', r.paper_id); return { c, r, p, hay: (c.comment + ' ' + c.response + ' ' + (c.changes || '')).toLowerCase() }; });
+  }
+  function findAnswers(q, like, exceptId) {
+    const pool = answerPool(exceptId), terms = String(q || '').toLowerCase().split(/\s+/).filter(Boolean);
+    if (terms.length) return pool.filter((x) => terms.every((w) => x.hay.includes(w)));
+    if (like) { const base = words(like); return pool.map((x) => ({ ...x, score: words(x.c.comment).filter((w) => base.includes(w)).length })).filter((x) => x.score > 0).sort((a, b) => b.score - a.score).slice(0, 8); }
+    return pool.slice().reverse();
+  }
+  const mark = (text, q) => { let h = esc(text); String(q || '').split(/\s+/).filter((w) => w.length > 1).forEach((w) => { h = h.replace(new RegExp('(' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'), '<mark>$1</mark>'); }); return h; };
+  function answerCard(x, q, reuseFor) {
+    const where = [x.p ? paperName(x.p) : '', x.r.journal, `${x.c.reviewer} ${x.c.seq}`].filter(Boolean).map(esc).join(' · ');
+    return `<div class="ans"><div class="ans-q">${mark(x.c.comment, q)}</div><div class="ans-a">${mark(x.c.response, q)}</div><div class="ans-foot"><small>${where}</small>` +
+      (reuseFor ? `<button type="button" class="btn sm primary" data-reuse="${x.c.id}">${T('帶入', 'Use this')}</button>` : `<button type="button" class="btn sm" data-act="copy-answer" data-id="${x.c.id}">${ic('copy')}${T('複製回覆', 'Copy')}</button>${x.p ? `<a class="btn sm ghost" href="#/paper/${x.p.id}/reviews?round=${x.r.id}">${T('看原文', 'Open')}</a>` : ''}`) + '</div></div>';
+  }
+  let ANS_Q = '';
+  function pageAnswers() {
+    const n = answerPool().length;
+    return ph(T('回覆庫', 'Answer library')) + papersSeg('answers') +
+      `<div class="ans-search"><input class="inp" type="search" id="ans-q" data-act="ans-q" value="${esc(ANS_Q)}" placeholder="${T('搜尋意見或回覆，例如 E-value、missing data、敏感度分析', 'Search comments and replies, e.g. E-value, missing data')}" aria-label="${T('搜尋回覆', 'Search replies')}"><p class="muted small" id="ans-n"></p></div><div id="ans-list">${n ? '' : `<div class="empty">${T('寫過的審稿回覆都會收在這裡，之後遇到類似的意見可以搜尋、複製，或在回覆時直接帶入。', 'Every reply you write to reviewers collects here, so you can search, copy or reuse it when a similar comment comes up.')}</div>`}</div>`;
+  }
+  function paintAnswers() {
+    const box = $('ans-list'); if (!box || !answerPool().length) return;
+    const list = findAnswers(ANS_Q);
+    $('ans-n').textContent = ANS_Q ? T(`找到 ${list.length} 則`, `${list.length} found`) : T(`共 ${list.length} 則回覆`, `${list.length} replies`);
+    box.innerHTML = list.length ? list.slice(0, 100).map((x) => answerCard(x, ANS_Q)).join('') : `<div class="empty">${T('沒有符合的回覆。', 'No matching replies.')}</div>`;
+  }
+  // pick an earlier reply and put it in this comment's response box
+  function reuseDialog(c) {
+    const dlg = document.createElement('dialog');
+    dlg.innerHTML = `<form method="dialog"><div class="dlg-head">${T('從回覆庫帶入', 'Reuse an earlier reply')}</div><div class="dlg-body"><div class="ans-ref">${esc(c.comment)}</div><input class="inp" type="search" placeholder="${T('搜尋，或直接看下面相似的意見', 'Search, or pick from similar comments below')}" aria-label="${T('搜尋回覆', 'Search replies')}"><p class="muted small" data-n style="margin:6px 2px"></p><div data-list></div></div><div class="dlg-foot"><span class="spacer"></span><button class="btn" value="cancel">${T('取消', 'Cancel')}</button></div></form>`;
+    document.body.appendChild(dlg);
+    const inp = dlg.querySelector('input'), list = dlg.querySelector('[data-list]'), n = dlg.querySelector('[data-n]');
+    const paint = () => { const q = inp.value.trim(), xs = findAnswers(q, q ? '' : c.comment, c.id); n.textContent = q ? T(`找到 ${xs.length} 則`, `${xs.length} found`) : xs.length ? T('和這條意見相似的舊回覆：', 'Earlier replies to similar comments:') : T('沒有找到相似的，試試搜尋。', 'Nothing similar; try searching.'); list.innerHTML = xs.slice(0, 40).map((x) => answerCard(x, q, true)).join(''); };
+    inp.addEventListener('input', paint);
+    list.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-reuse]'); if (!b) return;
+      const src = byId('comments', b.dataset.reuse), ta = $('resp-' + c.id); if (!src || !ta) return;
+      ta.value = ta.value.trim() ? ta.value.trimEnd() + '\n\n' + src.response : src.response;
+      ta.dispatchEvent(new Event('input', { bubbles: true })); dlg.close(); ta.focus(); toast(T('已帶入，可以再修改', 'Added; edit as needed'));
+    });
+    dlg.addEventListener('close', () => dlg.remove());
+    dlg.showModal(); paint(); inp.focus();
+  }
+
   function pageMe() {
     return ph(T('我的', 'Me')) +
       `<div class="card"><h3>${T('帳號', 'Account')}</h3><p style="font-weight:700;margin-bottom:12px">${esc(USER.email)}</p>
@@ -782,6 +895,8 @@
       if (wide) { split = true; html = `<div class="pane-list">${listJournals(name)}</div><div class="pane-detail">${name ? detailJournal(name) : emptyPane(T('選一家期刊查看', 'Pick a journal'))}</div>`; }
       else html = name ? detailJournal(name) : listJournals();
     } else if (a === 'deadlines') { section = 'todos'; html = pageDeadlines(); }
+    else if (a === 'reviewing') { section = 'papers'; html = pageReviewing(); }
+    else if (a === 'answers') { section = 'papers'; html = pageAnswers(); }
     else if (a === 'todos') html = pageTodos();
     else if (a === 'stats') { section = ''; html = pageStats(); }
     else if (a === 'me') html = pageMe();
@@ -792,6 +907,7 @@
     renderNav(section);
     document.title = tt('appName');
     if (keepScroll) window.scrollTo(0, y); else window.scrollTo(0, 0);
+    if (a === 'answers') paintAnswers();
     if (a === 'me') bindMe();
   }
   const emptyPane = (t) => `<div class="empty" style="margin-top:22px">${esc(t)}</div>`;
@@ -922,16 +1038,24 @@
   };
   // a new round starts in the administrative check; editing a pending round leaves the stage alone
   const statusFromRound = (r, isNew) => ({ pending: isNew ? 'admin_check' : null, admin_return: 'revision', major: 'revision', minor: 'revision', accept: 'accepted', pre_proof: 'pre_proof', reject: 'rejected', desk_reject: 'rejected', withdrawn: 'withdrawn' }[r.decision] || null);
+  function revisionShortcuts(dlg, form) {
+    const box = form.elements.revision_due.parentNode, row = document.createElement('div'); row.className = 'quick-days';
+    row.innerHTML = [30, 60, 90].map((n) => `<button type="button" class="btn sm ghost" data-days="${n}">${T(`+${n} 天`, `+${n} d`)}</button>`).join('');
+    row.onclick = (e) => { const b = e.target.closest('[data-days]'); if (!b) return; const base = parseDate(form.elements.decision_on.value) || today(); form.elements.revision_due.value = localISO(new Date(base.getFullYear(), base.getMonth(), base.getDate() + +b.dataset.days)); };
+    box.insertBefore(row, box.querySelector('.help'));
+  }
   function editRound(paperId, r) {
     const p = byId('papers', r ? r.paper_id : paperId), rs = roundsOf(p.id), lr = rs[rs.length - 1];
     const def = r || { journal: lr ? (['reject', 'desk_reject'].includes(lr.decision) ? '' : lr.journal) : (p.target_journal || ''), submitted_on: localISO(new Date()), decision: 'pending' };
     formDialog({
+      afterOpen: revisionShortcuts,
       title: r ? T(`編輯第 ${rs.indexOf(r) + 1} 輪`, `Edit round ${rs.indexOf(r) + 1}`) : lr ? T('下一輪（修改後再送或轉投）', 'Next round (resubmission or new journal)') : T('記錄投稿', 'Record submission'), values: def,
       fields: [
         { name: 'journal', label: T('期刊', 'Journal'), required: true, max: 300, suggest: allJournalNames() },
         { name: 'submitted_on', label: T('投稿日', 'Submitted'), type: 'date', required: true },
         { name: 'decision', label: T('結果', 'Decision'), type: 'select', options: opt(DECISION()) },
         { name: 'decision_on', label: T('收到結果', 'Decision received'), type: 'date' },
+        { name: 'revision_due', label: T('修改稿交回期限（Major／Minor／退回時）', 'Revision due (major, minor or returned)'), type: 'date', help: T('期刊給的期限，會出現在行事曆和總覽。', 'The journal’s deadline; it shows on the calendar and Home.') },
         { name: 'response_on', label: T('送出回覆', 'Response sent'), type: 'date', help: T('修改後重新送審的日期', 'When the revision went back') },
         { name: 'notes', label: T('備註（審查結果原文放在「審稿往來 › 原文」）', 'Notes (the decision letter goes under Reviews › Original)'), type: 'textarea', max: 10000, full: true },
         { name: 'links', label: T('檔案連結（選填）', 'File links (optional)'), type: 'links', help: T('貼上雲端硬碟的分享連結，例如這一輪送出的稿件和回覆信。', 'Paste share links from your cloud storage, e.g. the manuscript and response sent this round.') },
@@ -1026,29 +1150,76 @@
     });
     return out;
   }
+  // second step: every piece is editable before it is saved — change who it is from, edit, cut, merge, remove or add
+  function splitEditor(roundId, items, keep) {
+    const dlg = document.createElement('dialog'); dlg.className = 'wide';
+    dlg.innerHTML = `<form method="dialog"><div class="dlg-head">${T('檢查切分', 'Check the split')}</div><div class="dlg-body"><p class="muted small" style="margin-bottom:10px">${T('每一條都可以改內容、改成別人的意見；在文字中點一下再按「✂ 從這裡切開」可以拆成兩條，「↑ 併入上一條」可以合併。', 'Edit any piece or change who it is from. Click in the text and use “✂ Split here” to cut it in two, or “↑ Merge up” to join it to the one above.')}</p><div class="sp-list"></div><button type="button" class="btn sm" data-add>${ic('plus')}${T('新增一條', 'Add one')}</button></div><div class="dlg-foot"><button class="btn" value="cancel" formnovalidate>${T('取消', 'Cancel')}</button><span class="spacer"></span><button class="btn primary" value="save" data-ok></button></div></form>`;
+    document.body.appendChild(dlg);
+    const list = dlg.querySelector('.sp-list'), ok = dlg.querySelector('[data-ok]');
+    const names = [...new Set([...REVIEWERS, ...items.map((x) => x.reviewer)])];
+    const itemHTML = (x) => `<div class="sp-item"><div class="sp-head"><span class="no"></span><select aria-label="${T('誰的意見', 'From')}">${names.map((n) => `<option${n === x.reviewer ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select><span class="spacer"></span><button type="button" class="btn sm ghost" data-cut aria-label="${T('從這裡切開', 'Split here')}">✂<span class="lbl"> ${T('從這裡切開', 'Split here')}</span></button><button type="button" class="btn sm ghost" data-merge aria-label="${T('併入上一條', 'Merge up')}">↑<span class="lbl"> ${T('併入上一條', 'Merge up')}</span></button><button type="button" class="btn sm ghost icon" data-del aria-label="${T('刪除這一條', 'Remove')}">✕</button></div><textarea class="inp" rows="3" maxlength="20000">${esc(x.text)}</textarea></div>`;
+    const fit = (ta) => { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight + 2, 320) + 'px'; };
+    const renumber = () => {
+      const seq = {}; const els = [...list.children];
+      els.forEach((el, i) => { const who = el.querySelector('select').value; seq[who] = seq[who] || nextSeq(roundId, who); el.querySelector('.no').textContent = `${reviewerNo(who)}.${seq[who]++}`; el.querySelector('[data-merge]').disabled = i === 0; });
+      const n = els.filter((el) => el.querySelector('textarea').value.trim()).length;
+      ok.textContent = T(`加入 ${n} 條`, `Add ${n}`); ok.disabled = !n;
+    };
+    list.innerHTML = items.map(itemHTML).join('');
+    list.querySelectorAll('textarea').forEach(fit);
+    list.addEventListener('input', (e) => { if (e.target.tagName === 'TEXTAREA') { fit(e.target); renumber(); } });
+    list.addEventListener('change', renumber);
+    list.addEventListener('click', (e) => {
+      const b = e.target.closest('button'); if (!b) return; const el = b.closest('.sp-item'), ta = el.querySelector('textarea');
+      if (b.hasAttribute('data-del')) el.remove();
+      else if (b.hasAttribute('data-merge')) { const prev = el.previousElementSibling; if (!prev) return; const pt = prev.querySelector('textarea'); pt.value = pt.value.trimEnd() + '\n' + ta.value.trim(); fit(pt); el.remove(); }
+      else if (b.hasAttribute('data-cut')) {
+        const at = ta.selectionStart || 0, a = ta.value.slice(0, at).trim(), rest = ta.value.slice(at).trim();
+        if (!a || !rest) { toast(T('先在文字中要切開的地方點一下', 'Click in the text where it should be cut')); ta.focus(); return; }
+        ta.value = a; fit(ta);
+        el.insertAdjacentHTML('afterend', itemHTML({ reviewer: el.querySelector('select').value, text: rest })); fit(el.nextElementSibling.querySelector('textarea'));
+      }
+      renumber();
+    });
+    dlg.querySelector('[data-add]').onclick = () => { const last = list.lastElementChild; list.insertAdjacentHTML('beforeend', itemHTML({ reviewer: last ? last.querySelector('select').value : 'Reviewer 1', text: '' })); renumber(); list.lastElementChild.querySelector('textarea').focus(); };
+    renumber();
+    dlg.querySelector('form').addEventListener('submit', async (e) => {
+      if (!e.submitter || e.submitter.value !== 'save') return;
+      e.preventDefault();
+      const seq = {}, rows = [];
+      [...list.children].forEach((el) => { const t = el.querySelector('textarea').value.trim(), who = el.querySelector('select').value; if (!t) return; seq[who] = seq[who] || nextSeq(roundId, who); rows.push({ round_id: roundId, reviewer: who, seq: seq[who]++, comment: t.slice(0, 20000), status: 'todo' }); });
+      if (!rows.length) return;
+      ok.disabled = true;
+      const r = await sb.from(TABLE.comments).insert(rows);
+      if (r.error) { ok.disabled = false; toast(T('儲存失敗：', 'Could not save: ') + r.error.message, 6000); return; }
+      // pasted comments are also kept in the round's original text, once
+      const rd = byId('rounds', roundId);
+      if (keep && rd && !(rd.letter_text || '').includes(keep.text)) {
+        const add = keep.secs.length === 1 && keep.secs[0].reviewer === keep.reviewer && !/^\s*(reviewer|referee|editor)/i.test(keep.text) ? keep.reviewer + '\n' + keep.text : keep.text;
+        await save('rounds', { letter_text: ((rd.letter_text ? rd.letter_text.trimEnd() + '\n\n' : '') + add).slice(0, 200000) }, roundId);
+      }
+      REVIEW_VIEW = 'list'; try { localStorage.setItem('tracker-review-view', 'list'); } catch (e2) { /* ignore */ }
+      dlg.close();
+      toast(T(`已加入 ${rows.length} 條意見`, `${rows.length} comment${rows.length > 1 ? 's' : ''} added`)); await refresh();
+    });
+    dlg.addEventListener('close', () => dlg.remove());
+    dlg.showModal();
+  }
   function pasteComments(roundId, preset) {
     const used = commentsOf(roundId).map((x) => x.reviewer);
     const dlg = formDialog({
       title: preset != null ? T('從原文產生清單', 'Checklist from the letter') : T('貼上審稿意見', 'Paste reviewer comments'), values: { text: preset || '', reviewer: used.length ? REVIEWERS[Math.min(REVIEWERS.length - 1, REVIEWERS.indexOf(used[used.length - 1]) + 1)] || 'Reviewer 1' : 'Reviewer 1' },
-      saveLabel: T('加入', 'Add'),
+      saveLabel: T('下一步：檢查切分', 'Next: check the split'),
       fields: [
         { name: 'reviewer', label: T('誰的意見（沒有 Reviewer／Editor 標題時）', 'From (when there are no Reviewer / Editor headings)'), type: 'select', options: reviewerOptions() },
         { name: 'text', label: T('整段意見', 'All the comments'), type: 'textarea', rows: 10, required: true, max: 200000, full: true, help: T('有「Reviewer 1」「Editor」標題就分給對應的人，再依「1.」「2.」「Comment 3:」或空行切成一條一條。', 'Headings such as “Reviewer 1” or “Editor” decide who it is from; each part is split at “1.”, “2.”, “Comment 3:” or blank lines.') },
       ],
       onSave: async (row) => {
-        const secs = splitLetter(row.text, row.reviewer), rows = [];
-        secs.forEach((x) => { let seq = nextSeq(roundId, x.reviewer); x.parts.forEach((t) => rows.push({ round_id: roundId, reviewer: x.reviewer, seq: seq++, comment: t.slice(0, 20000), status: 'todo' })); });
-        if (!rows.length) { toast(T('沒有找到內容', 'Nothing to add')); return false; }
-        const r = await sb.from(TABLE.comments).insert(rows);
-        if (r.error) { toast(T('儲存失敗：', 'Could not save: ') + r.error.message, 6000); return false; }
-        // pasted comments are also kept in the round's original text, once
-        const rd = byId('rounds', roundId), txt = row.text.trim();
-        if (preset == null && rd && !(rd.letter_text || '').includes(txt)) {
-          const add = secs.length === 1 && secs[0].reviewer === row.reviewer && !/^\s*(reviewer|referee|editor)/i.test(txt) ? row.reviewer + '\n' + txt : txt;
-          await save('rounds', { letter_text: ((rd.letter_text ? rd.letter_text.trimEnd() + '\n\n' : '') + add).slice(0, 200000) }, roundId);
-        }
-        REVIEW_VIEW = 'list'; try { localStorage.setItem('tracker-review-view', 'list'); } catch (e) { /* ignore */ }
-        toast(T(`已加入 ${rows.length} 條意見`, `${rows.length} comment${rows.length > 1 ? 's' : ''} added`)); await refresh();
+        const secs = splitLetter(row.text, row.reviewer);
+        const items = []; secs.forEach((x) => x.parts.forEach((t) => items.push({ reviewer: x.reviewer, text: t })));
+        if (!items.length) { toast(T('沒有找到內容', 'Nothing to add')); return false; }
+        splitEditor(roundId, items, preset == null ? { text: row.text.trim(), reviewer: row.reviewer, secs } : null);
+
       },
     });
     // live count of how the text will be split
@@ -1324,13 +1495,14 @@
     projects: ['id', 'title', 'short_title', 'stage', 'role', 'collaborators', 'start_date', 'target_date', 'notes', 'created_at', 'updated_at'],
     milestones: ['id', 'project_id', 'title', 'kind', 'due', 'done_on', 'expires_on', 'ref', 'notes', 'created_at'],
     papers: ['id', 'project_id', 'title', 'short_title', 'authors', 'my_role', 'status', 'target_journal', 'deadline', 'doi', 'year', 'notes', 'checklist', 'cover', 'created_at', 'updated_at'],
-    rounds: ['id', 'paper_id', 'journal', 'submitted_on', 'decision', 'decision_on', 'response_on', 'notes', 'links', 'letter_text', 'created_at'],
+    rounds: ['id', 'paper_id', 'journal', 'submitted_on', 'decision', 'decision_on', 'revision_due', 'response_on', 'notes', 'links', 'letter_text', 'created_at'],
     comments: ['id', 'round_id', 'reviewer', 'seq', 'comment', 'response', 'changes', 'status', 'created_at', 'updated_at'],
     deadlines: ['id', 'title', 'kind', 'due', 'url', 'done', 'notes', 'created_at'],
     todos: ['id', 'title', 'notes', 'due', 'done_at', 'starred', 'repeat', 'next_id', 'project_id', 'paper_id', 'created_at'],
     journals: ['id', 'name', 'word_limit', 'abstract_limit', 'apc', 'url', 'guideline', 'notes', 'created_at'],
     people: ['id', 'name', 'degree', 'affiliation', 'orcid', 'email', 'contact', 'created_at'],
     authors: ['id', 'paper_id', 'person_id', 'position', 'corresponding', 'roles', 'created_at'],
+    peer: ['id', 'journal', 'manuscript', 'ms_id', 'status', 'invited_on', 'due', 'submitted_on', 'round', 'recommendation', 'notes', 'created_at'],
   };
   const pick = (row, cols) => { const o = {}; cols.forEach((c) => { if (row[c] !== undefined) o[c] = row[c]; }); return o; };
   const stamp = () => localISO(new Date()).replace(/-/g, '');
@@ -1351,9 +1523,10 @@
       [T('專案', 'Projects'), D.projects.map((p) => ({ [T('名稱', 'Name')]: p.title, [T('簡稱', 'Short name')]: p.short_title, [T('階段', 'Stage')]: STAGE()[p.stage], [T('角色', 'Role')]: p.role, [T('合作者', 'Collaborators')]: p.collaborators, [T('開始', 'Start')]: p.start_date, [T('預計完成', 'Target')]: p.target_date, [T('筆記', 'Notes')]: p.notes }))],
       [T('里程碑', 'Milestones'), D.milestones.map((m) => ({ [T('專案', 'Project')]: jName(m.project_id), [T('名稱', 'Name')]: m.title, [T('類型', 'Kind')]: MS_KIND()[m.kind], [T('目標日', 'Due')]: m.due, [T('完成日', 'Done')]: m.done_on, [T('有效到', 'Valid until')]: m.expires_on, [T('編號', 'Reference')]: m.ref, [T('備註', 'Notes')]: m.notes }))],
       [T('論文', 'Papers'), D.papers.map((p) => ({ [T('標題', 'Title')]: p.title, [T('簡稱', 'Short name')]: p.short_title, [T('狀態', 'Status')]: STATUS()[p.status], [T('專案', 'Project')]: jName(p.project_id), [T('目標期刊', 'Target journal')]: p.target_journal, [T('作者列', 'Authors')]: p.authors, [T('作者序', 'Authorship')]: p.my_role, [T('年份', 'Year')]: p.year, DOI: p.doi, [T('備註', 'Notes')]: p.notes }))],
-      [T('投稿輪次', 'Rounds'), D.rounds.map((r) => ({ [T('論文', 'Paper')]: pName(r.paper_id), [T('第幾輪', 'Round')]: roundNo(r), [T('期刊', 'Journal')]: r.journal, [T('投稿日', 'Submitted')]: r.submitted_on, [T('結果', 'Decision')]: DECISION()[r.decision], [T('收到結果', 'Decision on')]: r.decision_on, [T('送出回覆', 'Response sent')]: r.response_on, [T('備註', 'Notes')]: r.notes }))],
+      [T('投稿輪次', 'Rounds'), D.rounds.map((r) => ({ [T('論文', 'Paper')]: pName(r.paper_id), [T('第幾輪', 'Round')]: roundNo(r), [T('期刊', 'Journal')]: r.journal, [T('投稿日', 'Submitted')]: r.submitted_on, [T('結果', 'Decision')]: DECISION()[r.decision], [T('收到結果', 'Decision on')]: r.decision_on, [T('修改期限', 'Revision due')]: r.revision_due, [T('送出回覆', 'Response sent')]: r.response_on, [T('備註', 'Notes')]: r.notes }))],
       [T('審稿意見', 'Reviewer comments'), D.comments.map((c) => { const r = byId('rounds', c.round_id) || {}; return { [T('論文', 'Paper')]: pName(r.paper_id), [T('輪次', 'Round')]: r.id ? roundNo(r) : '', [T('期刊', 'Journal')]: r.journal, [T('誰', 'From')]: c.reviewer, [T('編號', 'No.')]: c.seq, [T('意見', 'Comment')]: c.comment, [T('回覆', 'Response')]: c.response, [T('修改位置', 'Changes')]: c.changes, [T('狀態', 'Status')]: C_STATUS()[c.status] }; })],
       [T('待辦', 'To-dos'), D.todos.map((t) => ({ [T('名稱', 'Name')]: t.title, [T('日期', 'Date')]: t.due, [T('重複', 'Repeat')]: REPEAT()[t.repeat], [T('重要', 'Important')]: t.starred ? '★' : '', [T('專案', 'Project')]: jName(t.project_id), [T('論文', 'Paper')]: pName(t.paper_id), [T('完成時間', 'Done at')]: t.done_at ? t.done_at.slice(0, 16).replace('T', ' ') : '', [T('備註', 'Notes')]: t.notes }))],
+      [T('我審的稿', 'Reviewing'), D.peer.map((r) => ({ [T('期刊', 'Journal')]: r.journal, [T('稿件', 'Manuscript')]: r.manuscript, [T('稿件編號', 'ID')]: r.ms_id, [T('輪次', 'Round')]: r.round, [T('狀態', 'Status')]: PR_STATUS()[r.status], [T('受邀', 'Invited')]: r.invited_on, [T('期限', 'Due')]: r.due, [T('交出', 'Submitted')]: r.submitted_on, [T('建議', 'Recommendation')]: r.recommendation ? PR_REC()[r.recommendation] : '', [T('備註', 'Notes')]: r.notes }))],
       [T('截止日', 'Deadlines'), D.deadlines.map((d) => ({ [T('名稱', 'Name')]: d.title, [T('類型', 'Kind')]: DL_KIND()[d.kind], [T('截止日', 'Due')]: d.due, [T('網址', 'Link')]: d.url, [T('完成', 'Done')]: d.done ? '✓' : '', [T('備註', 'Notes')]: d.notes }))],
       [T('期刊', 'Journals'), D.journals.map((j) => ({ [T('名稱', 'Name')]: j.name, [T('全文字數上限', 'Word limit')]: j.word_limit, [T('摘要字數上限', 'Abstract limit')]: j.abstract_limit, [T('報告指引', 'Guideline')]: j.guideline, APC: j.apc, [T('投稿網址', 'Site')]: j.url, [T('備註', 'Notes')]: j.notes }))],
       [T('共同作者', 'Co-authors'), D.people.map((x) => ({ [T('姓名', 'Name')]: x.name, [T('學位', 'Degree')]: x.degree, [T('單位', 'Affiliation')]: x.affiliation, ORCID: x.orcid, Email: x.email, [T('地址與電話', 'Address and phone')]: x.contact }))],
@@ -1372,7 +1545,7 @@
       let obj; try { obj = JSON.parse(await file.text()); } catch (e) { toast(T('這不是有效的 JSON 檔', 'This is not a valid JSON file'), 5000); return; }
       if (!obj || obj.app !== 'submission-tracker' || !obj.data) { toast(T('這不是這個系統匯出的備份檔', 'This is not a backup from this tracker'), 5000); return; }
       const d = obj.data, count = (k) => (Array.isArray(d[k]) ? d[k].length : 0);
-      const summary = T(`備份日期 ${String(obj.exportedAt || '').slice(0, 10)}：專案 ${count('projects')}、論文 ${count('papers')}、投稿輪次 ${count('rounds')}、審稿意見 ${count('comments')}、截止日 ${count('deadlines')}、待辦 ${count('todos')}、期刊 ${count('journals')}、共同作者 ${count('people')}。`, `Backup from ${String(obj.exportedAt || '').slice(0, 10)}: ${count('projects')} projects, ${count('papers')} papers, ${count('rounds')} rounds, ${count('comments')} comments, ${count('deadlines')} deadlines, ${count('todos')} to-dos, ${count('journals')} journals, ${count('people')} co-authors.`);
+      const summary = T(`備份日期 ${String(obj.exportedAt || '').slice(0, 10)}：專案 ${count('projects')}、論文 ${count('papers')}、投稿輪次 ${count('rounds')}、審稿意見 ${count('comments')}、截止日 ${count('deadlines')}、待辦 ${count('todos')}、期刊 ${count('journals')}、共同作者 ${count('people')}、我審的稿 ${count('peer')}。`, `Backup from ${String(obj.exportedAt || '').slice(0, 10)}: ${count('projects')} projects, ${count('papers')} papers, ${count('rounds')} rounds, ${count('comments')} comments, ${count('deadlines')} deadlines, ${count('todos')} to-dos, ${count('journals')} journals, ${count('people')} co-authors.`);
       formDialog({
         title: T('從備份還原', 'Restore from backup'), saveLabel: T('開始還原', 'Restore'), values: { mode: 'add' },
         fields: [
@@ -1392,7 +1565,7 @@
     const fail = (e) => { toast(T('還原中斷：', 'Restore stopped: ') + (e.message || e), 8000); return false; };
     try {
       if (replace) {
-        for (const k of ['todos', 'authors', 'comments', 'rounds', 'papers', 'milestones', 'projects', 'deadlines', 'journals', 'people']) {
+        for (const k of ['todos', 'authors', 'comments', 'rounds', 'papers', 'milestones', 'projects', 'deadlines', 'journals', 'people', 'peer']) {
           const r = await sb.from(TABLE[k]).delete().eq('owner', USER.id); if (r.error) throw r.error;
         }
       }
@@ -1409,6 +1582,7 @@
         ['rounds', (r) => (map[r.paper_id] ? { ...r, id: nid(r.id), paper_id: map[r.paper_id] } : null)],
         ['comments', (r) => (map[r.round_id] ? { ...r, id: nid(r.id), round_id: map[r.round_id] } : null)],
         ['deadlines', (r) => ({ ...r, id: nid(r.id) })],
+        ['peer', (r) => ({ ...r, id: nid(r.id) })],
         ['todos', (r) => ({ ...r, id: nid(r.id), next_id: r.next_id ? nid(r.next_id) : null, project_id: r.project_id ? map[r.project_id] || null : null, paper_id: r.paper_id ? map[r.paper_id] || null : null })],
       ];
       let total = 0;
@@ -1492,6 +1666,11 @@
       case 'new-round': return editRound(id);
       case 'edit-round': return editRound(null, byId('rounds', id));
       case 'new-deadline': return editDeadline();
+      case 'new-peer': return editPeer();
+      case 'edit-peer': e.preventDefault(); return editPeer(byId('peer', id));
+      case 'copy-peer-cv': { const cv = peerCv(); try { await navigator.clipboard.writeText([cv.all, '', ...cv.years].join('\n')); toast(T('已複製', 'Copied')); } catch (e2) { toast(T('無法複製', 'Could not copy')); } return; }
+      case 'copy-answer': { const c = byId('comments', id); try { await navigator.clipboard.writeText(c.response || ''); toast(T('已複製回覆', 'Reply copied')); } catch (e2) { toast(T('無法複製', 'Could not copy')); } return; }
+      case 'reuse-answer': return reuseDialog(byId('comments', id));
       case 'set-status': { const st = b.dataset.status; if (await save('papers', { status: st }, id)) { toast(T(`狀態改成「${STATUS()[st]}」`, `Status: ${STATUS()[st]}`)); await refresh(); } return; }
       case 'cal-move': { const n = new Date(CAL.y, CAL.m + +b.dataset.d, 1); CAL = { y: n.getFullYear(), m: n.getMonth(), sel: CAL.sel }; render(true); return; }
       case 'cal-today': CAL = null; render(true); return;
@@ -1567,7 +1746,8 @@
   // responses save themselves a moment after typing stops; a written answer moves "to do" to "draft"
   const respTimers = {};
   document.addEventListener('input', (e) => {
-    const el = e.target; if (el.dataset && el.dataset.act === 'letter-text') { clearTimeout(respTimers['lt' + el.dataset.id]); respTimers['lt' + el.dataset.id] = setTimeout(() => saveLetter(el), 900); return; }
+    const el = e.target; if (el.dataset && el.dataset.act === 'ans-q') { ANS_Q = el.value; paintAnswers(); return; }
+    if (el.dataset && el.dataset.act === 'letter-text') { clearTimeout(respTimers['lt' + el.dataset.id]); respTimers['lt' + el.dataset.id] = setTimeout(() => saveLetter(el), 900); return; }
     if (!el.dataset || !['response', 'changes'].includes(el.dataset.act)) return;
     const key = el.dataset.id + el.dataset.act;
     clearTimeout(respTimers[key]);

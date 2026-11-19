@@ -386,3 +386,33 @@ a.cal-ev:hover { border-color: var(--faint); }
 .rvi-foot select { min-height: 34px; padding: 3px 8px; font-size: 13px; border-radius: 7px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
 .rvi-foot .btn { margin-left: auto; }
 @media (max-width: 480px) { .rv-seg { flex: 1 1 100%; } .rvi-main { flex-wrap: wrap; } .rvi-main .chip { margin-left: 0; } }
+
+/* revision due shortcuts */
+.quick-days { display: flex; gap: 4px; margin-top: 4px; }
+/* calendar: reviews I do */
+.k-peer { background: var(--ink); }
+/* reviewing for journals */
+.cv-line { font-size: 14px; line-height: 1.6; }
+.cv-years { margin: 8px 0 0; padding-left: 1.1em; font-size: 13px; color: var(--muted); }
+/* answer library */
+.ans-search { margin: 6px 0 12px; }
+.ans-search .muted { margin: 6px 2px 0; min-height: 1lh; }
+.ans { padding: 12px 14px; border-radius: var(--r); background: var(--panel); border: 1px solid var(--line); }
+.ans + .ans { margin-top: 8px; }
+.ans-q { font-size: 13px; color: var(--muted); white-space: pre-wrap; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.ans-a { margin-top: 6px; font-size: 14px; white-space: pre-wrap; }
+.ans-foot { display: flex; align-items: center; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.ans-foot small { flex: 1; min-width: 0; color: var(--faint); font-size: 12px; }
+.ans mark { background: var(--warn-soft); color: inherit; border-radius: 2px; padding: 0 1px; }
+.ans-ref { font-size: 13px; color: var(--muted); padding: 8px 10px; border-left: 3px solid var(--line); border-radius: 0; margin-bottom: 10px; white-space: pre-wrap; max-height: 7.5em; overflow: auto; }
+/* split editor */
+dialog.wide { width: min(760px, calc(100vw - 24px)); }
+.sp-list { display: grid; gap: 8px; margin-bottom: 10px; }
+.sp-item { padding: 8px 10px 10px; border-radius: var(--r); border: 1px solid var(--line); background: var(--panel); }
+.sp-head { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-bottom: 6px; }
+.sp-head .no { font-weight: 700; font-variant-numeric: tabular-nums; min-width: 2.6em; }
+.sp-head select { min-height: 32px; padding: 3px 8px; font-size: 13px; border-radius: 7px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
+.sp-head .spacer { flex: 1; }
+.sp-item textarea { font-size: 14px; line-height: 1.55; resize: vertical; }
+@media (max-width: 480px) { .sp-head .lbl { display: none; } .sp-head .btn, .sp-head .btn.icon { min-width: 32px; width: auto; padding: 0 6px; justify-content: center; } .sp-head .no { min-width: 0; } .sp-head .spacer { flex: 1 1 0; min-width: 0; width: 0; } }
+@media (max-width: 360px) { .sp-head select { max-width: 6.5em; } }
