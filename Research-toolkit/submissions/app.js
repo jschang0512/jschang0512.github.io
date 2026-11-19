@@ -22,8 +22,21 @@
   };
   const tt = (k) => T(S[k][0], S[k][1]);
 
-  const STATUS = () => ({ drafting: T('撰寫中', 'In preparation'), submitted: T('已投稿', 'Submitted'), under_review: T('審查中', 'Under review'), revision: T('修改中', 'Revising'), accepted: T('已接受', 'Accepted'), published: T('已發表', 'Published'), rejected: T('被拒', 'Rejected'), withdrawn: T('撤回', 'Withdrawn') });
-  const STATUS_CHIP = { drafting: 'warn', submitted: '', under_review: '', revision: 'warn', accepted: 'ok', published: 'ok', rejected: 'dim', withdrawn: 'dim' };
+  /* ---------------- light / dark: follow the system unless chosen ---------------- */
+  let THEME = (() => { try { const v = localStorage.getItem('tracker-theme'); return v === 'light' || v === 'dark' ? v : 'auto'; } catch (e) { return 'auto'; } })();
+  const sysDark = () => !!(window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+  const isDark = () => (THEME === 'auto' ? sysDark() : THEME === 'dark');
+  function applyTheme(t) {
+    THEME = t;
+    try { if (t === 'auto') localStorage.removeItem('tracker-theme'); else localStorage.setItem('tracker-theme', t); } catch (e) { /* ignore */ }
+    if (t === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t);
+    const m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', isDark() ? '#1b2333' : '#2347b8');
+  }
+  applyTheme(THEME);
+  if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (THEME === 'auto') applyTheme('auto'); });
+
+  const STATUS = () => ({ drafting: T('撰寫中', 'In preparation'), submitted: T('已投稿', 'Submitted'), admin_check: T('行政審查', 'Administrative check'), under_review: T('審查中', 'Under review'), revision: T('修改中', 'Revising'), accepted: T('已接受', 'Accepted'), pre_proof: 'Pre-proof', published: T('已發表', 'Published'), rejected: T('被拒', 'Rejected'), withdrawn: T('撤回', 'Withdrawn') });
+  const STATUS_CHIP = { drafting: 'warn', submitted: '', admin_check: '', pre_proof: 'ok', under_review: '', revision: 'warn', accepted: 'ok', published: 'ok', rejected: 'dim', withdrawn: 'dim' };
   const DECISION = () => ({ pending: T('等待結果', 'Awaiting decision'), desk_reject: 'Desk reject', major: 'Major revision', minor: 'Minor revision', accept: T('接受', 'Accept'), reject: T('拒絕', 'Reject'), withdrawn: T('撤回', 'Withdrawn') });
   const STAGES = ['planning', 'irb', 'data', 'analysis', 'writing', 'done'];
   const STAGE = () => ({ planning: T('規劃', 'Planning'), irb: 'IRB', data: T('資料申請', 'Data access'), analysis: T('分析', 'Analysis'), writing: T('撰寫', 'Writing'), done: T('完成', 'Done'), paused: T('暫停', 'Paused') });
@@ -116,7 +129,7 @@
       if (m.expires_on) { const ex = parseDate(m.expires_on), left = days(t, ex); if (left >= -30 && left <= SOON_DAYS) push(ex, { title: T(`${m.title} 到期`, `${m.title} expires`), sub: T(`${pr.short_title || pr.title} · 記得送期中審查或展延`, `${pr.short_title || pr.title} · renew before it lapses`), href: '#/project/' + pr.id, expiry: true }); }
     });
     D.papers.forEach((p) => {
-      if (p.deadline && !['accepted', 'published', 'rejected', 'withdrawn'].includes(p.status)) { const due = parseDate(p.deadline), left = days(t, due); if (left >= -30 && left <= SOON_DAYS) push(due, { title: paperName(p), sub: T('自訂截止日', 'Own deadline'), href: '#/paper/' + p.id }); }
+      if (p.deadline && !['accepted', 'pre_proof', 'published', 'rejected', 'withdrawn'].includes(p.status)) { const due = parseDate(p.deadline), left = days(t, due); if (left >= -30 && left <= SOON_DAYS) push(due, { title: paperName(p), sub: T('自訂截止日', 'Own deadline'), href: '#/paper/' + p.id }); }
       const w = waitInfo(p);
       if (w && w.kind === 'review' && w.days >= WAIT_DAYS) push(null, { nudge: true, title: paperName(p), sub: T(`${w.journal} 已審查 ${w.days} 天，可以寫信詢問進度`, `${w.journal} has had it ${w.days} days; consider asking about progress`), href: '#/paper/' + p.id });
       if (w && w.kind === 'revise') {
@@ -155,11 +168,41 @@
   const isWide = () => window.matchMedia('(min-width: 900px)').matches;
 
   /* ---------------- pages ---------------- */
+  /* ---------------- progress of everything not closed yet ---------------- */
+  const PAPER_STEPS = ['drafting', 'submitted', 'admin_check', 'under_review', 'revision', 'accepted', 'pre_proof', 'published'];
+  const PAPER_STEP_LABEL = () => [T('撰寫', 'Draft'), T('投稿', 'Submit'), T('行政', 'Admin'), T('審查', 'Review'), T('修改', 'Revise'), T('接受', 'Accept'), 'Pre-proof', T('發表', 'Publish')];
+  function bar(n, at, labels, paused) {
+    return `<div class="pbar${paused ? ' paused' : ''}" role="img" aria-label="${esc(labels[at] || '')} ${at + 1}/${n}">${Array.from({ length: n }, (_, i) => `<i class="${i < at ? 'done' : i === at ? 'now' : ''}"></i>`).join('')}</div>`;
+  }
+  function progressHTML() {
+    const projects = D.projects.filter((p) => p.stage !== 'done').sort((a, b) => (a.stage === 'paused') - (b.stage === 'paused') || STAGES.indexOf(b.stage) - STAGES.indexOf(a.stage));
+    const papers = D.papers.filter((p) => !['published', 'rejected', 'withdrawn'].includes(p.status)).sort((a, b) => PAPER_STEPS.indexOf(b.status) - PAPER_STEPS.indexOf(a.status));
+    if (!projects.length && !papers.length) return '';
+    const projRow = (p) => {
+      const paused = p.stage === 'paused', at = paused ? 0 : STAGES.indexOf(p.stage);
+      const next = msOf(p.id).filter((m) => !m.done_on && m.due).sort((a, b) => parseDate(a.due) - parseDate(b.due))[0];
+      const msAll = msOf(p.id), msDone = msAll.filter((m) => m.done_on).length;
+      return `<a class="prog" href="#/project/${p.id}"><div class="prog-head"><b>${esc(p.short_title || p.title)}</b><span class="chip ${paused ? 'dim' : 'violet'}">${esc(STAGE()[p.stage])}${paused ? '' : ` ${at + 1}/${STAGES.length}`}</span></div>` +
+        bar(STAGES.length, at, STAGES.map((x) => STAGE()[x]), paused) +
+        `<small>${[msAll.length ? T(`里程碑 ${msDone}/${msAll.length}`, `Milestones ${msDone}/${msAll.length}`) : '', next ? T(`下一步：${esc(next.title)} ${md(next.due)}`, `Next: ${esc(next.title)} ${md(next.due)}`) : ''].filter(Boolean).join(' · ') || '&nbsp;'}</small></a>`;
+    };
+    const paperRow = (p) => {
+      const at = Math.max(0, PAPER_STEPS.indexOf(p.status === 'submitted' ? 'submitted' : p.status)), lr = lastRound(p.id), w = waitInfo(p);
+      const wr = workingRound(p.id), open = wr && ['major', 'minor'].includes(wr.decision) ? openCount(wr.id) : 0;
+      const sub = [lr ? esc(lr.journal) : (p.target_journal ? esc(p.target_journal) : ''), w && w.kind === 'review' ? T(`已等 ${w.days} 天`, `${w.days} d waiting`) : '', open ? T(`${open} 條意見待回覆`, `${open} comments to answer`) : ''].filter(Boolean).join(' · ');
+      return `<a class="prog" href="#/paper/${p.id}"><div class="prog-head"><b>${esc(paperName(p))}</b><span class="chip ${STATUS_CHIP[p.status]}">${esc(STATUS()[p.status])} ${at + 1}/${PAPER_STEPS.length}</span></div>` +
+        bar(PAPER_STEPS.length, at, PAPER_STEP_LABEL()) + `<small>${sub || '&nbsp;'}</small></a>`;
+    };
+    return `<h2 class="sec-title">${T('未結案的進度', 'Work in progress')} <small>${T('專案依階段、論文從撰寫到發表', 'Projects by stage, papers from draft to publication')}</small></h2>` +
+      (projects.length ? `<div class="prog-group"><h3>${T('專案', 'Projects')}</h3><div class="progs">${projects.map(projRow).join('')}</div></div>` : '') +
+      (papers.length ? `<div class="prog-group"><h3>${T('論文', 'Papers')}<span class="prog-legend">${PAPER_STEP_LABEL().join(' › ')}</span></h3><div class="progs">${papers.map(paperRow).join('')}</div></div>` : '');
+  }
+
   function pageHome() {
     const active = D.projects.filter((p) => !['done', 'paused'].includes(p.stage)).length;
-    const inReview = D.papers.filter((p) => ['submitted', 'under_review'].includes(p.status)).length;
+    const inReview = D.papers.filter((p) => ['submitted', 'admin_check', 'under_review'].includes(p.status)).length;
     const revising = D.papers.filter((p) => p.status === 'revision').length;
-    const done = D.papers.filter((p) => ['accepted', 'published'].includes(p.status)).length;
+    const done = D.papers.filter((p) => ['accepted', 'pre_proof', 'published'].includes(p.status)).length;
     const nothing = !D.projects.length && !D.papers.length && !D.deadlines.length;
     return ph(T('總覽', 'Home')) +
       (nothing ? `<div class="empty" style="margin-top:4px"><b>${T('從第一個專案或論文開始', 'Start with your first project or paper')}</b><br>${T('專案用來記錄 IRB、資料申請與分析進度；論文用來記錄每一輪投稿和審稿意見。', 'Projects hold IRB, data access and analysis; papers hold every submission round and reviewer comment.')}<div class="row" style="justify-content:center"><button class="btn primary" data-act="new-project">${ic('plus')}${T('新增專案', 'New project')}</button><button class="btn" data-act="new-paper">${ic('plus')}${T('新增論文', 'New paper')}</button></div></div>` : '') +
@@ -169,7 +212,7 @@
         <a class="metric" href="#/papers"><span>${T('修改中', 'Revising')}</span><b>${revising}</b></a>
         <a class="metric" href="#/papers"><span>${T('已接受・已發表', 'Accepted & published')}</span><b>${done}</b></a>
       </div>` +
-      `<h2 class="sec-title">${T('接下來', 'Up next')} <small>${T('60 天內的截止日、IRB 到期、等太久的審查、待回覆的意見', 'Deadlines and IRB expiry in 60 days, long reviews, comments to answer')}</small></h2>` + agendaHTML(agenda()) +
+      `<h2 class="sec-title">${T('接下來', 'Up next')} <small>${T('60 天內的截止日、IRB 到期、等太久的審查、待回覆的意見', 'Deadlines and IRB expiry in 60 days, long reviews, comments to answer')}</small></h2>` + agendaHTML(agenda()) + progressHTML() +
       `<a class="ag" href="#/stats" style="margin-top:18px;grid-template-columns:minmax(0,1fr) auto"><span class="what"><b>${T('年度統計', 'Year by year')}</b><small>${T('每年投稿、接受、發表與審查天數', 'Submissions, acceptances, publications and review times per year')}</small></span><span class="chev">${ic('chev')}</span></a>`;
   }
 
@@ -226,7 +269,7 @@
   }
   function listPapers(currentId) {
     const g = { active: [], draft: [], done: [], closed: [] };
-    D.papers.forEach((p) => g[['submitted', 'under_review', 'revision'].includes(p.status) ? 'active' : p.status === 'drafting' ? 'draft' : ['accepted', 'published'].includes(p.status) ? 'done' : 'closed'].push(p));
+    D.papers.forEach((p) => g[['submitted', 'admin_check', 'under_review', 'revision'].includes(p.status) ? 'active' : p.status === 'drafting' ? 'draft' : ['accepted', 'pre_proof', 'published'].includes(p.status) ? 'done' : 'closed'].push(p));
     const block = (label, arr) => (arr.length ? `<h2 class="sec-title">${label} <small>${arr.length}</small></h2><div class="list">${arr.map((p) => paperCard(p, p.id === currentId)).join('')}</div>` : '');
     return ph(T('論文', 'Papers'), { actions: `<button class="btn primary sm" data-act="new-paper">${ic('plus')}${T('論文', 'Paper')}</button>` }) + papersSeg('papers') +
       (D.papers.length ? block(T('進行中', 'In review'), g.active) + block(T('撰寫中', 'In preparation'), g.draft) + block(T('已接受・已發表', 'Accepted & published'), g.done) +
@@ -252,7 +295,7 @@
   }
   function tabTimeline(p) {
     const rs = roundsOf(p.id), lr = rs[rs.length - 1];
-    const actions = `<div class="d-actions"><button class="btn primary sm" data-act="new-round" data-id="${p.id}">${ic('plus')}${rs.length ? T('下一輪／轉投', 'Next round / new journal') : T('記錄投稿', 'Record submission')}</button>${lr && lr.decision === 'pending' ? `<button class="btn sm" data-act="edit-round" data-id="${lr.id}">${T('更新結果', 'Record decision')}</button>` : ''}</div>`;
+    const actions = `<div class="d-actions"><button class="btn primary sm" data-act="new-round" data-id="${p.id}">${ic('plus')}${rs.length ? T('下一輪／轉投', 'Next round / new journal') : T('記錄投稿', 'Record submission')}</button>${lr && lr.decision === 'pending' ? `<button class="btn sm" data-act="edit-round" data-id="${lr.id}">${T('更新結果', 'Record decision')}</button>` : ''}${NEXT_STAGE[p.status] ? `<button class="btn sm" data-act="set-status" data-id="${p.id}" data-status="${NEXT_STAGE[p.status][0]}">${NEXT_STAGE[p.status][1]()}</button>` : ''}</div>`;
     if (!rs.length) return actions + `<div class="empty">${T('還沒投稿。投稿後在這裡記錄每一輪的期刊、結果和回覆。', 'Not submitted yet. Record each round here once it goes out.')}</div>`;
     return actions + rs.slice().reverse().map((r) => {
       const i = rs.indexOf(r) + 1, cs = commentsOf(r.id);
@@ -615,8 +658,9 @@
           <label class="f"><span>${tt('confirmPassword')}</span><input type="password" name="password2" autocomplete="new-password" minlength="8"></label>
           <div class="full"><button class="btn sm" type="submit">${T('變更密碼', 'Change password')}</button></div>
         </form></div>` +
-      `<div class="card"><h3>${T('語言與外觀', 'Language')}</h3><div class="seg" style="max-width:16rem" role="tablist"><button type="button" data-act="lang" data-lang="zh" aria-selected="${LANG === 'zh'}">中文</button><button type="button" data-act="lang" data-lang="en" aria-selected="${LANG === 'en'}">English</button></div>
-        <p class="muted small" style="margin-top:10px">${NATIVE ? T('深色模式跟著系統設定。', 'Dark mode follows your system.') : T('Android 可以安裝 App（「其他」裡的「下載 Android App」）；iPhone 用 Safari 的「分享 › 加入主畫面」。深色模式跟著系統設定。', 'On Android, install the app (Android app, under More); on iPhone use Safari’s Share › Add to Home Screen. Dark mode follows your system.')}</p></div>` +
+      `<div class="card"><h3>${T('語言與外觀', 'Language and look')}</h3><div class="seg" style="max-width:16rem" role="tablist" aria-label="${T('語言', 'Language')}"><button type="button" data-act="lang" data-lang="zh" aria-selected="${LANG === 'zh'}">中文</button><button type="button" data-act="lang" data-lang="en" aria-selected="${LANG === 'en'}">English</button></div>
+        <div class="seg" style="max-width:22rem;margin-top:10px" role="tablist" aria-label="${T('深淺色', 'Light or dark')}">${[['auto', T('跟隨系統', 'System')], ['light', T('淺色', 'Light')], ['dark', T('深色', 'Dark')]].map(([k, l]) => `<button type="button" data-act="theme" data-theme="${k}" aria-selected="${THEME === k}">${l}</button>`).join('')}</div>
+        <p class="muted small" style="margin-top:10px">${NATIVE ? T('深淺色可以在上面切換。', 'Switch light or dark above.') : T('Android 可以安裝 App（「其他」裡的「下載 Android App」）；iPhone 用 Safari 的「分享 › 加入主畫面」。', 'On Android, install the app (Android app, under More); on iPhone use Safari’s Share › Add to Home Screen.')}</p></div>` +
       `<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 style="margin:0">${T('共同作者', 'Co-authors')}</h3><button class="btn sm" data-act="new-person">${ic('plus')}${T('新增', 'Add')}</button></div>` +
         (D.people.length ? `<div class="list">${D.people.map((x) => `<button type="button" class="ms" data-act="edit-person" data-id="${x.id}" style="grid-template-columns:minmax(0,1fr) auto"><span><h4>${esc(x.name)}</h4><span class="meta">${esc([x.affiliation, x.orcid].filter(Boolean).join(' · '))}</span></span><span class="chev">${ic('chev')}</span></button>`).join('')}</div>`
           : `<p class="muted small">${T('加一次以後，每篇論文都能直接選，產生作者列和 CRediT 貢獻聲明。', 'Add people once and pick them on any paper for author lines and CRediT statements.')}</p>`) + '</div>' +
@@ -794,7 +838,15 @@
       }),
     });
   }
-  const statusFromRound = (r) => ({ pending: 'under_review', major: 'revision', minor: 'revision', accept: 'accepted', reject: 'rejected', desk_reject: 'rejected', withdrawn: 'withdrawn' }[r.decision] || null);
+  // one tap to the next stage, where no decision letter marks it
+  const NEXT_STAGE = {
+    submitted: ['admin_check', () => T('→ 行政審查', '→ Administrative check')],
+    admin_check: ['under_review', () => T('→ 已送外審（審查中）', '→ Sent to reviewers')],
+    accepted: ['pre_proof', () => T('→ Pre-proof', '→ Pre-proof')],
+    pre_proof: ['published', () => T('→ 已正式發表', '→ Published')],
+  };
+  // a new round starts in the administrative check; editing a pending round leaves the stage alone
+  const statusFromRound = (r, isNew) => ({ pending: isNew ? 'admin_check' : null, major: 'revision', minor: 'revision', accept: 'accepted', reject: 'rejected', desk_reject: 'rejected', withdrawn: 'withdrawn' }[r.decision] || null);
   function editRound(paperId, r) {
     const p = byId('papers', r ? r.paper_id : paperId), rs = roundsOf(p.id), lr = rs[rs.length - 1];
     const def = r || { journal: lr ? (['reject', 'desk_reject'].includes(lr.decision) ? '' : lr.journal) : (p.target_journal || ''), submitted_on: localISO(new Date()), decision: 'pending' };
@@ -813,8 +865,8 @@
         if (!r) row.paper_id = p.id;
         const s = await save('rounds', row, r && r.id); if (!s) return false;
         await loadAll();
-        const all = roundsOf(p.id), isLast = all.length && all[all.length - 1].id === s.id, st = isLast ? statusFromRound(s) : null;
-        if (st && st !== p.status && !(p.status === 'published' && st === 'accepted')) { await save('papers', { status: st }, p.id); await loadAll(); toast(T(`已儲存，狀態改成「${STATUS()[st]}」`, `Saved; status is now “${STATUS()[st]}”`)); }
+        const all = roundsOf(p.id), isLast = all.length && all[all.length - 1].id === s.id, st = isLast ? statusFromRound(s, !r || r.decision !== 'pending') : null;
+        if (st && st !== p.status && !(['pre_proof', 'published'].includes(p.status) && st === 'accepted')) { await save('papers', { status: st }, p.id); await loadAll(); toast(T(`已儲存，狀態改成「${STATUS()[st]}」`, `Saved; status is now “${STATUS()[st]}”`)); }
         else toast(T('已儲存', 'Saved'));
         render(true);
       },
@@ -1155,7 +1207,7 @@
   function citeDialog(p) {
     const lr = lastRound(p.id), journal = lr ? lr.journal : (p.target_journal || '');
     const doi = p.doi ? (/^https?:/i.test(p.doi) ? p.doi : 'https://doi.org/' + p.doi.replace(/^doi:\s*/i, '')) : '';
-    const st = { accepted: T('已接受', 'Accepted'), published: T('已發表', 'Published') }[p.status] || T('審查中', 'Under review');
+    const st = { accepted: T('已接受', 'Accepted'), pre_proof: T('已接受（Pre-proof）', 'Accepted (pre-proof)'), published: T('已發表', 'Published') }[p.status] || T('審查中', 'Under review');
     const fields = [[T('標題', 'Title'), p.title], [T('期刊', 'Journal'), journal], [T('作者序', 'Authorship'), p.my_role], [T('狀態', 'Status'), st], [T('年份', 'Year'), p.year], [T('作者列', 'Authors'), p.authors], [T('連結', 'Link'), doi]];
     const dlg = document.createElement('dialog');
     dlg.innerHTML = `<form method="dialog"><div class="dlg-head">${ADMIN ? T('更新到 CV', 'Update CV') : T('書目資料', 'Citation details')}</div><div class="dlg-body"><p class="muted small" style="margin-bottom:8px">${ADMIN ? T('在 Pages CMS 打開「網站內容 › 學術著作」，新增或修改這篇，把各欄複製貼上後儲存。', 'In Pages CMS, open Site content › Publications, add or edit this paper, paste each field and save.') : T('每一欄都可以複製，貼到你的履歷或文獻管理軟體。', 'Copy each field into your CV or reference manager.')}</p>` +
@@ -1341,6 +1393,7 @@
       case 'new-round': return editRound(id);
       case 'edit-round': return editRound(null, byId('rounds', id));
       case 'new-deadline': return editDeadline();
+      case 'set-status': { const st = b.dataset.status; if (await save('papers', { status: st }, id)) { toast(T(`狀態改成「${STATUS()[st]}」`, `Status: ${STATUS()[st]}`)); await refresh(); } return; }
       case 'new-todo': return editTodo(null, { project: b.dataset.project, paper: b.dataset.paper });
       case 'edit-todo': return editTodo(byId('todos', id));
       case 'todo-done': { b.disabled = true; await toggleTodo(byId('todos', id)); return; }
@@ -1369,6 +1422,7 @@
       case 'export-json': return exportJson();
       case 'import-json': return importJson();
       case 'expand': { const el = document.querySelector(`#cm-${id} .cm-text`); el.classList.remove('clamp'); b.remove(); return; }
+      case 'theme': applyTheme(b.dataset.theme); render(true); return;
       case 'lang': LANG = b.dataset.lang; try { localStorage.setItem('rt:lang', LANG); } catch (err) { /* ignore */ } document.documentElement.lang = LANG === 'en' ? 'en' : 'zh-Hant'; render(true); return;
       case 'logout': await sb.auth.signOut(); location.hash = ''; location.reload(); return;
       case 'delete-account': {
@@ -1449,6 +1503,7 @@
     $('tab-in').textContent = tt('signIn'); $('tab-up').textContent = tt('createAccount');
     document.querySelectorAll('[data-t]').forEach((el) => { el.textContent = tt(el.dataset.t); });
     $('auth-lang').textContent = LANG === 'en' ? '中文' : 'English';
+    $('auth-theme').textContent = isDark() ? T('淺色', 'Light') : T('深色', 'Dark');
   }
   function friendly(err) {
     const m = String((err && err.message) || err || '');
@@ -1464,6 +1519,7 @@
   }
   $('tab-in').onclick = () => showAuthForm('in');
   $('tab-up').onclick = () => showAuthForm('up');
+  $('auth-theme').onclick = () => { applyTheme(isDark() ? 'light' : 'dark'); paintAuth(); };
   $('auth-lang').onclick = () => { LANG = LANG === 'en' ? 'zh' : 'en'; try { localStorage.setItem('rt:lang', LANG); } catch (e) { /* ignore */ } paintAuth(); };
   $('f-in').addEventListener('submit', async (e) => {
     e.preventDefault();
