@@ -77,6 +77,11 @@
         ],
         "createdAt": "2026-10-24T17:08:27.814Z",
         "reason": "Claude: flagged .card is the shared #form section rule (transparent, top border only, no side boundary) used by every toolkit tool; same false positive as forestplot/evalue/dag"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "sfmono-regular",
+        "createdAt": "2026-11-19T06:21:25.753Z"
       }
     ]
   }

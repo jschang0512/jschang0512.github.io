@@ -35,9 +35,9 @@
   applyTheme(THEME);
   if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (THEME === 'auto') applyTheme('auto'); });
 
-  const STATUS = () => ({ drafting: T('撰寫中', 'In preparation'), submitted: T('已投稿', 'Submitted'), admin_check: T('行政審查', 'Administrative check'), under_review: T('審查中', 'Under review'), revision: T('修改中', 'Revising'), accepted: T('已接受', 'Accepted'), pre_proof: 'Pre-proof', published: T('已發表', 'Published'), rejected: T('被拒', 'Rejected'), withdrawn: T('撤回', 'Withdrawn') });
-  const STATUS_CHIP = { drafting: 'warn', submitted: '', admin_check: '', pre_proof: 'ok', under_review: '', revision: 'warn', accepted: 'ok', published: 'ok', rejected: 'dim', withdrawn: 'dim' };
-  const DECISION = () => ({ pending: T('等待結果', 'Awaiting decision'), desk_reject: 'Desk reject', major: 'Major revision', minor: 'Minor revision', accept: T('接受', 'Accept'), reject: T('拒絕', 'Reject'), withdrawn: T('撤回', 'Withdrawn') });
+  const STATUS = () => ({ planning: T('規劃中', 'Planning'), drafting: T('撰寫中', 'In preparation'), submitted: T('已投稿', 'Submitted'), admin_check: T('行政審查', 'Administrative check'), under_review: T('審查中', 'Under review'), revision: T('修改中', 'Revising'), accepted: T('已接受', 'Accepted'), pre_proof: 'Pre-proof', published: T('已發表', 'Published'), rejected: T('被拒', 'Rejected'), withdrawn: T('撤回', 'Withdrawn') });
+  const STATUS_CHIP = { planning: 'violet', drafting: 'warn', submitted: '', admin_check: '', pre_proof: 'ok', under_review: '', revision: 'warn', accepted: 'ok', published: 'ok', rejected: 'dim', withdrawn: 'dim' };
+  const DECISION = () => ({ pending: T('等待結果', 'Awaiting decision'), admin_return: T('行政審查退回', 'Returned at technical check'), desk_reject: 'Desk reject', major: 'Major revision', minor: 'Minor revision', accept: T('接受', 'Accept'), pre_proof: 'Pre-proof', reject: T('拒絕', 'Reject'), withdrawn: T('撤回', 'Withdrawn') });
   const STAGES = ['planning', 'irb', 'data', 'analysis', 'writing', 'done'];
   const STAGE = () => ({ planning: T('規劃', 'Planning'), irb: 'IRB', data: T('資料申請', 'Data access'), analysis: T('分析', 'Analysis'), writing: T('撰寫', 'Writing'), done: T('完成', 'Done'), paused: T('暫停', 'Paused') });
   const MS_KIND = () => ({ irb: 'IRB', data: T('資料申請', 'Data access'), analysis: T('分析', 'Analysis'), writing: T('撰寫', 'Writing'), other: T('其他', 'Other') });
@@ -107,14 +107,14 @@
     const lr = lastRound(p.id), t = today();
     if (!lr) return null;
     if (lr.decision === 'pending') { const since = parseDate(lr.response_on) || parseDate(lr.submitted_on); return { kind: 'review', days: days(since, t), journal: lr.journal, responded: !!lr.response_on, round: lr }; }
-    if ((lr.decision === 'major' || lr.decision === 'minor') && !lr.response_on) return { kind: 'revise', days: lr.decision_on ? days(parseDate(lr.decision_on), t) : null, journal: lr.journal, round: lr };
+    if (['admin_return', 'major', 'minor'].includes(lr.decision) && !lr.response_on) return { kind: 'revise', days: lr.decision_on ? days(parseDate(lr.decision_on), t) : null, journal: lr.journal, round: lr };
     return null;
   }
   function openCount(roundId) { return commentsOf(roundId).filter((c) => c.status === 'todo' || c.status === 'draft').length; }
   // the round whose reviewer comments are being worked on: the latest one with a revision decision, else the latest
   function workingRound(paperId) {
     const rs = roundsOf(paperId);
-    for (let i = rs.length - 1; i >= 0; i--) if (['major', 'minor'].includes(rs[i].decision)) return rs[i];
+    for (let i = rs.length - 1; i >= 0; i--) if (['admin_return', 'major', 'minor'].includes(rs[i].decision)) return rs[i];
     return rs[rs.length - 1] || null;
   }
 
@@ -138,7 +138,7 @@
         else if (w.days !== null && w.days >= REVISION_DAYS) push(null, { nudge: true, title: paperName(p), sub: T(`修改意見已收到 ${w.days} 天，還沒送出回覆`, `Reviews arrived ${w.days} days ago; response not sent yet`), href: '#/paper/' + p.id });
       }
     });
-    D.todos.forEach((td) => { if (td.done_at || !td.due) return; const due = parseDate(td.due); if (days(t, due) <= 0) push(due, { title: (td.starred ? '★ ' : '') + td.title, sub: T('待辦', 'To-do'), href: '#/todos' }); });
+    D.todos.forEach((td) => { if (td.done_at || !td.due) return; const due = parseDate(td.due); if (days(t, due) <= 0) push(due, { todo: true, title: (td.starred ? '★ ' : '') + td.title, sub: T('待辦', 'To-do'), href: '#/todos' }); });
     items.sort((a, b) => (a.nudge === b.nudge ? (a.date || 0) - (b.date || 0) : a.nudge ? -1 : 1));
     return items;
   }
@@ -169,8 +169,8 @@
 
   /* ---------------- pages ---------------- */
   /* ---------------- progress of everything not closed yet ---------------- */
-  const PAPER_STEPS = ['drafting', 'submitted', 'admin_check', 'under_review', 'revision', 'accepted', 'pre_proof', 'published'];
-  const PAPER_STEP_LABEL = () => [T('撰寫', 'Draft'), T('投稿', 'Submit'), T('行政', 'Admin'), T('審查', 'Review'), T('修改', 'Revise'), T('接受', 'Accept'), 'Pre-proof', T('發表', 'Publish')];
+  const PAPER_STEPS = ['planning', 'drafting', 'submitted', 'admin_check', 'under_review', 'revision', 'accepted', 'pre_proof', 'published'];
+  const PAPER_STEP_LABEL = () => [T('規劃', 'Plan'), T('撰寫', 'Draft'), T('投稿', 'Submit'), T('行政', 'Admin'), T('審查', 'Review'), T('修改', 'Revise'), T('接受', 'Accept'), 'Pre-proof', T('發表', 'Publish')];
   function bar(n, at, labels, paused) {
     return `<div class="pbar${paused ? ' paused' : ''}" role="img" aria-label="${esc(labels[at] || '')} ${at + 1}/${n}">${Array.from({ length: n }, (_, i) => `<i class="${i < at ? 'done' : i === at ? 'now' : ''}"></i>`).join('')}</div>`;
   }
@@ -188,7 +188,7 @@
     };
     const paperRow = (p) => {
       const at = Math.max(0, PAPER_STEPS.indexOf(p.status === 'submitted' ? 'submitted' : p.status)), lr = lastRound(p.id), w = waitInfo(p);
-      const wr = workingRound(p.id), open = wr && ['major', 'minor'].includes(wr.decision) ? openCount(wr.id) : 0;
+      const wr = workingRound(p.id), open = wr && ['admin_return', 'major', 'minor'].includes(wr.decision) ? openCount(wr.id) : 0;
       const sub = [lr ? esc(lr.journal) : (p.target_journal ? esc(p.target_journal) : ''), w && w.kind === 'review' ? T(`已等 ${w.days} 天`, `${w.days} d waiting`) : '', open ? T(`${open} 條意見待回覆`, `${open} comments to answer`) : ''].filter(Boolean).join(' · ');
       return `<a class="prog" href="#/paper/${p.id}"><div class="prog-head"><b>${esc(paperName(p))}</b><span class="chip ${STATUS_CHIP[p.status]}">${esc(STATUS()[p.status])} ${at + 1}/${PAPER_STEPS.length}</span></div>` +
         bar(PAPER_STEPS.length, at, PAPER_STEP_LABEL()) + `<small>${sub || '&nbsp;'}</small></a>`;
@@ -196,6 +196,64 @@
     return `<h2 class="sec-title">${T('未結案的進度', 'Work in progress')} <small>${T('專案依階段、論文從撰寫到發表', 'Projects by stage, papers from draft to publication')}</small></h2>` +
       (projects.length ? `<div class="prog-group"><h3>${T('專案', 'Projects')}</h3><div class="progs">${projects.map(projRow).join('')}</div></div>` : '') +
       (papers.length ? `<div class="prog-group"><h3>${T('論文', 'Papers')}<span class="prog-legend">${PAPER_STEP_LABEL().join(' › ')}</span></h3><div class="progs">${papers.map(paperRow).join('')}</div></div>` : '');
+  }
+
+  /* ---------------- Home: to-dos and a month calendar ---------------- */
+  function homeTodos() {
+    const t = today(), open = D.todos.filter((x) => !x.done_at);
+    const soon = open.filter((x) => x.starred || (x.due && days(t, parseDate(x.due)) <= 3)).sort(byStarDue);
+    const shown = soon.slice(0, 8), more = open.length - shown.length;
+    return `<section class="home-card"><h2 class="sec-title">${T('待辦', 'To-dos')} <small>${T('過期、今天、三天內與加星號的', 'Overdue, today, next 3 days and starred')}</small><a class="btn sm ghost right" href="#/todos">${T('全部', 'All')}${ic('chev')}</a></h2>` +
+      `<form class="quick" id="f-todo" autocomplete="off"><input class="inp" name="title" maxlength="300" placeholder="${T('＋ 新增待辦…', '+ Add a to-do…')}" aria-label="${T('新增待辦', 'New to-do')}"><input class="inp" type="date" name="due" aria-label="${T('日期（選填）', 'Date (optional)')}"><button class="btn primary" type="submit">${T('加入', 'Add')}</button></form>` +
+      (shown.length ? `<div class="todos">${shown.map((x) => todoRow(x)).join('')}</div>` : `<p class="muted small" style="margin:10px 2px 0">${T('最近三天沒有待辦。', 'Nothing due in the next three days.')}</p>`) +
+      (more > 0 ? `<p class="muted small" style="margin:8px 2px 0"><a href="#/todos">${T(`還有 ${more} 項待辦 ›`, `${more} more to-do${more > 1 ? 's' : ''} ›`)}</a></p>` : '') + '</section>';
+  }
+
+  // everything with a date: deadlines, milestones, IRB expiry, own paper deadlines, open to-dos
+  const EV_KIND = () => ({ dl: T('截止日', 'Deadline'), ms: T('里程碑', 'Milestone'), irb: T('到期', 'Expiry'), paper: T('論文', 'Paper'), todo: T('待辦', 'To-do') });
+  function calEvents() {
+    const ev = {}, add = (date, o) => { if (!date) return; (ev[date] = ev[date] || []).push(o); };
+    D.deadlines.forEach((d) => { if (!d.done) add(d.due, { kind: 'dl', title: d.title, sub: DL_KIND()[d.kind], href: '#/deadlines' }); });
+    D.milestones.forEach((m) => {
+      const pr = byId('projects', m.project_id); if (!pr) return;
+      const pn = pr.short_title || pr.title;
+      if (!m.done_on && m.due) add(m.due, { kind: 'ms', title: m.title, sub: pn, href: '#/project/' + pr.id });
+      if (m.expires_on) add(m.expires_on, { kind: 'irb', title: T(`${m.title} 到期`, `${m.title} expires`), sub: pn, href: '#/project/' + pr.id });
+    });
+    D.papers.forEach((p) => { if (p.deadline && !['accepted', 'pre_proof', 'published', 'rejected', 'withdrawn'].includes(p.status)) add(p.deadline, { kind: 'paper', title: paperName(p), sub: T('自訂截止日', 'Own deadline'), href: '#/paper/' + p.id }); });
+    D.todos.forEach((x) => { if (!x.done_at && x.due) add(x.due.slice(0, 10), { kind: 'todo', title: (x.starred ? '★ ' : '') + x.title, sub: x.repeat && x.repeat !== 'none' ? REPEAT()[x.repeat] : '', href: '#/todos' }); });
+    return ev;
+  }
+  let CAL = null; // { y, m, sel } — the month on show and the picked day ('' = the next seven days)
+  function calendarHTML() {
+    const t = today(), tISO = localISO(t);
+    if (!CAL) CAL = { y: t.getFullYear(), m: t.getMonth(), sel: '' };
+    const ev = calEvents(), first = new Date(CAL.y, CAL.m, 1), start = new Date(CAL.y, CAL.m, 1 - first.getDay());
+    const weeks = Math.ceil((first.getDay() + new Date(CAL.y, CAL.m + 1, 0).getDate()) / 7);
+    const wd = LANG === 'en' ? ['S', 'M', 'T', 'W', 'T', 'F', 'S'] : ['日', '一', '二', '三', '四', '五', '六'];
+    let cells = '';
+    for (let i = 0; i < weeks * 7; i++) {
+      const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i), iso = localISO(d), list = ev[iso] || [];
+      const kinds = [...new Set(list.map((e) => e.kind))].slice(0, 3);
+      const cls = ['cal-d', d.getMonth() !== CAL.m ? 'out' : '', iso === tISO ? 'today' : '', iso === CAL.sel ? 'sel' : '', iso < tISO ? 'past' : ''].filter(Boolean).join(' ');
+      const label = T(`${d.getMonth() + 1} 月 ${d.getDate()} 日`, d.toDateString()) + (list.length ? T(`，${list.length} 件事`, `, ${list.length} item${list.length > 1 ? 's' : ''}`) : '');
+      cells += `<button type="button" class="${cls}" data-act="cal-day" data-date="${iso}" aria-label="${esc(label)}"${iso === CAL.sel ? ' aria-pressed="true"' : ''}><span>${d.getDate()}</span><i>${kinds.map((k) => `<b class="k-${k}"></b>`).join('')}</i></button>`;
+    }
+    const row = (e) => `<a class="cal-ev" href="${e.href}"><b class="k-${e.kind}"></b><span><strong>${esc(e.title)}</strong><small>${esc(EV_KIND()[e.kind])}${e.sub ? ' · ' + esc(e.sub) : ''}</small></span></a>`;
+    const dayName = (iso) => { const d = parseDate(iso), l = days(t, d); const w = wd[d.getDay()]; const rel = l === 0 ? T('今天', 'Today') : l === 1 ? T('明天', 'Tomorrow') : l === 2 ? T('後天', 'In 2 days') : ''; return `${md(iso)}（${LANG === 'en' ? d.toLocaleDateString('en', { weekday: 'short' }) : w}）${rel ? ' ' + rel : ''}`; };
+    let below;
+    if (CAL.sel) {
+      const list = ev[CAL.sel] || [];
+      below = `<div class="cal-list"><h3>${dayName(CAL.sel)}<button type="button" class="link" data-act="cal-week">${T('看接下來 7 天', 'Next 7 days')}</button></h3>${list.length ? list.map(row).join('') : `<p class="muted small">${T('這天沒有安排。', 'Nothing on this day.')}</p>`}</div>`;
+    } else {
+      const ds = Array.from({ length: 7 }, (_, i) => localISO(new Date(t.getFullYear(), t.getMonth(), t.getDate() + i))).filter((iso) => ev[iso]);
+      below = `<div class="cal-list"><h3>${T('接下來 7 天', 'Next 7 days')}</h3>${ds.length ? ds.map((iso) => `<div class="cal-day"><h4>${dayName(iso)}</h4>${ev[iso].map(row).join('')}</div>`).join('') : `<p class="muted small">${T('接下來 7 天沒有安排。', 'Nothing in the next 7 days.')}</p>`}</div>`;
+    }
+    const title = LANG === 'en' ? first.toLocaleDateString('en', { month: 'long', year: 'numeric' }) : `${CAL.y} 年 ${CAL.m + 1} 月`;
+    const onThisMonth = CAL.y === t.getFullYear() && CAL.m === t.getMonth();
+    return `<section class="home-card"><h2 class="sec-title">${T('行事曆', 'Calendar')}<span class="cal-nav right"><button type="button" class="btn sm ghost icon" data-act="cal-move" data-d="-1" aria-label="${T('上個月', 'Previous month')}">${ic('back')}</button><span class="cal-title" aria-live="polite">${title}</span><button type="button" class="btn sm ghost icon" data-act="cal-move" data-d="1" aria-label="${T('下個月', 'Next month')}">${ic('chev')}</button>${onThisMonth && !CAL.sel ? '' : `<button type="button" class="btn sm" data-act="cal-today">${T('今天', 'Today')}</button>`}</span></h2>` +
+      `<div class="cal"><div class="cal-wd" aria-hidden="true">${wd.map((x) => `<span>${x}</span>`).join('')}</div><div class="cal-grid">${cells}</div></div>` +
+      `<p class="cal-legend">${Object.entries(EV_KIND()).map(([k, l]) => `<span><b class="k-${k}"></b>${l}</span>`).join('')}</p>` + below + '</section>';
   }
 
   function pageHome() {
@@ -212,7 +270,8 @@
         <a class="metric" href="#/papers"><span>${T('修改中', 'Revising')}</span><b>${revising}</b></a>
         <a class="metric" href="#/papers"><span>${T('已接受・已發表', 'Accepted & published')}</span><b>${done}</b></a>
       </div>` +
-      `<h2 class="sec-title">${T('接下來', 'Up next')} <small>${T('60 天內的截止日、IRB 到期、等太久的審查、待回覆的意見', 'Deadlines and IRB expiry in 60 days, long reviews, comments to answer')}</small></h2>` + agendaHTML(agenda()) + progressHTML() +
+      `<div class="home-grid">${homeTodos()}${calendarHTML()}</div>` +
+      `<h2 class="sec-title">${T('接下來', 'Up next')} <small>${T('60 天內的截止日、IRB 到期、等太久的審查、待回覆的意見', 'Deadlines and IRB expiry in 60 days, long reviews, comments to answer')}</small></h2>` + agendaHTML(agenda().filter((x) => !x.todo)) + progressHTML() +
       `<a class="ag" href="#/stats" style="margin-top:18px;grid-template-columns:minmax(0,1fr) auto"><span class="what"><b>${T('年度統計', 'Year by year')}</b><small>${T('每年投稿、接受、發表與審查天數', 'Submissions, acceptances, publications and review times per year')}</small></span><span class="chev">${ic('chev')}</span></a>`;
   }
 
@@ -262,17 +321,17 @@
     if (lr) meta.push(`<b>${esc(lr.journal)}</b>`); else if (p.target_journal) meta.push(`${T('目標', 'Target')}：<b>${esc(p.target_journal)}</b>`);
     if (w && w.kind === 'review') meta.push(T(`已等 ${w.days} 天`, `${w.days} d waiting`));
     const wr = workingRound(p.id);
-    if (wr && ['major', 'minor'].includes(wr.decision)) { const cs = commentsOf(wr.id); if (cs.length) meta.push(T(`意見 ${cs.length - openCount(wr.id)}/${cs.length} 已處理`, `${cs.length - openCount(wr.id)}/${cs.length} comments done`)); }
+    if (wr && ['admin_return', 'major', 'minor'].includes(wr.decision)) { const cs = commentsOf(wr.id); if (cs.length) meta.push(T(`意見 ${cs.length - openCount(wr.id)}/${cs.length} 已處理`, `${cs.length - openCount(wr.id)}/${cs.length} comments done`)); }
     const pr = p.project_id && byId('projects', p.project_id);
     if (pr && !inProject) meta.push(esc(pr.short_title || pr.title));
     return `<a class="item${on ? ' on' : ''}" href="#/paper/${p.id}"><div class="item-head"><h3>${esc(paperName(p))}</h3><span class="chip ${STATUS_CHIP[p.status]}">${esc(STATUS()[p.status])}</span></div>${meta.length ? `<div class="meta">${meta.join(' · ')}</div>` : ''}</a>`;
   }
   function listPapers(currentId) {
     const g = { active: [], draft: [], done: [], closed: [] };
-    D.papers.forEach((p) => g[['submitted', 'admin_check', 'under_review', 'revision'].includes(p.status) ? 'active' : p.status === 'drafting' ? 'draft' : ['accepted', 'pre_proof', 'published'].includes(p.status) ? 'done' : 'closed'].push(p));
+    D.papers.forEach((p) => g[['submitted', 'admin_check', 'under_review', 'revision'].includes(p.status) ? 'active' : ['planning', 'drafting'].includes(p.status) ? 'draft' : ['accepted', 'pre_proof', 'published'].includes(p.status) ? 'done' : 'closed'].push(p));
     const block = (label, arr) => (arr.length ? `<h2 class="sec-title">${label} <small>${arr.length}</small></h2><div class="list">${arr.map((p) => paperCard(p, p.id === currentId)).join('')}</div>` : '');
     return ph(T('論文', 'Papers'), { actions: `<button class="btn primary sm" data-act="new-paper">${ic('plus')}${T('論文', 'Paper')}</button>` }) + papersSeg('papers') +
-      (D.papers.length ? block(T('進行中', 'In review'), g.active) + block(T('撰寫中', 'In preparation'), g.draft) + block(T('已接受・已發表', 'Accepted & published'), g.done) +
+      (D.papers.length ? block(T('進行中', 'In review'), g.active) + block(T('規劃・撰寫中', 'Planned & in preparation'), g.draft) + block(T('已接受・已發表', 'Accepted & published'), g.done) +
         (g.closed.length ? `<details class="fold"${g.closed.some((p) => p.id === currentId) ? ' open' : ''}><summary>${T('已結束（被拒・撤回）', 'Closed (rejected, withdrawn)')} (${g.closed.length})</summary><div class="list">${g.closed.map((p) => paperCard(p, p.id === currentId)).join('')}</div></details>` : '')
         : `<div class="empty">${T('每篇論文記錄投稿的每一輪、審稿結果、你的回覆，以及和 reviewer 的來往。', 'Each paper keeps every submission round, decision and response, and your exchanges with reviewers.')}<br><button class="btn primary" data-act="new-paper">${ic('plus')}${T('新增論文', 'New paper')}</button></div>`);
   }
@@ -311,6 +370,9 @@
     }).join('');
   }
   let REVIEW_ROUND = {};
+  // the reviews tab shows either the decision letter as received, or the comments as a checklist
+  let REVIEW_VIEW = (() => { try { return localStorage.getItem('tracker-review-view'); } catch (e) { return null; } })();
+  const OPEN_CM = new Set();
   function tabReviews(p) {
     const rs = roundsOf(p.id);
     if (!rs.length) return `<div class="empty">${T('先記錄一次投稿，收到審稿意見後就能在這裡逐條記錄和回覆。', 'Record a submission first; when reviews come back, log and answer them here comment by comment.')}<br><button class="btn primary" data-act="new-round" data-id="${p.id}">${ic('plus')}${T('記錄投稿', 'Record submission')}</button></div>`;
@@ -318,24 +380,36 @@
     const rid = (q.get('round') && rs.some((r) => r.id === q.get('round'))) ? q.get('round') : (REVIEW_ROUND[p.id] && rs.some((r) => r.id === REVIEW_ROUND[p.id]) ? REVIEW_ROUND[p.id] : workingRound(p.id).id);
     REVIEW_ROUND[p.id] = rid;
     const r = byId('rounds', rid), cs = commentsOf(rid);
+    const isDone = (c) => ['done', 'declined'].includes(c.status), nDone = cs.filter(isDone).length;
+    const view = ['text', 'list'].includes(REVIEW_VIEW) ? REVIEW_VIEW : (cs.length ? 'list' : 'text');
+    const sel = `<select class="inp" data-act="pick-round" data-id="${p.id}" aria-label="${T('哪一輪', 'Round')}">${rs.map((x, i) => `<option value="${x.id}"${x.id === rid ? ' selected' : ''}>${T(`第 ${i + 1} 輪`, `Round ${i + 1}`)} · ${esc(x.journal)} · ${esc(DECISION()[x.decision])}</option>`).join('')}</select>`;
+    const seg = `<div class="seg rv-seg" role="tablist" aria-label="${T('呈現方式', 'View')}">${[['text', T('原文', 'Original')], ['list', T('清單', 'List')]].map(([k, l]) => `<button type="button" role="tab" data-act="rv-view" data-view="${k}" aria-selected="${view === k}">${l}${k === 'list' && cs.length ? ` <small>${nDone}/${cs.length}</small>` : ''}</button>`).join('')}</div>`;
+    const bar = `<div class="rv-bar"><div class="grow">${sel}</div>${seg}</div>`;
+    if (view === 'text') {
+      return bar + `<div class="rv-letter"><label for="lt-${rid}"><span>${T('審查結果原文：編輯的信和所有審稿意見，整封貼上', 'Decision letter as received: the editor’s letter and every reviewer’s comments')}</span><span class="saved" id="saved-lt-${rid}">${T('已儲存', 'Saved')}</span></label>` +
+        `<textarea class="inp" id="lt-${rid}" data-act="letter-text" data-id="${rid}" rows="16" maxlength="200000" placeholder="${T('Dear Dr. …\n\nReviewer #1:\n1. …\n2. …\n\nReviewer #2:\n…', 'Dear Dr. …\n\nReviewer #1:\n1. …\n2. …\n\nReviewer #2:\n…')}">${esc(r.letter_text || '')}</textarea>` +
+        `<div class="d-actions"><button class="btn primary sm" data-act="split-letter" data-id="${rid}">${T('從原文產生清單', 'Make a checklist from it')}</button>${r.letter_text ? `<button class="btn sm" data-act="copy-letter" data-id="${rid}">${ic('copy')}${T('複製原文', 'Copy')}</button>` : ''}</div>` +
+        `<p class="muted small">${T('會依「Reviewer 1」「Editor」這類標題分給對應的人，再依「1.」「2.」或空行切成一條一條。', 'Sections headed “Reviewer 1”, “Editor” and so on go to that person, then each is split at “1.”, “2.” or blank lines.')}${cs.length ? T(`這一輪已經有 ${cs.length} 條，新產生的會接在後面。`, ` This round already has ${cs.length}; new ones are added after them.`) : ''}</p></div>`;
+    }
+    const actions = `<div class="d-actions" style="margin-top:0"><button class="btn sm" data-act="paste-comments" data-id="${rid}">${ic('plus')}${T('貼上審稿意見', 'Paste comments')}</button><button class="btn sm" data-act="new-comment" data-id="${rid}">${T('新增一條', 'Add one')}</button>${cs.length ? `<button class="btn sm" data-act="letter" data-id="${rid}">${ic('doc')}${T('產生回覆信', 'Response letter')}</button>` : ''}</div>`;
+    if (!cs.length) return bar + actions + `<div class="empty" style="margin-top:12px">${T('到「原文」把收到的信整封貼上，再按「從原文產生清單」；或直接貼上某位 reviewer 的意見。', 'Paste the whole letter under “Original” and make a checklist from it, or paste one reviewer’s comments here.')}</div>`;
     const groups = {}; cs.forEach((c) => { (groups[c.reviewer] = groups[c.reviewer] || []).push(c); });
     const names = Object.keys(groups).sort(reviewerOrder);
-    const sel = `<select class="inp" data-act="pick-round" data-id="${p.id}" aria-label="${T('哪一輪', 'Round')}">${rs.map((x, i) => `<option value="${x.id}"${x.id === rid ? ' selected' : ''}>${T(`第 ${i + 1} 輪`, `Round ${i + 1}`)} · ${esc(x.journal)} · ${esc(DECISION()[x.decision])}</option>`).join('')}</select>`;
-    const bar = `<div class="rv-bar"><div class="grow">${sel}</div></div><div class="d-actions" style="margin-top:0"><button class="btn primary sm" data-act="paste-comments" data-id="${rid}">${ic('plus')}${T('貼上審稿意見', 'Paste comments')}</button><button class="btn sm" data-act="new-comment" data-id="${rid}">${T('新增一條', 'Add one')}</button>${cs.length ? `<button class="btn sm" data-act="letter" data-id="${rid}">${ic('doc')}${T('產生回覆信', 'Response letter')}</button>` : ''}</div>`;
-    if (!cs.length) return bar + `<div class="empty" style="margin-top:12px">${T('把 reviewer 的意見整段貼上，會依「1.」「2.」或空行自動切成一條一條，再逐條寫回覆。', 'Paste a reviewer’s comments in one go; they are split at “1.”, “2.” or blank lines, then you answer them one by one.')}</div>`;
-    const prog = `<div class="rv-progress">${names.map((n) => { const arr = groups[n], open = arr.filter((c) => ['todo', 'draft'].includes(c.status)).length; return `<span class="chip ${open ? 'warn' : 'ok'}">${esc(n)} ${arr.length - open}/${arr.length}</span>`; }).join('')}</div>`;
-    return bar + `<div style="margin-top:12px">${prog}</div>` + names.map((n) => `<div class="rv-group"><h4>${esc(n)}</h4>${groups[n].sort((a, b) => a.seq - b.seq).map((c) => commentCard(c, n)).join('')}</div>`).join('');
+    return bar + actions + names.map((n) => { const arr = groups[n].sort((a, b) => a.seq - b.seq), d = arr.filter(isDone).length; return `<div class="rv-group"><h4>${esc(n)} <span class="chip ${d === arr.length ? 'ok' : 'warn'}">${d}/${arr.length}</span></h4><div class="rvl">${arr.map((c) => commentRow(c, n)).join('')}</div></div>`; }).join('');
+  }
+  function commentRow(c, name) {
+    const done = c.status === 'done', dec = c.status === 'declined', open = OPEN_CM.has(c.id);
+    const chip = c.status === 'todo' ? '' : `<span class="chip ${C_CHIP[c.status]}">${esc(C_STATUS()[c.status])}</span>`;
+    return `<div class="rvi${done || dec ? ' done' : ''}${open ? ' open' : ''}" id="cm-${c.id}">` +
+      `<button type="button" class="tick" data-act="cm-tick" data-id="${c.id}" aria-pressed="${done || dec}" aria-label="${done || dec ? T('改回待處理', 'Mark not answered') : T('標成已回覆', 'Mark answered')}">${done ? ic('check') : dec ? '–' : ''}</button>` +
+      `<button type="button" class="rvi-main" data-act="cm-open" data-id="${c.id}" aria-expanded="${open}"><span class="no">${esc(reviewerNo(name))}.${c.seq}</span><span class="rvi-t">${esc(c.comment)}</span>${chip}</button>` +
+      (open ? `<div class="rvi-body"><div class="cm-text">${esc(c.comment)}</div>` +
+        `<label for="resp-${c.id}"><span>${T('你的回覆', 'Your response')}</span><span class="saved" id="saved-${c.id}">${T('已儲存', 'Saved')}</span></label><textarea class="inp" id="resp-${c.id}" data-act="response" data-id="${c.id}" rows="3" maxlength="20000" placeholder="${T('寫下你的回覆，例如：已補充 30 與 60 天的敏感度分析…', 'Your reply, e.g. We added sensitivity analyses with 30 and 60 days…')}">${esc(c.response || '')}</textarea>` +
+        `<label for="chg-${c.id}" style="margin-top:8px"><span>${T('修改位置（選填，會放進回覆信）', 'Where it changed (optional, goes into the letter)')}</span></label><input class="inp" id="chg-${c.id}" data-act="changes" data-id="${c.id}" maxlength="2000" value="${esc(c.changes || '')}" placeholder="${T('例如：p.5, L120–128; Table S4', 'e.g. p.5, L120–128; Table S4')}">` +
+        `<div class="rvi-foot"><select data-act="comment-status" data-id="${c.id}" aria-label="${T('狀態', 'Status')}">${Object.entries(C_STATUS()).map(([k, l]) => `<option value="${k}"${k === c.status ? ' selected' : ''}>${l}</option>`).join('')}</select><button class="btn ghost sm" data-act="edit-comment" data-id="${c.id}">${ic('edit')}${T('編輯意見', 'Edit comment')}</button></div></div>` : '') + '</div>';
   }
   const reviewerOrder = (a, b) => { const k = (s) => (/^editor/i.test(s) ? -1 : (parseInt((s.match(/\d+/) || [999])[0], 10))); return k(a) - k(b) || a.localeCompare(b); };
   const reviewerNo = (name) => (/^editor/i.test(name) ? 'E' : ((name.match(/\d+/) || [''])[0] || name.slice(0, 1).toUpperCase()));
-  function commentCard(c, name) {
-    const long = c.comment.length > 360;
-    return `<div class="cm ${c.status === 'done' ? 'done' : ''}" id="cm-${c.id}"><div class="cm-head"><span class="no">${esc(reviewerNo(name))}.${c.seq}</span><button class="btn ghost sm" data-act="edit-comment" data-id="${c.id}" aria-label="${T('編輯意見', 'Edit comment')}">${ic('edit')}</button>` +
-      `<select data-act="comment-status" data-id="${c.id}" aria-label="${T('狀態', 'Status')}">${Object.entries(C_STATUS()).map(([k, l]) => `<option value="${k}"${k === c.status ? ' selected' : ''}>${l}</option>`).join('')}</select></div>` +
-      `<div class="cm-text${long ? ' clamp' : ''}">${esc(c.comment)}</div>${long ? `<button class="link" data-act="expand" data-id="${c.id}">${T('顯示全文', 'Show all')}</button>` : ''}` +
-      `<label for="resp-${c.id}"><span>${T('你的回覆', 'Your response')}</span><span class="saved" id="saved-${c.id}">${T('已儲存', 'Saved')}</span></label><textarea class="inp" id="resp-${c.id}" data-act="response" data-id="${c.id}" rows="3" maxlength="20000" placeholder="${T('寫下你的回覆，例如：已補充 30 與 60 天的敏感度分析…', 'Your reply, e.g. We added sensitivity analyses with 30 and 60 days…')}">${esc(c.response || '')}</textarea>` +
-      `<label for="chg-${c.id}" style="margin-top:8px"><span>${T('修改位置（選填，會放進回覆信）', 'Where it changed (optional, goes into the letter)')}</span></label><input class="inp" id="chg-${c.id}" data-act="changes" data-id="${c.id}" maxlength="2000" value="${esc(c.changes || '')}" placeholder="${T('例如：p.5, L120–128; Table S4', 'e.g. p.5, L120–128; Table S4')}"></div>`;
-  }
   function tabInfo(p) {
     const pr = p.project_id && byId('projects', p.project_id);
     const rows = [[T('標題', 'Title'), p.title], [T('專案', 'Project'), pr ? (pr.short_title || pr.title) : ''], [T('目標期刊', 'Target journal'), p.target_journal], [T('作者列', 'Authors'), p.authors], [T('作者序', 'Authorship'), p.my_role], [T('年份', 'Year'), p.year], ['DOI', p.doi], [T('自訂截止日', 'Own deadline'), ymd(p.deadline)], [T('備註', 'Notes'), p.notes]].filter((x) => x[1]);
@@ -504,7 +578,7 @@
     const papers = [...new Set(rs.map((r) => r.paper_id))];
     const firstDays = papers.map((pid) => { const r = rs.filter((x) => x.paper_id === pid)[0]; return r && r.decision_on ? days(parseDate(r.submitted_on), parseDate(r.decision_on)) : null; }).filter((x) => x !== null && x >= 0);
     const median = (a) => { if (!a.length) return null; const s = a.slice().sort((x, y) => x - y), m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : Math.round((s[m - 1] + s[m]) / 2); };
-    return { rounds: rs, papers: papers.length, firstMedian: median(firstDays), firstN: firstDays.length, desk: papers.filter((pid) => rs.some((r) => r.paper_id === pid && r.decision === 'desk_reject')).length, accepted: papers.filter((pid) => rs.some((r) => r.paper_id === pid && r.decision === 'accept')).length, rejected: papers.filter((pid) => rs.some((r) => r.paper_id === pid && r.decision === 'reject')).length, roundsPer: papers.length ? (rs.length / papers.length) : 0 };
+    return { rounds: rs, papers: papers.length, firstMedian: median(firstDays), firstN: firstDays.length, desk: papers.filter((pid) => rs.some((r) => r.paper_id === pid && r.decision === 'desk_reject')).length, accepted: papers.filter((pid) => rs.some((r) => r.paper_id === pid && ['accept', 'pre_proof'].includes(r.decision))).length, rejected: papers.filter((pid) => rs.some((r) => r.paper_id === pid && r.decision === 'reject')).length, roundsPer: papers.length ? (rs.length / papers.length) : 0 };
   }
   function allJournalNames() {
     const names = new Map();
@@ -571,7 +645,7 @@
   function todoRow(t, opts = {}) {
     const meta = [];
     if (!t.done_at) meta.push(dueLabel(t.due)); else meta.push(T(`完成於 ${md(localISO(new Date(t.done_at)))}`, `Done ${md(localISO(new Date(t.done_at)))}`));
-    if (t.repeat !== 'none') meta.push(`${ic('repeat')}${esc(REPEAT()[t.repeat])}`);
+    if (t.repeat && t.repeat !== 'none') meta.push(`${ic('repeat')}${esc(REPEAT()[t.repeat])}`);
     const pr = !opts.inProject && t.project_id && byId('projects', t.project_id), pa = !opts.inPaper && t.paper_id && byId('papers', t.paper_id);
     if (pr) meta.push(esc(pr.short_title || pr.title)); if (pa) meta.push(esc(paperName(pa)));
     if (t.notes) meta.push(T('有備註', 'notes'));
@@ -815,7 +889,7 @@
   function editPaper(p, projectId) {
     let pendingAuthors = null;
     formDialog({
-      title: p ? T('編輯論文', 'Edit paper') : T('新增論文', 'New paper'), values: p || { status: 'drafting', project_id: projectId || '' },
+      title: p ? T('編輯論文', 'Edit paper') : T('新增論文', 'New paper'), values: p || { status: 'planning', project_id: projectId || '' },
       fields: [
         { name: 'title', label: T('標題', 'Title'), type: 'textarea', rows: 2, required: true, max: 500, full: true },
         { name: 'short_title', label: T('簡稱（選填，清單上顯示這個）', 'Short name (optional, shown in lists)'), max: 120 },
@@ -840,13 +914,14 @@
   }
   // one tap to the next stage, where no decision letter marks it
   const NEXT_STAGE = {
+    planning: ['drafting', () => T('→ 開始撰寫', '→ Start writing')],
     submitted: ['admin_check', () => T('→ 行政審查', '→ Administrative check')],
     admin_check: ['under_review', () => T('→ 已送外審（審查中）', '→ Sent to reviewers')],
     accepted: ['pre_proof', () => T('→ Pre-proof', '→ Pre-proof')],
     pre_proof: ['published', () => T('→ 已正式發表', '→ Published')],
   };
   // a new round starts in the administrative check; editing a pending round leaves the stage alone
-  const statusFromRound = (r, isNew) => ({ pending: isNew ? 'admin_check' : null, major: 'revision', minor: 'revision', accept: 'accepted', reject: 'rejected', desk_reject: 'rejected', withdrawn: 'withdrawn' }[r.decision] || null);
+  const statusFromRound = (r, isNew) => ({ pending: isNew ? 'admin_check' : null, admin_return: 'revision', major: 'revision', minor: 'revision', accept: 'accepted', pre_proof: 'pre_proof', reject: 'rejected', desk_reject: 'rejected', withdrawn: 'withdrawn' }[r.decision] || null);
   function editRound(paperId, r) {
     const p = byId('papers', r ? r.paper_id : paperId), rs = roundsOf(p.id), lr = rs[rs.length - 1];
     const def = r || { journal: lr ? (['reject', 'desk_reject'].includes(lr.decision) ? '' : lr.journal) : (p.target_journal || ''), submitted_on: localISO(new Date()), decision: 'pending' };
@@ -858,7 +933,7 @@
         { name: 'decision', label: T('結果', 'Decision'), type: 'select', options: opt(DECISION()) },
         { name: 'decision_on', label: T('收到結果', 'Decision received'), type: 'date' },
         { name: 'response_on', label: T('送出回覆', 'Response sent'), type: 'date', help: T('修改後重新送審的日期', 'When the revision went back') },
-        { name: 'notes', label: T('編輯的信、其他紀錄', 'Editor’s letter, other notes'), type: 'textarea', max: 10000, full: true },
+        { name: 'notes', label: T('備註（審查結果原文放在「審稿往來 › 原文」）', 'Notes (the decision letter goes under Reviews › Original)'), type: 'textarea', max: 10000, full: true },
         { name: 'links', label: T('檔案連結（選填）', 'File links (optional)'), type: 'links', help: T('貼上雲端硬碟的分享連結，例如這一輪送出的稿件和回覆信。', 'Paste share links from your cloud storage, e.g. the manuscript and response sent this round.') },
       ],
       onSave: async (row) => {
@@ -866,7 +941,7 @@
         const s = await save('rounds', row, r && r.id); if (!s) return false;
         await loadAll();
         const all = roundsOf(p.id), isLast = all.length && all[all.length - 1].id === s.id, st = isLast ? statusFromRound(s, !r || r.decision !== 'pending') : null;
-        if (st && st !== p.status && !(['pre_proof', 'published'].includes(p.status) && st === 'accepted')) { await save('papers', { status: st }, p.id); await loadAll(); toast(T(`已儲存，狀態改成「${STATUS()[st]}」`, `Saved; status is now “${STATUS()[st]}”`)); }
+        if (st && st !== p.status && !((p.status === 'pre_proof' && st === 'accepted') || (p.status === 'published' && ['accepted', 'pre_proof'].includes(st)))) { await save('papers', { status: st }, p.id); await loadAll(); toast(T(`已儲存，狀態改成「${STATUS()[st]}」`, `Saved; status is now “${STATUS()[st]}”`)); }
         else toast(T('已儲存', 'Saved'));
         render(true);
       },
@@ -935,28 +1010,52 @@
     }
     return s.split(/\n\s*\n+/).map((x) => x.trim()).filter(Boolean);
   }
-  function pasteComments(roundId) {
+  // a whole decision letter: sections start at a short heading line such as "Reviewer #1", "Reviewer 2:", "Editor comments"
+  function splitLetter(text, fallback) {
+    // the sign-off (Sincerely, … and everything after it) is not a comment
+    const s = String(text || '').replace(/\r\n?/g, '\n').replace(/\n[ \t]*(?:yours\s+)?(?:sincerely|best regards|kind regards|warm regards|regards|best wishes|with best wishes|yours truly)\b[\s\S]*$/i, '');
+    const re = /^[ \t]*(?:comments?\s+(?:from|of|by)\s+)?(?:the\s+)?(?:(?:reviewer|referee)\s*#?\s*(\d{1,2})|(?:(?:associate|academic|handling|section|deputy)\s+)?(editor))\b[^\n]{0,40}$/gim;
+    const marks = []; let m;
+    while ((m = re.exec(s))) marks.push({ i: m.index, end: m.index + m[0].length, name: m[1] ? 'Reviewer ' + +m[1] : 'Editor' });
+    if (!marks.length) return [{ reviewer: fallback, parts: splitComments(s) }];
+    const out = [];
+    marks.forEach((k, j) => {
+      const parts = splitComments(s.slice(k.end, j + 1 < marks.length ? marks[j + 1].i : s.length));
+      const same = out.find((x) => x.reviewer === k.name);
+      if (same) same.parts.push(...parts); else if (parts.length) out.push({ reviewer: k.name, parts });
+    });
+    return out;
+  }
+  function pasteComments(roundId, preset) {
     const used = commentsOf(roundId).map((x) => x.reviewer);
     const dlg = formDialog({
-      title: T('貼上審稿意見', 'Paste reviewer comments'), values: { reviewer: used.length ? REVIEWERS[Math.min(REVIEWERS.length - 1, REVIEWERS.indexOf(used[used.length - 1]) + 1)] || 'Reviewer 1' : 'Reviewer 1' },
+      title: preset != null ? T('從原文產生清單', 'Checklist from the letter') : T('貼上審稿意見', 'Paste reviewer comments'), values: { text: preset || '', reviewer: used.length ? REVIEWERS[Math.min(REVIEWERS.length - 1, REVIEWERS.indexOf(used[used.length - 1]) + 1)] || 'Reviewer 1' : 'Reviewer 1' },
       saveLabel: T('加入', 'Add'),
       fields: [
-        { name: 'reviewer', label: T('誰的意見', 'From'), type: 'select', options: reviewerOptions() },
-        { name: 'text', label: T('整段意見', 'All the comments'), type: 'textarea', rows: 10, required: true, max: 200000, full: true, help: T('會依「1.」「2.」「Comment 3:」或空行切成一條一條。', 'Split at “1.”, “2.”, “Comment 3:” or blank lines.') },
+        { name: 'reviewer', label: T('誰的意見（沒有 Reviewer／Editor 標題時）', 'From (when there are no Reviewer / Editor headings)'), type: 'select', options: reviewerOptions() },
+        { name: 'text', label: T('整段意見', 'All the comments'), type: 'textarea', rows: 10, required: true, max: 200000, full: true, help: T('有「Reviewer 1」「Editor」標題就分給對應的人，再依「1.」「2.」「Comment 3:」或空行切成一條一條。', 'Headings such as “Reviewer 1” or “Editor” decide who it is from; each part is split at “1.”, “2.”, “Comment 3:” or blank lines.') },
       ],
       onSave: async (row) => {
-        const parts = splitComments(row.text);
-        if (!parts.length) { toast(T('沒有找到內容', 'Nothing to add')); return false; }
-        let seq = nextSeq(roundId, row.reviewer);
-        const rows = parts.map((t) => ({ round_id: roundId, reviewer: row.reviewer, seq: seq++, comment: t.slice(0, 20000), status: 'todo' }));
+        const secs = splitLetter(row.text, row.reviewer), rows = [];
+        secs.forEach((x) => { let seq = nextSeq(roundId, x.reviewer); x.parts.forEach((t) => rows.push({ round_id: roundId, reviewer: x.reviewer, seq: seq++, comment: t.slice(0, 20000), status: 'todo' })); });
+        if (!rows.length) { toast(T('沒有找到內容', 'Nothing to add')); return false; }
         const r = await sb.from(TABLE.comments).insert(rows);
         if (r.error) { toast(T('儲存失敗：', 'Could not save: ') + r.error.message, 6000); return false; }
+        // pasted comments are also kept in the round's original text, once
+        const rd = byId('rounds', roundId), txt = row.text.trim();
+        if (preset == null && rd && !(rd.letter_text || '').includes(txt)) {
+          const add = secs.length === 1 && secs[0].reviewer === row.reviewer && !/^\s*(reviewer|referee|editor)/i.test(txt) ? row.reviewer + '\n' + txt : txt;
+          await save('rounds', { letter_text: ((rd.letter_text ? rd.letter_text.trimEnd() + '\n\n' : '') + add).slice(0, 200000) }, roundId);
+        }
+        REVIEW_VIEW = 'list'; try { localStorage.setItem('tracker-review-view', 'list'); } catch (e) { /* ignore */ }
         toast(T(`已加入 ${rows.length} 條意見`, `${rows.length} comment${rows.length > 1 ? 's' : ''} added`)); await refresh();
       },
     });
     // live count of how the text will be split
     const ta = dlg.querySelector('textarea[name=text]'), help = ta.parentNode.querySelector('.help'), base = help.textContent;
-    ta.addEventListener('input', () => { const n = splitComments(ta.value).length; help.textContent = n ? T(`會加入 ${n} 條。`, `${n} comment${n > 1 ? 's' : ''} will be added. `) + base : base; });
+    const who = dlg.querySelector('select[name=reviewer]');
+    const count = () => { const secs = splitLetter(ta.value, who.value).filter((x) => x.parts.length); help.textContent = secs.length ? T(`會加入：${secs.map((x) => `${x.reviewer} ${x.parts.length} 條`).join('、')}。`, `Adds ${secs.map((x) => `${x.parts.length} from ${x.reviewer}`).join(', ')}. `) : base; };
+    ta.addEventListener('input', count); who.addEventListener('change', count); count();
   }
 
   /* ---------------- response letter ---------------- */
@@ -1181,7 +1280,7 @@
     const firstOf = {};
     D.rounds.forEach((r) => { const k = r.paper_id + '|' + normJ(r.journal); if (!firstOf[k]) firstOf[k] = r; });
     Object.values(firstOf).forEach((r) => { const y = Y(yr(r.submitted_on)); y.submissions++; if (r.decision_on && r.decision !== 'pending') { const d = days(parseDate(r.submitted_on), parseDate(r.decision_on)); if (d >= 0) y.firstDays.push(d); } });
-    D.rounds.forEach((r) => { const y = yr(r.decision_on || r.submitted_on); if (r.decision === 'accept') Y(y).accepted++; if (r.decision === 'reject') Y(y).rejected++; if (r.decision === 'desk_reject') { Y(y).rejected++; Y(y).desk++; } });
+    D.rounds.forEach((r) => { const y = yr(r.decision_on || r.submitted_on); if (r.decision === 'accept' || r.decision === 'pre_proof') Y(y).accepted++; if (r.decision === 'reject') Y(y).rejected++; if (r.decision === 'desk_reject') { Y(y).rejected++; Y(y).desk++; } });
     D.projects.forEach((p) => { Y(yr(p.start_date || p.created_at)).newProjects++; });
     D.milestones.forEach((m) => { if (m.done_on) Y(yr(m.done_on)).milestones++; });
     const med = (a) => { if (!a.length) return null; const s = a.slice().sort((x, y) => x - y), m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : Math.round((s[m - 1] + s[m]) / 2); };
@@ -1225,7 +1324,7 @@
     projects: ['id', 'title', 'short_title', 'stage', 'role', 'collaborators', 'start_date', 'target_date', 'notes', 'created_at', 'updated_at'],
     milestones: ['id', 'project_id', 'title', 'kind', 'due', 'done_on', 'expires_on', 'ref', 'notes', 'created_at'],
     papers: ['id', 'project_id', 'title', 'short_title', 'authors', 'my_role', 'status', 'target_journal', 'deadline', 'doi', 'year', 'notes', 'checklist', 'cover', 'created_at', 'updated_at'],
-    rounds: ['id', 'paper_id', 'journal', 'submitted_on', 'decision', 'decision_on', 'response_on', 'notes', 'links', 'created_at'],
+    rounds: ['id', 'paper_id', 'journal', 'submitted_on', 'decision', 'decision_on', 'response_on', 'notes', 'links', 'letter_text', 'created_at'],
     comments: ['id', 'round_id', 'reviewer', 'seq', 'comment', 'response', 'changes', 'status', 'created_at', 'updated_at'],
     deadlines: ['id', 'title', 'kind', 'due', 'url', 'done', 'notes', 'created_at'],
     todos: ['id', 'title', 'notes', 'due', 'done_at', 'starred', 'repeat', 'next_id', 'project_id', 'paper_id', 'created_at'],
@@ -1394,6 +1493,10 @@
       case 'edit-round': return editRound(null, byId('rounds', id));
       case 'new-deadline': return editDeadline();
       case 'set-status': { const st = b.dataset.status; if (await save('papers', { status: st }, id)) { toast(T(`狀態改成「${STATUS()[st]}」`, `Status: ${STATUS()[st]}`)); await refresh(); } return; }
+      case 'cal-move': { const n = new Date(CAL.y, CAL.m + +b.dataset.d, 1); CAL = { y: n.getFullYear(), m: n.getMonth(), sel: CAL.sel }; render(true); return; }
+      case 'cal-today': CAL = null; render(true); return;
+      case 'cal-week': CAL.sel = ''; render(true); return;
+      case 'cal-day': { const d = parseDate(b.dataset.date), iso = b.dataset.date; CAL = { y: d.getFullYear(), m: d.getMonth(), sel: CAL.sel === iso ? '' : iso }; render(true); return; }
       case 'new-todo': return editTodo(null, { project: b.dataset.project, paper: b.dataset.paper });
       case 'edit-todo': return editTodo(byId('todos', id));
       case 'todo-done': { b.disabled = true; await toggleTodo(byId('todos', id)); return; }
@@ -1402,6 +1505,11 @@
       case 'new-comment': return editComment(id);
       case 'edit-comment': { const c = byId('comments', id); return editComment(c.round_id, c); }
       case 'paste-comments': return pasteComments(id);
+      case 'rv-view': REVIEW_VIEW = b.dataset.view; try { localStorage.setItem('tracker-review-view', REVIEW_VIEW); } catch (e2) { /* ignore */ } render(true); return;
+      case 'split-letter': { const ta = $('lt-' + id); if (ta) await saveLetter(ta); const r = byId('rounds', id); if (!r.letter_text) { toast(T('先把原文貼上', 'Paste the letter first')); if (ta) ta.focus(); return; } return pasteComments(id, r.letter_text); }
+      case 'copy-letter': { const r = byId('rounds', id); try { await navigator.clipboard.writeText(r.letter_text || ''); toast(T('已複製', 'Copied')); } catch (e2) { toast(T('無法複製', 'Could not copy')); } return; }
+      case 'cm-open': { if (OPEN_CM.has(id)) OPEN_CM.delete(id); else OPEN_CM.add(id); render(true); if (OPEN_CM.has(id)) { const t = $('resp-' + id); if (t && !t.value) t.focus({ preventScroll: true }); } return; }
+      case 'cm-tick': { const c = byId('comments', id), was = ['done', 'declined'].includes(c.status); b.disabled = true; if (await save('comments', { status: was ? (c.response ? 'draft' : 'todo') : 'done' }, id)) { await loadAll(); render(true); renderNav('papers'); } else b.disabled = false; return; }
       case 'letter': return letterDialog(id);
       case 'cite': return citeDialog(byId('papers', id));
       case 'add-author': return addAuthor(id);
@@ -1421,7 +1529,6 @@
       case 'reset-cover': { const r = await sb.from('research_settings').upsert({ owner: USER.id, checklist_template: SETTINGS ? SETTINGS.checklist_template : null, cover_template: null, updated_at: new Date().toISOString() }).select().single(); if (!r.error) { SETTINGS = r.data; render(true); toast(T('已還原預設範本', 'Default template restored')); } return; }
       case 'export-json': return exportJson();
       case 'import-json': return importJson();
-      case 'expand': { const el = document.querySelector(`#cm-${id} .cm-text`); el.classList.remove('clamp'); b.remove(); return; }
       case 'theme': applyTheme(b.dataset.theme); render(true); return;
       case 'lang': LANG = b.dataset.lang; try { localStorage.setItem('rt:lang', LANG); } catch (err) { /* ignore */ } document.documentElement.lang = LANG === 'en' ? 'en' : 'zh-Hant'; render(true); return;
       case 'logout': await sb.auth.signOut(); location.hash = ''; location.reload(); return;
@@ -1454,18 +1561,27 @@
     if (act === 'pick-round') { REVIEW_ROUND[el.dataset.id] = el.value; history.replaceState(null, '', `#/paper/${el.dataset.id}/reviews`); render(true); }
     if (act === 'comment-status') {
       const c = byId('comments', el.dataset.id);
-      if (await save('comments', { status: el.value }, c.id)) { c.status = el.value; el.closest('.cm').classList.toggle('done', el.value === 'done'); updateProgress(c.round_id); }
+      if (await save('comments', { status: el.value }, c.id)) { c.status = el.value; render(true); renderNav('papers'); }
     }
   });
   // responses save themselves a moment after typing stops; a written answer moves "to do" to "draft"
   const respTimers = {};
   document.addEventListener('input', (e) => {
-    const el = e.target; if (!el.dataset || !['response', 'changes'].includes(el.dataset.act)) return;
+    const el = e.target; if (el.dataset && el.dataset.act === 'letter-text') { clearTimeout(respTimers['lt' + el.dataset.id]); respTimers['lt' + el.dataset.id] = setTimeout(() => saveLetter(el), 900); return; }
+    if (!el.dataset || !['response', 'changes'].includes(el.dataset.act)) return;
     const key = el.dataset.id + el.dataset.act;
     clearTimeout(respTimers[key]);
     respTimers[key] = setTimeout(() => saveResponse(el), 800);
   });
-  document.addEventListener('focusout', (e) => { const el = e.target; if (el.dataset && ['response', 'changes'].includes(el.dataset.act) && respTimers[el.dataset.id + el.dataset.act]) { clearTimeout(respTimers[el.dataset.id + el.dataset.act]); saveResponse(el); } });
+  document.addEventListener('focusout', (e) => { const el = e.target; if (el.dataset && el.dataset.act === 'letter-text' && respTimers['lt' + el.dataset.id]) { saveLetter(el); return; } if (el.dataset && ['response', 'changes'].includes(el.dataset.act) && respTimers[el.dataset.id + el.dataset.act]) { clearTimeout(respTimers[el.dataset.id + el.dataset.act]); saveResponse(el); } });
+  async function saveLetter(el) {
+    const id = el.dataset.id, r = byId('rounds', id); clearTimeout(respTimers['lt' + id]); delete respTimers['lt' + id];
+    if (!r) return; const v = el.value.trim() ? el.value : null;
+    if ((r.letter_text || null) === v) return;
+    const s = await save('rounds', { letter_text: v }, id); if (!s) return;
+    r.letter_text = v;
+    const ok = $('saved-lt-' + id); if (ok) { ok.classList.add('show'); setTimeout(() => ok.classList.remove('show'), 1600); }
+  }
   async function saveResponse(el) {
     const id = el.dataset.id, field = el.dataset.act, c = byId('comments', id); if (!c) return;
     delete respTimers[id + field];
@@ -1477,6 +1593,8 @@
     Object.assign(c, s);
     const card = $('cm-' + id), sel = card && card.querySelector('select');
     if (sel) sel.value = c.status;
+    const main = card && card.querySelector('.rvi-main');
+    if (main && row.status) { const old = main.querySelector('.chip'); if (old) old.remove(); main.insertAdjacentHTML('beforeend', `<span class="chip ${C_CHIP[c.status]}">${esc(C_STATUS()[c.status])}</span>`); }
     const ok = $('saved-' + id); if (ok) { ok.classList.add('show'); setTimeout(() => ok.classList.remove('show'), 1600); }
     updateProgress(c.round_id);
   }
