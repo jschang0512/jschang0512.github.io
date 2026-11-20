@@ -44,14 +44,13 @@
         "zh": "Bayesian NMA"
       },
       {
-        "zh": "Target Trial Emulation"
+        "zh": "Cohort Study"
       }
     ],
     "areas": [
       {
-        "zh": "bj396",
-        "en": "Oncology (CDK4/6)",
-        "ja": "腫瘍学（CDK4/6）"
+        "zh": "乳癌",
+        "en": "Breast Cancer"
       },
       {
         "zh": "移植醫學（Everolimus）",
