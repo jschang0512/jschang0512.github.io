@@ -6,7 +6,7 @@ Browser-based figure tools for research papers. Everything runs in the browser �
 |---|---|
 | PRISMA 2020 flow diagram | `prismaflow/` |
 | Cohort patient-selection flowchart | `cohortflow/` |
-| Cohort study timeline (study design diagram) | `timeline/` |
+| Cohort study timeline (study design diagram), edited in the form or directly on the figure: several segments per row, text boxes, arrows, brackets, custom types and a legend | `timeline/` |
 | Figure DPI & format converter | `figureconvert/` |
 | Forest plot | `forestplot/` |
 | E-value calculator (unmeasured confounding) | `evalue/` |
@@ -32,4 +32,4 @@ Interface in Traditional Chinese and English. Figures export to PNG, TIFF, JPG, 
 
 張家菘 — questions, bug reports and suggestions: [js.chang0512@gmail.com](mailto:js.chang0512@gmail.com)
 
-Version: v3.3 (2026-11-19)
+Version: v3.4 (2026-11-20)

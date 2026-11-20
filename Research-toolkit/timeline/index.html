@@ -39,6 +39,63 @@
   .fit.ok { background: var(--warn-bg); color: var(--warn-text); }
   .tpl-note { margin-top: 8px; }
   .ref-row { display: grid; grid-template-columns: 90px minmax(0, 1fr) 30px; gap: 6px; margin-bottom: 6px; }
+  .seg-row { display: grid; grid-template-columns: 64px 64px 78px 36px minmax(0, 1fr) 30px; gap: 4px; margin: 4px 0; align-items: center; }
+  .seg-row select, .seg-row input { padding: 5px 6px; font-size: 12.5px; min-width: 0; }
+  .seg-row input[type=color] { padding: 2px; height: 30px; }
+  .paper .edit-ui .move-ev { cursor: ew-resize; }
+  .paper .edit-ui .txt-move { cursor: move; }
+  .paper .edit-ui .txt-move:focus-visible { outline: 2px solid #2563EB; }
+  /* editing on the figure */
+  .tl-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 8px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel); }
+  .tl-bar .spacer { flex: 1; }
+  .tl-bar .paper-zoom { align-self: auto; }
+  .tl-sep { width: 1px; align-self: stretch; background: var(--border); margin: 2px 2px; }
+  .tl-bar [aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: var(--accent-weak); }
+  .tl-bottom { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 12px; align-items: start; }
+  .tl-bottom > .card { margin: 0; }
+  .tl-g2b { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 8px; }
+  .tl-panel .tpl-row { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+  .tl-panel .field { margin-bottom: 6px; }
+  .tl-hint { font-size: 12.5px; color: var(--muted); }
+  body.tl-canvas .tool { grid-template-columns: minmax(0, 1fr); }
+  body.tl-canvas #form { display: none; }
+  body.tl-canvas .preview-jump { display: none; }
+  body.tl-canvas .preview-col { position: static; max-height: none; overflow: visible; }
+  body.tl-canvas .paper { max-height: none; }
+  .tl-panel, .tl-ed { position: fixed; z-index: 50; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 10px 30px oklch(20% 0.02 255 / 0.18); padding: 10px 12px; }
+  .tl-panel { width: min(440px, calc(100vw - 16px)); max-height: min(70vh, 560px); overflow: auto; }
+  .tl-panel.sheet { left: 0 !important; right: 0; bottom: 0; top: auto !important; width: 100%; max-height: 62vh; border-radius: 14px 14px 0 0; }
+  .tl-p-head { display: flex; align-items: center; gap: 6px; margin: -10px -12px 6px; padding: 8px 12px 6px; font-size: 13.5px; cursor: move; touch-action: none; }
+  .tl-panel.sheet .tl-p-head { cursor: default; }
+  .tl-p-head .muted, .tl-ed .muted { color: var(--muted); font-size: 12.5px; }
+  .tl-p-head .spacer, .tl-p-foot .spacer { flex: 1; }
+  .tl-f { display: block; margin-bottom: 6px; min-width: 0; }
+  .tl-f > span { display: block; font-size: 12px; color: var(--muted); margin-bottom: 2px; }
+  .tl-f input, .tl-f select, .tl-f textarea { width: 100%; padding: 5px 7px; font-size: 13px; min-width: 0; }
+  .tl-f input[type=color] { padding: 2px; height: 31px; }
+  .tl-g4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0 6px; }
+  .tl-g2 { display: grid; grid-template-columns: minmax(0, 1fr) 96px; gap: 0 6px; }
+  @media (max-width: 480px) { .tl-g4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .tl-segs-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 6px 0 4px; font-size: 12px; color: var(--muted); }
+  .tl-seg { display: grid; grid-template-columns: 58px 58px 70px 34px minmax(0, 1fr) 28px; gap: 4px; margin-bottom: 4px; align-items: center; }
+  .tl-seg input, .tl-seg select { padding: 4px 5px; font-size: 12.5px; min-width: 0; }
+  .tl-seg input[type=color] { padding: 2px; height: 28px; }
+  .tl-p-foot { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+  .tl-p-foot .danger { color: var(--danger); }
+  .tl-p-foot .danger:hover { border-color: var(--danger); }
+  .tl-ed-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .kind-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) 56px 30px; gap: 6px; align-items: center; margin-bottom: 5px; }
+  .kind-row input[type=color] { padding: 2px; height: 30px; width: 40px; }
+  .kind-row input { padding: 5px 8px; font-size: 13px; min-width: 0; }
+  .kind-n { font-size: 12px; color: var(--muted); text-align: right; }
+  .note-row { display: grid; grid-template-columns: 64px minmax(0, 1fr) 40px 30px; gap: 6px; align-items: center; margin-bottom: 5px; }
+  .note-row input { padding: 5px 8px; font-size: 13px; min-width: 0; }
+  .note-row input[type=color] { padding: 2px; height: 30px; width: 40px; }
+  .paper .edit-ui .note-hit { cursor: move; }
+  .paper .edit-ui .note-end { cursor: crosshair; }
+  .paper .edit-ui .note-hit:focus-visible { outline: 2px solid #2563EB; }
+  .tl-tip { font-size: 12px; color: var(--muted); margin: 4px 0 0; }
+  .tl-kinds .kind-row { grid-template-columns: 40px minmax(0, 1fr) 52px 30px; }
 </style>
 </head>
 <body>
@@ -130,8 +187,25 @@
     </div>
 
     <div class="card">
+      <h2><span class="step-no">6</span> <span data-en="Types &amp; legend">類別與圖例</span></h2>
+      <p class="hint" data-en="Rename or recolour a type and every row of that type follows. Add types of your own (e.g. pregnancy, dose change).">改類別的名稱或顏色，這個類別的每一列會一起改；也可以新增自己的類別（例如懷孕期、劑量調整）。</p>
+      <div id="kindsEd"></div>
+      <label class="check" style="margin-top:10px"><input type="checkbox" data-k="legend.on"> <span data-en="Add a legend under the figure">在圖下方加圖例</span></label>
+      <div data-show="legend.on">
+        <label class="field"><span data-en="Legend title (optional)">圖例標題（選填）</span><input data-k="legend.title"></label>
+        <label class="check"><input type="checkbox" data-k="legend.all"> <span data-en="List every type (off = only the types on the figure)">列出全部類別（不勾＝只列圖上用到的）</span></label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span class="step-no">7</span> <span data-en="Annotations on the figure">圖上註解</span></h2>
+      <p class="hint" data-en="Add text boxes, arrows and brackets from the bar above the figure, then drag them into place. Edit or remove them here too.">從圖上方工具列加文字框、箭頭、括號，再拖到想要的位置；這裡也可以修改或刪除。</p>
+      <div id="notesList"></div>
+    </div>
+
+    <div class="card">
       <details>
-        <summary><span class="step-no" style="display:inline-grid">6</span> <span data-en="Detailed appearance">細部外觀</span></summary>
+        <summary><span class="step-no" style="display:inline-grid">8</span> <span data-en="Detailed appearance">細部外觀</span></summary>
         <label class="field"><span data-en="Colour palette (overrides the style’s colours)">配色（覆蓋風格的顏色）</span><select id="paletteSel"></select></label>
         <div class="sub-h" data-en="Bars">色條</div>
         <div class="grid2">
@@ -186,7 +260,7 @@
 
   <section class="preview-col">
     <div class="paper" id="preview"></div>
-    <p class="hint drag-hint" data-en="Tip: drag either end of a window on the figure to change its days, or drag the middle to move the whole window. Click it and use the arrow keys for one day at a time (Shift = 10).">小技巧：在圖上拖曳時間窗的兩端可改天數，拖曳中間可整段移動；點一下後也可以用方向鍵一天一天調（Shift＝10 天）。</p>
+    <p class="hint drag-hint" data-en="Click a row or note for its settings · double-click any text to edit it · drag a bar’s ends to change days (arrow keys: one day, Shift: 10) · drag the blue handle to move a row’s text">點一列或註解開啟設定・雙擊文字直接修改・拖曳色條兩端改天數（方向鍵一次一天，Shift＝10）・拖曳藍色把手移動該列文字</p>
     <div class="card" id="designCheck">
       <h2 data-en="Design check">設計檢查</h2>
       <p class="hint" data-en="Common timing problems in cohort designs, checked against the follow-up start. A warning is not always an error — some designs do this on purpose; say so in the Methods.">依追蹤起點檢查世代研究常見的時間錯誤。提醒不一定是錯，有些設計是刻意的，請在 Methods 說明。</p>
@@ -196,7 +270,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261119a"></script>
+<script src="../shared/common.js?v=20261120a"></script>
 <script>
 const T = RT.t;
 const KEY = 'timeline5';
@@ -214,6 +288,23 @@ const KINDS = [
   ['other', '其他', 'Other'],
 ];
 const SHAPES = () => [['bar', T('色段', 'Segment')], ['event', T('事件標記', 'Event marker')], ['bracket', T('括號區間', 'Bracket')]];
+/** every type a row can have: the built-in ones (with any new name) and your own */
+const kindList = () => [...KINDS.map(([v, zh, en]) => [v, (S.kindNames || {})[v] || T(zh, en)]), ...(S.kinds || []).map((k) => [k.id, k.name || T('自訂類別', 'Custom type')])];
+const kindName = (id) => (kindList().find((k) => k[0] === id) || [id, id])[1];
+/** the name printed on the figure: yours if you renamed it, else the English one */
+function figKindName(id) {
+  const own = (S.kinds || []).find((k) => k.id === id); if (own) return own.name || 'Custom type';
+  const b = KINDS.find((k) => k[0] === id); return (S.kindNames || {})[id] || (b ? b[2] : id);
+}
+/** a type's colour: your own type's colour, a recoloured built-in one, else the palette's */
+function kindColorIn(St, id) {
+  const c = (St.kinds || []).find((k) => k.id === id);
+  if (c) return c.color || '#CCCCCC';
+  const pal = (PALETTES[St.palette] || PALETTES.bold).c;
+  return (St.kindColors || {})[id] || pal[id] || pal.other;
+}
+const kindColor = (id) => kindColorIn(S, id);
+const KIND_SWATCH = ['#8E7CC3', '#E06666', '#F6B26B', '#93C47D', '#76A5AF', '#6FA8DC', '#C27BA0', '#FFD966'];
 const PALETTES = {
   bold: { zh: '深色色塊', en: 'Bold blocks', c: { screen: '#375482', incl: '#375482', excl: '#D05353', wash: '#7F7F7F', cov: '#9933FF', expo: '#ED7D31', fu: '#00B050', out: '#C00000', other: '#1F9C9C' } },
   pastel: { zh: '柔和粉彩（Schneeweiss / REPEAT）', en: 'Soft pastel (Schneeweiss / REPEAT)', c: { screen: '#E7E6E6', incl: '#F4CCCC', excl: '#F4CCCC', wash: '#D9D2E9', cov: '#CFE2F3', expo: '#FCE5CD', fu: '#D9EAD3', out: '#EAD1DC', other: '#FFF2CC' } },
@@ -245,7 +336,12 @@ const THEMES = {
 };
 
 /* ---------------- study-design templates (content only) ---------------- */
-const row = (o) => Object.assign({ label: '', details: '', s: '', e: '0', win: '', kind: 'other', shape: 'bar', color: '', pos: 'auto', tcolor: '' }, o);
+const row = (o) => Object.assign({ label: '', details: '', s: '', e: '0', win: '', kind: 'other', shape: 'bar', color: '', pos: 'auto', tcolor: '', segs: [], fsK: 1, bold: '', minH: 0, tdx: 0, tdy: 0 }, o);
+// per-row text: size factor, weight ('' = the figure's setting, 'b' = bold, 'n' = regular), offset dragged on the figure
+const rowFs = (r, fs) => fs * (Number(r.fsK) || 1);
+const rowBold = (r, def) => (r.bold === 'b' ? true : r.bold === 'n' ? false : def);
+const segsOf = (r) => (Array.isArray(r.segs) ? r.segs : []);
+const seg = (o) => Object.assign({ s: '', e: '', shape: 'bar', color: '', win: '' }, o);
 const TEMPLATES = {
   acnu: {
     zh: 'New-user active comparator', en: 'New-user, active comparator', dzh: 'Washout、排除、共變項、追蹤', den: 'Washout, exclusions, covariates, follow-up',
@@ -389,6 +485,8 @@ const DEF = {
   barR: 0, barBW: 0, barBC: '#333333', titleBold: true, winItalic: false, trackTicks: true,
   d0Color: '#BFBFBF', d0W: 9, d0Dash: 'solid', refColor: '#555555', axisColor: '#263238', axisW: 4, titleScale: 1.6, bgColor: '#F2F2F2', bgOn: true, axis: true,
   center0: true, gray: false, stripes: false, showWin: true, winParen: true,
+  // types renamed or recoloured, types of your own, a legend, and annotations placed freely on the figure
+  kindNames: {}, kindColors: {}, kinds: [], legend: { on: false, title: '', all: false }, notes: [],
 };
 function loadTemplate(S, id) {
   const t = structuredClone(TEMPLATES[id]);
@@ -414,8 +512,7 @@ function applyThemeTo(S, id) {
   S.palette = th.palette;
 }
 function applyPalette(S) {
-  const pal = (PALETTES[S.palette] || PALETTES.bold).c;
-  S.rows.forEach((r) => { r.color = pal[r.kind] || pal.other; });
+  S.rows.forEach((r) => { r.color = kindColorIn(S, r.kind); });
 }
 loadTemplate(DEF, 'acnu');
 let S = RT.load(KEY, DEF);
@@ -449,6 +546,71 @@ function syncInputs() {
   RT.syncForm(form, S);
   document.getElementById('paletteSel').value = S.palette;
   renderRows(); renderRefs(); renderCal(); showTplNote();
+  const ke = document.getElementById('kindsEd'); if (ke && !ke.contains(document.activeElement)) mountKinds(ke);
+  const nl = document.getElementById('notesList'); if (nl && !nl.contains(document.activeElement)) renderNotesList();
+}
+/** types editor: rename or recolour any type (every row of that type follows), add or remove types of your own */
+function mountKinds(host) {
+  if (!host) return;
+  host.innerHTML = '';
+  const builtIn = new Set(KINDS.map((k) => k[0]));
+  kindList().forEach(([id, name]) => {
+    const own = !builtIn.has(id), b = KINDS.find((k) => k[0] === id), def = own ? '' : (RT.lang === 'en' ? b[2] : b[2] + '（' + b[1] + '）');
+    const used = S.rows.filter((r) => r.kind === id).length;
+    const el = RT.h(`<div class="kind-row"><input type="color" aria-label="${T('顏色', 'Colour')}"><input class="kn" placeholder="${RT.esc(def)}" aria-label="${T('類別名稱', 'Type name')}"><span class="kind-n">${used ? T(used + ' 列', used + (used > 1 ? ' rows' : ' row')) : ''}</span>${own ? `<button type="button" class="icon" aria-label="${T('刪除這個類別', 'Remove this type')}">✕</button>` : '<span></span>'}</div>`);
+    const [col, nm] = el.querySelectorAll('input');
+    col.value = kindColor(id);
+    nm.value = own ? ((S.kinds.find((k) => k.id === id) || {}).name || '') : ((S.kindNames || {})[id] || '');
+    col.oninput = () => {
+      if (own) S.kinds.find((k) => k.id === id).color = col.value; else (S.kindColors ||= {})[id] = col.value;
+      S.rows.forEach((r) => { if (r.kind === id) r.color = col.value; });
+      kindsChanged();
+    };
+    nm.oninput = () => {
+      if (own) S.kinds.find((k) => k.id === id).name = nm.value;
+      else { S.kindNames ||= {}; if (nm.value.trim()) S.kindNames[id] = nm.value; else delete S.kindNames[id]; }
+      kindsChanged();
+    };
+    const del = el.querySelector('button');
+    if (del) del.onclick = () => {
+      S.kinds = S.kinds.filter((k) => k.id !== id);
+      S.rows.forEach((r) => { if (r.kind === id) { r.kind = 'other'; r.color = kindColor('other'); } });
+      mountKinds(host); kindsChanged(true);
+    };
+    host.appendChild(el);
+  });
+  const add = RT.h(`<button type="button" class="small">${T('＋ 新增類別', '+ Add a type')}</button>`);
+  add.onclick = () => {
+    (S.kinds ||= []).push({ id: 'k' + Date.now().toString(36), name: 'New type', color: KIND_SWATCH[S.kinds.length % KIND_SWATCH.length] });
+    mountKinds(host); kindsChanged(true);
+    const ins = host.querySelectorAll('.kn'); const last = ins[ins.length - 1]; if (last) { last.focus(); last.select(); }
+  };
+  host.appendChild(add);
+}
+let KINDS_V = 0;   // bumped whenever the list of types or their names change, so open pickers can refresh
+const kindsSync = RT.debounce(() => { renderRows(); renderCal(); }, 250);
+function kindsChanged(structural) {
+  KINDS_V++;
+  kindsSync();
+  if (structural) { const h = document.getElementById('kindsEd'); if (h && !h.contains(document.activeElement)) mountKinds(h); }
+  update();
+}
+/** the annotations placed on the figure, editable from the form too */
+const NOTE_KIND = () => ({ text: T('文字框', 'Text box'), arrow: T('箭頭', 'Arrow'), brace: T('括號', 'Bracket') });
+function renderNotesList() {
+  const host = document.getElementById('notesList');
+  if (!host) return;
+  host.innerHTML = '';
+  const notes = S.notes || [];
+  if (!notes.length) { host.innerHTML = `<p class="hint" style="margin:0">${T('還沒有註解。用圖上方工具列的「＋ 文字」「＋ 箭頭」「＋ 括號」加入。', 'No annotations yet. Add them with + Text, + Arrow or + Bracket above the figure.')}</p>`; return; }
+  notes.forEach((n, k) => {
+    const el = RT.h(`<div class="note-row"><span class="lbl" style="margin:0">${NOTE_KIND()[n.type] || n.type}</span>${n.type === 'arrow' ? '<span></span>' : '<input>'}<input type="color" aria-label="${T('顏色', 'Colour')}"><button type="button" class="icon" aria-label="${T('刪除', 'Delete')}">✕</button></div>`);
+    const txt = el.querySelector('input:not([type])'), col = el.querySelector('input[type=color]');
+    if (txt) { txt.value = n.text || ''; txt.oninput = () => { n.text = txt.value; update(); }; }
+    col.value = n.color || '#000000'; col.oninput = () => { n.color = col.value; update(); };
+    el.querySelector('button').onclick = () => { S.notes.splice(k, 1); renderNotesList(); update(); };
+    host.appendChild(el);
+  });
 }
 function renderCal() {
   const host = document.getElementById('calRows');
@@ -460,7 +622,7 @@ function renderCal() {
       <div class="trow4" style="grid-template-columns:1fr 1fr 1fr 1fr;margin-top:0">
         <label><span class="lbl">${T('起', 'From')}</span><input data-f="start" placeholder="2009-01-01"></label>
         <label><span class="lbl">${T('迄', 'To')}</span><input data-f="end" placeholder="2019-12-31"></label>
-        <label><span class="lbl">${T('類型', 'Type')}</span><select data-f="kind">${KINDS.map(([v, zh, en]) => `<option value="${v}">${T(zh, en)}</option>`).join('')}</select></label>
+        <label><span class="lbl">${T('類型', 'Type')}</span><select data-f="kind">${kindList().map(([v, l]) => `<option value="${RT.esc(v)}">${RT.esc(l)}</option>`).join('')}</select></label>
         <label><span class="lbl">${T('形狀', 'Shape')}</span><select data-f="shape"><option value="bar">${T('期間', 'Period')}</option><option value="event">${T('時間點', 'Point')}</option></select></label>
       </div></div>`);
     blk.querySelectorAll('[data-f]').forEach((el) => {
@@ -487,11 +649,12 @@ document.getElementById('themeSel').onchange = (e) => {
   const keepTrack = S.style === 'track';
   applyThemeTo(S, id);
   if (keepTrack && th.s.style !== 'track') S.style = 'track';
+  S.kindColors = {};
   applyPalette(S);
   syncInputs(); update();
   RT.toast(T('已套用風格：', 'Style applied: ') + T(th.zh, th.en) + T('（按 ↶ 可復原）', ' (↶ to undo)'));
 };
-document.getElementById('paletteSel').onchange = (e) => { S.palette = e.target.value; applyPalette(S); renderRows(); update(); };
+document.getElementById('paletteSel').onchange = (e) => { S.palette = e.target.value; S.kindColors = {}; applyPalette(S); renderRows(); mountKinds(document.getElementById('kindsEd')); update(); };
 function renderRefs() {
   const host = document.getElementById('refLines');
   host.innerHTML = '';
@@ -507,6 +670,15 @@ function renderRefs() {
 }
 document.getElementById('addRef').onclick = () => { (S.refLines ||= []).push({ t: '30', label: '' }); renderRefs(); update(); };
 const POS = () => [['auto', T('自動', 'Auto')], ['in', T('色條內', 'Inside')], ['out', T('色條外', 'Outside')]];
+const FS_STEPS = [0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.35, 1.5, 1.75, 2];
+const nearestFs = (k) => FS_STEPS.reduce((a, b) => (Math.abs(b - (Number(k) || 1)) < Math.abs(a - (Number(k) || 1)) ? b : a), 1);
+/** a new segment starts just after the row's last one (or after the row itself), the same length as the row */
+function newSegFor(r) {
+  const all = [r, ...segsOf(r)].map(rowEnds).filter((x) => x.s !== null || x.e !== null);
+  const ends = all.map((x) => (x.e ?? x.s)).filter((v) => v !== null && v !== undefined), end = ends.length ? Math.max(...ends) : 0;
+  const { s, e } = rowEnds(r), len = s !== null && e !== null ? Math.max(1, Math.abs(e - s)) : 30;
+  return seg({ s: String(end + 1), e: String(end + len) });
+}
 const openRows = new Set();
 function renderRows() {
   const host = document.getElementById('rows');
@@ -522,7 +694,7 @@ function renderRows() {
       <div class="trow3">
         <label><span class="lbl">${T('起點', 'Start')}</span><input class="n" data-f="s" placeholder="${T('開放', 'open')}" title="${T('數字加括號可加標示，例：280 (delivery)', 'Add a label in brackets, e.g. 280 (delivery)')}"></label>
         <label><span class="lbl">${T('終點', 'End')}</span><input class="n" data-f="e" placeholder="${T('開放', 'open')}" title="${T('只寫文字（如 Censor）＝開放端點；數字加括號可加標示', 'Text only (e.g. Censor) = open end; add a label in brackets')}"></label>
-        <label><span class="lbl">${T('類型', 'Type')}</span><select data-f="kind">${KINDS.map(([v, zh, en]) => `<option value="${v}">${T(zh, en)}</option>`).join('')}</select></label>
+        <label><span class="lbl">${T('類型', 'Type')}</span><select data-f="kind">${kindList().map(([v, l]) => `<option value="${RT.esc(v)}">${RT.esc(l)}</option>`).join('')}</select></label>
       </div>
       <details class="row-more"${openRows.has(i) ? ' open' : ''}><summary>${T('更多：區間文字、形狀、顏色', 'More: window label, shape, colours')}</summary>
       <label class="field" style="margin-top:4px"><span class="lbl">${T('區間文字（留空自動）', 'Window label (blank = auto)')}</span><input data-f="win"></label>
@@ -533,17 +705,38 @@ function renderRows() {
         <label><span class="lbl">${T('文字色', 'Text')}</span><input type="color" data-f="tcolor"></label>
       </div>
       <label class="check"><input type="checkbox" class="tc-on"> ${T('自訂文字顏色（不勾＝依底色自動）', 'Custom text colour (off = automatic)')}</label>
+      <div class="trow4" style="grid-template-columns:1fr 1fr 1fr">
+        <label><span class="lbl">${T('字級', 'Text size')}</span><select data-f="fsK">${FS_STEPS.map((k) => `<option value="${k}">${Math.round(k * 100)}%</option>`).join('')}</select></label>
+        <label><span class="lbl">${T('標題粗細', 'Title weight')}</span><select data-f="bold"><option value="">${T('跟著整張圖', 'As the figure')}</option><option value="b">${T('粗體', 'Bold')}</option><option value="n">${T('一般', 'Regular')}</option></select></label>
+        <label><span class="lbl">${T('最小高度 (px)', 'Min height (px)')}</span><input class="n" type="number" min="0" max="400" step="2" data-f="minH"></label>
+      </div>
+      <button type="button" class="small" data-a="resetpos" style="margin-top:6px"${Number(r.tdx) || Number(r.tdy) ? '' : ' hidden'}>${T('文字回到自動位置', 'Put the text back in place')}</button>
+      <div class="lbl" style="margin-top:10px">${T('同一列的其他段（例：間斷用藥、多次暴露）', 'More segments on this row (e.g. gaps in use, repeated exposure)')}</div>
+      <div class="segs"></div>
+      <button type="button" class="small" data-a="addseg">${T('＋ 加一段', '+ Add a segment')}</button>
       </details></div>`);
     blk.querySelector('.row-more').addEventListener('toggle', (e) => { if (e.target.open) openRows.add(i); else openRows.delete(i); });
     blk.querySelectorAll('[data-f]').forEach((el) => {
       const f = el.dataset.f;
-      el.value = r[f] || ({ tcolor: '#000000', pos: 'auto', kind: 'other', shape: 'bar', color: pal[r.kind] || pal.other }[f] ?? '');
+      el.value = f === 'fsK' ? String(nearestFs(r.fsK)) : f === 'minH' ? (Number(r.minH) || '') : (r[f] || ({ tcolor: '#000000', pos: 'auto', kind: 'other', shape: 'bar', color: kindColor(r.kind) }[f] ?? ''));
       if (f === 'tcolor') el.disabled = !r.tcolor;
       el.oninput = () => {
-        r[f] = el.value;
-        if (f === 'kind') { r.color = pal[r.kind] || pal.other; blk.querySelector('[data-f="color"]').value = r.color; }
+        r[f] = f === 'fsK' || f === 'minH' ? Number(el.value) || (f === 'fsK' ? 1 : 0) : el.value;
+        if (f === 'kind') { r.color = kindColor(r.kind); blk.querySelector('[data-f="color"]').value = r.color; }
         update();
       };
+    });
+    // extra segments
+    const segHost = blk.querySelector('.segs');
+    segsOf(r).forEach((g, k) => {
+      const sr = RT.h(`<div class="seg-row"><input class="n" data-g="s" placeholder="${T('起', 'From')}"><input class="n" data-g="e" placeholder="${T('迄', 'To')}"><select data-g="shape"><option value="bar">${T('色段', 'Segment')}</option><option value="event">${T('事件', 'Event')}</option></select><input type="color" data-g="color" title="${T('顏色（不改＝同這列）', 'Colour (unchanged = the row’s)')}"><input data-g="win" placeholder="${T('段內文字', 'Label')}"><button class="icon" type="button" title="${T('刪除這段', 'Remove segment')}">✕</button></div>`);
+      sr.querySelectorAll('[data-g]').forEach((el) => {
+        const f = el.dataset.g;
+        el.value = f === 'color' ? (g.color || colorOf(r)) : (g[f] ?? '');
+        el.oninput = () => { g[f] = el.value; if (f === 'shape' && g.shape === 'event') g.e = ''; update(); };
+      });
+      sr.querySelector('button').onclick = () => { r.segs.splice(k, 1); renderRows(); update(); };
+      segHost.appendChild(sr);
     });
     const tcOn = blk.querySelector('.tc-on'), tc = blk.querySelector('[data-f="tcolor"]');
     tcOn.checked = !!r.tcolor;
@@ -554,10 +747,12 @@ function renderRows() {
       if (a === 'up' && i > 0) [S.rows[i - 1], S.rows[i]] = [S.rows[i], S.rows[i - 1]];
       else if (a === 'down' && i < S.rows.length - 1) [S.rows[i + 1], S.rows[i]] = [S.rows[i], S.rows[i + 1]];
       else if (a === 'dup') S.rows.splice(i + 1, 0, structuredClone(r));
-      else if (a === 'del') S.rows.splice(i, 1);
+      else if (a === 'del') { S.rows.splice(i, 1); if (SEL !== null && SEL >= S.rows.length) SEL = null; }
       else return;
       renderRows(); update();
     };
+    blk.querySelector('[data-a="addseg"]').onclick = () => { (r.segs ||= []).push(newSegFor(r)); openRows.add(i); renderRows(); update(); };
+    blk.querySelector('[data-a="resetpos"]').onclick = () => { r.tdx = 0; r.tdy = 0; renderRows(); update(); };
     host.appendChild(blk);
   });
 }
@@ -594,12 +789,48 @@ const winOf = (r) => (r.win && r.win.trim() ? r.win.trim() : autoWin(r));
 const rgb = (h) => { const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(h || ''); return m ? m.slice(1).map((x) => parseInt(x, 16)) : [200, 200, 200]; };
 const lum = (h) => { const [r, g, b] = rgb(h); return (0.299 * r + 0.587 * g + 0.114 * b) / 255; };
 const toGray = (h) => { const v = Math.round(lum(h) * 255).toString(16).padStart(2, '0'); return '#' + v + v + v; };
-const colorOf = (r) => r.color || (PALETTES[S.palette] || PALETTES.bold).c[r.kind] || '#cccccc';
+const colorOf = (r) => r.color || kindColor(r.kind) || '#cccccc';
 const fillOf = (c) => (S.gray ? toGray(c) : c);
 const dashOf = (sw, style = S.d0Dash) => (style === 'dash' ? `${Math.max(4, sw * 3)} ${Math.max(3, sw * 2)}` : style === 'dot' ? `${Math.max(1, sw)} ${Math.max(2.5, sw * 1.8)}` : '');
 const refs = () => (S.refLines || []).map((rf) => ({ t: N(rf.t), label: rf.label || '' })).filter((rf) => rf.t !== null);
-// filled in by the layout that drew the preview: its day→x scale and each window's bar
-let TL = { X: null, bars: [] };
+// filled in by the layout that drew the preview: its day→x scale, each window's bar, each row's text block,
+// and the Day 0 title and footnote (for editing on the figure)
+let TL = { X: null, bars: [], texts: [], d0: null, foot: null };
+// the row selected on the figure (canvas.js), outlined by decorate()
+let SEL = null;
+/** x extent of an extra segment, on the same rules as a row's own window */
+function segX(g, X, left, right, x0, w0) {
+  const a = ep(g.s).n; let b = ep(g.e).n;
+  if (g.shape === 'event') b = a;
+  if (a === null && b === null) return null;
+  let xs = a === null ? left : X(a), xe = b === null ? right : X(b);
+  if (xe < xs) [xs, xe] = [xe, xs];
+  if (g.shape === 'event') return { xs: xs - 5, xe: xs + 5, s: a, e: a, ev: true };
+  if (a === 0) xs = x0 - w0 / 2;
+  if (b === 0) xe = x0 + w0 / 2;
+  if (xe - xs < 8) { const c = (xs + xe) / 2; xs = c - 4; xe = c + 4; }
+  return { xs, xe, s: a, e: b, ev: false };
+}
+/** draw a row's extra segments in the band y..y+h; window labels sit inside when they fit */
+function drawSegs(r, i, X, left, right, x0, w0, y, h, fs, rowColor) {
+  let out = '';
+  const bw = Number(S.barBW) || 0;
+  segsOf(r).forEach((g, k) => {
+    const p = segX(g, X, left, right, x0, w0);
+    if (!p) return;
+    const c = fillOf(g.color || rowColor);
+    if (p.ev) {
+      const cx = (p.xs + p.xe) / 2, d = Math.min(h * 0.42, 11), cy = y + h / 2;
+      out += RT.poly([[cx, cy - d], [cx + d, cy], [cx, cy + d], [cx - d, cy]], { fill: c, stroke: lum(c) > 0.85 ? '#333333' : 'none', sw: 0.8 });
+    } else {
+      out += RT.rect(p.xs, y, p.xe - p.xs, h, { fill: c, radius: Math.min(Number(S.barR) || 0, h / 2, (p.xe - p.xs) / 2), stroke: bw > 0 ? S.barBC : 'none', sw: bw });
+      const w = String(g.win || '').trim(), sf = fs * 0.85;
+      if (w && RT.textWidth(w, sf, false, !!S.winItalic) + 8 <= p.xe - p.xs) out += RT.rich([{ runs: [{ t: w, size: sf, italic: !!S.winItalic, color: lum(c) < 0.62 ? '#FFFFFF' : '#222222' }] }], (p.xs + p.xe) / 2, y + h / 2 - sf * 0.65, { lh: sf * 1.3, anchor: 'middle' });
+    }
+    TL.bars.push({ i, seg: k, xs: p.xs, xe: p.xe, y, h, s: p.s, e: p.ev ? p.s : p.e });
+  });
+  return out;
+}
 function makeF(vals) {
   const uniq = [...new Set(vals)].sort((a, b) => a - b);
   if (S.scale === 'linear') return (t) => t;
@@ -610,6 +841,7 @@ function makeF(vals) {
 function collect() {
   const vals = [0]; let openL = false, openR = false;
   S.rows.forEach((r) => {
+    segsOf(r).forEach((g) => { const a = ep(g.s).n, b = ep(g.e).n; if (a !== null) vals.push(a); if (g.shape !== 'event' && b !== null) vals.push(b); });
     const s = ep(r.s).n, e = ep(r.e).n;
     if (r.shape === 'event') { if (s !== null) vals.push(s); return; }
     if (s === null) openL = true; else vals.push(s);
@@ -653,29 +885,30 @@ function buildBlock() {
   if (negRaw < posRaw * 0.05) negMax = Math.max(negMax, Math.abs(F(posRaw * 0.25)));
   const reserveL = openL ? 0.15 * (x0 - left) : 0, reserveR = openR ? 0.3 * (right - x0) : 0;
   const X = (t) => (t < 0 ? x0 - (Math.abs(F(t)) / negMax) * (x0 - left - reserveL) : t > 0 ? x0 + (F(t) / posMax) * (right - x0 - reserveR) : x0);
-  TL = { X, bars: [] };
+  TL = { X, bars: [], texts: [], d0: null, foot: null };
 
   const runW = (runs) => runs.reduce((a, r) => a + RT.textWidth(r.t, r.size, r.bold, r.italic), 0);
   const winStr = (r) => { let w = winOf(r); if (S.winParen && !/^\(/.test(w)) w = `(${NB}${w}${NB})`; return w; };
   function layout(r, maxW, colTitle, colText) {
-    const lines = [];
-    String(r.label || '').split('\n').flatMap((t) => RT.wrap(t, maxW, fs, tb)).forEach((t) => lines.push({ runs: [{ t, bold: tb, size: fs, color: colTitle }], ind: 0 }));
+    const lines = [], f = rowFs(r, fs), b = rowBold(r, tb), rlh = f * (Number(S.st.lh) || 1.38);
+    String(r.label || '').split('\n').flatMap((t) => RT.wrap(t, maxW, f, b)).forEach((t) => lines.push({ runs: [{ t, bold: b, size: f, color: colTitle }], ind: 0 }));
     if (S.showWin) {
       const w = winStr(r);
       const last = lines[lines.length - 1];
-      if (last && runW(last.runs) + RT.textWidth(NB + w, fs, false, wi) <= maxW) last.runs.push({ t: NB + w, bold: false, italic: wi, size: fs, color: colText });
-      else lines.push({ runs: [{ t: w, bold: false, italic: wi, size: fs, color: colText }], ind: 0 });
+      if (last && runW(last.runs) + RT.textWidth(NB + w, f, false, wi) <= maxW) last.runs.push({ t: NB + w, bold: false, italic: wi, size: f, color: colText });
+      else lines.push({ runs: [{ t: w, bold: false, italic: wi, size: f, color: colText }], ind: 0 });
     }
     String(r.details || '').split('\n').filter((d) => d.trim()).forEach((d) => {
-      const hang = /^\s*(\d+[.)]|[•\-–])\s/.test(d) ? RT.textWidth(d.trim().match(/^(\S+\s)/)[1], fs) : 0;
-      RT.wrap(d.trim(), maxW - indent - hang, fs, false).forEach((t, i) => lines.push({ runs: [{ t, bold: false, size: fs, color: colText }], ind: indent + (i > 0 ? hang : 0) }));
+      const hang = /^\s*(\d+[.)]|[•\-–])\s/.test(d) ? RT.textWidth(d.trim().match(/^(\S+\s)/)[1], f) : 0;
+      RT.wrap(d.trim(), maxW - indent - hang, f, false).forEach((t, i) => lines.push({ runs: [{ t, bold: false, size: f, color: colText }], ind: indent + (i > 0 ? hang : 0) }));
     });
-    return { lines, width: Math.max(0, ...lines.map((l) => l.ind + runW(l.runs))), height: lines.length * lh };
+    return { lines, lh: rlh, width: Math.max(0, ...lines.map((l) => l.ind + runW(l.runs))), height: lines.length * rlh };
   }
   const natural = (r) => {
-    const ws = String(r.label || '').split('\n').map((t) => RT.textWidth(t, fs, tb));
-    if (S.showWin) ws.push(RT.textWidth(winStr(r), fs, false, wi));
-    String(r.details || '').split('\n').forEach((d) => ws.push(indent + RT.textWidth(d.trim(), fs)));
+    const f = rowFs(r, fs), b = rowBold(r, tb);
+    const ws = String(r.label || '').split('\n').map((t) => RT.textWidth(t, f, b));
+    if (S.showWin) ws.push(RT.textWidth(winStr(r), f, false, wi));
+    String(r.details || '').split('\n').forEach((d) => ws.push(indent + RT.textWidth(d.trim(), f)));
     return Math.max(0, ...ws);
   };
 
@@ -726,9 +959,10 @@ function buildBlock() {
       L = layout(r, avail, tcol, dark);
       tx = side === 'L' ? Math.max(left, xs - padX - L.width) : Math.min(xe + padX, W - M - L.width);
     }
-    const h = Math.max(L.height + 2 * padY, fs * 2);
-    R.push({ xs, xe, y, h, color, L, tx });
-    TL.bars.push({ i: S.rows.indexOf(r), xs, xe, y, h, s, e });
+    const h = Math.max(L.height + 2 * padY, rowFs(r, fs) * 2, Number(r.minH) || 0);
+    const ri = S.rows.indexOf(r);
+    R.push({ r, ri, xs, xe, y, h, color, L, tx });
+    TL.bars.push({ i: ri, xs, xe, y, h, s, e });
     y += h + gapY;
   });
   y -= gapY;
@@ -737,11 +971,14 @@ function buildBlock() {
   RT.beginScene();
   const lineTop = topBox ? M + topBox.h : M * 0.2;
   let body = RT.line([[x0, lineTop], [x0, axisY]], { color: S.d0Color, sw: LINE, dash: dashOf(LINE), dashType: S.d0Dash });
-  if (topBox) body += RT.drawBox(topBox, Math.max(left, Math.min(W - M - topBox.w, x0 - topBox.w / 2)), M);
+  if (topBox) { const bx = Math.max(left, Math.min(W - M - topBox.w, x0 - topBox.w / 2)); body += RT.drawBox(topBox, bx, M); TL.d0 = { x: bx, y: M, w: topBox.w, h: topBox.h }; }
   const bw = Number(S.barBW) || 0;
   R.forEach((r) => {
     body += RT.rect(r.xs, r.y, r.xe - r.xs, r.h, { fill: r.color, radius: Math.min(Number(S.barR) || 0, r.h / 2, (r.xe - r.xs) / 2), stroke: bw > 0 ? S.barBC : 'none', sw: bw });
-    body += RT.rich(r.L.lines, r.tx, r.y + (r.h - r.L.height) / 2, { lh });
+    body += drawSegs(r.r, r.ri, X, left, right, x0, LINE, r.y, r.h, fs, r.color);
+    const tx = r.tx + (Number(r.r.tdx) || 0), ty = r.y + (r.h - r.L.height) / 2 + (Number(r.r.tdy) || 0);
+    body += RT.rich(r.L.lines, tx, ty, { lh: r.L.lh });
+    TL.texts.push({ i: r.ri, x: tx, y: ty, w: Math.max(20, r.L.width), h: Math.max(10, r.L.height) });
   });
   body += drawRefs(X, topBox ? lineTop + 4 : M * 0.3, axisY, fs, W - M);
   let H = axisY;
@@ -755,6 +992,7 @@ function buildBlock() {
     const tw = runW(title);
     const cx = Math.max(left, Math.min(W - M - tw, x0 - tw / 2));
     body += RT.rich([{ runs: title }], cx, axisY + tfs * 0.2, { lh: tfs * 1.25 });
+    TL.d0 = { x: cx, y: axisY + tfs * 0.2, w: tw, h: tfs * 1.25 };
     H = axisY + tfs * 1.45;
   }
   return { W, H, body, bg: S.bgOn ? S.bgColor : '#FFFFFF' };
@@ -772,13 +1010,13 @@ function buildClassic() {
   if (fmax === fmin) { fmin -= 1; fmax += 1; }
   const padL = openL ? 56 : 10, padR = openR ? 64 : 10;
   const X = (t) => x0 + padL + ((F(t) - fmin) / (fmax - fmin)) * (PW - padL - padR);
-  TL = { X, bars: [] };
+  TL = { X, bars: [], texts: [], d0: null, foot: null };
 
   RT.beginScene();
   let body = '';
   const hx = X(0);
   const hb = RT.box([{ text: S.day0Title, bold: true }, S.day0Text ? { text: S.day0Text } : null], Math.min(260, PW), { size: fs, fill: '#fff', stroke: '#000', sw: 1.2, radius: 4, lh: lhK });
-  body += RT.drawBox(hb, Math.max(x0, Math.min(x1 - hb.w, hx - hb.w / 2)), M);
+  { const bx = Math.max(x0, Math.min(x1 - hb.w, hx - hb.w / 2)); body += RT.drawBox(hb, bx, M); TL.d0 = { x: bx, y: M, w: hb.w, h: hb.h }; }
   const topY = M + hb.h;
   let y = topY + 18 + (refs().some((rf) => rf.label) ? fs * 0.6 : 0);
   const wfs = fs - 1;
@@ -786,9 +1024,10 @@ function buildClassic() {
   const R0 = [];
   const align = S.labelAlign === 'right' ? 'right' : 'left';
   S.rows.forEach((r) => {
-    const items = [{ text: r.label, bold: tb, color: r.tcolor || undefined }];
-    String(r.details || '').split('\n').filter((d) => d.trim()).forEach((d) => items.push({ text: d.trim(), size: fs - 1.5, indent: align === 'left' ? 10 : 0 }));
-    const lb = RT.box(items, LW, { size: fs, align, fill: 'none', stroke: 'none', pad: 0, padX: 0, lh: lhK });
+    const fsR = rowFs(r, fs), wfsR = fsR - 1;
+    const items = [{ text: r.label, bold: rowBold(r, tb), color: r.tcolor || undefined, size: fsR }];
+    String(r.details || '').split('\n').filter((d) => d.trim()).forEach((d) => items.push({ text: d.trim(), size: fsR - 1.5, indent: align === 'left' ? 10 : 0 }));
+    const lb = RT.box(items, LW, { size: fsR, align, fill: 'none', stroke: 'none', pad: 0, padX: 0, lh: lhK });
     const { s, e } = rowEnds(r);
     let xs = s === null ? x0 : X(s), xe = e === null ? x1 : X(e);
     if (xe < xs) [xs, xe] = [xe, xs];
@@ -798,7 +1037,7 @@ function buildClassic() {
     if (s === 0 && e === 0) { xs = X(0) - w0 / 2; xe = X(0) + w0 / 2; }
     else if (xe - xs < 12) { const c = (xs + xe) / 2; xs = c - 6; xe = c + 6; }
     const win = S.showWin ? winOf(r) : '';
-    const tw = win ? RT.textWidth(win, wfs, false, wi) : 0;
+    const tw = win ? RT.textWidth(win, wfsR, false, wi) : 0;
     let place = 'none', bx = null;
     if (win) {
       // vertical lines the label must not cross: Day 0 (drawn under the bars, so only outside them) and
@@ -819,18 +1058,21 @@ function buildClassic() {
         bx = cands.filter((v) => !crosses(v, v + tw, lines)).sort((a, b) => Math.abs(a - want) - Math.abs(b - want))[0] ?? want;
       }
     }
-    const barBlock = BH + (place === 'below' ? wfs * 1.4 + 4 : 0);
-    const rh = Math.max(lb.h, barBlock) + 8 + (Number(S.rowGap) || 0);
-    R0.push({ y, rh, lb, xs, xe, s, e, win, tw, place, bx, color: fillOf(colorOf(r)) });
+    const barBlock = BH + (place === 'below' ? wfsR * 1.4 + 4 : 0);
+    const rh = Math.max(lb.h, barBlock, Number(r.minH) || 0) + 8 + (Number(S.rowGap) || 0);
+    R0.push({ r, y, rh, lb, xs, xe, s, e, win, tw, place, bx, wfs: wfsR, color: fillOf(colorOf(r)) });
     y += rh;
   });
   const bottomY = y;
   const bw = Number(S.barBW) || 0;
   if (S.stripes) R0.forEach((r, i) => { if (i % 2 === 0) body += RT.rect(M, r.y, x1 - M, r.rh, { fill: '#F4F5F7' }); });
   R0.forEach((r) => {
-    body += RT.drawBox(r.lb, M, r.y + (r.rh - r.lb.h) / 2);
-    const by = r.y + (r.rh - (BH + (r.place === 'below' ? wfs * 1.4 + 4 : 0))) / 2, bm = by + BH / 2, bb = by + BH;
+    const lx = M + (Number(r.r.tdx) || 0), ly = r.y + (r.rh - r.lb.h) / 2 + (Number(r.r.tdy) || 0);
+    body += RT.drawBox(r.lb, lx, ly);
+    TL.texts.push({ i: R0.indexOf(r), x: lx, y: ly, w: r.lb.w, h: Math.max(10, r.lb.h) });
+    const by = r.y + (r.rh - (BH + (r.place === 'below' ? r.wfs * 1.4 + 4 : 0))) / 2, bm = by + BH / 2, bb = by + BH;
     TL.bars.push({ i: R0.indexOf(r), xs: r.xs, xe: r.xe, y: by, h: BH, s: r.s, e: r.e });
+    const segSvg = drawSegs(r.r, R0.indexOf(r), X, x0, x1, X(0), Number(S.d0W) || 1.2, by, BH, fs, r.color);
     if (r.s !== null && r.e !== null) {
       body += RT.rect(r.xs, by, r.xe - r.xs, BH, { fill: r.color, radius: Math.min(Number(S.barR) || 0, BH / 2, (r.xe - r.xs) / 2), stroke: bw > 0 ? S.barBC : 'none', sw: bw });
     } else {
@@ -841,14 +1083,15 @@ function buildClassic() {
       if (r.e === null) pts.push([r.xe - tip, by], [r.xe, bm], [r.xe - tip, bb]); else pts.push([r.xe, by], [r.xe, bb]);
       body += RT.poly(pts, { fill: r.color, stroke: bw > 0 ? S.barBC : 'none', sw: bw });
     }
+    body += segSvg;
     if (r.win) {
       const inCol = lum(r.color) < 0.55 ? '#FFFFFF' : '#000000';
-      const line = (col) => [{ runs: [{ t: r.win, size: wfs, italic: wi, color: col }] }];
-      const ty = bm - wfs * 0.65;
-      if (r.place === 'in') body += RT.rich(line(inCol), (r.xs + r.xe) / 2, ty, { lh: wfs * 1.3, anchor: 'middle' });
-      else if (r.place === 'right') { body += RT.rich(line('#000'), r.xe + 6, ty, { lh: wfs * 1.3 }); maxX = Math.max(maxX, r.xe + 6 + r.tw + M); }
-      else if (r.place === 'left') body += RT.rich(line('#000'), r.xs - 6, ty, { lh: wfs * 1.3, anchor: 'end' });
-      else { body += RT.rich(line('#000'), r.bx, bb + 2, { lh: wfs * 1.3 }); maxX = Math.max(maxX, r.bx + r.tw + M); }
+      const line = (col) => [{ runs: [{ t: r.win, size: r.wfs, italic: wi, color: col }] }];
+      const ty = bm - r.wfs * 0.65;
+      if (r.place === 'in') body += RT.rich(line(inCol), (r.xs + r.xe) / 2, ty, { lh: r.wfs * 1.3, anchor: 'middle' });
+      else if (r.place === 'right') { body += RT.rich(line('#000'), r.xe + 6, ty, { lh: r.wfs * 1.3 }); maxX = Math.max(maxX, r.xe + 6 + r.tw + M); }
+      else if (r.place === 'left') body += RT.rich(line('#000'), r.xs - 6, ty, { lh: r.wfs * 1.3, anchor: 'end' });
+      else { body += RT.rich(line('#000'), r.bx, bb + 2, { lh: r.wfs * 1.3 }); maxX = Math.max(maxX, r.bx + r.tw + M); }
     }
   });
   const d0w = Number(S.d0W) || 1.2;
@@ -868,16 +1111,16 @@ function buildTrack() {
   if (fmax === fmin) { fmin -= 1; fmax += 1; }
   const padL = openL ? 44 : 18, padR = openR ? 44 : 18;
   const X = (t) => left + padL + ((F(t) - fmin) / (fmax - fmin)) * (right - left - padL - padR);
-  TL = { X, bars: [] };
+  TL = { X, bars: [], texts: [], d0: null, foot: null };
   const runW = (runs) => runs.reduce((a, r) => a + RT.textWidth(r.t, r.size, r.bold, r.italic), 0);
   const titleCol = (r, c) => r.tcolor || (lum(c) < 0.75 ? c : dark);
   /** centred label: title / window / details */
   const label = (r, c) => {
-    const lines = [];
-    String(r.label || '').split('\n').filter(Boolean).forEach((t) => lines.push({ runs: [{ t, bold: tb, size: fs, color: titleCol(r, c) }] }));
-    if (S.showWin) { const w = winOf(r); if (w) lines.push({ runs: [{ t: w, italic: wi, size: sfs, color: soft }] }); }
-    String(r.details || '').split('\n').filter((d) => d.trim()).forEach((d) => lines.push({ runs: [{ t: d.trim(), size: sfs, color: soft }] }));
-    return { lines, w: Math.max(10, ...lines.map((l) => runW(l.runs))), h: lines.length * lh };
+    const lines = [], f = rowFs(r, fs), sf = f * 0.86, rlh = f * lhK;
+    String(r.label || '').split('\n').filter(Boolean).forEach((t) => lines.push({ runs: [{ t, bold: rowBold(r, tb), size: f, color: titleCol(r, c) }] }));
+    if (S.showWin) { const w = winOf(r); if (w) lines.push({ runs: [{ t: w, italic: wi, size: sf, color: soft }] }); }
+    String(r.details || '').split('\n').filter((d) => d.trim()).forEach((d) => lines.push({ runs: [{ t: d.trim(), size: sf, color: soft }] }));
+    return { lines, lh: rlh, w: Math.max(10, ...lines.map((l) => runW(l.runs))), h: Math.max(rlh, lines.length * rlh) };
   };
   const clampX = (cx, w) => Math.max(M, Math.min(W - M - w, cx - w / 2));
   // levels: a label goes on the lowest level where it overlaps nothing on that level, its leader line
@@ -925,6 +1168,7 @@ function buildTrack() {
     else bars.push({ r, c, xs, xe, s, e, L: label(r, c) });
     if (r.shape !== 'bracket') TL.bars.push({ i: S.rows.indexOf(r), xs, xe, y: null, h: null, s, e });
   });
+  const trackSegRows = S.rows.map((r, i) => [r, i]).filter(([r]) => segsOf(r).length);
   // above the track: brackets first (outer), then events; greedy levels
   const upLv = [], upH = [];   // upLv: placed labels above the track
   above.sort((a, b) => (a.type === b.type ? 0 : a.type === 'bracket' ? 1 : -1));
@@ -1000,7 +1244,7 @@ function buildTrack() {
   if (S.day0Title) title.push({ t: S.day0Title, bold: true, size: tfs, color: '#000' });
   const sub = String(S.day0Text || '').replace(/\n/g, ' ').trim();
   if (sub) title.push({ t: (title.length ? ': ' : '') + sub, size: fs, color: '#000' });
-  if (title.length) body += RT.rich([{ runs: title }], Math.max(M, Math.min(W - M - runW(title), x0 - runW(title) / 2)), M, { lh: tfs * 1.2 });
+  if (title.length) { const tx = Math.max(M, Math.min(W - M - runW(title), x0 - runW(title) / 2)); body += RT.rich([{ runs: title }], tx, M, { lh: tfs * 1.2 }); TL.d0 = { x: tx, y: M, w: runW(title), h: tfs * 1.2 }; }
   const d0w = Math.min(Number(S.d0W) || 1.5, 4);
   const lineBot = trackBot + (S.trackTicks ? 4 : tickH);
   body += RT.line([[x0, M + tfs * 1.25], [x0, lineBot]], { color: S.d0Color, sw: d0w, dash: dashOf(d0w), dashType: S.d0Dash });
@@ -1015,13 +1259,17 @@ function buildTrack() {
     if (b.inside) {
       const tc = b.r.tcolor || (lum(b.c) < 0.62 ? '#FFFFFF' : dark);
       const lines = b.L.lines.slice(0, 1).map((l) => ({ runs: l.runs.map((r) => ({ ...r, color: tc })) }));
-      body += RT.rich(lines, (b.xs + b.xe) / 2, trackMid - lh / 2, { lh, anchor: 'middle' });
+      const ox = Number(b.r.tdx) || 0, oy = Number(b.r.tdy) || 0;
+      body += RT.rich(lines, (b.xs + b.xe) / 2 + ox, trackMid - b.L.lh / 2 + oy, { lh: b.L.lh, anchor: 'middle' });
+      TL.texts.push({ i: S.rows.indexOf(b.r), x: (b.xs + b.xe) / 2 + ox - b.L.w / 2, y: trackMid - b.L.lh / 2 + oy, w: b.L.w, h: b.L.lh });
     } else if (b.lvl !== undefined) {
-      const cx = b.cx ?? (b.xs + b.xe) / 2, top = dnTop[b.lvl];
-      if (b.lvl > 0 || Math.abs(b.lx + b.L.w / 2 - cx) > 2) body += RT.line([[cx, trackBot + 1], [cx, top - 2]], { color: '#9AA0A6', sw: 0.8 });
-      body += RT.rich(b.L.lines, b.lx + b.L.w / 2, top, { lh, anchor: 'middle' });
+      const cx = b.cx ?? (b.xs + b.xe) / 2, top = dnTop[b.lvl], ox = Number(b.r.tdx) || 0, oy = Number(b.r.tdy) || 0;
+      if (b.lvl > 0 || Math.abs(b.lx + b.L.w / 2 - cx) > 2) body += RT.line([[cx, trackBot + 1], [cx, top - 2 + oy]], { color: '#9AA0A6', sw: 0.8 });
+      body += RT.rich(b.L.lines, b.lx + b.L.w / 2 + ox, top + oy, { lh: b.L.lh, anchor: 'middle' });
+      TL.texts.push({ i: S.rows.indexOf(b.r), x: b.lx + ox, y: top + oy, w: b.L.w, h: b.L.h });
     }
   });
+  trackSegRows.forEach(([r, i]) => { body += drawSegs(r, i, X, left, right, x0, d0w, trackTop, BH, fs, fillOf(colorOf(r))); });
   // ticks
   if (S.trackTicks) {
     const taken = [];
@@ -1039,8 +1287,9 @@ function buildTrack() {
   // above items
   above.forEach((it) => {
     const top = lvTop[it.lvl];
-    const cx = it.lx + it.L.w / 2;
-    body += RT.rich(it.L.lines, cx, top, { lh, anchor: 'middle' });
+    const ox = Number(it.r.tdx) || 0, oy = Number(it.r.tdy) || 0, cx = it.lx + it.L.w / 2 + ox;
+    body += RT.rich(it.L.lines, cx, top + oy, { lh: it.L.lh, anchor: 'middle' });
+    TL.texts.push({ i: S.rows.indexOf(it.r), x: it.lx + ox, y: top + oy, w: it.L.w, h: it.L.h });
     if (it.type === 'bracket') {
       const ly = top + it.L.h + 5, col = lum(it.c) > 0.85 ? dark : it.c;
       body += RT.line([[it.xs, ly + 6], [it.xs, ly], [it.xe, ly], [it.xe, ly + 6]], { color: col, sw: 1.6 });
@@ -1075,7 +1324,7 @@ function calendarPanel(W, y0, fs) {
   if (cal.title) { svg += RT.rich([{ runs: [{ t: cal.title, bold: true, size: fs, color: '#000' }] }], M, y, { lh: fs * 1.3 }); y += fs * 1.7; }
   const BH = fs * 1.35, gap = fs * 0.45;
   rows.forEach((x) => {
-    const c = fillOf(pal[x.r.kind] || pal.other);
+    const c = fillOf(kindColor(x.r.kind));
     const lb = RT.box([{ text: x.r.label || '' }], LW, { size: sfs, align: 'left', fill: 'none', stroke: 'none', pad: 0, padX: 0, lh: lhK, color: '#222' });
     const rh = Math.max(BH, lb.h);
     svg += RT.drawBox(lb, M, y + (rh - lb.h) / 2);
@@ -1115,6 +1364,67 @@ function calendarPanel(W, y0, fs) {
   return { svg, bottom: ay + sfs * 1.5 };
 }
 
+/** legend: a swatch and name for each type on the figure (or every type), flowing across the width */
+function legendPanel(W, y0, fs) {
+  const M = 16, lg = S.legend || {};
+  const seen = [];
+  if (lg.all) kindList().forEach(([id]) => seen.push([id, fillOf(kindColor(id))]));
+  else S.rows.forEach((r) => { if (!seen.some((x) => x[0] === r.kind)) seen.push([r.kind, fillOf(colorOf(r))]); });
+  if (!seen.length) return { svg: '', bottom: y0 };
+  const sf = fs * 0.9, sw = sf * 0.95, lh = sf * 1.5, gap = sf * 1.4;
+  let svg = '', x = M, y = y0;
+  if (lg.title) { const tw = RT.textWidth(lg.title, sf, true); svg += RT.rich([{ runs: [{ t: lg.title, bold: true, size: sf, color: '#000' }] }], x, y, { lh }); x += tw + gap; }
+  seen.forEach(([id, c]) => {
+    const name = figKindName(id), w = sw + 6 + RT.textWidth(name, sf);
+    if (x + w > W - M && x > M) { x = M + (lg.title ? 12 : 0); y += lh; }
+    svg += RT.rect(x, y + (lh - sw) / 2, sw, sw, { fill: c, stroke: lum(c) > 0.85 ? '#666666' : 'none', sw: 0.8 });
+    svg += RT.rich([{ runs: [{ t: name, size: sf, color: '#222' }] }], x + sw + 6, y, { lh });
+    x += w + gap;
+  });
+  TL.legend = { x: M, y: y0, w: W - 2 * M, h: y + lh - y0 };
+  return { svg, bottom: y + lh };
+}
+/** annotations placed freely on the figure, in figure units; drawn last so they sit on top */
+function drawNotes(fs) {
+  let svg = '', maxX = 0, maxY = 0;
+  TL.notes = [];
+  (S.notes || []).forEach((n, k) => {
+    const col = n.color || '#000000';
+    if (n.type === 'text') {
+      const size = Number(n.size) || fs, framed = n.frame && n.frame !== 'none', pad = framed ? size * 0.45 : 0;
+      const lines = String(n.text || ' ').split('\n');
+      const w = Math.min(560, Math.max(24, ...lines.map((t) => RT.textWidth(t, size, !!n.bold)))) + 2 * pad + (framed ? 4 : 2);
+      const b = RT.box([{ text: n.text || ' ', bold: !!n.bold, size, color: col }], w, { size, align: n.align || 'left', fill: n.frame === 'fill' ? (n.fill || '#FFF2CC') : n.frame === 'white' ? '#FFFFFF' : 'none', stroke: framed ? col : 'none', sw: 1.2, radius: n.frame === 'fill' ? 4 : 2, pad, padX: framed ? pad + 2 : 1, lh: Number(S.st.lh) || 1.3 });
+      svg += RT.drawBox(b, n.x, n.y);
+      TL.notes.push({ k, type: 'text', x: n.x, y: n.y, w: b.w, h: b.h });
+      maxX = Math.max(maxX, n.x + b.w); maxY = Math.max(maxY, n.y + b.h);
+    } else if (n.type === 'arrow') {
+      const sw = Number(n.sw) || 1.6;
+      svg += RT.arrow([[n.x, n.y], [n.x2, n.y2]], { color: col, sw, head: 6 + sw * 3, dash: n.dash ? `${sw * 3} ${sw * 2}` : undefined });
+      TL.notes.push({ k, type: 'arrow', x1: n.x, y1: n.y, x2: n.x2, y2: n.y2, x: Math.min(n.x, n.x2), y: Math.min(n.y, n.y2), w: Math.abs(n.x2 - n.x), h: Math.abs(n.y2 - n.y) });
+      maxX = Math.max(maxX, n.x, n.x2); maxY = Math.max(maxY, n.y, n.y2);
+    } else if (n.type === 'brace') {
+      const size = Number(n.size) || fs * 0.9, tick = Math.max(6, size * 0.45), d = n.flip ? -1 : 1, sw = Number(n.sw) || 1.4;
+      const horiz = Math.abs(n.x2 - n.x) >= Math.abs(n.y2 - n.y);
+      let box;
+      if (horiz) {
+        const a = Math.min(n.x, n.x2), b = Math.max(n.x, n.x2), y = n.y;
+        svg += RT.line([[a, y + d * tick], [a, y], [b, y], [b, y + d * tick]], { color: col, sw });
+        if (n.text) { const tw = RT.textWidth(n.text, size, !!n.bold), ty = d > 0 ? y - size * 1.35 : y + size * 0.15; svg += RT.rich([{ runs: [{ t: n.text, size, bold: !!n.bold, color: col }] }], (a + b) / 2, ty, { lh: size * 1.25, anchor: 'middle' }); maxX = Math.max(maxX, (a + b) / 2 + tw / 2); maxY = Math.max(maxY, ty + size * 1.25); }
+        box = { x: a, y: y - (d > 0 ? size * 1.4 : tick), w: b - a, h: size * 1.4 + tick };
+        maxX = Math.max(maxX, b); maxY = Math.max(maxY, y + tick);
+      } else {
+        const a = Math.min(n.y, n.y2), b = Math.max(n.y, n.y2), x = n.x;
+        svg += RT.line([[x + d * tick, a], [x, a], [x, b], [x + d * tick, b]], { color: col, sw });
+        if (n.text) { const tw = RT.textWidth(n.text, size, !!n.bold); svg += RT.rich([{ runs: [{ t: n.text, size, bold: !!n.bold, color: col }] }], d > 0 ? x - 6 : x + 6, (a + b) / 2 - size * 0.62, { lh: size * 1.25, anchor: d > 0 ? 'end' : 'start' }); maxX = Math.max(maxX, d > 0 ? x : x + 6 + tw); }
+        box = { x: x - (d > 0 ? 80 : tick), y: a, w: 80 + tick, h: b - a };
+        maxX = Math.max(maxX, x + tick); maxY = Math.max(maxY, b);
+      }
+      TL.notes.push({ k, type: 'brace', x1: n.x, y1: n.y, x2: n.x2, y2: n.y2, horiz, ...box });
+    }
+  });
+  return { svg, maxX, maxY };
+}
 function build() {
   RT.applyStyle(S.st);
   const r = S.style === 'track' ? buildTrack() : S.style === 'classic' ? buildClassic() : buildBlock();
@@ -1124,11 +1434,17 @@ function build() {
     const c = calendarPanel(W, H + fs * 1.1, fs);
     body += c.svg; H = c.bottom;
   }
+  TL.legend = null;
+  if (S.legend && S.legend.on) { const lg = legendPanel(W, H + fs * 0.9, fs); body += lg.svg; H = lg.bottom; }
   if (S.footnote && S.footnote.trim()) {
     const fb = RT.box([{ text: S.footnote }], W - 2 * M, { size: fs * 0.85, align: 'left', stroke: 'none', fill: 'none', pad: 0, padX: 0, lh: Number(S.st.lh) || 1.3 });
     body += RT.drawBox(fb, M, H + fs * 0.6);
+    TL.foot = { x: M, y: H + fs * 0.6, w: fb.w, h: fb.h };
     H += fs * 0.6 + fb.h;
   }
+  // annotations go on top; the figure grows to hold any placed past its edge
+  const nt = drawNotes(fs);
+  body += nt.svg; W = Math.max(W, nt.maxX + M); H = Math.max(H, nt.maxY);
   return RT.figure(W, H + M, body, r.bg);
 }
 
@@ -1144,6 +1460,9 @@ function dayAt(x) {
   for (let k = 0; k < 60; k++) { const mid = (lo + hi) / 2; if (X(mid) < x) lo = mid; else hi = mid; }
   return Math.round((lo + hi) / 2);
 }
+// what a drag or arrow key changes: the row itself, or one of its extra segments
+const tgtOf = (i, k) => (k != null && k !== '' && S.rows[i] ? segsOf(S.rows[i])[Number(k)] : S.rows[i]);
+const barOf = (i, k) => TL.bars.find((x) => x.i === i && String(x.seg ?? '') === String(k ?? ''));
 const withDay = (raw, t) => (ep(raw).label && ep(raw).n !== null ? String(raw).replace(/^\s*-?\d+(?:\.\d+)?/, String(t)) : String(t));
 let tlDrag = null;
 function decorate() {
@@ -1152,31 +1471,49 @@ function decorate() {
   const g = RT.svgEl('g', { class: 'edit-ui' });
   TL.bars.forEach((b) => {
     // 兩端都是數字時，中間可以整段拖動
-    if (b.s !== null && b.e !== null && b.xe - b.xs > 16 && S.rows[b.i] && S.rows[b.i].shape !== 'event') {
-      g.appendChild(RT.svgEl('rect', { x: b.xs + 6, y: b.y, width: b.xe - b.xs - 12, height: b.h, fill: 'transparent', class: 'move', 'data-row': b.i, 'data-move': 1,
+    const tg = tgtOf(b.i, b.seg), sk = b.seg ?? '';
+    if (b.s !== null && b.e !== null && b.xe - b.xs > 16 && tg && tg.shape !== 'event') {
+      g.appendChild(RT.svgEl('rect', { x: b.xs + 6, y: b.y, width: b.xe - b.xs - 12, height: b.h, fill: 'transparent', class: 'move', 'data-row': b.i, 'data-seg': sk, 'data-move': 1,
         role: 'slider', tabindex: 0, 'aria-label': T(`${S.rows[b.i]?.label || '時間窗'}：整段移動（${b.s} 到 ${b.e}）`, `${S.rows[b.i]?.label || 'Window'}: move the whole window (${b.s} to ${b.e})`) }));
     }
     [['s', b.s, b.xs], ['e', b.e, b.xe]].forEach(([end, v, x]) => {
       if (v === null) return;   // an open end has no day to drag
-      g.appendChild(RT.svgEl('rect', { x: x - 5, y: b.y, width: 10, height: b.h, fill: 'transparent', class: 'resize', 'data-row': b.i, 'data-end': end,
+      g.appendChild(RT.svgEl('rect', { x: x - 5, y: b.y, width: 10, height: b.h, fill: 'transparent', class: tg && tg.shape === 'event' ? 'move-ev' : 'resize', 'data-row': b.i, 'data-seg': sk, 'data-end': end,
         role: 'slider', tabindex: 0, 'aria-label': T(`${S.rows[b.i]?.label || '時間窗'}：${end === 's' ? '開始' : '結束'}於 ${v}`, `${S.rows[b.i]?.label || 'Window'}: ${end === 's' ? 'starts' : 'ends'} at ${v}`) }));
     });
   });
+  // the selected row: a dashed outline around its bars and its text
+  if (SEL !== null && S.rows[SEL]) {
+    const parts = [...TL.bars.filter((b) => b.i === SEL && b.y !== null), ...TL.texts.filter((t) => t.i === SEL).map((t) => ({ xs: t.x, xe: t.x + t.w, y: t.y, h: t.h }))];
+    if (parts.length) {
+      const x1 = Math.min(...parts.map((p) => p.xs)) - 4, x2 = Math.max(...parts.map((p) => p.xe)) + 4, y1 = Math.min(...parts.map((p) => p.y)) - 4, y2 = Math.max(...parts.map((p) => p.y + p.h)) + 4;
+      g.insertBefore(RT.svgEl('rect', { x: x1, y: y1, width: x2 - x1, height: y2 - y1, rx: 4, fill: 'none', stroke: '#2563EB', 'stroke-width': 1.6, 'stroke-dasharray': '5 3', 'pointer-events': 'none', class: 'sel-ring' }), g.firstChild);
+      // the text block of the selected row can be dragged by this handle
+      TL.texts.filter((t) => t.i === SEL).forEach((t) => {
+        const hx = t.x - 9, hy = t.y - 9;
+        const hg = RT.svgEl('g', { class: 'txt-move', 'data-txt': SEL, tabindex: 0, role: 'button', 'aria-label': T('拖曳移動文字（方向鍵微調）', 'Drag to move the text (arrow keys nudge)') });
+        hg.appendChild(RT.svgEl('circle', { cx: hx, cy: hy, r: 8, fill: '#2563EB' }));
+        hg.appendChild(RT.svgEl('path', { d: `M${hx - 4} ${hy}h8M${hx} ${hy - 4}v8`, stroke: '#fff', 'stroke-width': 1.6, 'stroke-linecap': 'round' }));
+        g.appendChild(hg);
+      });
+    }
+  }
   if (tlDrag) {
-    const t = tlDrag.move ? `${unitOne()} [${fmtT(rowEnds(S.rows[tlDrag.i]).s)}, ${fmtT(rowEnds(S.rows[tlDrag.i]).e)}]` : `${unitOne()} ${fmtT(tlDrag.t)}`, w = RT.textWidth(t, 13) + 12;
+    const t = tlDrag.move ? `${unitOne()} [${fmtT(rowEnds(tgtOf(tlDrag.i, tlDrag.seg)).s)}, ${fmtT(rowEnds(tgtOf(tlDrag.i, tlDrag.seg)).e)}]` : `${unitOne()} ${fmtT(tlDrag.t)}`, w = RT.textWidth(t, 13) + 12;
     g.appendChild(RT.svgEl('rect', { x: tlDrag.x - w / 2, y: tlDrag.y - 26, width: w, height: 20, rx: 4, fill: '#222' }));
     const tx = RT.svgEl('text', { x: tlDrag.x, y: tlDrag.y - 12, 'text-anchor': 'middle', 'font-size': 13, fill: '#fff' });
     tx.textContent = t; g.appendChild(tx);
   }
+  if (window.TLX && window.TLX.decorate) window.TLX.decorate(g);
   svg.appendChild(g);
 }
 const redraw = () => { fig = build(); preview.innerHTML = fig.svg; decorate(); };
 preview.addEventListener('pointerdown', (e) => {
   const mv = e.target.closest && e.target.closest('[data-move]');
   if (mv) {
-    const i = Number(mv.dataset.row), b = TL.bars.find((x) => x.i === i), { s, e: en } = rowEnds(S.rows[i]);
+    const i = Number(mv.dataset.row), sg = mv.dataset.seg, b = barOf(i, sg), { s, e: en } = rowEnds(tgtOf(i, sg));
     const [px] = RT.figPoint(preview, fig, e);
-    tlDrag = { i, move: true, s0: s, e0: en, d0: null, px0: px, y: b ? b.y : 0, x: b ? (b.xs + b.xe) / 2 : px, t: s, X: TL.X };
+    tlDrag = { i, seg: sg, move: true, s0: s, e0: en, d0: null, px0: px, y: b ? b.y : 0, x: b ? (b.xs + b.xe) / 2 : px, t: s, X: TL.X };
     tlDrag.d0 = dayAt(px);
     preview.setPointerCapture(e.pointerId);
     e.preventDefault();
@@ -1184,26 +1521,26 @@ preview.addEventListener('pointerdown', (e) => {
   }
   const h = e.target.closest && e.target.closest('[data-end]');
   if (!h) return;
-  const i = Number(h.dataset.row), end = h.dataset.end, b = TL.bars.find((x) => x.i === i);
-  tlDrag = { i, end, y: b ? b.y : 0, x: Number(h.getAttribute('x')) + 5, t: rowEnds(S.rows[i])[end], X: TL.X };
+  const i = Number(h.dataset.row), end = h.dataset.end, sg = h.dataset.seg, b = barOf(i, sg);
+  tlDrag = { i, seg: sg, end, y: b ? b.y : 0, x: Number(h.getAttribute('x')) + 5, t: rowEnds(tgtOf(i, sg))[end], X: TL.X };
   preview.setPointerCapture(e.pointerId);
   e.preventDefault();
 });
 preview.addEventListener('pointermove', (e) => {
   if (!tlDrag) return;
   if (tlDrag.move) {
-    const [mx] = RT.figPoint(preview, fig, e), r = S.rows[tlDrag.i];
+    const [mx] = RT.figPoint(preview, fig, e), r = tgtOf(tlDrag.i, tlDrag.seg);
     const d = dayAt(mx) - tlDrag.d0;
     const ns = tlDrag.s0 + d;
     if (ns === tlDrag.t) return;
     tlDrag.t = ns;
     r.s = withDay(r.s, ns); r.e = withDay(r.e, tlDrag.e0 + d);
     redraw();
-    const b = TL.bars.find((x) => x.i === tlDrag.i);
+    const b = barOf(tlDrag.i, tlDrag.seg);
     if (b) { tlDrag.x = (b.xs + b.xe) / 2; tlDrag.y = b.y; preview.querySelector('.edit-ui')?.remove(); decorate(); }
     return;
   }
-  const [px] = RT.figPoint(preview, fig, e), r = S.rows[tlDrag.i];
+  const [px] = RT.figPoint(preview, fig, e), r = tgtOf(tlDrag.i, tlDrag.seg);
   let t = dayAt(px);
   // a window cannot end before it starts
   const other = rowEnds(r)[tlDrag.end === 's' ? 'e' : 's'];
@@ -1213,7 +1550,7 @@ preview.addEventListener('pointermove', (e) => {
   r[tlDrag.end] = withDay(r[tlDrag.end], t);
   if (r.shape === 'event') r.e = r.s;
   redraw();
-  const b = TL.bars.find((x) => x.i === tlDrag.i);
+  const b = barOf(tlDrag.i, tlDrag.seg);
   if (b) { tlDrag.x = tlDrag.end === 's' ? b.xs : b.xe; tlDrag.y = b.y; preview.querySelector('.edit-ui')?.remove(); decorate(); }
 });
 const endTl = () => { if (!tlDrag) return; tlDrag = null; syncInputs(); update(); };
@@ -1225,24 +1562,24 @@ preview.addEventListener('keydown', (e) => {
   const mv = e.target.closest && e.target.closest('[data-move]');
   if (mv && d) {
     e.preventDefault();
-    const i = Number(mv.dataset.row), r = S.rows[i], k = d * (e.shiftKey ? 10 : 1), { s, e: en } = rowEnds(r);
+    const i = Number(mv.dataset.row), sg = mv.dataset.seg, r = tgtOf(i, sg), k = d * (e.shiftKey ? 10 : 1), { s, e: en } = rowEnds(r);
     r.s = withDay(r.s, s + k); r.e = withDay(r.e, en + k);
     redraw();
-    preview.querySelector(`[data-row="${i}"][data-move]`)?.focus({ preventScroll: true });
+    preview.querySelector(`[data-row="${i}"][data-seg="${sg}"][data-move]`)?.focus({ preventScroll: true });
     syncInputs(); update();
     return;
   }
   const h = e.target.closest && e.target.closest('[data-end]');
   if (!h || !d) return;
   e.preventDefault();
-  const i = Number(h.dataset.row), end = h.dataset.end, r = S.rows[i];
+  const i = Number(h.dataset.row), end = h.dataset.end, sg = h.dataset.seg, r = tgtOf(i, sg);
   let t = rowEnds(r)[end] + d * (e.shiftKey ? 10 : 1);
   const other = rowEnds(r)[end === 's' ? 'e' : 's'];
   if (other !== null && r.shape !== 'event') t = end === 's' ? Math.min(t, other) : Math.max(t, other);
   r[end] = withDay(r[end], t);
   if (r.shape === 'event') r.e = r.s;
   redraw();
-  preview.querySelector(`[data-row="${i}"][data-end="${end}"]`)?.focus({ preventScroll: true });
+  preview.querySelector(`[data-row="${i}"][data-seg="${sg}"][data-end="${end}"]`)?.focus({ preventScroll: true });
   syncInputs(); update();
 });
 
@@ -1342,11 +1679,12 @@ document.getElementById('toCohortflow').onclick = () => {
 
 function render() {
   try {
-    const keep = preview.contains(document.activeElement) && document.activeElement.dataset && document.activeElement.dataset.end ? [document.activeElement.dataset.row, document.activeElement.dataset.end] : null;
+    const keep = preview.contains(document.activeElement) && document.activeElement.dataset && document.activeElement.dataset.end ? [document.activeElement.dataset.row, document.activeElement.dataset.end, document.activeElement.dataset.seg || ''] : null;
     fig = build();
     preview.innerHTML = fig.svg;
     decorate();
-    if (keep) preview.querySelector(`[data-row="${keep[0]}"][data-end="${keep[1]}"]`)?.focus({ preventScroll: true });
+    if (keep) preview.querySelector(`[data-row="${keep[0]}"][data-seg="${keep[2]}"][data-end="${keep[1]}"]`)?.focus({ preventScroll: true });
+    if (window.TLX) window.TLX.afterRender();
   } catch (e) {
     console.error(e);
     preview.innerHTML = `<div class="msg">⚠ ${RT.esc(e.message)}</div>`;
@@ -1390,5 +1728,6 @@ hist.push();
   RT.toast(T('已把暴露規則寫入「暴露評估」列（按 ↶ 可復原）', 'Exposure rules written into the exposure assessment row (↶ to undo)'), 6000);
 })();
 </script>
+<script src="canvas.js?v=20261120c"></script>
 </body>
 </html>
