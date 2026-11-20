@@ -18,7 +18,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../shared/style.css?v=20261119a">
+<link rel="stylesheet" href="../shared/style.css?v=20261120b">
 <style>
   .prow { display: grid; grid-template-columns: minmax(0, 1fr) 6.5rem 30px; gap: 6px; align-items: center; margin-bottom: 6px; }
   .colors { display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: 6px 12px; }
@@ -95,7 +95,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261120a"></script>
+<script src="../shared/common.js?v=20261120c"></script>
 <script>
 const T = RT.t;
 const KEY = 'sankey1';
@@ -214,7 +214,7 @@ function build() {
   RT.beginScene();
   NODES = [];
   let body = '', top = M;
-  if (S.title) { body += RT.rich([{ runs: [{ t: S.title, bold: true, size: fs * 1.1, color: ink }] }], M, top, { lh: fs * 1.5 }); top += fs * 1.9; }
+  if (S.title) { body += RT.rich([{ runs: [{ t: S.title, bold: true, size: fs * 1.1, color: ink }] }], M, top, { lh: fs * 1.5 }); RT.addHit(M - 3, top, RT.textWidth(S.title, fs * 1.1, true) + 8, fs * 1.5, RT.hitKey('title')); top += fs * 1.9; }
   top += fs * 1.8;   // line titles
   const bottom = top + H;
   if (!m.depth) return RT.figure(W, bottom + M, body);
@@ -283,7 +283,7 @@ function build() {
   let y = Math.max(bottom, ...nodes.flat().map((n) => n.y + n.h)) + fs * 0.6;
   if (S.footnote && S.footnote.trim()) {
     const fb = RT.box([{ text: S.footnote }], W - 2 * M, { size: fs * 0.85, pad: 0, padX: 0, align: 'left', fill: 'none', stroke: 'none', color: ink, lh: 1.3 });
-    body += RT.drawBox(fb, M, y);
+    body += RT.drawBox(fb, M, y); RT.addHit(M, y, fb.w, fb.h, RT.hitKey('footnote'));
     y += fb.h;
   }
   return RT.figure(W, y + M, body);
@@ -407,6 +407,7 @@ function render() {
   if (names.length && JSON.stringify(RT.study.get().drugs || []) !== JSON.stringify(names)) RT.study.set({ drugs: names });
 }
 const update = RT.debounce(() => { render(); hist.push(); }, 80);
+RT.refresh = update; RT.renderNow = render;   // used by shared/figedit.js
 
 document.getElementById('btnUndo').onclick = hist.undo;
 document.getElementById('btnRedo').onclick = hist.redo;
@@ -429,6 +430,13 @@ RT.applyState = (o) => { S = RT.merge(DEF, o); syncInputs(); update(); };
 syncInputs();
 render();
 hist.push();
+</script>
+<script src="../shared/figedit.js?v=20261120b"></script>
+<script>
+RT.figEdit({ key: 'sankey', menus: [
+  { id: 'fig', label: RT.t('圖', 'Figure'), items: ["title","W","H","nodeW","gap","alpha","pctOf","show","sortBySize","showStop","stopLabel"] },
+  { id: 'style', label: RT.t('風格', 'Style'), items: ["st.font","st.fontSize","st.lh","st.textColor","st.boxFill","st.boxStroke","st.boxSW","st.radius","st.lineColor","st.lineW"] },
+] });
 </script>
 </body>
 </html>

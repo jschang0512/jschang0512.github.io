@@ -18,7 +18,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../shared/style.css?v=20261119a">
+<link rel="stylesheet" href="../shared/style.css?v=20261120b">
 <style>
   .drop { display: grid; place-items: center; gap: 6px; padding: 18px; border: 1.5px dashed var(--border); border-radius: var(--radius); text-align: center; color: var(--muted); font-size: 13px; cursor: pointer; }
   .drop.over { border-color: var(--accent); color: var(--accent); background: var(--accent-weak); }
@@ -92,7 +92,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261120a"></script>
+<script src="../shared/common.js?v=20261120c"></script>
 <script>
 const T = RT.t;
 const KEY = 'panels1';
@@ -352,6 +352,7 @@ function render() {
 }
 document.getElementById('export').addEventListener('change', () => render());
 const update = RT.debounce(() => { render(); hist.push(); }, 80);
+RT.refresh = update; RT.renderNow = render;   // used by shared/figedit.js
 
 document.getElementById('btnUndo').onclick = hist.undo;
 document.getElementById('btnRedo').onclick = hist.redo;
@@ -373,6 +374,13 @@ RT.imageStore.all().then((all) => {
 syncInputs();
 render();
 hist.push();
+</script>
+<script src="../shared/figedit.js?v=20261120b"></script>
+<script>
+RT.figEdit({ key: 'panels', menus: [
+  { id: 'layout', label: RT.t('版面', 'Layout'), items: ["cols","gap","fit","valign","lab","labPos","labBold"] },
+  { id: 'style', label: RT.t('風格', 'Style'), items: ["st.font","st.fontSize","st.lh","st.textColor","st.boxFill","st.boxStroke","st.boxSW","st.radius","st.lineColor","st.lineW"] },
+] });
 </script>
 </body>
 </html>

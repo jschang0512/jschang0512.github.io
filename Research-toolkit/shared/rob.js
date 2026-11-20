@@ -292,7 +292,7 @@
       const colX = (i) => gx + i * cw + cw / 2 + (i === doms.length ? ovGap : 0);
       const gridR = colX(doms.length) + cw / 2;
       let body = '', y = y0;
-      if (S.title) { body += RT.rich([{ runs: [{ t: S.title, bold: true, size: fs * 1.1, color: '#000' }] }], (gx + gridR) / 2, y, { lh: fs * 1.4, anchor: 'middle' }); y += fs * 1.6; }
+      if (S.title) { body += RT.rich([{ runs: [{ t: S.title, bold: true, size: fs * 1.1, color: '#000' }] }], (gx + gridR) / 2, y, { lh: fs * 1.4, anchor: 'middle' }); const tw0 = RT.textWidth(S.title, fs * 1.1, true) + 10; RT.addHit((gx + gridR) / 2 - tw0 / 2, y, tw0, fs * 1.4, RT.hitKey('title')); y += fs * 1.6; }
       // header: column codes over a hairline; the Overall column sits on a light band
       const hh = fs * 1.8, gridBot = y + hh + 4 + S.studies.length * rh;
       const domR = colX(doms.length - 1) + cw / 2;
@@ -307,6 +307,7 @@
       S.studies.forEach((st, si) => { if (si % 2 === 1) body += RT.rect(G, y + si * rh, domR - G, rh, { fill: ZEBRA }); });
       S.studies.forEach((st, si) => {
         body += RT.rich([{ runs: [{ t: names[si], size: fs, color: INK }] }], gx - 10, y + (rh - lh) / 2, { lh, anchor: 'end' });
+        { const nw = RT.textWidth(names[si], fs) + 8; RT.addHit(gx - 10 - nw, y, nw + 4, rh, () => { const tr = document.querySelectorAll('.rob-tbl tbody tr:not(.det)')[si]; return tr && tr.querySelector('.nm input'); }); }
         [...doms.map((d) => st.j[d.code]), effOverall(st)].forEach((v, i) => {
           const c = v ? colorOf(v) : '#FFFFFF';
           const stroke = !v ? '#C9CED6' : S.palette === 'gray' ? '#555' : '#FFFFFF';
@@ -344,7 +345,7 @@
       const weight = (st) => { const w = RT.num(st.w); return S.useWeights && w !== null && w > 0 ? w : 1; };
       const order = cfg.judgments.filter((j) => inVariant(j) && (!j.optional || S.allowNI)).slice().sort((a, b) => a.rank - b.rank);
       let body = '', y = y0;
-      if (S.title) { body += RT.rich([{ runs: [{ t: S.title, bold: true, size: fs * 1.1, color: '#000' }] }], bx + bw / 2, y, { lh: fs * 1.4, anchor: 'middle' }); y += fs * 1.6; }
+      if (S.title) { body += RT.rich([{ runs: [{ t: S.title, bold: true, size: fs * 1.1, color: '#000' }] }], bx + bw / 2, y, { lh: fs * 1.4, anchor: 'middle' }); { const tw1 = RT.textWidth(S.title, fs * 1.1, true) + 10; RT.addHit(bx + bw / 2 - tw1 / 2, y, tw1, fs * 1.4, RT.hitKey('title')); } y += fs * 1.6; }
       // lay the rows out first so the gridlines can be drawn underneath the bars
       const rows = rowsDef.map((rd) => {
         const lb = RT.box([{ text: rd.label, bold: rd.bold }], labW, { size: fs, align: 'right', fill: 'none', stroke: 'none', pad: 0, padX: 0, lh: lhK, color: INK });
@@ -521,6 +522,7 @@
       RT.save(cfg.key, S);
     }
     const update = RT.debounce(() => { render(); hist.push(); }, 80);
+    RT.refresh = update; RT.renderNow = render;   // used by shared/figedit.js
     document.getElementById('btnUndo').onclick = hist.undo;
     document.getElementById('btnRedo').onclick = hist.redo;
     document.getElementById('btnExample').onclick = () => { S.studies = structuredClone(cfg.exampleStudies); open.clear(); syncInputs(); update(); RT.toast(T('已載入範例（虛構研究與判斷，僅供示範；按 ↶ 可復原）', 'Example loaded (fictional studies and judgements; ↶ to undo)')); };

@@ -18,7 +18,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../shared/style.css?v=20261119a">
+<link rel="stylesheet" href="../shared/style.css?v=20261120b">
 <style>
   .trow3 { display: grid; grid-template-columns: 90px 90px minmax(0, 1fr); gap: 6px; align-items: end; margin-top: 6px; }
   .trow4 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, .9fr) 34px 34px; gap: 6px; align-items: end; margin-top: 6px; }
@@ -270,7 +270,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261120a"></script>
+<script src="../shared/common.js?v=20261120c"></script>
 <script>
 const T = RT.t;
 const KEY = 'timeline5';
@@ -1384,46 +1384,11 @@ function legendPanel(W, y0, fs) {
   TL.legend = { x: M, y: y0, w: W - 2 * M, h: y + lh - y0 };
   return { svg, bottom: y + lh };
 }
-/** annotations placed freely on the figure, in figure units; drawn last so they sit on top */
+/** annotations placed freely on the figure: drawn by the shared RT.drawNotes (common.js), last so they sit on top */
 function drawNotes(fs) {
-  let svg = '', maxX = 0, maxY = 0;
-  TL.notes = [];
-  (S.notes || []).forEach((n, k) => {
-    const col = n.color || '#000000';
-    if (n.type === 'text') {
-      const size = Number(n.size) || fs, framed = n.frame && n.frame !== 'none', pad = framed ? size * 0.45 : 0;
-      const lines = String(n.text || ' ').split('\n');
-      const w = Math.min(560, Math.max(24, ...lines.map((t) => RT.textWidth(t, size, !!n.bold)))) + 2 * pad + (framed ? 4 : 2);
-      const b = RT.box([{ text: n.text || ' ', bold: !!n.bold, size, color: col }], w, { size, align: n.align || 'left', fill: n.frame === 'fill' ? (n.fill || '#FFF2CC') : n.frame === 'white' ? '#FFFFFF' : 'none', stroke: framed ? col : 'none', sw: 1.2, radius: n.frame === 'fill' ? 4 : 2, pad, padX: framed ? pad + 2 : 1, lh: Number(S.st.lh) || 1.3 });
-      svg += RT.drawBox(b, n.x, n.y);
-      TL.notes.push({ k, type: 'text', x: n.x, y: n.y, w: b.w, h: b.h });
-      maxX = Math.max(maxX, n.x + b.w); maxY = Math.max(maxY, n.y + b.h);
-    } else if (n.type === 'arrow') {
-      const sw = Number(n.sw) || 1.6;
-      svg += RT.arrow([[n.x, n.y], [n.x2, n.y2]], { color: col, sw, head: 6 + sw * 3, dash: n.dash ? `${sw * 3} ${sw * 2}` : undefined });
-      TL.notes.push({ k, type: 'arrow', x1: n.x, y1: n.y, x2: n.x2, y2: n.y2, x: Math.min(n.x, n.x2), y: Math.min(n.y, n.y2), w: Math.abs(n.x2 - n.x), h: Math.abs(n.y2 - n.y) });
-      maxX = Math.max(maxX, n.x, n.x2); maxY = Math.max(maxY, n.y, n.y2);
-    } else if (n.type === 'brace') {
-      const size = Number(n.size) || fs * 0.9, tick = Math.max(6, size * 0.45), d = n.flip ? -1 : 1, sw = Number(n.sw) || 1.4;
-      const horiz = Math.abs(n.x2 - n.x) >= Math.abs(n.y2 - n.y);
-      let box;
-      if (horiz) {
-        const a = Math.min(n.x, n.x2), b = Math.max(n.x, n.x2), y = n.y;
-        svg += RT.line([[a, y + d * tick], [a, y], [b, y], [b, y + d * tick]], { color: col, sw });
-        if (n.text) { const tw = RT.textWidth(n.text, size, !!n.bold), ty = d > 0 ? y - size * 1.35 : y + size * 0.15; svg += RT.rich([{ runs: [{ t: n.text, size, bold: !!n.bold, color: col }] }], (a + b) / 2, ty, { lh: size * 1.25, anchor: 'middle' }); maxX = Math.max(maxX, (a + b) / 2 + tw / 2); maxY = Math.max(maxY, ty + size * 1.25); }
-        box = { x: a, y: y - (d > 0 ? size * 1.4 : tick), w: b - a, h: size * 1.4 + tick };
-        maxX = Math.max(maxX, b); maxY = Math.max(maxY, y + tick);
-      } else {
-        const a = Math.min(n.y, n.y2), b = Math.max(n.y, n.y2), x = n.x;
-        svg += RT.line([[x + d * tick, a], [x, a], [x, b], [x + d * tick, b]], { color: col, sw });
-        if (n.text) { const tw = RT.textWidth(n.text, size, !!n.bold); svg += RT.rich([{ runs: [{ t: n.text, size, bold: !!n.bold, color: col }] }], d > 0 ? x - 6 : x + 6, (a + b) / 2 - size * 0.62, { lh: size * 1.25, anchor: d > 0 ? 'end' : 'start' }); maxX = Math.max(maxX, d > 0 ? x : x + 6 + tw); }
-        box = { x: x - (d > 0 ? 80 : tick), y: a, w: 80 + tick, h: b - a };
-        maxX = Math.max(maxX, x + tick); maxY = Math.max(maxY, b);
-      }
-      TL.notes.push({ k, type: 'brace', x1: n.x, y1: n.y, x2: n.x2, y2: n.y2, horiz, ...box });
-    }
-  });
-  return { svg, maxX, maxY };
+  const r = RT.drawNotes(S.notes, fs, Number(S.st.lh) || 1.3);
+  TL.notes = r.boxes;
+  return r;
 }
 function build() {
   RT.applyStyle(S.st);

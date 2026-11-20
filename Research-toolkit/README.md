@@ -21,6 +21,8 @@ Browser-based figure tools for research papers. Everything runs in the browser �
 
 Interface in Traditional Chinese and English. Figures export to PNG, TIFF, JPG, PDF, SVG and editable Word.
 
+The figure tools open figure-first: the settings column stays hidden until Settings is pressed, quick menus above the figure hold the most-used settings, and text boxes, arrows and brackets can be added and dragged on any figure, and clicking a box, title, axis label or study name opens its fields beside the figure (shared/figedit.js).
+
 ## Notes
 
 - Cite the reporting guideline or assessment tool you followed (PRISMA 2020, Schneeweiss et al. 2019, RoB 2, ROBINS-I V2), not this toolkit. Full references are listed on each page.
@@ -32,4 +34,4 @@ Interface in Traditional Chinese and English. Figures export to PNG, TIFF, JPG, 
 
 張家菘 — questions, bug reports and suggestions: [js.chang0512@gmail.com](mailto:js.chang0512@gmail.com)
 
-Version: v3.4 (2026-11-20)
+Version: v3.5 (2026-11-20)

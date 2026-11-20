@@ -18,7 +18,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../shared/style.css?v=20261119a">
+<link rel="stylesheet" href="../shared/style.css?v=20261120b">
 <style>
   .frow .block-head input { flex: 1; }
   .frow .nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
@@ -134,7 +134,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261120a"></script>
+<script src="../shared/common.js?v=20261120c"></script>
 <script>
 const T = RT.t;
 const KEY = 'forest1';
@@ -519,6 +519,7 @@ function render() {
   RT.save(KEY, S);
 }
 const update = RT.debounce(() => { render(); hist.push(); }, 80);
+RT.refresh = update; RT.renderNow = render;   // used by shared/figedit.js
 
 const EX_ROWS = [
   row({ label: 'Overall', sum: true, c1: '412/10,250', c2: '538/10,180', est: '0.78', lo: '0.69', hi: '0.88' }),
@@ -590,6 +591,14 @@ hist.push();
   syncInputs(); update();
   RT.toast(T(`已帶入 ${h.tool} 判斷：對應到 ${matched} 列${added ? `，新增 ${added} 列（請填估計值與 CI）` : ''}（按 ↶ 可復原）`, `${h.tool} judgements added: ${matched} ${matched === 1 ? 'row' : 'rows'} matched${added ? `, ${added} new ${added === 1 ? 'row' : 'rows'} added (fill in the estimates and CIs)` : ''} (↶ to undo)`), 7000);
 })();
+</script>
+<script src="../shared/figedit.js?v=20261120b"></script>
+<script>
+RT.figEdit({ key: 'forestplot', menus: [
+  { id: 'axis', label: RT.t('刻度', 'Axis'), items: ["measure","scale","nullV","xmin","xmax","ticks","dec","axisLabel","favL","favR","refDash"] },
+  { id: 'cols', label: RT.t('欄位', 'Columns'), items: ["showEv","showC1","showC2","showEst","showW","showP","hLabel","hEst"] },
+  { id: 'style', label: RT.t('風格', 'Style'), items: ["title","marker","color","sumColor","sizeBy","ciW","plotW","rowSp","st.font","st.fontSize","st.lh","st.textColor","st.boxFill","st.boxStroke","st.boxSW","st.radius","st.lineColor","st.lineW"] },
+] });
 </script>
 </body>
 </html>

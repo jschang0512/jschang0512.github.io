@@ -18,7 +18,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../shared/style.css?v=20261119a">
+<link rel="stylesheet" href="../shared/style.css?v=20261120b">
 <style>
   .erow .block-head input { flex: 1; }
   .erow .nums { display: grid; grid-template-columns: 7.5rem repeat(3, minmax(0, 1fr)); gap: 6px; align-items: end; }
@@ -117,7 +117,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261120a"></script>
+<script src="../shared/common.js?v=20261120c"></script>
 <script>
 const T = RT.t;
 const KEY = 'evalue1';
@@ -303,7 +303,7 @@ function buildPlot() {
   const L = fs * 4.2, top = fs * (S.title ? 3 : 1.2), M = 16;
   RT.beginScene();
   let body = '';
-  if (S.title) body += RT.rich([{ runs: [{ t: S.title, bold: true, size: fs * 1.1, color: ink }] }], M, M, { lh: fs * 1.5 });
+  if (S.title) { body += RT.rich([{ runs: [{ t: S.title, bold: true, size: fs * 1.1, color: ink }] }], M, M, { lh: fs * 1.5 }); RT.addHit(M - 3, M, RT.textWidth(S.title, fs * 1.1, true) + 8, fs * 1.5, RT.hitKey('title')); }
   const x0 = M + L, y0 = top + M, x1 = x0 + PW, y1 = y0 + PH;
   const ok = c && !c.err;
   const R = ok ? Math.max(c.rr / c.t, c.t / c.rr) : 2;
@@ -330,6 +330,7 @@ function buildPlot() {
     body += RT.rich([{ runs: [{ t, size: fs * 0.9, color: ink }] }], x0 - fs * 0.5, Y(v) - fs * 0.65, { lh: fs * 1.3, anchor: 'end' });
   }
   body += RT.rich([{ runs: [{ t: S.xLab, size: fs, color: ink }] }], x0 + PW / 2, y1 + fs * 1.9, { lh: fs * 1.4, anchor: 'middle' });
+  { const xw = RT.textWidth(S.xLab, fs, false) + 10; RT.addHit(x0 + PW / 2 - xw / 2, y1 + fs * 1.9, xw, fs * 1.4, RT.hitKey('xLab')); RT.addHit(M, y0, fs * 1.6, PH, RT.hitKey('yLab')); }
   // y title: drawn as a rotated label
   body += `<text transform="translate(${RT.f(M + fs * 0.9)},${RT.f(y0 + PH / 2)}) rotate(-90)" text-anchor="middle" font-size="${fs}" fill="${ink}">${RT.esc(S.yLab)}</text>`;
   RT.scene && RT.scene.push({ k: 'shape', x: M, y: y0, w: fs * 1.6, h: PH, fill: 'none', stroke: 'none', sw: 0, vert: 'vert270', padL: 0, padR: 0, padT: 0, padB: 0, anchor: 'ctr', paras: [{ align: 'center', indent: 0, hang: 0, gap: 0, lh: fs * 1.3, runs: [{ t: S.yLab, size: fs, color: ink }] }] });
@@ -376,7 +377,7 @@ function buildTable() {
   const o = { size: fs, lh: 1.3, pad: 6, align: 'left', color: st.textColor, stroke: 'none', sw: 0, radius: 0, fill: 'none' };
   RT.beginScene();
   let body = '', y = M;
-  if (S.title) { const tb = RT.box([{ text: S.title, bold: true }], tw, { ...o, pad: 0, padX: 0, size: fs * 1.08 }); body += RT.drawBox(tb, M, y); y += tb.h + fs * 0.5; }
+  if (S.title) { const tb = RT.box([{ text: S.title, bold: true }], tw, { ...o, pad: 0, padX: 0, size: fs * 1.08 }); body += RT.drawBox(tb, M, y); RT.addHit(M, y, tb.w, tb.h, RT.hitKey('title')); y += tb.h + fs * 0.5; }
   const drawRow = (cells, bold) => {
     const bs = cells.map((t, i) => RT.box([{ text: t, bold, align: i ? 'center' : 'left' }], cw[i], o));
     const h = Math.max(...bs.map((b) => b.h));
@@ -433,6 +434,7 @@ function render() {
   RT.save(KEY, S);
 }
 const update = RT.debounce(() => { render(); hist.push(); }, 80);
+RT.refresh = update; RT.renderNow = render;   // used by shared/figedit.js
 
 document.getElementById('btnUndo').onclick = hist.undo;
 document.getElementById('btnRedo').onclick = hist.redo;
@@ -467,6 +469,13 @@ hist.push();
   syncInputs(); update();
   RT.toast(T(`已帶入森林圖的 ${S.rows.length} 個估計值（按 ↶ 可回到原本的內容）。OR 或 HR 若結果常見，請記得勾選。`, `${S.rows.length} estimates brought in from the forest plot (↶ restores your previous entries). Tick “Common outcome” where it applies.`), 7000);
 })();
+</script>
+<script src="../shared/figedit.js?v=20261120b"></script>
+<script>
+RT.figEdit({ key: 'evalue', menus: [
+  { id: 'plot', label: RT.t('圖', 'Plot'), items: ["view","title","trueV","axMax","plotW","plotH","shade","xLab","yLab"] },
+  { id: 'style', label: RT.t('風格', 'Style'), items: ["st.font","st.fontSize","st.lh","st.textColor","st.boxFill","st.boxStroke","st.boxSW","st.radius","st.lineColor","st.lineW"] },
+] });
 </script>
 </body>
 </html>

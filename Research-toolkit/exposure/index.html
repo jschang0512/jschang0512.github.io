@@ -18,7 +18,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../shared/style.css?v=20261119a">
+<link rel="stylesheet" href="../shared/style.css?v=20261120b">
 <style>
   .pt .block-head input { flex: 1; }
   .pt textarea { font-family: var(--font-mono); font-size: 13px; }
@@ -100,7 +100,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261120a"></script>
+<script src="../shared/common.js?v=20261120c"></script>
 <script>
 const T = RT.t;
 const KEY = 'exposure1';
@@ -226,7 +226,7 @@ function build() {
   const axMax = RT.num(S.axMax) > 0 ? RT.num(S.axMax) : Math.ceil((lastDay + step * 0.5) / step) * step;
   RT.beginScene();
   let body = '', y = M;
-  if (S.title) { body += RT.rich([{ runs: [{ t: S.title, bold: true, size: fs * 1.1, color: ink }] }], M, y, { lh: fs * 1.5 }); y += fs * 1.9; }
+  if (S.title) { body += RT.rich([{ runs: [{ t: S.title, bold: true, size: fs * 1.1, color: ink }] }], M, y, { lh: fs * 1.5 }); RT.addHit(M - 3, y, RT.textWidth(S.title, fs * 1.1, true) + 8, fs * 1.5, RT.hitKey('title')); y += fs * 1.9; }
   const x0 = M + LW, x1 = W - M - fs * 2;
   const X = (d) => x0 + (Math.min(d, axMax) / axMax) * (x1 - x0);
   BARS = []; SCALE = { x0, x1, axMax };
@@ -279,7 +279,7 @@ function build() {
     body += RT.rich([{ runs: [{ t: String(d), size: fs * 0.9, color: ink }] }], X(d), y + fs * 0.4, { lh: fs * 1.3, anchor: 'middle' });
   }
   y += fs * 1.9;
-  if (S.axisLabel) { body += RT.rich([{ runs: [{ t: S.axisLabel, size: fs, color: ink }] }], (x0 + x1) / 2, y, { lh: fs * 1.4, anchor: 'middle' }); y += fs * 1.8; }
+  if (S.axisLabel) { body += RT.rich([{ runs: [{ t: S.axisLabel, size: fs, color: ink }] }], (x0 + x1) / 2, y, { lh: fs * 1.4, anchor: 'middle' }); const aw = RT.textWidth(S.axisLabel, fs, false) + 10; RT.addHit((x0 + x1) / 2 - aw / 2, y, aw, fs * 1.4, RT.hitKey('axisLabel')); y += fs * 1.8; }
   // legend
   if (data.length) {
     const items = [];
@@ -303,7 +303,7 @@ function build() {
   }
   if (S.footnote && S.footnote.trim()) {
     const fb = RT.box([{ text: S.footnote }], W - 2 * M, { size: fs * 0.85, pad: 0, padX: 0, align: 'left', fill: 'none', stroke: 'none', color: ink, lh: 1.3 });
-    body += RT.drawBox(fb, M, y);
+    body += RT.drawBox(fb, M, y); RT.addHit(M, y, fb.w, fb.h, RT.hitKey('footnote'));
     y += fb.h;
   }
   return RT.figure(W, y + M, body);
@@ -399,6 +399,7 @@ function render() {
   RT.save(KEY, S);
 }
 const update = RT.debounce(() => { render(); hist.push(); }, 80);
+RT.refresh = update; RT.renderNow = render;   // used by shared/figedit.js
 
 document.getElementById('btnUndo').onclick = hist.undo;
 document.getElementById('btnRedo').onclick = hist.redo;
@@ -452,6 +453,14 @@ hist.push();
   syncInputs(); update();
   RT.toast(done.length ? T(`已從時間軸帶入：${done.join('；')}（按 ↶ 可復原）`, `From the timeline: ${done.join('; ')} (↶ to undo)`) : T('時間軸沒有可帶入的暴露設定', 'Nothing to bring in from the timeline'), 7000);
 })();
+</script>
+<script src="../shared/figedit.js?v=20261120b"></script>
+<script>
+RT.figEdit({ key: 'exposure', menus: [
+  { id: 'rule', label: RT.t('規則', 'Rules'), items: ["grace","endRule","stockpile","censorSwitch"] },
+  { id: 'fig', label: RT.t('圖', 'Figure'), items: ["title","W","axMax","tick","labelW","axisLabel"] },
+  { id: 'style', label: RT.t('風格', 'Style'), items: ["st.font","st.fontSize","st.lh","st.textColor","st.boxFill","st.boxStroke","st.boxSW","st.radius","st.lineColor","st.lineW"] },
+] });
 </script>
 </body>
 </html>

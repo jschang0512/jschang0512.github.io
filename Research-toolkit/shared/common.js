@@ -6,7 +6,7 @@
  */
 (function () {
   const RT = (window.RT = {});
-  RT.VERSION = 'v3.4 (2026-11-20)';
+  RT.VERSION = 'v3.5 (2026-11-20)';
   RT.DEV = { name: '張家菘', email: 'js.chang0512@gmail.com' };
 
   /* ---------- i18n ---------- */
@@ -421,7 +421,11 @@
   /* ---------- scene (for editable Word export) ---------- */
   RT.scene = null;
   const rec = (item) => { if (RT.scene) RT.scene.push(item); };
-  RT.beginScene = () => { RT.scene = []; };
+  RT.beginScene = () => { RT.scene = []; RT.hits = []; };
+  // parts of a figure that open a form field when clicked: RT.addHit(x, y, w, h, () => element) while drawing
+  RT.hits = [];
+  RT.addHit = (x, y, w, h, find) => { if (w > 0 && h > 0) RT.hits.push({ x, y, w, h, find }); };
+  RT.hitKey = (k) => () => document.querySelector(`#form [data-k="${k}"]`);
   RT.endScene = () => { const s = RT.scene || []; RT.scene = null; return s; };
   RT.sceneLen = () => (RT.scene ? RT.scene.length : 0);
   RT.shiftScene = (from, dx, dy) => {
@@ -555,8 +559,59 @@
   RT.svgDoc = (w, h, body, bg = '#ffffff') =>
     `<svg xmlns="http://www.w3.org/2000/svg" width="${Math.ceil(w)}" height="${Math.ceil(h)}" viewBox="0 0 ${Math.ceil(w)} ${Math.ceil(h)}" font-family="${RT.esc(RT.fontFamily)}">` +
     (bg ? `<rect x="0" y="0" width="${Math.ceil(w)}" height="${Math.ceil(h)}" fill="${bg}"/>` : '') + body + `</svg>`;
+  /**
+   * Annotations placed freely on a figure (text boxes, arrows, brackets), in figure units. Drawn with the same
+   * primitives as everything else, so they reach every export. Returns the SVG, how far they reach, and a box per
+   * annotation for editing on the figure. notes: [{type:'text'|'arrow'|'brace', x, y, x2, y2, text, size, color, …}]
+   */
+  RT.drawNotes = (notes, fs = 13, lhK = 1.3) => {
+    let svg = '', maxX = 0, maxY = 0;
+    const boxes = [];
+    (notes || []).forEach((n, k) => {
+      const col = n.color || '#000000';
+      if (n.type === 'text') {
+        const size = Number(n.size) || fs, framed = n.frame && n.frame !== 'none', pad = framed ? size * 0.45 : 0;
+        const lines = String(n.text || ' ').split('\n');
+        const w = Math.min(560, Math.max(24, ...lines.map((t) => RT.textWidth(t, size, !!n.bold)))) + 2 * pad + (framed ? 4 : 2);
+        const b = RT.box([{ text: n.text || ' ', bold: !!n.bold, size, color: col }], w, { size, align: n.align || 'left', fill: n.frame === 'fill' ? (n.fill || '#FFF2CC') : n.frame === 'white' ? '#FFFFFF' : 'none', stroke: framed ? col : 'none', sw: 1.2, radius: n.frame === 'fill' ? 4 : 2, pad, padX: framed ? pad + 2 : 1, lh: lhK });
+        svg += RT.drawBox(b, n.x, n.y);
+        boxes.push({ k, type: 'text', x: n.x, y: n.y, w: b.w, h: b.h });
+        maxX = Math.max(maxX, n.x + b.w); maxY = Math.max(maxY, n.y + b.h);
+      } else if (n.type === 'arrow') {
+        const sw = Number(n.sw) || 1.6;
+        svg += RT.arrow([[n.x, n.y], [n.x2, n.y2]], { color: col, sw, head: 6 + sw * 3, dash: n.dash ? `${sw * 3} ${sw * 2}` : undefined });
+        boxes.push({ k, type: 'arrow', x1: n.x, y1: n.y, x2: n.x2, y2: n.y2, x: Math.min(n.x, n.x2), y: Math.min(n.y, n.y2), w: Math.abs(n.x2 - n.x), h: Math.abs(n.y2 - n.y) });
+        maxX = Math.max(maxX, n.x, n.x2); maxY = Math.max(maxY, n.y, n.y2);
+      } else if (n.type === 'brace') {
+        const size = Number(n.size) || fs * 0.9, tick = Math.max(6, size * 0.45), d = n.flip ? -1 : 1, sw = Number(n.sw) || 1.4;
+        const horiz = Math.abs(n.x2 - n.x) >= Math.abs(n.y2 - n.y);
+        let box;
+        if (horiz) {
+          const a = Math.min(n.x, n.x2), b = Math.max(n.x, n.x2), y = n.y;
+          svg += RT.line([[a, y + d * tick], [a, y], [b, y], [b, y + d * tick]], { color: col, sw });
+          if (n.text) { const tw = RT.textWidth(n.text, size, !!n.bold), ty = d > 0 ? y - size * 1.35 : y + size * 0.15; svg += RT.rich([{ runs: [{ t: n.text, size, bold: !!n.bold, color: col }] }], (a + b) / 2, ty, { lh: size * 1.25, anchor: 'middle' }); maxX = Math.max(maxX, (a + b) / 2 + tw / 2); maxY = Math.max(maxY, ty + size * 1.25); }
+          box = { x: a, y: y - (d > 0 ? size * 1.4 : tick), w: b - a, h: size * 1.4 + tick };
+          maxX = Math.max(maxX, b); maxY = Math.max(maxY, y + tick);
+        } else {
+          const a = Math.min(n.y, n.y2), b = Math.max(n.y, n.y2), x = n.x;
+          svg += RT.line([[x + d * tick, a], [x, a], [x, b], [x + d * tick, b]], { color: col, sw });
+          if (n.text) { const tw = RT.textWidth(n.text, size, !!n.bold); svg += RT.rich([{ runs: [{ t: n.text, size, bold: !!n.bold, color: col }] }], d > 0 ? x - 6 : x + 6, (a + b) / 2 - size * 0.62, { lh: size * 1.25, anchor: d > 0 ? 'end' : 'start' }); maxX = Math.max(maxX, d > 0 ? x : x + 6 + tw); }
+          box = { x: x - (d > 0 ? 80 : tick), y: a, w: 80 + tick, h: b - a };
+          maxX = Math.max(maxX, x + tick); maxY = Math.max(maxY, b);
+        }
+        boxes.push({ k, type: 'brace', x1: n.x, y1: n.y, x2: n.x2, y2: n.y2, horiz, ...box });
+      }
+    });
+    return { svg, maxX, maxY, boxes };
+  };
+  // shared/figedit.js sets this so annotations are added to every figure a tool builds (preview and exports alike)
+  RT.figureHook = null;
   /** Wrap up a figure: {svg, w, h, scene, bg, font} */
-  RT.figure = (w, h, body, bg = '#FFFFFF') => ({ svg: RT.svgDoc(w, h, body, bg), w: Math.ceil(w), h: Math.ceil(h), scene: RT.endScene(), bg, font: { ...RT.font } });
+  RT.figure = (w, h, body, bg = '#FFFFFF') => {
+    if (RT.figureHook) { const r = RT.figureHook(w, h, body); w = r.w; h = r.h; body = r.body; }
+    RT.lastHits = RT.hits || [];
+    return { svg: RT.svgDoc(w, h, body, bg), w: Math.ceil(w), h: Math.ceil(h), scene: RT.endScene(), bg, font: { ...RT.font } };
+  };
 
   /* ---------- editable Word (.docx) export ---------- */
   const hex = (c) => {
