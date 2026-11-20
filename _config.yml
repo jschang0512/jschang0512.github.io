@@ -25,6 +25,8 @@ exclude:
   - DESIGN.md
   - .impeccable
   - Research-toolkit/submissions/native
+  - Research-toolkit/submissions/src
+  - Research-toolkit/submissions/build.js
 
 markdown: kramdown
 kramdown:
