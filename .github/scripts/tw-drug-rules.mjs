@@ -19,8 +19,9 @@ const col = nhi.cols.indexOf('ruleFiles');
 const wanted = [...new Set(nhi.rows.flatMap((r) => (r[col] ? r[col].split(',') : [])))].sort();
 // bump when tidy() changes, so texts converted under the old rules are converted again
 const TIDY = 2;
-let prev = {};
-try { if (prevFile && fs.existsSync(prevFile)) { const p = JSON.parse(fs.readFileSync(prevFile, 'utf8')); if (p.tidy === TIDY) prev = p.files || {}; } } catch (e) { prev = {}; }
+// prev: texts that can be kept as they are; older: any earlier text, kept when the PDF cannot be fetched now
+let prev = {}, older = {};
+try { if (prevFile && fs.existsSync(prevFile)) { const p = JSON.parse(fs.readFileSync(prevFile, 'utf8')); older = p.files || {}; if (p.tidy === TIDY) prev = older; } } catch (e) { prev = {}; older = {}; }
 
 // PDF lines → paragraphs: a line that starts a numbered item starts a paragraph, other lines continue the one above
 const START = /^(\(?\d{1,2}\)|\d{1,2}\.(\d{1,2}\.)*|[A-Za-z]\.|\([a-zA-Z]\)|[（(][一二三四五六七八九十]+[）)]|[一二三四五六七八九十]+、|[①-⑳]|註|備註|※|◎|●|■|【|附表|附件)/;
@@ -40,11 +41,13 @@ function tidy(text) {
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'nhi-rules-'));
 const files = {};
-let fetched = 0, reused = 0, failed = 0;
+let fetched = 0, reused = 0, failed = 0, inARow = 0, blocked = false;
 for (const name of wanted) {
   if (prev[name]) { files[name] = prev[name]; reused++; continue; }
+  // the NHI site may refuse this machine altogether (it has refused GitHub's servers): after five failures in a row stop asking
+  if (blocked) { if (older[name]) { files[name] = older[name]; reused++; } else failed++; continue; }
   try {
-    const res = await fetch(URL + encodeURIComponent(name), { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    const res = await fetch(URL + encodeURIComponent(name), { headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(30000) });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const pdf = path.join(tmp, 'r.pdf');
     fs.writeFileSync(pdf, Buffer.from(await res.arrayBuffer()));
@@ -52,8 +55,12 @@ for (const name of wanted) {
     // a PDF whose Chinese font could not be read gives text without any Chinese: leave it out so the next run tries again
     if (!/[一-鿿]/.test(text)) throw new Error('no Chinese text extracted');
     files[name] = tidy(text);
-    fetched++;
-  } catch (e) { failed++; console.warn('skip', name, e.message); }
+    fetched++; inARow = 0;
+  } catch (e) {
+    if (older[name]) { files[name] = older[name]; reused++; } else failed++;
+    console.warn('skip', name, e.message);
+    if (++inARow >= 5 && !fetched) { blocked = true; console.warn('The NHI site is not answering; keeping last week\'s texts for the rest.'); }
+  }
   await new Promise((r) => setTimeout(r, 250));   // gentle on the NHI server
 }
 fs.rmSync(tmp, { recursive: true, force: true });
@@ -66,4 +73,5 @@ meta.counts.rules = Object.keys(files).length;
 fs.writeFileSync(path.join(dir, 'rules.json'), JSON.stringify({ v: meta.v, tidy: TIDY, files }));
 fs.writeFileSync(metaFile, JSON.stringify(meta));
 console.log(`rules.json: ${Object.keys(files).length} of ${wanted.length} files (${fetched} fetched, ${reused} reused, ${failed} failed), ${(fs.statSync(path.join(dir, 'rules.json')).size / 1e6).toFixed(1)} MB`);
-if (failed > wanted.length / 4) { console.error('Too many rules could not be fetched.'); process.exit(1); }
+// missing texts only mean "open the PDF" on the page; fail the run only when there is nothing at all
+if (!Object.keys(files).length && wanted.length) { console.error('No rule text could be fetched or kept.'); process.exit(1); }
