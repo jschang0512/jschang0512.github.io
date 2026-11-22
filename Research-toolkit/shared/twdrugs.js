@@ -1,10 +1,16 @@
 /* Taiwan drug data (NHI drug list + TFDA licences) shared by drugs/ and codelist/.
- * Built weekly by .github/workflows/tw-drugs.yml into the branch "tw-drugs-data" and read from
- * raw.githubusercontent.com. On a local server it reads Research-toolkit/data/tw-drugs/ instead. */
+ * Built weekly by .github/workflows/tw-drugs.yml into the branch "tw-drugs-data", with a git tag per version.
+ * meta.json is read fresh from raw.githubusercontent.com; the data files come through jsDelivr at that version's
+ * tag (a fixed, compressed, cached address), falling back to raw.githubusercontent.com. On a local server
+ * everything is read from Research-toolkit/data/tw-drugs/.
+ * Files: nhi-paid (reimbursed now, loaded first) + nhi-rest (no longer reimbursed, on request); fda (short
+ * licence fields) + fda-more (indication and package, on request); hist, extra, rules (on request). */
 (() => {
   const RT = window.RT;
   const local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
-  const BASE = local ? '/Research-toolkit/data/tw-drugs/' : 'https://raw.githubusercontent.com/jschang0512/jschang0512.github.io/tw-drugs-data/';
+  const REPO = 'jschang0512/jschang0512.github.io';
+  const BASE = local ? '/Research-toolkit/data/tw-drugs/' : `https://raw.githubusercontent.com/${REPO}/tw-drugs-data/`;
+  const CDN = (tag) => `https://cdn.jsdelivr.net/gh/${REPO}@${tag}/`;
   const NHI_URL = 'https://info.nhi.gov.tw/api/INAE3000/INAE3000S01/getPDF?DurgFileName=';
   const LIC_URL = 'https://lmspiq.fda.gov.tw/web/DRPIQ/DRPIQ1000Result?licId=';
   const memo = {};
@@ -36,20 +42,44 @@
     if (memo[name]) return memo[name];
     memo[name] = (async () => {
       const m = await meta();
-      const r = await fetch(BASE + name + '.json?v=' + m.v);
-      if (!r.ok) { memo[name] = null; throw new Error(name + '.json HTTP ' + r.status); }
-      return r.json();
+      const urls = [];
+      if (!local && m.tag) urls.push(CDN(m.tag) + name + '.json');       // fixed address per version
+      urls.push(BASE + name + '.json?v=' + m.v);
+      let last = null;
+      for (const u of urls) {
+        try { const r = await fetch(u); if (r.ok) return await r.json(); last = new Error(name + '.json HTTP ' + r.status); } catch (e) { last = e; }
+      }
+      memo[name] = null;
+      throw last;
     })();
     return memo[name];
   }
+  const split = async () => ((await meta()).format || 1) >= 2;
+  // NHI items reimbursed now: enough for most searches, about a third of the codes
   async function nhi() {
-    const d = await file('nhi');
-    if (!d._ready) {
-      colIndex(d.cols, N);
-      d.byCode = new Map(d.rows.map((r) => [r[N.code], r]));
-      d._ready = true;
-    }
-    return d;
+    if (memo.nhiD) return memo.nhiD;
+    memo.nhiD = (async () => {
+      const d = await file((await split()) ? 'nhi-paid' : 'nhi');
+      if (!d._ready) {
+        colIndex(d.cols, N);
+        d.byCode = new Map(d.rows.map((r) => [r[N.code], r]));
+        d.complete = !(await split());
+        d._ready = true;
+      }
+      return d;
+    })();
+    memo.nhiD.catch(() => { memo.nhiD = null; });
+    return memo.nhiD;
+  }
+  // every NHI code ever listed: adds the ones no longer reimbursed to the same object
+  async function nhiAll() {
+    const d = await nhi();
+    if (d.complete) return d;
+    if (!memo.rest) memo.rest = file('nhi-rest').then((rest) => {
+      if (!d.complete) { rest.rows.forEach((r) => { d.rows.push(r); d.byCode.set(r[N.code], r); }); d.complete = true; }
+      return d;
+    }).catch((e) => { memo.rest = null; throw e; });
+    return memo.rest;
   }
   async function fda() {
     const d = await file('fda');
@@ -59,6 +89,21 @@
       d._ready = true;
     }
     return d;
+  }
+  // indication and package text, kept apart from the short licence fields
+  let moreD = null;
+  async function fdaMore() {
+    if (F.indication != null) return null;          // first-version data: already in fda.json
+    if (!moreD) moreD = await file('fda-more');
+    return moreD;
+  }
+  function licText(f) {
+    if (!f) return null;
+    if (F.indication != null) return { indication: f[F.indication] || '', package: f[F.package] || '' };
+    if (!moreD) return null;
+    const x = moreD.more[f[F.licence]] || [];
+    const o = {}; moreD.cols.forEach((c, i) => (o[c] = x[i] || ''));
+    return o;
   }
   async function hist(code) {
     const d = await file('hist');
@@ -74,16 +119,16 @@
   const fold = (s) => String(s || '').replace(/[！-～]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0)).replace(/　/g, ' ').toLowerCase();
 
   RT.twDrugs = {
-    BASE, N, F, meta, nhi, fda, hist, extra, rules, fold,
+    BASE, N, F, meta, nhi, nhiAll, fda, fdaMore, licText, hist, extra, rules, fold,
     /** 第一級…第四級管制藥品 (not 取消管制藥品註記, which marks a schedule that was lifted) */
     ctrlLevel: (v) => { const m = String(v || '').match(/^第(.)級管制藥品$/); return m ? '一二三四'.indexOf(m[1]) + 1 : 0; },
     /** NHI codes ending in G0 are the foil-packed (PTP) version of the same product; worked out from the data, not an NHIA definition */
     isFoil: (code) => /G0$/.test(code),
     ruleUrl: (f) => NHI_URL + encodeURIComponent(f),
     licUrl: (id) => LIC_URL + encodeURIComponent(id),
-    /** NHI codes whose ATC code starts with the given prefix (A10BA → metformin, phenformin...) */
+    /** NHI codes whose ATC code starts with the given prefix (A10BA → metformin, phenformin...), delisted ones included */
     async byAtc(prefix) {
-      const d = await nhi(); const p = String(prefix || '').toUpperCase().trim();
+      const d = await nhiAll(); const p = String(prefix || '').toUpperCase().trim();
       return p ? d.rows.filter((r) => r[N.atc].startsWith(p)) : [];
     },
     sourceNote: () => RT.t(

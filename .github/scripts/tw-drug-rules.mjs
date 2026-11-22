@@ -14,9 +14,11 @@ const [dir, prevFile] = process.argv.slice(2);
 if (!dir) { console.error('usage: tw-drug-rules.mjs <dataDir> [previous rules.json]'); process.exit(1); }
 const URL = 'https://info.nhi.gov.tw/api/INAE3000/INAE3000S01/getPDF?DurgFileName=';
 
-const nhi = JSON.parse(fs.readFileSync(path.join(dir, 'nhi.json'), 'utf8'));
-const col = nhi.cols.indexOf('ruleFiles');
-const wanted = [...new Set(nhi.rows.flatMap((r) => (r[col] ? r[col].split(',') : [])))].sort();
+// NHI rows: nhi-paid.json + nhi-rest.json (or the single nhi.json of the first version)
+const parts = ['nhi-paid.json', 'nhi-rest.json', 'nhi.json'].map((f) => path.join(dir, f)).filter((f) => fs.existsSync(f)).map((f) => JSON.parse(fs.readFileSync(f, 'utf8')));
+if (!parts.length) { console.error('No NHI data in ' + dir); process.exit(1); }
+const col = parts[0].cols.indexOf('ruleFiles');
+const wanted = [...new Set(parts.flatMap((p) => p.rows).flatMap((r) => (r[col] ? r[col].split(',') : [])))].sort();
 // bump when tidy() changes, so texts converted under the old rules are converted again
 const TIDY = 2;
 // prev: texts that can be kept as they are; older: any earlier text, kept when the PDF cannot be fetched now
@@ -70,6 +72,9 @@ const meta = JSON.parse(fs.readFileSync(metaFile, 'utf8'));
 const rv = crypto.createHash('sha1').update(JSON.stringify(files)).digest('hex').slice(0, 10);
 meta.v = crypto.createHash('sha1').update(meta.v + rv).digest('hex').slice(0, 10);
 meta.counts.rules = Object.keys(files).length;
+// the git tag this version is published under; the pages load the data files through jsDelivr at that tag,
+// a fixed address that its CDN keeps compressed and cached (names sort by date, so old ones are easy to prune)
+meta.tag = `tw-drugs-${String(meta.built).replace(/-/g, '')}-${meta.v}`;
 fs.writeFileSync(path.join(dir, 'rules.json'), JSON.stringify({ v: meta.v, tidy: TIDY, files }));
 fs.writeFileSync(metaFile, JSON.stringify(meta));
 console.log(`rules.json: ${Object.keys(files).length} of ${wanted.length} files (${fetched} fetched, ${reused} reused, ${failed} failed), ${(fs.statSync(path.join(dir, 'rules.json')).size / 1e6).toFixed(1)} MB`);

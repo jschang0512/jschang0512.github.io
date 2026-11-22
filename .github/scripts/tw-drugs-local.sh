@@ -19,7 +19,7 @@ echo "== $(date '+%F %T') Taiwan drug data, built locally"
 # last published data: the fallback for any source that cannot be downloaded, and the rule texts already converted
 mkdir -p "$WORK/prev" "$WORK/src"
 git fetch -q origin tw-drugs-data 2>/dev/null || true
-for f in meta nhi hist fda extra rules; do
+for f in meta nhi nhi-paid nhi-rest hist fda fda-more extra rules; do
   git show "origin/tw-drugs-data:$f.json" > "$WORK/prev/$f.json" 2>/dev/null || rm -f "$WORK/prev/$f.json"
 done
 # before the branch has rule texts, reuse the ones converted on this computer
@@ -31,7 +31,7 @@ size() { wc -c < "$1" 2>/dev/null || echo 0; }
 if get "$WORK/src/nhi.csv" "https://info.nhi.gov.tw/api/iode0000s01/Dataset?rId=A21030000I-E41001-001" && [ "$(size "$WORK/src/nhi.csv")" -gt 20000000 ]; then
   NHI="$WORK/src/nhi.csv"
 else
-  echo "NHI drug list could not be downloaded; keeping last week's"; NHI="$WORK/prev/nhi.json"
+  echo "NHI drug list could not be downloaded; keeping last week's"; NHI="$WORK/prev/nhi.json"; [ -f "$WORK/prev/nhi-paid.json" ] && NHI="$WORK/prev/nhi-paid.json"
 fi
 declare -A PICK
 for pair in "36:LIC:fda.json:10000000" "42:LOOKS:extra.json:100000" "39:LEAF:extra.json:1000000"; do
@@ -60,4 +60,8 @@ git init -q -b tw-drugs-data
 printf 'Taiwan drug data for Research Toolkit, rebuilt weekly by .github/workflows/tw-drugs.yml or .github/scripts/tw-drugs-local.sh on main.\nSources: NHI 健保用藥品項 and 藥品給付規定; TFDA 全部藥品許可證資料集, 藥品外觀資料集, 藥品仿單外盒資料集 (Open Government Data License, Taiwan, v1.0).\n' > README.md
 git add -A
 git commit -q -m "Taiwan drug data $(node -p "require('./meta.json').built") (built locally)"
-git push -q -f "$REMOTE" tw-drugs-data && echo "Published to tw-drugs-data."
+TAG="$(node -p "require('./meta.json').tag")"
+git tag "$TAG"
+git push -q -f "$REMOTE" tw-drugs-data "refs/tags/$TAG" && echo "Published to tw-drugs-data as $TAG."
+# keep the three newest data tags
+git ls-remote --tags "$REMOTE" 'refs/tags/tw-drugs-*' | awk '{print $2}' | grep -vF '^{}' | sed 's#refs/tags/##' | sort -r | tail -n +4 | while read -r t; do git push -q "$REMOTE" --delete "$t" || true; done

@@ -165,7 +165,7 @@
 </main>
 
 <script src="../shared/common.js?v=20261122a"></script>
-<script src="../shared/twdrugs.js?v=20261122b"></script>
+<script src="../shared/twdrugs.js?v=20261122c"></script>
 <script>
 const T = RT.t, esc = RT.esc, TW = RT.twDrugs, N = TW.N;
 const KEY = 'codelist';
@@ -238,7 +238,7 @@ async function atcName(code) {
 let nhiD = null, nhiP = null;
 function loadNhi() {
   if (nhiP) return nhiP;
-  nhiP = TW.nhi().then((d) => { nhiD = d; renderGroups(); renderSnip(); if (S.sys === 'drug') runSearch(); return d; })
+  nhiP = TW.nhiAll().then((d) => { nhiD = d; renderGroups(); renderSnip(); if (S.sys === 'drug') runSearch(); return d; })
     .catch((e) => { nhiP = null; RT.toast(String(e.message || e), 5000); throw e; });
   return nhiP;
 }
@@ -426,7 +426,7 @@ async function renderBrowse(my) {
     loadHeads9();
     items = (sys === 'icd9cm' ? ICD9_CH : ICD9P_CH).map(([r, name]) => nodeHTML(g, sys, { key: 'ch9:' + r, lazy: 'ch9:' + r, label: r, name })).join('');
   } else {
-    if (!nhiD) { box.innerHTML = `<p class="hits-empty">${T('正在載入健保藥品資料（約 3 MB，第一次之後會快取）…', 'Loading the NHI drug list (about 3 MB; cached after the first visit)…')}</p>`; try { await loadNhi(); } catch (e) { box.innerHTML = `<p class="hits-empty">${esc(e.message || e)}</p>`; } return; }
+    if (!nhiD) { box.innerHTML = `<p class="hits-empty">${T('正在載入健保藥品資料（第一次之後會快取）…', 'Loading the NHI drug list (cached after the first visit)…')}</p>`; try { await loadNhi(); } catch (e) { box.innerHTML = `<p class="hits-empty">${esc(e.message || e)}</p>`; } return; }
     items = atcLevel(g, '');
   }
   if (my !== seq) return;
@@ -549,7 +549,7 @@ async function itemFrom(d, excl) {
 const ATC_RE = /^[A-Z]\d{2}([A-Z]([A-Z](\d{1,2})?)?)?$/i;
 async function drugSearch(q, my) {
   const box = $('hits'), g = activeGroup();
-  if (!nhiD) { box.innerHTML = `<p class="hits-empty">${T('正在載入健保藥品資料（約 3 MB，第一次之後會快取）…', 'Loading the NHI drug list (about 3 MB; cached after the first visit)…')}</p>`; try { await loadNhi(); } catch (e) { box.innerHTML = `<p class="hits-empty">${esc(e.message || e)}</p>`; } return; }
+  if (!nhiD) { box.innerHTML = `<p class="hits-empty">${T('正在載入健保藥品資料（第一次之後會快取）…', 'Loading the NHI drug list (cached after the first visit)…')}</p>`; try { await loadNhi(); } catch (e) { box.innerHTML = `<p class="hits-empty">${esc(e.message || e)}</p>`; } return; }
   const isAtc = ATC_RE.test(q), Q = TW.fold(q);
   const toks = Q.split(/\s+/).filter(Boolean);
   const rows = nhiD.rows.filter((r) => (isAtc ? r[N.atc].startsWith(q.toUpperCase()) : toks.every((t) => TW.fold(r[N.ingredient] + ' ' + r[N.en] + ' ' + r[N.zh] + ' ' + r[N.code] + ' ' + r[N.atc]).includes(t))));

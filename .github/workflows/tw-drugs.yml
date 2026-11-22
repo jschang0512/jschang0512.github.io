@@ -39,7 +39,7 @@ jobs:
         run: |
           mkdir -p /tmp/prev
           git fetch origin tw-drugs-data --depth 1 || true
-          for f in meta nhi hist fda extra rules; do
+          for f in meta nhi nhi-paid nhi-rest hist fda fda-more extra rules; do
             git show origin/tw-drugs-data:$f.json > /tmp/prev/$f.json 2>/dev/null || rm -f /tmp/prev/$f.json
           done
           ls -l /tmp/prev
@@ -53,7 +53,7 @@ jobs:
             echo "NHI=/tmp/src/nhi.csv" >> "$GITHUB_ENV"
           else
             echo "::warning::NHI drug list could not be downloaded; keeping last week's"
-            echo "NHI=/tmp/prev/nhi.json" >> "$GITHUB_ENV"
+            if [ -f /tmp/prev/nhi-paid.json ]; then echo "NHI=/tmp/prev/nhi-paid.json"; else echo "NHI=/tmp/prev/nhi.json"; fi >> "$GITHUB_ENV"
           fi
           # TFDA: 36 licences, 42 appearance, 39 leaflets and cartons
           for pair in "36:LIC:fda.json:10000000" "42:LOOKS:extra.json:100000" "39:LEAF:extra.json:1000000"; do
@@ -89,4 +89,10 @@ jobs:
           printf 'Taiwan drug data for Research Toolkit, rebuilt weekly by .github/workflows/tw-drugs.yml on main.\nSources: NHI 健保用藥品項 and 藥品給付規定; TFDA 全部藥品許可證資料集, 藥品外觀資料集, 藥品仿單外盒資料集 (Open Government Data License, Taiwan, v1.0).\n' > README.md
           git add -A
           git commit -q -m "Taiwan drug data $(node -p "require('./meta.json').built")"
-          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" tw-drugs-data
+          URL="https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git"
+          # a tag per version: the pages read the data files through jsDelivr at this fixed address
+          TAG=$(node -p "require('./meta.json').tag")
+          git tag "$TAG"
+          git push -f "$URL" tw-drugs-data "refs/tags/$TAG"
+          # keep the three newest data tags; older versions are no longer read by anyone
+          git ls-remote --tags "$URL" 'refs/tags/tw-drugs-*' | awk '{print $2}' | grep -vF '^{}' | sed 's#refs/tags/##' | sort -r | tail -n +4 | while read -r t; do git push -q "$URL" --delete "$t" || true; done

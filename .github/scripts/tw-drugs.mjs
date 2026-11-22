@@ -6,8 +6,10 @@
 // Any input can instead be the previous week's JSON (nhi.json, fda.json, extra.json from the tw-drugs-data branch):
 // a source that could not be downloaded then keeps last week's data while the others are refreshed.
 // Output (outDir, default Research-toolkit/data/tw-drugs/):
-//   nhi.json   every NHI drug code ever listed, one row each, with its current price (0 = no longer reimbursed)
-//   fda.json   licences that are still valid, plus cancelled ones that an NHI code still points to
+//   nhi-paid.json  NHI drug codes reimbursed now (loaded first: most searches need only these)
+//   nhi-rest.json  NHI drug codes no longer reimbursed (price 0), loaded when someone asks for them
+//   fda.json       licences that are still valid, plus cancelled ones that an NHI code still points to (short fields)
+//   fda-more.json  indication and package text per licence (loaded when a drug is opened)
 //   hist.json  price history per NHI code (loaded only when someone opens it)
 //   extra.json appearance (shape, colour, markings, photo) and leaflet / carton links per licence, from
 //              TFDA 藥品外觀資料集 (export/42) and 藥品仿單外盒資料集 (export/39); loaded when a drug is opened
@@ -51,13 +53,18 @@ const readJson = (p) => JSON.parse(fs.readFileSync(p, 'utf8'));
 const reused = [];
 const NHI_COLS = ['code', 'en', 'zh', 'ingredient', 'price', 'priceSince', 'firstListed', 'lastPaidPrice', 'lastPaidSince', 'vendor', 'maker', 'form', 'class', 'group', 'atc', 'ruleChapters', 'ruleFiles', 'licId', 'single', 'strength'];
 const FDA_COLS = ['licence', 'status', 'cancelDate', 'cancelReason', 'validUntil', 'issued', 'zh', 'en', 'indication', 'form', 'package', 'category', 'controlled', 'ingredients', 'applicant', 'maker', 'country', 'licId'];
+// the long text fields go to fda-more.json, read only when a drug is opened
+const FDA_MORE = ['indication', 'package'];
+// bump when the files change shape, so the next run publishes even if the content did not change
+const FORMAT = 2;
 
 /* ---------- NHI ---------- */
 let nhi = [], hist = {};
 if (isJson(nhiFile)) {
-  const p = readJson(nhiFile);
-  if (JSON.stringify(p.cols) !== JSON.stringify(NHI_COLS)) throw new Error('previous nhi.json has other columns');
-  nhi = p.rows;
+  const dir = path.dirname(nhiFile), paid = path.join(dir, 'nhi-paid.json'), rest = path.join(dir, 'nhi-rest.json');
+  const parts = fs.existsSync(paid) ? [readJson(paid), fs.existsSync(rest) ? readJson(rest) : { cols: NHI_COLS, rows: [] }] : [readJson(nhiFile)];
+  parts.forEach((p) => { if (JSON.stringify(p.cols) !== JSON.stringify(NHI_COLS)) throw new Error('previous NHI data has other columns'); });
+  nhi = parts.flatMap((p) => p.rows).sort((a, b) => (a[0] < b[0] ? -1 : 1));
   const h = path.join(path.dirname(nhiFile), 'hist.json'); if (fs.existsSync(h)) hist = readJson(h).hist || {};
   reused.push('nhi');
 } else {
@@ -101,9 +108,13 @@ nhi.sort((a, b) => (a[0] < b[0] ? -1 : 1));
 /* ---------- TFDA licences ---------- */
 let fda = [], typeMap = {};
 if (isJson(fdaFile)) {
-  const p = readJson(fdaFile);
-  if (JSON.stringify(p.cols) !== JSON.stringify(FDA_COLS)) throw new Error('previous fda.json has other columns');
-  fda = p.rows;
+  const p = readJson(fdaFile), more = path.join(path.dirname(fdaFile), 'fda-more.json');
+  if (JSON.stringify(p.cols) === JSON.stringify(FDA_COLS)) fda = p.rows;   // first version: everything in one file
+  else {
+    // split version: put the long fields back where FDA_COLS has them
+    const m = fs.existsSync(more) ? readJson(more) : { cols: FDA_MORE, more: {} };
+    fda = p.rows.map((r) => { const o = {}; p.cols.forEach((c, i) => (o[c] = r[i])); const x = m.more[o.licence] || []; m.cols.forEach((c, i) => (o[c] = x[i] || '')); return FDA_COLS.map((c) => o[c] ?? ''); });
+  }
   const m = path.join(path.dirname(fdaFile), 'meta.json'); if (fs.existsSync(m)) typeMap = readJson(m).licTypes || {};
   reused.push('fda');
 } else {
@@ -185,10 +196,16 @@ const meta = {
   reused,   // sources that could not be downloaded this time and kept last week's data
 };
 // the version follows the content, so an unchanged week leaves the data files byte-identical
-const v = crypto.createHash('sha1').update(JSON.stringify([nhi, fda, looks, leaflets])).digest('hex').slice(0, 10);
-meta.v = v;
-console.log('nhi.json', w('nhi.json', { v, cols: NHI_COLS, rows: nhi }));
-console.log('fda.json', w('fda.json', { v, cols: FDA_COLS, rows: fda }));
+const v = crypto.createHash('sha1').update(JSON.stringify([FORMAT, nhi, fda, looks, leaflets])).digest('hex').slice(0, 10);
+meta.v = v; meta.format = FORMAT;
+const iPrice = NHI_COLS.indexOf('price');
+console.log('nhi-paid.json', w('nhi-paid.json', { v, cols: NHI_COLS, rows: nhi.filter((r) => r[iPrice] > 0) }));
+console.log('nhi-rest.json', w('nhi-rest.json', { v, cols: NHI_COLS, rows: nhi.filter((r) => !(r[iPrice] > 0)) }));
+const coreCols = FDA_COLS.filter((c) => !FDA_MORE.includes(c)), coreIdx = coreCols.map((c) => FDA_COLS.indexOf(c)), moreIdx = FDA_MORE.map((c) => FDA_COLS.indexOf(c));
+const more = {}; fda.forEach((r) => { const x = moreIdx.map((i) => r[i]); if (x.some(Boolean)) more[r[0]] = x; });
+console.log('fda.json', w('fda.json', { v, cols: coreCols, rows: fda.map((r) => coreIdx.map((i) => r[i])) }));
+console.log('fda-more.json', w('fda-more.json', { v, cols: FDA_MORE, more }));
+meta.fdaCols = coreCols;
 console.log('hist.json', w('hist.json', { v, hist }));
 console.log('extra.json', w('extra.json', { v, base: MCP, lookCols: LOOK_COLS, looks, leaflets }));
 meta.counts.looks = Object.keys(looks).length; meta.counts.leaflets = Object.keys(leaflets).length;
