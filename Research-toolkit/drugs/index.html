@@ -242,7 +242,9 @@
     .d-pic { width: 88px; height: 80px; }
     .d-price { grid-column: 1 / -1; text-align: left; display: flex; align-items: baseline; gap: 10px; }
     .d-price b { display: inline; font-size: 24px; }
-    .tabs { position: sticky; top: 49px; z-index: 1; background: var(--bg); }
+    /* six tabs do not fit a phone: wrap them so none hides off screen */
+    .tabs { position: sticky; top: 49px; z-index: 1; background: var(--bg); flex-wrap: wrap; overflow-x: visible; padding: 0 8px; }
+    .tabs button { padding: 8px 8px 7px; font-size: 12.5px; }
     .tabp { padding: 14px 16px 28px; }
     .facts { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
     .ci { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "nm v" "tr tr"; row-gap: 3px; }
@@ -746,6 +748,7 @@ function tabHTML(r, tab) {
       ${fact(T('藥品分類', 'Class'), r[N.class] ? `<span class="dot k-${CLS_KEY[r[N.class]] || 'none'}"></span> ${esc(clsName(r[N.class]))}` : '')}
       ${fact(T('包裝', 'Pack'), pkg ? esc(pkg) : '')}
       ${fact(T('同品項其他包裝', 'Same product, other pack'), sibs.length ? `<span class="sib">${sibs.map((s) => `<button type="button" data-go="${esc(s[N.code])}">${esc(s[N.code])} ${s[N.price] > 0 ? '$' + fmtP(s[N.price]) : T('已取消給付', 'delisted')}</button>`).join('')}</span>` : '')}
+      ${fact(T('給付規定', 'NHI rules'), r[N.ruleChapters] ? r[N.ruleChapters].split(',').filter(Boolean).map((c) => { const fl = ruleFile(r, c); return `<b>${esc(c)}</b>${fl ? ` <span class="hint" style="margin:0">${T('修訂', 'revised')} ${esc(TW.ruleDate(fl))}</span>` : ''}`; }).join('　') + ` <button type="button" class="small" data-tab="rules">${T('看全文', 'Full text')}</button>` : T('沒有特別給付規定', 'No specific rule'), true)}
       ${fact(T('分類分組', 'Price group'), esc(r[N.group]), true)}
       ${fact(T('藥商', 'Vendor'), esc(r[N.vendor]))}
       ${fact(T('製造廠', 'Manufacturer'), esc(r[N.maker]))}
@@ -1037,7 +1040,8 @@ $('out').addEventListener('click', async (e) => {
   if (tb) {
     tabOf.set(r[N.code], tb.dataset.tab);
     const d = li.querySelector('.detail');
-    d.querySelectorAll('[data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b === tb)));
+    // the button may also be a shortcut inside a panel ("Full text"): mark the tab with the same name
+    d.querySelectorAll('.tabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tb.dataset.tab)));
     const p = d.querySelector('.tabp'); p.dataset.panel = tb.dataset.tab; p.innerHTML = tabHTML(r, tb.dataset.tab); hydrate(li);
     return;
   }
