@@ -18,7 +18,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../shared/style.css?v=20261120b">
+<link rel="stylesheet" href="../shared/style.css?v=20261121c">
 <style>
   .drop { display: grid; place-items: center; gap: 6px; padding: 18px; border: 1.5px dashed var(--border); border-radius: var(--radius); text-align: center; color: var(--muted); font-size: 13px; cursor: pointer; }
   .drop.over { border-color: var(--accent); color: var(--accent); background: var(--accent-weak); }
@@ -92,7 +92,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261120c"></script>
+<script src="../shared/common.js?v=20261121d"></script>
 <script>
 const T = RT.t;
 const KEY = 'panels1';
@@ -121,6 +121,17 @@ async function addFiles(files) {
   syncInputs(); update();
   if (failed.length) RT.toast(T(`無法讀取：${failed.join('、')}（只支援 PNG、JPG、SVG）`, `Could not read: ${failed.join(', ')} (PNG, JPG and SVG only)`), 6000);
 }
+// figures sent from the other tools ("Add to multi-panel"), waiting in this browser's storage
+function takeHandoff() {
+  let q = [];
+  try { q = JSON.parse(localStorage.getItem('rt:handoff-panels') || '[]'); localStorage.removeItem('rt:handoff-panels'); } catch (e) { return; }
+  if (!q.length) return;
+  addFiles(q.map((x) => new File([x.svg], x.name || 'figure.svg', { type: 'image/svg+xml' })));
+  RT.toast(T(`已加入 ${q.length} 張來自其他工具的圖`, `${q.length} figure${q.length > 1 ? 's' : ''} added from the other tools`), 4000);
+}
+window.addEventListener('storage', (e) => { if (e.key === 'rt:handoff-panels' && e.newValue) takeHandoff(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') takeHandoff(); });
+setTimeout(takeHandoff, 300);
 const drop = document.getElementById('drop'), file = document.getElementById('file');
 file.onchange = () => { addFiles([...file.files]); file.value = ''; };
 ['dragenter', 'dragover'].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); drop.classList.add('over'); }));
@@ -208,6 +219,7 @@ function build() {
       const off = S.valign === 'middle' ? (rh - c.ih) / 2 : S.valign === 'bottom' ? rh - c.ih : 0;
       const iy = y + labH + off, src = SRC.get(c.p.id);
       BOXES.push({ i: c.i, x: c.x, y: iy, w: c.iw, h: c.ih, slotX: c.x, cw, gap, cols });
+      { const pi = c.i; RT.addHit(c.x, iy, c.iw, c.ih, () => { const r = document.querySelectorAll('#panels .panel-row')[pi]; return r && r.querySelector('select, input'); }, { passive: true }); }
       body += src
         ? `<image x="${RT.f(c.x)}" y="${RT.f(iy)}" width="${RT.f(c.iw)}" height="${RT.f(c.ih)}" preserveAspectRatio="none" href="${src}"/>`
         : RT.rect(c.x, iy, c.iw, c.ih, { fill: '#F2F2F2', stroke: '#BBBBBB', sw: 1 });
@@ -375,9 +387,14 @@ syncInputs();
 render();
 hist.push();
 </script>
-<script src="../shared/figedit.js?v=20261120b"></script>
+<script src="../shared/figedit.js?v=20261121f"></script>
 <script>
-RT.figEdit({ key: 'panels', menus: [
+RT.figEdit({ key: 'panels', caption: () => {
+    const n = S.panels.length; if (!n) return '';
+    const L = (i) => (S.lab === 'a' ? 'abcdefghijklmnopqrstuvwxyz'[i] : S.lab === '1' ? String(i + 1) : 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[i]) || String(i + 1);
+    return 'Figure. ' + Array.from({ length: n }, (_, i) => `(${L(i)}) [describe panel ${L(i)}].`).join(' ');
+  },
+  menus: [
   { id: 'layout', label: RT.t('版面', 'Layout'), items: ["cols","gap","fit","valign","lab","labPos","labBold"] },
   { id: 'style', label: RT.t('風格', 'Style'), items: ["st.font","st.fontSize","st.lh","st.textColor","st.boxFill","st.boxStroke","st.boxSW","st.radius","st.lineColor","st.lineW"] },
 ] });

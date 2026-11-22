@@ -6,7 +6,7 @@
  */
 (function () {
   const RT = (window.RT = {});
-  RT.VERSION = 'v3.5 (2026-11-20)';
+  RT.VERSION = 'v3.6 (2026-11-21)';
   RT.DEV = { name: '張家菘', email: 'js.chang0512@gmail.com' };
 
   /* ---------- i18n ---------- */
@@ -39,6 +39,11 @@
     RT.initA11y();
     RT.initPaperZoom();
     RT.initPreviewJump();
+    // works offline once visited, and can be installed as an app (the submission tracker has its own)
+    if ('serviceWorker' in navigator && /\/Research-toolkit\//.test(location.pathname) && !/\/submissions\//.test(location.pathname)) {
+      if (!document.querySelector('link[rel="manifest"]')) { const l = document.createElement('link'); l.rel = 'manifest'; l.href = '/Research-toolkit/manifest.webmanifest'; document.head.appendChild(l); }
+      navigator.serviceWorker.register('/Research-toolkit/sw.js', { scope: '/Research-toolkit/' }).catch(() => {});
+    }
     if (!document.querySelector('.site-foot')) {
       const f = document.createElement('footer');
       f.className = 'site-foot';
@@ -220,7 +225,7 @@
     } catch (e) { /* ignore */ }
     return structuredClone(def);
   };
-  RT.save = (key, state) => { try { localStorage.setItem('rt:' + key, JSON.stringify(state)); } catch (e) { /* ignore */ } };
+  RT.save = (key, state) => { if (key !== 'export') { RT.lastSaved = Date.now(); setTimeout(() => document.dispatchEvent(new CustomEvent('rt:saved', { detail: key })), 0); } try { localStorage.setItem('rt:' + key, JSON.stringify(state)); } catch (e) { /* ignore */ } };
   RT.downloadJSON = (obj, name) => RT.download(new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' }), name);
   RT.pickJSON = () => new Promise((resolve, reject) => {
     const inp = document.createElement('input');
@@ -424,7 +429,8 @@
   RT.beginScene = () => { RT.scene = []; RT.hits = []; };
   // parts of a figure that open a form field when clicked: RT.addHit(x, y, w, h, () => element) while drawing
   RT.hits = [];
-  RT.addHit = (x, y, w, h, find) => { if (w > 0 && h > 0) RT.hits.push({ x, y, w, h, find }); };
+  // passive: the tool drags this part itself, so the hit area lets pointer events through (double-click still finds it)
+  RT.addHit = (x, y, w, h, find, o = {}) => { if (w > 0 && h > 0) RT.hits.push({ x, y, w, h, find, passive: !!o.passive }); };
   RT.hitKey = (k) => () => document.querySelector(`#form [data-k="${k}"]`);
   RT.endScene = () => { const s = RT.scene || []; RT.scene = null; return s; };
   RT.sceneLen = () => (RT.scene ? RT.scene.length : 0);
@@ -1071,8 +1077,27 @@
     });
     return out;
   };
+  /**
+   * Figure specifications from publishers' own author guidelines (checked 2026-11). Widths are only given where the
+   * publisher states them; for the others only resolution is set. Always check the journal's current instructions.
+   * Sources: Elsevier artwork sizing; Springer journal author help (39/84/129/174 mm, 8–12 pt); Nature research
+   * figure guide (89/120–136/183 mm, 5–7 pt); BioMed Central (85/176 mm, ≥ 8 pt); PLOS figures page (6.68–19.05 cm,
+   * 300–600 dpi, TIFF/EPS, 8–12 pt); JAMA Network (line art ≥ 600 ppi, photos ≥ 350 ppi); Wiley (line art ≥ 600 dpi,
+   * 1200 for fine drawings; photos ≥ 300); BMJ (≥ 300 dpi, line art 1200 dpi).
+   */
+  RT.JOURNALS = {
+    generic: { label: () => RT.t('一般（不指定）', 'General (none)'), widths: [[9, () => RT.t('單欄 9 cm', 'Single 9 cm')], [14, () => RT.t('1.5 欄 14 cm', '1.5-col 14 cm')], [19, () => RT.t('雙欄 19 cm', 'Double 19 cm')]], dpi: 300, fmt: 'png', minPt: 7, note: () => RT.t('多數期刊要求圖中文字 ≥ 6–8 pt。', 'Most journals ask for figure text of at least 6–8 pt.') },
+    elsevier: { label: () => 'Elsevier', widths: [[9, () => RT.t('單欄 90 mm', 'Single 90 mm')], [14, () => RT.t('1.5 欄 140 mm', '1.5-col 140 mm')], [19, () => RT.t('雙欄 190 mm', 'Double 190 mm')]], dpi: 1000, fmt: 'tiff', minPt: 8, note: () => RT.t('線條圖 1000 dpi、圖文混合 500 dpi、照片 300 dpi；字建議 8 pt。', 'Line art 1000 dpi, combination 500 dpi, photos 300 dpi; text about 8 pt.') },
+    springer: { label: () => 'Springer', widths: [[8.4, () => RT.t('單欄 84 mm', 'Single 84 mm')], [12.9, () => '129 mm'], [17.4, () => RT.t('全寬 174 mm', 'Full 174 mm')]], dpi: 600, fmt: 'tiff', minPt: 8, note: () => RT.t('Helvetica／Arial，字 8–12 pt；圖文混合至少 600 dpi；高度不超過 234 mm。', 'Helvetica/Arial, text 8–12 pt; combination art ≥ 600 dpi; height ≤ 234 mm.') },
+    nature: { label: () => 'Nature', widths: [[8.9, () => RT.t('單欄 89 mm', 'Single 89 mm')], [12.8, () => RT.t('1.5 欄 128 mm', '1.5-col 128 mm')], [18.3, () => RT.t('雙欄 183 mm', 'Double 183 mm')]], fmt: 'pdf', minPt: 5, note: () => RT.t('字 5–7 pt；交向量檔（PDF/EPS）；高度不超過 170 mm。', 'Text 5–7 pt; supply vector files (PDF/EPS); height ≤ 170 mm.') },
+    bmc: { label: () => 'BMC', widths: [[8.5, () => RT.t('單欄 85 mm', 'Single 85 mm')], [17.6, () => RT.t('雙欄 176 mm', 'Double 176 mm')]], dpi: 600, fmt: 'tiff', minPt: 8, note: () => RT.t('文字不小於 8 pt。', 'Text not smaller than 8 pt.') },
+    plos: { label: () => 'PLOS', widths: [[13.2, () => RT.t('對齊內文 13.2 cm', 'Text column 13.2 cm')], [19.05, () => RT.t('最寬 19.05 cm', 'Max 19.05 cm')]], dpi: 600, fmt: 'tiff', minPt: 8, note: () => RT.t('只收 TIFF 或 EPS；Arial／Times 8–12 pt；300–600 dpi；最窄 6.68 cm。', 'TIFF or EPS only; Arial/Times 8–12 pt; 300–600 dpi; at least 6.68 cm wide.') },
+    jama: { label: () => 'JAMA Network', widths: [], dpi: 600, fmt: 'tiff', minPt: 7, note: () => RT.t('線條圖 ≥ 600 ppi、照片 ≥ 350 ppi；寬度依各期刊說明。', 'Line art ≥ 600 ppi, photos ≥ 350 ppi; width per the journal’s instructions.') },
+    wiley: { label: () => 'Wiley', widths: [], dpi: 600, fmt: 'tiff', minPt: 7, note: () => RT.t('線條圖 ≥ 600 dpi（細緻的圖 1200）、照片 ≥ 300 dpi；寬度依各期刊說明。', 'Line art ≥ 600 dpi (1200 for fine drawings), photos ≥ 300 dpi; width per the journal.') },
+    bmj: { label: () => 'BMJ', widths: [], dpi: 1200, fmt: 'tiff', minPt: 7, note: () => RT.t('線條圖 1200 dpi、其他 ≥ 300 dpi；寬度依各期刊說明。', 'Line art 1200 dpi, other images ≥ 300 dpi; width per the journal.') },
+  };
   RT.exportPanel = (host, getFig, baseName, opts = {}) => {
-    const saved = RT.load('export', { fmt: 'png', dpi: '300', dpiC: 300, widthCm: '', gray: false });
+    const saved = RT.load('export', { fmt: 'png', dpi: '300', dpiC: 300, widthCm: '', gray: false, pub: 'generic' });
     host.innerHTML = `
       <h2>${RT.t('匯出', 'Export')}</h2>
       <div class="export">
@@ -1085,14 +1110,10 @@
           <option>150</option><option>300</option><option>500</option><option>600</option><option>1000</option><option>1200</option><option value="custom">${RT.t('自訂…', 'Custom…')}</option></select></label>
         <label class="field"><span>${RT.t('輸出寬度 (cm)', 'Output width (cm)')}</span><input class="ex-width" type="number" min="1" step="0.1" placeholder="${RT.t('原始', 'Native')}"></label>
         <label class="field ex-dpi-custom" hidden><span>${RT.t('自訂 DPI', 'Custom DPI')}</span><input class="ex-dpic" type="number" min="50" max="4800" step="1"></label>
-        <div class="btns ex-presets" style="grid-column:1/-1;gap:6px">
-          <span class="hint" style="margin:0">${RT.t('期刊寬度（Elsevier）：', 'Journal width (Elsevier):')}</span>
-          <button class="small" data-w="9" title="Elsevier 90 mm">${RT.t('單欄 9 cm', 'Single 9 cm')}</button>
-          <button class="small" data-w="14" title="Elsevier 140 mm">${RT.t('1.5 欄 14 cm', '1.5-col 14 cm')}</button>
-          <button class="small" data-w="19" title="Elsevier 190 mm">${RT.t('雙欄 19 cm', 'Double 19 cm')}</button>
-          <button class="small" data-w="">${RT.t('原始', 'Native')}</button>
-          <label class="check ex-gray-wrap" style="margin:0 0 0 6px"><input type="checkbox" class="ex-gray"> ${RT.t('灰階', 'Grayscale')}</label>
-        </div>
+        <label class="field" style="grid-column:1/-1"><span>${RT.t('期刊規格（帶入寬度、DPI、格式與最小字級）', 'Journal spec (sets width, DPI, format and minimum text size)')}</span><select class="ex-pub">${Object.entries(RT.JOURNALS).map(([k, j]) => `<option value="${k}">${RT.esc(j.label())}</option>`).join('')}</select></label>
+        <div class="btns ex-presets" style="grid-column:1/-1;gap:6px"></div>
+        <div class="hint ex-pubnote" style="grid-column:1/-1;margin:0"></div>
+        <label class="check ex-gray-wrap" style="grid-column:1/-1;margin:0"><input type="checkbox" class="ex-gray"> ${RT.t('灰階', 'Grayscale')}</label>
         <div class="export-info"></div>
         <div class="export-legible"></div>
         <div class="export-overlap" hidden></div>
@@ -1101,10 +1122,44 @@
           <span class="ex-issues" hidden></span>
           <button class="ex-word" title="${RT.esc(opts.docxInfo || RT.t('Word 原生圖形，每個方框、文字與線條都能在 Word 裡編輯', 'Native Word shapes — every box, text and line can be edited in Word'))}">${opts.docxLabel || RT.t('Word（可編輯）', 'Word (editable)')}</button>
           <button class="ex-copy" title="${RT.t('以 PNG 複製到剪貼簿，可直接貼到 Word / PowerPoint', 'Copy as PNG to paste into Word / PowerPoint')}">${RT.t('複製 PNG', 'Copy PNG')}</button>
+          ${/\/panels\/?/.test(location.pathname) ? '' : `<button class="ex-topanels" title="${RT.t('把這張圖（向量）加入多面板圖組合，和其他圖排成 A、B、C', 'Add this figure (vector) to the multi-panel composer, to lay it out with others as A, B, C')}">${RT.t('加入多面板圖', 'Add to multi-panel')}</button><a class="btn small ex-topanels-go" href="../panels/index.html" hidden></a>`}
         </div>
       </div>`;
     const $ = (s) => host.querySelector(s);
     $('.ex-fmt').value = saved.fmt; $('.ex-dpi').value = saved.dpi; $('.ex-dpic').value = saved.dpiC; $('.ex-width').value = saved.widthCm; $('.ex-gray').checked = !!saved.gray;
+    $('.ex-pub').value = RT.JOURNALS[saved.pub] ? saved.pub : 'generic';
+    // the usual actions first; format, journal spec, DPI and width wait under "Advanced"
+    {
+      const grid = host.querySelector('.export'), btnRow = grid.querySelector(':scope > .btns:last-of-type');
+      const quick = document.createElement('div'); quick.className = 'btns ex-quick';
+      const mk = (cls, src, primary) => { const b = document.createElement('button'); b.type = 'button'; b.className = cls + (primary ? ' primary' : ''); b.onclick = () => $(src).click(); quick.appendChild(b); return b; };
+      mk('ex-q-go', '.ex-go', !opts.tablePrimary); mk('ex-q-word', '.ex-word', !!opts.tablePrimary); mk('ex-q-copy', '.ex-copy');
+      const tp = btnRow.querySelector('.ex-topanels'), tpg = btnRow.querySelector('.ex-topanels-go'), iss = btnRow.querySelector('.ex-issues');
+      [tp, tpg, iss].forEach((x) => { if (x) quick.appendChild(x); });
+      btnRow.hidden = true;
+      const warn = document.createElement('div'); warn.className = 'ex-warn';
+      ['.export-legible', '.export-overlap'].forEach((s0) => { const el = grid.querySelector(s0); if (el) warn.appendChild(el); });
+      const adv = document.createElement('details'); adv.className = 'ex-adv';
+      adv.innerHTML = `<summary>${RT.t('進階設定：格式、期刊規格、DPI、寬度', 'Advanced: format, journal spec, DPI, width')}<span class="ex-sum"></span></summary>`;
+      grid.before(quick); quick.after(warn); warn.after(adv); adv.appendChild(grid);
+      try { adv.open = localStorage.getItem('rt:ex-adv') === '1'; } catch (e) { /* ignore */ }
+      adv.addEventListener('toggle', () => { try { localStorage.setItem('rt:ex-adv', adv.open ? '1' : '0'); } catch (e) { /* ignore */ } });
+    }
+    const pub = () => RT.JOURNALS[$('.ex-pub').value] || RT.JOURNALS.generic;
+    const paintPresets = () => {
+      const j = pub();
+      $('.ex-presets').innerHTML = j.widths.map(([w, l]) => `<button type="button" class="small" data-w="${w}">${RT.esc(l())}</button>`).join('') + `<button type="button" class="small" data-w="">${RT.t('原始', 'Native')}</button>`;
+      $('.ex-pubnote').textContent = j.note() + (j === RT.JOURNALS.generic ? '' : RT.t('　規格會變動，投稿前請以期刊最新說明為準。', '  Requirements change; check the journal’s current instructions.'));
+    };
+    paintPresets();
+    // choosing a publisher sets its single-column width, its line-art resolution and the format it asks for
+    $('.ex-pub').addEventListener('change', () => {
+      const j = pub();
+      paintPresets();
+      if (j.widths.length) $('.ex-width').value = j.widths[0][0];
+      if (j.fmt && $('.ex-fmt').value !== 'docx') $('.ex-fmt').value = j.fmt;
+      if (j.dpi) { const has = [...$('.ex-dpi').options].some((o) => o.value === String(j.dpi)); $('.ex-dpi').value = has ? String(j.dpi) : 'custom'; if (!has) $('.ex-dpic').value = j.dpi; }
+    });
     const read = () => {
       const dpiSel = $('.ex-dpi').value;
       const dpi = dpiSel === 'custom' ? Math.max(50, Math.min(4800, Number($('.ex-dpic').value) || 300)) : Number(dpiSel);
@@ -1132,6 +1187,13 @@
       if (fmt === 'pdf' && fig.font && !['Arial', 'Helvetica', 'Times New Roman'].includes(fig.font.name))
         txt += RT.t(`　（PDF 會以 ${fig.font.kind === 'serif' ? 'Times' : 'Helvetica'} 取代 ${fig.font.name}）`, `  (PDF substitutes ${fig.font.kind === 'serif' ? 'Times' : 'Helvetica'} for ${fig.font.name})`);
       $('.export-info').textContent = txt;
+      // the quick buttons say what they will do with the advanced settings as they are
+      { const fmtName = $('.ex-fmt').selectedOptions[0] ? $('.ex-fmt').selectedOptions[0].textContent.replace(/（.*?）|\(.*?\)/g, '').trim() : 'PNG';
+        const q = (s0) => host.querySelector(s0);
+        if (q('.ex-q-go')) q('.ex-q-go').textContent = opts.tablePrimary ? RT.t('下載圖片', 'Download image') : RT.t('下載 ', 'Download ') + fmtName;
+        if (q('.ex-q-word')) q('.ex-q-word').textContent = $('.ex-word').textContent;
+        if (q('.ex-q-copy')) q('.ex-q-copy').textContent = RT.t('複製圖片', 'Copy image');
+        const sum = host.querySelector('.ex-sum'); if (sum) sum.textContent = ' · ' + [fmtName, raster ? o.dpi + ' dpi' : '', o.widthCm ? o.widthCm + ' cm' : RT.t('原始寬度', 'native width'), pub() === RT.JOURNALS.generic ? '' : pub().label()].filter(Boolean).join(' · '); }
       // smallest text at the chosen print width (figure units are CSS px at 96/in; 1 px = 0.75 pt)
       let minPx = Infinity;
       fig.svg.replace(/font-size="([\d.]+)"/g, (m, v) => { minPx = Math.min(minPx, Number(v)); return m; });
@@ -1142,15 +1204,16 @@
         const pt = minPx * 0.75 * (g.inches / (fig.w / 96));
         const p = pt.toFixed(1);
         const pre = opts.tablePrimary ? RT.t('圖片版：', 'Image version: ') : '';
-        leg.className = 'export-legible ' + (pt < 6 ? 'bad' : pt < 7 ? 'near' : 'good');
-        if (pt >= 7) leg.textContent = pre + RT.t(`✓ 最小字約 ${p} pt（多數期刊要求 ≥ 6–8 pt）`, `✓ Smallest text ≈ ${p} pt (most journals ask for ≥ 6–8 pt)`);
+        const MIN = pub().minPt || 7, who = pub() === RT.JOURNALS.generic ? RT.t('多數期刊要求 ≥ 6–8 pt', 'most journals ask for ≥ 6–8 pt') : RT.t(`${pub().label()} 要求 ≥ ${MIN} pt`, `${pub().label()} asks for ≥ ${MIN} pt`);
+        leg.className = 'export-legible ' + (pt < MIN - 1 ? 'bad' : pt < MIN ? 'near' : 'good');
+        if (pt >= MIN) leg.textContent = pre + RT.t(`✓ 最小字約 ${p} pt（${who}）`, `✓ Smallest text ≈ ${p} pt (${who})`);
         else {
-          const k = 7 / pt;
+          const k = MIN / pt;
           const fs = opts.fontSize ? Number(opts.fontSize.get()) || 0 : 0;
           const need = fs ? Math.ceil(fs * k * 2) / 2 : 0;
           const wider = (o.widthCm || 0) < 19;
-          let t = pre + RT.t(`⚠ 最小字約 ${p} pt（多數期刊要求 ≥ 6–8 pt）。`, `⚠ Smallest text ≈ ${p} pt (most journals ask for ≥ 6–8 pt). `);
-          if (need && need <= 40) t += RT.t(`把字級調到 ${need} px 可達 7 pt`, `Font size ${need} px reaches 7 pt`) + (wider ? RT.t('，或改用較寬的版面。', ', or use a wider layout.') : RT.t('。', '.'));
+          let t = pre + RT.t(`⚠ 最小字約 ${p} pt（${who}）。`, `⚠ Smallest text ≈ ${p} pt (${who}). `);
+          if (need && need <= 40) t += RT.t(`把字級調到 ${need} px 可達 ${MIN} pt`, `Font size ${need} px reaches ${MIN} pt`) + (wider ? RT.t('，或改用較寬的版面。', ', or use a wider layout.') : RT.t('。', '.'));
           else t += wider ? RT.t('請改用較寬的版面或放大字級。', 'Use a wider layout or a larger font size.') : RT.t('請放大字級或縮小圖寬。', 'Increase the font size or reduce the figure width.');
           leg.textContent = t;
           if (need && need <= 40) {
@@ -1164,7 +1227,7 @@
       }
       const w = $('.ex-width').value;
       host.querySelectorAll('.ex-presets [data-w]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.w === w)));
-      RT.save('export', { fmt, dpi: $('.ex-dpi').value, dpiC: $('.ex-dpic').value, widthCm: $('.ex-width').value, gray: $('.ex-gray').checked });
+      RT.save('export', { fmt, dpi: $('.ex-dpi').value, dpiC: $('.ex-dpic').value, widthCm: $('.ex-width').value, gray: $('.ex-gray').checked, pub: $('.ex-pub').value });
     };
     host.addEventListener('input', info);
     host.addEventListener('change', info);
@@ -1194,6 +1257,18 @@
       try { await RT.exportFigure(getFig(), { ...read(), fmt: 'docx', docx: opts.docx }); }
       catch (e) { console.error(e); RT.toast(String(e.message || e), 6000); }
       finally { btn.disabled = false; btn.textContent = t; }
+    };
+    // queue the figure for the multi-panel composer (it picks them up when it opens, or at once if already open)
+    const tp = $('.ex-topanels');
+    if (tp) tp.onclick = () => {
+      const fig = getFig(); if (!fig) return;
+      let q = []; try { q = JSON.parse(localStorage.getItem('rt:handoff-panels') || '[]'); } catch (e) { q = []; }
+      q.push({ name: (read().name || baseName) + '.svg', svg: fig.svg, at: Date.now() });
+      try { localStorage.setItem('rt:handoff-panels', JSON.stringify(q)); }
+      catch (e) { RT.toast(RT.t('瀏覽器空間不足，請先到多面板把已加入的圖收下', 'Browser storage is full; open the multi-panel composer to take in the figures already added'), 6000); return; }
+      const go = $('.ex-topanels-go');
+      go.hidden = false; go.textContent = RT.t(`已加入 ${q.length} 張 → 打開多面板`, `${q.length} added → open multi-panel`);
+      RT.toast(RT.t('已加入多面板圖', 'Added to the multi-panel composer'));
     };
     $('.ex-copy').onclick = async () => {
       try {
@@ -1405,6 +1480,7 @@
     const g = RT.svgEl('g', { class: 'edit-ui field-ui', transform: `translate(${dx},${dy})` });
     hits.forEach((h, i) => {
       const r = RT.svgEl('rect', { x: h.x, y: h.y, width: h.w, height: h.h, fill: 'transparent', 'data-hit': '', 'data-field': i });
+      if (h.passive) r.setAttribute('pointer-events', 'none');
       const t = RT.svgEl('title'); t.textContent = RT.t('點一下編輯這一格', 'Click to edit this box'); r.appendChild(t);
       g.appendChild(r);
     });

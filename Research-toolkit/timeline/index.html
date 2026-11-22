@@ -18,7 +18,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../shared/style.css?v=20261120b">
+<link rel="stylesheet" href="../shared/style.css?v=20261121c">
 <style>
   .trow3 { display: grid; grid-template-columns: 90px 90px minmax(0, 1fr); gap: 6px; align-items: end; margin-top: 6px; }
   .trow4 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, .9fr) 34px 34px; gap: 6px; align-items: end; margin-top: 6px; }
@@ -270,7 +270,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261120c"></script>
+<script src="../shared/common.js?v=20261121d"></script>
 <script>
 const T = RT.t;
 const KEY = 'timeline5';
@@ -984,16 +984,20 @@ function buildBlock() {
   let H = axisY;
   if (S.axis) body += RT.arrow([[left, axisY], [W - M, axisY]], { color: S.axisColor, sw: Number(S.axisW) || 4, head: 4 + (Number(S.axisW) || 4) * 3.5 });
   const tfs = fs * (Number(S.titleScale) || 1.6);
-  const title = [];
-  if (S.day0Title) title.push({ t: S.day0Title, bold: true, size: tfs, color: '#000' });
-  const sub = String(S.day0Text || '').replace(/\n/g, ' ').trim();
-  if (sub) title.push({ t: (title.length ? NB : '') + sub, bold: false, size: fs * 1.05, color: '#000' });
-  if (title.length && !topBox) {
-    const tw = runW(title);
-    const cx = Math.max(left, Math.min(W - M - tw, x0 - tw / 2));
-    body += RT.rich([{ runs: title }], cx, axisY + tfs * 0.2, { lh: tfs * 1.25 });
-    TL.d0 = { x: cx, y: axisY + tfs * 0.2, w: tw, h: tfs * 1.25 };
-    H = axisY + tfs * 1.45;
+  // Day 0 title on one line, its description on the line(s) below, all centred under the Day 0 line
+  const d0Lines = [];
+  if (S.day0Title) d0Lines.push({ runs: [{ t: S.day0Title, bold: true, size: tfs, color: '#000' }], lh: tfs * 1.2 });
+  String(S.day0Text || '').split('\n').map((t) => t.trim()).filter(Boolean).forEach((t) => d0Lines.push({ runs: [{ t, bold: false, size: fs * 1.05, color: '#000' }], lh: fs * 1.4 }));
+  if (d0Lines.length && !topBox) {
+    let ty = axisY + tfs * 0.2, top = ty, wMax = 0;
+    d0Lines.forEach((ln) => {
+      const tw = runW(ln.runs), cx = Math.max(left + tw / 2, Math.min(W - M - tw / 2, x0));
+      body += RT.rich([{ runs: ln.runs }], cx, ty, { lh: ln.lh, anchor: 'middle' });
+      wMax = Math.max(wMax, tw); ty += ln.lh;
+    });
+    const cx0 = Math.max(left + wMax / 2, Math.min(W - M - wMax / 2, x0));
+    TL.d0 = { x: cx0 - wMax / 2, y: top, w: wMax, h: ty - top };
+    H = ty + fs * 0.3;
   }
   return { W, H, body, bg: S.bgOn ? S.bgColor : '#FFFFFF' };
 }
@@ -1693,6 +1697,7 @@ hist.push();
   RT.toast(T('已把暴露規則寫入「暴露評估」列（按 ↶ 可復原）', 'Exposure rules written into the exposure assessment row (↶ to undo)'), 6000);
 })();
 </script>
-<script src="canvas.js?v=20261120c"></script>
+<script src="../shared/figedit.js?v=20261121f"></script>
+<script src="canvas.js?v=20261121e"></script>
 </body>
 </html>

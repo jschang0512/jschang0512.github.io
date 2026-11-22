@@ -22,7 +22,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Noto+Serif+TC:wght@700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="shared/style.css?v=20261120b">
+<link rel="stylesheet" href="shared/style.css?v=20261121c">
 <style>
   /* Hallmark · macrostructure: Index-First · theme: Cobalt · genre: modern-minimal
    * nav: N9 · footer: Ft2 · 加料: none · tone: 實用 · 推斷: 受眾=做研究的同儕 用途=找到並打開工具
@@ -85,6 +85,15 @@
     .tile h2::after { transition: none; }
     @keyframes rt-fade { from { opacity: 0; } to { opacity: 1; } }
   }
+  .find { margin-top: 22px; max-width: 520px; }
+  .find input { width: 100%; height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--on-accent-rule); background: oklch(100% 0 0 / 0.08); color: var(--band-ink); font-size: 15px; }
+  .find input::placeholder { color: var(--on-accent-muted); }
+  .find input:focus-visible { outline: 2px solid var(--band-ink); outline-offset: 2px; }
+  .empty { color: var(--muted); font-size: 15px; margin: 24px 0; }
+  .tile.has-thumb { grid-template-columns: minmax(0, 17rem) minmax(0, 1fr) auto 132px; }
+  .tile .thumb { margin: 0; align-self: center; display: grid; gap: 4px; justify-items: center; }
+  .tile .thumb img { width: 132px; height: 84px; object-fit: contain; background: #FFFFFF; border: 1px solid var(--border); border-radius: 6px; }
+  .tile .thumb figcaption { font-size: 11.5px; color: var(--accent); white-space: nowrap; }
   .pill.tutorial { background: var(--accent-weak); color: var(--accent); border-color: transparent; }
   .pill.section { background: transparent; color: var(--muted); box-shadow: inset 0 0 0 1px var(--border); }
   .below { max-width: 1080px; margin: 0 auto; padding: 0 20px; display: flex; flex-direction: column; gap: 12px; }
@@ -95,6 +104,8 @@
     .group + .group { margin-top: 56px; }
     .tile { grid-template-columns: minmax(0, 1fr); padding: 16px 8px; margin-inline: -8px; }
     .tile .tags { justify-content: flex-start; }
+    .tile.has-thumb { grid-template-columns: minmax(0, 1fr); }
+    .tile .thumb { justify-items: start; }
   }
 </style>
 </head>
@@ -103,48 +114,31 @@
 <div class="hero-band"><section class="hero">
   <h1>Research Toolkit</h1>
   <p data-en="Figure tools for research papers. Everything runs in your browser — files are never uploaded. Unless noted, every figure exports as PNG, TIFF, JPG, PDF, SVG and editable Word shapes.">研究論文圖表小工具。所有處理都在你的瀏覽器中完成，檔案不會上傳。除另有註明，每張圖都能匯出 PNG、TIFF、JPG、PDF、SVG 與可編輯的 Word 圖形。</p>
-  <nav class="jump"><a href="#g-rwe" data-en="Real-world evidence">真實世界研究</a><a href="#g-sr" data-en="Systematic reviews">系統性回顧</a><a href="#g-any" data-en="For any study">通用</a></nav>
+  <nav class="jump"><a href="#g-design" data-en="Study design">研究設計</a><a href="#g-select" data-en="Selection & screening">選樣與篩選</a><a href="#g-results" data-en="Results">結果呈現</a><a href="#g-bias" data-en="Risk of bias">偏誤評估</a><a href="#g-submit" data-en="Getting ready to submit">投稿準備</a></nav>
+  <div class="find"><input type="search" id="q" autocomplete="off" placeholder="搜尋工具，例如 PRISMA、森林圖、樣本數（按 / 開始）" data-en-placeholder="Search tools, e.g. PRISMA, forest plot, sample size (press /)" aria-label="搜尋工具" data-en-aria="Search tools"></div>
 </section></div>
 
 <main class="tools">
-  <section class="group" id="g-rwe">
-  <h2 class="group-label" data-en="Real-world evidence (RWE)">真實世界研究（RWE）</h2>
-  <p class="group-desc" data-en="Observational studies: design, causal assumptions, exposure definitions and sensitivity analysis.">觀察性研究的設計、因果假設、暴露定義與敏感度分析。</p>
-  <a class="tile" href="dag/index.html">
+  <section class="group" id="g-design">
+  <h2 class="group-label" data-en="Study design">研究設計</h2>
+  <p class="group-desc" data-en="Before the data: causal assumptions, time windows, exposure definitions and sample size.">收資料前先講清楚：因果假設、時間窗、暴露定義與樣本數。</p>
+  <a class="tile" href="dag/index.html" data-key="dag">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="2.5" width="6" height="4" rx="1"/><rect x="2" y="16" width="6" height="4" rx="1"/><rect x="16" y="16" width="6" height="4" rx="1"/><path d="M10.5 6.5 6 16M13.5 6.5 18 16M8 18h8"/></svg></div>
     <h2>Causal Diagram (DAG)</h2>
     <p data-en="Causal assumptions as a directed acyclic graph. Drag to lay it out; it lists open back-door paths and minimal adjustment sets and drafts a methods paragraph.">因果假設的有向無環圖。拖曳排版，自動列出未阻斷的後門路徑、最小調整集合，並產生 methods 段落描述。</p>
     <div class="tags"><span class="pill" data-en="Back-door criterion">後門準則</span><span class="pill section">Methods</span></div>
   </a>
-  <a class="tile" href="timeline/index.html">
+  <a class="tile" href="timeline/index.html" data-key="timeline">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20" stroke-dasharray="2 2"/><rect x="3" y="5" width="8" height="3" rx="1"/><rect x="5" y="11" width="6" height="3" rx="1"/><path d="M13 17h8l-2-2M21 17l-2 2"/></svg></div>
     <h2>Study Design Timeline</h2>
     <p data-en="Study design diagram centred on Day 0: exclusion, covariate, exposure and follow-up windows.">以 Day 0 為中心的研究設計圖，標出排除、共變項、暴露評估與追蹤期間。</p>
     <div class="tags"><span class="pill">Schneeweiss 2019</span><span class="pill section">Methods</span></div>
   </a>
-  <a class="tile" href="cohortflow/index.html">
-    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="10" height="4" rx="1"/><rect x="6" y="10" width="10" height="4" rx="1"/><rect x="2" y="18" width="8" height="4" rx="1"/><rect x="14" y="18" width="8" height="4" rx="1"/><path d="M11 6v4M11 14v2H6v2M11 16h7v2"/></svg></div>
-    <h2>Cohort Patient Selection</h2>
-    <p data-en="Patient selection flowchart: step-by-step exclusions with the remaining n calculated, ending in exposed and comparator groups.">病人選取流程圖：逐步排除並自動計算剩餘人數，最後分成暴露組與對照組。</p>
-    <div class="tags"><span class="pill">STROBE</span><span class="pill section">Results</span></div>
-  </a>
-  <a class="tile" href="exposure/index.html">
+  <a class="tile" href="exposure/index.html" data-key="exposure">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h6M11 7h5M3 13h10M3 19h18"/><path d="M19 4v6" stroke-width="2.4"/><circle cx="16" cy="13" r="1.6"/></svg></div>
     <h2>Exposure Definition Diagram</h2>
     <p data-en="Illustrative patients showing your exposure definition: exposed periods, gaps, discontinuation and switching under your grace-period and stockpiling rules.">用示範病人說明暴露定義：依你設定的 grace period 與 stockpiling 規則，畫出暴露期間、空窗、停藥與換藥。</p>
     <div class="tags"><span class="pill">Grace period</span><span class="pill section">Methods</span></div>
-  </a>
-  <a class="tile" href="sankey/index.html">
-    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="4" width="3" height="16" rx="1"/><rect x="19" y="3" width="3" height="7" rx="1"/><rect x="19" y="13" width="3" height="8" rx="1"/><path d="M5 7c7 0 7-1 14-1M5 15c7 0 7 2 14 2"/></svg></div>
-    <h2>Treatment Pathway Sankey</h2>
-    <p data-en="Treatment pathways: enter the number of patients on each pathway to draw lines of therapy, switches and discontinuation.">治療路徑圖：輸入每條用藥路徑的人數，畫出各線治療、轉換與停藥的流向。</p>
-    <div class="tags"><span class="pill" data-en="Drug utilisation">藥物利用</span><span class="pill section">Results</span></div>
-  </a>
-  <a class="tile" href="evalue/index.html">
-    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M7 4c1 8 4 12 14 13"/><circle cx="10.5" cy="12.5" r="1.5"/></svg></div>
-    <h2>E-value</h2>
-    <p data-en="Sensitivity analysis for unmeasured confounding: E-values for RR, OR, HR and SMD, a results sentence to copy, and the E-value curve.&lt;span class=&quot;out&quot;&gt;Also: Word results table&lt;/span&gt;">未測量干擾的敏感度分析：算出 RR、OR、HR、SMD 的 E-value，可複製結果描述並畫出 E-value 曲線。<span class="out">另可匯出：Word 結果表</span></p>
-    <div class="tags"><span class="pill">VanderWeele &amp; Ding 2017</span><span class="pill section">Results</span></div>
   </a>
   <a class="tile" href="effectsize/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 8h4M9 6v4M14 8h4M7 16l4-2M7 14l4 2M14 15h4M14 17h4"/></svg></div>
@@ -153,26 +147,42 @@
     <div class="tags"><span class="pill">NNT · Zhang &amp; Yu</span><span class="pill section">Methods</span></div>
   </a>
   </section>
-  <section class="group" id="g-sr">
-  <h2 class="group-label" data-en="Systematic reviews and meta-analysis">系統性回顧與統合分析</h2>
-  <p class="group-desc" data-en="Study selection, risk-of-bias assessment, and a network meta-analysis tutorial.">文獻篩選、偏誤風險評估，以及網絡統合分析教學。</p>
-  <a class="tile" href="prismaflow/index.html">
+  <section class="group" id="g-select">
+  <h2 class="group-label" data-en="Selection & screening">選樣與篩選</h2>
+  <p class="group-desc" data-en="Flow diagrams of how patients were selected or studies screened.">病人怎麼選進來、文獻怎麼篩出來的流程圖。</p>
+  <a class="tile" href="cohortflow/index.html" data-key="cohortflow">
+    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2" width="10" height="4" rx="1"/><rect x="6" y="10" width="10" height="4" rx="1"/><rect x="2" y="18" width="8" height="4" rx="1"/><rect x="14" y="18" width="8" height="4" rx="1"/><path d="M11 6v4M11 14v2H6v2M11 16h7v2"/></svg></div>
+    <h2>Cohort Patient Selection</h2>
+    <p data-en="Patient selection flowchart: step-by-step exclusions with the remaining n calculated, ending in exposed and comparator groups.">病人選取流程圖：逐步排除並自動計算剩餘人數，最後分成暴露組與對照組。</p>
+    <div class="tags"><span class="pill">STROBE</span><span class="pill section">Results</span></div>
+  </a>
+  <a class="tile" href="prismaflow/index.html" data-key="prismaflow">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="8" height="5" rx="1"/><rect x="3" y="16" width="8" height="5" rx="1"/><rect x="15" y="3" width="6" height="5" rx="1"/><path d="M7 8v8M11 5.5h4"/></svg></div>
     <h2>PRISMA Flow Diagram</h2>
     <p data-en="Study selection flow diagram for systematic reviews, with databases and other sources side by side and counts calculated and checked.">系統性回顧的文獻篩選流程圖，資料庫與其他來源分欄，自動推算並檢查人數。</p>
     <div class="tags"><span class="pill">PRISMA 2020</span><span class="pill section">Results</span></div>
   </a>
-  <a class="tile" href="rob2/index.html">
-    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="7" r="2.5"/><circle cx="12" cy="7" r="2.5"/><circle cx="18" cy="7" r="2.5"/><circle cx="6" cy="16" r="2.5"/><circle cx="12" cy="16" r="2.5"/><circle cx="18" cy="16" r="2.5"/></svg></div>
-    <h2>RoB 2</h2>
-    <p data-en="Risk of bias in randomised trials: record domain judgements, get the overall judgement, and draw traffic-light and summary plots.&lt;span class=&quot;out&quot;&gt;Also: Word table, CSV&lt;/span&gt;">隨機試驗的偏誤風險：記錄各 domain 判斷，自動得出整體判斷，畫紅綠燈圖與摘要圖。<span class="out">另可匯出：Word 表格、CSV</span></p>
-    <div class="tags"><span class="pill">Cochrane RoB 2</span><span class="pill section">Results</span></div>
+  </section>
+  <section class="group" id="g-results">
+  <h2 class="group-label" data-en="Results">結果呈現</h2>
+  <p class="group-desc" data-en="Effect estimates, treatment pathways and sensitivity to unmeasured confounding.">效果量、治療路徑，以及對未測量干擾的敏感度分析。</p>
+  <a class="tile" href="forestplot/index.html" data-key="forestplot">
+    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20" stroke-dasharray="2 2"/><path d="M5 6h8M9 12h10M4 18h12"/><rect x="8" y="5" width="2" height="2"/><rect x="13" y="11" width="2" height="2"/><rect x="9" y="17" width="2" height="2"/></svg></div>
+    <h2>Forest Plot</h2>
+    <p data-en="Forest plots for subgroup, sensitivity or meta-analyses, drawn from the estimates and 95% CIs you enter; paste straight from Excel.&lt;span class=&quot;out&quot;&gt;Also: Word table of the numbers&lt;/span&gt;">次族群、敏感度分析或統合分析的森林圖。只依你輸入的估計值與 95% CI 繪圖，可從 Excel 貼上。<span class="out">另可匯出：數值的 Word 表格</span></p>
+    <div class="tags"><span class="pill">HR · OR · RR · MD</span><span class="pill section">Results</span></div>
   </a>
-  <a class="tile" href="robinsi/index.html">
-    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="5" cy="12" r="2.3"/><circle cx="12" cy="12" r="2.3"/><circle cx="19" cy="12" r="2.3"/><path d="M3 5h18M3 19h18"/></svg></div>
-    <h2>ROBINS-I V2</h2>
-    <p data-en="Risk of bias in non-randomised studies of interventions: official V2 (20 Nov 2025), with the archived 2024 V2 and 2016 V1; traffic-light and summary plots.&lt;span class=&quot;out&quot;&gt;Also: Word table, CSV&lt;/span&gt;">非隨機介入研究的偏誤風險：官方 V2（2025-11-20），可切換 2024 封存版與 2016 V1，畫紅綠燈圖與摘要圖。<span class="out">另可匯出：Word 表格、CSV</span></p>
-    <div class="tags"><span class="pill">ROBINS-I V2</span><span class="pill section">Results</span></div>
+  <a class="tile" href="sankey/index.html" data-key="sankey">
+    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="4" width="3" height="16" rx="1"/><rect x="19" y="3" width="3" height="7" rx="1"/><rect x="19" y="13" width="3" height="8" rx="1"/><path d="M5 7c7 0 7-1 14-1M5 15c7 0 7 2 14 2"/></svg></div>
+    <h2>Treatment Pathway Sankey</h2>
+    <p data-en="Treatment pathways: enter the number of patients on each pathway to draw lines of therapy, switches and discontinuation.">治療路徑圖：輸入每條用藥路徑的人數，畫出各線治療、轉換與停藥的流向。</p>
+    <div class="tags"><span class="pill" data-en="Drug utilisation">藥物利用</span><span class="pill section">Results</span></div>
+  </a>
+  <a class="tile" href="evalue/index.html" data-key="evalue">
+    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M7 4c1 8 4 12 14 13"/><circle cx="10.5" cy="12.5" r="1.5"/></svg></div>
+    <h2>E-value</h2>
+    <p data-en="Sensitivity analysis for unmeasured confounding: E-values for RR, OR, HR and SMD, a results sentence to copy, and the E-value curve.&lt;span class=&quot;out&quot;&gt;Also: Word results table&lt;/span&gt;">未測量干擾的敏感度分析：算出 RR、OR、HR、SMD 的 E-value，可複製結果描述並畫出 E-value 曲線。<span class="out">另可匯出：Word 結果表</span></p>
+    <div class="tags"><span class="pill">VanderWeele &amp; Ding 2017</span><span class="pill section">Results</span></div>
   </a>
   <a class="tile" href="../NMA/">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="4.5" r="2.3"/><circle cx="4.5" cy="18" r="2.3"/><circle cx="19.5" cy="18" r="2.3"/><path d="M10.9 6.5 5.6 16M13.1 6.5l5.3 9.5M6.8 18h10.4"/></svg></div>
@@ -181,26 +191,36 @@
     <div class="tags"><span class="pill">R · multinma</span><span class="pill tutorial" data-en="Tutorial">教學</span></div>
   </a>
   </section>
-  <section class="group" id="g-any">
-  <h2 class="group-label" data-en="For any study">通用</h2>
-  <p class="group-desc" data-en="Results figures and submission tidy-up for either kind of study.">兩類研究都用得到的結果圖與投稿前整理。</p>
-  <a class="tile" href="forestplot/index.html">
-    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20" stroke-dasharray="2 2"/><path d="M5 6h8M9 12h10M4 18h12"/><rect x="8" y="5" width="2" height="2"/><rect x="13" y="11" width="2" height="2"/><rect x="9" y="17" width="2" height="2"/></svg></div>
-    <h2>Forest Plot</h2>
-    <p data-en="Forest plots for subgroup, sensitivity or meta-analyses, drawn from the estimates and 95% CIs you enter; paste straight from Excel.&lt;span class=&quot;out&quot;&gt;Also: Word table of the numbers&lt;/span&gt;">次族群、敏感度分析或統合分析的森林圖。只依你輸入的估計值與 95% CI 繪圖，可從 Excel 貼上。<span class="out">另可匯出：數值的 Word 表格</span></p>
-    <div class="tags"><span class="pill">HR · OR · RR · MD</span><span class="pill section">Results</span></div>
+  <section class="group" id="g-bias">
+  <h2 class="group-label" data-en="Risk of bias">偏誤評估</h2>
+  <p class="group-desc" data-en="Risk of bias of each study in a systematic review.">系統性回顧中，每個納入研究的偏誤風險。</p>
+  <a class="tile" href="rob2/index.html" data-key="rob2">
+    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="6" cy="7" r="2.5"/><circle cx="12" cy="7" r="2.5"/><circle cx="18" cy="7" r="2.5"/><circle cx="6" cy="16" r="2.5"/><circle cx="12" cy="16" r="2.5"/><circle cx="18" cy="16" r="2.5"/></svg></div>
+    <h2>RoB 2</h2>
+    <p data-en="Risk of bias in randomised trials: record domain judgements, get the overall judgement, and draw traffic-light and summary plots.&lt;span class=&quot;out&quot;&gt;Also: Word table, CSV&lt;/span&gt;">隨機試驗的偏誤風險：記錄各 domain 判斷，自動得出整體判斷，畫紅綠燈圖與摘要圖。<span class="out">另可匯出：Word 表格、CSV</span></p>
+    <div class="tags"><span class="pill">Cochrane RoB 2</span><span class="pill section">Results</span></div>
+  </a>
+  <a class="tile" href="robinsi/index.html" data-key="robinsi">
+    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="5" cy="12" r="2.3"/><circle cx="12" cy="12" r="2.3"/><circle cx="19" cy="12" r="2.3"/><path d="M3 5h18M3 19h18"/></svg></div>
+    <h2>ROBINS-I V2</h2>
+    <p data-en="Risk of bias in non-randomised studies of interventions: official V2 (20 Nov 2025), with the archived 2024 V2 and 2016 V1; traffic-light and summary plots.&lt;span class=&quot;out&quot;&gt;Also: Word table, CSV&lt;/span&gt;">非隨機介入研究的偏誤風險：官方 V2（2025-11-20），可切換 2024 封存版與 2016 V1，畫紅綠燈圖與摘要圖。<span class="out">另可匯出：Word 表格、CSV</span></p>
+    <div class="tags"><span class="pill">ROBINS-I V2</span><span class="pill section">Results</span></div>
+  </a>
+  </section>
+  <section class="group" id="g-submit">
+  <h2 class="group-label" data-en="Getting ready to submit">投稿準備</h2>
+  <p class="group-desc" data-en="Combine figures into panels, convert them to journal formats and track your submissions.">把圖組成多面板、轉成期刊要的格式，並追蹤投稿進度。</p>
+  <a class="tile" href="panels/index.html" data-key="panels">
+    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="18" height="8" rx="1"/></svg></div>
+    <h2>Multi-panel Figure</h2>
+    <p data-en="Arrange figures as A, B, C panels with letters and export at journal width and DPI; panels too low in resolution are flagged.&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG, or Word with the figure embedded&lt;/span&gt;">把多張圖排成 A、B、C 面板並加上字母，以期刊寬度與 DPI 匯出；解析度不足的面板會提醒。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG，或嵌入圖片的 Word</span></p>
+    <div class="tags"><span class="pill">A · B · C</span><span class="pill section" data-en="Submission">投稿</span></div>
   </a>
   <a class="tile" href="figureconvert/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="11" height="14" rx="1.5"/><path d="M14 8h5a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-2"/><path d="M6 8h5M6 11h5"/></svg></div>
     <h2>Figure DPI &amp; Format</h2>
     <p data-en="Convert PDF, Word or images to the DPI and format a journal asks for: trim margins, set the print width, download in batches.&lt;span class=&quot;out&quot;&gt;Output: PNG, JPG, TIFF (or a ZIP)&lt;/span&gt;">把 PDF、Word 或圖片轉成投稿要求的 DPI 與格式，可裁白邊、指定列印寬度、批次下載。<span class="out">輸出：PNG、JPG、TIFF（可打包成 ZIP）</span></p>
     <div class="tags"><span class="pill">300 / 600 dpi</span><span class="pill section" data-en="Submission">投稿</span></div>
-  </a>
-  <a class="tile" href="panels/index.html">
-    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="18" height="8" rx="1"/></svg></div>
-    <h2>Multi-panel Figure</h2>
-    <p data-en="Arrange figures as A, B, C panels with letters and export at journal width and DPI; panels too low in resolution are flagged.&lt;span class=&quot;out&quot;&gt;Output: PNG, TIFF, JPG, PDF, SVG, or Word with the figure embedded&lt;/span&gt;">把多張圖排成 A、B、C 面板並加上字母，以期刊寬度與 DPI 匯出；解析度不足的面板會提醒。<span class="out">輸出：PNG、TIFF、JPG、PDF、SVG，或嵌入圖片的 Word</span></p>
-    <div class="tags"><span class="pill">A · B · C</span><span class="pill section" data-en="Submission">投稿</span></div>
   </a>
   <a class="tile" href="submissions/index.html">
     <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h5"/><circle cx="16" cy="16" r="2.5"/><path d="M16 14.6V16l.9.9"/></svg></div>
@@ -209,6 +229,7 @@
     <div class="tags"><span class="pill" data-en="Sign-in">登入使用</span><span class="pill section" data-en="Submission">投稿</span></div>
   </a>
   </section>
+  <p class="empty" id="noMatch" hidden data-en="No tool matches. Try another word, e.g. flow, bias or sample size.">找不到符合的工具，換個關鍵字試試，例如：流程、偏誤、樣本數。</p>
 </main>
 
 <div class="below">
@@ -220,7 +241,7 @@
   <div class="card" id="refs"></div>
 </div>
 
-<script src="shared/common.js?v=20261120c"></script>
+<script src="shared/common.js?v=20261121d"></script>
 <script>
 document.getElementById('refs').innerHTML = RT.refsHTML([
   RT.REFS.prisma, RT.REFS.prismaFlow, RT.REFS.strobe, RT.REFS.record, RT.REFS.schneeweiss, RT.REFS.acnu, RT.REFS.tte, RT.REFS.cco, RT.REFS.sccs, RT.REFS.okabe,
@@ -228,6 +249,33 @@ document.getElementById('refs').innerHTML = RT.refsHTML([
   RT.REFS.artwork, RT.REFS.tiff, RT.REFS.png, RT.REFS.jfif, RT.REFS.libs,
 ], [RT.LICENSES.prisma, RT.LICENSES.rob]);
 document.querySelector('#refs details').open = true;
+// search: tools whose name, description or group match every word typed
+(() => {
+  const q = document.getElementById('q');
+  if (RT.lang === 'en') { q.placeholder = q.dataset.enPlaceholder; q.setAttribute('aria-label', q.dataset.enAria); }
+  const tiles = [...document.querySelectorAll('.tile')];
+  const text = (t) => (t.textContent + ' ' + t.closest('.group').querySelector('.group-label').textContent + ' ' + (t.querySelector('p') || {}).dataset?.en + ' ' + t.getAttribute('href')).toLowerCase();
+  q.addEventListener('input', () => {
+    const words = q.value.toLowerCase().split(/\s+/).filter(Boolean);
+    let shown = 0;
+    tiles.forEach((t) => { const ok = words.every((w) => text(t).includes(w)); t.hidden = !ok; if (ok) shown++; });
+    document.querySelectorAll('.group').forEach((g) => { g.hidden = !g.querySelector('.tile:not([hidden])'); });
+    document.getElementById('noMatch').hidden = shown > 0;
+  });
+  q.addEventListener('keydown', (e) => { if (e.key === 'Enter') { const t = tiles.find((x) => !x.hidden); if (t) location.href = t.href; } if (e.key === 'Escape') { q.value = ''; q.dispatchEvent(new Event('input')); } });
+  document.addEventListener('keydown', (e) => { if (e.key === '/' && document.activeElement !== q && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); q.focus(); } });
+})();
+// the last figure made in each tool on this device, as a way back in
+(() => {
+  const ago = (t) => { const m = Math.round((Date.now() - t) / 60000); if (m < 60) return RT.t(m < 2 ? '剛剛' : m + ' 分鐘前', m < 2 ? 'just now' : m + ' min ago'); const h = Math.round(m / 60); if (h < 24) return RT.t(h + ' 小時前', h + ' h ago'); return new Date(t).toLocaleDateString(RT.lang === 'en' ? 'en' : 'zh-TW', { month: 'numeric', day: 'numeric' }); };
+  document.querySelectorAll('.tile[data-key]').forEach((t) => {
+    let th = null; try { th = JSON.parse(localStorage.getItem('rt:thumb:' + t.dataset.key) || 'null'); } catch (e) { th = null; }
+    if (!th || !th.img) return;
+    const f = document.createElement('figure'); f.className = 'thumb';
+    f.innerHTML = `<img alt="" src="${th.img}"><figcaption>${RT.t('接續上次', 'Continue')} · ${ago(th.at)}</figcaption>`;
+    t.classList.add('has-thumb'); t.appendChild(f);
+  });
+})();
 </script>
 </body>
 </html>

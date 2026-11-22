@@ -13,6 +13,244 @@
   'use strict';
   const T = RT.t, esc = RT.esc;
 
+  /* ---------------- a small drop-down under a toolbar button ---------------- */
+  let POP = null;
+  function popover(anchor, build) {
+    if (POP && POP.anchor === anchor) { closePop(); return; }
+    closePop();
+    const el = document.createElement('div');
+    el.className = 'fe-pop'; el.setAttribute('role', 'dialog');
+    document.body.appendChild(el);
+    POP = { el, anchor, build };
+    build(el);
+    const r = anchor.getBoundingClientRect(), w = Math.min(380, window.innerWidth - 16);
+    el.style.width = w + 'px';
+    el.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left)) + 'px';
+    el.style.top = Math.min(window.innerHeight - 60, r.bottom + 6) + 'px';
+    anchor.setAttribute('aria-expanded', 'true');
+  }
+  function closePop() { if (!POP) return; POP.anchor.setAttribute('aria-expanded', 'false'); POP.el.remove(); POP = null; }
+  document.addEventListener('pointerdown', (e) => { if (POP && !POP.el.contains(e.target) && !POP.anchor.contains(e.target)) closePop(); }, true);
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && POP) closePop(); });
+
+  /* ---------------- saved versions of a tool's figure (this device) ---------------- */
+  // Each tool keeps one working copy; versions are named snapshots of it (e.g. one per paper) that can be opened again.
+  RT.feVersions = (btn, key) => {
+    const LK = 'rt:versions:' + key, CK = 'rt:versions-cur:' + key;
+    const list = () => { try { return JSON.parse(localStorage.getItem(LK) || '[]'); } catch (e) { return []; } };
+    const store = (l) => { try { localStorage.setItem(LK, JSON.stringify(l)); return true; } catch (e) { RT.toast(T('瀏覽器空間不足，無法儲存版本', 'Not enough browser storage to save the version'), 5000); return false; } };
+    const cur = () => { try { return localStorage.getItem(CK) || ''; } catch (e) { return ''; } };
+    const setCur = (id) => { try { if (id) localStorage.setItem(CK, id); else localStorage.removeItem(CK); } catch (e) { /* ignore */ } paintBtn(); };
+    const snap = () => structuredClone(RT.currentState());
+    const when = (t) => new Date(t).toLocaleString(RT.lang === 'en' ? 'en' : 'zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    function paintBtn() { const v = list().find((x) => x.id === cur()); btn.textContent = (v ? T('版本：', 'Version: ') + v.name : T('版本', 'Versions')) + ' ▾'; btn.title = T('把這張圖存成不同版本（例如每篇論文一份），之後隨時切換', 'Keep named versions of this figure (e.g. one per paper) and switch between them'); }
+    function build(el) {
+      const l = list(), c = cur();
+      el.innerHTML = `<div class="fe-pop-h">${T('這張圖的版本', 'Versions of this figure')}</div>
+        <div class="fe-pop-new"><input class="fe-vname" maxlength="60" placeholder="${T('版本名稱，例如：論文 A', 'Name, e.g. Paper A')}" aria-label="${T('版本名稱', 'Version name')}"><button type="button" class="small primary" data-v="new">${T('另存新版本', 'Save as new')}</button></div>
+        ${l.length ? `<div class="fe-vlist">${l.map((v) => `<div class="fe-v${v.id === c ? ' on' : ''}" data-id="${v.id}"><button type="button" class="fe-v-open" data-v="open" title="${T('開啟這個版本（目前的內容可按 ↶ 找回）', 'Open this version (↶ brings back what was here)')}"><b>${esc(v.name)}</b><small>${when(v.at)}${v.id === c ? T(' · 目前', ' · current') : ''}</small></button>${v.id === c ? `<button type="button" class="small" data-v="save" title="${T('用目前的內容更新這個版本', 'Update this version with what is here now')}">${T('更新', 'Update')}</button>` : ''}<button type="button" class="icon" data-v="ren" aria-label="${T('重新命名', 'Rename')}">✎</button><button type="button" class="icon" data-v="del" aria-label="${T('刪除', 'Delete')}">✕</button></div>`).join('')}</div>` : `<p class="fe-tip">${T('還沒有儲存的版本。目前的內容會一直保留在這個瀏覽器裡；存成版本後可以切換。', 'No saved versions yet. What is here stays in this browser; save versions to switch between them.')}</p>`}
+        <p class="fe-tip">${T('版本存在這台裝置的瀏覽器；要帶到別台電腦，用上方「專案」的儲存。', 'Versions live in this browser; to move them to another computer, use Project › Save.')}</p>`;
+      const name = el.querySelector('.fe-vname');
+      name.addEventListener('keydown', (e) => { if (e.key === 'Enter') el.querySelector('[data-v="new"]').click(); });
+      el.onclick = (e) => {
+        const b = e.target.closest('[data-v]'); if (!b) return;
+        const act = b.dataset.v, row = b.closest('[data-id]'), id = row && row.dataset.id, l2 = list(), v = l2.find((x) => x.id === id);
+        if (act === 'new') {
+          const nm = name.value.trim() || T('版本 ', 'Version ') + (l2.length + 1);
+          const nv = { id: Date.now().toString(36), name: nm, at: Date.now(), state: snap() };
+          if (store([nv, ...l2])) { setCur(nv.id); RT.toast(T('已存成新版本：', 'Saved as a new version: ') + nm); }
+        } else if (act === 'open' && v) {
+          RT.applyState(structuredClone(v.state)); setCur(v.id); RT.toast(T('已開啟版本：', 'Opened: ') + v.name + T('（按 ↶ 可回到剛才的內容）', ' (↶ brings back what was here)'));
+          closePop(); return;
+        } else if (act === 'save' && v) { v.state = snap(); v.at = Date.now(); if (store(l2)) RT.toast(T('已更新版本：', 'Updated: ') + v.name); }
+        else if (act === 'ren' && v) { const nn = prompt(T('新的名稱', 'New name'), v.name); if (nn && nn.trim()) { v.name = nn.trim().slice(0, 60); store(l2); paintBtn(); } }
+        else if (act === 'del' && v) { if (!confirm(T(`要刪除版本「${v.name}」嗎？`, `Delete the version “${v.name}”?`))) return; store(l2.filter((x) => x.id !== id)); if (id === cur()) setCur(''); }
+        build(el);
+      };
+      setTimeout(() => name.focus(), 0);
+    }
+    if (btn.tagName === 'BUTTON') { btn.addEventListener('click', () => popover(btn, build)); btn.setAttribute('aria-haspopup', 'dialog'); }
+    paintBtn();
+    return { open: (anchor) => popover(anchor || btn, build), name: () => { const v = list().find((x) => x.id === cur()); return v ? v.name : ''; } };
+  };
+
+  /* ---------------- how the figure looks with colour-vision deficiency, or printed in black and white ---------------- */
+  // Machado et al. (2009) severity-1 matrices; the preview only — exports are never changed
+  const CVD = {
+    deut: '0.367 0.861 -0.228 0 0  0.280 0.673 0.047 0 0  -0.012 0.043 0.969 0 0  0 0 0 1 0',
+    prot: '0.152 1.053 -0.205 0 0  0.115 0.786 0.099 0 0  -0.004 -0.048 1.052 0 0  0 0 0 1 0',
+    trit: '1.256 -0.077 -0.179 0 0  -0.078 0.931 0.148 0 0  0.005 0.691 0.304 0 0  0 0 0 1 0',
+    gray: '0.299 0.587 0.114 0 0  0.299 0.587 0.114 0 0  0.299 0.587 0.114 0 0  0 0 0 1 0',
+  };
+  RT.feVision = (btn, preview) => {
+    if (!document.getElementById('fe-cvd-defs')) {
+      const d = document.createElement('div'); d.id = 'fe-cvd-defs'; d.style.cssText = 'position:absolute;width:0;height:0;overflow:hidden';
+      d.innerHTML = '<svg width="0" height="0" aria-hidden="true">' + Object.entries(CVD).map(([k, m]) => `<filter id="fe-cvd-${k}" color-interpolation-filters="linearRGB"><feColorMatrix type="matrix" values="${m}"/></filter>`).join('') + '</svg>';
+      document.body.appendChild(d);
+    }
+    const NAMES = () => [['', T('一般', 'Normal')], ['deut', T('綠色弱（最常見）', 'Deuteranopia (most common)')], ['prot', T('紅色弱', 'Protanopia')], ['trit', T('藍黃色弱', 'Tritanopia')], ['gray', T('黑白列印', 'Black-and-white print')]];
+    let mode = '';
+    const paint = () => { btn.textContent = (mode ? T('色覺：', 'Colour: ') + NAMES().find((x) => x[0] === mode)[1] : T('色覺預覽', 'Colour check')) + ' ▾'; btn.setAttribute('aria-pressed', String(!!mode)); preview.style.filter = mode ? `url(#fe-cvd-${mode})` : ''; };
+    btn.title = T('看看色覺差異的讀者或黑白列印時，這張圖分不分得清楚（只影響預覽，不影響匯出）', 'See whether the figure still reads for colour-blind readers or in black-and-white print (preview only, exports are unchanged)');
+    const build = (el) => {
+      el.innerHTML = `<div class="fe-pop-h">${T('色覺預覽（只影響預覽）', 'Colour check (preview only)')}</div>` + NAMES().map(([k, l]) => `<button type="button" class="fe-pop-item${k === mode ? ' on' : ''}" data-cvd="${k}">${esc(l)}</button>`).join('');
+      el.onclick = (e) => { const b = e.target.closest('[data-cvd]'); if (!b) return; mode = b.dataset.cvd; paint(); closePop(); };
+    };
+    if (btn.tagName === 'BUTTON') btn.addEventListener('click', () => popover(btn, build));
+    paint();
+    return { open: (anchor) => popover(anchor || btn, build), mode: () => mode };
+  };
+
+  /* ---------------- the toolbar kit: + Note, Copy image, More, saved indicator, shortcuts, tips, empty state, settings search ---------------- */
+  /**
+   * o: { bar, anchor (insert before), key, preview, form, addNote(type), openSettings(), menuButtons (to fold on phones),
+   *      tips: [[zh, en], …] }
+   */
+  RT.feKit = (o) => {
+    const { bar, preview } = o;
+    const kitHtml = `<button type="button" class="small" data-k="note" aria-haspopup="dialog">${T('＋ 註解', '+ Note')} ▾</button>
+      <span class="fe-sep" aria-hidden="true"></span>
+      <button type="button" class="small" data-k="copy" title="${T('複製圖片，直接貼到 Word／PowerPoint（Ctrl+Shift+C）', 'Copy the image to paste into Word / PowerPoint (Ctrl+Shift+C)')}">${T('複製圖片', 'Copy image')}</button>
+      <button type="button" class="small" data-k="more" aria-haspopup="dialog">${T('更多', 'More')} ▾</button>
+      <span class="spacer"></span>
+      <span class="fe-saved" role="status" aria-live="polite" title="${T('內容會自動存在這台裝置的瀏覽器裡，關掉再開也還在；要帶到別台電腦，用「專案 › 儲存」。', 'Your work is saved automatically in this browser on this device, and is still here next time. To move it to another computer, use Project › Save.')}"></span>`;
+    o.anchor.insertAdjacentHTML('beforebegin', kitHtml);
+    const vers = RT.feVersions(document.createElement('span'), o.key);
+    const vis = RT.feVision(document.createElement('span'), preview);
+    const btn = (k) => bar.querySelector(`[data-k="${k}"]`);
+    const copyImage = () => { const c = document.querySelector('#export .ex-copy'); if (c) c.click(); };
+    const narrow = () => window.innerWidth < 700;
+    // phones: the tool's quick menus fold into More
+    const foldMenus = () => (o.menuButtons ? o.menuButtons() : []).forEach((b) => { b.hidden = narrow(); });
+    foldMenus(); window.addEventListener('resize', foldMenus);
+    btn('note').addEventListener('click', (e) => popover(e.currentTarget, (el) => {
+      el.innerHTML = `<div class="fe-pop-h">${T('加到圖上（之後可拖曳）', 'Add to the figure (drag it afterwards)')}</div>` +
+        [['text', T('文字框', 'Text box')], ['arrow', T('箭頭', 'Arrow')], ['brace', T('括號', 'Bracket')]].map(([k, l]) => `<button type="button" class="fe-pop-item" data-n="${k}">${l}</button>`).join('');
+      el.onclick = (ev) => { const b = ev.target.closest('[data-n]'); if (!b) return; closePop(); o.addNote(b.dataset.n); };
+    }));
+    btn('copy').addEventListener('click', copyImage);
+    const showKeys = () => {
+      const KEYS = [['Ctrl+Z / Ctrl+Y', T('復原 / 重做', 'Undo / redo')], ['Ctrl+S', T('存成版本', 'Save a version')], ['Ctrl+Shift+C', T('複製圖片', 'Copy the image')], ['/', T('打開設定並搜尋欄位', 'Open settings and search them')], ['?', T('這張快捷鍵表', 'This list')], ['Esc', T('關閉面板', 'Close the panel')], [T('雙擊', 'Double-click'), T('直接修改圖上的文字', 'Edit text on the figure')], [T('方向鍵', 'Arrow keys'), T('微調選取的註解（Shift＝10）', 'Nudge the selected note (Shift = 10)')]];
+      const d = document.createElement('dialog'); d.className = 'fe-keys';
+      d.innerHTML = `<h2>${T('快捷鍵', 'Keyboard shortcuts')}</h2><table>${KEYS.map(([k, v]) => `<tr><th><kbd>${esc(k)}</kbd></th><td>${esc(v)}</td></tr>`).join('')}</table><div class="btns"><button type="button" class="small primary">${T('知道了', 'Got it')}</button></div>`;
+      document.body.appendChild(d); d.querySelector('button').onclick = () => d.close(); d.addEventListener('close', () => d.remove()); d.showModal();
+    };
+    btn('more').addEventListener('click', (e) => popover(e.currentTarget, (el) => {
+      const vn = vers.name(), menus = narrow() && o.menuButtons ? o.menuButtons() : [];
+      el.innerHTML = (menus.length ? `<div class="fe-pop-h">${T('選單', 'Menus')}</div>` + menus.map((b, i) => `<button type="button" class="fe-pop-item" data-m="${i}">${esc(b.textContent.replace('▾', '').trim())}</button>`).join('') : '') +
+        `<div class="fe-pop-h">${T('這張圖', 'This figure')}</div>
+        <button type="button" class="fe-pop-item" data-a="versions">${T('版本', 'Versions')}${vn ? ` <small>· ${esc(vn)}</small>` : ''} <kbd>Ctrl+S</kbd></button>
+        <button type="button" class="fe-pop-item" data-a="vision">${T('色覺預覽', 'Colour check')}${vis.mode() ? T('（使用中）', ' (on)') : ''}</button>
+        <button type="button" class="fe-pop-item" data-a="tips">${T('使用提示', 'Tips')}</button>
+        <button type="button" class="fe-pop-item" data-a="keys">${T('快捷鍵', 'Keyboard shortcuts')} <kbd>?</kbd></button>`;
+      el.onclick = (ev) => {
+        const b = ev.target.closest('button'); if (!b) return;
+        const anchor = btn('more'); closePop();
+        if (b.dataset.m) menus[Number(b.dataset.m)].click();
+        else if (b.dataset.a === 'versions') vers.open(anchor);
+        else if (b.dataset.a === 'vision') vis.open(anchor);
+        else if (b.dataset.a === 'tips') showTips(true);
+        else if (b.dataset.a === 'keys') showKeys();
+      };
+    }));
+    // saved indicator
+    const saved = bar.querySelector('.fe-saved');
+    const ago = (t) => { const s = Math.round((Date.now() - t) / 1000); return s < 10 ? T('剛剛', 'just now') : s < 60 ? T(`${s} 秒前`, `${s} s ago`) : T(`${Math.round(s / 60)} 分鐘前`, `${Math.round(s / 60)} min ago`); };
+    const paintSaved = () => { const vn = vers.name(); saved.textContent = (vn ? vn + ' · ' : '') + (RT.lastSaved ? T('已自動儲存 · ', 'Saved · ') + ago(RT.lastSaved) : T('自動儲存', 'Auto-saved')); };
+    document.addEventListener('rt:saved', paintSaved); setInterval(paintSaved, 20000); paintSaved();
+    // shortcuts
+    const typing = (el) => el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable);
+    document.addEventListener('keydown', (e) => {
+      const mod = e.ctrlKey || e.metaKey;
+      if (mod && !e.shiftKey && e.key.toLowerCase() === 's') { e.preventDefault(); vers.open(btn('more')); return; }
+      if (mod && e.shiftKey && e.key.toLowerCase() === 'c' && !typing(document.activeElement)) { e.preventDefault(); copyImage(); return; }
+      if (typing(document.activeElement) || mod || e.altKey || document.querySelector('dialog[open]')) return;
+      if (e.key === '?') { e.preventDefault(); showKeys(); }
+      else if (e.key === '/' && o.form) { e.preventDefault(); o.openSettings(); setTimeout(() => { const q = o.form.querySelector('.fe-find input'); if (q) q.focus(); }, 60); }
+    });
+    // nothing to draw yet: offer the example or a blank start
+    const ex = document.getElementById('btnExample');
+    const emptyState = () => {
+      if (preview.querySelector('svg') || preview.querySelector('.fe-empty')) return;
+      const box = document.createElement('div'); box.className = 'fe-empty';
+      box.innerHTML = `<p>${T('還沒有內容。', 'Nothing here yet.')}</p><div class="btns">${ex ? `<button type="button" class="primary" data-e="ex">${T('載入範例', 'Load the example')}</button>` : ''}<button type="button" data-e="new">${T('從頭開始：打開設定', 'Start from scratch: open settings')}</button></div>`;
+      box.onclick = (ev) => { const b = ev.target.closest('[data-e]'); if (!b) return; if (b.dataset.e === 'ex') ex.click(); else o.openSettings(); };
+      preview.appendChild(box);
+    };
+    new MutationObserver(() => setTimeout(emptyState, 0)).observe(preview, { childList: true }); emptyState();
+    // search the settings column
+    if (o.form) {
+      const find = document.createElement('div'); find.className = 'fe-find';
+      find.innerHTML = `<input type="search" autocomplete="off" placeholder="${T('搜尋設定，例如：字級、顏色、寬度（按 / ）', 'Search settings, e.g. font, colour, width (press /)')}" aria-label="${T('搜尋設定', 'Search settings')}"><div class="fe-find-list" hidden></div>`;
+      o.form.prepend(find);
+      const inp = find.querySelector('input'), list = find.querySelector('.fe-find-list');
+      const nameOf = (el) => { const lab = el.closest('label'); let t = lab ? (lab.querySelector(':scope > span') || lab).textContent : (el.getAttribute('aria-label') || el.placeholder || ''); return t.replace(/\s+/g, ' ').trim(); };
+      const secOf = (el) => { const c = el.closest('.card'); const h = c && (c.querySelector('h2') || c.querySelector('summary')); return h ? h.textContent.replace(/\s+/g, ' ').replace(/^\d+\s*/, '').trim() : ''; };
+      let hits = [];
+      inp.addEventListener('input', () => {
+        const q = inp.value.trim().toLowerCase();
+        if (!q) { list.hidden = true; return; }
+        hits = [...o.form.querySelectorAll('input:not([type=hidden]):not([type=file]), select, textarea')].filter((el) => el !== inp && !el.closest('.fe-find'))
+          .map((el) => ({ el, name: nameOf(el), sec: secOf(el) })).filter((x) => x.name && (x.name + ' ' + x.sec).toLowerCase().includes(q)).slice(0, 12);
+        list.innerHTML = hits.length ? hits.map((x, i) => `<button type="button" data-i="${i}"><b>${esc(x.name.slice(0, 40))}</b><small>${esc(x.sec)}</small></button>`).join('') : `<p>${T('找不到這個設定。', 'No setting matches.')}</p>`;
+        list.hidden = false;
+      });
+      const go = (x) => {
+        let d = x.el.closest('details'); while (d) { d.open = true; d = d.parentElement && d.parentElement.closest('details'); }
+        const sh = x.el.closest('[hidden]'); if (sh && !sh.closest('.fe-find')) RT.toast(T('這個設定在目前的版面用不到', 'This setting does not apply to the current layout'));
+        x.el.scrollIntoView({ block: 'center' }); x.el.focus({ preventScroll: true });
+        const f = x.el.closest('label') || x.el; f.classList.add('fe-flash'); setTimeout(() => f.classList.remove('fe-flash'), 1600);
+        list.hidden = true;
+      };
+      list.addEventListener('click', (e) => { const b = e.target.closest('[data-i]'); if (b) go(hits[Number(b.dataset.i)]); });
+      inp.addEventListener('keydown', (e) => { if (e.key === 'Enter' && hits[0]) { e.preventDefault(); go(hits[0]); } if (e.key === 'Escape') { inp.value = ''; list.hidden = true; } });
+    }
+    // first visit: three tips, then never again (More › Tips brings them back)
+    const TK = 'rt:tips-seen:' + o.key;
+    function showTips(force) {
+      let seen = false; try { seen = localStorage.getItem(TK) === '1'; } catch (e) { /* ignore */ }
+      if (seen && !force) return;
+      const steps = o.tips || [];
+      if (!steps.length) return;
+      let i = 0;
+      const card = document.createElement('div'); card.className = 'fe-tips'; card.setAttribute('role', 'status');
+      const paint = () => {
+        card.innerHTML = `<b>${T('小提示', 'Tip')} ${i + 1}/${steps.length}</b><p>${esc(T(steps[i][0], steps[i][1]))}</p><div class="btns"><button type="button" class="small" data-t="skip">${T('不用了', 'Skip')}</button><button type="button" class="small primary" data-t="next">${i + 1 < steps.length ? T('下一個', 'Next') : T('知道了', 'Got it')}</button></div>`;
+      };
+      const done = () => { card.remove(); try { localStorage.setItem(TK, '1'); } catch (e) { /* ignore */ } };
+      card.onclick = (e) => { const b = e.target.closest('[data-t]'); if (!b) return; if (b.dataset.t === 'skip' || i + 1 >= steps.length) done(); else { i++; paint(); } };
+      paint();
+      bar.after(card);
+    }
+    setTimeout(() => showTips(false), 600);
+  };
+
+  /* ---------------- a small picture of the latest figure, for the home page ---------------- */
+  const thumbTimers = {};
+  RT.feThumb = (key, getSvg) => {
+    clearTimeout(thumbTimers[key]);
+    thumbTimers[key] = setTimeout(async () => {
+      const svgEl = getSvg(); if (!svgEl) return;
+      const vb = svgEl.viewBox && svgEl.viewBox.baseVal; if (!vb || !vb.width) return;
+      const clone = svgEl.cloneNode(true); clone.querySelectorAll('.fe-ui, .edit-ui, .field-ui').forEach((x) => x.remove());
+      try {
+        const k = Math.min(1, 360 / vb.width), cv = await RT.svgToCanvas(new XMLSerializer().serializeToString(clone), vb.width, vb.height, k);
+        localStorage.setItem('rt:thumb:' + key, JSON.stringify({ at: Date.now(), img: cv.toDataURL('image/jpeg', 0.8) }));
+      } catch (e) { /* no room or not drawable: the home page simply shows no picture */ }
+    }, 2500);
+  };
+
+  /* ---------------- a draft figure legend under the figure ---------------- */
+  RT.feCaption = (host, make) => {
+    const card = RT.h(`<div class="card fe-caption"><h2>${T('圖說草稿（Figure legend）', 'Draft figure legend')}</h2><p class="hint" style="margin-top:0">${T('依目前的內容自動產生，請依期刊格式修改。', 'Written from the figure as it is now; adapt it to the journal’s style.')}</p><textarea readonly rows="4" aria-label="${T('圖說草稿', 'Draft figure legend')}"></textarea><div class="btns" style="margin-top:6px"><button type="button" class="small">${T('複製', 'Copy')}</button></div></div>`);
+    host.appendChild(card);
+    const ta = card.querySelector('textarea');
+    const refresh = () => { let t = ''; try { t = make() || ''; } catch (e) { t = ''; } card.hidden = !t; if (ta.value !== t) { ta.value = t; ta.rows = Math.min(10, Math.max(3, Math.ceil(t.length / 90))); } };
+    card.querySelector('button').onclick = async () => { try { await navigator.clipboard.writeText(ta.value); RT.toast(T('已複製圖說', 'Legend copied')); } catch (e) { ta.select(); } };
+    refresh();
+    return refresh;
+  };
+
   RT.figEdit = (cfg) => {
     const col = document.querySelector('.preview-col'), preview = document.getElementById('preview'), form = document.getElementById('form');
     if (!col || !preview) return;
@@ -38,10 +276,7 @@
       ${(cfg.menus || []).length ? '<span class="fe-sep" aria-hidden="true"></span>' : ''}
       ${(cfg.menus || []).map((m) => `<button type="button" class="small" data-x="menu" data-m="${esc(m.id)}" aria-haspopup="dialog">${esc(m.label)} ▾</button>`).join('')}
       <span class="fe-sep" aria-hidden="true"></span>
-      <button type="button" class="small" data-x="text">${T('＋ 文字', '+ Text')}</button>
-      <button type="button" class="small" data-x="arrow">${T('＋ 箭頭', '+ Arrow')}</button>
-      <button type="button" class="small" data-x="brace">${T('＋ 括號', '+ Bracket')}</button>
-      <span class="spacer"></span>
+      <span class="fe-kit-here"></span>
     </div>`);
     col.prepend(bar);
     // under the figure: a short hint, the messages, then every other card side by side
@@ -51,6 +286,7 @@
     const msgs = document.getElementById('msgs');
     (msgs && msgs.parentNode === col ? msgs : hint).after(bottom);
     [...col.children].filter((el) => el !== bar && el !== preview && el !== hint && el !== bottom && el !== msgs && !el.classList.contains('paper-zoom') && col.contains(el) && [...col.children].indexOf(el) > [...col.children].indexOf(bottom)).forEach((el) => bottom.appendChild(el));
+    const capRefresh = cfg.caption ? RT.feCaption(bottom, cfg.caption) : null;
     const adoptZoom = () => { const z = document.querySelector('.paper-zoom'); if (z && z.parentNode !== bar) bar.appendChild(z); };
     adoptZoom(); document.addEventListener('DOMContentLoaded', () => setTimeout(adoptZoom, 0));
 
@@ -69,6 +305,17 @@
       setTimeout(place, 0);
     }
     setCanvas(canvas);
+    RT.feKit({
+      bar, anchor: bar.querySelector('.fe-kit-here'), key: cfg.key || location.pathname, preview, form,
+      addNote: (t) => addNote(t), openSettings: () => setCanvas(false),
+      menuButtons: () => [...bar.querySelectorAll('[data-x="menu"]')],
+      tips: [
+        ['點圖上的方框、標題或標籤，旁邊會出現它的設定，直接在那裡改。', 'Click a box, title or label on the figure and its settings appear beside it.'],
+        ['雙擊文字可以直接修改；「＋ 註解」可以在圖上加文字框、箭頭、括號，拖曳就能移動。', 'Double-click text to edit it; + Note adds text boxes, arrows and brackets you can drag.'],
+        ['常用設定在上方選單，完整設定按「設定」；「更多」裡有版本與色覺預覽，匯出在圖的下方。', 'Common settings are in the menus above, all of them under Settings; More holds versions and the colour check; export is below the figure.'],
+      ],
+    });
+    bar.querySelector('.fe-kit-here').remove();
 
     /* ---------------- the floating panel ---------------- */
     const panel = document.createElement('div');
@@ -85,7 +332,8 @@
     // the name of the section a control sits in: its row's heading, a label just above it, or its card's title
     function sectionOf(orig) {
       if (orig.closest('tr')) return '';
-      const blk = orig.closest('.block'), bh = blk && blk.querySelector('.block-head b'); if (bh) return bh.textContent.trim();
+      const blk = orig.closest('.block'), bh = blk && blk.querySelector('.block-head b');
+      if (bh) { const named = blk.querySelector('.block-head input'); return (bh.textContent.trim() + ' ' + (named && named.value ? named.value : '')).trim(); }
       for (let p = orig.previousElementSibling; p; p = p.previousElementSibling) if (p.classList.contains('lbl')) return p.textContent.trim();
       const card = orig.closest('.card'), h = card && card.querySelector('h2');
       return h ? h.textContent.replace(/^\s*\d+\s*/, '').trim() : '';
@@ -166,9 +414,9 @@
     // the field behind a clicked part of the figure, plus the other fields of the same row or block
     let FIELD = null;
     function relatedOrigs(el) {
-      const box = el.closest('.list-row, .block, .rob-det, tr');
+      const box = el.closest('.list-row, .block, .rob-det, tr, .nrow2, .panel-row');
       if (!box) return [el];
-      const all = [...box.querySelectorAll('input:not([type=hidden]):not([type=file]):not([type=button]), select, textarea')].filter((x) => !x.closest('[hidden]') && !x.closest('.block-head'));
+      const all = [...box.querySelectorAll('input:not([type=hidden]):not([type=file]):not([type=button]), select, textarea')].filter((x) => !x.closest('[hidden]'));
       if (all.length > 12) return [el];
       return all.includes(el) ? all : [el, ...all];
     }
@@ -178,7 +426,7 @@
       panel.innerHTML = head(title) + '<div class="fe-fields"></div>' + `<p class="fe-tip">${T('改這裡，圖和設定欄會一起變。', 'Changes here update the figure and the settings column.')}</p>`;
       const host = panel.querySelector('.fe-fields');
       relatedOrigs(el).forEach((o) => {
-        const p = proxyFor(o), text = ownLabel(o) || o.placeholder || labelOf(o) || '';
+        const p = proxyFor(o), text = ownLabel(o) || o.getAttribute('aria-label') || o.placeholder || labelOf(o) || '';
         const row = document.createElement('label');
         if (p.type === 'checkbox') { row.className = 'fe-row check'; row.append(p, document.createTextNode(' ' + text)); }
         else { row.className = 'fe-row fe-f' + (p.tagName === 'TEXTAREA' || (p.type === 'text' && relatedOrigs(el).length === 1) ? ' wide' : ''); const sp = document.createElement('span'); sp.textContent = text; row.append(sp, p); }
@@ -224,7 +472,7 @@
       const x = b.dataset.x;
       if (x === 'settings') setCanvas(!canvas);
       else if (x === 'menu') { if (MODE === 'menu:' + b.dataset.m) close(); else open('menu', b.dataset.m); }
-      else addNote(x);
+      else if (x === 'text' || x === 'arrow' || x === 'brace') addNote(x);
     });
 
     /* ---------------- annotations: add, select, drag, nudge, type over ---------------- */
@@ -250,6 +498,7 @@
         svg0.querySelectorAll('[data-field].fe-on').forEach((r) => { r.classList.remove('fe-on'); });
         if (MODE === 'field' && FIELD) { const r = svg0.querySelector(`[data-field="${FIELD.idx}"]`); if (r) r.classList.add('fe-on'); }
         if (MODE === 'field' && FIELD && !FIELD.el.isConnected) close();
+        if (MODE === 'note' && !notes()[NSEL]) close();
       }
       if (svg0 && !svg0.querySelector('.field-ui') && (RT.lastHits || []).length) RT.fieldHits(preview, RT.lastHits);
       if (force === true) { place(); return; }
@@ -266,6 +515,8 @@
       });
       svg.appendChild(g);
       refreshProxies();
+      if (capRefresh) capRefresh();
+      RT.feThumb(cfg.key || location.pathname, () => preview.querySelector('svg'));
       place();
     }
     const hitOf = (e) => { const r = e.target.closest && e.target.closest('[data-field]'); if (!r || !preview._hits) return null; const i = Number(r.dataset.field), h = preview._hits[i]; return h ? { i, h } : null; };
@@ -275,8 +526,16 @@
       let el = null; try { el = x.h.find(); } catch (err) { /* ignore */ }
       if (el) openField(x.i, el, false);
     }, true);
+    function hitAt(e) {
+      const svg = preview.querySelector('svg'), g = svg && svg.querySelector('.field-ui'); if (!g || !preview._hits) return null;
+      const m = /translate\(([-\d.]+)[ ,]+([-\d.]+)\)/.exec(g.getAttribute('transform') || ''), dx = m ? Number(m[1]) : 0, dy = m ? Number(m[2]) : 0;
+      const p = figPoint(e), px = p[0] - dx, py = p[1] - dy;
+      for (let i = preview._hits.length - 1; i >= 0; i--) { const h = preview._hits[i]; if (px >= h.x && px <= h.x + h.w && py >= h.y && py <= h.y + h.h) return { i, h }; }
+      return null;
+    }
     preview.addEventListener('dblclick', (e) => {
-      const x = hitOf(e); if (!x) return;
+      if (e.target.closest && e.target.closest('.fe-ui')) return;
+      const x = hitOf(e) || hitAt(e); if (!x) return;
       e.stopImmediatePropagation(); e.preventDefault();
       let el = null; try { el = x.h.find(); } catch (err) { /* ignore */ }
       if (el) openField(x.i, el, true);

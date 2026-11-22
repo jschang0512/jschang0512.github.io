@@ -21,7 +21,7 @@ Browser-based figure tools for research papers. Everything runs in the browser �
 
 Interface in Traditional Chinese and English. Figures export to PNG, TIFF, JPG, PDF, SVG and editable Word.
 
-The figure tools open figure-first: the settings column stays hidden until Settings is pressed, quick menus above the figure hold the most-used settings, and text boxes, arrows and brackets can be added and dragged on any figure, and clicking a box, title, axis label or study name opens its fields beside the figure (shared/figedit.js).
+The figure tools open figure-first: the settings column stays hidden until Settings is pressed, quick menus above the figure hold the most-used settings, and text boxes, arrows and brackets can be added and dragged on any figure, and clicking a box, title, axis label or study name opens its fields beside the figure (shared/figedit.js). Each tool also keeps named versions of its figure, previews colour-blind and black-and-white readability, drafts a figure legend, and can send its figure to the multi-panel composer. Exports offer publisher presets (Elsevier, Springer, Nature, BMC, PLOS, JAMA Network, Wiley, BMJ). The toolkit works offline once visited and can be installed as an app. Each tool shows a few tips on first use, saves automatically (shown in the toolbar), keeps its export options folded under Advanced, and has keyboard shortcuts (press ? to list them) and a search box in its settings column.
 
 ## Notes
 
@@ -34,4 +34,4 @@ The figure tools open figure-first: the settings column stays hidden until Setti
 
 張家菘 — questions, bug reports and suggestions: [js.chang0512@gmail.com](mailto:js.chang0512@gmail.com)
 
-Version: v3.5 (2026-11-20)
+Version: v3.6 (2026-11-21)

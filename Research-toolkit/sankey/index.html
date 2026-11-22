@@ -18,7 +18,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../shared/style.css?v=20261120b">
+<link rel="stylesheet" href="../shared/style.css?v=20261121c">
 <style>
   .prow { display: grid; grid-template-columns: minmax(0, 1fr) 6.5rem 30px; gap: 6px; align-items: center; margin-bottom: 6px; }
   .colors { display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: 6px 12px; }
@@ -95,7 +95,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261120c"></script>
+<script src="../shared/common.js?v=20261121d"></script>
 <script>
 const T = RT.t;
 const KEY = 'sankey1';
@@ -431,9 +431,14 @@ syncInputs();
 render();
 hist.push();
 </script>
-<script src="../shared/figedit.js?v=20261120b"></script>
+<script src="../shared/figedit.js?v=20261121f"></script>
 <script>
-RT.figEdit({ key: 'sankey', menus: [
+RT.figEdit({ key: 'sankey', caption: () => {
+    const total = RT.sum(S.rows.map((r) => r.n));
+    const st = String(S.stages || '').split(',').map((t) => t.trim()).filter(Boolean);
+    return `Figure. Treatment pathways${st.length ? ` across ${st.join(', ').replace(/, ([^,]*)$/, ' and $1')}` : ''}${total ? ` (N = ${RT.fmtNum(total)})` : ''}. Each band shows patients moving from one line of treatment to the next; band widths are proportional to the number of patients${S.showStop ? `, and "${S.stopLabel || 'No further treatment'}" marks patients without a further line` : ''}.`;
+  },
+  menus: [
   { id: 'fig', label: RT.t('圖', 'Figure'), items: ["title","W","H","nodeW","gap","alpha","pctOf","show","sortBySize","showStop","stopLabel"] },
   { id: 'style', label: RT.t('風格', 'Style'), items: ["st.font","st.fontSize","st.lh","st.textColor","st.boxFill","st.boxStroke","st.boxSW","st.radius","st.lineColor","st.lineW"] },
 ] });

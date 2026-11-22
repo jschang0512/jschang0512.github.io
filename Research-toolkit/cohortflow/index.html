@@ -18,7 +18,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../shared/style.css?v=20261120b">
+<link rel="stylesheet" href="../shared/style.css?v=20261121c">
 <style>
   .step-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
   /* exclusions inside a group sit indented between the two boxes they connect */
@@ -108,7 +108,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261120c"></script>
+<script src="../shared/common.js?v=20261121d"></script>
 <script>
 const T = RT.t;
 const KEY = 'cohort3';
@@ -651,9 +651,15 @@ hist.push();
   RT.toast(T('已把時間軸的納入／排除條件帶入，請填上各步驟人數（按 ↶ 可復原）', 'Criteria from the timeline added — fill in the numbers for each step (↶ to undo)'), 7000);
 })();
 </script>
-<script src="../shared/figedit.js?v=20261120b"></script>
+<script src="../shared/figedit.js?v=20261121f"></script>
 <script>
-RT.figEdit({ key: 'cohortflow', menus: [
+RT.figEdit({ key: 'cohortflow', caption: () => {
+    const c = computeN(), f = (v) => (v === null || v === undefined ? '…' : RT.fmtNum(v, S.comma !== false)), lc = (t) => String(t || '').replace(/\n/g, ' ').trim().replace(/^([A-Z])(?=[a-z])/, (m) => m.toLowerCase());
+    const last = c[c.length - 1], lastStep = S.steps[S.steps.length - 1];
+    const ex = c.reduce((a, x) => a + (x.total || 0), 0);
+    return `Figure. Flowchart of patient selection. Of ${f(RT.num(S.start.n))} ${lc(S.start.text) || 'patients'}, ${f(ex)} were excluded for the reasons shown, leaving ${f(last ? last.n : null)} ${lc(lastStep && lastStep.text) || 'patients'} in the study cohort.` + (S.groups.length ? ' The cohort was then divided into the groups shown.' : '');
+  },
+  menus: [
   { id: 'layout', label: RT.t('版面', 'Layout'), items: ["boxW","exSide","exW","groupW","exSize","bullet","nStyle","nBreak","comma","exTotal","boldMain","exTitleBold"] },
   { id: 'style', label: RT.t('風格', 'Style'), items: ["exFill","grpFill","st.font","st.fontSize","st.lh","st.textColor","st.boxFill","st.boxStroke","st.boxSW","st.radius","st.lineColor","st.lineW"] },
 ] });

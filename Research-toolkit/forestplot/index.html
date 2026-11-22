@@ -18,7 +18,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../shared/style.css?v=20261120b">
+<link rel="stylesheet" href="../shared/style.css?v=20261121c">
 <style>
   .frow .block-head input { flex: 1; }
   .frow .nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
@@ -134,7 +134,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261120c"></script>
+<script src="../shared/common.js?v=20261121d"></script>
 <script>
 const T = RT.t;
 const KEY = 'forest1';
@@ -592,9 +592,15 @@ hist.push();
   RT.toast(T(`已帶入 ${h.tool} 判斷：對應到 ${matched} 列${added ? `，新增 ${added} 列（請填估計值與 CI）` : ''}（按 ↶ 可復原）`, `${h.tool} judgements added: ${matched} ${matched === 1 ? 'row' : 'rows'} matched${added ? `, ${added} new ${added === 1 ? 'row' : 'rows'} added (fill in the estimates and CIs)` : ''} (↶ to undo)`), 7000);
 })();
 </script>
-<script src="../shared/figedit.js?v=20261120b"></script>
+<script src="../shared/figedit.js?v=20261121f"></script>
 <script>
-RT.figEdit({ key: 'forestplot', menus: [
+RT.figEdit({ key: 'forestplot', caption: () => {
+    const M = { HR: 'hazard ratios', OR: 'odds ratios', RR: 'risk ratios', IRR: 'incidence rate ratios', MD: 'mean differences', SMD: 'standardised mean differences', RD: 'risk differences' }[S.measure] || 'effect estimates';
+    const sum = S.rows.some((r) => r.sum), lc = (t) => String(t || '').replace(/^favours?\s+/i, '').trim();
+    return `Figure. Forest plot of ${M} with 95% confidence intervals${S.title ? ` (${S.title})` : ''}. Squares show point estimates${S.sizeBy && S.sizeBy !== 'fixed' ? ' (sized by weight)' : ''} and horizontal lines their 95% CIs${sum ? '; diamonds show pooled estimates' : ''}. The vertical${S.refDash ? ' dashed' : ''} line marks no effect (${S.measure} = ${S.nullV})${S.scale === 'log' ? '; the x axis is on a log scale' : ''}.` +
+      (S.favL && S.favR ? ` Estimates to the left of the line favour ${lc(S.favL)}; to the right, ${lc(S.favR)}.` : '');
+  },
+  menus: [
   { id: 'axis', label: RT.t('刻度', 'Axis'), items: ["measure","scale","nullV","xmin","xmax","ticks","dec","axisLabel","favL","favR","refDash"] },
   { id: 'cols', label: RT.t('欄位', 'Columns'), items: ["showEv","showC1","showC2","showEst","showW","showP","hLabel","hEst"] },
   { id: 'style', label: RT.t('風格', 'Style'), items: ["title","marker","color","sumColor","sizeBy","ciW","plotW","rowSp","st.font","st.fontSize","st.lh","st.textColor","st.boxFill","st.boxStroke","st.boxSW","st.radius","st.lineColor","st.lineW"] },

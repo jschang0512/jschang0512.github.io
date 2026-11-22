@@ -44,11 +44,9 @@
     <button type="button" class="small" data-x="style" aria-haspopup="dialog">${T('風格', 'Style')} ▾</button>
     <span class="tl-sep" aria-hidden="true"></span>
     <button type="button" class="small" data-x="addrow">${T('＋ 列', '+ Row')}</button>
-    <button type="button" class="small" data-x="text">${T('＋ 文字', '+ Text')}</button>
-    <button type="button" class="small" data-x="arrow">${T('＋ 箭頭', '+ Arrow')}</button>
-    <button type="button" class="small" data-x="brace">${T('＋ 括號', '+ Bracket')}</button>
     <button type="button" class="small" data-x="kinds" aria-haspopup="dialog">${T('類別與圖例', 'Types & legend')}</button>
-    <span class="spacer"></span>
+    <span class="tl-sep" aria-hidden="true"></span>
+    <span class="fe-kit-here"></span>
   </div>`);
   col.prepend(bar);
   // the settings column is hidden unless it was opened last time: the figure comes first
@@ -69,6 +67,15 @@
   const bottom = document.createElement('div'); bottom.className = 'tl-bottom';
   (hint || preview).after(bottom);
   ['export', 'designCheck'].forEach((id) => { const el = document.getElementById(id); if (el) bottom.appendChild(el); });
+  // a draft legend in the style of Schneeweiss et al., from the windows on the figure
+  const legendRefresh = RT.feCaption(bottom, () => {
+    if (!S.rows.length) return '';
+    const win = (r) => String(r.label || '').split('\n')[0].trim() + ' (' + winOf(r).replace(/^\(\s*|\s*\)$/g, '').replace(/\u00a0/g, ' ') + ')';
+    // "Day 0" as the title says nothing new: then the description alone defines it
+    const t0 = String(S.day0Title || '').trim(), d0 = String(S.day0Text || '').replace(/\n/g, ' ').trim();
+    const day0 = [/^day\s*0$/i.test(t0) ? '' : t0, d0].filter(Boolean).join(': ') || 'the index date';
+    return `Figure. Study design diagram. Day 0 = ${day0}. Time windows: ${S.rows.map(win).join('; ')}. Days in brackets are relative to Day 0, both ends inclusive. Diagram format follows Schneeweiss et al. (Ann Intern Med 2019;170:398–406).`;
+  });
   const adoptZoom = () => { const z = document.querySelector('.paper-zoom'); if (z && z.parentNode !== bar) bar.appendChild(z); };
   adoptZoom(); document.addEventListener('DOMContentLoaded', () => setTimeout(adoptZoom, 0));
   function addNote(type) {
@@ -83,6 +90,7 @@
   bar.addEventListener('click', (e) => {
     const x = e.target.closest('[data-x]'); if (!x) return;
     const a = x.dataset.x;
+    if (!a) return;
     if (a === 'canvas') setCanvas(!canvas);
     else if (a === 'addrow') {
       S.rows.push(row({ kind: 'cov', color: kindColor('cov'), label: 'New row', s: '-30', e: '-1' }));
@@ -92,6 +100,17 @@
     else addNote(a);
   });
   setCanvas(canvas);
+  RT.feKit({
+    bar, anchor: bar.querySelector('.fe-kit-here'), key: 'timeline', preview, form: document.getElementById('form'),
+    addNote: (t) => addNote(t), openSettings: () => setCanvas(false),
+    menuButtons: () => [...bar.querySelectorAll('[data-x="tpl"], [data-x="layout"], [data-x="style"], [data-x="kinds"]')],
+    tips: [
+      ['點一列可開啟它的設定；拖曳色條兩端改天數，拖中間整段移動。', 'Click a row for its settings; drag a bar’s ends to change days, or its middle to move it.'],
+      ['雙擊任何文字直接修改；「＋ 註解」加文字框、箭頭、括號；藍色把手可以移動一列的文字。', 'Double-click any text to edit it; + Note adds text boxes, arrows and brackets; the blue handle moves a row’s text.'],
+      ['範本、版面、風格在上方；完整設定按「設定」；版本和色覺預覽在「更多」，匯出與圖說在圖的下方。', 'Templates, layout and style are above; everything else under Settings; versions and the colour check are in More; export and the legend are below the figure.'],
+    ],
+  });
+  bar.querySelector('.fe-kit-here').remove();
 
   /* ---------------- selection ---------------- */
   function resetPlacement() { pinned = null; scrolledFor = null; }
@@ -552,6 +571,8 @@
         if (panel.querySelectorAll('.tl-seg').length !== segsOf(r).length) buildPanel();
       }
       setTimeout(place, 0);
+      legendRefresh();
+      RT.feThumb('timeline', () => preview.querySelector('svg'));
     },
   };
   window.TLX.afterRender();
