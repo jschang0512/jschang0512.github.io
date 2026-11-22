@@ -1,0 +1,76 @@
+# Weekly refresh of the Taiwan drug data behind Research-toolkit/drugs/ and Research-toolkit/codelist/.
+# Downloads the NHI drug list and three TFDA datasets (licences, appearance, leaflets), trims them with
+# .github/scripts/tw-drugs.mjs, converts the NHI reimbursement-rule PDFs to text with
+# .github/scripts/tw-drug-rules.mjs (only new or revised ones), and force-pushes the result to the orphan
+# branch "tw-drugs-data" (one commit, no history, so the JSON never piles up in main).
+# The pages read it from raw.githubusercontent.com.
+name: Refresh Taiwan drug data
+
+on:
+  schedule:
+    - cron: "40 19 * * 0"   # 03:40 Taipei time every Monday
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tw-drugs
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pdftotext
+        # poppler-data carries the CJK CMaps (e.g. ETenms-B5-H) that older Big5-encoded rule PDFs need
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq poppler-utils poppler-data
+
+      - name: Download sources
+        run: |
+          set -e
+          mkdir -p /tmp/src
+          get() { curl -fsSL --retry 3 --max-time 600 -A "Mozilla/5.0" -o "$1" "$2"; }
+          get /tmp/src/nhi.csv "https://info.nhi.gov.tw/api/iode0000s01/Dataset?rId=A21030000I-E41001-001"
+          for id in 36 42 39; do
+            get /tmp/src/fda$id.zip "https://data.fda.gov.tw/data/opendata/export/$id/csv"
+            mkdir -p /tmp/src/fda$id && unzip -o -q /tmp/src/fda$id.zip -d /tmp/src/fda$id
+          done
+          ls -lR /tmp/src
+          # a broken download must not replace good data
+          test "$(stat -c %s /tmp/src/nhi.csv)" -gt 20000000
+          test "$(find /tmp/src/fda36 -name '*.csv' -size +10M | wc -l)" -ge 1
+
+      - name: Previous data
+        run: |
+          git fetch origin tw-drugs-data --depth 1 || true
+          git show origin/tw-drugs-data:meta.json > /tmp/old-meta.json 2>/dev/null || rm -f /tmp/old-meta.json
+          git show origin/tw-drugs-data:rules.json > /tmp/old-rules.json 2>/dev/null || rm -f /tmp/old-rules.json
+
+      - name: Build JSON
+        run: |
+          set -e
+          csv() { find /tmp/src/$1 -name '*.csv' | head -1; }
+          node .github/scripts/tw-drugs.mjs /tmp/src/nhi.csv "$(csv fda36)" /tmp/out "$(csv fda42)" "$(csv fda39)"
+          node .github/scripts/tw-drug-rules.mjs /tmp/out /tmp/old-rules.json
+
+      - name: Publish to tw-drugs-data
+        run: |
+          set -e
+          if [ -f /tmp/old-meta.json ] && [ "$(node -p "require('/tmp/old-meta.json').v")" = "$(node -p "require('/tmp/out/meta.json').v")" ]; then
+            echo "Data unchanged."; exit 0
+          fi
+          cd /tmp/out
+          git init -q -b tw-drugs-data
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          printf 'Taiwan drug data for Research Toolkit, rebuilt weekly by .github/workflows/tw-drugs.yml on main.\nSources: NHI 健保用藥品項 and 藥品給付規定; TFDA 全部藥品許可證資料集, 藥品外觀資料集, 藥品仿單外盒資料集 (Open Government Data License, Taiwan, v1.0).\n' > README.md
+          git add -A
+          git commit -q -m "Taiwan drug data $(node -p "require('./meta.json').built")"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" tw-drugs-data

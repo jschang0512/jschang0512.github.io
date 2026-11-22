@@ -1,0 +1,876 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/Research-toolkit/icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/Research-toolkit/icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/Research-toolkit/icons/apple-touch-icon.png">
+<title data-en="Code List Builder · Research Toolkit">代碼清單產生器 · Research Toolkit</title>
+<meta name="description" content="為健保資料庫與真實世界研究整理 ICD-10-CM、ICD-9-CM 診斷與處置、ATC 與健保藥品代號：整個分支一次加入、逐碼排除、分群組寫操作型定義，匯出 Excel、Word 附錄表與 SAS／R／Stata／SQL／Python 篩選語法。">
+<link rel="canonical" href="https://jschang0512.github.io/Research-toolkit/codelist/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Research Toolkit">
+<meta property="og:title" content="代碼清單產生器 · Research Toolkit">
+<meta property="og:description" content="ICD-10-CM、ICD-9-CM、ATC 與健保藥品代號的研究代碼清單：Word 附錄表與 SAS／R／Stata／SQL 語法。">
+<meta property="og:url" content="https://jschang0512.github.io/Research-toolkit/codelist/">
+<meta property="og:image" content="https://jschang0512.github.io/assets/og/research-toolkit.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../shared/style.css?v=20261121c">
+<style>
+  @media (min-width: 961px) { .tool { grid-template-columns: minmax(340px, 500px) minmax(0, 1fr); } }
+  @media (max-width: 520px) { .ghead { grid-template-columns: minmax(0, 1fr) auto; } .ghead > span { grid-column: 1 / -1; justify-self: end; } }
+  .sys { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .sys button { border: 0; border-radius: 0; border-right: 1px solid var(--border); background: var(--panel-2); padding: 8px 6px; font-size: 12.5px; line-height: 1.25; justify-content: center; text-align: center; }
+  .sys button:last-child { border-right: 0; }
+  .sys button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+  @media (max-width: 520px) { .sys { grid-template-columns: repeat(2, minmax(0, 1fr)); } .sys button:nth-child(2) { border-right: 0; } .sys button:nth-child(-n+2) { border-bottom: 1px solid var(--border); } }
+  .qrow { display: flex; gap: 8px; margin-top: 10px; }
+  .qrow input { flex: 1; font-size: 15px; padding: 9px 11px; min-height: 42px; }
+  .target { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 13px; color: var(--muted); }
+  .target select { width: auto; flex: 1; min-width: 0; }
+  .rhead { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 12px 0 6px; font-size: 12.5px; color: var(--muted); }
+  .rhead .spacer { flex: 1; }
+  .branch { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; background: var(--accent-weak); margin-bottom: 8px; }
+  .branch .txt { flex: 1; min-width: 0; font-size: 13px; }
+  .branch b { font-family: var(--font-mono); }
+  ul.hits { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--border); }
+  ul.hits li { display: grid; grid-template-columns: 22px 6.2em minmax(0, 1fr) auto; gap: 4px 8px; align-items: start; padding: 6px 2px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  ul.hits li.atc { grid-template-columns: 22px 6.2em minmax(0, 1fr) auto; }
+  ul.hits li input { margin: 3px 0 0; }
+  ul.hits .cd { font-family: var(--font-mono); font-size: 12.5px; padding-top: 1px; }
+  ul.hits .nm { overflow-wrap: anywhere; line-height: 1.4; }
+  ul.hits .nm small { display: block; color: var(--muted); font-size: 11.5px; }
+  ul.hits .in { font-size: 11px; font-weight: 600; color: var(--ok-text); background: var(--ok-bg); padding: 1px 6px; border-radius: 4px; white-space: nowrap; }
+  ul.hits .in.ex { color: var(--warn-text); background: var(--warn-bg); }
+  ul.hits button { padding: 2px 9px; font-size: 12px; white-space: nowrap; }
+  ul.hits .kids { grid-column: 2 / -1; }
+  ul.hits li.node { display: block; padding: 0; }
+  ul.hits li.node > details > summary { display: grid; grid-template-columns: 22px 6.2em minmax(0, 1fr) auto; gap: 4px 8px; align-items: start; padding: 7px 2px; cursor: pointer; list-style: none; font-size: 13px; }
+  ul.hits li.node > details > summary::-webkit-details-marker { display: none; }
+  ul.hits li.node > details > summary:hover { background: var(--panel-2); }
+  ul.hits li.node > details > summary .cd { font-weight: 700; }
+  ul.hits li.node > details > summary .nm { font-weight: 600; }
+  ul.hits .st { display: inline-flex; gap: 4px; justify-self: end; }
+  ul.hits li.grp-only > details > summary .cd { font-size: 12px; white-space: nowrap; }
+  ul.hits li.grp-only > details > summary .nm { font-weight: 700; }
+  ul.hits li.loading-row { display: block; padding: 8px 2px; color: var(--muted); font-size: 12.5px; }
+  .branch .st { flex-shrink: 0; }
+  ul.hits .car { width: 12px; height: 14px; display: inline-flex; align-items: center; justify-content: flex-start; vertical-align: -1px; }
+  ul.hits .car::before { content: ""; width: 0; height: 0; border-left: 5px solid var(--muted); border-top: 4px solid transparent; border-bottom: 4px solid transparent; transition: transform var(--dur-micro, 120ms) var(--ease-out); }
+  ul.hits details[open] > summary .car::before { transform: rotate(90deg); }
+  ul.hits.sub { border-top: 1px solid var(--border); margin-left: 22px; }
+  ul.hits.sub li:last-child { border-bottom: 0; }
+  @media (prefers-reduced-motion: reduce) { ul.hits .car::before { transition: none; } }
+  .hits-empty { padding: 16px 2px; color: var(--muted); font-size: 13px; }
+
+  .glist { display: flex; flex-direction: column; gap: 12px; }
+  .grp { border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel); }
+  .grp.active { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+  .ghead { display: grid; grid-template-columns: minmax(0, 1fr) 8.5em auto; gap: 8px; align-items: center; padding: 10px 12px 6px; }
+  .ghead input.gname { font-weight: 700; font-size: 15px; }
+  .gbody { padding: 0 12px 12px; }
+  .gbody textarea { width: 100%; min-height: 2.6em; font-size: 13px; resize: vertical; }
+  .gsum { font-size: 12px; color: var(--muted); margin: 6px 0; }
+  .gsum:empty { display: none; }
+  .gactive { font-size: 11px; font-weight: 700; color: var(--accent); white-space: nowrap; }
+  table.items { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  table.items td { padding: 4px 6px 4px 0; border-top: 1px solid var(--border); vertical-align: top; }
+  table.items td.cd { font-family: var(--font-mono); white-space: nowrap; line-height: 1.5; }
+  table.items td.nm { overflow-wrap: anywhere; }
+  @media (max-width: 520px) { table.items td.n { display: none; } table.items td.x { white-space: normal; } table.items td.x button { margin: 0 0 3px; } }
+  table.items td.n { color: var(--muted); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  table.items td.x { width: 1%; white-space: nowrap; text-align: right; }
+  table.items td.x button { padding: 1px 7px; font-size: 11.5px; }
+  table.items tr.ex td.cd, table.items tr.ex td.nm { text-decoration: line-through; color: var(--muted); }
+  .itemwrap { max-height: 320px; overflow-y: auto; }
+  .stag { display: inline-block; font-size: 10.5px; font-weight: 700; padding: 0 5px; border-radius: 4px; background: var(--panel-2); border: 1px solid var(--border); color: var(--muted); white-space: nowrap; }
+  .gempty { font-size: 12.5px; color: var(--muted); padding: 8px 0 2px; }
+  .ex-row { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 13px; margin-bottom: 8px; }
+  .ex-row .check { margin: 0; }
+  .ex-row select, .ex-row input { width: auto; min-width: 0; }
+  .ex-row input { width: 8em; }
+  pre.snip { font-family: var(--font-mono); font-size: 12px; background: var(--panel-2); border-radius: 7px; padding: 10px 12px; overflow: auto; max-height: 360px; margin: 8px 0 0; white-space: pre; }
+  .copyrow { display: flex; flex-wrap: wrap; gap: 6px; }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="back" href="../index.html" data-en="← Home">← 工具首頁</a>
+  <h1 data-en="Code List Builder">代碼清單產生器</h1>
+  <span class="sub" data-en="ICD-10-CM, ICD-9-CM, ATC and NHI drug codes for claims-data studies">健保資料庫研究用的 ICD-10-CM、ICD-9-CM、ATC 與健保藥品代號</span>
+  <span class="spacer"></span>
+  <div class="btns">
+    <button class="small" id="btnUndo" title="復原 (Ctrl+Z)" data-en-title="Undo (Ctrl+Z)">↶</button>
+    <button class="small" id="btnRedo" title="重做 (Ctrl+Y)" data-en-title="Redo (Ctrl+Y)">↷</button>
+    <button class="small" id="btnSaveJson" data-en="Save project">儲存專案</button>
+    <button class="small" id="btnLoadJson" data-en="Import project">匯入專案</button>
+    <button class="small" id="btnExample" data-en="Example">範例</button>
+    <button class="small" id="btnReset" data-en="Clear">清空</button>
+  </div>
+</header>
+
+<main class="tool">
+  <section id="form">
+    <div class="card">
+      <h2 data-en="Find codes">找代碼</h2>
+      <div class="sys" role="group" aria-label="編碼系統" id="sys">
+        <button type="button" data-v="icd10cm">ICD-10-CM</button>
+        <button type="button" data-v="icd9cm" data-en="ICD-9-CM&lt;br&gt;diagnoses">ICD-9-CM<br>診斷</button>
+        <button type="button" data-v="icd9pcs" data-en="ICD-9-CM&lt;br&gt;procedures">ICD-9-CM<br>處置</button>
+        <button type="button" data-v="drug" data-en="Drugs&lt;br&gt;ATC / NHI">藥品<br>ATC／健保</button>
+      </div>
+      <div class="qrow"><input type="search" id="q" autocomplete="off" spellcheck="false" aria-label="搜尋代碼"></div>
+      <label class="target"><span data-en="Add to">加入到</span><select id="target" aria-label="加入到哪個群組"></select></label>
+      <div id="hits" aria-live="polite"></div>
+    </div>
+    <div class="card" id="refs"></div>
+  </section>
+
+  <section class="preview-col">
+    <div class="card">
+      <h2 data-en="Your code list">我的代碼清單</h2>
+      <label class="field"><span data-en="Study (shown in the Word title)">研究名稱（會放在 Word 表格標題）</span><input id="title" data-en-ph="e.g. Statins and heart failure" placeholder="例如：Statin 與心衰竭"></label>
+      <div class="glist" id="groups"></div>
+      <div class="copyrow" style="margin-top:10px">
+        <button type="button" class="small" id="addGroup" data-en="+ Add group">＋ 新增群組</button>
+      </div>
+    </div>
+    <div class="msgs" id="msgs"></div>
+    <div class="card">
+      <h2 data-en="Export">匯出</h2>
+      <div class="ex-row">
+        <label class="check"><input type="checkbox" id="oExpand"> <span data-en="List every code in a branch">展開分支，逐碼列出</span></label>
+        <label class="check"><input type="checkbox" id="oNoDot"> <span data-en="ICD codes without dots (NHIRD format)">ICD 去掉小數點（健保資料庫格式）</span></label>
+      </div>
+      <div class="copyrow">
+        <button type="button" id="btnDocx" data-en="Word appendix table">Word 附錄表</button>
+        <button type="button" id="btnCsv" data-en="Excel (CSV)">Excel（CSV）</button>
+        <button type="button" id="btnTsv" data-en="Copy table">複製表格</button>
+      </div>
+      <h3 style="margin:16px 0 6px;font-size:14px" data-en="Selection code">篩選語法</h3>
+      <div class="ex-row">
+        <select id="oLang" aria-label="語言"><option value="sas">SAS</option><option value="r">R</option><option value="stata">Stata</option><option value="sql">SQL</option><option value="py">Python (pandas)</option></select>
+        <label><span class="lbl" style="display:inline" data-en="Diagnosis column">診斷欄位</span> <input id="oDx" aria-label="診斷欄位"></label>
+        <label><span class="lbl" style="display:inline" data-en="Procedure column">處置欄位</span> <input id="oPx" aria-label="處置欄位"></label>
+        <label><span class="lbl" style="display:inline" data-en="Drug column">藥品欄位</span> <input id="oRx" aria-label="藥品欄位"></label>
+        <select id="oDrug" aria-label="藥品比對方式"><option value="nhi" data-en="Drugs by NHI code">藥品以健保代號比對</option><option value="atc" data-en="Drugs by ATC column">藥品以 ATC 欄位比對</option></select>
+      </div>
+      <pre class="snip" id="snip"></pre>
+      <div class="copyrow" style="margin-top:8px"><button type="button" class="small" id="btnSnip" data-en="Copy code">複製語法</button></div>
+    </div>
+  </section>
+</main>
+
+<script src="../shared/common.js?v=20261122a"></script>
+<script src="../shared/twdrugs.js?v=20261122b"></script>
+<script>
+const T = RT.t, esc = RT.esc, TW = RT.twDrugs, N = TW.N;
+const KEY = 'codelist';
+const ROLES = { exposure: ['暴露', 'Exposure'], outcome: ['結果', 'Outcome'], covariate: ['共變項', 'Covariate'], exclusion: ['排除條件', 'Exclusion'], other: ['其他', 'Other'] };
+const SYS = { icd10cm: 'ICD-10-CM', icd9cm: 'ICD-9-CM', icd9pcs: 'ICD-9-CM proc', atc: 'ATC', nhi: T('健保代號', 'NHI code') };
+const SYS_LONG = { icd10cm: 'ICD-10-CM', icd9cm: 'ICD-9-CM diagnosis', icd9pcs: 'ICD-9-CM procedure', atc: 'ATC', nhi: 'NHI drug code' };
+const uid = () => Math.random().toString(36).slice(2, 9);
+const newGroup = (name = '', role = 'outcome') => ({ id: uid(), name, role, def: '', items: [] });
+const DEF = { title: '', groups: [], active: '', sys: 'icd10cm', expand: false, noDot: true, lang: 'sas', dx: 'icd', px: 'icd_op', rx: 'drug_no', drug: 'nhi' };
+let S = RT.merge(DEF, RT.load(KEY, {}));
+if (!S.groups.length) { S.groups = [newGroup(T('暴露', 'Exposure'), 'exposure'), newGroup(T('結果', 'Outcome'), 'outcome')]; }
+if (!S.groups.some((g) => g.id === S.active)) S.active = S.groups[0].id;
+const $ = (id) => document.getElementById(id);
+const activeGroup = () => S.groups.find((g) => g.id === S.active) || S.groups[0];
+
+/* ---------- NLM Clinical Tables ---------- */
+const CT = 'https://clinicaltables.nlm.nih.gov/api/';
+const API = {
+  icd10cm: { path: 'icd10cm/v3/search', df: 'code,name', nameSf: 'code,name' },
+  icd9cm: { path: 'icd9cm_dx/v3/search', df: 'code_dotted,long_name', nameSf: '' },
+  icd9pcs: { path: 'icd9cm_sg/v3/search', df: 'code_dotted,long_name', nameSf: '' },
+};
+const CODE_RE = {
+  icd10cm: /^[A-Z][0-9][0-9A-Z](\.?[0-9A-Z]{0,4})?$/i,
+  icd9cm: /^([VE]\d{0,3}|\d{1,3})(\.\d{0,2}|\d{0,2})?$/i,
+  icd9pcs: /^\d{1,2}(\.\d{0,2}|\d{0,2})?$/,
+};
+// what the user typed → [prefix as NLM searches it, prefix as people write it]
+function normCode(sys, q) {
+  let c = q.toUpperCase().replace(/\s/g, '');
+  if (sys === 'icd10cm') { const u = c.replace('.', ''); return u.length > 3 ? [u.slice(0, 3) + '.' + u.slice(3), u.slice(0, 3) + '.' + u.slice(3)] : [u, u]; }
+  const u = c.replace('.', '');
+  const cut = sys === 'icd9pcs' ? 2 : (u[0] === 'E' ? 4 : 3);
+  return [u, u.length > cut ? u.slice(0, cut) + '.' + u.slice(cut) : u];
+}
+const cache = new Map();
+async function ctSearch(sys, terms, byCode, max = 100, offset = 0) {
+  const a = API[sys];
+  const p = new URLSearchParams({ terms, maxList: String(max), df: a.df });
+  if (offset) p.set('offset', String(offset));
+  if (byCode) p.set('sf', 'code'); else if (a.nameSf) p.set('sf', a.nameSf);
+  const url = CT + a.path + '?' + p;
+  if (cache.has(url)) return cache.get(url);
+  const pr = fetch(url).then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then((j) => ({ total: j[0], rows: (j[3] || []).map((d) => ({ code: String(d[0]).trim(), name: String(d[1] || '').trim() })) }));
+  cache.set(url, pr); pr.catch(() => cache.delete(url));
+  return pr;
+}
+async function expandPrefix(sys, prefix) {
+  const [terms] = normCode(sys, prefix);
+  const first = await ctSearch(sys, terms, true, 500, 0);
+  let rows = first.rows.slice();
+  for (let off = 500; off < Math.min(first.total, 10000); off += 500) rows = rows.concat((await ctSearch(sys, terms, true, 500, off)).rows);
+  return rows;
+}
+
+/* ---------- ATC class names (RxNav RxClass, levels 1-4) ---------- */
+const atcNames = (() => { try { return JSON.parse(localStorage.getItem('rt:atcnames') || '{}'); } catch (e) { return {}; } })();
+async function atcName(code) {
+  if (atcNames[code]) return atcNames[code];
+  try {
+    const j = await (await fetch('https://rxnav.nlm.nih.gov/REST/rxclass/class/byId.json?classId=' + encodeURIComponent(code))).json();
+    const c = j?.rxclassMinConceptList?.rxclassMinConcept?.[0];
+    if (c?.className) { atcNames[code] = c.className; try { localStorage.setItem('rt:atcnames', JSON.stringify(atcNames)); } catch (e) { /* ignore */ } return c.className; }
+  } catch (e) { /* offline: no name */ }
+  return '';
+}
+
+/* ---------- NHI data (only when drugs are involved) ---------- */
+let nhiD = null, nhiP = null;
+function loadNhi() {
+  if (nhiP) return nhiP;
+  nhiP = TW.nhi().then((d) => { nhiD = d; renderGroups(); renderSnip(); if (S.sys === 'drug') runSearch(); return d; })
+    .catch((e) => { nhiP = null; RT.toast(String(e.message || e), 5000); throw e; });
+  return nhiP;
+}
+const atcCodes = (prefix) => (nhiD ? nhiD.rows.filter((r) => r[N.atc].startsWith(prefix)) : []);
+
+/* ---------- items ---------- */
+const ikey = (it) => it.sys + '|' + it.code + '|' + (it.kind || 'code');
+function findItem(g, sys, code, kind) { return g.items.find((i) => i.sys === sys && i.code === code && (i.kind || 'code') === (kind || 'code')); }
+// does an existing branch already cover this code?
+function coveredBy(g, sys, code) { return g.items.find((i) => i.kind === 'prefix' && !i.excl && i.sys === sys && code.replace('.', '').startsWith(i.code.replace('.', ''))); }
+function addItems(items, g = activeGroup()) {
+  let n = 0;
+  items.forEach((it) => { if (!findItem(g, it.sys, it.code, it.kind)) { g.items.push({ kind: 'code', ...it }); n++; } });
+  if (n) { commit(); RT.toast(T(`已加入 ${n} 項到「${g.name || '未命名'}」`, `${n} added to “${g.name || 'Untitled'}”`)); }
+  else RT.toast(T('都已經在清單裡了', 'Already in the list'));
+}
+function itemCount(it) {
+  if (it.kind !== 'prefix') return 1;
+  if (it.sys === 'atc') return nhiD ? atcCodes(it.code).length : it.n || 0;
+  return it.n || 0;
+}
+
+/* ---------- search and browse ---------- */
+let seq = 0;
+async function runSearch() {
+  const q = $('q').value.trim(), my = ++seq, box = $('hits'), g = activeGroup();
+  if (!q) return renderBrowse(my);
+  if (S.sys === 'drug') return drugSearch(q, my);
+  box.innerHTML = `<p class="hits-empty">${T('搜尋中…', 'Searching…')}</p>`;
+  const byCode = CODE_RE[S.sys].test(q);
+  try {
+    const [terms, shownPrefix] = byCode ? normCode(S.sys, q) : [q, ''];
+    const [res] = await Promise.all([ctSearch(S.sys, terms, byCode, 500), loadNames(S.sys)]);
+    if (my !== seq) return;
+    if (!res.total) { box.innerHTML = `<p class="hits-empty">${T('找不到。試試英文關鍵字或代碼開頭，例如 heart failure、I50、428。', 'Nothing found. Try an English term or the start of a code, e.g. heart failure, I50, 428.')}</p>`; return; }
+    const pfx = shownPrefix.replace(/\.$/, '');
+    const branch = byCode ? `<div class="branch" ${rowAttrs(S.sys, pfx, 'prefix', '')}><span class="txt">${T('整個', 'The whole')} <b>${esc(pfx)}</b> ${T(`分支：${res.total} 個代碼，之後新版增加的子代碼也算在內`, `branch: ${res.total} codes, including child codes added in later versions`)}</span><span class="st">${stateHTML(g, S.sys, pfx, 'prefix', true)}</span></div>` : '';
+    box.innerHTML = branch + `<div class="rhead"><span>${T(`${res.total} 個代碼`, `${res.total} codes`)}${res.total > res.rows.length ? T(`，顯示前 ${res.rows.length} 個`, `, showing ${res.rows.length}`) : ''}</span><span class="spacer"></span>${checkedBtn()}</div>` +
+      `<ul class="hits">${searchTree(g, res.rows, q)}</ul>`;
+    syncTicks();
+  } catch (e) {
+    if (my === seq) box.innerHTML = `<p class="hits-empty">${T('無法連到 NLM Clinical Tables（請確認網路連線）。', 'Could not reach NLM Clinical Tables (check your connection).')} ${esc(e.message || '')}</p>`;
+  }
+}
+const checkedBtn = () => `<button type="button" class="small" id="addChecked" disabled>${T('加入勾選的', 'Add checked')}</button>`;
+
+/* ---------- classification data ---------- */
+// ICD-10-CM: names of header codes (I50, I50.2 …) and chapters › sections › categories, from the CDC release files
+let heads = null, tree10 = null, secOf = null, headsP = null;
+function loadHeads() {
+  if (!headsP) headsP = fetch('icd10cm-heads.json?v=FY2026b').then((r) => r.json()).then((j) => {
+    heads = j.heads; tree10 = j.tree; secOf = {};
+    tree10.forEach((ch) => ch[3].forEach((sec) => sec[2].forEach((c) => (secOf[c[0]] = sec))));
+    return heads;
+  }).catch(() => { headsP = null; return null; });
+  return headsP;
+}
+// ICD-9-CM: names of categories (394) and subcategories (250.0; procedures 39, 39.9), from the CDC FY2012 tabular lists
+let heads9 = null, heads9P = null;
+function loadHeads9() {
+  if (!heads9P) heads9P = fetch('icd9-heads.json?v=FY2012').then((r) => r.json()).then((j) => (heads9 = j)).catch(() => { heads9P = null; return null; });
+  return heads9P;
+}
+const loadNames = (sys) => (sys === 'icd10cm' ? loadHeads() : sys === 'icd9cm' || sys === 'icd9pcs' ? loadHeads9() : null);
+// a parent's name: the official one, else what its children share, else its first child's
+function headName(sys, code, rows) {
+  const official = sys === 'icd10cm' ? heads && heads[code] : sys === 'icd9cm' ? heads9 && heads9.dx[code] : sys === 'icd9pcs' ? heads9 && heads9.px[code] : '';
+  if (official) return official;
+  const names = (rows || []).map((r) => r.name);
+  return sharedName(names) || (names[0] || '').replace(/,?\s+unspecified$/i, '');
+}
+const ICD9_CH = [['001-139', 'Infectious and parasitic diseases'], ['140-239', 'Neoplasms'], ['240-279', 'Endocrine, nutritional and metabolic diseases, and immunity disorders'], ['280-289', 'Diseases of the blood and blood-forming organs'], ['290-319', 'Mental disorders'], ['320-389', 'Diseases of the nervous system and sense organs'], ['390-459', 'Diseases of the circulatory system'], ['460-519', 'Diseases of the respiratory system'], ['520-579', 'Diseases of the digestive system'], ['580-629', 'Diseases of the genitourinary system'], ['630-679', 'Complications of pregnancy, childbirth, and the puerperium'], ['680-709', 'Diseases of the skin and subcutaneous tissue'], ['710-739', 'Diseases of the musculoskeletal system and connective tissue'], ['740-759', 'Congenital anomalies'], ['760-779', 'Certain conditions originating in the perinatal period'], ['780-799', 'Symptoms, signs, and ill-defined conditions'], ['800-999', 'Injury and poisoning'], ['V01-V91', 'Factors influencing health status and contact with health services'], ['E000-E999', 'External causes of injury and poisoning']];
+const ICD9P_CH = [['00', 'Procedures and interventions, not elsewhere classified'], ['01-05', 'Operations on the nervous system'], ['06-07', 'Operations on the endocrine system'], ['08-16', 'Operations on the eye'], ['17', 'Other miscellaneous procedures'], ['18-20', 'Operations on the ear'], ['21-29', 'Operations on the nose, mouth, and pharynx'], ['30-34', 'Operations on the respiratory system'], ['35-39', 'Operations on the cardiovascular system'], ['40-41', 'Operations on the hemic and lymphatic system'], ['42-54', 'Operations on the digestive system'], ['55-59', 'Operations on the urinary system'], ['60-64', 'Operations on the male genital organs'], ['65-71', 'Operations on the female genital organs'], ['72-75', 'Obstetrical procedures'], ['76-84', 'Operations on the musculoskeletal system'], ['85-86', 'Operations on the integumentary system'], ['87-99', 'Miscellaneous diagnostic and therapeutic procedures']];
+const ATC1 = { A: 'Alimentary tract and metabolism', B: 'Blood and blood forming organs', C: 'Cardiovascular system', D: 'Dermatologicals', G: 'Genito-urinary system and sex hormones', H: 'Systemic hormonal preparations, excluding sex hormones and insulins', J: 'Antiinfectives for systemic use', L: 'Antineoplastic and immunomodulating agents', M: 'Musculo-skeletal system', N: 'Nervous system', P: 'Antiparasitic products, insecticides and repellents', R: 'Respiratory system', S: 'Sensory organs', V: 'Various' };
+// which ICD-9 chapter a code belongs to
+function chapter9(sys, code) {
+  const nd = nodot(code);
+  if (sys === 'icd9pcs') { const n = +nd.slice(0, 2); return ICD9P_CH.find(([r]) => { const [a, b = a] = r.split('-'); return n >= +a && n <= +b; }); }
+  if (nd[0] === 'V') return ICD9_CH[17];
+  if (nd[0] === 'E') return ICD9_CH[18];
+  const n = +nd.slice(0, 3); return ICD9_CH.find(([r]) => { const [a, b] = r.split('-'); return n >= +a && n <= +b; });
+}
+// the two-character prefixes NLM is asked for to list a whole ICD-9 chapter (chapters start and end on whole tens)
+function chapterPrefixes(sys, range) {
+  const [a, b = a] = range.split('-');
+  if (a[0] === 'V' || a[0] === 'E') return [...'0123456789'].map((d) => a[0] + d);
+  const step = sys === 'icd9pcs' ? 1 : 10, out = [];
+  for (let i = Math.floor(+a / step); i <= Math.floor(+b / step); i++) out.push(String(i).padStart(2, '0'));
+  return out;
+}
+
+const nodot = (c) => c.replace('.', '');
+// where the dot goes: ICD-10-CM and ICD-9-CM after 3 characters (ICD-9 E codes after 4), ICD-9 procedures after 2
+function dotted(sys, nd) {
+  const cut = sys === 'icd9pcs' ? 2 : sys === 'icd9cm' && nd[0] === 'E' ? 4 : 3;
+  return nd.length > cut ? nd.slice(0, cut) + '.' + nd.slice(cut) : nd;
+}
+// a parent without an official name here: what all its children's names start with, or the "unspecified" child
+function sharedName(names) {
+  if (!names.length) return '';
+  let p = names[0];
+  names.forEach((n) => { while (p && !n.startsWith(p)) p = p.slice(0, -1); });
+  if (names.every((n) => n === p || /^[\s,;(]/.test(n.slice(p.length)))) { p = p.replace(/[\s,;(-]+$/, '').trim(); if (p.length >= 4) return p; }
+  p = p.replace(/[,;(\s-]+[^,;(\s-]*$/, '').replace(/[\s,;(-]+(with|without|and|or|of|in|due|to|the)$/i, '').replace(/[\s,;(-]+$/, '').trim();
+  if (p.length >= 4) return p;
+  for (const n of names) {
+    let m = n.match(/^(.*?),?\s+unspecified$/i); if (m) return m[1];
+    m = n.match(/^unspecified\s+(.*)$/i); if (m) return m[1][0].toUpperCase() + m[1].slice(1);
+  }
+  return '';
+}
+
+/* ---------- rows: one checkbox, code, name and state per code or branch ---------- */
+const rowAttrs = (sys, code, kind, name) => `data-row data-sys="${sys}" data-code="${esc(code)}" data-kind="${kind}" data-name="${esc(name || '')}"`;
+const blocked = (g, sys, code, kind) => !!(findItem(g, sys, code, kind) || coveredBy(g, sys, code));
+function stateHTML(g, sys, code, kind, primary) {
+  const have = findItem(g, sys, code, kind), cov = !have && coveredBy(g, sys, code);
+  if (kind === 'prefix') {
+    if (have) return `<span class="in">${sys === 'atc' ? T('已加入', 'Added') : T('已加入分支', 'Branch added')}</span>`;
+    if (cov) return `<span class="in">${T('在', 'In')} ${esc(cov.code)}</span>`;
+    return `<button type="button" data-act="add"${primary ? ' class="primary small"' : ''}>${sys === 'atc' ? (primary ? T('加入整類', 'Add class') : '＋ ATC') : T('加入分支', 'Add branch')}</button>`;
+  }
+  if (have) return `<span class="in${have.excl ? ' ex' : ''}">${have.excl ? T('已排除', 'Excluded') : T('已加入', 'Added')}</span>`;
+  if (cov) return `<button type="button" data-act="excl" title="${T('包含在分支', 'In branch')} ${esc(cov.code)}${T('；按一下排除這個代碼', '; press to leave this code out')}">${T('排除', 'Exclude')}</button>`;
+  return `<button type="button" data-act="add">＋</button>`;
+}
+function leafHTML(g, sys, code, name, o = {}) {
+  const kind = o.kind || 'code';
+  return `<li${o.cls ? ` class="${o.cls}"` : ''} ${rowAttrs(sys, code, kind, name)}><input type="checkbox" class="pk" aria-label="${esc(code)}"${blocked(g, sys, code, kind) ? ' disabled' : ''}><span class="cd">${esc(code)}</span><span class="nm">${esc(name)}${o.sub ? `<small>${o.sub}</small>` : ''}</span><span class="st">${stateHTML(g, sys, code, kind)}</span>${o.after || ''}</li>`;
+}
+// a folded row. addable: the row is a branch (I50, A10BA); otherwise it only groups (a chapter or section)
+function nodeHTML(g, sys, o) {
+  const addable = !!o.code;
+  const key = o.key || o.code;
+  const box = addable ? `<input type="checkbox" class="pk" aria-label="${esc(o.code)}"${blocked(g, sys, o.code, 'prefix') ? ' disabled' : ''}>` : `<input type="checkbox" class="pg" aria-label="${esc(o.label)}">`;
+  return `<li class="node${addable ? '' : ' grp-only'}"><details data-node="${esc(key)}"${o.lazy ? ` data-lazy="${esc(o.lazy)}"` : ''}${o.open || treeOpen.set.has(key) ? ' open' : ''}><summary${addable ? ' ' + rowAttrs(sys, o.code, 'prefix', o.name) : ''}>${box}<span class="cd"><span class="car" aria-hidden="true"></span>${esc(o.label || o.code)}</span><span class="nm"><span${o.nameKey ? ` data-atcname="${esc(o.nameKey)}"` : ''}>${esc(o.name || T('（多個代碼）', '(several codes)'))}</span>${o.count ? `<small>${o.count}</small>` : ''}</span><span class="st">${addable ? stateHTML(g, sys, o.code, 'prefix') : ''}</span></summary><ul class="hits sub">${o.inner || (o.lazy ? `<li class="loading-row">${T('載入中…', 'Loading…')}</li>` : '')}</ul></details></li>`;
+}
+const nCodes = (n) => T(`${n} 個代碼`, `${n} codes`);
+// rows share their first L-1 characters (dots left out); fold them by the first L
+function buildTree(g, sys, rs, L, top) {
+  const groups = new Map();
+  rs.forEach((r) => { const k = nodot(r.code).slice(0, L); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(r); });
+  return [...groups.values()].map((m) => {
+    if (m.length === 1) return leafHTML(g, sys, m[0].code, m[0].name);
+    // skip levels that hold just one subgroup: show E11.32 directly rather than E11.3 › E11.32
+    let L2 = L;
+    while (m.every((r) => nodot(r.code).length > L2 + 1) && new Set(m.map((r) => nodot(r.code).slice(0, L2 + 1))).size === 1) L2++;
+    const code = dotted(sys, nodot(m[0].code).slice(0, L2));
+    const name = headName(sys, code, m);
+    return nodeHTML(g, sys, { code, name, count: nCodes(m.length), open: top && groups.size === 1, inner: buildTree(g, sys, m, L2 + 1, false) });
+  }).join('');
+}
+const sortCodes = (rows) => rows.slice().sort((a, b) => (nodot(a.code) < nodot(b.code) ? -1 : 1));
+const treeOpen = { q: '', set: new Set() };
+// search results folded under one more level: the ICD-10-CM section (F01-F09) or the ICD-9 chapter
+function searchTree(g, rows, q) {
+  if (treeOpen.q !== q + S.sys) { treeOpen.q = q + S.sys; treeOpen.set = new Set(); }
+  const sys = S.sys, L = sys === 'icd9pcs' ? 2 : 3;
+  const parts = new Map();
+  sortCodes(rows).forEach((r) => {
+    let k = '', label = '', name = '';
+    if (sys === 'icd10cm') { const sec = secOf && secOf[nodot(r.code).slice(0, 3)]; if (sec) [k, name] = [sec[0], sec[1]]; label = k; }
+    else { const ch = chapter9(sys, r.code); if (ch) [k, name] = ch; label = k; }
+    if (!parts.has(k)) parts.set(k, { label, name, rows: [] });
+    parts.get(k).rows.push(r);
+  });
+  const one = parts.size === 1;
+  return [...parts.entries()].map(([k, p]) => (k
+    ? nodeHTML(g, sys, { key: 'sec:' + k, label: p.label, name: p.name, count: nCodes(p.rows.length), open: one, inner: buildTree(g, sys, p.rows, L, one) })
+    : buildTree(g, sys, p.rows, L, one))).join('');
+}
+
+/* ---------- browsing without a search ---------- */
+async function renderBrowse(my) {
+  const box = $('hits'), g = activeGroup(), sys = S.sys;
+  treeOpen.q = ''; treeOpen.set = new Set();
+  const head = `<p class="hint" style="margin:10px 0 6px">${emptyHint()}</p><div class="rhead"><span>${T('或直接展開目錄', 'Or browse the classification')}</span><span class="spacer"></span>${checkedBtn()}</div>`;
+  let items = '';
+  if (sys === 'icd10cm') {
+    box.innerHTML = `<p class="hits-empty">${T('載入目錄…', 'Loading the classification…')}</p>`;
+    await loadHeads(); if (my !== seq) return;
+    if (!tree10) { box.innerHTML = `<p class="hits-empty">${T('目錄載入失敗（請確認網路連線）。', 'Could not load the classification (check your connection).')}</p>`; return; }
+    items = tree10.map((ch, i) => nodeHTML(g, sys, { key: 'ch10:' + i, lazy: 'ch10:' + i, label: ch[2], name: ch[1], count: T(`第 ${ch[0]} 章 · ${ch[3].length} 個區段`, `Chapter ${ch[0]} · ${ch[3].length} sections`) })).join('');
+  } else if (sys === 'icd9cm' || sys === 'icd9pcs') {
+    loadHeads9();
+    items = (sys === 'icd9cm' ? ICD9_CH : ICD9P_CH).map(([r, name]) => nodeHTML(g, sys, { key: 'ch9:' + r, lazy: 'ch9:' + r, label: r, name })).join('');
+  } else {
+    if (!nhiD) { box.innerHTML = `<p class="hits-empty">${T('正在載入健保藥品資料（約 3 MB，第一次之後會快取）…', 'Loading the NHI drug list (about 3 MB; cached after the first visit)…')}</p>`; try { await loadNhi(); } catch (e) { box.innerHTML = `<p class="hits-empty">${esc(e.message || e)}</p>`; } return; }
+    items = atcLevel(g, '');
+  }
+  if (my !== seq) return;
+  box.innerHTML = head + `<ul class="hits">${items}</ul>`;
+  syncTicks();
+}
+// ATC levels: 1 (C) › 2 (C10) › 3 (C10A) › 4 (C10AA) › 5 (C10AA05), counted in NHI codes
+const ATC_LEN = [1, 3, 4, 5, 7];
+function atcLevel(g, parent) {
+  const len = ATC_LEN[ATC_LEN.indexOf(parent.length) + 1] || 1;
+  const kids = new Map();
+  nhiD.rows.forEach((r) => { const a = r[N.atc]; if (a.length >= len && a.startsWith(parent)) { const k = a.slice(0, len); kids.set(k, (kids.get(k) || 0) + 1); } });
+  return [...kids.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([code, n]) => {
+    const count = T(`${n} 個健保代號`, `${n} NHI codes`);
+    if (len === 7) {
+      const ing = mostCommon(nhiD.rows.filter((r) => r[N.atc] === code).map((r) => r[N.ingredient].replace(/\s+[\d.,]+\s*(MG|MCG|G|ML|IU|%).*$/i, '').trim()));
+      return leafHTML(g, 'atc', code, ing, { kind: 'prefix', sub: count });
+    }
+    const name = len === 1 ? ATC1[code] || '' : atcNames[code] || '';
+    return nodeHTML(g, 'atc', { code, name: name || '…', nameKey: name ? '' : code, count, lazy: 'atc:' + code });
+  }).join('');
+}
+// fill in the names of ATC classes that have just come into view
+async function nameAtc(root) {
+  for (const el of [...root.querySelectorAll('[data-atcname]')]) {
+    const code = el.dataset.atcname; const nm = await atcName(code);
+    el.textContent = nm || T('（未提供名稱）', '(no name)'); el.removeAttribute('data-atcname');
+    const row = el.closest('[data-row]'); if (row && nm) row.dataset.name = nm;
+  }
+}
+async function loadLazy(d) {
+  if (d.dataset.loaded) return;
+  d.dataset.loaded = '1';
+  const ul = d.querySelector(':scope > ul'), g = activeGroup(), [kind, arg] = d.dataset.lazy.split(/:(.*)/s);
+  try {
+    if (kind === 'ch10') {
+      const ch = tree10[+arg];
+      ul.innerHTML = ch[3].map((sec) => nodeHTML(g, 'icd10cm', { key: 'sec:' + sec[0], label: sec[0], name: sec[1], count: T(`${sec[2].length} 個大分類`, `${sec[2].length} categories`),
+        inner: sec[2].map(([c, name, kids]) => (kids ? nodeHTML(g, 'icd10cm', { code: c, name, lazy: 'cat:' + c }) : leafHTML(g, 'icd10cm', c, name))).join('') })).join('');
+    } else if (kind === 'cat') {
+      const rows = sortCodes(await expandPrefix('icd10cm', arg));
+      ul.innerHTML = buildTree(g, 'icd10cm', rows, 4, false);
+      const sm = d.querySelector(':scope > summary .nm'); if (sm && !sm.querySelector('small')) sm.insertAdjacentHTML('beforeend', `<small>${nCodes(rows.length)}</small>`);
+    } else if (kind === 'ch9') {
+      const sys = S.sys, ch = (sys === 'icd9cm' ? ICD9_CH : ICD9P_CH).find(([r]) => r === arg);
+      const [lists] = await Promise.all([Promise.all(chapterPrefixes(sys, arg).map((p) => expandPrefix(sys, p))), loadHeads9()]);
+      const rows = sortCodes(lists.flat().filter((r) => chapter9(sys, r.code) === ch));
+      const cats = new Map();
+      rows.forEach((r) => { const c = r.code.split('.')[0]; if (!cats.has(c)) cats.set(c, []); cats.get(c).push(r); });
+      ul.innerHTML = [...cats.entries()].map(([c, rs]) => (rs.length === 1 && rs[0].code === c ? leafHTML(g, sys, c, rs[0].name)
+        : nodeHTML(g, sys, { code: c, name: headName(sys, c, rs), count: nCodes(rs.length), inner: buildTree(g, sys, rs, nodot(c).length + 1, false) }))).join('');
+      const sm = d.querySelector(':scope > summary .nm'); if (sm && !sm.querySelector('small')) sm.insertAdjacentHTML('beforeend', `<small>${T(`${cats.size} 個大分類`, `${cats.size} categories`)}</small>`);
+    } else if (kind === 'atc') {
+      ul.innerHTML = atcLevel(g, arg);
+      nameAtc(ul);
+    }
+  } catch (e) {
+    delete d.dataset.loaded;
+    ul.innerHTML = `<li class="loading-row">${T('載入失敗（請確認網路連線）', 'Could not load (check your connection)')}</li>`;
+    return;
+  }
+  // a ticked group passes its tick to what has just appeared under it
+  const own = d.querySelector(':scope > summary > input');
+  if (own && own.checked && !own.indeterminate) ul.querySelectorAll('input[type=checkbox]:not(:disabled)').forEach((c) => (c.checked = true));
+  syncTicks();
+}
+
+/* ---------- ticks ---------- */
+// what "Add checked" adds: fully ticked branches as branches, other ticked codes one by one
+function picked() {
+  const out = [];
+  const walk = (ul) => ul && [...ul.children].forEach((li) => {
+    const d = li.querySelector(':scope > details');
+    if (d) {
+      const box = d.querySelector(':scope > summary > input'), row = d.querySelector(':scope > summary[data-row]');
+      if (row && box.checked && !box.indeterminate && !box.disabled) out.push({ ...row.dataset });
+      else walk(d.querySelector(':scope > ul'));
+      return;
+    }
+    const c = li.querySelector(':scope > input.pk');
+    if (c && c.checked && !c.disabled && li.dataset.code) out.push({ ...li.dataset });
+  });
+  walk($('hits').querySelector('ul.hits'));
+  return out;
+}
+function syncTicks() {
+  // groups from the deepest up: ticked when every enabled box right below is ticked; nothing loaded below: left as it is
+  [...$('hits').querySelectorAll('summary > input')].reverse().forEach((n) => {
+    if (n.disabled) return;
+    const kids = [...n.closest('details').querySelectorAll(':scope > ul > li > input, :scope > ul > li > details > summary > input')].filter((c) => !c.disabled);
+    if (!kids.length) return;
+    const all = kids.every((c) => c.checked && !c.indeterminate), some = kids.some((c) => c.checked || c.indeterminate);
+    n.checked = all; n.indeterminate = some && !all;
+  });
+  const p = picked(), b = $('addChecked');
+  if (b) { b.disabled = !p.length; b.textContent = p.length ? T(`加入勾選的 ${p.length} 項`, `Add ${p.length} checked`) : T('加入勾選的', 'Add checked'); }
+}
+// after the list changes: update every row's state in place, so open branches stay open
+function refreshMarks() {
+  const g = activeGroup();
+  $('hits').querySelectorAll('[data-row]').forEach((row) => {
+    const { sys, code, kind } = row.dataset;
+    const st = row.querySelector(':scope > .st'); if (st) st.innerHTML = stateHTML(g, sys, code, kind, row.classList.contains('branch'));
+    const box = row.querySelector(':scope > input');
+    if (box) { box.disabled = blocked(g, sys, code, kind); if (box.disabled) { box.checked = false; box.indeterminate = false; } }
+  });
+  syncTicks();
+}
+async function itemFrom(d, excl) {
+  const it = { sys: d.sys, code: d.code, kind: d.kind || 'code', name: d.name || '' };
+  if (excl) it.excl = true;
+  if (it.kind === 'prefix' && API[it.sys]) {
+    try { it.n = (await ctSearch(it.sys, normCode(it.sys, it.code)[0], true, 1)).total; } catch (x) { /* counted later */ }
+    if (!it.name || it.name === '…') it.name = await branchName(it.sys, it.code);
+  }
+  if (it.sys === 'atc' && it.code.length <= 5 && (!it.name || it.name === '…')) it.name = await atcName(it.code);
+  return it;
+}
+
+const ATC_RE = /^[A-Z]\d{2}([A-Z]([A-Z](\d{1,2})?)?)?$/i;
+async function drugSearch(q, my) {
+  const box = $('hits'), g = activeGroup();
+  if (!nhiD) { box.innerHTML = `<p class="hits-empty">${T('正在載入健保藥品資料（約 3 MB，第一次之後會快取）…', 'Loading the NHI drug list (about 3 MB; cached after the first visit)…')}</p>`; try { await loadNhi(); } catch (e) { box.innerHTML = `<p class="hits-empty">${esc(e.message || e)}</p>`; } return; }
+  const isAtc = ATC_RE.test(q), Q = TW.fold(q);
+  const toks = Q.split(/\s+/).filter(Boolean);
+  const rows = nhiD.rows.filter((r) => (isAtc ? r[N.atc].startsWith(q.toUpperCase()) : toks.every((t) => TW.fold(r[N.ingredient] + ' ' + r[N.en] + ' ' + r[N.zh] + ' ' + r[N.code] + ' ' + r[N.atc]).includes(t))));
+  if (my !== seq) return;
+  if (!rows.length) { box.innerHTML = `<p class="hits-empty">${T('找不到。可以輸入成分（metformin）、ATC（A10BA）或健保代號。', 'Nothing found. Try an ingredient (metformin), an ATC code (A10BA) or an NHI code.')}</p>`; return; }
+  const by = new Map();
+  rows.forEach((r) => { const k = r[N.atc] || '—'; const a = by.get(k) || []; a.push(r); by.set(k, a); });
+  const groups = [...by.entries()].sort((a, b) => (a[0] === '—') - (b[0] === '—') || (a[0] < b[0] ? -1 : 1));
+  const P = q.toUpperCase();
+  let html = '';
+  if (isAtc) {
+    const nm = await atcName(P.slice(0, Math.min(P.length, 5)));
+    if (my !== seq) return;
+    html += `<div class="branch" ${rowAttrs('atc', P, 'prefix', nm || '')}><span class="txt">ATC <b>${esc(P)}</b>${nm && P.length <= 5 ? ' ' + esc(nm) : ''}${T(`：${groups.length} 個成分、${rows.length} 個健保代號（含已取消給付）`, `: ${groups.length} ingredients, ${rows.length} NHI codes (incl. delisted)`)}</span><span class="st">${stateHTML(g, 'atc', P, 'prefix', true)}</span></div>`;
+  }
+  html += `<div class="rhead"><span>${T(`${rows.length} 個健保代號，分屬 ${groups.length} 個 ATC`, `${rows.length} NHI codes in ${groups.length} ATC codes`)}</span><span class="spacer"></span>${checkedBtn()}</div><ul class="hits">`;
+  html += groups.slice(0, 80).map(([atc, rs]) => {
+    const ing = mostCommon(rs.map((r) => r[N.ingredient].replace(/\s+[\d.,]+\s*(MG|MCG|G|ML|IU|%).*$/i, '').trim()));
+    const paid = rs.filter((r) => r[N.price] > 0).length;
+    const codes = rs.map((r) => leafHTML(g, 'nhi', r[N.code], [r[N.zh], r[N.en]].filter(Boolean).join(' / '), { sub: esc(r[N.ingredient]) + (r[N.price] > 0 ? '' : ' · ' + T('已取消給付', 'delisted')) })).join('');
+    if (atc === '—') return nodeHTML(g, 'nhi', { key: 'noatc', label: '—', name: T('沒有 ATC 的品項', 'Items without ATC'), count: T(`${rs.length} 個健保代號`, `${rs.length} NHI codes`), inner: codes });
+    return nodeHTML(g, 'atc', { code: atc, name: ing, count: T(`${rs.length} 個健保代號，給付中 ${paid}`, `${rs.length} NHI codes, ${paid} reimbursed`), inner: codes });
+  }).join('') + '</ul>';
+  if (groups.length > 80) html += `<p class="hits-empty">${T('只顯示前 80 個 ATC，請輸入更精確的關鍵字。', 'Showing the first 80 ATC codes; narrow the search.')}</p>`;
+  box.innerHTML = html;
+  syncTicks();
+}
+function mostCommon(a) { const c = {}; a.forEach((x) => { if (x) c[x] = (c[x] || 0) + 1; }); return Object.entries(c).sort((x, y) => y[1] - x[1])[0]?.[0] || ''; }
+function emptyHint() {
+  if (S.sys === 'drug') return T('輸入成分（metformin）、ATC（A10BA、C10AA）、藥名或健保代號。ATC 整類加入後，會自動對應到所有健保藥品代號，連已取消給付的也算在內。', 'Type an ingredient (metformin), an ATC code (A10BA, C10AA), a brand name or an NHI code. An ATC class maps to every NHI code, delisted ones included.');
+  return T('輸入代碼開頭（例如 I50、E11.2、428、39.95）可以整個分支一次加入；也可以用英文關鍵字搜尋（例如 heart failure）。', 'Type the start of a code (I50, E11.2, 428, 39.95) to add a whole branch, or search in English (heart failure).');
+}
+
+/* ---------- groups panel ---------- */
+function itemRow(g, it) {
+  const n = itemCount(it);
+  const code = it.kind === 'prefix' ? it.code + '*' : it.code;
+  return `<tr class="${it.excl ? 'ex' : ''}" data-g="${g.id}" data-k="${esc(ikey(it))}"><td class="cd"><span class="stag">${esc(SYS[it.sys])}</span><br>${esc(code)}</td><td class="nm">${esc(it.name || '')}</td><td class="n">${it.kind === 'prefix' ? (n ? n + T(' 碼', '') : '…') : ''}</td><td class="x"><button type="button" data-tog="1" title="${T('切換包含／排除', 'Toggle include / exclude')}">${it.excl ? T('排除', 'excl.') : T('包含', 'incl.')}</button> <button type="button" class="icon" data-del="1" aria-label="${T('刪除', 'Remove')}">×</button></td></tr>`;
+}
+function gSummary(g) {
+  const by = {};
+  g.items.forEach((it) => { if (it.excl) return; const k = it.sys === 'atc' || it.sys === 'nhi' ? 'drug' : it.sys; by[k] = (by[k] || 0) + itemCount(it); });
+  const ex = g.items.filter((i) => i.excl).length;
+  const parts = Object.entries(by).map(([k, n]) => (k === 'drug' ? T(`藥品約 ${n} 個健保代號`, `drugs: ~${n} NHI codes`) : `${SYS[k]} ${n}`));
+  if (ex) parts.push(T(`排除 ${ex} 項`, `${ex} excluded`));
+  return parts.join(' · ');
+}
+function renderGroups() {
+  $('groups').innerHTML = S.groups.map((g, gi) => `<div class="grp${g.id === S.active ? ' active' : ''}" data-g="${g.id}">
+    <div class="ghead">
+      <input class="gname" value="${esc(g.name)}" data-f="name" aria-label="${T('群組名稱', 'Group name')}" placeholder="${T('群組名稱，例如：心衰竭', 'Group name, e.g. Heart failure')}">
+      <select data-f="role" aria-label="${T('角色', 'Role')}">${Object.entries(ROLES).map(([k, v]) => `<option value="${k}"${g.role === k ? ' selected' : ''}>${T(v[0], v[1])}</option>`).join('')}</select>
+      <span>${g.id === S.active ? `<span class="gactive">${T('加入中', 'Adding here')}</span>` : `<button type="button" class="small" data-act="use">${T('加到這組', 'Add here')}</button>`} <button type="button" class="icon" data-act="delg" aria-label="${T('刪除群組', 'Delete group')}">×</button></span>
+    </div>
+    <div class="gbody">
+      <textarea data-f="def" rows="1" aria-label="${T('操作型定義', 'Operational definition')}" placeholder="${T('操作型定義，例如：≥2 次門診或 ≥1 次住院主次診斷', 'Definition, e.g. ≥2 outpatient or ≥1 inpatient diagnoses')}">${esc(g.def)}</textarea>
+      <div class="gsum">${esc(gSummary(g))}</div>
+      ${g.items.length ? `<div class="itemwrap"><table class="items"><tbody>${g.items.map((it) => itemRow(g, it)).join('')}</tbody></table></div>` : `<div class="gempty">${T('還沒有代碼：在左邊搜尋後按「＋」或「加入分支」。', 'No codes yet: search on the left and press “＋” or “Add branch”.')}</div>`}
+    </div></div>`).join('');
+  $('target').innerHTML = S.groups.map((g) => `<option value="${g.id}"${g.id === S.active ? ' selected' : ''}>${esc(g.name || T('未命名群組', 'Untitled group'))}（${T(ROLES[g.role][0], ROLES[g.role][1])}）</option>`).join('');
+  RT.save(KEY, S);
+}
+function commit() { renderGroups(); renderSnip(); warn(); hist.push(); fillCounts(); refreshMarks(); }
+async function fillCounts() {
+  for (const g of S.groups) for (const it of g.items) {
+    if (it.kind === 'prefix' && API[it.sys] && !it.n) {
+      try { it.n = (await ctSearch(it.sys, normCode(it.sys, it.code)[0], true, 1)).total; renderGroups(); } catch (e) { /* offline */ }
+    }
+  }
+  if (S.groups.some((g) => g.items.some((i) => i.sys === 'atc' || i.sys === 'nhi'))) loadNhi().catch(() => {});
+}
+
+/* ---------- events ---------- */
+$('sys').addEventListener('click', (e) => { const b = e.target.closest('[data-v]'); if (!b) return; S.sys = b.dataset.v; syncSys(); RT.save(KEY, S); runSearch(); $('q').focus(); });
+function syncSys() {
+  [...$('sys').children].forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === S.sys)));
+  $('q').placeholder = S.sys === 'drug' ? T('成分、ATC、藥名或健保代號', 'Ingredient, ATC, name or NHI code') : T('代碼開頭或英文關鍵字', 'Start of a code, or an English term');
+  if (S.sys === 'drug') loadNhi().catch(() => {});
+}
+$('q').addEventListener('input', RT.debounce(runSearch, 260));
+$('target').onchange = () => { S.active = $('target').value; renderGroups(); refreshMarks(); };
+$('hits').addEventListener('change', async (e) => {
+  const box = e.target;
+  if (!box.matches('input[type=checkbox]')) return;
+  const d = box.parentElement.tagName === 'SUMMARY' ? box.closest('details') : null;
+  if (d) {
+    // ticking a chapter that has not been opened yet: list what is in it first
+    if (box.checked && d.dataset.lazy && !d.dataset.loaded) await loadLazy(d);
+    d.querySelectorAll(':scope > ul input[type=checkbox]:not(:disabled)').forEach((c) => { c.checked = box.checked; c.indeterminate = false; });
+  }
+  syncTicks();
+});
+$('hits').addEventListener('toggle', (e) => {
+  const d = e.target; if (!d.dataset || !d.dataset.node) return;
+  if (d.open) { treeOpen.set.add(d.dataset.node); if (d.dataset.lazy) loadLazy(d); } else treeOpen.set.delete(d.dataset.node);
+}, true);
+$('hits').addEventListener('click', async (e) => {
+  const t = e.target.closest('button, a'); if (!t) return;
+  if (t.closest('summary')) e.preventDefault();
+  if (t.dataset.act === 'add' || t.dataset.act === 'excl') {
+    const row = t.closest('[data-row]'); if (!row) return;
+    addItems([await itemFrom(row.dataset, t.dataset.act === 'excl')]);
+  } else if (t.id === 'addChecked') {
+    const list = picked(); if (!list.length) return;
+    t.disabled = true;
+    const items = []; for (const p of list) items.push(await itemFrom(p, false));
+    addItems(items);
+  }
+});
+async function branchName(sys, code) {
+  await loadNames(sys);
+  { const nm = headName(sys, code, []); if (nm) return nm; }
+  try { const r = await ctSearch(sys, normCode(sys, code)[0], true, 1); const row = r.rows[0]; if (row && row.code.replace('.', '') === code.replace('.', '')) return row.name; } catch (e) { /* ignore */ }
+  try { // the branch head itself is not a billable code: use the shared start of its children's names
+    const rows = (await ctSearch(sys, normCode(sys, code)[0], true, 20)).rows.map((r) => r.name);
+    if (!rows.length) return '';
+    let p = rows[0]; rows.forEach((n) => { while (p && !n.startsWith(p)) p = p.slice(0, -1); });
+    p = p.replace(/[\s,;(-]+\w*$/, '').trim();
+    return p.length > 6 ? p : rows[0];
+  } catch (e) { return ''; }
+}
+$('groups').addEventListener('input', (e) => {
+  const el = e.target.closest('[data-f]'); if (!el) return;
+  const g = S.groups.find((x) => x.id === el.closest('.grp').dataset.g); if (!g) return;
+  g[el.dataset.f] = el.value;
+  if (el.dataset.f === 'def') { el.style.height = 'auto'; el.style.height = el.scrollHeight + 2 + 'px'; }
+  RT.save(KEY, S); saveSoon();
+});
+$('groups').addEventListener('change', (e) => { if (e.target.closest('[data-f]')) { renderGroups(); renderSnip(); hist.push(); } });
+$('groups').addEventListener('click', (e) => {
+  const grp = e.target.closest('.grp'); if (!grp) return;
+  const g = S.groups.find((x) => x.id === grp.dataset.g);
+  const act = e.target.closest('[data-act]');
+  if (act?.dataset.act === 'use') { S.active = g.id; renderGroups(); refreshMarks(); return; }
+  if (act?.dataset.act === 'delg') {
+    if (S.groups.length === 1) { g.items = []; g.name = ''; g.def = ''; }
+    else S.groups = S.groups.filter((x) => x !== g);
+    if (!S.groups.some((x) => x.id === S.active)) S.active = S.groups[0].id;
+    commit(); RT.toast(T('已刪除群組（按 ↶ 可復原）', 'Group deleted (↶ to undo)')); return;
+  }
+  const tr = e.target.closest('tr[data-k]');
+  if (tr) {
+    const it = g.items.find((i) => ikey(i) === tr.dataset.k); if (!it) return;
+    if (e.target.closest('[data-del]')) { g.items = g.items.filter((i) => i !== it); commit(); return; }
+    if (e.target.closest('[data-tog]')) { it.excl = !it.excl; commit(); return; }
+  }
+  if (!e.target.closest('input, select, textarea, button') && g.id !== S.active) { S.active = g.id; renderGroups(); refreshMarks(); }
+});
+$('addGroup').onclick = () => { const g = newGroup('', 'covariate'); S.groups.push(g); S.active = g.id; commit(); const inp = $('groups').querySelector(`[data-g="${g.id}"] .gname`); if (inp) inp.focus(); };
+$('title').addEventListener('input', () => { S.title = $('title').value; RT.save(KEY, S); saveSoon(); });
+const saveSoon = RT.debounce(() => { renderSnip(); hist.push(); }, 500);
+['oExpand', 'oNoDot'].forEach((id) => ($(id).onchange = () => { S[id === 'oExpand' ? 'expand' : 'noDot'] = $(id).checked; RT.save(KEY, S); renderSnip(); }));
+$('oLang').onchange = () => { S.lang = $('oLang').value; RT.save(KEY, S); renderSnip(); };
+$('oDrug').onchange = () => { S.drug = $('oDrug').value; RT.save(KEY, S); renderSnip(); };
+$('oDx').oninput = () => { S.dx = $('oDx').value.trim() || 'icd'; RT.save(KEY, S); renderSnip(); };
+$('oPx').oninput = () => { S.px = $('oPx').value.trim() || 'icd_op'; RT.save(KEY, S); renderSnip(); };
+$('oRx').oninput = () => { S.rx = $('oRx').value.trim() || 'drug_no'; RT.save(KEY, S); renderSnip(); };
+
+/* ---------- export ---------- */
+const dot = (sys, c) => (S.noDot && sys !== 'atc' && sys !== 'nhi' ? c.replace('.', '') : c);
+async function flatRows(expand) {
+  // one row per code; branches either as one row or listed code by code
+  const out = [];
+  for (const g of S.groups) {
+    for (const it of g.items) {
+      if (expand && it.kind === 'prefix') {
+        let kids = [];
+        if (it.sys === 'atc') { await loadNhi(); kids = atcCodes(it.code).map((r) => ({ sys: 'nhi', code: r[N.code], name: r[N.en] || r[N.zh], via: 'ATC ' + it.code + ' ' + r[N.atc] })); }
+        else kids = (await expandPrefix(it.sys, it.code)).map((r) => ({ sys: it.sys, code: r.code, name: r.name, via: it.code + '*' }));
+        kids.forEach((k) => out.push({ g, sys: k.sys, code: k.code, name: k.name, rule: k.via, excl: !!it.excl }));
+      } else out.push({ g, sys: it.sys, code: it.kind === 'prefix' ? it.code + '*' : it.code, name: it.name || '', rule: it.kind === 'prefix' ? (it.sys === 'atc' ? T('ATC 整類', 'ATC class') : T('整個分支', 'whole branch')) + (itemCount(it) ? ` (${itemCount(it)})` : '') : '', excl: !!it.excl });
+    }
+  }
+  return out;
+}
+const roleEn = (r) => ROLES[r][1];
+async function withBusy(fn) { if (S.expand) RT.toast(T('正在展開分支…', 'Listing every code…'), 1500); try { await fn(); } catch (e) { RT.toast(String(e.message || e), 6000); } }
+$('btnCsv').onclick = () => withBusy(async () => {
+  const rows = await flatRows(S.expand);
+  if (!rows.length) { RT.toast(T('清單還是空的', 'The list is empty')); return; }
+  RT.downloadCSV([['Group', 'Role', 'Definition', 'Coding system', 'Code', 'Description', 'Rule', 'Include/Exclude'],
+    ...rows.map((r) => [r.g.name, roleEn(r.g.role), r.g.def, SYS_LONG[r.sys], dot(r.sys, r.code), r.name, r.rule, r.excl ? 'Exclude' : 'Include'])], 'code-list.csv');
+});
+$('btnTsv').onclick = () => withBusy(async () => {
+  const rows = await flatRows(S.expand);
+  const tsv = [['Group', 'Coding system', 'Code', 'Description'], ...rows.map((r) => [r.g.name + (r.excl ? ' (exclude)' : ''), SYS_LONG[r.sys], dot(r.sys, r.code), r.name])].map((r) => r.map((v) => String(v).replace(/\t|\n/g, ' ')).join('\t')).join('\n');
+  try { await navigator.clipboard.writeText(tsv); RT.toast(T('已複製，可貼進 Excel', 'Copied; paste into Excel')); } catch (e) { RT.toast(T('無法複製到剪貼簿', 'Could not copy'), 3000); }
+});
+$('btnDocx').onclick = () => withBusy(async () => {
+  const rows = await flatRows(S.expand);
+  if (!rows.length) { RT.toast(T('清單還是空的', 'The list is empty')); return; }
+  const body = [];
+  S.groups.forEach((g) => {
+    const rs = rows.filter((r) => r.g === g); if (!rs.length) return;
+    body.push([{ text: `${g.name || 'Untitled'} (${roleEn(g.role)})${g.def ? '\n' + g.def : ''}`, bold: true, fill: 'F2F2F2' }, { text: '', fill: 'F2F2F2' }, { text: '', fill: 'F2F2F2' }]);
+    rs.forEach((r) => body.push([SYS_LONG[r.sys], (r.excl ? 'Excluding ' : '') + dot(r.sys, r.code), r.name + (r.rule && !S.expand ? ` [${r.rule}]` : '')]));
+  });
+  const m = nhiD ? await TW.meta().catch(() => null) : null;
+  const notes = ['* = the code and every code below it.',
+    S.groups.some((g) => g.items.some((i) => API[i.sys])) ? 'ICD-9-CM and ICD-10-CM codes and descriptions: US National Library of Medicine, Clinical Tables (US editions).' : '',
+    S.groups.some((g) => g.items.some((i) => i.sys === 'atc' || i.sys === 'nhi')) ? `NHI drug codes: National Health Insurance Administration drug list${m ? ' (version of ' + m.built + ')' : ''}; ATC classification as recorded in that list.` : ''].filter(Boolean).join('\n');
+  RT.applyStyle(RT.STYLE_DEF || {});
+  const blob = await RT.buildDocxTable({ title: `Supplementary Table. Codes used to define study variables${S.title ? ': ' + S.title : ''}`, headers: ['Coding system', 'Code', 'Description'], widths: [1.4, 1.3, 4.3], rows: body, note: notes, sizePt: 9, headerFill: 'FFFFFF' });
+  RT.download(blob, 'code-list.docx');
+});
+
+/* ---------- selection code ---------- */
+function varName(g, i) {
+  const base = String(g.name || '').normalize('NFKD').replace(/[^\w]+/g, '_').replace(/^_+|_+$/g, '').toLowerCase();
+  return /^[a-z]/.test(base) ? base.slice(0, 28) : `${g.role}_${i + 1}`;
+}
+function rules(g) {
+  // [{col, prefix:[...], exact:[...]}] for included and excluded codes
+  const pick = (excl) => {
+    const dx = { prefix: [], exact: [] }, px = { prefix: [], exact: [] }, rx = { prefix: [], exact: [] };
+    g.items.filter((it) => !!it.excl === excl).forEach((it) => {
+      if (it.sys === 'atc') {
+        if (S.drug === 'atc') (it.kind === 'prefix' ? rx.prefix : rx.exact).push(it.code);
+        else atcCodes(it.code).forEach((r) => rx.exact.push(r[N.code]));
+      } else if (it.sys === 'nhi') { if (S.drug === 'nhi') rx.exact.push(it.code); }
+      else { const t = it.sys === 'icd9pcs' ? px : dx; (it.kind === 'prefix' ? t.prefix : t.exact).push(dot(it.sys, it.code)); }
+    });
+    return { dx, px, rx };
+  };
+  return { inc: pick(false), exc: pick(true) };
+}
+const q1 = (s) => `'${String(s).replace(/'/g, "''")}'`, q2 = (s) => `"${String(s).replace(/"/g, '\\"')}"`;
+function wrap(list, per, f, ind) { const out = []; for (let i = 0; i < list.length; i += per) out.push(list.slice(i, i + per).map(f).join(', ')); return out.join(',\n' + ind); }
+function cond(lang, col, set) {
+  const parts = [];
+  const { prefix: P, exact: E } = set;
+  const re = () => '^(' + P.map((p) => p.replace(/\./g, '\\.')).join('|') + ')';
+  if (lang === 'sas') { if (P.length) parts.push(`${col} in: (${wrap(P, 8, q1, '      ')})`); if (E.length) parts.push(`${col} in (${wrap(E, 8, q1, '      ')})`); }
+  if (lang === 'r') { if (P.length) parts.push(`grepl("${re().replace(/\\/g, '\\\\')}", ${col})`); if (E.length) parts.push(`${col} %in% c(${wrap(E, 8, q2, '    ')})`); }
+  if (lang === 'py') { if (P.length) parts.push(`df["${col}"].str.match(r"${re()}", na=False)`); if (E.length) parts.push(`df["${col}"].isin([${wrap(E, 8, q2, '    ')}])`); }
+  if (lang === 'stata') { if (P.length) parts.push(`ustrregexm(${col}, "${re()}")`); for (let i = 0; i < E.length; i += 40) parts.push(`ustrregexm(${col}, "^(${E.slice(i, i + 40).map((e) => e.replace(/\./g, '\\.')).join('|')})$")`); }   // Stata limits string literal length: 40 codes per test
+  if (lang === 'sql') { P.forEach((p) => parts.push(`${col} LIKE ${q1(p + '%')}`)); if (E.length) parts.push(`${col} IN (${wrap(E, 8, q1, '      ')})`); }
+  return parts;
+}
+function snippet() {
+  const L = S.lang, dx = S.dx || 'icd', px = S.px || 'icd_op', rx = S.rx || 'drug_no';
+  const needNhi = S.drug === 'nhi' && S.groups.some((g) => g.items.some((i) => i.sys === 'atc'));
+  if (needNhi && !nhiD) return T('/* 正在載入健保藥品資料，把 ATC 轉成健保代號… */', '/* Loading the NHI drug list to turn ATC classes into NHI codes… */');
+  const cm = { sas: (t) => `/* ${t} */`, r: (t) => `# ${t}`, py: (t) => `# ${t}`, stata: (t) => `* ${t}`, sql: (t) => `-- ${t}` }[L];
+  const out = [cm(`Code list${S.title ? ': ' + S.title : ''} — Research Toolkit (${new Date().toISOString().slice(0, 10)})`),
+    cm(`${T('診斷欄位', 'diagnosis column')} = ${dx}; ${T('處置欄位', 'procedure column')} = ${px}; ${T('藥品欄位', 'drug column')} = ${rx}${S.drug === 'atc' ? ' (ATC)' : ' (NHI code)'}${S.noDot ? T('；ICD 不含小數點', '; ICD codes without dots') : ''}`)];
+  const sqlCols = [];
+  S.groups.forEach((g, i) => {
+    const v = varName(g, i), { inc, exc } = rules(g);
+    const incP = [...cond(L, dx, inc.dx), ...cond(L, px, inc.px), ...cond(L, rx, inc.rx)], excP = [...cond(L, dx, exc.dx), ...cond(L, px, exc.px), ...cond(L, rx, exc.rx)];
+    if (!incP.length) return;
+    out.push('', cm(`${g.name || v} (${roleEn(g.role)})${g.def ? ' — ' + g.def.replace(/\n/g, ' ') : ''}`));
+    const any = (ps, j) => ps.join(j);
+    if (L === 'sas') { out.push(`${v} = 0;`, `if (${any(incP, '\n    or ')})${excP.length ? `\n   and not (${any(excP, '\n    or ')})` : ''} then ${v} = 1;`); }
+    if (L === 'r') out.push(`${v} <- (${any(incP, ' |\n  ')})${excP.length ? ` &\n  !(${any(excP, ' |\n  ')})` : ''}`);
+    if (L === 'py') out.push(`df["${v}"] = (${any(incP, ' |\n  ')})${excP.length ? ` &\n  ~(${any(excP, ' |\n  ')})` : ''}`);
+    if (L === 'stata') out.push(`gen byte ${v} = (${any(incP, ' |\n  ')})${excP.length ? ` & !(${any(excP, ' | ')})` : ''}`);
+    if (L === 'sql') sqlCols.push(`  ${cm(g.name || v)}\n  CASE WHEN (${any(incP, '\n         OR ')})${excP.length ? `\n        AND NOT (${any(excP, ' OR ')})` : ''} THEN 1 ELSE 0 END AS ${v}`);
+  });
+  if (L === 'sql' && sqlCols.length) out.push('', 'SELECT *,', sqlCols.join(',\n'), 'FROM claims;');
+  return out.length > 2 ? out.join('\n') : cm(T('加入代碼後，這裡會出現篩選語法', 'Add codes to see the selection code'));
+}
+function renderSnip() { $('snip').textContent = snippet(); }
+$('btnSnip').onclick = async () => { try { await navigator.clipboard.writeText($('snip').textContent); RT.toast(T('已複製語法', 'Code copied')); } catch (e) { RT.toast(T('無法複製到剪貼簿', 'Could not copy'), 3000); } };
+
+/* ---------- warnings ---------- */
+function warn() {
+  const m = [];
+  const has = (sys) => S.groups.some((g) => g.items.some((i) => i.sys === sys));
+  if (has('icd10cm')) m.push(T('ICD-10-CM 代碼與說明取自美國最新版；台灣健保申報使用的版本不同，少數代碼可能不存在或意義不同，請與健保署公告的版本核對。', 'ICD-10-CM codes come from the current US edition; Taiwan’s NHI uses a different edition, so a few codes may be missing or differ: check against the NHIA edition.'));
+  if (has('icd10cm') !== has('icd9cm') && S.groups.some((g) => g.items.some((i) => i.sys === 'icd10cm' || i.sys === 'icd9cm'))) m.push(T('健保資料在 2016 年由 ICD-9-CM 改為 ICD-10-CM；研究期間跨過 2016 年時，兩種代碼都需要。', 'Taiwan NHI claims switched from ICD-9-CM to ICD-10-CM in 2016; studies spanning 2016 need both.'));
+  $('msgs').innerHTML = m.map((t) => `<div class="msg">⚠ ${esc(t)}</div>`).join('');
+}
+
+/* ---------- handoff from the drug lookup ---------- */
+function takeHandoff() {
+  let q = []; try { q = JSON.parse(localStorage.getItem('rt:handoff-codes') || '[]'); } catch (e) { q = []; }
+  if (!q.length) return;
+  try { localStorage.removeItem('rt:handoff-codes'); } catch (e) { /* ignore */ }
+  addItems(q.map((x) => ({ sys: x.sys, code: x.code, name: x.name, kind: x.kind || 'code' })));
+}
+window.addEventListener('storage', (e) => { if (e.key === 'rt:handoff-codes') takeHandoff(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) takeHandoff(); });
+
+/* ---------- undo, example, clear ---------- */
+function syncAll() {
+  $('title').value = S.title; $('oExpand').checked = S.expand; $('oNoDot').checked = S.noDot; $('oLang').value = S.lang; $('oDrug').value = S.drug; $('oDx').value = S.dx; $('oPx').value = S.px; $('oRx').value = S.rx;
+  syncSys(); renderGroups(); renderSnip(); warn();
+}
+const hist = RT.history(() => S, (s) => { S = s; syncAll(); });
+$('btnUndo').onclick = hist.undo; $('btnRedo').onclick = hist.redo;
+$('btnExample').onclick = () => {
+  S.title = 'Statins and incident heart failure';
+  const gx = { ...newGroup('Statins', 'exposure'), def: T('≥2 次處方，間隔 ≤30 天', '≥2 prescriptions ≤30 days apart'), items: [{ sys: 'atc', code: 'C10AA', kind: 'prefix', name: 'HMG CoA reductase inhibitors' }] };
+  const gy = { ...newGroup('Heart failure', 'outcome'), def: T('≥1 次住院主診斷，或 ≥2 次門診診斷', '≥1 inpatient primary or ≥2 outpatient diagnoses'), items: [
+    { sys: 'icd10cm', code: 'I50', kind: 'prefix', name: 'Heart failure' }, { sys: 'icd10cm', code: 'I11.0', name: 'Hypertensive heart disease with heart failure' }, { sys: 'icd9cm', code: '428', kind: 'prefix', name: 'Heart failure' }] };
+  const gc = { ...newGroup('Type 2 diabetes', 'covariate'), def: T('基準日前一年內 ≥2 次門診', '≥2 outpatient diagnoses in the year before Day 0'), items: [
+    { sys: 'icd10cm', code: 'E11', kind: 'prefix', name: 'Type 2 diabetes mellitus' }, { sys: 'icd10cm', code: 'E11.A', name: 'Type 2 diabetes mellitus without complications in remission', excl: true }, { sys: 'icd9cm', code: '250', kind: 'prefix', name: 'Diabetes mellitus' }] };
+  S.groups = [gx, gy, gc]; S.active = gx.id;
+  syncAll(); commit();
+  RT.toast(T('已載入範例（按 ↶ 可復原）', 'Example loaded (↶ to undo)'));
+};
+$('btnReset').onclick = () => { S.title = ''; S.groups = [newGroup(T('暴露', 'Exposure'), 'exposure'), newGroup(T('結果', 'Outcome'), 'outcome')]; S.active = S.groups[0].id; syncAll(); commit(); RT.toast(T('已清空（按 ↶ 可復原）', 'Cleared (↶ to undo)')); };
+RT.currentState = () => S;
+RT.applyState = (o) => { S = RT.merge(DEF, o); if (!S.groups.length) S.groups = [newGroup()]; S.active = S.groups[0].id; syncAll(); commit(); };
+
+/* ---------- start ---------- */
+$('refs').innerHTML = RT.refsHTML([
+  'US National Library of Medicine. Clinical Table Search Service (ICD-10-CM, ICD-9-CM). clinicaltables.nlm.nih.gov',
+  'National Center for Health Statistics (CDC). ICD-10-CM FY2026 code descriptions in tabular order (names of category and subcategory codes). ftp.cdc.gov/pub/Health_Statistics/NCHS/Publications/ICD10CM',
+  'National Center for Health Statistics (CDC). ICD-9-CM tabular lists, FY2012 final edition (names of category and subcategory codes). ftp.cdc.gov/pub/Health_Statistics/NCHS/Publications/ICD9-CM',
+  'US National Library of Medicine. RxNav RxClass API (ATC class names). lhncbc.nlm.nih.gov/RxNav',
+  'WHO Collaborating Centre for Drug Statistics Methodology. ATC/DDD Index. atcddd.fhi.no',
+  'Hsieh CY, et al. Taiwan’s National Health Insurance Research Database: past and future. Clin Epidemiol 2019;11:349–58.',
+], [T('隱私：ICD 搜尋字詞會送到美國國家醫學圖書館（NLM）的 Clinical Tables 服務以取得代碼；ATC 類別名稱查自 NLM RxNav。代碼清單本身只存在你的瀏覽器。', 'Privacy: ICD search terms are sent to the US National Library of Medicine’s Clinical Tables service to fetch codes; ATC class names come from NLM RxNav. The code list itself stays in your browser.'), TW.sourceNote()]);
+syncAll();
+runSearch();
+fillCounts();
+takeHandoff();
+setTimeout(takeHandoff, 300);
+hist.push();
+</script>
+</body>
+</html>

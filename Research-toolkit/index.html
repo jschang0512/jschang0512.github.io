@@ -114,7 +114,7 @@
 <div class="hero-band"><section class="hero">
   <h1>Research Toolkit</h1>
   <p data-en="Figure tools for research papers. Everything runs in your browser — files are never uploaded. Unless noted, every figure exports as PNG, TIFF, JPG, PDF, SVG and editable Word shapes.">研究論文圖表小工具。所有處理都在你的瀏覽器中完成，檔案不會上傳。除另有註明，每張圖都能匯出 PNG、TIFF、JPG、PDF、SVG 與可編輯的 Word 圖形。</p>
-  <nav class="jump"><a href="#g-design" data-en="Study design">研究設計</a><a href="#g-select" data-en="Selection & screening">選樣與篩選</a><a href="#g-results" data-en="Results">結果呈現</a><a href="#g-bias" data-en="Risk of bias">偏誤評估</a><a href="#g-submit" data-en="Getting ready to submit">投稿準備</a></nav>
+  <nav class="jump"><a href="#g-design" data-en="Study design">研究設計</a><a href="#g-data" data-en="Drugs & codes">藥品與代碼</a><a href="#g-select" data-en="Selection & screening">選樣與篩選</a><a href="#g-results" data-en="Results">結果呈現</a><a href="#g-bias" data-en="Risk of bias">偏誤評估</a><a href="#g-submit" data-en="Getting ready to submit">投稿準備</a></nav>
   <div class="find"><input type="search" id="q" autocomplete="off" placeholder="搜尋工具，例如 PRISMA、森林圖、樣本數（按 / 開始）" data-en-placeholder="Search tools, e.g. PRISMA, forest plot, sample size (press /)" aria-label="搜尋工具" data-en-aria="Search tools"></div>
 </section></div>
 
@@ -145,6 +145,22 @@
     <h2>Effect Sizes &amp; Sample Size</h2>
     <p data-en="Sample size for two proportions or means, NNT / NNH with confidence intervals, OR → RR, and the SE and p value from a confidence interval, each with a sentence to copy.&lt;span class=&quot;out&quot;&gt;Also: Word results table&lt;/span&gt;">兩組比例或平均的樣本數、NNT／NNH 與信賴區間、OR 換算 RR、從信賴區間回推 SE 與 p 值，每項都附可複製的句子。<span class="out">另可匯出：Word 結果表</span></p>
     <div class="tags"><span class="pill">NNT · Zhang &amp; Yu</span><span class="pill section">Methods</span></div>
+  </a>
+  </section>
+  <section class="group" id="g-data">
+  <h2 class="group-label" data-en="Drugs &amp; codes">藥品與代碼</h2>
+  <p class="group-desc" data-en="Turn study variables into the codes claims data use: ICD, ATC and Taiwan NHI drug codes, with the official drug list and licences a search away.">把研究變項變成資料庫裡的代碼：ICD、ATC 與健保藥品代號，健保品項與食藥署許可證一查就有。</p>
+  <a class="tile" href="codelist/index.html">
+    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h3M4 10h3M4 15h3M4 20h3"/><path d="M10 5h10M10 10h7M10 15h10M10 20h6"/></svg></div>
+    <h2>Code List Builder</h2>
+    <p data-en="ICD-10-CM, ICD-9-CM diagnoses and procedures, ATC and NHI drug codes in groups (exposure, outcome, covariates, exclusions): add a whole branch, leave single codes out, write the operational definition.&lt;span class=&quot;out&quot;&gt;Output: Word appendix table, Excel, SAS / R / Stata / SQL / Python selection code&lt;/span&gt;">ICD-10-CM、ICD-9-CM 診斷與處置、ATC 與健保藥品代號，依暴露、結果、共變項、排除分組：整個分支一次加入、個別代碼排除、寫上操作型定義。<span class="out">輸出：Word 附錄表、Excel、SAS／R／Stata／SQL／Python 篩選語法</span></p>
+    <div class="tags"><span class="pill">ICD · ATC · NHI</span><span class="pill section">Methods</span></div>
+  </a>
+  <a class="tile" href="drugs/index.html">
+    <div class="ico"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="8" width="13" height="7" rx="3.5" transform="rotate(-35 9.5 11.5)"/><path d="m7.6 7.8 3.9 5.6"/><circle cx="17" cy="16" r="3.2"/><path d="m19.4 18.4 2.1 2.1"/></svg></div>
+    <h2 data-en="Taiwan Drug Lookup">台灣藥品速查</h2>
+    <p data-en="One search across the NHI drug list and TFDA licences: price and its history, reimbursement rules, ATC, same-group price comparison, indications, controlled-drug schedule and licence status. Refreshed weekly.&lt;span class=&quot;out&quot;&gt;Also: CSV, send codes to the Code List Builder&lt;/span&gt;">一個搜尋框查健保用藥品項與食藥署許可證：支付價與價格歷程、給付規定、ATC、同分組比價、適應症、管制藥品級別與許可證狀態，每週自動更新。<span class="out">另可匯出：CSV，或把代碼送到代碼清單產生器</span></p>
+    <div class="tags"><span class="pill" data-en="NHI · TFDA">健保署 · 食藥署</span><span class="pill section" data-en="Data">資料</span></div>
   </a>
   </section>
   <section class="group" id="g-select">
@@ -241,7 +257,7 @@
   <div class="card" id="refs"></div>
 </div>
 
-<script src="shared/common.js?v=20261121d"></script>
+<script src="shared/common.js?v=20261122a"></script>
 <script>
 document.getElementById('refs').innerHTML = RT.refsHTML([
   RT.REFS.prisma, RT.REFS.prismaFlow, RT.REFS.strobe, RT.REFS.record, RT.REFS.schneeweiss, RT.REFS.acnu, RT.REFS.tte, RT.REFS.cco, RT.REFS.sccs, RT.REFS.okabe,

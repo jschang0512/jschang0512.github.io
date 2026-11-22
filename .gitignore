@@ -4,3 +4,6 @@
 .claude/
 skills-lock.json
 .impeccable/critique/
+
+# Taiwan drug data, built locally for testing (published from the tw-drugs-data branch)
+Research-toolkit/data/
