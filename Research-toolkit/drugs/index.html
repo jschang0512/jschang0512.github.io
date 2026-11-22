@@ -7,12 +7,12 @@
 <link rel="icon" href="/Research-toolkit/icons/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="/Research-toolkit/icons/apple-touch-icon.png">
 <title data-en="Taiwan Drug Lookup · Research Toolkit">台灣藥品速查 · Research Toolkit</title>
-<meta name="description" content="一次查健保用藥品項與食藥署藥品許可證：支付價與價格歷程、給付規定全文、ATC、同分組比價、藥品外觀照片、仿單、適應症、管制藥品級別與許可證狀態，附進階篩選。資料每週自動更新。">
+<meta name="description" content="一次查健保用藥品項與食藥署藥品許可證：支付價與價格歷程、同分組比價圖、給付規定全文、ATC、藥品外觀照片、仿單、適應症、管制藥品級別與許可證狀態，附進階篩選。資料每週自動更新。">
 <link rel="canonical" href="https://jschang0512.github.io/Research-toolkit/drugs/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Research Toolkit">
 <meta property="og:title" content="台灣藥品速查 · Research Toolkit">
-<meta property="og:description" content="健保支付價、給付規定全文、ATC、同分組比價、藥品外觀照片與食藥署許可證，一個搜尋框查完。">
+<meta property="og:description" content="健保支付價、價格歷程與同分組比價、給付規定全文、ATC、藥品外觀照片與食藥署許可證，一個搜尋框查完。">
 <meta property="og:url" content="https://jschang0512.github.io/Research-toolkit/drugs/">
 <meta property="og:image" content="https://jschang0512.github.io/assets/og/research-toolkit.png">
 <meta property="og:image:width" content="1200">
@@ -20,26 +20,33 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="../shared/style.css?v=20261121c">
 <style>
+  /* drug classes: one hue each, readable on both themes */
+  :root { --c-orig: oklch(56% 0.150 28); --c-babe: oklch(52% 0.120 160); --c-gen: oklch(58% 0.060 250); --c-bio: oklch(54% 0.140 305); --c-off: oklch(70% 0.100 75); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --c-orig: oklch(74% 0.120 28); --c-babe: oklch(74% 0.110 160); --c-gen: oklch(74% 0.050 250); --c-bio: oklch(74% 0.110 305); --c-off: oklch(78% 0.090 75); } }
+  :root[data-theme="dark"] { --c-orig: oklch(74% 0.120 28); --c-babe: oklch(74% 0.110 160); --c-gen: oklch(74% 0.050 250); --c-bio: oklch(74% 0.110 305); --c-off: oklch(78% 0.090 75); }
+
   .dr { max-width: 1080px; margin: 0 auto; padding: 16px 16px 48px; }
-  .dr-search { display: flex; flex-direction: column; gap: 10px; padding: 6px 0 14px; border-bottom: 1px solid var(--border); }
-  .dr-q { position: relative; }
+  .dr-search { display: flex; flex-direction: column; gap: 10px; padding: 6px 0 12px; }
+  .dr-q { position: relative; display: block; }
   .dr-q input { width: 100%; font-size: 17px; padding: 12px 14px 12px 40px; border-radius: 10px; min-height: 48px; }
   .dr-q svg { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
-  .dr-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 13px; }
+  .dr-filters { display: flex; align-items: center; gap: 8px 10px; font-size: 13px; }
   .dr-filters select { width: auto; min-width: 0; padding: 6px 8px; font-size: 13px; }
   .dr-filters .spacer { flex: 1; }
-  .scope { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .scope { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
   .scope button { border: 0; border-radius: 0; border-right: 1px solid var(--border); background: var(--panel-2); padding: 6px 11px; font-size: 12.5px; white-space: nowrap; }
   .scope button:last-child { border-right: 0; }
   .scope button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 700; }
-  #btnAdv { padding: 6px 12px; font-size: 12.5px; white-space: nowrap; }
+  #btnAdv { padding: 6px 12px; font-size: 12.5px; white-space: nowrap; flex-shrink: 0; }
   #btnAdv[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); }
   #btnAdv .badge { display: inline-block; min-width: 18px; margin-left: 4px; padding: 0 5px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font-size: 11px; font-weight: 700; text-align: center; }
   #btnAdv .badge:empty { display: none; }
+
+  /* advanced filters: a panel on wide screens, a sheet from the bottom on phones */
   .adv { border: 1px solid var(--border); border-radius: 10px; background: var(--panel); padding: 12px 14px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 16px; font-size: 13px; }
   .adv[hidden] { display: none; }
+  .adv-head, .adv-foot, .adv-scrim { display: none; }
   @media (max-width: 860px) { .adv { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  @media (max-width: 520px) { .adv { grid-template-columns: minmax(0, 1fr); } }
   .adv label > span { display: block; font-size: 12px; color: var(--muted); margin-bottom: 3px; }
   .adv select, .adv input { width: 100%; padding: 6px 8px; font-size: 13px; }
   .adv .pair { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 6px; align-items: center; }
@@ -49,56 +56,166 @@
   .adv .checks input[type="checkbox"] { width: auto; padding: 0; }
   .adv .checks .check > span { display: inline; margin: 0; font-size: 13px; color: var(--text); }
   .adv .checks .spacer { flex: 1; }
+
   .chips { display: flex; flex-wrap: wrap; gap: 6px; }
   .chips:empty { display: none; }
   .chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 10px; border-radius: 999px; background: var(--accent-weak); color: var(--accent); font-size: 12.5px; font-weight: 600; }
   .chip button { border: 0; background: transparent; color: inherit; padding: 0 6px; font-size: 14px; line-height: 1; }
-  .dr-status { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 10px 0; font-size: 13px; color: var(--muted); }
-  .dr-status .spacer { flex: 1; }
   .dr-tips { font-size: 12.5px; color: var(--muted); margin: 0; }
   .dr-tips button { padding: 1px 8px; font-size: 12px; }
+  .dr-tips.quiet { display: none; }
 
+  /* overview of the results */
+  .ov { border: 1px solid var(--border); border-radius: 10px; background: var(--panel); margin: 6px 0 10px; }
+  .ov > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; padding: 10px 14px; font-size: 13px; color: var(--muted); }
+  .ov > summary::-webkit-details-marker { display: none; }
+  .ov > summary b { color: var(--text); font-size: 15px; font-variant-numeric: tabular-nums; }
+  .ov > summary .car { margin-left: auto; transition: transform var(--dur-micro) var(--ease-out); }
+  .ov[open] > summary .car { transform: rotate(180deg); }
+  .ov-body { padding: 2px 14px 12px; display: grid; grid-template-columns: 6.5em minmax(0, 1fr); gap: 10px 12px; align-items: center; font-size: 12.5px; }
+  .ov-body > .k { color: var(--muted); }
+  .strip { position: relative; }
+  .strip .track { position: relative; height: 34px; margin: 0 5px; }
+  .strip .track::before { content: ""; position: absolute; left: 0; right: 0; top: 16px; height: 2px; background: var(--border); }
+  .strip .track i { position: absolute; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 50%; background: var(--accent); opacity: .4; }
+  .strip .track .med { position: absolute; top: 3px; bottom: 3px; width: 2px; margin-left: -1px; background: var(--text); }
+  .strip .ends { display: flex; justify-content: space-between; color: var(--muted); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+  .strip .ends b { color: var(--text); }
+  .bar { display: flex; height: 14px; border-radius: 4px; overflow: hidden; background: var(--panel-2); }
+  .bar button { border: 0; border-radius: 0; padding: 0; min-width: 3px; height: 100%; cursor: pointer; }
+  .bar button:hover { filter: brightness(1.1); }
+  .bar button:focus-visible { outline: 2px solid var(--text); outline-offset: -2px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 2px 12px; margin-top: 5px; color: var(--muted); font-size: 12px; }
+  .legend button { border: 0; background: none; padding: 0; font: inherit; color: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+  .legend button[aria-pressed="true"] { color: var(--text); font-weight: 700; }
+  .legend b { color: var(--text); font-variant-numeric: tabular-nums; }
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; flex-shrink: 0; }
+  .k-orig { background: var(--c-orig); } .k-babe { background: var(--c-babe); } .k-gen { background: var(--c-gen); } .k-bio { background: var(--c-bio); } .k-none { background: var(--border); }
+  .k-paid { background: var(--accent); } .k-off { background: var(--c-off); }
+
+  .dr-status { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 4px 0 8px; font-size: 13px; color: var(--muted); }
+  .dr-status .spacer { flex: 1; }
+
+  /* result cards */
   ul.res { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--border); }
   ul.res > li { border-bottom: 1px solid var(--border); }
-  .row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 16px; width: 100%; text-align: left; padding: 11px 6px; border: 0; border-radius: 0; background: transparent; color: var(--text); font: inherit; cursor: pointer; }
+  .row { display: grid; grid-template-columns: 48px minmax(0, 1fr) 7.5em; gap: 4px 14px; align-items: center; width: 100%; white-space: normal; text-align: left; padding: 10px 6px; border: 0; border-radius: 0; background: transparent; color: var(--text); font: inherit; cursor: pointer; }
   .row:hover { background: var(--panel-2); color: var(--text); }
   .row[aria-expanded="true"] { background: var(--panel-2); }
+  .thumb { width: 48px; height: 48px; border-radius: 8px; border: 1px solid var(--border); background: var(--figure); display: flex; align-items: center; justify-content: center; overflow: hidden; color: oklch(55% 0.03 250); }
+  .thumb img { width: 100%; height: 100%; object-fit: contain; }
+  .thumb svg { width: 26px; height: 26px; }
+  .row .main { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
   .row .nm { font-weight: 700; font-size: 14.5px; line-height: 1.35; overflow-wrap: anywhere; }
-  .row .en { color: var(--muted); font-size: 12.5px; overflow-wrap: anywhere; }
-  .row .meta { grid-column: 1; display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .row .en { color: var(--muted); font-size: 12.5px; font-weight: 400; overflow-wrap: anywhere; }
+  .row .meta { display: flex; flex-wrap: wrap; gap: 3px 10px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
   .row .meta .cd { font-family: var(--font-mono); color: var(--text); }
-  .row .pr { grid-column: 2; grid-row: 1 / span 2; text-align: right; font-variant-numeric: tabular-nums; align-self: center; white-space: nowrap; }
+  .row .tags { display: flex; flex-wrap: wrap; gap: 4px; }
+  .row .pr { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
   .row .pr b { font-size: 16px; }
-  .row .pr small { display: block; font-size: 11.5px; color: var(--muted); }
-  .tag { display: inline-block; font-size: 11px; font-weight: 600; padding: 0 6px; border-radius: 4px; background: var(--panel-2); border: 1px solid var(--border); color: var(--muted); }
+  .row .pr small { font-size: 11px; color: var(--muted); }
+  .pos { width: 72px; height: 6px; border-radius: 3px; background: var(--panel-2); border: 1px solid var(--border); position: relative; }
+  .pos i { position: absolute; top: -3px; width: 4px; height: 10px; margin-left: -2px; border-radius: 2px; background: var(--accent); }
+  .tag { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 0 6px; border-radius: 4px; background: var(--panel-2); border: 1px solid var(--border); color: var(--muted); line-height: 1.6; }
+  .tag .dot { width: 7px; height: 7px; }
   .tag.off { background: var(--warn-bg); color: var(--warn-text); border-color: transparent; }
   .tag.ctrl { background: var(--accent-weak); color: var(--accent); border-color: transparent; }
   .tag.ok { background: var(--ok-bg); color: var(--ok-text); border-color: transparent; }
   .tag.pkg { border-style: dashed; }
   mark { background: var(--accent-weak); color: inherit; border-radius: 2px; padding: 0 1px; }
 
-  .detail { padding: 4px 6px 16px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px 24px; }
-  @media (max-width: 760px) { .detail { grid-template-columns: minmax(0, 1fr); } .row { grid-template-columns: minmax(0, 1fr); } .row .pr { grid-column: 1; grid-row: auto; text-align: left; } .row .pr small { display: inline; margin-left: 6px; } }
-  .detail h3 { font-size: 12.5px; font-weight: 700; color: var(--muted); margin: 0 0 6px; }
-  .detail h3 + .kv, .detail .kv + h3 { margin-top: 0; }
-  .detail .blk + .blk { margin-top: 16px; }
-  .kv { display: grid; grid-template-columns: 7.5em minmax(0, 1fr); gap: 4px 10px; font-size: 13px; margin: 0; }
-  .kv dt { color: var(--muted); }
-  .kv dd { margin: 0; overflow-wrap: anywhere; }
-  .kv dd .cd { font-family: var(--font-mono); }
-  .kv dd button { padding: 1px 8px; font-size: 12px; }
-  .ind { white-space: pre-wrap; }
+  /* detail: a card on wide screens, a full screen on phones */
+  .detail { margin: 0 6px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel); overflow: hidden; }
+  .d-back { display: none; }
+  .d-head { display: grid; grid-template-columns: 112px minmax(0, 1fr) auto; gap: 14px 18px; padding: 14px 16px; align-items: center; border-bottom: 1px solid var(--border); }
+  .d-pic { width: 112px; height: 96px; border-radius: 10px; border: 1px solid var(--border); background: var(--figure); display: flex; align-items: center; justify-content: center; overflow: hidden; color: oklch(55% 0.03 250); }
+  .d-pic svg { width: 44px; height: 44px; }
+  .d-pic .zoom { all: unset; box-sizing: border-box; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; cursor: zoom-in; }
+  .d-pic .zoom:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .d-pic img { max-width: 100%; max-height: 100%; display: block; }
+  .d-title h2 { margin: 0; font-size: 18px; line-height: 1.3; overflow-wrap: anywhere; }
+  .d-title .en { color: var(--muted); font-size: 13px; margin-top: 2px; overflow-wrap: anywhere; }
+  .d-title .tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .d-price { text-align: right; font-variant-numeric: tabular-nums; }
+  .d-price b { display: block; font-size: 26px; line-height: 1.1; font-family: var(--font-display); }
+  .d-price small { color: var(--muted); font-size: 12px; }
+  .tabs { display: flex; gap: 2px; padding: 0 10px; border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tabs button { border: 0; border-radius: 0; background: none; padding: 10px 10px 9px; font-size: 13px; color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap; }
+  .tabs button:hover { color: var(--text); }
+  .tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
+  .tabp { padding: 14px 16px 16px; }
+  .facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+  .fact { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; background: var(--panel-2); min-width: 0; }
+  .fact .k { display: block; font-size: 11.5px; color: var(--muted); margin-bottom: 2px; }
+  .fact .v { font-size: 13.5px; overflow-wrap: anywhere; }
+  .fact .v .cd, .cd { font-family: var(--font-mono); }
+  .fact.wide { grid-column: 1 / -1; }
   .sib { display: flex; flex-wrap: wrap; gap: 4px 6px; }
   .sib button { font-family: var(--font-mono); font-size: 12px; padding: 1px 8px; }
-  .note { font-size: 11.5px; color: var(--muted); margin: 4px 0 0; }
+  .note { font-size: 11.5px; color: var(--muted); margin: 8px 0 0; }
+  .acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .acts button { font-size: 12.5px; padding: 6px 11px; }
+  .sec { font-size: 13px; font-weight: 700; margin: 0 0 8px; }
+  .sec small { font-weight: 400; color: var(--muted); }
+  .sec + .sec, * + .sec { margin-top: 18px; }
+  .kv { display: grid; grid-template-columns: 7.5em minmax(0, 1fr); gap: 5px 12px; font-size: 13px; margin: 0; }
+  .kv dt { color: var(--muted); }
+  .kv dd { margin: 0; overflow-wrap: anywhere; }
+  .ind { white-space: pre-wrap; }
+
+  /* price history chart */
+  .chart { max-width: 760px; }
+  .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .chart .ax { stroke: var(--border); }
+  .chart .lbl { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .chart .ln { fill: none; stroke: var(--accent); stroke-width: 2; }
+  .chart .ln.gone { stroke: var(--c-off); stroke-dasharray: 4 3; }
+  .chart .pt { fill: var(--accent); }
+  .hist-tbl { margin-top: 8px; }
+  .hist-tbl summary { font-size: 12.5px; color: var(--muted); cursor: pointer; }
+  .hist-tbl table { width: 100%; max-width: 360px; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; margin-top: 6px; }
+  .hist-tbl td { padding: 2px 0; border-bottom: 1px solid var(--border); }
+  .hist-tbl td:last-child { text-align: right; }
+  /* same-group comparison */
+  .cmp { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; }
+  .ci { display: grid; grid-template-columns: minmax(0, 15em) minmax(0, 1fr) 5.2em; gap: 10px; align-items: center; }
+  .cmp .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cmp .nm button { all: unset; cursor: pointer; }
+  .cmp .nm button:hover { color: var(--accent); text-decoration: underline; }
+  .cmp .nm button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .cmp .track { height: 12px; border-radius: 3px; background: var(--panel-2); position: relative; overflow: hidden; }
+  .cmp .track i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; opacity: .75; }
+  .cmp .v { text-align: right; font-variant-numeric: tabular-nums; }
+  .ci.me { font-weight: 700; }
+  .ci.me .track i { opacity: 1; box-shadow: inset 0 0 0 2px var(--text); }
+  .cmp-more { margin-top: 8px; }
+
   .looks { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 10px 14px; align-items: start; }
-  .looks + .looks { margin-top: 10px; }
+  .looks + .looks { margin-top: 12px; }
   .looks figure { margin: 0; width: 150px; height: 126px; border: 1px solid var(--border); border-radius: 8px; background: var(--figure); display: flex; align-items: center; justify-content: center; overflow: hidden; }
   .looks img { max-width: 100%; max-height: 100%; display: block; }
   .looks .zoom { all: unset; box-sizing: border-box; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; cursor: zoom-in; border-radius: 8px; }
-  .looks .zoom:hover img { transform: scale(1.04); }
-  .looks .zoom img { transition: transform var(--dur-micro, 120ms) var(--ease-out); }
   .looks .zoom:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .looks figure span { font-size: 11.5px; color: var(--muted); padding: 6px; text-align: center; }
+  .links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .links a { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; padding: 4px 10px; border: 1px solid var(--border); border-radius: 999px; text-decoration: none; }
+  .links a:hover { border-color: var(--accent); }
+  .rules-txt { border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); }
+  .rules-txt h4 { margin: 0; padding: 8px 12px; font-size: 13px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+  .rules-txt h4 a { font-weight: 400; font-size: 12.5px; }
+  .rules-txt .txt { margin: 0; padding: 10px 12px; max-height: 460px; overflow-y: auto; white-space: pre-wrap; font: 13px/1.7 var(--font-body); }
+  .rules-txt .txt + h4 { border-top: 1px solid var(--border); }
+  .rules-txt + .rules-txt { margin-top: 10px; }
+
+  .more { display: flex; justify-content: center; padding: 14px 0; }
+  .empty-state { padding: 28px 6px; color: var(--muted); font-size: 14px; }
+  .empty-state b { color: var(--text); }
+  .loading { padding: 28px 6px; color: var(--muted); }
+  .sec-h { font-size: 13px; font-weight: 700; color: var(--muted); margin: 22px 0 6px; }
+  .foot { margin-top: 26px; font-size: 12.5px; color: var(--muted); display: flex; flex-direction: column; gap: 8px; }
+  .foot p { margin: 0; }
+
   /* photo viewer */
   dialog.photo { border: 0; padding: 0; border-radius: 12px; background: var(--panel); color: var(--text); width: min(92vw, 760px); max-height: 92vh; box-shadow: 0 12px 40px oklch(0% 0 0 / 0.35); }
   dialog.photo::backdrop { background: oklch(15% 0.01 255 / 0.72); }
@@ -109,31 +226,52 @@
   dialog.photo .ph-cap b { font-size: 14px; }
   dialog.photo .ph-bar a { font-size: 12.5px; white-space: nowrap; }
   dialog.photo .ph-bar button { padding: 4px 12px; font-size: 12.5px; }
-  @media (prefers-reduced-motion: reduce) { .looks .zoom img { transition: none; } }
-  .looks figure span { font-size: 11.5px; color: var(--muted); padding: 6px; text-align: center; }
-  .links { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; margin-top: 8px; }
-  .rules { grid-column: 1 / -1; border: 1px solid var(--border); border-radius: 8px; background: var(--panel); }
-  .rules h4 { margin: 0; padding: 8px 12px; font-size: 13px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
-  .rules h4 a { font-weight: 400; font-size: 12.5px; }
-  .rules .txt { margin: 0; padding: 10px 12px; max-height: 420px; overflow-y: auto; white-space: pre-wrap; font: 13px/1.65 var(--font-body); }
-  .rules .txt + h4 { border-top: 1px solid var(--border); }
-  .rules p.note { padding: 0 12px 10px; margin: 0; }
-  .acts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; }
-  .acts button { font-size: 12.5px; padding: 6px 11px; }
-  .hist { margin-top: 8px; }
-  .hist svg { display: block; width: 100%; height: 64px; }
-  .hist table { width: 100%; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; margin-top: 6px; }
-  .hist td { padding: 2px 0; border-bottom: 1px solid var(--border); }
-  .hist td:last-child { text-align: right; }
-  .hist .scroll { max-height: 180px; overflow-y: auto; }
-  .more { display: flex; justify-content: center; padding: 14px 0; }
-  .empty-state { padding: 28px 6px; color: var(--muted); font-size: 14px; }
-  .empty-state b { color: var(--text); }
-  .loading { padding: 28px 6px; color: var(--muted); }
-  .sec-h { font-size: 13px; font-weight: 700; color: var(--muted); margin: 22px 0 6px; }
-  .foot { margin-top: 26px; font-size: 12.5px; color: var(--muted); display: flex; flex-direction: column; gap: 8px; }
-  .foot p { margin: 0; }
-  @media (prefers-reduced-motion: reduce) { .row, .scope button { transition: none; } }
+
+  /* ---------- phones ---------- */
+  @media (max-width: 760px) {
+    .row { grid-template-columns: 44px minmax(0, 1fr) auto; gap: 4px 10px; padding: 10px 2px; }
+    .thumb { width: 44px; height: 44px; }
+    .row .pr b { font-size: 15px; }
+    .pos { width: 52px; }
+    /* the open drug takes the whole screen; Back returns to the list */
+    .detail { position: fixed; inset: 0; z-index: 40; margin: 0; border: 0; border-radius: 0; overflow-y: auto; overscroll-behavior: contain; background: var(--bg); }
+    .d-back { display: flex; position: sticky; top: 0; z-index: 2; align-items: center; gap: 8px; padding: 10px 16px; background: var(--bg); border-bottom: 1px solid var(--border); }
+    .d-back button { padding: 6px 12px; font-size: 13px; }
+    .d-back span { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .d-head { grid-template-columns: 88px minmax(0, 1fr); padding: 14px 16px; }
+    .d-pic { width: 88px; height: 80px; }
+    .d-price { grid-column: 1 / -1; text-align: left; display: flex; align-items: baseline; gap: 10px; }
+    .d-price b { display: inline; font-size: 24px; }
+    .tabs { position: sticky; top: 49px; z-index: 1; background: var(--bg); }
+    .tabp { padding: 14px 16px 28px; }
+    .facts { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .ci { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "nm v" "tr tr"; row-gap: 3px; }
+    .ci .nm { grid-area: nm; } .ci .v { grid-area: v; } .ci .track { grid-area: tr; height: 8px; margin-bottom: 4px; }
+    .looks { grid-template-columns: 120px minmax(0, 1fr); }
+    .looks figure { width: 120px; height: 104px; }
+    body.sheet-open { overflow: hidden; }
+  }
+  @media (max-width: 640px) {
+    .topbar .sub { display: none; }
+    .dr { padding-top: 8px; }
+    .dr-q { position: sticky; top: 0; z-index: 30; background: var(--bg); padding: 6px 0; margin: -6px 0 0; }
+    .dr-filters { overflow-x: auto; scrollbar-width: none; margin: 0 -16px; padding: 0 16px; }
+    .dr-filters::-webkit-scrollbar { display: none; }
+    .dr-filters .spacer { min-width: 4px; }
+    .ov-body { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+    .ov-body > .k { margin-top: 6px; }
+    /* advanced filters as a sheet from the bottom */
+    .adv { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; max-height: 86vh; overflow-y: auto; border-radius: 16px 16px 0 0; border-bottom: 0; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); padding: 0 16px 16px; box-shadow: 0 -8px 30px oklch(0% 0 0 / 0.25); }
+    .adv .wide2 { grid-column: 1 / -1; }
+    .adv-head { display: flex; grid-column: 1 / -1; position: sticky; top: 0; z-index: 1; align-items: center; justify-content: space-between; padding: 12px 0 8px; background: var(--panel); border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+    .adv-head b { font-size: 15px; }
+    .adv-foot { display: flex; grid-column: 1 / -1; position: sticky; bottom: -16px; gap: 8px; padding: 10px 0 16px; background: var(--panel); border-top: 1px solid var(--border); }
+    .adv-foot button { flex: 1; padding: 10px; }
+    .adv .checks .spacer, #advClear { display: none; }
+    .adv-scrim:not([hidden]) { display: block; position: fixed; inset: 0; z-index: 55; background: var(--scrim); }
+    body.adv-open { overflow: hidden; }
+  }
+  @media (prefers-reduced-motion: reduce) { .ov > summary .car, .row, .scope button { transition: none; } }
 </style>
 </head>
 <body>
@@ -157,7 +295,7 @@
         <button type="button" data-v="delisted" data-en="Delisted">已取消給付</button>
         <button type="button" data-v="lic" data-en="Licences without NHI code">無健保代號的許可證</button>
       </span>
-      <button type="button" id="btnAdv" aria-expanded="false" aria-controls="adv"><span data-en="Advanced filters">進階篩選</span> ▾<span class="badge" id="advCount"></span></button>
+      <button type="button" id="btnAdv" aria-expanded="false" aria-controls="adv"><span data-en="Filters">進階篩選</span> ▾<span class="badge" id="advCount"></span></button>
       <span class="spacer"></span>
       <select id="fSort" aria-label="排序">
         <option value="rel" data-en="Best match">最相關</option>
@@ -167,10 +305,12 @@
         <option value="new" data-en="Newest listed">最新收載</option>
       </select>
     </div>
-    <div class="adv" id="adv" hidden>
-      <label><span data-en="Price (NT$)">支付價（元）</span><span class="pair"><input id="aPmin" inputmode="decimal" placeholder="最低" data-en-ph="min"><i>～</i><input id="aPmax" inputmode="decimal" placeholder="最高" data-en-ph="max"></span></label>
-      <label><span data-en="First listed">首次收載</span><span class="pair"><input id="aFrom" type="month" aria-label="從"><i>～</i><input id="aTo" type="month" aria-label="到"></span></label>
-      <label><span data-en="ATC starts with">ATC 開頭</span><input id="aAtc" placeholder="例如 C10、A10BA" data-en-ph="e.g. C10, A10BA" autocomplete="off"></label>
+    <div class="adv-scrim" id="advScrim" hidden></div>
+    <div class="adv" id="adv" hidden role="group" aria-label="進階篩選">
+      <div class="adv-head"><b data-en="Filters">進階篩選</b><button type="button" class="small" id="advDone" data-en="Done">完成</button></div>
+      <label class="wide2"><span data-en="Price (NT$)">支付價（元）</span><span class="pair"><input id="aPmin" inputmode="decimal" placeholder="最低" data-en-ph="min"><i>～</i><input id="aPmax" inputmode="decimal" placeholder="最高" data-en-ph="max"></span></label>
+      <label class="wide2"><span data-en="First listed">首次收載</span><span class="pair"><input id="aFrom" type="month" aria-label="從"><i>～</i><input id="aTo" type="month" aria-label="到"></span></label>
+      <label><span data-en="ATC starts with">ATC 開頭</span><input id="aAtc" placeholder="例如 C10" data-en-ph="e.g. C10" autocomplete="off"></label>
       <label><span data-en="Class">藥品分類</span><select id="aCls"></select></label>
       <label><span data-en="Dosage form">劑型</span><select id="aForm"></select></label>
       <label><span data-en="Single or combination">單複方</span><select id="aSingle"><option value="" data-en="All">不限</option><option value="單方" data-en="Single ingredient">單方</option><option value="複方" data-en="Combination">複方</option></select></label>
@@ -179,18 +319,20 @@
       <label><span data-en="Made in">製造國別</span><select id="aCountry"></select></label>
       <label><span data-en="Licence">許可證狀態</span><select id="aLic"><option value="" data-en="All">不限</option><option value="valid" data-en="Valid">有效</option><option value="gone" data-en="Cancelled or revoked">已註銷／廢止</option></select></label>
       <label><span data-en="Packaging">包裝</span><select id="aPkg"><option value="" data-en="All">不限</option><option value="g0" data-en="Foil packs only (G0)">只看鋁箔包裝（G0）</option><option value="not" data-en="Leave foil packs out">排除鋁箔包裝</option></select></label>
-      <label><span data-en="Vendor or manufacturer">藥商或製造廠</span><input id="aWho" autocomplete="off"></label>
+      <label class="wide2"><span data-en="Vendor or manufacturer">藥商或製造廠</span><input id="aWho" autocomplete="off"></label>
       <div class="checks">
         <label class="check"><input type="checkbox" id="aRules"> <span data-en="Has NHI rules">有給付規定</span></label>
         <label class="check"><input type="checkbox" id="aPhoto"> <span data-en="Has a photo">有外觀照片</span></label>
         <span class="spacer"></span>
         <button type="button" class="small" id="advClear" data-en="Clear filters">清除篩選</button>
       </div>
+      <div class="adv-foot"><button type="button" id="advClear2" data-en="Clear">清除</button><button type="button" class="primary" id="advDone2"><span data-en="Show results">看結果</span> <span id="advN"></span></button></div>
     </div>
     <div class="chips" id="chips"></div>
     <p class="dr-tips" id="tips"></p>
   </section>
 
+  <div id="ovWrap"></div>
   <div class="dr-status" id="status" aria-live="polite"></div>
   <div id="out"><div class="loading" data-en="Loading the NHI drug list (about 3 MB; cached after the first visit)…">正在載入健保藥品資料（約 3 MB，第一次之後會快取）…</div></div>
 
@@ -213,18 +355,22 @@ const KEY = 'drugs';
 const ADV = { pmin: '', pmax: '', from: '', to: '', atc: '', cls: '', form: '', single: '', cat: '', ctrl: '', country: '', lic: '', pkg: '', who: '', rules: false, photo: false };
 const DEF = { scope: 'paid', sort: 'rel', advOpen: false, adv: ADV };
 let S = RT.merge(DEF, RT.load(KEY, {}));
-// earlier versions kept a few filters at the top level
 // scopes before the four-way split: 'all' (with delisted) and 'lic' (everything) both become 'every'
 if (S.scope === 'all' || (S.scope === 'lic' && !S.scope4)) S.scope = 'every';
 S.scope4 = true;
+// earlier versions kept a few filters at the top level
 ['cls', 'form'].forEach((k) => { if (S[k]) { S.adv[k] = S[k]; } delete S[k]; });
 if (S.ctrl === true) S.adv.ctrl = 'any'; if (S.single === true) S.adv.single = '單方'; delete S.ctrl; delete S.single;
 let Q = '', chips = [];            // chips: [{k: 'group'|'atc', v}]
 let nhiD = null, fdaD = null, extraD = null, rulesD = null, shown = 50, open = new Set();
+const tabOf = new Map();           // the tab each open drug shows
 const $ = (id) => document.getElementById(id);
+const phone = () => matchMedia('(max-width: 760px)').matches;
 const fmtP = (p) => (p ? p.toLocaleString('en-US', { minimumFractionDigits: p < 100 ? 2 : 0, maximumFractionDigits: 2 }) : '0');
 const CLS = ['研發廠', 'BA/BE學名藥', '一般學名藥', '生物製劑'];
 const CLS_EN = { '研發廠': 'Originator', 'BA/BE學名藥': 'BA/BE generic', '一般學名藥': 'Generic', '生物製劑': 'Biologic' };
+const CLS_KEY = { '研發廠': 'orig', 'BA/BE學名藥': 'babe', '一般學名藥': 'gen', '生物製劑': 'bio' };
+const clsName = (c) => (RT.lang === 'en' ? CLS_EN[c] || c : c);
 const COUNTRY = { TW: '台灣', IN: '印度', JP: '日本', DE: '德國', US: '美國', IT: '義大利', CN: '中國', CH: '瑞士', FR: '法國', GB: '英國', ES: '西班牙', BE: '比利時', KR: '韓國', AT: '奧地利', IE: '愛爾蘭', NL: '荷蘭', SE: '瑞典', DK: '丹麥', AU: '澳洲', CA: '加拿大', PR: '波多黎各', SI: '斯洛維尼亞', PT: '葡萄牙', GR: '希臘', HU: '匈牙利', PL: '波蘭', IL: '以色列', SG: '新加坡', TH: '泰國', MY: '馬來西亞', ID: '印尼', VN: '越南', FI: '芬蘭', NO: '挪威', CZ: '捷克', HR: '克羅埃西亞', BR: '巴西', AR: '阿根廷', MX: '墨西哥', TR: '土耳其', PK: '巴基斯坦', KE: '肯亞', ZA: '南非' };
 const countryName = (c) => (RT.lang === 'en' ? c : (COUNTRY[c] ? `${COUNTRY[c]} ${c}` : c));
 
@@ -233,6 +379,12 @@ function licOf(r) { return fdaD && r[N.licId] ? fdaD.byLicId.get(r[N.licId]) || 
 // the same product in another pack: same first eight characters of the NHI code (…00 and …G0)
 const siblings = (r) => { const p = r[N.code].slice(0, 8); return ['00', 'G0'].map((s) => p + s).filter((c) => c !== r[N.code] && nhiD.byCode.has(c)).map((c) => nhiD.byCode.get(c)); };
 const hasFoilTwin = (r) => !TW.isFoil(r[N.code]) && nhiD.byCode.has(r[N.code].slice(0, 8) + 'G0');
+const mcp = (p) => (/^https?:/.test(p) ? p : (extraD ? extraD.base : 'https://mcp.fda.gov.tw/') + p);
+function looksOf(f) { return f && extraD ? extraD.looks[f[F.licence]] || [] : []; }
+function photoOf(r) {
+  const looks = looksOf(licOf(r)); if (!looks.length) return '';
+  const i = extraD.lookCols.indexOf('photo'); const l = looks.find((x) => x[i]); return l ? mcp(l[i]) : '';
+}
 let hay = null;
 function haystack() {
   if (hay) return hay;
@@ -253,12 +405,32 @@ function licOnlyRows() {
 const ATC_RE = /^[a-z]\d{2}([a-z]([a-z](\d{1,2})?)?)?$/;
 function tokens() { return TW.fold(Q).split(/\s+/).filter(Boolean); }
 
+/* ---------- dosage-form pictograms (when there is no photo) ---------- */
+const ICON = {
+  tab: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="7.5"/><path d="M5.5 12h13"/></svg>',
+  cap: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3.5" y="8" width="17" height="8" rx="4" transform="rotate(-35 12 12)"/><path d="m9.2 7.9 4.6 6.5"/></svg>',
+  inj: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m17 3 4 4M19 5l-9.5 9.5M14 6l4 4M7 13l4 4M5.5 18.5 3 21M8.5 11.5 5 15l4 4 3.5-3.5"/></svg>',
+  liq: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 3h6M10 3v4l-3 3v10a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V10l-3-3V3"/><path d="M7 14h10"/></svg>',
+  tube: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M6 21h12l-2-14H8z"/><path d="M10 7V4h4v3"/></svg>',
+  inh: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 3h6v10h4v5a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3V5a2 2 0 0 1 2-2z"/></svg>',
+  drop: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>',
+};
+function formIcon(form) {
+  const f = String(form || '');
+  if (/膠囊/.test(f)) return ICON.cap;
+  if (/注射|輸注|針/.test(f)) return ICON.inj;
+  if (/吸入|噴/.test(f)) return ICON.inh;
+  if (/點眼|點耳|點鼻|滴/.test(f)) return ICON.drop;
+  if (/膏|凝膠|乳|貼/.test(f)) return ICON.tube;
+  if (/液|糖漿|懸|酏|溶|乳劑/.test(f)) return ICON.liq;
+  return ICON.tab;
+}
+
 /* ---------- advanced filters ---------- */
 const A = () => S.adv;
 const advCount = () => Object.entries(A()).filter(([, v]) => v !== '' && v !== false).length;
 const needsLic = () => !!(A().cat || A().ctrl || A().country || A().lic);
 const num = (v) => { const n = parseFloat(String(v).replace(/,/g, '')); return Number.isFinite(n) ? n : null; };
-// licence-level tests, shared by NHI items (through their licence) and licences without an NHI code
 function licPasses(f) {
   const a = A();
   if (!needsLic()) return true;
@@ -286,7 +458,7 @@ function passes(r) {
   if (a.who) { const w = TW.fold(a.who); if (!TW.fold(r[N.vendor] + ' ' + r[N.maker]).includes(w)) return false; }
   if (a.rules && !r[N.ruleChapters]) return false;
   if (needsLic() && !licPasses(licOf(r))) return false;
-  if (a.photo) { const f = licOf(r); if (!extraD || !f || !extraD.looks[f[F.licence]]) return false; }
+  if (a.photo && !photoOf(r)) return false;
   return true;
 }
 
@@ -336,11 +508,22 @@ function search() {
     const L = licOnlyRows();
     for (let i = 0; i < L.length; i++) {
       if (!licPasses(L[i])) continue;
-      if (A().photo && !(extraD && extraD.looks[L[i][F.licence]])) continue;
+      if (A().photo && !looksOf(L[i]).length) continue;
       if (toks.every((t) => licHay[i].includes(t))) lic.push(L[i]);
     }
   }
   return { rows: out.map((x) => x.r), lic };
+}
+
+/* ---------- price scale shared by the overview and the cards ---------- */
+let scale = null;
+function makeScale(rows) {
+  const ps = rows.map((r) => r[N.price]).filter((p) => p > 0).sort((a, b) => a - b);
+  if (!ps.length) return null;
+  const lo = ps[0], hi = ps[ps.length - 1], log = hi / lo > 20;
+  const f = (p) => (log ? Math.log(p) : p);
+  const pos = (p) => (hi === lo ? 0.5 : (f(p) - f(lo)) / (f(hi) - f(lo)));
+  return { ps, lo, hi, log, pos, med: ps[Math.floor(ps.length / 2)] };
 }
 
 /* ---------- render ---------- */
@@ -353,51 +536,166 @@ function hl(text) {
   for (let i = 0; i < s.length; i++) { if (marks[i] !== inM) { o += marks[i] ? '<mark>' : '</mark>'; inM = marks[i]; } o += esc(s[i]); }
   return o + (inM ? '</mark>' : '');
 }
-function priceCell(r) {
-  if (r[N.price] > 0) return `<b>$${fmtP(r[N.price])}</b><small>${T('自 ', 'since ')}${esc(r[N.priceSince] || '—')}</small>`;
-  return `<span class="tag off">${T('已取消給付', 'Delisted')}</span><small>${r[N.lastPaidPrice] ? T(`最後 $${fmtP(r[N.lastPaidPrice])}`, `last $${fmtP(r[N.lastPaidPrice])}`) : ''}${r[N.priceSince] ? ' · ' + esc(r[N.priceSince]) + T(' 起', '') : ''}</small>`;
-}
+const clsTag = (c) => (c ? `<span class="tag"><span class="dot k-${CLS_KEY[c] || 'none'}"></span>${esc(clsName(c))}</span>` : '');
 const pkgTag = (r) => (TW.isFoil(r[N.code]) ? `<span class="tag pkg" title="${T('健保代號末兩碼 G0', 'NHI code ends in G0')}">${T('鋁箔包裝', 'Foil pack')}</span>`
   : hasFoilTwin(r) ? `<span class="tag pkg" title="${T('同品項另有 G0 鋁箔包裝代號', 'A G0 foil-pack code exists for this product')}">${T('一般包裝', 'Standard pack')}</span>` : '');
 function ctrlTag(f) {
   if (!f || !f[F.controlled]) return '';
   return TW.ctrlLevel(f[F.controlled]) ? `<span class="tag ctrl">${esc(f[F.controlled])}</span>` : `<span class="tag">${esc(f[F.controlled])}</span>`;
 }
+function thumbHTML(r) {
+  const src = photoOf(r);
+  return `<span class="thumb">${src ? `<img src="${esc(src)}" alt="" loading="lazy" decoding="async">` : formIcon(r[N.form])}</span>`;
+}
 function rowHTML(r) {
   const f = licOf(r);
-  const tags = [
-    r[N.class] ? `<span class="tag">${esc(RT.lang === 'en' ? CLS_EN[r[N.class]] || r[N.class] : r[N.class])}</span>` : '',
-    pkgTag(r), ctrlTag(f),
-    f && f[F.status] ? `<span class="tag off">${T('許可證', 'Licence ')}${esc(f[F.status])}</span>` : '',
-  ].join('');
   const id = r[N.code];
+  const tags = [clsTag(r[N.class]), pkgTag(r), ctrlTag(f), f && f[F.status] ? `<span class="tag off">${T('許可證', 'Licence ')}${esc(f[F.status])}</span>` : ''].join('');
+  const price = r[N.price] > 0
+    ? `<b>$${fmtP(r[N.price])}</b>${scale && scale.ps.length > 1 ? `<span class="pos" title="${T('在這次結果中的價格位置', 'Where the price sits in these results')}"><i style="left:${(scale.pos(r[N.price]) * 100).toFixed(1)}%"></i></span>` : ''}<small>${esc(r[N.priceSince] || '')}</small>`
+    : `<span class="tag off">${T('已取消給付', 'Delisted')}</span>${r[N.lastPaidPrice] ? `<small>${T('最後', 'last')} $${fmtP(r[N.lastPaidPrice])}</small>` : ''}`;
   return `<li data-code="${esc(id)}"><button type="button" class="row" aria-expanded="${open.has(id)}" aria-controls="d-${esc(id)}">
-    <span><span class="nm">${hl(r[N.zh] || r[N.en])}</span> <span class="en">${r[N.zh] ? hl(r[N.en]) : ''}</span></span>
-    <span class="pr">${priceCell(r)}</span>
-    <span class="meta"><span class="cd">${hl(id)}</span>${r[N.atc] ? `<span>ATC ${hl(r[N.atc])}</span>` : ''}<span>${hl(r[N.ingredient])}</span>${r[N.form] ? `<span>${esc(r[N.form])}</span>` : ''}${tags}</span>
+    ${thumbHTML(r)}
+    <span class="main"><span class="nm">${hl(r[N.zh] || r[N.en])} <span class="en">${r[N.zh] ? hl(r[N.en]) : ''}</span></span>
+      <span class="meta"><span class="cd">${hl(id)}</span>${r[N.atc] ? `<span>ATC ${hl(r[N.atc])}</span>` : ''}<span>${hl(r[N.ingredient])}</span>${r[N.form] ? `<span>${esc(r[N.form])}</span>` : ''}</span>
+      ${tags ? `<span class="tags">${tags}</span>` : ''}</span>
+    <span class="pr">${price}</span>
   </button>${open.has(id) ? detailHTML(r) : ''}</li>`;
 }
+
+/* ---------- overview of the results ---------- */
+function overviewHTML(rows) {
+  if (!rows.length) return '';
+  const sc = scale;
+  const paid = rows.filter((r) => r[N.price] > 0).length;
+  const byCls = {}; rows.forEach((r) => { const k = CLS_KEY[r[N.class]] ? r[N.class] : ''; byCls[k] = (byCls[k] || 0) + 1; });
+  const ctrl = {}; if (fdaD) rows.forEach((r) => { const lv = TW.ctrlLevel((licOf(r) || [])[F.controlled]); if (lv) ctrl[lv] = (ctrl[lv] || 0) + 1; });
+  const pct = (n) => ((n / rows.length) * 100).toFixed(2) + '%';
+  // price dots: every reimbursed item, on a log scale when prices span more than 20×
+  let strip = '';
+  if (sc) {
+    // dots as positioned elements so they stay round at any width; a little vertical jitter shows where they pile up
+    const dots = sc.ps.length > 1500 ? sc.ps.filter((_, i) => i % Math.ceil(sc.ps.length / 1500) === 0) : sc.ps;
+    const left = (p) => (sc.pos(p) * 100).toFixed(2) + '%';
+    strip = `<div class="strip"><div class="track" role="img" aria-label="${T(`支付價分布：最低 $${fmtP(sc.lo)}、中位數 $${fmtP(sc.med)}、最高 $${fmtP(sc.hi)}`, `Prices: lowest $${fmtP(sc.lo)}, median $${fmtP(sc.med)}, highest $${fmtP(sc.hi)}`)}">${dots.map((p, i) => `<i style="left:${left(p)};top:${10 + ((i * 7919) % 13)}px"></i>`).join('')}<b class="med" style="left:${left(sc.med)}"></b></div>
+      <div class="ends"><span>$${fmtP(sc.lo)}</span><span>${T('中位數', 'median')} <b>$${fmtP(sc.med)}</b>${sc.log ? T('（對數刻度）', ' (log scale)') : ''}</span><span>$${fmtP(sc.hi)}</span></div></div>`;
+  }
+  const clsBar = ['研發廠', 'BA/BE學名藥', '一般學名藥', '生物製劑', ''].filter((c) => byCls[c]).map((c) => ({ c, n: byCls[c], key: CLS_KEY[c] || 'none', name: c ? clsName(c) : T('未分類', 'Unclassified') }));
+  const on = A().cls;
+  const open = !phone();
+  return `<details class="ov" id="ov"${open ? ' open' : ''}><summary><span><b>${rows.length.toLocaleString()}</b> ${T('筆', 'items')}</span>${sc ? `<span>${T('中位數', 'median')} <b>$${fmtP(sc.med)}</b></span><span>$${fmtP(sc.lo)} – $${fmtP(sc.hi)}</span>` : ''}<span>${T('給付中', 'reimbursed')} <b>${paid}</b></span><span class="car" aria-hidden="true">▾</span></summary>
+    <div class="ov-body">
+      ${sc ? `<span class="k">${T('支付價', 'Price')}</span>${strip}` : ''}
+      <span class="k">${T('藥品分類', 'Class')}</span><div><div class="bar">${clsBar.map((b) => `<button type="button" class="k-${b.key}" style="width:${pct(b.n)}" data-ovcls="${esc(b.c)}" title="${esc(b.name)} ${b.n}" aria-label="${esc(b.name)} ${b.n}"></button>`).join('')}</div>
+        <div class="legend">${clsBar.map((b) => `<button type="button" data-ovcls="${esc(b.c)}" aria-pressed="${on === b.c && !!b.c}"><span class="dot k-${b.key}"></span>${esc(b.name)} <b>${b.n}</b></button>`).join('')}</div></div>
+      ${S.scope === 'every' || S.scope === 'delisted' ? `<span class="k">${T('給付狀態', 'Status')}</span><div><div class="bar"><button type="button" class="k-paid" style="width:${pct(paid)}" data-ovscope="paid" aria-label="${T('給付中', 'Reimbursed')} ${paid}"></button><button type="button" class="k-off" style="width:${pct(rows.length - paid)}" data-ovscope="delisted" aria-label="${T('已取消給付', 'Delisted')} ${rows.length - paid}"></button></div>
+        <div class="legend"><button type="button" data-ovscope="paid"><span class="dot k-paid"></span>${T('給付中', 'Reimbursed')} <b>${paid}</b></button><button type="button" data-ovscope="delisted"><span class="dot k-off"></span>${T('已取消給付', 'Delisted')} <b>${rows.length - paid}</b></button></div></div>` : ''}
+      ${Object.keys(ctrl).length ? `<span class="k">${T('管制藥品', 'Controlled')}</span><div class="legend" style="margin:0">${Object.entries(ctrl).sort().map(([lv, n]) => `<button type="button" data-ovctrl="${lv}" aria-pressed="${A().ctrl === lv}"><span class="tag ctrl">${T(`第${'一二三四'[lv - 1]}級`, `Schedule ${lv}`)}</span> <b>${n}</b></button>`).join('')}</div>` : ''}
+    </div></details>`;
+}
+
+/* ---------- detail ---------- */
+const fact = (k, v, wide) => (v ? `<div class="fact${wide ? ' wide' : ''}"><span class="k">${k}</span><span class="v">${v}</span></div>` : '');
 const kv = (rows) => `<dl class="kv">${rows.filter((x) => x && x[1]).map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`;
-const mcp = (p) => (/^https?:/.test(p) ? p : (extraD ? extraD.base : 'https://mcp.fda.gov.tw/') + p);
-function looksHTML(f) {
-  if (!f) return '';
-  if (!extraD) return `<div class="blk"><h3>${T('外觀', 'Appearance')}</h3><p class="hint">${T('外觀資料載入中…', 'Loading appearance data…')}</p></div>`;
+function ruleFile(r, c) { const files = r[N.ruleFiles] ? r[N.ruleFiles].split(',') : []; return files.find((x) => x.startsWith(c + '_')) || ''; }
+function zoomBtn(src, cap, inner) { return `<button type="button" class="zoom" data-photo="${esc(src)}" data-cap="${esc(cap)}" aria-label="${T('放大照片', 'Enlarge photo')}" title="${T('點一下放大', 'Click to enlarge')}">${inner}</button>`; }
+const TABS = [['sum', '概要', 'Overview'], ['price', '價格', 'Price'], ['rules', '給付規定', 'NHI rules'], ['looks', '外觀與仿單', 'Looks & leaflet'], ['lic', '許可證', 'Licence']];
+function detailHTML(r) {
+  const f = licOf(r), id = r[N.code], tab = tabOf.get(id) || 'sum';
+  const photo = photoOf(r);
+  const statusTags = [
+    r[N.price] > 0 ? `<span class="tag ok">${T('給付中', 'Reimbursed')}</span>` : `<span class="tag off">${T('已取消給付', 'Delisted')}</span>`,
+    clsTag(r[N.class]), ctrlTag(f), pkgTag(r),
+    f ? (f[F.status] ? `<span class="tag off">${T('許可證', 'Licence ')}${esc(f[F.status])}</span>` : `<span class="tag ok">${T('許可證有效', 'Licence valid')}</span>`) : '',
+  ].join('');
+  const price = r[N.price] > 0 ? `<b>$${fmtP(r[N.price])}</b><small>${T('自 ', 'since ')}${esc(r[N.priceSince] || '—')}</small>`
+    : `<b style="color:var(--warn-text)">${T('取消給付', 'Delisted')}</b><small>${esc(r[N.priceSince] || '')}${r[N.lastPaidPrice] ? T(` · 最後 $${fmtP(r[N.lastPaidPrice])}`, ` · last $${fmtP(r[N.lastPaidPrice])}`) : ''}</small>`;
+  const tabs = TABS.filter(([k]) => k !== 'rules' || r[N.ruleChapters]);
+  return `<div class="detail" id="d-${esc(id)}" data-code="${esc(id)}">
+    <div class="d-back"><button type="button" data-act="close">← ${T('返回', 'Back')}</button><span>${esc(r[N.zh] || r[N.en])}</span></div>
+    <div class="d-head">
+      <div class="d-pic">${photo ? zoomBtn(photo, (r[N.zh] || r[N.en]), `<img src="${esc(photo)}" alt="${esc(T('藥品外觀照片', 'Photo of the drug'))}" decoding="async">`) : formIcon(r[N.form])}</div>
+      <div class="d-title"><h2>${esc(r[N.zh] || r[N.en])}</h2>${r[N.zh] ? `<div class="en">${esc(r[N.en])}</div>` : ''}<div class="tags">${statusTags}</div></div>
+      <div class="d-price">${price}</div>
+    </div>
+    <div class="tabs" role="tablist">${tabs.map(([k, zh, en]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${k === tab}">${T(zh, en)}</button>`).join('')}</div>
+    <div class="tabp" role="tabpanel" data-panel="${tab}">${tabHTML(r, tab)}</div>
+  </div>`;
+}
+function tabHTML(r, tab) {
+  const f = licOf(r);
+  if (tab === 'sum') {
+    const sibs = siblings(r);
+    const pkg = TW.isFoil(r[N.code]) ? T('鋁箔包裝（代號末兩碼 G0）', 'Foil pack (code ends in G0)') : hasFoilTwin(r) ? T('一般包裝（同品項另有 G0 鋁箔包裝）', 'Standard pack (a G0 foil pack also exists)') : '';
+    return `<div class="facts">
+      ${fact(T('成分', 'Ingredient'), esc(r[N.ingredient]), true)}
+      ${fact(T('健保代號', 'NHI code'), `<span class="cd">${esc(r[N.code])}</span>`)}
+      ${fact('ATC', r[N.atc] ? `<span class="cd">${esc(r[N.atc])}</span>` : '')}
+      ${fact(T('劑型', 'Form'), esc(r[N.form]) + (r[N.strength] ? ' · ' + esc(r[N.strength]) : ''))}
+      ${fact(T('單複方', 'Single/combo'), esc(r[N.single]))}
+      ${fact(T('首次收載', 'First listed'), esc(r[N.firstListed]))}
+      ${fact(T('藥品分類', 'Class'), r[N.class] ? `<span class="dot k-${CLS_KEY[r[N.class]] || 'none'}"></span> ${esc(clsName(r[N.class]))}` : '')}
+      ${fact(T('包裝', 'Pack'), pkg ? esc(pkg) : '')}
+      ${fact(T('同品項其他包裝', 'Same product, other pack'), sibs.length ? `<span class="sib">${sibs.map((s) => `<button type="button" data-go="${esc(s[N.code])}">${esc(s[N.code])} ${s[N.price] > 0 ? '$' + fmtP(s[N.price]) : T('已取消給付', 'delisted')}</button>`).join('')}</span>` : '')}
+      ${fact(T('分類分組', 'Price group'), esc(r[N.group]), true)}
+      ${fact(T('藥商', 'Vendor'), esc(r[N.vendor]))}
+      ${fact(T('製造廠', 'Manufacturer'), esc(r[N.maker]))}
+      ${f ? fact(T('適應症', 'Indication'), `<span class="ind">${esc(f[F.indication])}</span>`, true) : ''}
+    </div>
+    ${pkg ? `<p class="note">${T('G0 與 00 的對應是依健保資料推得（G0 品項為鋁箔包裝，支付價適用較高的最低價），以健保署公告為準。', 'The G0 / 00 pairing is worked out from the NHI data (G0 items are foil packs with a higher price floor); the NHIA’s own notices take precedence.')}</p>` : ''}
+    <div class="acts">
+      ${r[N.group] ? `<button type="button" data-act="group">${T('同分組比價', 'Same price group')}</button>` : ''}
+      ${r[N.atc] ? `<button type="button" data-act="atc">${T('同 ATC 藥品', 'Same ATC')} (${esc(r[N.atc])})</button>` : ''}
+      ${r[N.atc] && r[N.atc].length > 5 ? `<button type="button" data-act="atc5">${T('同藥理分類', 'Same class')} (${esc(r[N.atc].slice(0, 5))})</button>` : ''}
+      <button type="button" data-act="copy">${T('複製摘要', 'Copy summary')}</button>
+      <button type="button" data-act="codelist">${T('加入代碼清單', 'Add to code list')}</button>
+    </div>`;
+  }
+  if (tab === 'price') {
+    return `<h3 class="sec">${T('價格歷程', 'Price history')}</h3><div class="chart" data-chart><p class="hint">${T('載入中…', 'Loading…')}</p></div>
+      ${r[N.group] ? `<h3 class="sec">${T('同分組比價', 'Same price group')} <small>${esc(r[N.group])}</small></h3>${groupBars(r)}` : ''}`;
+  }
+  if (tab === 'rules') {
+    const chapters = r[N.ruleChapters].split(',').filter(Boolean);
+    return `<div data-rulebox><p class="hint">${T('載入給付規定…', 'Loading the rules…')}</p></div>
+      <div class="links">${chapters.map((c) => { const fl = ruleFile(r, c); return fl ? `<a href="${TW.ruleUrl(fl)}" target="_blank" rel="noopener">${T('給付規定', 'Rules')} ${esc(c)} PDF ↗</a>` : ''; }).join('')}</div>`;
+  }
+  if (tab === 'looks') return looksTab(r, f);
+  if (tab === 'lic') return licTab(f);
+  return '';
+}
+// every item in the same NHI price group, cheapest first, this one highlighted
+function groupBars(r, all) {
+  const items = nhiD.rows.filter((x) => x[N.group] === r[N.group] && (x[N.price] > 0 || x === r)).sort((a, b) => a[N.price] - b[N.price]);
+  if (items.length < 2) return `<p class="hint">${T('這個分組只有這一項。', 'This is the only item in its group.')}</p>`;
+  const max = Math.max(...items.map((x) => x[N.price])) || 1;
+  const LIMIT = 24, list = all || items.length <= LIMIT ? items : items.slice(0, LIMIT - 1).concat(items.includes(r) && items.indexOf(r) >= LIMIT - 1 ? [r] : []);
+  return `<div class="cmp" role="list">${list.map((x) => `<div class="ci${x === r ? ' me' : ''}" role="listitem"><span class="nm" title="${esc(x[N.zh] || x[N.en])}"><button type="button" data-go="${esc(x[N.code])}">${esc(x[N.zh] || x[N.en])}</button></span><span class="track"><i class="k-${CLS_KEY[x[N.class]] || 'none'}" style="width:${((x[N.price] / max) * 100).toFixed(1)}%"></i></span><span class="v">${x[N.price] > 0 ? '$' + fmtP(x[N.price]) : T('取消', 'off')}</span></div>`).join('')}</div>
+    ${list.length < items.length ? `<button type="button" class="small cmp-more" data-act="allgroup">${T(`顯示全部 ${items.length} 項`, `Show all ${items.length}`)}</button>` : ''}
+    <div class="legend" style="margin-top:8px">${CLS.map((c) => `<span><span class="dot k-${CLS_KEY[c]}"></span> ${esc(clsName(c))}</span>`).join('')}</div>`;
+}
+function looksTab(r, f) {
+  if (!f) return `<p class="hint">${fdaD ? T('找不到對應的許可證資料。', 'No matching licence record.') : T('許可證資料載入中…', 'Loading licence data…')}</p>`;
+  if (!extraD) return `<p class="hint">${T('外觀資料載入中…', 'Loading appearance data…')}</p>`;
   const looks = extraD.looks[f[F.licence]] || [], lf = extraD.leaflets[f[F.licence]];
   const C = {}; extraD.lookCols.forEach((c, i) => (C[c] = i));
-  const looksPart = looks.length ? looks.map((l) => `<div class="looks"><figure>${l[C.photo] ? `<button type="button" class="zoom" data-photo="${esc(mcp(l[C.photo]))}" data-cap="${esc([f[F.zh] || f[F.en], [l[C.shape], l[C.colour], l[C.size] ? l[C.size] + ' mm' : '', [l[C.mark1], l[C.mark2]].filter(Boolean).join(' / ')].filter(Boolean).join(' · ')].join('\n'))}" aria-label="${T('放大照片', 'Enlarge photo')}" title="${T('點一下放大', 'Click to enlarge')}"><img src="${esc(mcp(l[C.photo]))}" alt="${esc(T('藥品外觀照片', 'Photo of the drug'))}" loading="lazy" decoding="async"></button>` : `<span>${T('沒有照片', 'No photo')}</span>`}</figure>${kv([
-    [T('形狀', 'Shape'), esc(l[C.shape])], [T('特殊劑型', 'Special form'), esc(l[C.special])], [T('顏色', 'Colour'), esc(l[C.colour])],
-    [T('氣味', 'Smell'), esc(l[C.smell])], [T('刻痕', 'Score line'), esc(l[C.score])], [T('尺寸', 'Size'), l[C.size] ? esc(l[C.size]) + ' mm' : ''],
-    [T('標註', 'Markings'), [l[C.mark1], l[C.mark2]].filter(Boolean).map(esc).join(' / ')],
-  ])}</div>`).join('') : `<p class="hint" style="margin:0">${T('食藥署外觀資料集沒有這張許可證的外觀資料。', 'The TFDA appearance dataset has no entry for this licence.')}</p>`;
+  const part = looks.length ? looks.map((l) => {
+    const cap = [f[F.zh] || f[F.en], [l[C.shape], l[C.colour], l[C.size] ? l[C.size] + ' mm' : '', [l[C.mark1], l[C.mark2]].filter(Boolean).join(' / ')].filter(Boolean).join(' · ')].join('\n');
+    return `<div class="looks"><figure>${l[C.photo] ? zoomBtn(mcp(l[C.photo]), cap, `<img src="${esc(mcp(l[C.photo]))}" alt="${esc(T('藥品外觀照片', 'Photo of the drug'))}" loading="lazy" decoding="async">`) : `<span>${T('沒有照片', 'No photo')}</span>`}</figure>${kv([
+      [T('形狀', 'Shape'), esc(l[C.shape])], [T('特殊劑型', 'Special form'), esc(l[C.special])], [T('顏色', 'Colour'), esc(l[C.colour])],
+      [T('氣味', 'Smell'), esc(l[C.smell])], [T('刻痕', 'Score line'), esc(l[C.score])], [T('尺寸', 'Size'), l[C.size] ? esc(l[C.size]) + ' mm' : ''],
+      [T('標註', 'Markings'), [l[C.mark1], l[C.mark2]].filter(Boolean).map(esc).join(' / ')],
+    ])}</div>`;
+  }).join('') : `<p class="hint" style="margin:0">${T('食藥署外觀資料集沒有這張許可證的外觀資料。', 'The TFDA appearance dataset has no entry for this licence.')}</p>`;
   const link = (p, label) => `<a href="${esc(mcp(p))}" target="_blank" rel="noopener">${label} ↗</a>`;
   const links = lf ? [...lf[0].map((p, i) => link(p, /^exportpdf\//.test(p) ? T('許可證資料', 'Licence record') : T('仿單', 'Leaflet') + (lf[0].length > 1 ? ' ' + (i + 1) : ''))), ...lf[1].map((p, i) => link(p, T('外盒', 'Carton') + (lf[1].length > 1 ? ' ' + (i + 1) : '')))].join('') : '';
-  return `<div class="blk"><h3>${T('外觀', 'Appearance')}</h3>${looksPart}${links ? `<div class="links">${links}</div>` : ''}</div>`;
+  return part + (links ? `<div class="links">${links}</div>` : '');
 }
-function licBlock(f) {
-  if (!f) return `<div class="blk"><h3>${T('食藥署許可證', 'TFDA licence')}</h3><p class="hint">${fdaD ? T('找不到對應的許可證資料。', 'No matching licence record.') : T('許可證資料載入中…', 'Loading licence data…')}</p></div>`;
+function licTab(f) {
+  if (!f) return `<p class="hint">${fdaD ? T('找不到對應的許可證資料。', 'No matching licence record.') : T('許可證資料載入中…', 'Loading licence data…')}</p>`;
   const st = f[F.status] ? `<span class="tag off">${esc(f[F.status])}</span> ${esc(f[F.cancelDate])} ${esc(f[F.cancelReason])}` : `<span class="tag ok">${T('有效', 'Valid')}</span> ${T('至 ', 'until ')}${esc(f[F.validUntil] || '—')}`;
-  return `<div class="blk"><h3>${T('食藥署許可證', 'TFDA licence')}</h3>${kv([
-    [T('字號', 'Number'), `${esc(f[F.licence])}`],
+  return kv([
+    [T('字號', 'Number'), esc(f[F.licence])],
     [T('狀態', 'Status'), st],
     [T('類別', 'Category'), esc(f[F.category])],
     [T('管制藥品', 'Controlled'), esc(f[F.controlled])],
@@ -408,106 +706,62 @@ function licBlock(f) {
     [T('製造廠', 'Manufacturer'), esc(f[F.maker]) + (f[F.country] ? ` (${esc(countryName(f[F.country]))})` : '')],
     [T('發證日期', 'Issued'), esc(f[F.issued])],
     f[F.licId] ? [T('食藥署查詢', 'TFDA record'), `<a href="${TW.licUrl(f[F.licId])}" target="_blank" rel="noopener">${T('藥品許可證查詢 ↗', 'Licence lookup ↗')}</a>`] : null,
-  ])}</div>`;
-}
-function ruleFile(r, c) { const files = r[N.ruleFiles] ? r[N.ruleFiles].split(',') : []; return files.find((x) => x.startsWith(c + '_')) || ''; }
-function detailHTML(r) {
-  const f = licOf(r);
-  const chapters = r[N.ruleChapters] ? r[N.ruleChapters].split(',').filter(Boolean) : [];
-  const rules = chapters.map((c) => { const fl = ruleFile(r, c); return fl ? `<a href="${TW.ruleUrl(fl)}" target="_blank" rel="noopener">${esc(c)} ↗</a>` : esc(c); }).join('　') +
-    (chapters.length ? ` <button type="button" data-act="rules">${T('顯示全文', 'Show full text')}</button>` : '');
-  const price = r[N.price] > 0 ? `$${fmtP(r[N.price])} ${T('（自 ', '(since ')}${esc(r[N.priceSince] || '—')}${T('）', ')')}`
-    : `<span class="tag off">${T('已取消給付', 'Delisted')}</span> ${T('自 ', 'since ')}${esc(r[N.priceSince] || '—')}${r[N.lastPaidPrice] ? T(`，最後支付價 $${fmtP(r[N.lastPaidPrice])}（${r[N.lastPaidSince]} 起）`, `; last price $${fmtP(r[N.lastPaidPrice])} (from ${r[N.lastPaidSince]})`) : ''}`;
-  const sibs = siblings(r);
-  const pkg = TW.isFoil(r[N.code]) ? T('鋁箔包裝（代號末兩碼 G0）', 'Foil pack (code ends in G0)') : hasFoilTwin(r) ? T('一般包裝（同品項另有 G0 鋁箔包裝）', 'Standard pack (a G0 foil pack also exists)') : '';
-  return `<div class="detail" id="d-${esc(r[N.code])}">
-    <div><div class="blk"><h3>${T('健保用藥品項', 'NHI drug list')}</h3>${kv([
-      [T('健保代號', 'NHI code'), `<span class="cd">${esc(r[N.code])}</span>`],
-      [T('支付價', 'Price'), price],
-      [T('首次收載', 'First listed'), esc(r[N.firstListed])],
-      [T('包裝', 'Pack'), pkg ? esc(pkg) : ''],
-      [T('同品項其他包裝', 'Same product, other pack'), sibs.length ? `<span class="sib">${sibs.map((s) => `<button type="button" data-go="${esc(s[N.code])}">${esc(s[N.code])} ${s[N.price] > 0 ? '$' + fmtP(s[N.price]) : T('已取消給付', 'delisted')}</button>`).join('')}</span>` : ''],
-      ['ATC', r[N.atc] ? `<span class="cd">${esc(r[N.atc])}</span>` : ''],
-      [T('成分', 'Ingredient'), esc(r[N.ingredient])],
-      [T('規格', 'Strength'), esc(r[N.strength])],
-      [T('單複方', 'Single/combo'), esc(r[N.single])],
-      [T('劑型', 'Form'), esc(r[N.form])],
-      [T('藥品分類', 'Class'), esc(r[N.class])],
-      [T('分類分組', 'Price group'), esc(r[N.group])],
-      [T('給付規定', 'NHI rules'), rules],
-      [T('藥商', 'Vendor'), esc(r[N.vendor])],
-      [T('製造廠', 'Manufacturer'), esc(r[N.maker])],
-    ])}${pkg ? `<p class="note">${T('G0 與 00 的對應是依健保資料推得（G0 品項為鋁箔包裝，支付價適用較高的最低價），以健保署公告為準。', 'The G0 / 00 pairing is worked out from the NHI data (G0 items are foil packs with a higher price floor); the NHIA’s own notices take precedence.')}</p>` : ''}
-    <div class="hist" data-hist="${esc(r[N.code])}"><button type="button" class="small" data-act="hist">${T('價格歷程', 'Price history')}</button></div></div></div>
-    <div>${looksHTML(f)}${licBlock(f)}</div>
-    <div class="rules" data-rules hidden></div>
-    <div class="acts">
-      ${r[N.group] ? `<button type="button" data-act="group">${T('同分組比價', 'Same price group')}</button>` : ''}
-      ${r[N.atc] ? `<button type="button" data-act="atc">${T('同 ATC 藥品', 'Same ATC')} (${esc(r[N.atc])})</button>` : ''}
-      ${r[N.atc] && r[N.atc].length > 5 ? `<button type="button" data-act="atc5">${T('同藥理分類', 'Same class')} (${esc(r[N.atc].slice(0, 5))})</button>` : ''}
-      <button type="button" data-act="copy">${T('複製摘要', 'Copy summary')}</button>
-      <button type="button" data-act="codelist">${T('加入代碼清單', 'Add to code list')}</button>
-    </div>
-  </div>`;
+  ]);
 }
 function licRowHTML(f) {
+  const looks = looksOf(f), i = extraD ? extraD.lookCols.indexOf('photo') : -1, l = i >= 0 ? looks.find((x) => x[i]) : null;
   return `<li><div class="row" style="cursor:default">
-    <span><span class="nm">${hl(f[F.zh] || f[F.en])}</span> <span class="en">${f[F.zh] ? hl(f[F.en]) : ''}</span></span>
+    <span class="thumb">${l ? `<img src="${esc(mcp(l[i]))}" alt="" loading="lazy" decoding="async">` : formIcon(f[F.form])}</span>
+    <span class="main"><span class="nm">${hl(f[F.zh] || f[F.en])} <span class="en">${f[F.zh] ? hl(f[F.en]) : ''}</span></span>
+      <span class="meta"><span class="cd">${hl(f[F.licence])}</span><span>${hl(f[F.ingredients])}</span>${f[F.form] ? `<span>${esc(f[F.form])}</span>` : ''}${f[F.licId] ? `<a href="${TW.licUrl(f[F.licId])}" target="_blank" rel="noopener">${T('食藥署 ↗', 'TFDA ↗')}</a>` : ''}</span>
+      ${ctrlTag(f) ? `<span class="tags">${ctrlTag(f)}</span>` : ''}</span>
     <span class="pr"><span class="tag">${esc(f[F.category] || '—')}</span></span>
-    <span class="meta"><span class="cd">${hl(f[F.licence])}</span><span>${hl(f[F.ingredients])}</span>${f[F.form] ? `<span>${esc(f[F.form])}</span>` : ''}${ctrlTag(f)}${f[F.licId] ? `<a href="${TW.licUrl(f[F.licId])}" target="_blank" rel="noopener">${T('食藥署 ↗', 'TFDA ↗')}</a>` : ''}</span>
   </div></li>`;
 }
-let last = { rows: [], lic: [] };
-function render() {
-  if (!nhiD) return;
-  const t0 = performance.now();
-  last = search();
-  const total = last.rows.length;
-  const idle = !tokens().length && !chips.length && !advCount();
-  $('chips').innerHTML = chips.map((c, i) => `<span class="chip">${c.k === 'group' ? T('分組：', 'Group: ') : 'ATC '}${esc(c.v)}<button type="button" data-chip="${i}" aria-label="${T('移除', 'Remove')}">×</button></span>`).join('');
-  $('advCount').textContent = advCount() || '';
-  if (idle) {
-    $('status').innerHTML = '';
-    $('out').innerHTML = `<div class="empty-state">${T(`共收錄 <b>${nhiD.rows.length.toLocaleString()}</b> 個健保藥品代號（給付中 ${fmtCount()}）`, `<b>${nhiD.rows.length.toLocaleString()}</b> NHI drug codes (${fmtCount()} reimbursed)`)}${fdaD ? T(`、<b>${fdaD.rows.length.toLocaleString()}</b> 張許可證`, ` and <b>${fdaD.rows.length.toLocaleString()}</b> licences`) : ''}。${T('輸入藥名、成分或代號開始查詢，或打開「進階篩選」。', ' Type a name, ingredient or code, or open Advanced filters.')}</div>`;
-    return;
-  }
-  const ms = Math.round(performance.now() - t0);
-  $('status').innerHTML = `<span>${T(`${total.toLocaleString()} 筆健保品項`, `${total.toLocaleString()} NHI items`)}${last.lic.length ? T(`、${last.lic.length} 張無健保代號的許可證`, `, ${last.lic.length} licences without an NHI code`) : ''}${total > shown ? T(`，顯示前 ${shown} 筆`, `; showing ${shown}`) : ''}</span><span class="hint" style="margin:0">${ms} ms</span><span class="spacer"></span>${total ? `<button type="button" class="small" id="btnCsv">${T('匯出 CSV', 'Export CSV')}</button><button type="button" class="small" id="btnAllCl">${T('全部加入代碼清單', 'Add all to code list')}</button>` : ''}`;
-  if (!total && !last.lic.length) {
-    $('out').innerHTML = `<div class="empty-state">${T('找不到符合的藥品。', 'No matching drugs.')}${S.scope !== 'every' ? ` <button type="button" class="small" data-scope="every">${T('改搜全部', 'Search everything')}</button>` : ''}${advCount() ? ` <button type="button" class="small" data-clear="1">${T('清除進階篩選', 'Clear advanced filters')}</button>` : ''}</div>`;
-    return;
-  }
-  $('out').innerHTML = (total ? `<ul class="res">${last.rows.slice(0, shown).map(rowHTML).join('')}</ul>` : '') +
-    (total > shown ? `<div class="more"><button type="button" id="btnMore">${T(`再顯示 ${Math.min(100, total - shown)} 筆`, `Show ${Math.min(100, total - shown)} more`)}</button></div>` : '') +
-    (last.lic.length ? `<h2 class="sec-h"${S.scope === 'lic' ? ' hidden' : ''}>${T('沒有健保代號的有效許可證（例如指示藥、成藥）', 'Valid licences without an NHI code (e.g. OTC)')}</h2><ul class="res">${last.lic.slice(0, 50).map(licRowHTML).join('')}</ul>` : '');
-}
-let paidCount = null;
-function fmtCount() { if (paidCount == null) paidCount = nhiD.rows.filter((r) => r[N.price] > 0).length; return paidCount.toLocaleString(); }
-function rerenderOpen() {
-  document.querySelectorAll('#out li[data-code]').forEach((li) => {
-    if (!open.has(li.dataset.code)) return;
-    const r = nhiD.byCode.get(li.dataset.code); const tmp = document.createElement('ul'); tmp.innerHTML = rowHTML(r); li.replaceWith(tmp.firstElementChild);
+
+/* ---------- tabs that load something: price history, rules ---------- */
+function hydrate(root) {
+  root.querySelectorAll('.detail[data-code]').forEach((d) => {
+    const r = nhiD.byCode.get(d.dataset.code); if (!r) return;
+    const tab = tabOf.get(r[N.code]) || 'sum';
+    if (tab === 'price') drawHist(d.querySelector('[data-chart]'), r);
+    if (tab === 'rules') fillRules(d.querySelector('[data-rulebox]'), r);
   });
 }
-
-/* ---------- price history ---------- */
-async function showHist(box, code) {
-  box.innerHTML = `<span class="hint">${T('載入中…', 'Loading…')}</span>`;
+async function drawHist(box, r) {
+  if (!box) return;
   try {
-    const h = await TW.hist(code);
-    if (!h.length) { box.innerHTML = `<p class="hint">${T('沒有價格變動紀錄。', 'No price changes on record.')}</p>`; return; }
-    const pts = h.filter((x) => x.date);
-    const t = (d) => new Date(d).getTime(); const now = Date.now();
-    const x0 = t(pts[0].date), x1 = Math.max(now, t(pts[pts.length - 1].date) + 1);
-    const ps = pts.map((p) => p.price), pmax = Math.max(...ps), pmin = Math.min(...ps.filter((p) => p > 0), pmax), span = pmax - pmin || pmax || 1;
-    const W = 300, Hh = 60, X = (d) => ((t(d) - x0) / (x1 - x0)) * W, Y = (p) => (p > 0 ? Hh - 8 - ((p - pmin) / span) * (Hh - 16) : Hh - 1);
-    let d = ''; pts.forEach((p, i) => { const x = X(p.date).toFixed(1), y = Y(p.price).toFixed(1); d += i ? ` H${x} V${y}` : `M${x} ${y}`; }); d += ` H${W}`;
-    box.innerHTML = `<svg viewBox="0 0 ${W} ${Hh}" preserveAspectRatio="none" role="img" aria-label="${T('支付價變化', 'Price over time')}"><path d="${d}" fill="none" stroke="currentColor" stroke-width="1.6" vector-effect="non-scaling-stroke" style="color:var(--accent)"/></svg>
-      <div class="scroll"><table>${pts.slice().reverse().map((p) => `<tr><td>${esc(p.date)}</td><td>${p.price ? '$' + fmtP(p.price) : T('取消給付', 'delisted')}</td></tr>`).join('')}</table></div>`;
+    const h = (await TW.hist(r[N.code])).filter((x) => x.date);
+    const pts = h.length ? h : (r[N.priceSince] ? [{ date: r[N.priceSince], price: r[N.price] }] : []);
+    if (!pts.length) { box.innerHTML = `<p class="hint">${T('沒有價格紀錄。', 'No price record.')}</p>`; return; }
+    const W = 640, H = 190, L = 52, R = 14, Tp = 12, B = 26;
+    const t = (d) => new Date(d).getTime();
+    const x0 = t(pts[0].date), x1 = Math.max(Date.now(), t(pts[pts.length - 1].date) + 864e5);
+    const ps = pts.map((p) => p.price).filter((p) => p > 0);
+    const max = Math.max(...ps, 0.01), min = Math.min(...ps, max);
+    // y axis: 0 when prices are close to it, else a little below the lowest
+    const y0 = min < max * 0.35 ? 0 : Math.max(0, min - (max - min) * 0.25), y1 = max + (max - y0) * 0.08 || 1;
+    const X = (d) => L + ((t(d) - x0) / (x1 - x0)) * (W - L - R), Y = (p) => Tp + (1 - (p - y0) / (y1 - y0)) * (H - Tp - B);
+    const yt = [y0, (y0 + y1) / 2, y1].map((v) => ({ v, y: Y(v) }));
+    const yrs = []; const ya = new Date(x0).getFullYear(), yb = new Date(x1).getFullYear(), step = Math.max(1, Math.ceil((yb - ya + 1) / 6));
+    for (let y = ya + (ya === new Date(x0).getFullYear() && new Date(x0).getMonth() > 0 ? 1 : 0); y <= yb; y += step) yrs.push(y);
+    let d = '', gone = '';
+    pts.forEach((p, i) => {
+      const xx = X(p.date).toFixed(1), yy = (p.price > 0 ? Y(p.price) : H - B).toFixed(1);
+      if (p.price > 0) d += (i && pts[i - 1].price > 0 ? ` H${xx} V${yy}` : ` M${xx} ${yy}`);
+      else if (i) gone += ` M${X(p.date).toFixed(1)} ${Y(pts[i - 1].price || max).toFixed(1)} V${yy} H${(W - R).toFixed(1)}`;
+    });
+    const last = pts[pts.length - 1];
+    if (last.price > 0) d += ` H${(W - R).toFixed(1)}`;
+    box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${T('支付價歷程圖', 'Price history chart')}">
+      ${yt.map((g) => `<line class="ax" x1="${L}" x2="${W - R}" y1="${g.y.toFixed(1)}" y2="${g.y.toFixed(1)}" stroke-dasharray="${g.v === y0 ? '' : '2 4'}"/><text class="lbl" x="${L - 8}" y="${(g.y + 4).toFixed(1)}" text-anchor="end">$${fmtP(+g.v.toFixed(2)) || '0'}</text>`).join('')}
+      ${yrs.map((y) => { const xx = X(`${y}-01-01`); return xx >= L && xx <= W - R ? `<line class="ax" x1="${xx.toFixed(1)}" x2="${xx.toFixed(1)}" y1="${H - B}" y2="${H - B + 4}"/><text class="lbl" x="${xx.toFixed(1)}" y="${H - 8}" text-anchor="middle">${y}</text>` : ''; }).join('')}
+      <path class="ln" d="${d.trim()}"/>${gone ? `<path class="ln gone" d="${gone.trim()}"/>` : ''}
+      ${pts.filter((p) => p.price > 0).map((p) => `<circle class="pt" cx="${X(p.date).toFixed(1)}" cy="${Y(p.price).toFixed(1)}" r="2.6"><title>${esc(p.date)} $${fmtP(p.price)}</title></circle>`).join('')}
+    </svg>
+    <details class="hist-tbl"><summary>${T(`${pts.length} 次價格變動`, `${pts.length} price changes`)}</summary><table>${pts.slice().reverse().map((p) => `<tr><td>${esc(p.date)}</td><td>${p.price ? '$' + fmtP(p.price) : T('取消給付', 'delisted')}</td></tr>`).join('')}</table></details>`;
   } catch (e) { box.innerHTML = `<p class="hint">${esc(e.message || e)}</p>`; }
 }
-
-/* ---------- reimbursement rules, full text ---------- */
 // highlight the drug's own ingredients in the chapter, so the relevant paragraph is easy to find
 function ruleMarks(r) {
   const words = new Set();
@@ -522,25 +776,106 @@ function markText(text, words) {
   words.forEach((w) => { h = h.replace(new RegExp('(' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi'), '<mark>$1</mark>'); });
   return h;
 }
-async function showRules(r, box, btn) {
-  if (!box.hidden) { box.hidden = true; btn.textContent = T('顯示全文', 'Show full text'); return; }
-  box.hidden = false; btn.textContent = T('收起全文', 'Hide full text');
-  box.innerHTML = `<p class="hint" style="padding:10px 12px;margin:0">${T('載入給付規定…', 'Loading the rules…')}</p>`;
+async function fillRules(box, r) {
+  if (!box) return;
+  const chapters = r[N.ruleChapters].split(',').filter(Boolean);
   try {
     if (!rulesD) rulesD = await TW.rules();
     const words = ruleMarks(r);
-    const chapters = r[N.ruleChapters].split(',').filter(Boolean);
     box.innerHTML = chapters.map((c) => {
       const fl = ruleFile(r, c), text = fl && rulesD.files[fl];
-      return `<h4>${T('給付規定', 'NHI rules')} ${esc(c)}${fl ? ` <a href="${TW.ruleUrl(fl)}" target="_blank" rel="noopener">PDF ↗</a>` : ''}</h4>` +
-        (text ? `<div class="txt">${markText(text, words)}</div>` : `<p class="hint" style="padding:10px 12px;margin:0">${T('這一章的全文還沒有轉好，請開 PDF。', 'No text for this chapter yet; open the PDF.')}</p>`);
-    }).join('') + `<p class="note" style="padding-top:8px">${T('全文由健保署 PDF 自動轉出，表格可能排版不完整；以 PDF 為準。', 'Text converted automatically from the NHIA PDFs; tables may lose their layout. The PDF is authoritative.')}</p>`;
+      return `<div class="rules-txt"><h4>${T('給付規定', 'NHI rules')} ${esc(c)}${fl ? ` <a href="${TW.ruleUrl(fl)}" target="_blank" rel="noopener">PDF ↗</a>` : ''}</h4>` +
+        (text ? `<div class="txt">${markText(text, words)}</div>` : `<p class="hint" style="padding:10px 12px;margin:0">${T('這一章的全文還沒有轉好，請開 PDF。', 'No text for this chapter yet; open the PDF.')}</p>`) + '</div>';
+    }).join('') + `<p class="note">${T('全文由健保署 PDF 自動轉出，表格可能排版不完整；以 PDF 為準。', 'Text converted automatically from the NHIA PDFs; tables may lose their layout. The PDF is authoritative.')}</p>`;
   } catch (e) {
-    // no text file (yet, or offline): point to the PDFs instead of showing an error code
-    const pdfs = r[N.ruleChapters].split(',').filter(Boolean).map((c) => { const fl = ruleFile(r, c); return fl ? `<a href="${TW.ruleUrl(fl)}" target="_blank" rel="noopener">${esc(c)} PDF ↗</a>` : ''; }).filter(Boolean).join('　');
-    box.innerHTML = `<p class="hint" style="padding:10px 12px;margin:0">${T('暫時無法取得給付規定全文，請開 PDF：', 'The full text is not available right now; open the PDF:')} ${pdfs}</p>`;
+    box.innerHTML = `<p class="hint">${T('暫時無法取得給付規定全文，請開下方的 PDF。', 'The full text is not available right now; open the PDF below.')}</p>`;
   }
 }
+
+/* ---------- list ---------- */
+let last = { rows: [], lic: [] };
+function render() {
+  if (!nhiD) return;
+  const t0 = performance.now();
+  last = search();
+  scale = makeScale(last.rows);
+  const total = last.rows.length;
+  const idle = !tokens().length && !chips.length && !advCount();
+  $('chips').innerHTML = chips.map((c, i) => `<span class="chip">${c.k === 'group' ? T('分組：', 'Group: ') : 'ATC '}${esc(c.v)}<button type="button" data-chip="${i}" aria-label="${T('移除', 'Remove')}">×</button></span>`).join('');
+  $('advCount').textContent = advCount() || '';
+  $('advN').textContent = idle ? '' : `(${(total + last.lic.length).toLocaleString()})`;
+  $('tips').classList.toggle('quiet', !idle && phone());
+  if (idle) {
+    $('ovWrap').innerHTML = ''; $('status').innerHTML = '';
+    $('out').innerHTML = `<div class="empty-state">${T(`共收錄 <b>${nhiD.rows.length.toLocaleString()}</b> 個健保藥品代號（給付中 ${fmtCount()}）`, `<b>${nhiD.rows.length.toLocaleString()}</b> NHI drug codes (${fmtCount()} reimbursed)`)}${fdaD ? T(`、<b>${fdaD.rows.length.toLocaleString()}</b> 張許可證`, ` and <b>${fdaD.rows.length.toLocaleString()}</b> licences`) : ''}。${T('輸入藥名、成分或代號開始查詢，或打開「進階篩選」。', ' Type a name, ingredient or code, or open Filters.')}</div>`;
+    return;
+  }
+  const keepOpen = $('ov') ? $('ov').open : null;
+  $('ovWrap').innerHTML = overviewHTML(last.rows);
+  if (keepOpen != null && $('ov')) $('ov').open = keepOpen;
+  const ms = Math.round(performance.now() - t0);
+  $('status').innerHTML = `<span>${T(`${total.toLocaleString()} 筆健保品項`, `${total.toLocaleString()} NHI items`)}${last.lic.length ? T(`、${last.lic.length} 張無健保代號的許可證`, `, ${last.lic.length} licences without an NHI code`) : ''}${total > shown ? T(`，顯示前 ${shown} 筆`, `; showing ${shown}`) : ''}</span><span class="hint" style="margin:0">${ms} ms</span><span class="spacer"></span>${total ? `<button type="button" class="small" id="btnCsv">${T('匯出 CSV', 'Export CSV')}</button><button type="button" class="small" id="btnAllCl">${T('全部加入代碼清單', 'Add all to code list')}</button>` : ''}`;
+  if (!total && !last.lic.length) {
+    $('out').innerHTML = `<div class="empty-state">${T('找不到符合的藥品。', 'No matching drugs.')}${S.scope !== 'every' ? ` <button type="button" class="small" data-scope="every">${T('改搜全部', 'Search everything')}</button>` : ''}${advCount() ? ` <button type="button" class="small" data-clear="1">${T('清除進階篩選', 'Clear filters')}</button>` : ''}</div>`;
+    return;
+  }
+  $('out').innerHTML = (total ? `<ul class="res">${last.rows.slice(0, shown).map(rowHTML).join('')}</ul>` : '') +
+    (total > shown ? `<div class="more"><button type="button" id="btnMore">${T(`再顯示 ${Math.min(100, total - shown)} 筆`, `Show ${Math.min(100, total - shown)} more`)}</button></div>` : '') +
+    (last.lic.length ? `<h2 class="sec-h"${S.scope === 'lic' ? ' hidden' : ''}>${T('沒有健保代號的有效許可證（例如指示藥、成藥）', 'Valid licences without an NHI code (e.g. OTC)')}</h2><ul class="res">${last.lic.slice(0, 50).map(licRowHTML).join('')}</ul>` : '');
+  hydrate($('out'));
+  if (total && !extraD) loadExtra();   // photos for the cards
+}
+let paidCount = null;
+function fmtCount() { if (paidCount == null) paidCount = nhiD.rows.filter((r) => r[N.price] > 0).length; return paidCount.toLocaleString(); }
+function redrawRow(li) {
+  const r = nhiD.byCode.get(li.dataset.code); if (!r) return null;
+  const tmp = document.createElement('ul'); tmp.innerHTML = rowHTML(r); const n = tmp.firstElementChild; li.replaceWith(n); hydrate(n); return n;
+}
+// after the licence, appearance or rule files arrive: refresh what is on screen
+function refreshShown() {
+  document.querySelectorAll('#out li[data-code]').forEach((li) => {
+    const thumb = li.querySelector(':scope > .row .thumb'), r = nhiD.byCode.get(li.dataset.code);
+    if (open.has(li.dataset.code)) { redrawRow(li); return; }
+    if (thumb && r) { const src = photoOf(r); if (src && !thumb.querySelector('img')) thumb.innerHTML = `<img src="${esc(src)}" alt="" loading="lazy" decoding="async">`; }
+  });
+}
+
+/* ---------- opening and closing a drug (a full screen on phones) ---------- */
+let sheetState = false;
+function openDrug(li) {
+  const id = li.dataset.code;
+  if (phone()) {
+    [...open].forEach((c) => { open.delete(c); const o = document.querySelector(`#out li[data-code="${CSS.escape(c)}"]`); if (o) redrawRow(o); });
+    open.add(id); document.body.classList.add('sheet-open');
+    if (!sheetState) { history.pushState({ sheet: id }, ''); sheetState = true; }
+  } else open.add(id);
+  loadExtra();
+  const n = redrawRow(document.querySelector(`#out li[data-code="${CSS.escape(id)}"]`) || li);
+  if (phone() && n) { const d = n.querySelector('.detail'); if (d) { d.scrollTop = 0; const b = d.querySelector('[data-act="close"]'); if (b) b.focus({ preventScroll: true }); } }
+}
+function closeDrug(id, fromHistory) {
+  open.delete(id);
+  document.body.classList.remove('sheet-open');
+  const li = document.querySelector(`#out li[data-code="${CSS.escape(id)}"]`);
+  const n = li ? redrawRow(li) : null;
+  if (sheetState && !fromHistory) { sheetState = false; history.back(); } else sheetState = false;
+  if (n) { const row = n.querySelector('.row'); if (row) row.focus({ preventScroll: phone() }); }
+}
+window.addEventListener('popstate', () => { if (sheetState) { sheetState = false; [...open].forEach((c) => closeDrug(c, true)); } });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && phone() && open.size && !$('photo').open) [...open].forEach((c) => closeDrug(c)); });
+
+/* ---------- photo viewer ---------- */
+function openPhoto(btn) {
+  const [name, ...rest] = (btn.dataset.cap || '').split('\n');
+  $('phImg').src = btn.dataset.photo; $('phImg').alt = T('藥品外觀照片：', 'Photo: ') + name;
+  $('phCap').innerHTML = `<b>${esc(name)}</b>${rest.length ? '\n' + esc(rest.join('\n')) : ''}`;
+  $('phLink').href = btn.dataset.photo;
+  $('photo').showModal();
+}
+$('phClose').onclick = () => $('photo').close();
+$('phImg').onclick = () => $('photo').close();
+$('photo').addEventListener('click', (e) => { if (e.target === $('photo')) $('photo').close(); });
+$('photo').addEventListener('close', () => { $('phImg').removeAttribute('src'); });
 
 /* ---------- actions ---------- */
 function summary(r) {
@@ -556,22 +891,16 @@ function toCodelist(items) {
   RT.toast(T(`已送出 ${items.length} 個代碼，到「代碼清單產生器」就會出現`, `${items.length} codes sent; they appear in the Code List Builder`), 4000);
 }
 const nhiItem = (r) => ({ sys: 'nhi', code: r[N.code], name: [r[N.zh], r[N.en]].filter(Boolean).join(' / '), atc: r[N.atc] });
-function setChip(k, v) { chips = chips.filter((c) => c.k !== k); chips.push({ k, v }); Q = ''; $('q').value = ''; shown = 50; open.clear(); sync(); render(); window.scrollTo({ top: 0 }); }
-function goCode(code) { chips = []; Q = code; $('q').value = code; shown = 50; open.clear(); open.add(code); { const p = nhiD.byCode.get(code)[N.price] > 0; if ((S.scope === 'paid' && !p) || (S.scope === 'delisted' && p) || S.scope === 'lic') setScope('every', true); } sync(); render(); window.scrollTo({ top: 0 }); }
-/* ---------- photo viewer ---------- */
-function openPhoto(btn) {
-  const [name, ...rest] = (btn.dataset.cap || '').split('\n');
-  $('phImg').src = btn.dataset.photo; $('phImg').alt = T('藥品外觀照片：', 'Photo: ') + name;
-  $('phCap').innerHTML = `<b>${esc(name)}</b>${rest.length ? '\n' + esc(rest.join('\n')) : ''}`;
-  $('phLink').href = btn.dataset.photo;
-  $('photo').showModal();
+function leaveSheet() { if (open.size && phone()) { open.clear(); document.body.classList.remove('sheet-open'); if (sheetState) { sheetState = false; history.back(); } } }
+function setChip(k, v) { leaveSheet(); chips = chips.filter((c) => c.k !== k); chips.push({ k, v }); Q = ''; $('q').value = ''; shown = 50; open.clear(); sync(); render(); window.scrollTo({ top: 0 }); }
+function goCode(code) {
+  leaveSheet();
+  chips = []; Q = code; $('q').value = code; shown = 50; open.clear();
+  const p = nhiD.byCode.get(code)[N.price] > 0;
+  if ((S.scope === 'paid' && !p) || (S.scope === 'delisted' && p) || S.scope === 'lic') setScope('every', true);
+  sync(); render(); window.scrollTo({ top: 0 });
+  const li = document.querySelector(`#out li[data-code="${CSS.escape(code)}"]`); if (li) openDrug(li);
 }
-$('phClose').onclick = () => $('photo').close();
-$('phImg').onclick = () => $('photo').close();
-// a click on the dimmed area outside the box closes it too
-$('photo').addEventListener('click', (e) => { if (e.target === $('photo')) $('photo').close(); });
-$('photo').addEventListener('close', () => { $('phImg').removeAttribute('src'); });
-
 $('out').addEventListener('click', async (e) => {
   const z = e.target.closest('[data-photo]'); if (z) { openPhoto(z); return; }
   const sc = e.target.closest('[data-scope]'); if (sc) { setScope(sc.dataset.scope); return; }
@@ -580,12 +909,20 @@ $('out').addEventListener('click', async (e) => {
   const go = e.target.closest('[data-go]'); if (go) { goCode(go.dataset.go); return; }
   const li = e.target.closest('li[data-code]'); if (!li) return;
   const r = nhiD.byCode.get(li.dataset.code); if (!r) return;
+  const tb = e.target.closest('[data-tab]');
+  if (tb) {
+    tabOf.set(r[N.code], tb.dataset.tab);
+    const d = li.querySelector('.detail');
+    d.querySelectorAll('[data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b === tb)));
+    const p = d.querySelector('.tabp'); p.dataset.panel = tb.dataset.tab; p.innerHTML = tabHTML(r, tb.dataset.tab); hydrate(li);
+    return;
+  }
   const act = e.target.closest('[data-act]');
   if (act) {
     const a = act.dataset.act;
-    if (a === 'hist') showHist(act.parentElement, r[N.code]);
-    else if (a === 'rules') showRules(r, li.querySelector('[data-rules]'), act);
+    if (a === 'close') closeDrug(r[N.code]);
     else if (a === 'group') setChip('group', r[N.group]);
+    else if (a === 'allgroup') { const cmp = act.closest('.tabp').querySelector('.cmp'), tmp = document.createElement('div'); tmp.innerHTML = groupBars(r, true); act.remove(); cmp.replaceWith(tmp.querySelector('.cmp')); }
     else if (a === 'atc') setChip('atc', r[N.atc]);
     else if (a === 'atc5') setChip('atc', r[N.atc].slice(0, 5));
     else if (a === 'copy') { try { await navigator.clipboard.writeText(summary(r)); RT.toast(T('已複製', 'Copied')); } catch (x) { RT.toast(T('無法複製到剪貼簿', 'Could not copy'), 3000); } }
@@ -593,10 +930,14 @@ $('out').addEventListener('click', async (e) => {
     return;
   }
   if (e.target.closest('.row') && !e.target.closest('a')) {
-    const id = r[N.code];
-    if (open.has(id)) open.delete(id); else { open.add(id); loadExtra(); }
-    const tmp = document.createElement('ul'); tmp.innerHTML = rowHTML(r); li.replaceWith(tmp.firstElementChild);
+    if (open.has(r[N.code])) closeDrug(r[N.code]); else openDrug(li);
   }
+});
+$('ovWrap').addEventListener('click', (e) => {
+  const c = e.target.closest('[data-ovcls]'), s = e.target.closest('[data-ovscope]'), k = e.target.closest('[data-ovctrl]');
+  if (c) { A().cls = A().cls === c.dataset.ovcls ? '' : c.dataset.ovcls; syncAdv(); shown = 50; save(); render(); }
+  else if (s) setScope(s.dataset.ovscope);
+  else if (k) { A().ctrl = A().ctrl === k.dataset.ovctrl ? '' : k.dataset.ovctrl; syncAdv(); shown = 50; save(); render(); }
 });
 $('status').addEventListener('click', (e) => {
   if (e.target.id === 'btnCsv') {
@@ -619,15 +960,24 @@ function sync() {
   const p = new URLSearchParams();
   if (Q) p.set('q', Q);
   chips.forEach((c) => p.set(c.k, c.v));
-  history.replaceState(null, '', location.pathname + (p.toString() ? '?' + p : ''));
+  history.replaceState(history.state, '', location.pathname + (p.toString() ? '?' + p : ''));
 }
-const onQ = RT.debounce(() => { Q = $('q').value.trim(); shown = 50; open.clear(); sync(); render(); }, 140);
+const onQ = RT.debounce(() => { Q = $('q').value.trim(); shown = 50; leaveSheet(); open.clear(); sync(); render(); }, 140);
 $('q').addEventListener('input', onQ);
 $('q').addEventListener('keydown', (e) => { if (e.key === 'Escape') { $('q').value = ''; onQ(); } });
 document.addEventListener('keydown', (e) => { if (e.key === '/' && document.activeElement !== $('q') && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); $('q').focus(); } });
 $('fSort').onchange = () => { S.sort = $('fSort').value; save(); render(); };
-$('btnAdv').onclick = () => { S.advOpen = $('adv').hidden; $('adv').hidden = !S.advOpen; $('btnAdv').setAttribute('aria-expanded', String(S.advOpen)); save(); if (S.advOpen) loadFda(); };
-// the advanced panel: one field per filter
+// the filter panel (a sheet on phones)
+function showAdv(on) {
+  $('adv').hidden = !on; $('btnAdv').setAttribute('aria-expanded', String(on));
+  const sheet = on && matchMedia('(max-width: 640px)').matches;
+  $('advScrim').hidden = !sheet; document.body.classList.toggle('adv-open', sheet);
+  S.advOpen = on; save(); if (on) loadFda();
+}
+$('btnAdv').onclick = () => showAdv($('adv').hidden);
+['advDone', 'advDone2'].forEach((id) => ($(id).onclick = () => showAdv(false)));
+$('advScrim').onclick = () => showAdv(false);
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('adv').hidden && document.body.classList.contains('adv-open')) showAdv(false); });
 const AF = { aPmin: 'pmin', aPmax: 'pmax', aFrom: 'from', aTo: 'to', aAtc: 'atc', aCls: 'cls', aForm: 'form', aSingle: 'single', aCat: 'cat', aCtrl: 'ctrl', aCountry: 'country', aLic: 'lic', aPkg: 'pkg', aWho: 'who', aRules: 'rules', aPhoto: 'photo' };
 const applyAdv = RT.debounce(() => { shown = 50; save(); render(); }, 160);
 Object.entries(AF).forEach(([id, k]) => {
@@ -641,7 +991,7 @@ Object.entries(AF).forEach(([id, k]) => {
 });
 function syncAdv() { Object.entries(AF).forEach(([id, k]) => { const el = $(id); if (el.type === 'checkbox') el.checked = !!A()[k]; else el.value = A()[k] || ''; }); }
 function clearAdv() { S.adv = { ...ADV }; syncAdv(); shown = 50; save(); render(); }
-$('advClear').onclick = clearAdv;
+$('advClear').onclick = clearAdv; $('advClear2').onclick = clearAdv;
 $('tips').innerHTML = T('例如：', 'Try: ') + ['metformin', 'A10BA', 'AC368201G0', '衛署藥輸字第004858號', 'atorvastatin 10'].map((x) => `<button type="button" class="small" data-try="${esc(x)}">${esc(x)}</button>`).join(' ');
 $('tips').addEventListener('click', (e) => { const b = e.target.closest('[data-try]'); if (b) { $('q').value = b.dataset.try; onQ(); } });
 
@@ -660,7 +1010,7 @@ function loadFda() {
 }
 function loadExtra() {
   if (extraP) return extraP;
-  extraP = TW.extra().then((d) => { extraD = d; if (A().photo) render(); else rerenderOpen(); })
+  extraP = TW.extra().then((d) => { extraD = d; if (A().photo) render(); else refreshShown(); })
     .catch((e) => { extraP = null; RT.toast(String(e.message || e), 5000); });
   return extraP;
 }
@@ -676,8 +1026,9 @@ $('refs').innerHTML = RT.noticeHTML([T('資料來源：健保署「健保用藥�
 })();
 [...$('scope').children].forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === S.scope)));
 $('fSort').value = S.sort;
-$('adv').hidden = !S.advOpen; $('btnAdv').setAttribute('aria-expanded', String(!!S.advOpen));
-$('aCls').innerHTML = `<option value="">${T('不限', 'All')}</option>` + CLS.map((c) => `<option value="${esc(c)}">${esc(RT.lang === 'en' ? CLS_EN[c] : c)}</option>`).join('');
+// the filter sheet never opens by itself on a phone
+showAdv(!!S.advOpen && !matchMedia('(max-width: 640px)').matches);
+$('aCls').innerHTML = `<option value="">${T('不限', 'All')}</option>` + CLS.map((c) => `<option value="${esc(c)}">${esc(clsName(c))}</option>`).join('');
 $('aCat').innerHTML = $('aCountry').innerHTML = `<option value="">${T('不限', 'All')}</option>`;
 syncAdv();
 TW.nhi().then((d) => {
