@@ -115,11 +115,19 @@
   async function extra() { return file('extra'); }
   // full text of the NHI reimbursement rules, keyed by PDF file name
   async function rules() { return file('rules'); }
+  // recalls (per licence), shortages and recoveries (per licence); an empty set for data built before they existed
+  async function alerts() { return ((await meta()).counts || {}).recalls != null ? file('alerts') : { recallCols: [], supplyCols: [], recalls: {}, short: {}, recovered: {} }; }
+  // NHI usage per code and year: {years:[{year, from, to, partial}], q:{code:[[total, male], …]}}
+  async function usage() { return ((await meta()).counts || {}).usageYears ? file('usage') : { years: [], q: {} }; }
+  // what changed week by week: {weeks:[{from, to, added, up, down, delisted, relisted, rules, newShort, resolved, newRecalls}]}
+  async function changes() { return ((await meta()).counts || {}).usageYears != null ? file('changes') : { weeks: [] }; }
+  // the date in a rule PDF's name: 5.1._20250601.pdf → 2025-06-01
+  const ruleDate = (f) => { const m = String(f || '').match(/_(\d{4})(\d{2})(\d{2})/); return m ? `${m[1]}-${m[2]}-${m[3]}` : ''; };
   // full-width letters and digits → half-width, lower case, no spaces
   const fold = (s) => String(s || '').replace(/[！-～]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0)).replace(/　/g, ' ').toLowerCase();
 
   RT.twDrugs = {
-    BASE, N, F, meta, nhi, nhiAll, fda, fdaMore, licText, hist, extra, rules, fold,
+    BASE, N, F, meta, nhi, nhiAll, fda, fdaMore, licText, hist, extra, rules, alerts, usage, changes, ruleDate, fold,
     /** 第一級…第四級管制藥品 (not 取消管制藥品註記, which marks a schedule that was lifted) */
     ctrlLevel: (v) => { const m = String(v || '').match(/^第(.)級管制藥品$/); return m ? '一二三四'.indexOf(m[1]) + 1 : 0; },
     /** NHI codes ending in G0 are the foil-packed (PTP) version of the same product; worked out from the data, not an NHIA definition */

@@ -36,6 +36,13 @@
   .branch { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; background: var(--accent-weak); margin-bottom: 8px; }
   .branch .txt { flex: 1; min-width: 0; font-size: 13px; }
   .branch b { font-family: var(--font-mono); }
+  /* NHI claims for the ATC class, year by year */
+  .atcuse { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 4px 10px; font-size: 12px; color: var(--muted); margin: -2px 0 10px; }
+  .atcuse:empty { display: none; }
+  .atcuse .mini { display: inline-flex; align-items: flex-end; gap: 3px; height: 30px; }
+  .atcuse .mini i { width: 12px; background: var(--accent); border-radius: 2px 2px 0 0; min-height: 1px; }
+  .atcuse .mini i.part { opacity: .5; }
+  .atcuse b { color: var(--text); font-variant-numeric: tabular-nums; }
   ul.hits { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--border); }
   ul.hits li { display: grid; grid-template-columns: 22px 6.2em minmax(0, 1fr) auto; gap: 4px 8px; align-items: start; padding: 6px 2px; border-bottom: 1px solid var(--border); font-size: 13px; }
   ul.hits li.atc { grid-template-columns: 22px 6.2em minmax(0, 1fr) auto; }
@@ -165,7 +172,7 @@
 </main>
 
 <script src="../shared/common.js?v=20261122a"></script>
-<script src="../shared/twdrugs.js?v=20261122c"></script>
+<script src="../shared/twdrugs.js?v=20261122d"></script>
 <script>
 const T = RT.t, esc = RT.esc, TW = RT.twDrugs, N = TW.N;
 const KEY = 'codelist';
@@ -563,7 +570,7 @@ async function drugSearch(q, my) {
   if (isAtc) {
     const nm = await atcName(P.slice(0, Math.min(P.length, 5)));
     if (my !== seq) return;
-    html += `<div class="branch" ${rowAttrs('atc', P, 'prefix', nm || '')}><span class="txt">ATC <b>${esc(P)}</b>${nm && P.length <= 5 ? ' ' + esc(nm) : ''}${T(`：${groups.length} 個成分、${rows.length} 個健保代號（含已取消給付）`, `: ${groups.length} ingredients, ${rows.length} NHI codes (incl. delisted)`)}</span><span class="st">${stateHTML(g, 'atc', P, 'prefix', true)}</span></div>`;
+    html += `<div class="branch" ${rowAttrs('atc', P, 'prefix', nm || '')}><span class="txt">ATC <b>${esc(P)}</b>${nm && P.length <= 5 ? ' ' + esc(nm) : ''}${T(`：${groups.length} 個成分、${rows.length} 個健保代號（含已取消給付）`, `: ${groups.length} ingredients, ${rows.length} NHI codes (incl. delisted)`)}</span><span class="st">${stateHTML(g, 'atc', P, 'prefix', true)}</span></div><div class="atcuse" data-atcuse></div>`;
   }
   html += `<div class="rhead"><span>${T(`${rows.length} 個健保代號，分屬 ${groups.length} 個 ATC`, `${rows.length} NHI codes in ${groups.length} ATC codes`)}</span><span class="spacer"></span>${checkedBtn()}</div><ul class="hits">`;
   html += groups.slice(0, 80).map(([atc, rs]) => {
@@ -575,7 +582,19 @@ async function drugSearch(q, my) {
   }).join('') + '</ul>';
   if (groups.length > 80) html += `<p class="hits-empty">${T('只顯示前 80 個 ATC，請輸入更精確的關鍵字。', 'Showing the first 80 ATC codes; narrow the search.')}</p>`;
   box.innerHTML = html;
+  if (isAtc) fillAtcUse(rows, my);
   syncTicks();
+}
+// how much the class is used: NHI claims summed over its codes, per year (helps judge whether a study has enough users)
+async function fillAtcUse(rows, my) {
+  let u; try { u = await TW.usage(); } catch (e) { return; }
+  const el = $('hits').querySelector('[data-atcuse]');
+  if (!el || my !== seq || !u.years.length) return;
+  const tot = u.years.map((_, i) => rows.reduce((sum, r) => sum + (((u.q[r[N.code]] || [])[i] || [0])[0] || 0), 0));
+  if (!tot.some(Boolean)) return;
+  const max = Math.max(...tot, 1), full = u.years.map((y, i) => [y, tot[i]]).filter(([y]) => !y.partial).pop();
+  const fmt = (n) => (RT.lang === 'en' ? (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n.toLocaleString()) : n >= 1e8 ? (n / 1e8).toFixed(2) + ' 億' : n >= 1e4 ? (n / 1e4).toFixed(1) + ' 萬' : n.toLocaleString());
+  el.innerHTML = `<span>${T('健保醫令量', 'NHI claims')}</span><span class="mini" role="img" aria-label="${T('各年醫令量', 'Claims per year')}">${u.years.map((y, i) => `<i class="${y.partial ? 'part' : ''}" style="height:${((tot[i] / max) * 100).toFixed(1)}%" title="${y.year}${y.partial ? '*' : ''}: ${tot[i].toLocaleString()}"></i>`).join('')}</span><span>${u.years[0].year}–${u.years[u.years.length - 1].year}${full ? T(`，${full[0].year} 年 <b>${fmt(full[1])}</b>`, `; ${full[0].year}: <b>${fmt(full[1])}</b>`) : ''}</span>`;
 }
 function mostCommon(a) { const c = {}; a.forEach((x) => { if (x) c[x] = (c[x] || 0) + 1; }); return Object.entries(c).sort((x, y) => y[1] - x[1])[0]?.[0] || ''; }
 function emptyHint() {

@@ -39,7 +39,7 @@ jobs:
         run: |
           mkdir -p /tmp/prev
           git fetch origin tw-drugs-data --depth 1 || true
-          for f in meta nhi nhi-paid nhi-rest hist fda fda-more extra rules; do
+          for f in meta nhi nhi-paid nhi-rest hist fda fda-more extra rules alerts usage changes; do
             git show origin/tw-drugs-data:$f.json > /tmp/prev/$f.json 2>/dev/null || rm -f /tmp/prev/$f.json
           done
           ls -l /tmp/prev
@@ -66,6 +66,21 @@ jobs:
             if [ -n "$csv" ]; then echo "$var=$csv" >> "$GITHUB_ENV"
             else echo "::warning::TFDA dataset $id could not be downloaded; keeping last week's"; echo "$var=/tmp/prev/$prev" >> "$GITHUB_ENV"; fi
           done
+          # shortages (104 now short, 106 back in supply) and recalls (34); a failed one keeps last week's
+          for id in 34 104 106; do
+            # these exports come as plain CSV (the larger ones are zipped): take either
+            if get /tmp/src/fda$id.dl "https://data.fda.gov.tw/data/opendata/export/$id/csv"; then
+              mkdir -p /tmp/src/fda$id && { unzip -o -q /tmp/src/fda$id.dl -d /tmp/src/fda$id 2>/dev/null || cp /tmp/src/fda$id.dl /tmp/src/fda$id/fda$id.csv; }
+            fi
+          done
+          # NHI usage: one file per year from ROC 111 (2022) on; the first id that answers 400 ends the list
+          mkdir -p /tmp/src/usage
+          for n in $(seq -w 1 40); do
+            k=$(printf '%03d' $((10#$n)))
+            code=$(curl -s --retry 3 --retry-all-errors --retry-delay 10 --max-time 300 -A "Mozilla/5.0" -o /tmp/src/usage/E41005-$k.csv -w '%{http_code}' "https://info.nhi.gov.tw/api/iode0000s01/Dataset?rId=A21030000I-E41005-$k")
+            if [ "$code" != "200" ] || [ "$(wc -c < /tmp/src/usage/E41005-$k.csv)" -lt 1000 ]; then rm -f /tmp/src/usage/E41005-$k.csv; break; fi
+          done
+          ls -l /tmp/src/usage || true
           ls -lR /tmp/src || true
 
       - name: Build JSON
@@ -73,6 +88,13 @@ jobs:
           set -e
           for f in "$NHI" "$LIC"; do test -f "$f" || { echo "::error::$f missing and no earlier data to fall back on"; exit 1; }; done
           node .github/scripts/tw-drugs.mjs "$NHI" "$LIC" /tmp/out "$LOOKS" "$LEAF"
+          csv1() { find /tmp/src/$1 -name '*.csv' 2>/dev/null | head -1; }
+          args=""
+          [ -n "$(csv1 fda34)" ] && args="$args --recall $(csv1 fda34)"
+          [ -n "$(csv1 fda104)" ] && args="$args --short $(csv1 fda104)"
+          [ -n "$(csv1 fda106)" ] && args="$args --recovered $(csv1 fda106)"
+          ls /tmp/src/usage/*.csv >/dev/null 2>&1 && args="$args --usage /tmp/src/usage"
+          node .github/scripts/tw-drug-watch.mjs /tmp/out /tmp/prev $args
           node .github/scripts/tw-drug-rules.mjs /tmp/out /tmp/prev/rules.json
           node -e "const m=require('/tmp/out/meta.json'); console.log('reused:', m.reused.join(', ') || 'none')" | tee -a "$GITHUB_STEP_SUMMARY"
 

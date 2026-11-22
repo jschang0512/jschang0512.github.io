@@ -271,6 +271,98 @@
     .adv-scrim:not([hidden]) { display: block; position: fixed; inset: 0; z-index: 55; background: var(--scrim); }
     body.adv-open { overflow: hidden; }
   }
+  /* views: search · this week · shortages & recalls · rule revisions */
+  .views { display: flex; gap: 4px; margin: 0 0 12px; border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+  .views::-webkit-scrollbar { display: none; }
+  .views button { border: 0; border-radius: 0; background: none; padding: 9px 12px 8px; font-size: 13.5px; color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap; }
+  .views button:hover { color: var(--text); }
+  .views button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
+  .views .n { display: inline-block; margin-left: 5px; padding: 0 6px; border-radius: 999px; font-size: 11px; font-weight: 700; background: var(--panel-2); color: var(--muted); }
+  .views .n:empty { display: none; }
+  .tag.short { background: oklch(93% 0.06 75); color: oklch(40% 0.10 60); border-color: transparent; }
+  .tag.recall { background: oklch(93% 0.05 25); color: oklch(45% 0.15 25); border-color: transparent; }
+  :root[data-theme="dark"] .tag.short { background: oklch(32% 0.06 70); color: oklch(85% 0.10 80); }
+  :root[data-theme="dark"] .tag.recall { background: oklch(32% 0.07 25); color: oklch(84% 0.10 25); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tag.short { background: oklch(32% 0.06 70); color: oklch(85% 0.10 80); } :root:not([data-theme="light"]) .tag.recall { background: oklch(32% 0.07 25); color: oklch(84% 0.10 25); } }
+  .banners { display: flex; flex-direction: column; gap: 6px; padding: 10px 16px 0; }
+  .banner { border-radius: 8px; padding: 8px 12px; font-size: 13px; border-left: 4px solid; background: var(--panel-2); }
+  .banner b { margin-right: 6px; }
+  .banner span { color: var(--muted); }
+  .banner details { margin-top: 4px; }
+  .banner summary { cursor: pointer; }
+  .banner p { margin: 6px 0 0; white-space: pre-line; overflow-wrap: anywhere; }
+  .banner.short { border-left-color: var(--c-off); }
+  .banner.recall { border-left-color: var(--c-orig); }
+  .banner.ok { border-left-color: var(--c-babe); }
+
+  /* usage chart */
+  .ubars { display: flex; align-items: flex-end; gap: 10px; height: 170px; padding: 18px 4px 0; border-bottom: 1px solid var(--border); max-width: 620px; }
+  .ucol { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative; }
+  .ucol .val { font-size: 11.5px; color: var(--text); font-variant-numeric: tabular-nums; margin-bottom: 3px; white-space: nowrap; }
+  .ucol .stack { width: 70%; max-width: 54px; display: flex; flex-direction: column; border-radius: 4px 4px 0 0; overflow: hidden; min-height: 1px; }
+  .ucol .stack i { display: block; }
+  .ucol .stack .m { background: var(--accent); }
+  .ucol .stack .f { background: var(--c-bio); }
+  .ucol.part .stack { opacity: .55; background-image: repeating-linear-gradient(45deg, transparent 0 4px, oklch(100% 0 0 / .35) 4px 7px); }
+  .uyears { display: flex; gap: 10px; max-width: 620px; padding: 4px 4px 0; }
+  .uyears span { flex: 1; text-align: center; font-size: 11.5px; color: var(--muted); }
+  .utbl { width: 100%; max-width: 620px; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; margin-top: 12px; }
+  .utbl th { text-align: right; font-weight: 600; color: var(--muted); padding: 4px 6px; border-bottom: 1px solid var(--border); }
+  .utbl td { text-align: right; padding: 4px 6px; border-bottom: 1px solid var(--border); }
+  .utbl th:first-child, .utbl td:first-child { text-align: left; }
+
+  /* this week, shortages & recalls, rule revisions */
+  .vhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin: 4px 0 12px; }
+  .vhead h2 { margin: 0; font-size: 20px; font-family: var(--font-display); }
+  .vhead p { margin: 0; color: var(--muted); font-size: 13px; }
+  .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .pills button { padding: 4px 11px; font-size: 12.5px; border-radius: 999px; }
+  .pills button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; margin-bottom: 14px; }
+  .cards button { all: unset; box-sizing: border-box; cursor: pointer; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--panel); display: flex; flex-direction: column; gap: 2px; }
+  .cards button:hover { border-color: var(--accent); }
+  .cards button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .cards button[aria-pressed="true"] { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+  .cards b { font-size: 22px; font-family: var(--font-display); font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .cards span { font-size: 12px; color: var(--muted); }
+  .cards .zero { opacity: .5; }
+  .histo { display: flex; align-items: flex-end; gap: 2px; height: 90px; border-bottom: 1px solid var(--border); margin: 4px 0 2px; }
+  .histo i { flex: 1; min-height: 1px; border-radius: 2px 2px 0 0; }
+  .histo .dn { background: var(--c-babe); } .histo .upb { background: var(--c-orig); }
+  .histo-ax { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 14px; }
+  .yearbars { display: flex; align-items: flex-end; gap: 4px; height: 80px; border-bottom: 1px solid var(--border); margin: 4px 0 2px; }
+  .yearbars div { flex: 1; display: flex; flex-direction: column-reverse; min-width: 0; }
+  .yearbars i { display: block; }
+  .yearbars .g1 { background: var(--c-orig); } .yearbars .g2 { background: var(--c-off); } .yearbars .g3, .yearbars .g0 { background: var(--c-gen); }
+  .yearax { display: flex; gap: 4px; font-size: 10.5px; color: var(--muted); margin-bottom: 14px; }
+  .yearax span { flex: 1; text-align: center; min-width: 0; overflow: hidden; }
+  ul.wl { list-style: none; margin: 0 0 18px; padding: 0; border-top: 1px solid var(--border); }
+  ul.wl li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 8px 2px; border-bottom: 1px solid var(--border); font-size: 13px; align-items: start; }
+  ul.wl .t { min-width: 0; overflow-wrap: anywhere; }
+  ul.wl .t button { all: unset; cursor: pointer; font-weight: 700; }
+  ul.wl .t button:hover { color: var(--accent); text-decoration: underline; }
+  ul.wl .t button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  ul.wl .sub { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+  ul.wl .r { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  ul.wl details { grid-column: 1 / -1; font-size: 12.5px; }
+  ul.wl details summary { cursor: pointer; color: var(--muted); }
+  ul.wl details p { margin: 4px 0 0; white-space: pre-line; overflow-wrap: anywhere; }
+  .dn-t { color: oklch(45% 0.12 160); } .up-t { color: oklch(50% 0.16 25); }
+  :root[data-theme="dark"] .dn-t { color: oklch(78% 0.12 160); } :root[data-theme="dark"] .up-t { color: oklch(76% 0.13 25); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .dn-t { color: oklch(78% 0.12 160); } :root:not([data-theme="light"]) .up-t { color: oklch(76% 0.13 25); } }
+  .codes { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+  .codes button { font-family: var(--font-mono); font-size: 11.5px; padding: 0 7px; }
+  .vfilter { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+  .vfilter input { flex: 1; min-width: 160px; max-width: 360px; padding: 7px 10px; }
+  .vfilter select { width: auto; padding: 6px 8px; }
+  .rv summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 6.6em minmax(0, 1fr) auto; gap: 4px 10px; align-items: baseline; padding: 9px 2px; }
+  .rv summary::-webkit-details-marker { display: none; }
+  .rv summary:hover { background: var(--panel-2); }
+  .rv { border-bottom: 1px solid var(--border); font-size: 13px; }
+  .rv .d { font-variant-numeric: tabular-nums; color: var(--muted); }
+  .rv .c { font-family: var(--font-mono); margin-right: 6px; }
+  .rv .rules-txt { margin: 0 0 12px; }
+  @media (max-width: 640px) { .rv summary { grid-template-columns: minmax(0, 1fr) auto; } .rv .d { grid-column: 1 / -1; } }
   @media (prefers-reduced-motion: reduce) { .ov > summary .car, .row, .scope button { transition: none; } }
 </style>
 </head>
@@ -283,6 +375,13 @@
 </header>
 
 <main class="dr">
+  <nav class="views" id="views" role="tablist" aria-label="檢視">
+    <button type="button" role="tab" data-view="search" data-en="Search">搜尋</button>
+    <button type="button" role="tab" data-view="changes" data-en="This week">本週異動</button>
+    <button type="button" role="tab" data-view="alerts"><span data-en="Shortages &amp; recalls">缺藥與回收</span><span class="n" id="nAlerts"></span></button>
+    <button type="button" role="tab" data-view="rules" data-en="Rule revisions">給付規定修訂</button>
+  </nav>
+  <div id="vSearch">
   <section class="dr-search">
     <label class="dr-q">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -323,6 +422,8 @@
       <div class="checks">
         <label class="check"><input type="checkbox" id="aRules"> <span data-en="Has NHI rules">有給付規定</span></label>
         <label class="check"><input type="checkbox" id="aPhoto"> <span data-en="Has a photo">有外觀照片</span></label>
+        <label class="check"><input type="checkbox" id="aShort"> <span data-en="In short supply">缺藥中</span></label>
+        <label class="check"><input type="checkbox" id="aRecall"> <span data-en="Has been recalled">有回收紀錄</span></label>
         <span class="spacer"></span>
         <button type="button" class="small" id="advClear" data-en="Clear filters">清除篩選</button>
       </div>
@@ -336,6 +437,11 @@
   <div class="dr-status" id="status" aria-live="polite"></div>
   <div id="out"><div class="loading" data-en="Loading the NHI drug list (cached after the first visit)…">正在載入健保藥品資料（第一次之後會快取）…</div></div>
 
+  </div>
+  <section id="vChanges" hidden></section>
+  <section id="vAlerts" hidden></section>
+  <section id="vRules" hidden></section>
+
   <dialog class="photo" id="photo" aria-label="藥品照片">
     <div class="ph-img"><img id="phImg" alt=""></div>
     <div class="ph-bar"><div class="ph-cap" id="phCap"></div><a id="phLink" target="_blank" rel="noopener" data-en="Original ↗">原圖 ↗</a><button type="button" id="phClose" data-en="Close">關閉</button></div>
@@ -348,12 +454,12 @@
 </main>
 
 <script src="../shared/common.js?v=20261122a"></script>
-<script src="../shared/twdrugs.js?v=20261122c"></script>
+<script src="../shared/twdrugs.js?v=20261122d"></script>
 <script>
 const TW = RT.twDrugs, N = TW.N, F = TW.F, T = RT.t, esc = RT.esc;
 const KEY = 'drugs';
-const ADV = { pmin: '', pmax: '', from: '', to: '', atc: '', cls: '', form: '', single: '', cat: '', ctrl: '', country: '', lic: '', pkg: '', who: '', rules: false, photo: false };
-const DEF = { scope: 'paid', sort: 'rel', advOpen: false, adv: ADV };
+const ADV = { pmin: '', pmax: '', from: '', to: '', atc: '', cls: '', form: '', single: '', cat: '', ctrl: '', country: '', lic: '', pkg: '', who: '', rules: false, photo: false, short: false, recall: false };
+const DEF = { scope: 'paid', sort: 'rel', advOpen: false, adv: ADV, view: 'search' };
 let S = RT.merge(DEF, RT.load(KEY, {}));
 // scopes before the four-way split: 'all' (with delisted) and 'lic' (everything) both become 'every'
 if (S.scope === 'all' || (S.scope === 'lic' && !S.scope4)) S.scope = 'every';
@@ -459,6 +565,8 @@ function passes(r) {
   if (a.rules && !r[N.ruleChapters]) return false;
   if (needsLic() && !licPasses(licOf(r))) return false;
   if (a.photo && !photoOf(r)) return false;
+  if (a.short && !shortOf(licOf(r))) return false;
+  if (a.recall && !recallsOf(licOf(r)).length) return false;
   return true;
 }
 
@@ -550,7 +658,7 @@ function thumbHTML(r) {
 function rowHTML(r) {
   const f = licOf(r);
   const id = r[N.code];
-  const tags = [clsTag(r[N.class]), pkgTag(r), ctrlTag(f), f && f[F.status] ? `<span class="tag off">${T('許可證', 'Licence ')}${esc(f[F.status])}</span>` : ''].join('');
+  const tags = [clsTag(r[N.class]), pkgTag(r), ctrlTag(f), alertTags(f), f && f[F.status] ? `<span class="tag off">${T('許可證', 'Licence ')}${esc(f[F.status])}</span>` : ''].join('');
   const price = r[N.price] > 0
     ? `<b>$${fmtP(r[N.price])}</b>${scale && scale.ps.length > 1 ? `<span class="pos" title="${T('在這次結果中的價格位置', 'Where the price sits in these results')}"><i style="left:${(scale.pos(r[N.price]) * 100).toFixed(1)}%"></i></span>` : ''}<small>${esc(r[N.priceSince] || '')}</small>`
     : `<span class="tag off">${T('已取消給付', 'Delisted')}</span>${r[N.lastPaidPrice] ? `<small>${T('最後', 'last')} $${fmtP(r[N.lastPaidPrice])}</small>` : ''}`;
@@ -599,7 +707,7 @@ const fact = (k, v, wide) => (v ? `<div class="fact${wide ? ' wide' : ''}"><span
 const kv = (rows) => `<dl class="kv">${rows.filter((x) => x && x[1]).map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`;
 function ruleFile(r, c) { const files = r[N.ruleFiles] ? r[N.ruleFiles].split(',') : []; return files.find((x) => x.startsWith(c + '_')) || ''; }
 function zoomBtn(src, cap, inner) { return `<button type="button" class="zoom" data-photo="${esc(src)}" data-cap="${esc(cap)}" aria-label="${T('放大照片', 'Enlarge photo')}" title="${T('點一下放大', 'Click to enlarge')}">${inner}</button>`; }
-const TABS = [['sum', '概要', 'Overview'], ['price', '價格', 'Price'], ['rules', '給付規定', 'NHI rules'], ['looks', '外觀與仿單', 'Looks & leaflet'], ['lic', '許可證', 'Licence']];
+const TABS = [['sum', '概要', 'Overview'], ['price', '價格', 'Price'], ['use', '用量', 'Usage'], ['rules', '給付規定', 'NHI rules'], ['looks', '外觀與仿單', 'Looks & leaflet'], ['lic', '許可證', 'Licence']];
 function detailHTML(r) {
   const f = licOf(r), id = r[N.code], tab = tabOf.get(id) || 'sum';
   const photo = photoOf(r);
@@ -618,6 +726,7 @@ function detailHTML(r) {
       <div class="d-title"><h2>${esc(r[N.zh] || r[N.en])}</h2>${r[N.zh] ? `<div class="en">${esc(r[N.en])}</div>` : ''}<div class="tags">${statusTags}</div></div>
       <div class="d-price">${price}</div>
     </div>
+    ${alertBanners(f)}
     <div class="tabs" role="tablist">${tabs.map(([k, zh, en]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${k === tab}">${T(zh, en)}</button>`).join('')}</div>
     <div class="tabp" role="tabpanel" data-panel="${tab}">${tabHTML(r, tab)}</div>
   </div>`;
@@ -660,6 +769,7 @@ function tabHTML(r, tab) {
     return `<div data-rulebox><p class="hint">${T('載入給付規定…', 'Loading the rules…')}</p></div>
       <div class="links">${chapters.map((c) => { const fl = ruleFile(r, c); return fl ? `<a href="${TW.ruleUrl(fl)}" target="_blank" rel="noopener">${T('給付規定', 'Rules')} ${esc(c)} PDF ↗</a>` : ''; }).join('')}</div>`;
   }
+  if (tab === 'use') return `<h3 class="sec">${T('健保醫令量', 'NHI claims')}</h3><div data-usage><p class="hint">${T('載入中…', 'Loading…')}</p></div>`;
   if (tab === 'looks') return looksTab(r, f);
   if (tab === 'lic') return licTab(f);
   return '';
@@ -726,6 +836,7 @@ function hydrate(root) {
     const tab = tabOf.get(r[N.code]) || 'sum';
     if (tab === 'price') drawHist(d.querySelector('[data-chart]'), r);
     if (tab === 'rules') fillRules(d.querySelector('[data-rulebox]'), r);
+    if (tab === 'use') drawUsage(d.querySelector('[data-usage]'), r);
   });
 }
 async function drawHist(box, r) {
@@ -784,7 +895,7 @@ async function fillRules(box, r) {
     const words = ruleMarks(r);
     box.innerHTML = chapters.map((c) => {
       const fl = ruleFile(r, c), text = fl && rulesD.files[fl];
-      return `<div class="rules-txt"><h4>${T('給付規定', 'NHI rules')} ${esc(c)}${fl ? ` <a href="${TW.ruleUrl(fl)}" target="_blank" rel="noopener">PDF ↗</a>` : ''}</h4>` +
+      return `<div class="rules-txt"><h4>${T('給付規定', 'NHI rules')} ${esc(c)}${fl ? ` <small class="hint" style="margin:0">${T('修訂', 'revised')} ${esc(TW.ruleDate(fl))}</small>` : ''}${fl ? ` <a href="${TW.ruleUrl(fl)}" target="_blank" rel="noopener">PDF ↗</a>` : ''}</h4>` +
         (text ? `<div class="txt">${markText(text, words)}</div>` : `<p class="hint" style="padding:10px 12px;margin:0">${T('這一章的全文還沒有轉好，請開 PDF。', 'No text for this chapter yet; open the PDF.')}</p>`) + '</div>';
     }).join('') + `<p class="note">${T('全文由健保署 PDF 自動轉出，表格可能排版不完整；以 PDF 為準。', 'Text converted automatically from the NHIA PDFs; tables may lose their layout. The PDF is authoritative.')}</p>`;
   } catch (e) {
@@ -833,7 +944,7 @@ const totalCodes = () => (metaD && metaD.counts ? metaD.counts.nhiCodes : nhiD.r
 let allP = null;
 function loadAll() {
   if (nhiD && nhiD.complete) return Promise.resolve(nhiD);
-  if (!allP) allP = TW.nhiAll().then((d) => { hay = null; licOnly = null; render(); return d; }).catch((e) => { allP = null; RT.toast(String(e.message || e), 5000); });
+  if (!allP) allP = TW.nhiAll().then((d) => { nhiD = d; hay = null; licOnly = null; render(); return d; }).catch((e) => { allP = null; RT.toast(String(e.message || e), 5000); });
   return allP;
 }
 let moreP = null;
@@ -971,6 +1082,7 @@ $('scope').addEventListener('click', (e) => { const b = e.target.closest('button
 function save() { RT.save(KEY, S); }
 function sync() {
   const p = new URLSearchParams();
+  if (S.view && S.view !== 'search') p.set('view', S.view);
   if (Q) p.set('q', Q);
   chips.forEach((c) => p.set(c.k, c.v));
   history.replaceState(history.state, '', location.pathname + (p.toString() ? '?' + p : ''));
@@ -991,7 +1103,7 @@ $('btnAdv').onclick = () => showAdv($('adv').hidden);
 ['advDone', 'advDone2'].forEach((id) => ($(id).onclick = () => showAdv(false)));
 $('advScrim').onclick = () => showAdv(false);
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('adv').hidden && document.body.classList.contains('adv-open')) showAdv(false); });
-const AF = { aPmin: 'pmin', aPmax: 'pmax', aFrom: 'from', aTo: 'to', aAtc: 'atc', aCls: 'cls', aForm: 'form', aSingle: 'single', aCat: 'cat', aCtrl: 'ctrl', aCountry: 'country', aLic: 'lic', aPkg: 'pkg', aWho: 'who', aRules: 'rules', aPhoto: 'photo' };
+const AF = { aPmin: 'pmin', aPmax: 'pmax', aFrom: 'from', aTo: 'to', aAtc: 'atc', aCls: 'cls', aForm: 'form', aSingle: 'single', aCat: 'cat', aCtrl: 'ctrl', aCountry: 'country', aLic: 'lic', aPkg: 'pkg', aWho: 'who', aRules: 'rules', aPhoto: 'photo', aShort: 'short', aRecall: 'recall' };
 const applyAdv = RT.debounce(() => { shown = 50; save(); render(); }, 160);
 Object.entries(AF).forEach(([id, k]) => {
   const el = $(id);
@@ -999,6 +1111,7 @@ Object.entries(AF).forEach(([id, k]) => {
     A()[k] = el.type === 'checkbox' ? el.checked : el.value;
     if (needsLic()) loadFda();
     if (k === 'photo' && el.checked) loadExtra();
+    if ((k === 'short' || k === 'recall') && el.checked) { loadFda(); loadAlerts(); }
     applyAdv();
   });
 });
@@ -1028,6 +1141,223 @@ function loadExtra() {
   return extraP;
 }
 
+/* ---------- shortages and recalls ---------- */
+let alertsD = null, alertsP = null;
+function loadAlerts() {
+  if (!alertsP) alertsP = TW.alerts().then((d) => {
+    alertsD = d; if (open.size) refreshShown(); else render();
+    $('nAlerts').textContent = Object.keys(d.short).length || '';
+    if (S.view === 'alerts') renderAlerts();
+    if (A().short || A().recall) render();
+    return d;
+  }).catch(() => { alertsP = null; });
+  return alertsP;
+}
+const shortOf = (f) => (alertsD && f ? alertsD.short[f[F.licence]] || null : null);
+const recallsOf = (f) => (alertsD && f ? alertsD.recalls[f[F.licence]] || [] : []);
+const yearsAgo = (n) => { const d = new Date(); d.setFullYear(d.getFullYear() - n); return d.toISOString().slice(0, 10); };
+const firstLine = (s) => { const t = String(s || '').replace(/\s+/g, ' ').trim(); return t.length > 90 ? t.slice(0, 88) + '…' : t; };
+const GRADE = (g) => (g ? T(`第${'一二三'[g - 1]}級`, `Class ${g}`) : T('未分級', 'No class given'));
+function alertTags(f) {
+  const s = shortOf(f), rc = recallsOf(f).filter((x) => x[0] >= yearsAgo(2));
+  return (s ? `<span class="tag short">${T('缺藥中', 'Short supply')}</span>` : '') + (rc.length ? `<span class="tag recall">${T('近兩年回收', 'Recalled')} ${esc(rc[0][0].slice(0, 7))}</span>` : '');
+}
+function alertBanners(f) {
+  if (!f || !alertsD) return '';
+  const s = shortOf(f), rc = recallsOf(f), back = alertsD.recovered[f[F.licence]];
+  let h = '';
+  if (s) h += `<div class="banner short"><b>${T('缺藥中', 'In short supply')}</b><span>${T('食藥署公告 ', 'TFDA notice ')}${esc(s[0])}</span><details><summary>${esc(firstLine(s[2]))}</summary><p>${esc(s[2])}</p></details></div>`;
+  else if (back) h += `<div class="banner ok"><b>${T('已恢復供應', 'Back in supply')}</b><span>${esc(back[0])} · ${esc(firstLine(back[2]))}</span></div>`;
+  if (rc.length) h += `<div class="banner recall"><b>${T(`回收紀錄 ${rc.length} 次`, `${rc.length} recall${rc.length > 1 ? 's' : ''}`)}</b><span>${T('最近 ', 'latest ')}${esc(rc[0][0])} · ${GRADE(rc[0][1])}</span><details><summary>${esc(firstLine(rc[0][3]))}</summary>${rc.map((x) => `<p><b>${esc(x[0])} · ${GRADE(x[1])}</b>\n${T('批號', 'Batches')}：${esc(x[2] || '—')}\n${T('原因', 'Reason')}：${esc(x[3])}\n<small>${esc(x[4])}</small></p>`).join('')}</details></div>`;
+  return h ? `<div class="banners">${h}</div>` : '';
+}
+// licence number → its row, and → the NHI codes that point to it
+let licIndex = null;
+function licIdx() {
+  if (licIndex && licIndex.n === nhiD.rows.length) return licIndex;
+  const byNo = new Map(fdaD ? fdaD.rows.map((f) => [f[F.licence], f]) : []), codes = new Map();
+  if (fdaD) nhiD.rows.forEach((r) => { const f = licOf(r); if (f) { const a = codes.get(f[F.licence]) || []; a.push(r); codes.set(f[F.licence], a); } });
+  licIndex = { n: nhiD.rows.length, byNo, codes };
+  return licIndex;
+}
+const codeBtns = (licence) => { const rs = (licIdx().codes.get(licence) || []).slice(0, 8); return rs.length ? `<span class="codes">${rs.map((r) => `<button type="button" data-go="${esc(r[N.code])}" title="${esc(r[N.zh] || r[N.en])}">${esc(r[N.code])}${r[N.price] > 0 ? ' $' + fmtP(r[N.price]) : ''}</button>`).join('')}</span>` : ''; };
+
+/* ---------- NHI usage ---------- */
+let usageD = null, usageP = null;
+function loadUsage() { if (!usageP) usageP = TW.usage().then((d) => (usageD = d)).catch((e) => { usageP = null; throw e; }); return usageP; }
+const fmtN = (n) => (RT.lang === 'en'
+  ? (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e4 ? (n / 1e3).toFixed(0) + 'k' : n.toLocaleString())
+  : (n >= 1e8 ? (n / 1e8).toFixed(2) + ' 億' : n >= 1e4 ? (n / 1e4).toFixed(1) + ' 萬' : n.toLocaleString()));
+async function drawUsage(box, r) {
+  if (!box) return;
+  try { await Promise.all([loadUsage(), loadAll()]); } catch (e) { box.innerHTML = `<p class="hint">${T('無法取得用量資料。', 'Could not load the usage data.')}</p>`; return; }
+  const ys = usageD.years, mine = usageD.q[r[N.code]];
+  if (!ys.length) { box.innerHTML = `<p class="hint">${T('還沒有用量資料。', 'No usage data yet.')}</p>`; return; }
+  const span = `${ys[0].year}–${ys[ys.length - 1].year}`;
+  if (!mine || !mine.some((x) => x && x[0])) { box.innerHTML = `<p class="hint">${T(`這個健保代號在 ${span} 年沒有申報用量。`, `No claims for this NHI code in ${span}.`)}</p>`; return; }
+  // the same ATC code: this item's share of all claims for that ingredient
+  const peers = r[N.atc] ? nhiD.rows.filter((x) => x[N.atc] === r[N.atc]).map((x) => usageD.q[x[N.code]]).filter(Boolean) : [];
+  const atcTot = ys.map((_, i) => peers.reduce((s, p) => s + ((p[i] || [0])[0] || 0), 0));
+  const max = Math.max(...mine.map((x) => (x ? x[0] : 0)), 1);
+  const cols = ys.map((y, i) => {
+    const [t, m] = mine[i] || [0, 0], f = Math.max(0, t - m);
+    return `<div class="ucol${y.partial ? ' part' : ''}" title="${y.year}${y.partial ? T(`（到 ${y.to}）`, ` (to ${y.to})`) : ''}"><span class="val">${t ? fmtN(t) : '0'}</span><span class="stack" style="height:${((t / max) * 100).toFixed(1)}%"><i class="f" style="flex:${f}"></i><i class="m" style="flex:${m}"></i></span></div>`;
+  }).join('');
+  box.innerHTML = `<div class="ubars" role="img" aria-label="${T('各年醫令量', 'Claims per year')}">${cols}</div>
+    <div class="uyears">${ys.map((y) => `<span>${y.year}${y.partial ? '*' : ''}</span>`).join('')}</div>
+    <div class="legend" style="margin-top:8px"><span><span class="dot" style="background:var(--accent)"></span> ${T('男性', 'Men')}</span><span><span class="dot" style="background:var(--c-bio)"></span> ${T('女性', 'Women')}</span></div>
+    <table class="utbl"><thead><tr><th>${T('年', 'Year')}</th><th>${T('醫令量', 'Claims')}</th><th>${T('男 / 女', 'Men / women')}</th>${r[N.atc] ? `<th>${T('佔同 ATC', 'Share of ATC')}</th>` : ''}</tr></thead><tbody>
+    ${ys.map((y, i) => { const [t, m] = mine[i] || [0, 0]; return `<tr><td>${y.year}${y.partial ? T(`（1–${+y.to.slice(5)} 月）`, ` (Jan–${y.to.slice(5)})`) : ''}</td><td>${t.toLocaleString()}</td><td>${t ? Math.round((m / t) * 100) + '% / ' + (100 - Math.round((m / t) * 100)) + '%' : '—'}</td>${r[N.atc] ? `<td>${atcTot[i] ? ((t / atcTot[i]) * 100).toFixed(1) + '%' : '—'}</td>` : ''}</tr>`; }).join('')}
+    </tbody></table>
+    <p class="note">${T(`醫令量是健保申報的數量（含包裹支付），單位依品項而定，例如錠、支、瓶。* 為當年度部分月份。「佔同 ATC」是同一個 ATC 代碼（${esc(r[N.atc])}）所有健保代號中，這個代號的醫令量比例；不同劑型、含量的單位不同，比例僅供參考。資料來源：健保署「健保藥品使用量」。`, `Claims are NHI quantities including bundled payments, in each item’s own unit (tablet, vial, bottle…). * marks a partial year. “Share of ATC” is this code’s part of all NHI codes with ATC ${esc(r[N.atc])}; units differ between forms and strengths, so read it as a rough guide. Source: NHIA drug usage data.`)}</p>`;
+}
+
+/* ---------- views ---------- */
+const VIEWS = ['search', 'changes', 'alerts', 'rules'];
+function setView(v, quiet) {
+  if (!VIEWS.includes(v)) v = 'search';
+  S.view = v; save();
+  $('views').querySelectorAll('[data-view]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.view === v)));
+  $('vSearch').hidden = v !== 'search'; $('vChanges').hidden = v !== 'changes'; $('vAlerts').hidden = v !== 'alerts'; $('vRules').hidden = v !== 'rules';
+  if (v === 'changes') renderChanges(); else if (v === 'alerts') renderAlerts(); else if (v === 'rules') renderRulesView();
+  if (!quiet) sync();
+}
+$('views').addEventListener('click', (e) => { const b = e.target.closest('[data-view]'); if (b) { leaveSheet(); setView(b.dataset.view); window.scrollTo({ top: 0 }); } });
+// a drug named in any view opens in the search view
+['vChanges', 'vAlerts', 'vRules'].forEach((id) => $(id).addEventListener('click', (e) => {
+  const g = e.target.closest('[data-go]'); if (!g) return;
+  setView('search', true); goCode(g.dataset.go);
+}));
+const loadingBox = (id) => { $(id).innerHTML = `<div class="loading">${T('載入中…', 'Loading…')}</div>`; };
+const nameOf = (code) => { const r = nhiD.byCode.get(code); return r ? (r[N.zh] || r[N.en]) : code; };
+const drugBtn = (code) => `<button type="button" data-go="${esc(code)}">${esc(nameOf(code))}</button>`;
+
+/* this week */
+let changesD = null;
+async function renderChanges() {
+  loadingBox('vChanges');
+  try { [changesD] = await Promise.all([changesD || TW.changes(), loadAll(), loadFda(), loadAlerts()]); }
+  catch (e) { $('vChanges').innerHTML = `<div class="empty-state">${esc(e.message || e)}</div>`; return; }
+  const weeks = changesD.weeks || [];
+  if (!weeks.length) {
+    $('vChanges').innerHTML = `<div class="vhead"><h2>${T('本週異動', 'This week')}</h2></div><div class="empty-state">${T('還沒有異動紀錄。每週一更新資料時會和上一週比對，第一次比對完成後，新收載、調價、取消給付、新增缺藥與回收、給付規定改版都會列在這裡。', 'No changes recorded yet. Each Monday’s update is compared with the week before; after the first comparison, new listings, price changes, delistings, new shortages and recalls and revised rules appear here.')}</div>`;
+    return;
+  }
+  const wi = Math.min(S.week || 0, weeks.length - 1), w = weeks[wi];
+  const pct = (o, n) => ((n - o) / o) * 100;
+  const moves = [...w.down, ...w.up].map(([c, o, n]) => pct(o, n));
+  // histogram of price moves in 2.5% steps, clipped to ±30%
+  const bins = new Map(); moves.forEach((p) => { const b = Math.max(-30, Math.min(30, Math.round(p / 2.5) * 2.5)); bins.set(b, (bins.get(b) || 0) + 1); });
+  const keys = [...bins.keys()].sort((a, b) => a - b), hmax = Math.max(1, ...bins.values());
+  const sec = S.wsec || 'all';
+  const CARDS = [['added', '新收載', 'New listings'], ['down', '調降', 'Price cuts'], ['up', '調升', 'Price rises'], ['delisted', '取消給付', 'Delisted'], ['relisted', '恢復給付', 'Relisted'], ['rules', '給付規定改版', 'Rules revised'], ['newShort', '新增缺藥', 'New shortages'], ['resolved', '缺藥解除', 'Shortages ended'], ['newRecalls', '新增回收', 'New recalls']];
+  const lic = licIdx();
+  const licName = (l) => { const f = lic.byNo.get(l); return f ? (f[F.zh] || f[F.en]) : l; };
+  const list = (k) => {
+    const a = w[k] || [];
+    if (!a.length) return '';
+    let items = '';
+    if (k === 'added') items = a.map(([c, p]) => `<li><span class="t">${drugBtn(c)}<span class="sub">${esc(c)}</span></span><span class="r">${p > 0 ? '$' + fmtP(p) : '—'}</span></li>`).join('');
+    else if (k === 'down' || k === 'up') items = a.slice().sort((x, y) => pct(x[1], x[2]) - pct(y[1], y[2])).map(([c, o, n]) => `<li><span class="t">${drugBtn(c)}<span class="sub">${esc(c)}</span></span><span class="r">$${fmtP(o)} → $${fmtP(n)} <b class="${n < o ? 'dn-t' : 'up-t'}">${pct(o, n) > 0 ? '+' : ''}${pct(o, n).toFixed(1)}%</b></span></li>`).join('');
+    else if (k === 'delisted') items = a.map(([c, o]) => `<li><span class="t">${drugBtn(c)}<span class="sub">${esc(c)}</span></span><span class="r">${T('原', 'was')} $${fmtP(o)}</span></li>`).join('');
+    else if (k === 'relisted') items = a.map(([c, p]) => `<li><span class="t">${drugBtn(c)}<span class="sub">${esc(c)}</span></span><span class="r">$${fmtP(p)}</span></li>`).join('');
+    else if (k === 'rules') items = a.map((f) => `<li><span class="t"><b>${esc(f.split('_')[0])}</b><span class="sub">${T('修訂日期', 'revised')} ${esc(TW.ruleDate(f))}</span></span><span class="r"><a href="${TW.ruleUrl(f)}" target="_blank" rel="noopener">PDF ↗</a></span></li>`).join('');
+    else if (k === 'newShort' || k === 'resolved') items = a.map((l) => { const s = alertsD.short[l] || alertsD.recovered[l]; return `<li><span class="t"><b>${esc(s ? s[1] : licName(l))}</b><span class="sub">${esc(l)}</span>${codeBtns(l)}</span><span class="r">${esc(s ? s[0] : '')}</span>${s ? `<details><summary>${esc(firstLine(s[2]))}</summary><p>${esc(s[2])}</p></details>` : ''}</li>`; }).join('');
+    else if (k === 'newRecalls') items = a.map(([l, d, g]) => `<li><span class="t"><b>${esc(licName(l))}</b><span class="sub">${esc(l)}</span>${codeBtns(l)}</span><span class="r">${esc(d)} · ${GRADE(g)}</span></li>`).join('');
+    const c = CARDS.find((x) => x[0] === k);
+    return `<h3 class="sec">${T(c[1], c[2])} <small>${a.length}</small></h3><ul class="wl">${items}</ul>`;
+  };
+  $('vChanges').innerHTML = `<div class="vhead"><h2>${T('本週異動', 'This week')}</h2><p>${esc(w.from)} → ${esc(w.to)}</p></div>
+    ${weeks.length > 1 ? `<div class="pills" role="group" aria-label="${T('週次', 'Week')}">${weeks.map((x, i) => `<button type="button" data-week="${i}" aria-pressed="${i === wi}">${esc(x.to.slice(5))}</button>`).join('')}</div>` : ''}
+    <div class="cards">${CARDS.map(([k, zh, en]) => `<button type="button" data-wsec="${k}" aria-pressed="${sec === k}" class="${(w[k] || []).length ? '' : 'zero'}"><b>${(w[k] || []).length}</b><span>${T(zh, en)}</span></button>`).join('')}</div>
+    ${moves.length ? `<h3 class="sec">${T('調價幅度分布', 'Size of price changes')} <small>${T(`${moves.length} 項`, `${moves.length} items`)}</small></h3><div class="histo" role="img" aria-label="${T('調價幅度分布', 'Price change distribution')}">${keys.map((k) => `<i class="${k < 0 ? 'dn' : 'upb'}" style="height:${((bins.get(k) / hmax) * 100).toFixed(1)}%" title="${k > 0 ? '+' : ''}${k}%: ${bins.get(k)}"></i>`).join('')}</div><div class="histo-ax"><span>${keys[0] > 0 ? '+' : ''}${keys[0]}%</span><span>0</span><span>${keys[keys.length - 1] > 0 ? '+' : ''}${keys[keys.length - 1]}%</span></div>` : ''}
+    ${(sec === 'all' ? CARDS.map((c) => c[0]) : [sec]).map(list).join('') || `<p class="hint">${T('這一類本週沒有異動。', 'Nothing in this group this week.')}</p>`}`;
+}
+$('vChanges').addEventListener('click', (e) => {
+  const wk = e.target.closest('[data-week]'), sc = e.target.closest('[data-wsec]');
+  if (wk) { S.week = +wk.dataset.week; S.wsec = 'all'; save(); renderChanges(); }
+  else if (sc) { S.wsec = S.wsec === sc.dataset.wsec ? 'all' : sc.dataset.wsec; save(); renderChanges(); }
+});
+
+/* shortages and recalls */
+async function renderAlerts() {
+  loadingBox('vAlerts');
+  try { await Promise.all([loadAlerts(), loadFda(), loadAll()]); } catch (e) { $('vAlerts').innerHTML = `<div class="empty-state">${esc(e.message || e)}</div>`; return; }
+  if (!alertsD) { $('vAlerts').innerHTML = `<div class="empty-state">${T('缺藥與回收資料暫時無法取得。', 'Shortage and recall data are not available right now.')}</div>`; return; }
+  const tab = S.atab || 'short', q = TW.fold(S.aq || '');
+  const shorts = Object.entries(alertsD.short).sort((a, b) => (a[1][0] < b[1][0] ? 1 : -1));
+  const backs = Object.entries(alertsD.recovered).sort((a, b) => (a[1][0] < b[1][0] ? 1 : -1));
+  const recalls = []; Object.entries(alertsD.recalls).forEach(([l, a]) => a.forEach((x) => recalls.push([l, x]))); recalls.sort((a, b) => (a[1][0] < b[1][0] ? 1 : -1));
+  const lic = licIdx(), licName = (l) => { const f = lic.byNo.get(l); return f ? (f[F.zh] || f[F.en]) : ''; };
+  const hit = (...s) => !q || TW.fold(s.join(' ')).includes(q);
+  let body = '';
+  if (tab === 'short' || tab === 'back') {
+    const rows = (tab === 'short' ? shorts : backs).filter(([l, s]) => hit(l, s[1], s[2]));
+    body = `<ul class="wl">${rows.slice(0, 300).map(([l, s]) => `<li><span class="t"><b>${esc(s[1])}</b><span class="sub">${esc(l)}</span>${codeBtns(l)}</span><span class="r">${esc(s[0])}</span><details${tab === 'short' ? '' : ''}><summary>${esc(firstLine(s[2]))}</summary><p>${esc(s[2])}</p></details></li>`).join('')}</ul>${rows.length > 300 ? `<p class="hint">${T('只顯示前 300 筆，請用上方搜尋縮小範圍。', 'Showing the first 300; narrow with the search above.')}</p>` : ''}${!rows.length ? `<p class="hint">${T('沒有符合的項目。', 'Nothing matches.')}</p>` : ''}`;
+  } else {
+    const g = S.agrade || '';
+    const rows = recalls.filter(([l, x]) => (!g || String(x[1]) === g) && hit(l, x[5], x[6], x[3], licName(l)));
+    // recalls per year, by class
+    const years = {}; recalls.forEach(([, x]) => { const y = x[0].slice(0, 4); if (!y) return; years[y] = years[y] || [0, 0, 0, 0]; years[y][x[1]]++; });
+    const yk = Object.keys(years).sort(), ymax = Math.max(1, ...yk.map((y) => years[y].reduce((a, b) => a + b, 0)));
+    body = `<h3 class="sec">${T('每年回收件數', 'Recalls per year')}</h3><div class="yearbars" role="img" aria-label="${T('每年回收件數', 'Recalls per year')}">${yk.map((y) => `<div title="${y}: ${years[y].reduce((a, b) => a + b, 0)}">${[1, 2, 3, 0].map((k) => (years[y][k] ? `<i class="g${k}" style="height:${((years[y][k] / ymax) * 80).toFixed(1)}px"></i>` : '')).join('')}</div>`).join('')}</div>
+      <div class="yearax">${yk.map((y) => `<span>${y.slice(2)}</span>`).join('')}</div>
+      <div class="legend" style="margin:-8px 0 14px"><span><span class="dot" style="background:var(--c-orig)"></span> ${T('第一級', 'Class 1')}</span><span><span class="dot" style="background:var(--c-off)"></span> ${T('第二級', 'Class 2')}</span><span><span class="dot" style="background:var(--c-gen)"></span> ${T('第三級／未分級', 'Class 3 / none')}</span></div>
+      <div class="pills" role="group" aria-label="${T('分級', 'Class')}">${[['', '全部', 'All'], ['1', '第一級', 'Class 1'], ['2', '第二級', 'Class 2'], ['3', '第三級', 'Class 3']].map(([v, zh, en]) => `<button type="button" data-agrade="${v}" aria-pressed="${g === v}">${T(zh, en)}</button>`).join('')}</div>
+      <ul class="wl">${rows.slice(0, 300).map(([l, x]) => `<li><span class="t"><b>${esc(x[5] || licName(l) || l)}</b><span class="sub">${esc(l)}${x[6] ? ' · ' + esc(x[6]) : ''}</span>${codeBtns(l)}</span><span class="r">${esc(x[0])}<br><span class="tag ${x[1] === 1 ? 'recall' : ''}">${GRADE(x[1])}</span></span><details><summary>${esc(firstLine(x[3]))}</summary><p>${T('批號', 'Batches')}：${esc(x[2] || '—')}\n${T('原因', 'Reason')}：${esc(x[3])}\n${esc(x[4])}</p></details></li>`).join('')}</ul>${rows.length > 300 ? `<p class="hint">${T('只顯示前 300 筆，請用上方搜尋縮小範圍。', 'Showing the first 300; narrow with the search above.')}</p>` : ''}${!rows.length ? `<p class="hint">${T('沒有符合的項目。', 'Nothing matches.')}</p>` : ''}`;
+  }
+  $('vAlerts').innerHTML = `<div class="vhead"><h2>${T('缺藥與回收', 'Shortages & recalls')}</h2><p>${T('資料來源：食藥署藥品供應資訊、回收藥品資料集，每週更新。', 'Sources: TFDA drug supply notices and recall dataset, refreshed weekly.')}</p></div>
+    <div class="cards">${[['short', shorts.length, '缺藥中', 'In short supply'], ['back', backs.length, '已恢復供應', 'Back in supply'], ['recall', recalls.length, '回收紀錄', 'Recalls']].map(([k, n, zh, en]) => `<button type="button" data-atab="${k}" aria-pressed="${tab === k}"><b>${n.toLocaleString()}</b><span>${T(zh, en)}</span></button>`).join('')}</div>
+    <div class="vfilter"><input type="search" id="aq" value="${esc(S.aq || '')}" placeholder="${T('搜尋品名、成分、許可證字號、原因', 'Search name, licence, reason')}" aria-label="${T('搜尋', 'Search')}"></div>
+    ${body}`;
+  const inp = $('aq'); inp.oninput = RT.debounce(() => { S.aq = inp.value; save(); const pos = inp.selectionStart; renderAlerts().then(() => { const n = $('aq'); n.focus(); n.setSelectionRange(pos, pos); }); }, 250);
+}
+$('vAlerts').addEventListener('click', (e) => {
+  const t = e.target.closest('[data-atab]'), g = e.target.closest('[data-agrade]');
+  if (t) { S.atab = t.dataset.atab; save(); renderAlerts(); }
+  else if (g) { S.agrade = g.dataset.agrade; save(); renderAlerts(); }
+});
+
+/* rule revisions */
+async function renderRulesView() {
+  loadingBox('vRules');
+  try { await Promise.all([loadAll(), rulesD || TW.rules().then((d) => (rulesD = d))]); } catch (e) { $('vRules').innerHTML = `<div class="empty-state">${esc(e.message || e)}</div>`; return; }
+  const ch = new Map();
+  nhiD.rows.forEach((r) => {
+    if (!r[N.ruleChapters]) return;
+    r[N.ruleChapters].split(',').filter(Boolean).forEach((c) => {
+      const fl = ruleFile(r, c); if (!fl) return;
+      const e = ch.get(c) || { c, file: fl, date: TW.ruleDate(fl), n: 0 }; e.n += r[N.price] > 0 ? 1 : 0; ch.set(c, e);
+    });
+  });
+  // first line of the chapter, without its number and the list of revision dates that follows the title
+  const titleOf = (e) => { const t = (rulesD.files[e.file] || '').split('\n')[0].trim(); return t.replace(/^[\d.]+\s*/, '').replace(/\s*[（(]\s*\d{2,3}\/\d.*$/, '').replace(/[：:]\s*$/, '').slice(0, 80); };
+  const months = S.rmonths || '6', q = TW.fold(S.rq || '');
+  const since = months === 'all' ? '' : (() => { const d = new Date(); d.setMonth(d.getMonth() - +months); return d.toISOString().slice(0, 10); })();
+  const all = [...ch.values()].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : a.c.localeCompare(b.c, undefined, { numeric: true })));
+  const rows = all.filter((e) => e.date >= since && (!q || TW.fold(e.c + ' ' + titleOf(e)).includes(q)));
+  // revisions per month over the last two years
+  const mon = {}; const cut = (() => { const d = new Date(); d.setMonth(d.getMonth() - 24); return d.toISOString().slice(0, 7); })();
+  all.forEach((e) => { const m = e.date.slice(0, 7); if (m >= cut) mon[m] = (mon[m] || 0) + 1; });
+  const mk = []; { const d = new Date(cut + '-01'); const end = new Date().toISOString().slice(0, 7); while (d.toISOString().slice(0, 7) <= end) { mk.push(d.toISOString().slice(0, 7)); d.setMonth(d.getMonth() + 1); } }
+  const mmax = Math.max(1, ...Object.values(mon));
+  $('vRules').innerHTML = `<div class="vhead"><h2>${T('給付規定修訂', 'Rule revisions')}</h2><p>${T(`共 ${all.length} 個章節；日期取自健保署公告的 PDF 檔名。`, `${all.length} chapters; dates come from the NHIA PDF file names.`)}</p></div>
+    <h3 class="sec">${T('每月修訂章節數（近兩年）', 'Chapters revised per month (two years)')}</h3>
+    <div class="yearbars" role="img" aria-label="${T('每月修訂章節數', 'Chapters revised per month')}">${mk.map((m) => `<div title="${m}: ${mon[m] || 0}">${mon[m] ? `<i class="g2" style="height:${((mon[m] / mmax) * 80).toFixed(1)}px"></i>` : ''}</div>`).join('')}</div>
+    <div class="yearax">${mk.map((m, i) => `<span>${i % 3 === 0 ? m.slice(2).replace('-', '/') : ''}</span>`).join('')}</div>
+    <div class="vfilter"><input type="search" id="rq" value="${esc(S.rq || '')}" placeholder="${T('搜尋章節或標題，例如 5.1、糖尿病', 'Search chapter or title, e.g. 5.1, diabetes')}" aria-label="${T('搜尋', 'Search')}">
+      <select id="rmonths" aria-label="${T('期間', 'Period')}">${[['1', '近 1 個月', 'Last month'], ['3', '近 3 個月', 'Last 3 months'], ['6', '近 6 個月', 'Last 6 months'], ['12', '近 1 年', 'Last year'], ['all', '全部章節', 'All chapters']].map(([v, zh, en]) => `<option value="${v}"${v === months ? ' selected' : ''}>${T(zh, en)}</option>`).join('')}</select></div>
+    ${rows.length ? rows.map((e) => `<details class="rv" data-file="${esc(e.file)}"><summary><span class="d">${esc(e.date)}</span><span><span class="c">${esc(e.c)}</span>${esc(titleOf(e))}</span><span class="r hint" style="margin:0">${T(`${e.n} 項給付中`, `${e.n} reimbursed`)}</span></summary></details>`).join('') : `<p class="hint">${T('這段期間沒有修訂。', 'No revisions in this period.')}</p>`}`;
+  const inp = $('rq'); inp.oninput = RT.debounce(() => { S.rq = inp.value; save(); const pos = inp.selectionStart; renderRulesView().then(() => { const n = $('rq'); n.focus(); n.setSelectionRange(pos, pos); }); }, 250);
+  $('rmonths').onchange = () => { S.rmonths = $('rmonths').value; save(); renderRulesView(); };
+}
+$('vRules').addEventListener('toggle', (e) => {
+  const d = e.target; if (!d.matches || !d.matches('details.rv') || !d.open || d.dataset.filled) return;
+  d.dataset.filled = '1';
+  const fl = d.dataset.file, text = rulesD && rulesD.files[fl];
+  d.insertAdjacentHTML('beforeend', `<div class="rules-txt"><h4>${esc(fl.split('_')[0])} · ${T('修訂', 'revised')} ${esc(TW.ruleDate(fl))} <a href="${TW.ruleUrl(fl)}" target="_blank" rel="noopener">PDF ↗</a></h4>${text ? `<div class="txt">${esc(text)}</div>` : `<p class="hint" style="padding:10px 12px;margin:0">${T('這一章的全文還沒有轉好，請開 PDF。', 'No text for this chapter yet; open the PDF.')}</p>`}</div>`);
+}, true);
+
 /* ---------- start ---------- */
 $('srcNote').textContent = TW.sourceNote();
 $('refs').innerHTML = RT.noticeHTML([T('資料來源：健保署「健保用藥品項」與藥品給付規定；食藥署「全部藥品許可證資料集」「藥品外觀資料集」「藥品仿單外盒資料集」（政府資料開放授權條款第 1 版）。外觀照片、仿單與外盒直接連到食藥署網站。', 'Sources: NHIA “NHI drug list” and reimbursement rules; TFDA “All drug licences”, “Drug appearance” and “Leaflets and cartons” datasets (Open Government Data License, Taiwan v1.0). Photos, leaflets and cartons link straight to the TFDA site.')]);
@@ -1039,6 +1369,7 @@ $('refs').innerHTML = RT.noticeHTML([T('資料來源：健保署「健保用藥�
 })();
 [...$('scope').children].forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === S.scope)));
 $('fSort').value = S.sort;
+setView(new URLSearchParams(location.search).get('view') || S.view || 'search', true);
 // the filter sheet never opens by itself on a phone
 showAdv(!!S.advOpen && !matchMedia('(max-width: 640px)').matches);
 $('aCls').innerHTML = `<option value="">${T('不限', 'All')}</option>` + CLS.map((c) => `<option value="${esc(c)}">${esc(clsName(c))}</option>`).join('');
@@ -1054,6 +1385,7 @@ TW.nhi().then((d) => {
   render();
   // licences come second: search works as soon as the NHI list is in
   loadFda();
+  loadAlerts();
   if (A().photo) loadExtra();
 }).catch((e) => { $('out').innerHTML = `<div class="empty-state">${esc(e.message || e)}</div>`; });
 </script>
