@@ -116,8 +116,14 @@
   .row .pr { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
   .row .pr b { font-size: 16px; }
   .row .pr small { font-size: 11px; color: var(--muted); }
-  .pos { width: 72px; height: 6px; border-radius: 3px; background: var(--panel-2); border: 1px solid var(--border); position: relative; }
-  .pos i { position: absolute; top: -3px; width: 4px; height: 10px; margin-left: -2px; border-radius: 2px; background: var(--accent); }
+  .row .pr .gp { font-size: 11px; color: var(--muted); }
+  .row .pr .gp.lo { color: var(--ok-text); font-weight: 600; }
+  /* results listed by price group */
+  ul.res > li.grp-h { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 12px; padding: 14px 6px 6px; border-bottom: 1px solid var(--border); }
+  .grp-h .gn { font-weight: 700; font-size: 13px; overflow-wrap: anywhere; min-width: 0; }
+  .grp-h .gm { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .grp-h .gm b { color: var(--text); }
+  .grp-h button { margin-left: auto; }
   .tag { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 0 6px; border-radius: 4px; background: var(--panel-2); border: 1px solid var(--border); color: var(--muted); line-height: 1.6; }
   .tag .dot { width: 7px; height: 7px; }
   .tag.off { background: var(--warn-bg); color: var(--warn-text); border-color: transparent; }
@@ -147,9 +153,9 @@
   .tabs button:hover { color: var(--text); }
   .tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
   .tabp { padding: 14px 16px 16px; }
-  .facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
-  .fact { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; background: var(--panel-2); min-width: 0; }
-  .fact .k { display: block; font-size: 11.5px; color: var(--muted); margin-bottom: 2px; }
+  .facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); column-gap: 28px; border-top: 1px solid var(--border); }
+  .fact { display: grid; grid-template-columns: 6.5em minmax(0, 1fr); gap: 12px; align-items: baseline; padding: 7px 2px; border-bottom: 1px solid var(--border); min-width: 0; }
+  .fact .k { font-size: 12px; color: var(--muted); }
   .fact .v { font-size: 13.5px; overflow-wrap: anywhere; }
   .fact .v .cd, .cd { font-family: var(--font-mono); }
   .fact.wide { grid-column: 1 / -1; }
@@ -180,6 +186,31 @@
   .hist-tbl td { padding: 2px 0; border-bottom: 1px solid var(--border); }
   .hist-tbl td:last-child { text-align: right; }
   /* same-group comparison */
+  .tiers { display: flex; flex-direction: column; font-size: 12.5px; border-top: 1px solid var(--border); }
+  .tier { border-bottom: 1px solid var(--border); }
+  .tier > summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: 5.2em minmax(0, 1fr) 6.5em; gap: 12px; align-items: center; padding: 6px 2px; }
+  .tier > summary::-webkit-details-marker { display: none; }
+  .tier > summary:hover { background: var(--panel-2); }
+  .tier > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .tier .p { font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+  .tier .dots { display: flex; flex-wrap: wrap; gap: 3px; align-items: center; }
+  .tier .dots i { width: 9px; height: 9px; border-radius: 50%; }
+  .tier .dots i.g0, .legend i.sq { border-radius: 2px; }
+  .legend i.sq { display: inline-block; width: 9px; height: 9px; background: var(--muted); }
+  .tier .dots i.me { outline: 2px solid var(--text); outline-offset: 1px; }
+  .tier .n { color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .tier .n::after { content: " ▾"; font-size: 10px; }
+  .tier[open] .n::after { content: " ▴"; }
+  .tier.me > summary { background: var(--accent-weak); }
+  .tier.me .p { color: var(--accent); }
+  .tier ul { list-style: none; margin: 0; padding: 2px 0 8px calc(5.2em + 14px); display: flex; flex-direction: column; gap: 3px; }
+  .tier li { display: flex; align-items: center; gap: 6px; min-width: 0; }
+  .tier li button { all: unset; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tier li button:hover { color: var(--accent); text-decoration: underline; }
+  .tier li button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .tier li.me { font-weight: 700; }
+  .tier-sum { font-size: 12.5px; color: var(--muted); margin: 0 0 8px; }
+  .tier-sum b { color: var(--text); }
   .cmp { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; }
   .ci { display: grid; grid-template-columns: minmax(0, 15em) minmax(0, 1fr) 5.2em; gap: 10px; align-items: center; }
   .cmp .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -234,7 +265,6 @@
     .row { grid-template-columns: 44px minmax(0, 1fr) auto; gap: 4px 10px; padding: 10px 2px; }
     .thumb { width: 44px; height: 44px; }
     .row .pr b { font-size: 15px; }
-    .pos { width: 52px; }
     /* the open drug takes the whole screen; Back returns to the list */
     .detail { position: fixed; inset: 0; z-index: 40; margin: 0; border: 0; border-radius: 0; overflow-y: auto; overscroll-behavior: contain; background: var(--bg); }
     .d-back { display: flex; position: sticky; top: 0; z-index: 2; align-items: center; gap: 8px; padding: 10px 16px; background: var(--bg); border-bottom: 1px solid var(--border); }
@@ -248,7 +278,7 @@
     .tabs { position: sticky; top: 49px; z-index: 1; background: var(--bg); flex-wrap: wrap; overflow-x: visible; padding: 0 8px; }
     .tabs button { padding: 8px 8px 7px; font-size: 12.5px; }
     .tabp { padding: 14px 16px 28px; }
-    .facts { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    .fact { grid-template-columns: 5.5em minmax(0, 1fr); gap: 10px; }
     .ci { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "nm v" "tr tr"; row-gap: 3px; }
     .ci .nm { grid-area: nm; } .ci .v { grid-area: v; } .ci .track { grid-area: tr; height: 8px; margin-bottom: 4px; }
     .looks { grid-template-columns: 120px minmax(0, 1fr); }
@@ -439,8 +469,10 @@
   .ctr-row .ln { fill: none; stroke: var(--c-orig); stroke-width: 2; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
   .ctr-row .base { stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; }
   .ctr-ax { font-size: 11px; color: var(--muted); margin-top: -2px; }
-  .ctr-ax span:nth-child(2) { display: flex; justify-content: space-between; }
-  @media (max-width: 480px) { .ctr-row, .ctr-ax { grid-template-columns: 5.6em minmax(0, 1fr) 4.8em; gap: 8px; } }
+  .ctr-ax .yrs { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); text-align: center; white-space: nowrap; }
+  .ctr-ax .yrs span.off { visibility: hidden; }
+  .ov-body > .k.top { align-self: start; padding-top: 1px; }
+  @media (max-width: 480px) { .ctr-row, .ctr-ax { grid-template-columns: 5.6em minmax(0, 1fr) 4.8em; gap: 8px; } .tier > summary { grid-template-columns: 4.6em minmax(0, 1fr) 5.4em; gap: 8px; } .tier ul { padding-left: calc(4.6em + 10px); } }
 
   @media (prefers-reduced-motion: reduce) { .ov > summary .car, .row, .scope button { transition: none; } }
 </style>
@@ -480,6 +512,7 @@
       </span>
       <button type="button" id="btnAdv" aria-expanded="false" aria-controls="adv"><span data-en="Filters">進階篩選</span> ▾<span class="badge" id="advCount"></span></button>
       <span class="spacer"></span>
+      <button type="button" id="btnByGroup" aria-pressed="false" title="把相同成分、含量、劑型（健保分類分組）的品項排在一起" data-en-title="List items of the same ingredient, strength and form (NHI price group) together"><span data-en="By group">依分組列</span></button>
       <select id="fSort" aria-label="排序">
         <option value="rel" data-en="Best match">最相關</option>
         <option value="pa" data-en="Price, low to high">支付價 低→高</option>
@@ -537,13 +570,13 @@
   </div>
 </main>
 
-<script src="../shared/common.js?v=20261124e"></script>
+<script src="../shared/common.js?v=20261124f"></script>
 <script src="../shared/twdrugs.js?v=20261124a"></script>
 <script>
 const TW = RT.twDrugs, N = TW.N, F = TW.F, T = RT.t, esc = RT.esc;
 const KEY = 'drugs';
 const ADV = { pmin: '', pmax: '', from: '', to: '', atc: '', cls: '', form: '', single: '', cat: '', ctrl: '', country: '', lic: '', pkg: '', who: '', rules: false, photo: false, short: false, recall: false };
-const DEF = { scope: 'paid', pack: 'foil', sort: 'rel', advOpen: false, adv: ADV, view: 'search' };
+const DEF = { scope: 'paid', pack: 'foil', sort: 'rel', byGroup: false, advOpen: false, adv: ADV, view: 'search' };
 let S = RT.merge(DEF, RT.load(KEY, {}));
 // scopes before the four-way split: 'all' (with delisted) and 'lic' (everything) both become 'every'
 if (S.scope === 'all' || (S.scope === 'lic' && !S.scope4)) S.scope = 'every';
@@ -721,6 +754,24 @@ function search() {
 }
 
 /* ---------- price scale shared by the overview and the cards ---------- */
+// paid prices of every NHI price group, lowest first, foil packs (G0) apart from the rest since they have a higher price floor
+let grpIdx = null;
+const grpKey = (x) => x[N.group] + (TW.isFoil(x[N.code]) ? '|G0' : '');
+function grpPrices(r) {
+  if (!r[N.group]) return null;
+  if (!grpIdx) { grpIdx = new Map(); for (const x of nhiD.rows) if (x[N.price] > 0 && x[N.group]) { const k = grpKey(x), a = grpIdx.get(k); if (a) a.push(x[N.price]); else grpIdx.set(k, [x[N.price]]); } grpIdx.forEach((a) => a.sort((p, q) => p - q)); }
+  return grpIdx.get(grpKey(r)) || null;
+}
+// where the price sits in its own price group (same ingredient, strength and form)
+function grpPos(r) {
+  const ps = grpPrices(r), foil = TW.isFoil(r[N.code]);
+  if (!ps || ps.length < 2) return '';
+  const lo = ps[0], hi = ps[ps.length - 1], p = r[N.price];
+  const tip = T(`同分組（相同成分、含量、劑型）${foil ? '的鋁箔包裝' : ''}給付中 ${ps.length} 項，$${fmtP(lo)}${hi > lo ? ' – $' + fmtP(hi) : ''}`, `${ps.length} reimbursed ${foil ? 'foil-pack ' : ''}items in the same price group (ingredient, strength, form), $${fmtP(lo)}${hi > lo ? ' – $' + fmtP(hi) : ''}`);
+  if (p <= lo) return `<span class="gp${hi > lo ? ' lo' : ''}" title="${tip}">${hi > lo ? T('同組最低', 'Group low') : T('同組同價', 'Same as group')}</span>`;
+  const pc = Math.round(((p - lo) / lo) * 100);
+  return `<span class="gp" title="${tip}">${T(`比同組最低貴 ${pc < 1 ? '<1' : pc}%`, `+${pc < 1 ? '<1' : pc}% vs group low`)}</span>`;
+}
 let scale = null;
 function makeScale(rows) {
   const ps = rows.map((r) => r[N.price]).filter((p) => p > 0).sort((a, b) => a - b);
@@ -757,7 +808,7 @@ function rowHTML(r) {
   const id = r[N.code];
   const tags = [clsTag(r[N.class]), pkgTag(r), ctrlTag(f), alertTags(f), f && f[F.status] ? `<span class="tag off">${T('許可證', 'Licence ')}${esc(f[F.status])}</span>` : ''].join('');
   const price = r[N.price] > 0
-    ? `<b>$${fmtP(r[N.price])}</b>${scale && scale.ps.length > 1 ? `<span class="pos" title="${T('在這次結果中的價格位置', 'Where the price sits in these results')}"><i style="left:${(scale.pos(r[N.price]) * 100).toFixed(1)}%"></i></span>` : ''}<small>${esc(r[N.priceSince] || '')}</small>`
+    ? `<b>$${fmtP(r[N.price])}</b>${grpPos(r)}<small>${esc(r[N.priceSince] || '')}</small>`
     : `<span class="tag off">${T('已取消給付', 'Delisted')}</span>${r[N.lastPaidPrice] ? `<small>${T('最後', 'last')} $${fmtP(r[N.lastPaidPrice])}</small>` : ''}`;
   return `<li data-code="${esc(id)}"><button type="button" class="row" aria-expanded="${open.has(id)}" aria-controls="d-${esc(id)}">
     ${thumbHTML(r)}
@@ -795,7 +846,7 @@ function overviewHTML(rows) {
         <div class="legend">${clsBar.map((b) => `<button type="button" data-ovcls="${esc(b.c)}" aria-pressed="${on === b.c && !!b.c}"><span class="dot k-${b.key}"></span>${esc(b.name)} <b>${b.n}</b></button>`).join('')}</div></div>
       ${S.scope === 'every' || S.scope === 'delisted' ? `<span class="k">${T('給付狀態', 'Status')}</span><div><div class="bar"><button type="button" class="k-paid" style="width:${pct(paid)}" data-ovscope="paid" aria-label="${T('給付中', 'Reimbursed')} ${paid}"></button><button type="button" class="k-off" style="width:${pct(rows.length - paid)}" data-ovscope="delisted" aria-label="${T('已取消給付', 'Delisted')} ${rows.length - paid}"></button></div>
         <div class="legend"><button type="button" data-ovscope="paid"><span class="dot k-paid"></span>${T('給付中', 'Reimbursed')} <b>${paid}</b></button><button type="button" data-ovscope="delisted"><span class="dot k-off"></span>${T('已取消給付', 'Delisted')} <b>${rows.length - paid}</b></button></div></div>` : ''}
-      ${(() => { const cp = classPrefix(rows); return cp ? `<span class="k">ATC ${esc(cp)}</span><div><details class="ctr" data-ctr="${esc(cp)}"${S.ctrOpen ? ' open' : ''}><summary>${T('類別歷年趨勢：品項數、價格中位數、醫令量', 'Class over the years: items, median price, claims')}</summary><div class="ctr-box" data-ctrbox></div></details></div>` : ''; })()}
+      ${(() => { const cp = classPrefix(rows); return cp ? `<span class="k top">ATC ${esc(cp)}</span><div><details class="ctr" data-ctr="${esc(cp)}"${S.ctrOpen ? ' open' : ''}><summary>${T('類別歷年趨勢：品項數、價格中位數、醫令量', 'Class over the years: items, median price, claims')}</summary><div class="ctr-box" data-ctrbox></div></details></div>` : ''; })()}
       ${Object.keys(ctrl).length ? `<span class="k">${T('管制藥品', 'Controlled')}</span><div class="legend" style="margin:0">${Object.entries(ctrl).sort().map(([lv, n]) => `<button type="button" data-ovctrl="${lv}" aria-pressed="${A().ctrl === lv}"><span class="tag ctrl">${T(`第${'一二三四'[lv - 1]}級`, `Schedule ${lv}`)}</span> <b>${n}</b></button>`).join('')}</div>` : ''}
     </div></details>`;
 }
@@ -874,15 +925,25 @@ function tabHTML(r, tab) {
   if (tab === 'lic') return licTab(f);
   return '';
 }
-// every item in the same NHI price group, cheapest first, this one highlighted
-function groupBars(r, all) {
-  const items = nhiD.rows.filter((x) => x[N.group] === r[N.group] && (x[N.price] > 0 || x === r)).sort((a, b) => a[N.price] - b[N.price]);
+// every reimbursed item in the same NHI price group, gathered by price: one row per price, this item's price marked
+function groupBars(r) {
+  const items = nhiD.rows.filter((x) => x[N.group] === r[N.group] && (x[N.price] > 0 || x === r)).sort((a, b) => a[N.price] - b[N.price] || (a[N.zh] || a[N.en]).localeCompare(b[N.zh] || b[N.en]));
   if (items.length < 2) return `<p class="hint">${T('這個分組只有這一項。', 'This is the only item in its group.')}</p>`;
-  const max = Math.max(...items.map((x) => x[N.price])) || 1;
-  const LIMIT = 24, list = all || items.length <= LIMIT ? items : items.slice(0, LIMIT - 1).concat(items.includes(r) && items.indexOf(r) >= LIMIT - 1 ? [r] : []);
-  return `<div class="cmp" role="list">${list.map((x) => `<div class="ci${x === r ? ' me' : ''}" role="listitem"><span class="nm" title="${esc(x[N.zh] || x[N.en])}"><button type="button" data-go="${esc(x[N.code])}">${esc(x[N.zh] || x[N.en])}</button></span><span class="track"><i class="k-${CLS_KEY[x[N.class]] || 'none'}" style="width:${((x[N.price] / max) * 100).toFixed(1)}%"></i></span><span class="v">${x[N.price] > 0 ? '$' + fmtP(x[N.price]) : T('取消', 'off')}</span></div>`).join('')}</div>
-    ${list.length < items.length ? `<button type="button" class="small cmp-more" data-act="allgroup">${T(`顯示全部 ${items.length} 項`, `Show all ${items.length}`)}</button>` : ''}
-    <div class="legend" style="margin-top:8px">${CLS.map((c) => `<span><span class="dot k-${CLS_KEY[c]}"></span> ${esc(clsName(c))}</span>`).join('')}</div>`;
+  const tiers = [];
+  items.forEach((x) => { const t = tiers[tiers.length - 1]; if (t && t.p === x[N.price]) t.xs.push(x); else tiers.push({ p: x[N.price], xs: [x] }); });
+  const paid = items.filter((x) => x[N.price] > 0), mine = tiers.find((t) => t.xs.includes(r));
+  // foil packs (G0) have a higher price floor, so this item is ranked only among its own kind of pack
+  const foil = TW.isFoil(r[N.code]), kin = paid.filter((x) => TW.isFoil(x[N.code]) === foil), anyFoil = paid.some((x) => TW.isFoil(x[N.code]));
+  const below = kin.filter((x) => r[N.price] > 0 && x[N.price] < r[N.price]).length, tied = kin.filter((x) => x !== r && x[N.price] === r[N.price]).length;
+  const among = anyFoil ? T(foil ? '（只和鋁箔包裝比）' : '（只和一般包裝比）', foil ? ' (among foil packs)' : ' (among standard packs)') : '';
+  const sum = r[N.price] > 0
+    ? (below ? T(`給付中 <b>${paid.length}</b> 項；有 <b>${below}</b> 項比這個便宜${among}。`, `<b>${paid.length}</b> reimbursed; <b>${below}</b> cost less than this one${among}.`) : T(`給付中 <b>${paid.length}</b> 項；這個是最低價${tied ? `，和另外 ${tied} 項同價` : ''}${among}。`, `<b>${paid.length}</b> reimbursed; this one is the lowest${tied ? `, tied with ${tied} more` : ''}${among}.`))
+    : T(`這個品項已取消給付；同組給付中 <b>${paid.length}</b> 項。`, `This item is delisted; <b>${paid.length}</b> others are reimbursed.`);
+  const dot = (x) => `<i class="k-${CLS_KEY[x[N.class]] || 'none'}${TW.isFoil(x[N.code]) ? ' g0' : ''}${x === r ? ' me' : ''}"></i>`;
+  const MAXDOTS = 40;
+  return `<p class="tier-sum">${sum}</p><div class="tiers">${tiers.map((t) => { const me = t === mine; return `<details class="tier${me ? ' me' : ''}"${me && t.xs.length <= 12 ? ' open' : ''}><summary><span class="p">${t.p > 0 ? '$' + fmtP(t.p) : T('已取消', 'Delisted')}</span><span class="dots" aria-hidden="true">${t.xs.slice(0, MAXDOTS).map(dot).join('')}${t.xs.length > MAXDOTS ? '…' : ''}</span><span class="n">${T(`${t.xs.length} 項`, `${t.xs.length} item${t.xs.length > 1 ? 's' : ''}`)}</span></summary>
+      <ul>${t.xs.map((x) => `<li${x === r ? ' class="me"' : ''}><span class="dot k-${CLS_KEY[x[N.class]] || 'none'}"></span><button type="button" data-go="${esc(x[N.code])}" title="${esc(x[N.code])}">${esc(x[N.zh] || x[N.en])}</button></li>`).join('')}</ul></details>`; }).join('')}</div>
+    <div class="legend" style="margin-top:8px">${CLS.map((c) => `<span><span class="dot k-${CLS_KEY[c]}"></span> ${esc(clsName(c))}</span>`).join('')}${anyFoil ? `<span><i class="sq"></i> ${T('方點＝鋁箔包裝', 'square = foil pack')}</span>` : ''}<span>${T('點價格列看品項', 'Click a price to list the items')}</span></div>`;
 }
 function looksTab(r, f) {
   if (!f) return `<p class="hint">${fdaD ? T('找不到對應的許可證資料。', 'No matching licence record.') : T('許可證資料載入中…', 'Loading licence data…')}</p>`;
@@ -952,7 +1013,8 @@ async function drawHist(box, r) {
     const ps = pts.map((p) => p.price).filter((p) => p > 0);
     const max = Math.max(...ps, 0.01), min = Math.min(...ps, max);
     // y axis: 0 when prices are close to it, else a little below the lowest
-    const y0 = min < max * 0.35 ? 0 : Math.max(0, min - (max - min) * 0.25), y1 = max + (max - y0) * 0.08 || 1;
+    // (one price all along: from 0, so the line sits in the chart instead of on its top edge)
+    const y0 = min < max * 0.35 || min === max ? 0 : Math.max(0, min - (max - min) * 0.25), y1 = max + (max - y0) * (min === max ? 0.25 : 0.08) || 1;
     const X = (d) => L + ((t(d) - x0) / (x1 - x0)) * (W - L - R), Y = (p) => Tp + (1 - (p - y0) / (y1 - y0)) * (H - Tp - B);
     const yt = [y0, (y0 + y1) / 2, y1].map((v) => ({ v, y: Y(v) }));
     const yrs = []; const ya = new Date(x0).getFullYear(), yb = new Date(x1).getFullYear(), step = Math.max(1, Math.ceil((yb - ya + 1) / 6));
@@ -1026,14 +1088,28 @@ function render() {
   $('ovWrap').innerHTML = overviewHTML(last.rows);
   if (keepOpen != null && $('ov')) $('ov').open = keepOpen;
   { const ct = $('ovWrap').querySelector('details.ctr[open]'); if (ct) drawClassTrend(ct); }
+  // the list: plain, or gathered under one heading per price group (in the order the sort puts them)
+  let listHTML = '', used = Math.min(shown, total);
+  if (total && S.byGroup) {
+    const gs = new Map();
+    last.rows.forEach((r) => { const k = r[N.group] || '\u0000' + r[N.ingredient] + '|' + r[N.form]; const g = gs.get(k); if (g) g.push(r); else gs.set(k, [r]); });
+    used = 0;
+    for (const [k, rs] of gs) {
+      if (used >= shown) break;
+      const paidP = rs.map((r) => r[N.price]).filter((p) => p > 0), lo = Math.min(...paidP), hi = Math.max(...paidP);
+      const name = k[0] === '\u0000' ? [rs[0][N.ingredient], rs[0][N.form]].filter(Boolean).join(' · ') : k;
+      listHTML += `<li class="grp-h"><span class="gn">${esc(name)}</span><span class="gm">${T(`${rs.length} 項`, `${rs.length} items`)}${paidP.length ? T(` · 給付中 <b>${paidP.length}</b> · <b>$${fmtP(lo)}</b>${hi > lo ? ' – $' + fmtP(hi) : ''}`, ` · <b>${paidP.length}</b> reimbursed · <b>$${fmtP(lo)}</b>${hi > lo ? ' – $' + fmtP(hi) : ''}`) : T(' · 都已取消給付', ' · all delisted')}</span>${k[0] !== '\u0000' && !chips.some((c) => c.k === 'group') ? `<button type="button" class="small" data-chipgroup="${esc(k)}">${T('只看這組', 'Only this group')}</button>` : ''}</li>` + rs.map(rowHTML).join('');
+      used += rs.length;
+    }
+  } else if (total) listHTML = last.rows.slice(0, shown).map(rowHTML).join('');
   const ms = Math.round(performance.now() - t0);
-  $('status').innerHTML = `<span>${T(`${total.toLocaleString()} 筆健保品項`, `${total.toLocaleString()} NHI items`)}${last.lic.length ? T(`、${last.lic.length} 張無健保代號的許可證`, `, ${last.lic.length} licences without an NHI code`) : ''}${last.packHidden ? T(`（另有 ${last.packHidden} 個${last.pack === 'foil' ? '一般包裝' : '鋁箔包裝'}代號已收起）`, ` (${last.packHidden} ${last.pack === 'foil' ? 'standard-pack' : 'foil-pack'} codes folded away)`) : ''}${total > shown ? T(`，顯示前 ${shown} 筆`, `; showing ${shown}`) : ''}</span><span class="hint" style="margin:0">${ms} ms</span><span class="spacer"></span>${total ? `<button type="button" class="small" id="btnCsv">${T('匯出 CSV', 'Export CSV')}</button><button type="button" class="small" id="btnAllCl">${T('全部加入代碼清單', 'Add all to code list')}</button>` : ''}`;
+  $('status').innerHTML = `<span>${T(`${total.toLocaleString()} 筆健保品項`, `${total.toLocaleString()} NHI items`)}${last.lic.length ? T(`、${last.lic.length} 張無健保代號的許可證`, `, ${last.lic.length} licences without an NHI code`) : ''}${last.packHidden ? T(`（另有 ${last.packHidden} 個${last.pack === 'foil' ? '一般包裝' : '鋁箔包裝'}代號已收起）`, ` (${last.packHidden} ${last.pack === 'foil' ? 'standard-pack' : 'foil-pack'} codes folded away)`) : ''}${total > used ? T(`，顯示前 ${used} 筆`, `; showing ${used}`) : ''}</span><span class="hint" style="margin:0">${ms} ms</span><span class="spacer"></span>${total ? `<button type="button" class="small" id="btnCsv">${T('匯出 CSV', 'Export CSV')}</button><button type="button" class="small" id="btnAllCl">${T('全部加入代碼清單', 'Add all to code list')}</button>` : ''}`;
   if (!total && !last.lic.length) {
     $('out').innerHTML = `<div class="empty-state">${T('找不到符合的藥品。', 'No matching drugs.')}${S.scope !== 'every' ? ` <button type="button" class="small" data-scope="every">${T('改搜全部', 'Search everything')}</button>` : ''}${advCount() ? ` <button type="button" class="small" data-clear="1">${T('清除進階篩選', 'Clear filters')}</button>` : ''}</div>`;
     return;
   }
-  $('out').innerHTML = (total ? `<ul class="res">${last.rows.slice(0, shown).map(rowHTML).join('')}</ul>` : '') +
-    (total > shown ? `<div class="more"><button type="button" id="btnMore">${T(`再顯示 ${Math.min(100, total - shown)} 筆`, `Show ${Math.min(100, total - shown)} more`)}</button></div>` : '') +
+  $('out').innerHTML = (total ? `<ul class="res${S.byGroup ? ' grouped' : ''}">${listHTML}</ul>` : '') +
+    (total > used ? `<div class="more"><button type="button" id="btnMore">${T(`再顯示 ${Math.min(100, total - used)} 筆`, `Show ${Math.min(100, total - used)} more`)}</button></div>` : '') +
     (last.lic.length ? `<h2 class="sec-h"${S.scope === 'lic' ? ' hidden' : ''}>${T('沒有健保代號的有效許可證（例如指示藥、成藥）', 'Valid licences without an NHI code (e.g. OTC)')}</h2><ul class="res">${last.lic.slice(0, 50).map(licRowHTML).join('')}</ul>` : '');
   hydrate($('out'));
   if (total && !extraD) loadExtra();   // photos for the cards
@@ -1138,6 +1214,7 @@ $('out').addEventListener('click', async (e) => {
   const sc = e.target.closest('[data-scope]'); if (sc) { setScope(sc.dataset.scope); return; }
   if (e.target.closest('[data-clear]')) { clearAdv(); return; }
   if (e.target.id === 'btnMore') { shown += 100; render(); return; }
+  const cg = e.target.closest('[data-chipgroup]'); if (cg) { setChip('group', cg.dataset.chipgroup); return; }
   const go = e.target.closest('[data-go]'); if (go) { goCode(go.dataset.go); return; }
   const li = e.target.closest('li[data-code]'); if (!li) return;
   const r = nhiD.byCode.get(li.dataset.code); if (!r) return;
@@ -1155,7 +1232,6 @@ $('out').addEventListener('click', async (e) => {
     const a = act.dataset.act;
     if (a === 'close') closeDrug(r[N.code]);
     else if (a === 'group') setChip('group', r[N.group]);
-    else if (a === 'allgroup') { const cmp = act.closest('.tabp').querySelector('.cmp'), tmp = document.createElement('div'); tmp.innerHTML = groupBars(r, true); act.remove(); cmp.replaceWith(tmp.querySelector('.cmp')); }
     else if (a === 'atc') setChip('atc', r[N.atc]);
     else if (a === 'atc5') setChip('atc', r[N.atc].slice(0, 5));
     else if (a === 'copy') { try { await navigator.clipboard.writeText(summary(r)); RT.toast(T('已複製', 'Copied')); } catch (x) { RT.toast(T('無法複製到剪貼簿', 'Could not copy'), 3000); } }
@@ -1209,6 +1285,8 @@ $('q').addEventListener('input', onQ);
 $('q').addEventListener('keydown', (e) => { if (e.key === 'Escape') { $('q').value = ''; onQ(); } });
 document.addEventListener('keydown', (e) => { if (e.key === '/' && document.activeElement !== $('q') && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); $('q').focus(); } });
 $('fSort').onchange = () => { S.sort = $('fSort').value; save(); render(); };
+function setByGroup(on, quiet) { S.byGroup = !!on; $('btnByGroup').setAttribute('aria-pressed', String(S.byGroup)); shown = 50; save(); if (!quiet) render(); }
+$('btnByGroup').onclick = () => setByGroup(!S.byGroup);
 // the filter panel (a sheet on phones)
 function showAdv(on) {
   $('adv').hidden = !on; $('btnAdv').setAttribute('aria-expanded', String(on));
@@ -1346,7 +1424,7 @@ async function drawUsage(box, r) {
     <div class="uyears">${ys.map((y) => `<span>${y.year}${y.partial ? '*' : ''}</span>`).join('')}</div>
     <div class="legend" style="margin-top:8px"><span><span class="dot" style="background:var(--accent)"></span> ${T('男性', 'Men')}</span><span><span class="dot" style="background:var(--c-bio)"></span> ${T('女性', 'Women')}</span></div>
     <table class="utbl"><thead><tr><th>${T('年', 'Year')}</th><th>${T('醫令量', 'Claims')}</th><th>${T('男 / 女', 'Men / women')}</th>${r[N.atc] ? `<th>${T('佔同 ATC', 'Share of ATC')}</th>` : ''}</tr></thead><tbody>
-    ${ys.map((y, i) => { const [t, m] = mine[i] || [0, 0]; return `<tr><td>${y.year}${y.partial ? T(`（1–${+y.to.slice(5)} 月）`, ` (Jan–${y.to.slice(5)})`) : ''}</td><td>${t.toLocaleString()}</td><td>${t ? Math.round((m / t) * 100) + '% / ' + (100 - Math.round((m / t) * 100)) + '%' : '—'}</td>${r[N.atc] ? `<td>${atcTot[i] ? ((t / atcTot[i]) * 100).toFixed(1) + '%' : '—'}</td>` : ''}</tr>`; }).join('')}
+    ${ys.map((y, i) => { const [t, m] = mine[i] || [0, 0]; return `<tr><td>${y.year}${y.partial ? T(`（1–${+y.to.slice(5)} 月）`, ` (Jan–${y.to.slice(5)})`) : ''}</td><td>${t.toLocaleString()}</td><td>${t ? Math.round((m / t) * 100) + '% / ' + (100 - Math.round((m / t) * 100)) + '%' : '—'}</td>${r[N.atc] ? `<td>${atcTot[i] ? (t && t / atcTot[i] < 0.001 ? '<0.1%' : ((t / atcTot[i]) * 100).toFixed(1) + '%') : '—'}</td>` : ''}</tr>`; }).join('')}
     </tbody></table>
     <p class="note">${T(`醫令量是健保申報的數量（含包裹支付），單位依品項而定，例如錠、支、瓶。* 為當年度部分月份。「佔同 ATC」是同一個 ATC 代碼（${esc(r[N.atc])}）所有健保代號中，這個代號的醫令量比例；不同劑型、含量的單位不同，比例僅供參考。資料來源：健保署「健保藥品使用量」。`, `Claims are NHI quantities including bundled payments, in each item’s own unit (tablet, vial, bottle…). * marks a partial year. “Share of ATC” is this code’s part of all NHI codes with ATC ${esc(r[N.atc])}; units differ between forms and strengths, so read it as a rough guide. Source: NHIA drug usage data.`)}</p>`;
   box.insertAdjacentHTML('beforeend', shareHTML(r));
@@ -1562,7 +1640,7 @@ async function drawClassTrend(det) {
   const html = `<div class="ctr-row"><span class="k">${T('給付品項數', 'Items paid')}</span>${svg(bars(snap.map((x) => x.n), () => ''), T('各年給付品項數', 'Items paid per year'))}<span class="v">${last.n.toLocaleString()}</span></div>
     <div class="ctr-row"><span class="k">${T('支付價中位數', 'Median price')}</span>${svg(`<line class="base" x1="0" x2="${VW}" y1="${VH - 0.5}" y2="${VH - 0.5}"/><path class="ln" d="${line}"/>${snap.map((x, i) => (x.med ? `<rect x="${(i * bw).toFixed(2)}" y="0" width="${bw.toFixed(2)}" height="${VH}" class="hit"><title>${x.y}: $${fmtP(x.med)}</title></rect>` : '')).join('')}`, T('各年支付價中位數', 'Median price per year'))}<span class="v">$${fmtP(last.med)}</span></div>
     ${snap.some((x) => x.q) ? `<div class="ctr-row"><span class="k">${T('醫令量', 'Claims')}</span>${svg(bars(snap.map((x) => x.q), (i) => (snap[i].part ? 'part' : '')), T('各年醫令量', 'Claims per year'))}<span class="v">${lastQ ? fmtN(lastQ.q) : '—'}</span></div>` : ''}
-    <div class="ctr-ax"><span></span><span><span>${snap[0].y}</span><span>${snap[n - 1].y}</span></span><span></span></div>
+    <div class="ctr-ax"><span></span><span class="yrs">${snap.map((x, i) => { const step = Math.ceil(n / 6); return `<span${(n - 1 - i) % step ? ' class="off"' : ''}>${x.y}</span>`; }).join('')}</span><span></span></div>
     <p class="note">${T(`ATC ${esc(p)} 共 ${rows.length} 個健保代號（含已取消給付）。品項數與價格中位數取每年 7 月 1 日（今年為今天）的狀態；不同含量、劑型混在一起，只看大方向。醫令量 * 為部分月份。`, `ATC ${esc(p)}: ${rows.length} NHI codes, delisted ones included. Item counts and median prices are as of 1 July each year (today for this year); strengths and forms are mixed, so read the direction only. * marks a partial year of claims.`)}</p>`;
   ctrCache.set(p, html);
   if (det.isConnected) box.innerHTML = html;
@@ -1732,6 +1810,7 @@ $('refs').innerHTML = RT.noticeHTML([T('資料來源：健保署「健保用藥�
 [...$('scope').children].forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === S.scope)));
 setPack(['foil', 'can', 'both'].includes(S.pack) ? S.pack : 'foil', true);
 $('fSort').value = S.sort;
+setByGroup(S.byGroup, true);
 // a shared link to a search or a drug opens the search, whatever view was used last
 { const u = new URLSearchParams(location.search); setView(u.get('view') || (['q', 'code', 'atc', 'group'].some((k) => u.get(k)) ? 'search' : S.view) || 'search', true); }
 // the filter sheet never opens by itself on a phone

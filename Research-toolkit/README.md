@@ -19,7 +19,7 @@ Browser-based figure tools for research papers. Everything runs in the browser �
 | RoB 2 risk-of-bias plots and tables | `rob2/` |
 | ROBINS-I V2 risk-of-bias plots and tables | `robinsi/` |
 | Code list builder: ICD-10-CM, ICD-9-CM diagnoses and procedures, ATC and Taiwan NHI drug codes in groups, ICD-9-CM ↔ ICD-10-CM mapping (GEMs), ready-made Charlson and Elixhauser groups (Quan 2005), with a Word appendix table, CSV and SAS / R / Stata / SQL / Python selection code | `codelist/` |
-| Taiwan drug lookup: NHI drug list (price, price history, reimbursement rules, ATC, price groups) joined with TFDA drug licences | `drugs/` |
+| Taiwan drug lookup: NHI drug list (price, price history, reimbursement rules, ATC, price groups) joined with TFDA drug licences; results can be listed by price group, and each item shows where its price sits in its group | `drugs/` |
 
 Interface in Traditional Chinese and English, in a light or dark theme that follows the system or is set with the button beside the language switch. Figures export to PNG, TIFF, JPG, PDF, SVG and editable Word.
 
@@ -38,4 +38,4 @@ The figure tools open figure-first: the settings column stays hidden until Setti
 
 張家菘 — questions, bug reports and suggestions: [js.chang0512@gmail.com](mailto:js.chang0512@gmail.com)
 
-Version: v3.10 (2026-11-24)
+Version: v3.11 (2026-11-24)
