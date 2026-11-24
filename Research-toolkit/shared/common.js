@@ -6,7 +6,7 @@
  */
 (function () {
   const RT = (window.RT = {});
-  RT.VERSION = 'v3.11 (2026-11-24)';
+  RT.VERSION = 'v3.12 (2026-11-24)';
   RT.DEV = { name: '張家菘', email: 'js.chang0512@gmail.com' };
 
   /* ---------- i18n ---------- */
@@ -726,6 +726,106 @@
   };
 
 
+  /* ---------- PowerPoint (.pptx) export: slide 1 native shapes (editable), slide 2 the same figure as a picture ---------- */
+  RT.buildPptx = async (fig, { editable = true, picture = true } = {}) => {
+    await RT.loadScript(RT.CDN.jszip);
+    const SW = 12192000, SH = 6858000, M = 365760;            // 16:9 slide, 0.4 in margin
+    const k = Math.min((SW - 2 * M) / fig.w, (SH - 2 * M) / fig.h); // EMU per figure px: the figure fills the slide
+    const W = Math.round(fig.w * k), H = Math.round(fig.h * k), OX = Math.round((SW - W) / 2), OY = Math.round((SH - H) / 2);
+    const E = (v) => Math.round(v * k);
+    const PT = (px) => (px * k) / 12700;                       // figure px -> points on the slide
+    const font = fig.font || RT.font;
+    let id = 1;
+    const fillX = (c) => (isNone(c) ? '<a:noFill/>' : `<a:solidFill><a:srgbClr val="${hex(c)}"/></a:solidFill>`);
+    const arrowSz = fig.arrowSize || 'sm';
+    const lnX = (c, sw, dash, arrow, dashType) => (isNone(c) || !(sw > 0)
+      ? '<a:ln><a:noFill/></a:ln>'
+      : `<a:ln w="${Math.max(3175, E(sw))}">${fillX(c)}${dash ? `<a:prstDash val="${dashType === 'dot' ? 'sysDot' : 'dash'}"/>` : ''}<a:miter lim="800000"/>${arrow ? `<a:tailEnd type="triangle" w="${arrowSz}" len="${arrowSz}"/>` : ''}</a:ln>`);
+    const rPr = (r, tag = 'a:rPr') => `<${tag} lang="en-US" sz="${Math.min(400000, Math.max(100, Math.round(PT(r.size || 12) * 100)))}"${r.bold ? ' b="1"' : ' b="0"'}${r.italic ? ' i="1"' : ''} dirty="0"><a:solidFill><a:srgbClr val="${hex(r.color || '#000')}"/></a:solidFill><a:latin typeface="${xe(font.name)}"/><a:ea typeface="${xe(font.ea || font.name)}"/><a:cs typeface="${xe(font.name)}"/></${tag}>`;
+    const paraX = (p) => {
+      const algn = p.align === 'center' ? 'ctr' : p.align === 'right' ? 'r' : 'l';
+      const ind = p.align === 'left' && (p.indent || p.hang) ? ` marL="${E((p.indent || 0) + (p.hang || 0))}" indent="${-E(p.hang || 0)}"` : '';
+      const runs = p.runs.filter((r) => r.t !== '');
+      return `<a:p><a:pPr algn="${algn}"${ind}><a:lnSpc><a:spcPts val="${Math.min(158400, Math.max(0, Math.round(PT(p.lh) * 100)))}"/></a:lnSpc><a:spcBef><a:spcPts val="${Math.min(158400, Math.max(0, Math.round(PT(p.gap || 0) * 100)))}"/></a:spcBef><a:buNone/></a:pPr>` +
+        runs.map((r) => `<a:r>${rPr(r)}<a:t>${xe(r.t)}</a:t></a:r>`).join('') + rPr(runs[0] || p.runs[0] || {}, 'a:endParaRPr') + '</a:p>';
+    };
+    const shapeX = (it) => {
+      const nid = ++id;
+      const geom = it.geom === 'ellipse' ? '<a:prstGeom prst="ellipse"><a:avLst/></a:prstGeom>' : it.radius > 0
+        ? `<a:prstGeom prst="roundRect"><a:avLst><a:gd name="adj" fmla="val ${Math.round(Math.min(50000, (it.radius / Math.max(1, Math.min(it.w, it.h))) * 100000))}"/></a:avLst></a:prstGeom>`
+        : '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>';
+      const hasText = it.paras && it.paras.some((p) => p.runs.some((r) => r.t));
+      const body = `<a:bodyPr rot="0" vert="${it.vert || 'horz'}" wrap="square" lIns="${E(it.padL || 0)}" tIns="${E(it.padT || 0)}" rIns="${E(Math.max(0, (it.padR || 0) * 0.5))}" bIns="${E(it.padB || 0)}" anchor="${it.anchor || 'ctr'}" rtlCol="0"><a:noAutofit/></a:bodyPr><a:lstStyle/>`;
+      return `<p:sp><p:nvSpPr><p:cNvPr id="${nid}" name="${hasText ? 'Text' : 'Shape'} ${nid}"/><p:cNvSpPr${hasText ? ' txBox="1"' : ''}/><p:nvPr/></p:nvSpPr>` +
+        `<p:spPr><a:xfrm><a:off x="${OX + E(it.x)}" y="${OY + E(it.y)}"/><a:ext cx="${Math.max(1, E(it.w))}" cy="${Math.max(1, E(it.h))}"/></a:xfrm>${geom}${fillX(it.fill)}${lnX(it.stroke, it.sw)}</p:spPr>` +
+        `<p:txBody>${body}${hasText ? it.paras.map(paraX).join('') : '<a:p><a:endParaRPr lang="en-US" dirty="0"/></a:p>'}</p:txBody></p:sp>`;
+    };
+    const pathX = (it) => {
+      const nid = ++id;
+      const xs = it.pts.map((p) => p[0]), ys = it.pts.map((p) => p[1]);
+      const x0 = Math.min(...xs), y0 = Math.min(...ys);
+      const cx = Math.max(1, E(Math.max(...xs) - x0)), cy = Math.max(1, E(Math.max(...ys) - y0));
+      const P = (p) => `<a:pt x="${E(p[0] - x0)}" y="${E(p[1] - y0)}"/>`;
+      const d = `<a:moveTo>${P(it.pts[0])}</a:moveTo>` + it.pts.slice(1).map((p) => `<a:lnTo>${P(p)}</a:lnTo>`).join('') + (it.closed ? '<a:close/>' : '');
+      return `<p:sp><p:nvSpPr><p:cNvPr id="${nid}" name="${it.arrow ? 'Arrow' : it.closed ? 'Shape' : 'Line'} ${nid}"/><p:cNvSpPr/><p:nvPr/></p:nvSpPr>` +
+        `<p:spPr><a:xfrm><a:off x="${OX + E(x0)}" y="${OY + E(y0)}"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm>` +
+        `<a:custGeom><a:avLst/><a:gdLst/><a:ahLst/><a:cxnLst/><a:rect l="0" t="0" r="r" b="b"/><a:pathLst><a:path w="${cx}" h="${cy}"${it.closed ? '' : ' fill="none"'}>${d}</a:path></a:pathLst></a:custGeom>` +
+        `${it.closed ? fillX(it.fill) : '<a:noFill/>'}${lnX(it.stroke, it.sw, it.dash, it.arrow, it.dashType)}</p:spPr></p:sp>`;
+    };
+    const NS = 'xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:p="http://schemas.openxmlformats.org/presentationml/2006/main"';
+    const tree = (inner) => `<p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/><a:chOff x="0" y="0"/><a:chExt cx="0" cy="0"/></a:xfrm></p:grpSpPr>${inner}</p:spTree></p:cSld>`;
+    const sld = (inner) => `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sld ${NS}>${tree(inner)}<p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>`;
+    const slides = [];   // [{xml, img}]
+    if (editable && fig.scene && fig.scene.length) {
+      id = 1;
+      const shapes = [];
+      if (fig.bg && hex(fig.bg) !== 'FFFFFF') shapes.push(shapeX({ x: 0, y: 0, w: fig.w, h: fig.h, fill: fig.bg, stroke: 'none', paras: [] }));
+      for (const it of fig.scene) shapes.push(it.k === 'path' ? pathX(it) : shapeX(it));
+      const gid = ++id;
+      slides.push({ xml: sld(`<p:grpSp><p:nvGrpSpPr><p:cNvPr id="${gid}" name="Figure"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x="${OX}" y="${OY}"/><a:ext cx="${W}" cy="${H}"/><a:chOff x="${OX}" y="${OY}"/><a:chExt cx="${W}" cy="${H}"/></a:xfrm></p:grpSpPr>${shapes.join('')}</p:grpSp>`) });
+    }
+    if (picture || !slides.length) {
+      // about 300 dpi at the size it has on the slide, within what a canvas can hold
+      const px = Math.min(6000, Math.round((W / 914400) * 300));
+      const canvas = await RT.svgToCanvas(fig.svg, fig.w, fig.h, px / fig.w);
+      const img = await RT.encodeCanvas(canvas, 'png', 300);
+      slides.push({ img, xml: sld(`<p:pic><p:nvPicPr><p:cNvPr id="2" name="Figure (picture)"/><p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr><p:blipFill><a:blip r:embed="rId2"/><a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr><a:xfrm><a:off x="${OX}" y="${OY}"/><a:ext cx="${W}" cy="${H}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic>`) });
+    }
+    const REL = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+    const rels = (list) => `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${list.map(([rid, type, target]) => `<Relationship Id="${rid}" Type="${REL}/${type}" Target="${target}"/>`).join('')}</Relationships>`;
+    const clr = (n, v) => `<a:${n}><a:srgbClr val="${v}"/></a:${n}>`;
+    const fnt = `<a:latin typeface="${xe(font.name)}"/><a:ea typeface=""/><a:cs typeface=""/>`;
+    const solid = '<a:solidFill><a:schemeClr val="phClr"/></a:solidFill>';
+    const theme = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><a:theme xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" name="Research Toolkit"><a:themeElements><a:clrScheme name="Research Toolkit">${clr('dk1', '000000')}${clr('lt1', 'FFFFFF')}${clr('dk2', '44546A')}${clr('lt2', 'E7E6E6')}${clr('accent1', '4472C4')}${clr('accent2', 'ED7D31')}${clr('accent3', 'A5A5A5')}${clr('accent4', 'FFC000')}${clr('accent5', '5B9BD5')}${clr('accent6', '70AD47')}${clr('hlink', '0563C1')}${clr('folHlink', '954F72')}</a:clrScheme>` +
+      `<a:fontScheme name="Research Toolkit"><a:majorFont>${fnt}</a:majorFont><a:minorFont>${fnt}</a:minorFont></a:fontScheme>` +
+      `<a:fmtScheme name="Research Toolkit"><a:fillStyleLst>${solid}${solid}${solid}</a:fillStyleLst><a:lnStyleLst>${[6350, 12700, 19050].map((w) => `<a:ln w="${w}">${solid}</a:ln>`).join('')}</a:lnStyleLst><a:effectStyleLst><a:effectStyle><a:effectLst/></a:effectStyle><a:effectStyle><a:effectLst/></a:effectStyle><a:effectStyle><a:effectLst/></a:effectStyle></a:effectStyleLst><a:bgFillStyleLst>${solid}${solid}${solid}</a:bgFillStyleLst></a:fmtScheme></a:themeElements></a:theme>`;
+    const emptyTree = tree('');
+    const master = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sldMaster ${NS}>${emptyTree.replace('<p:cSld>', '<p:cSld><p:bg><p:bgRef idx="1001"><a:schemeClr val="bg1"/></p:bgRef></p:bg>')}<p:clrMap bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2" accent1="accent1" accent2="accent2" accent3="accent3" accent4="accent4" accent5="accent5" accent6="accent6" hlink="hlink" folHlink="folHlink"/><p:sldLayoutIdLst><p:sldLayoutId id="2147483649" r:id="rId1"/></p:sldLayoutIdLst><p:txStyles><p:titleStyle/><p:bodyStyle/><p:otherStyle/></p:txStyles></p:sldMaster>`;
+    const layout = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:sldLayout ${NS} type="blank" preserve="1">${emptyTree.replace('<p:cSld>', '<p:cSld name="Blank">')}<p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sldLayout>`;
+    const pres = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><p:presentation ${NS} saveSubsetFonts="1"><p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rId1"/></p:sldMasterIdLst><p:sldIdLst>${slides.map((_, i) => `<p:sldId id="${256 + i}" r:id="rId${i + 2}"/>`).join('')}</p:sldIdLst><p:sldSz cx="${SW}" cy="${SH}"/><p:notesSz cx="6858000" cy="9144000"/></p:presentation>`;
+    const CT = 'application/vnd.openxmlformats-officedocument';
+    const zip = new JSZip();
+    zip.file('[Content_Types].xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/>` +
+      `<Override PartName="/ppt/presentation.xml" ContentType="${CT}.presentationml.presentation.main+xml"/><Override PartName="/ppt/slideMasters/slideMaster1.xml" ContentType="${CT}.presentationml.slideMaster+xml"/><Override PartName="/ppt/slideLayouts/slideLayout1.xml" ContentType="${CT}.presentationml.slideLayout+xml"/><Override PartName="/ppt/theme/theme1.xml" ContentType="${CT}.theme+xml"/>` +
+      slides.map((_, i) => `<Override PartName="/ppt/slides/slide${i + 1}.xml" ContentType="${CT}.presentationml.slide+xml"/>`).join('') + '</Types>');
+    zip.file('_rels/.rels', rels([['rId1', 'officeDocument', 'ppt/presentation.xml']]));
+    zip.file('ppt/presentation.xml', pres);
+    zip.file('ppt/_rels/presentation.xml.rels', rels([['rId1', 'slideMaster', 'slideMasters/slideMaster1.xml'], ...slides.map((_, i) => [`rId${i + 2}`, 'slide', `slides/slide${i + 1}.xml`]), [`rId${slides.length + 2}`, 'theme', 'theme/theme1.xml']]));
+    zip.file('ppt/slideMasters/slideMaster1.xml', master);
+    zip.file('ppt/slideMasters/_rels/slideMaster1.xml.rels', rels([['rId1', 'slideLayout', '../slideLayouts/slideLayout1.xml'], ['rId2', 'theme', '../theme/theme1.xml']]));
+    zip.file('ppt/slideLayouts/slideLayout1.xml', layout);
+    zip.file('ppt/slideLayouts/_rels/slideLayout1.xml.rels', rels([['rId1', 'slideMaster', '../slideMasters/slideMaster1.xml']]));
+    zip.file('ppt/theme/theme1.xml', theme);
+    slides.forEach((s, i) => {
+      zip.file(`ppt/slides/slide${i + 1}.xml`, s.xml);
+      const list = [['rId1', 'slideLayout', '../slideLayouts/slideLayout1.xml']];
+      if (s.img) { zip.file(`ppt/media/image${i + 1}.png`, s.img); list.push(['rId2', 'image', `../media/image${i + 1}.png`]); }
+      zip.file(`ppt/slides/_rels/slide${i + 1}.xml.rels`, rels(list));
+    });
+    return zip.generateAsync({ type: 'blob', mimeType: `${CT}.presentationml.presentation` });
+  };
+
+
   /**
    * Editable Word table. spec: {title, note, headers:[cell], rows:[[cell]], widths:[n], landscape, sizePt, headerFill, borderColor}
    * cell: string | {text, fill, bold, color, align}
@@ -1034,8 +1134,9 @@
     return { inches, scale, px: [Math.round(fig.w * scale), Math.round(fig.h * scale)], cm: [inches * 2.54, (inches * 2.54 * fig.h) / fig.w] };
   };
 
-  RT.exportFigure = async (fig, { fmt, dpi, widthCm, name, quality, gray, docx }) => {
+  RT.exportFigure = async (fig, { fmt, dpi, widthCm, name, quality, gray, docx, pptEditable }) => {
     const g = RT.figureGeometry(fig, dpi, widthCm);
+    if (fmt === 'pptx') { RT.download(await RT.buildPptx(fig, { editable: pptEditable ?? !docx }), name + '.pptx'); return; }
     if (fmt === 'docx' && docx) { RT.download(await docx(), name + '.docx'); return; }
     if (fmt === 'docx') {
       RT.download(await RT.buildDocx(fig, { widthCm: g.inches * 2.54 }), name + '.docx');
@@ -1133,7 +1234,7 @@
         <label class="field"><span>${RT.t('格式', 'Format')}</span><select class="ex-fmt">
           <option value="docx">${opts.docxLabel || RT.t('Word（可編輯）', 'Word (editable)')}</option>
           <option value="png">PNG</option><option value="tiff">TIFF (LZW)</option><option value="jpg">JPG</option>
-          <option value="pdf">${RT.t('PDF（向量）', 'PDF (vector)')}</option><option value="svg">${RT.t('SVG（向量）', 'SVG (vector)')}</option></select></label>
+          <option value="pptx">${RT.t('PowerPoint', 'PowerPoint')}</option><option value="pdf">${RT.t('PDF（向量）', 'PDF (vector)')}</option><option value="svg">${RT.t('SVG（向量）', 'SVG (vector)')}</option></select></label>
         <label class="field ex-dpi-wrap"><span>${RT.t('解析度 DPI', 'Resolution (DPI)')}</span><select class="ex-dpi">
           <option>150</option><option>300</option><option>500</option><option>600</option><option>1000</option><option>1200</option><option value="custom">${RT.t('自訂…', 'Custom…')}</option></select></label>
         <label class="field"><span>${RT.t('輸出寬度 (cm)', 'Output width (cm)')}</span><input class="ex-width" type="number" min="1" step="0.1" placeholder="${RT.t('原始', 'Native')}"></label>
@@ -1149,6 +1250,7 @@
           <button class="primary ex-go">${RT.t('下載', 'Download')}</button>
           <span class="ex-issues" hidden></span>
           <button class="ex-word" title="${RT.esc(opts.docxInfo || RT.t('Word 原生圖形，每個方框、文字與線條都能在 Word 裡編輯', 'Native Word shapes — every box, text and line can be edited in Word'))}">${opts.docxLabel || RT.t('Word（可編輯）', 'Word (editable)')}</button>
+          <button class="ex-ppt" title="${RT.esc(opts.docx ? RT.t('16:9 投影片，圖以圖片放入', 'A 16:9 slide with the figure as a picture') : RT.t('16:9 投影片：第 1 張是 PowerPoint 原生圖形，每個方框、文字與線條都能編輯；第 2 張是同一張圖的圖片', '16:9 slides: the first in native PowerPoint shapes, every box, text and line editable; the second the same figure as a picture'))}">PowerPoint</button>
           <button class="ex-copy" title="${RT.t('以 PNG 複製到剪貼簿，可直接貼到 Word / PowerPoint', 'Copy as PNG to paste into Word / PowerPoint')}">${RT.t('複製 PNG', 'Copy PNG')}</button>
           ${/\/panels\/?/.test(location.pathname) ? '' : `<button class="ex-topanels" title="${RT.t('把這張圖（向量）加入多面板圖組合，和其他圖排成 A、B、C', 'Add this figure (vector) to the multi-panel composer, to lay it out with others as A, B, C')}">${RT.t('加入多面板圖', 'Add to multi-panel')}</button><a class="btn small ex-topanels-go" href="../panels/index.html" hidden></a>`}
         </div>
@@ -1161,7 +1263,7 @@
       const grid = host.querySelector('.export'), btnRow = grid.querySelector(':scope > .btns:last-of-type');
       const quick = document.createElement('div'); quick.className = 'btns ex-quick';
       const mk = (cls, src, primary) => { const b = document.createElement('button'); b.type = 'button'; b.className = cls + (primary ? ' primary' : ''); b.onclick = () => $(src).click(); quick.appendChild(b); return b; };
-      mk('ex-q-go', '.ex-go', !opts.tablePrimary); mk('ex-q-word', '.ex-word', !!opts.tablePrimary); mk('ex-q-copy', '.ex-copy');
+      mk('ex-q-go', '.ex-go', !opts.tablePrimary); mk('ex-q-word', '.ex-word', !!opts.tablePrimary); mk('ex-q-ppt', '.ex-ppt'); mk('ex-q-copy', '.ex-copy');
       const tp = btnRow.querySelector('.ex-topanels'), tpg = btnRow.querySelector('.ex-topanels-go'), iss = btnRow.querySelector('.ex-issues');
       [tp, tpg, iss].forEach((x) => { if (x) quick.appendChild(x); });
       btnRow.hidden = true;
@@ -1203,7 +1305,9 @@
       const o = read();
       const g = RT.figureGeometry(fig, o.dpi, o.widthCm);
       const size = `${g.cm[0].toFixed(1)} × ${g.cm[1].toFixed(1)} cm`;
-      let txt = fmt === 'docx'
+      let txt = fmt === 'pptx'
+        ? $('.ex-ppt').title
+        : fmt === 'docx'
         ? opts.docxInfo || RT.t(`Word 圖形，每個方框、文字與箭頭都可在 Word 中編輯，尺寸 ${size}`, `Native Word shapes — every box, text and arrow is editable in Word. Size ${size}`)
         : !raster
           ? RT.t(`向量格式，列印尺寸 ${size}（可無限放大）`, `Vector format, print size ${size} (scales without loss)`)
@@ -1220,6 +1324,7 @@
         const q = (s0) => host.querySelector(s0);
         if (q('.ex-q-go')) q('.ex-q-go').textContent = opts.tablePrimary ? RT.t('下載圖片', 'Download image') : RT.t('下載 ', 'Download ') + fmtName;
         if (q('.ex-q-word')) q('.ex-q-word').textContent = $('.ex-word').textContent;
+        if (q('.ex-q-ppt')) { q('.ex-q-ppt').textContent = 'PowerPoint'; q('.ex-q-ppt').title = $('.ex-ppt').title; }
         if (q('.ex-q-copy')) q('.ex-q-copy').textContent = RT.t('複製圖片', 'Copy image');
         const sum = host.querySelector('.ex-sum'); if (sum) sum.textContent = ' · ' + [fmtName, raster ? o.dpi + ' dpi' : '', o.widthCm ? o.widthCm + ' cm' : RT.t('原始寬度', 'native width'), pub() === RT.JOURNALS.generic ? '' : pub().label()].filter(Boolean).join(' · '); }
       // smallest text at the chosen print width (figure units are CSS px at 96/in; 1 px = 0.75 pt)
@@ -1228,7 +1333,7 @@
       const leg = $('.export-legible');
       leg.innerHTML = ''; leg.className = 'export-legible';
       // a table tool's Word export is a real table at its own size, so the check only concerns the image formats
-      if (Number.isFinite(minPx) && !(opts.tablePrimary && fmt === 'docx')) {
+      if (Number.isFinite(minPx) && !(opts.tablePrimary && fmt === 'docx') && fmt !== 'pptx') {
         const pt = minPx * 0.75 * (g.inches / (fig.w / 96));
         const p = pt.toFixed(1);
         const pre = opts.tablePrimary ? RT.t('圖片版：', 'Image version: ') : '';
@@ -1285,6 +1390,13 @@
       try { await RT.exportFigure(getFig(), { ...read(), fmt: 'docx', docx: opts.docx }); }
       catch (e) { console.error(e); RT.toast(String(e.message || e), 6000); }
       finally { btn.disabled = false; btn.textContent = t; }
+    };
+    // PowerPoint: native shapes plus a picture slide (a picture only when the tool's Word export is itself a picture)
+    $('.ex-ppt').onclick = async () => {
+      const btn = $('.ex-ppt'), qb = host.querySelector('.ex-q-ppt'); btn.disabled = true; if (qb) { qb.disabled = true; qb.textContent = RT.t('處理中…', 'Working…'); }
+      try { await RT.exportFigure(getFig(), { ...read(), fmt: 'pptx', pptEditable: !opts.docx }); }
+      catch (e) { console.error(e); RT.toast(String(e.message || e), 6000); }
+      finally { btn.disabled = false; if (qb) { qb.disabled = false; qb.textContent = 'PowerPoint'; } }
     };
     // queue the figure for the multi-panel composer (it picks them up when it opens, or at once if already open)
     const tp = $('.ex-topanels');
