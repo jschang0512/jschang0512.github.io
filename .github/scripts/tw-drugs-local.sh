@@ -54,7 +54,7 @@ done
 mkdir -p "$WORK/src"/usage
 for n in $(seq -w 1 40); do
   k=$(printf '%03d' $((10#$n)))
-  code=$(curl -s --retry 3 --retry-all-errors --retry-delay 10 --max-time 300 -A "Mozilla/5.0" -o "$WORK/src"/usage/E41005-$k.csv -w '%{http_code}' "https://info.nhi.gov.tw/api/iode0000s01/Dataset?rId=A21030000I-E41005-$k")
+  code=$(curl -s --retry 3 --retry-all-errors --retry-delay 10 --max-time 300 -A "Mozilla/5.0" -o "$WORK/src"/usage/E41005-$k.csv -w '%{http_code}' "https://info.nhi.gov.tw/api/iode0000s01/Dataset?rId=A21030000I-E41005-$k" || true)
   if [ "$code" != "200" ] || [ "$(wc -c < "$WORK/src"/usage/E41005-$k.csv)" -lt 1000 ]; then rm -f "$WORK/src"/usage/E41005-$k.csv; break; fi
 done
 ls -l "$WORK/src"/usage || true

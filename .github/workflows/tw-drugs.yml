@@ -77,7 +77,8 @@ jobs:
           mkdir -p /tmp/src/usage
           for n in $(seq -w 1 40); do
             k=$(printf '%03d' $((10#$n)))
-            code=$(curl -s --retry 3 --retry-all-errors --retry-delay 10 --max-time 300 -A "Mozilla/5.0" -o /tmp/src/usage/E41005-$k.csv -w '%{http_code}' "https://info.nhi.gov.tw/api/iode0000s01/Dataset?rId=A21030000I-E41005-$k")
+            # a refused connection must end the list, not the whole job (the step runs with bash -e)
+            code=$(curl -s --retry 3 --retry-all-errors --retry-delay 10 --max-time 300 -A "Mozilla/5.0" -o /tmp/src/usage/E41005-$k.csv -w '%{http_code}' "https://info.nhi.gov.tw/api/iode0000s01/Dataset?rId=A21030000I-E41005-$k" || true)
             if [ "$code" != "200" ] || [ "$(wc -c < /tmp/src/usage/E41005-$k.csv)" -lt 1000 ]; then rm -f /tmp/src/usage/E41005-$k.csv; break; fi
           done
           ls -l /tmp/src/usage || true
