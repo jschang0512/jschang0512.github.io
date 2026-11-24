@@ -4,7 +4,10 @@
  * tag (a fixed, compressed, cached address), falling back to raw.githubusercontent.com. On a local server
  * everything is read from Research-toolkit/data/tw-drugs/.
  * Files: nhi-paid (reimbursed now, loaded first) + nhi-rest (no longer reimbursed, on request); fda (short
- * licence fields) + fda-more (indication and package, on request); hist, extra, rules (on request). */
+ * licence fields) + fda-more (indication and package, on request); hist, extra, rules (on request).
+ * Format 3 splits the licence files the same way: fda-paid / fda-more-paid hold the licences that reimbursed codes
+ * point to, fda-rest / fda-more-rest the others; alerts-index says which licences are short or recalled.
+ * Each file, once parsed, is kept in IndexedDB under its version, so a second visit skips download and parsing. */
 (() => {
   const RT = window.RT;
   const local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
@@ -14,6 +17,32 @@
   const NHI_URL = 'https://info.nhi.gov.tw/api/INAE3000/INAE3000S01/getPDF?DurgFileName=';
   const LIC_URL = 'https://lmspiq.fda.gov.tw/web/DRPIQ/DRPIQ1000Result?licId=';
   const memo = {};
+
+  // parsed files kept in IndexedDB, keyed by name and checked against the data version; any failure just means "not cached"
+  let dbP = null, dbH = null;
+  function db() {
+    if (!dbP) dbP = new Promise((res) => {
+      try {
+        const q = indexedDB.open('rt-twdrugs', 1);
+        q.onupgradeneeded = () => q.result.createObjectStore('files');
+        q.onsuccess = () => { dbH = q.result; dbH.onversionchange = () => { dbH.close(); dbH = null; }; res(dbH); };
+        q.onerror = q.onblocked = () => res(null);
+        setTimeout(() => res(null), 1500);          // a database held up elsewhere must not hold up the page
+      } catch (e) { res(null); }
+    });
+    return dbP;
+  }
+  async function idbGet(name, v) {
+    const d = await db(); if (!d) return null;
+    return new Promise((res) => {
+      try { const g = d.transaction('files').objectStore('files').get(name); g.onsuccess = () => res(g.result && g.result.v === v ? g.result.data : null); g.onerror = () => res(null); } catch (e) { res(null); }
+    });
+  }
+  // synchronous on purpose: put() copies the object right away, before the page adds its own indexes to it
+  function idbPut(name, v, data) {
+    if (!dbH) return;
+    try { dbH.transaction('files', 'readwrite').objectStore('files').put({ v, data }, name); } catch (e) { /* quota or private mode */ }
+  }
 
   // column positions, filled from the files themselves
   const N = {}, F = {};
@@ -42,12 +71,18 @@
     if (memo[name]) return memo[name];
     memo[name] = (async () => {
       const m = await meta();
+      const kept = await idbGet(name, m.v);
+      if (kept) return kept;
       const urls = [];
       if (!local && m.tag) urls.push(CDN(m.tag) + name + '.json');       // fixed address per version
       urls.push(BASE + name + '.json?v=' + m.v);
       let last = null;
       for (const u of urls) {
-        try { const r = await fetch(u); if (r.ok) return await r.json(); last = new Error(name + '.json HTTP ' + r.status); } catch (e) { last = e; }
+        try {
+          const r = await fetch(u);
+          if (r.ok) { const d = await r.json(); idbPut(name, m.v, d); return d; }   // stored before the page adds its indexes
+          last = new Error(name + '.json HTTP ' + r.status);
+        } catch (e) { last = e; }
       }
       memo[name] = null;
       throw last;
@@ -55,6 +90,7 @@
     return memo[name];
   }
   const split = async () => ((await meta()).format || 1) >= 2;
+  const split3 = async () => ((await meta()).format || 1) >= 3;
   // NHI items reimbursed now: enough for most searches, about a third of the codes
   async function nhi() {
     if (memo.nhiD) return memo.nhiD;
@@ -81,26 +117,52 @@
     }).catch((e) => { memo.rest = null; throw e; });
     return memo.rest;
   }
+  // licences: those behind the reimbursed codes first (format 3); fdaAll() adds the rest to the same object
   async function fda() {
-    const d = await file('fda');
-    if (!d._ready) {
-      colIndex(d.cols, F);
-      d.byLicId = new Map(d.rows.filter((r) => r[F.licId]).map((r) => [r[F.licId], r]));
-      d._ready = true;
-    }
-    return d;
+    if (memo.fdaD) return memo.fdaD;
+    memo.fdaD = (async () => {
+      const three = await split3();
+      const d = await file(three ? 'fda-paid' : 'fda');
+      if (!d._ready) {
+        colIndex(d.cols, F);
+        d.byLicId = new Map(d.rows.filter((r) => r[F.licId]).map((r) => [r[F.licId], r]));
+        d.complete = !three;
+        d._ready = true;
+      }
+      return d;
+    })();
+    memo.fdaD.catch(() => { memo.fdaD = null; });
+    return memo.fdaD;
   }
-  // indication and package text, kept apart from the short licence fields
+  async function fdaAll() {
+    const d = await fda();
+    if (d.complete) return d;
+    if (!memo.fdaRest) memo.fdaRest = file('fda-rest').then((rest) => {
+      if (!d.complete) { rest.rows.forEach((r) => { d.rows.push(r); if (r[F.licId]) d.byLicId.set(r[F.licId], r); }); d.complete = true; }
+      return d;
+    }).catch((e) => { memo.fdaRest = null; throw e; });
+    return memo.fdaRest;
+  }
+  // indication and package text, kept apart from the short licence fields; all = also the licences of codes no longer reimbursed
   let moreD = null;
-  async function fdaMore() {
+  async function fdaMore(all) {
     if (F.indication != null) return null;          // first-version data: already in fda.json
-    if (!moreD) moreD = await file('fda-more');
+    if (!memo.more) memo.more = (async () => {
+      if (!(await split3())) { const m = await file('fda-more'); return { cols: m.cols, more: m.more, complete: true }; }
+      const m = await file('fda-more-paid'); return { cols: m.cols, more: { ...m.more }, complete: false };
+    })().catch((e) => { memo.more = null; throw e; });
+    moreD = await memo.more;
+    if (all && !moreD.complete) {
+      if (!memo.moreRest) memo.moreRest = file('fda-more-rest').then((r) => { Object.assign(moreD.more, r.more); moreD.complete = true; }).catch((e) => { memo.moreRest = null; throw e; });
+      await memo.moreRest;
+    }
     return moreD;
   }
   function licText(f) {
     if (!f) return null;
     if (F.indication != null) return { indication: f[F.indication] || '', package: f[F.package] || '' };
     if (!moreD) return null;
+    if (!moreD.more[f[F.licence]] && !moreD.complete) return null;   // in the part not loaded yet
     const x = moreD.more[f[F.licence]] || [];
     const o = {}; moreD.cols.forEach((c, i) => (o[c] = x[i] || ''));
     return o;
@@ -116,6 +178,17 @@
   // full text of the NHI reimbursement rules, keyed by PDF file name
   async function rules() { return file('rules'); }
   // recalls (per licence), shortages and recoveries (per licence); an empty set for data built before they existed
+  // which licences are short now and when each was last recalled: {short:Set, recall:Map(licence → [date, count])}
+  async function alertIndex() {
+    if (memo.aidx) return memo.aidx;
+    memo.aidx = (async () => {
+      if (await split3()) { const d = await file('alerts-index'); return { short: new Set(d.short), recall: new Map(Object.entries(d.recall)) }; }
+      const a = await alerts();
+      return { short: new Set(Object.keys(a.short)), recall: new Map(Object.entries(a.recalls).map(([l, x]) => [l, [x.map((y) => y[0]).sort().pop() || '', x.length]])) };
+    })();
+    memo.aidx.catch(() => { memo.aidx = null; });
+    return memo.aidx;
+  }
   async function alerts() { return ((await meta()).counts || {}).recalls != null ? file('alerts') : { recallCols: [], supplyCols: [], recalls: {}, short: {}, recovered: {} }; }
   // NHI usage per code and year: {years:[{year, from, to, partial}], q:{code:[[total, male], …]}}
   async function usage() { return ((await meta()).counts || {}).usageYears ? file('usage') : { years: [], q: {} }; }
@@ -127,7 +200,7 @@
   const fold = (s) => String(s || '').replace(/[！-～]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0)).replace(/　/g, ' ').toLowerCase();
 
   RT.twDrugs = {
-    BASE, N, F, meta, nhi, nhiAll, fda, fdaMore, licText, hist, extra, rules, alerts, usage, changes, ruleDate, fold,
+    BASE, N, F, meta, nhi, nhiAll, fda, fdaAll, fdaMore, licText, hist, histAll: () => file('hist'), extra, rules, alertIndex, alerts, usage, changes, ruleDate, fold,
     /** 第一級…第四級管制藥品 (not 取消管制藥品註記, which marks a schedule that was lifted) */
     ctrlLevel: (v) => { const m = String(v || '').match(/^第(.)級管制藥品$/); return m ? '一二三四'.indexOf(m[1]) + 1 : 0; },
     /** NHI codes ending in G0 are the foil-packed (PTP) version of the same product; worked out from the data, not an NHIA definition */

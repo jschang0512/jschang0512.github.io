@@ -365,6 +365,69 @@
   .rv .c { font-family: var(--font-mono); margin-right: 6px; }
   .rv .rules-txt { margin: 0 0 12px; }
   @media (max-width: 640px) { .rv summary { grid-template-columns: minmax(0, 1fr) auto; } .rv .d { grid-column: 1 / -1; } }
+  /* a drug's life on one line: licence, listing, prices, rules, shortages, recalls */
+  .tl { margin: 0 0 14px; }
+  .tl svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .tl .ax { stroke: var(--border); stroke-width: 1; }
+  .tl .yr { font-size: 11px; fill: var(--muted); }
+  .tl .e-lic { fill: var(--accent); }
+  .tl .e-list { fill: var(--panel); stroke: var(--accent); stroke-width: 2; }
+  .tl .e-down { fill: var(--c-babe); } .tl .e-up { fill: var(--c-orig); }
+  .tl .e-rule { fill: var(--c-bio); } .tl .e-recall { fill: var(--c-orig); }
+  .tl .e-off { fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round; }
+  .tl .e-short { fill: var(--c-off); } .tl .e-back { fill: var(--c-babe); }
+  .tl .legend { margin: 6px 0 0; }
+  .tl details { font-size: 12.5px; margin-top: 6px; }
+  .tl summary { cursor: pointer; color: var(--muted); }
+  .tl ol { list-style: none; margin: 6px 0 0; padding: 0; }
+  .tl li { display: grid; grid-template-columns: 6.6em minmax(0, 1fr); gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--border); }
+  .tl li .d { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  /* share of the same price group, year by year */
+  .share { max-width: 620px; margin-top: 6px; }
+  .sh-row { display: grid; grid-template-columns: 3.4em minmax(0, 1fr); gap: 8px; align-items: center; margin: 4px 0; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .sh-bar { display: flex; gap: 1px; height: 18px; border-radius: 4px; overflow: hidden; background: var(--panel-2); }
+  .sh-bar i { display: block; min-width: 0; }
+  .sh-bar i.me { box-shadow: inset 0 0 0 2px var(--text); }
+  ul.sh-leg { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 5px; font-size: 12.5px; max-width: 620px; }
+  ul.sh-leg li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center; }
+  ul.sh-leg li.me { font-weight: 700; }
+  ul.sh-leg button { all: unset; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  ul.sh-leg button:hover { color: var(--accent); text-decoration: underline; }
+  ul.sh-leg button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  ul.sh-leg b { font-variant-numeric: tabular-nums; }
+
+  /* month grid of new shortages, recoveries or recalls */
+  .cal { --cal: var(--c-off); display: grid; grid-template-columns: 2.8em repeat(12, minmax(0, 1fr)); gap: 3px; max-width: 520px; margin: 4px 0 6px; font-size: 11px; color: var(--muted); align-items: center; }
+  .cal.rc { --cal: var(--c-orig); } .cal.ok { --cal: var(--c-babe); }
+  .cal .h { text-align: center; }
+  .cal .c { all: unset; box-sizing: border-box; height: 20px; border-radius: 4px; background: var(--panel-2); }
+  .cal button.c { cursor: pointer; }
+  .cal span.c { opacity: .35; }
+  .cal .l1 { background: color-mix(in oklch, var(--cal) 30%, var(--panel-2)); }
+  .cal .l2 { background: color-mix(in oklch, var(--cal) 55%, var(--panel-2)); }
+  .cal .l3 { background: color-mix(in oklch, var(--cal) 80%, var(--panel-2)); }
+  .cal .l4 { background: var(--cal); }
+  .cal button.c:hover { outline: 1px solid var(--text); }
+  .cal button.c:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .cal button.c[aria-pressed="true"] { outline: 2px solid var(--text); outline-offset: 1px; }
+  .cal-note { font-size: 12px; color: var(--muted); margin: 0 0 14px; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; }
+
+  /* an ATC class over the years */
+  details.ctr > summary { cursor: pointer; font-size: 13px; }
+  .ctr-box { margin-top: 10px; max-width: 640px; }
+  .ctr-row, .ctr-ax { display: grid; grid-template-columns: 6.8em minmax(0, 1fr) 5.6em; gap: 10px; }
+  .ctr-row { align-items: center; margin-bottom: 8px; font-size: 12px; }
+  .ctr-row .k { color: var(--muted); }
+  .ctr-row svg { width: 100%; height: 40px; display: block; }
+  .ctr-row .v { text-align: right; font-variant-numeric: tabular-nums; }
+  .ctr-row rect { fill: var(--accent); } .ctr-row rect.part { opacity: .5; } .ctr-row rect.hit { fill: transparent; }
+  .ctr-row .ln { fill: none; stroke: var(--c-orig); stroke-width: 2; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+  .ctr-row .base { stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .ctr-ax { font-size: 11px; color: var(--muted); margin-top: -2px; }
+  .ctr-ax span:nth-child(2) { display: flex; justify-content: space-between; }
+  @media (max-width: 480px) { .ctr-row, .ctr-ax { grid-template-columns: 5.6em minmax(0, 1fr) 4.8em; gap: 8px; } }
+
   @media (prefers-reduced-motion: reduce) { .ov > summary .car, .row, .scope button { transition: none; } }
 </style>
 </head>
@@ -455,8 +518,8 @@
   </div>
 </main>
 
-<script src="../shared/common.js?v=20261122a"></script>
-<script src="../shared/twdrugs.js?v=20261122d"></script>
+<script src="../shared/common.js?v=20261124a"></script>
+<script src="../shared/twdrugs.js?v=20261124a"></script>
 <script>
 const TW = RT.twDrugs, N = TW.N, F = TW.F, T = RT.t, esc = RT.esc;
 const KEY = 'drugs';
@@ -493,18 +556,26 @@ function photoOf(r) {
   const looks = looksOf(licOf(r)); if (!looks.length) return '';
   const i = extraD.lookCols.indexOf('photo'); const l = looks.find((x) => x[i]); return l ? mcp(l[i]) : '';
 }
-let hay = null;
+let hay = null, zF = null, eF = null, iF = null, rank = null;
 function haystack() {
   if (hay) return hay;
-  hay = nhiD.rows.map((r) => {
-    const f = licOf(r);
-    return TW.fold([r[N.code], r[N.en], r[N.zh], r[N.ingredient], r[N.atc], r[N.vendor], r[N.maker], r[N.group], f ? f[F.licence] : '', f ? f[F.ingredients] : ''].join(' \u0001 '));
-  });
+  const rows = nhiD.rows, n = rows.length;
+  hay = new Array(n); zF = new Array(n); eF = new Array(n); iF = new Array(n);
+  for (let i = 0; i < n; i++) {
+    const r = rows[i], f = licOf(r);
+    hay[i] = TW.fold([r[N.code], r[N.en], r[N.zh], r[N.ingredient], r[N.atc], r[N.vendor], r[N.maker], r[N.group], f ? f[F.licence] : '', f ? f[F.ingredients] : ''].join(' \u0001 '));
+    zF[i] = TW.fold(r[N.zh]); eF[i] = TW.fold(r[N.en]); iF[i] = TW.fold(r[N.ingredient]);
+  }
+  // each row's place in Chinese name order, worked out once: sorting results is then a comparison of numbers
+  if (!rank || rank.length !== n) {
+    const col = new Intl.Collator('zh-Hant'), order = rows.map((_, i) => i).sort((a, b) => col.compare(rows[a][N.zh], rows[b][N.zh]));
+    rank = new Int32Array(n); order.forEach((ix, k) => (rank[ix] = k));
+  }
   return hay;
 }
 let licOnly = null, licHay = null;
 function licOnlyRows() {
-  if (licOnly || !fdaD) return licOnly || [];
+  if (licOnly || !fdaD || !fdaD.complete) return licOnly || [];
   const used = new Set(nhiD.rows.map((r) => r[N.licId]).filter(Boolean));
   licOnly = fdaD.rows.filter((f) => !f[F.status] && !(f[F.licId] && used.has(f[F.licId])));
   licHay = licOnly.map((f) => TW.fold([f[F.licence], f[F.zh], f[F.en], f[F.ingredients], f[F.applicant], f[F.maker]].join(' \u0001 ')));
@@ -567,8 +638,8 @@ function passes(r) {
   if (a.rules && !r[N.ruleChapters]) return false;
   if (needsLic() && !licPasses(licOf(r))) return false;
   if (a.photo && !photoOf(r)) return false;
-  if (a.short && !shortOf(licOf(r))) return false;
-  if (a.recall && !recallsOf(licOf(r)).length) return false;
+  if (a.short && !isShort(licOf(r))) return false;
+  if (a.recall && !lastRecall(licOf(r))) return false;
   return true;
 }
 
@@ -596,15 +667,15 @@ function search() {
       if (code === t) score += 100;
       else if (code.startsWith(t)) score += 60;
       if (ATC_RE.test(t) && atc.startsWith(t)) score += 50;
-      if (TW.fold(r[N.zh]).startsWith(t) || TW.fold(r[N.en]).startsWith(t)) score += 30;
-      if (TW.fold(r[N.ingredient]).startsWith(t)) score += 20;
+      if (zF[i].startsWith(t) || eF[i].startsWith(t)) score += 30;
+      if (iF[i].startsWith(t)) score += 20;
       score += 1;
     }
     if (!ok) continue;
-    out.push({ r, score: score + (r[N.price] > 0 ? 5 : 0) });
+    out.push({ r, i, score: score + (r[N.price] > 0 ? 5 : 0) });
   }
   const by = {
-    rel: (a, b) => b.score - a.score || (b.r[N.price] > 0) - (a.r[N.price] > 0) || a.r[N.zh].localeCompare(b.r[N.zh], 'zh-Hant'),
+    rel: (a, b) => b.score - a.score || (b.r[N.price] > 0) - (a.r[N.price] > 0) || rank[a.i] - rank[b.i],
     pa: (a, b) => (a.r[N.price] || Infinity) - (b.r[N.price] || Infinity),
     pd: (a, b) => b.r[N.price] - a.r[N.price],
     code: (a, b) => (a.r[N.code] < b.r[N.code] ? -1 : 1),
@@ -700,6 +771,7 @@ function overviewHTML(rows) {
         <div class="legend">${clsBar.map((b) => `<button type="button" data-ovcls="${esc(b.c)}" aria-pressed="${on === b.c && !!b.c}"><span class="dot k-${b.key}"></span>${esc(b.name)} <b>${b.n}</b></button>`).join('')}</div></div>
       ${S.scope === 'every' || S.scope === 'delisted' ? `<span class="k">${T('給付狀態', 'Status')}</span><div><div class="bar"><button type="button" class="k-paid" style="width:${pct(paid)}" data-ovscope="paid" aria-label="${T('給付中', 'Reimbursed')} ${paid}"></button><button type="button" class="k-off" style="width:${pct(rows.length - paid)}" data-ovscope="delisted" aria-label="${T('已取消給付', 'Delisted')} ${rows.length - paid}"></button></div>
         <div class="legend"><button type="button" data-ovscope="paid"><span class="dot k-paid"></span>${T('給付中', 'Reimbursed')} <b>${paid}</b></button><button type="button" data-ovscope="delisted"><span class="dot k-off"></span>${T('已取消給付', 'Delisted')} <b>${rows.length - paid}</b></button></div></div>` : ''}
+      ${(() => { const cp = classPrefix(rows); return cp ? `<span class="k">ATC ${esc(cp)}</span><div><details class="ctr" data-ctr="${esc(cp)}"${S.ctrOpen ? ' open' : ''}><summary>${T('類別歷年趨勢：品項數、價格中位數、醫令量', 'Class over the years: items, median price, claims')}</summary><div class="ctr-box" data-ctrbox></div></details></div>` : ''; })()}
       ${Object.keys(ctrl).length ? `<span class="k">${T('管制藥品', 'Controlled')}</span><div class="legend" style="margin:0">${Object.entries(ctrl).sort().map(([lv, n]) => `<button type="button" data-ovctrl="${lv}" aria-pressed="${A().ctrl === lv}"><span class="tag ctrl">${T(`第${'一二三四'[lv - 1]}級`, `Schedule ${lv}`)}</span> <b>${n}</b></button>`).join('')}</div>` : ''}
     </div></details>`;
 }
@@ -738,7 +810,7 @@ function tabHTML(r, tab) {
   if (tab === 'sum') {
     const sibs = siblings(r);
     const pkg = TW.isFoil(r[N.code]) ? T('鋁箔包裝（代號末兩碼 G0）', 'Foil pack (code ends in G0)') : hasFoilTwin(r) ? T('一般包裝（同品項另有 G0 鋁箔包裝）', 'Standard pack (a G0 foil pack also exists)') : '';
-    return `<div class="facts">
+    return `<div class="tl" data-tl></div><div class="facts">
       ${fact(T('成分', 'Ingredient'), esc(r[N.ingredient]), true)}
       ${fact(T('健保代號', 'NHI code'), `<span class="cd">${esc(r[N.code])}</span>`)}
       ${fact('ATC', r[N.atc] ? `<span class="cd">${esc(r[N.atc])}</span>` : '')}
@@ -760,6 +832,7 @@ function tabHTML(r, tab) {
       ${r[N.atc] ? `<button type="button" data-act="atc">${T('同 ATC 藥品', 'Same ATC')} (${esc(r[N.atc])})</button>` : ''}
       ${r[N.atc] && r[N.atc].length > 5 ? `<button type="button" data-act="atc5">${T('同藥理分類', 'Same class')} (${esc(r[N.atc].slice(0, 5))})</button>` : ''}
       <button type="button" data-act="copy">${T('複製摘要', 'Copy summary')}</button>
+      <button type="button" data-act="link">${T('複製連結', 'Copy link')}</button>
       <button type="button" data-act="codelist">${T('加入代碼清單', 'Add to code list')}</button>
     </div>`;
   }
@@ -837,6 +910,7 @@ function hydrate(root) {
   root.querySelectorAll('.detail[data-code]').forEach((d) => {
     const r = nhiD.byCode.get(d.dataset.code); if (!r) return;
     const tab = tabOf.get(r[N.code]) || 'sum';
+    if (tab === 'sum') drawTimeline(d.querySelector('[data-tl]'), r);
     if (tab === 'price') drawHist(d.querySelector('[data-chart]'), r);
     if (tab === 'rules') fillRules(d.querySelector('[data-rulebox]'), r);
     if (tab === 'use') drawUsage(d.querySelector('[data-usage]'), r);
@@ -921,12 +995,13 @@ function render() {
   $('tips').classList.toggle('quiet', !idle && phone());
   if (idle) {
     $('ovWrap').innerHTML = ''; $('status').innerHTML = '';
-    $('out').innerHTML = `<div class="empty-state">${T(`共收錄 <b>${totalCodes().toLocaleString()}</b> 個健保藥品代號（給付中 ${fmtCount()}）`, `<b>${totalCodes().toLocaleString()}</b> NHI drug codes (${fmtCount()} reimbursed)`)}${fdaD ? T(`、<b>${fdaD.rows.length.toLocaleString()}</b> 張許可證`, ` and <b>${fdaD.rows.length.toLocaleString()}</b> licences`) : ''}。${T('輸入藥名、成分或代號開始查詢，或打開「進階篩選」。', ' Type a name, ingredient or code, or open Filters.')}</div>`;
+    $('out').innerHTML = `<div class="empty-state">${T(`共收錄 <b>${totalCodes().toLocaleString()}</b> 個健保藥品代號（給付中 ${fmtCount()}）`, `<b>${totalCodes().toLocaleString()}</b> NHI drug codes (${fmtCount()} reimbursed)`)}${licTotal() ? T(`、<b>${licTotal().toLocaleString()}</b> 張許可證`, ` and <b>${licTotal().toLocaleString()}</b> licences`) : ''}。${T('輸入藥名、成分或代號開始查詢，或打開「進階篩選」。', ' Type a name, ingredient or code, or open Filters.')}</div>`;
     return;
   }
   const keepOpen = $('ov') ? $('ov').open : null;
   $('ovWrap').innerHTML = overviewHTML(last.rows);
   if (keepOpen != null && $('ov')) $('ov').open = keepOpen;
+  { const ct = $('ovWrap').querySelector('details.ctr[open]'); if (ct) drawClassTrend(ct); }
   const ms = Math.round(performance.now() - t0);
   $('status').innerHTML = `<span>${T(`${total.toLocaleString()} 筆健保品項`, `${total.toLocaleString()} NHI items`)}${last.lic.length ? T(`、${last.lic.length} 張無健保代號的許可證`, `, ${last.lic.length} licences without an NHI code`) : ''}${total > shown ? T(`，顯示前 ${shown} 筆`, `; showing ${shown}`) : ''}</span><span class="hint" style="margin:0">${ms} ms</span><span class="spacer"></span>${total ? `<button type="button" class="small" id="btnCsv">${T('匯出 CSV', 'Export CSV')}</button><button type="button" class="small" id="btnAllCl">${T('全部加入代碼清單', 'Add all to code list')}</button>` : ''}`;
   if (!total && !last.lic.length) {
@@ -942,6 +1017,7 @@ function render() {
 let paidCount = null;
 function fmtCount() { if (paidCount == null) paidCount = nhiD.rows.filter((r) => r[N.price] > 0).length; return paidCount.toLocaleString(); }
 let metaD = null;
+const licTotal = () => (metaD && metaD.counts && metaD.counts.licences) || (fdaD && fdaD.complete ? fdaD.rows.length : 0);
 const totalCodes = () => (metaD && metaD.counts ? metaD.counts.nhiCodes : nhiD.rows.length);
 // the codes no longer reimbursed are fetched only when a search needs them
 let allP = null;
@@ -950,8 +1026,12 @@ function loadAll() {
   if (!allP) allP = TW.nhiAll().then((d) => { nhiD = d; hay = null; licOnly = null; render(); return d; }).catch((e) => { allP = null; RT.toast(String(e.message || e), 5000); });
   return allP;
 }
-let moreP = null;
-function loadMore() { if (!moreP) moreP = TW.fdaMore().then(() => refreshShown()).catch(() => { moreP = null; }); return moreP; }
+const moreP = {};
+function loadMore() {
+  const all = !!(fdaD && fdaD.complete), k = all ? 'all' : 'paid';
+  if (!moreP[k]) moreP[k] = TW.fdaMore(all).then(() => refreshShown()).catch(() => { moreP[k] = null; });
+  return moreP[k];
+}
 function redrawRow(li) {
   const r = nhiD.byCode.get(li.dataset.code); if (!r) return null;
   const tmp = document.createElement('ul'); tmp.innerHTML = rowHTML(r); const n = tmp.firstElementChild; li.replaceWith(n); hydrate(n); return n;
@@ -974,7 +1054,7 @@ function openDrug(li) {
     open.add(id); document.body.classList.add('sheet-open');
     if (!sheetState) { history.pushState({ sheet: id }, ''); sheetState = true; }
   } else open.add(id);
-  loadExtra(); loadMore();
+  loadExtra(); loadMore(); loadAlerts(); sync();
   const n = redrawRow(document.querySelector(`#out li[data-code="${CSS.escape(id)}"]`) || li);
   if (phone() && n) { const d = n.querySelector('.detail'); if (d) { d.scrollTop = 0; const b = d.querySelector('[data-act="close"]'); if (b) b.focus({ preventScroll: true }); } }
 }
@@ -983,7 +1063,7 @@ function closeDrug(id, fromHistory) {
   document.body.classList.remove('sheet-open');
   const li = document.querySelector(`#out li[data-code="${CSS.escape(id)}"]`);
   const n = li ? redrawRow(li) : null;
-  if (sheetState && !fromHistory) { sheetState = false; history.back(); } else sheetState = false;
+  if (sheetState && !fromHistory) { sheetState = false; history.back(); setTimeout(sync, 0); } else { sheetState = false; sync(); }
   if (n) { const row = n.querySelector('.row'); if (row) row.focus({ preventScroll: phone() }); }
 }
 window.addEventListener('popstate', () => { if (sheetState) { sheetState = false; [...open].forEach((c) => closeDrug(c, true)); } });
@@ -1024,6 +1104,7 @@ async function goCode(code) {
   leaveSheet();
   chips = []; Q = code; $('q').value = code; shown = 50; open.clear();
   const p = nhiD.byCode.get(code)[N.price] > 0;
+  if (!p) loadFdaAll();
   if ((S.scope === 'paid' && !p) || (S.scope === 'delisted' && p) || S.scope === 'lic') setScope('every', true);
   sync(); render(); window.scrollTo({ top: 0 });
   const li = document.querySelector(`#out li[data-code="${CSS.escape(code)}"]`); if (li) openDrug(li);
@@ -1055,12 +1136,17 @@ $('out').addEventListener('click', async (e) => {
     else if (a === 'atc5') setChip('atc', r[N.atc].slice(0, 5));
     else if (a === 'copy') { try { await navigator.clipboard.writeText(summary(r)); RT.toast(T('已複製', 'Copied')); } catch (x) { RT.toast(T('無法複製到剪貼簿', 'Could not copy'), 3000); } }
     else if (a === 'codelist') toCodelist([nhiItem(r)]);
+    else if (a === 'link') { const u = location.origin + location.pathname + '?code=' + encodeURIComponent(r[N.code]); try { await navigator.clipboard.writeText(u); RT.toast(T('已複製這個藥的連結', 'Link copied')); } catch (x) { RT.toast(u, 6000); } }
     return;
   }
   if (e.target.closest('.row') && !e.target.closest('a')) {
     if (open.has(r[N.code])) closeDrug(r[N.code]); else openDrug(li);
   }
 });
+$('ovWrap').addEventListener('toggle', (e) => {
+  const d = e.target; if (!d.matches || !d.matches('details.ctr')) return;
+  S.ctrOpen = d.open; save(); if (d.open) drawClassTrend(d);
+}, true);
 $('ovWrap').addEventListener('click', (e) => {
   const c = e.target.closest('[data-ovcls]'), s = e.target.closest('[data-ovscope]'), k = e.target.closest('[data-ovctrl]');
   if (c) { A().cls = A().cls === c.dataset.ovcls ? '' : c.dataset.ovcls; syncAdv(); shown = 50; save(); render(); }
@@ -1081,13 +1167,14 @@ $('status').addEventListener('click', (e) => {
 $('chips').addEventListener('click', (e) => { const b = e.target.closest('[data-chip]'); if (!b) return; chips.splice(+b.dataset.chip, 1); shown = 50; sync(); render(); });
 
 /* ---------- controls ---------- */
-function setScope(v, quiet) { if (v !== 'paid') loadAll(); S.scope = v; [...$('scope').children].forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === v))); if (v === 'lic' || v === 'every') loadFda(); shown = 50; save(); if (!quiet) render(); }
+function setScope(v, quiet) { if (v !== 'paid') loadAll(); S.scope = v; [...$('scope').children].forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === v))); if (v !== 'paid') loadFdaAll(); shown = 50; save(); if (!quiet) render(); }
 $('scope').addEventListener('click', (e) => { const b = e.target.closest('button[data-v]'); if (b) setScope(b.dataset.v); });
 function save() { RT.save(KEY, S); }
 function sync() {
   const p = new URLSearchParams();
   if (S.view && S.view !== 'search') p.set('view', S.view);
   if (Q) p.set('q', Q);
+  if (open.size === 1 && S.view === 'search') p.set('code', [...open][0]);
   chips.forEach((c) => p.set(c.k, c.v));
   history.replaceState(history.state, '', location.pathname + (p.toString() ? '?' + p : ''));
 }
@@ -1115,7 +1202,7 @@ Object.entries(AF).forEach(([id, k]) => {
     A()[k] = el.type === 'checkbox' ? el.checked : el.value;
     if (needsLic()) loadFda();
     if (k === 'photo' && el.checked) loadExtra();
-    if ((k === 'short' || k === 'recall') && el.checked) { loadFda(); loadAlerts(); }
+    if ((k === 'short' || k === 'recall') && el.checked) { loadFda(); loadAlertIdx(); }
     applyAdv();
   });
 });
@@ -1126,17 +1213,27 @@ $('tips').innerHTML = T('例如：', 'Try: ') + ['metformin', 'A10BA', 'AC368201
 $('tips').addEventListener('click', (e) => { const b = e.target.closest('[data-try]'); if (b) { $('q').value = b.dataset.try; onQ(); } });
 
 let fdaP = null, extraP = null;
-function loadFda() {
-  if (fdaP) return fdaP;
-  fdaP = TW.fda().then((d) => {
-    fdaD = d; hay = null;
+function licOptions(d) {
     const cats = {}, countries = {};
     d.rows.forEach((f) => { if (f[F.category]) cats[f[F.category]] = (cats[f[F.category]] || 0) + 1; if (f[F.country]) countries[f[F.country]] = (countries[f[F.country]] || 0) + 1; });
     $('aCat').innerHTML = `<option value="">${T('不限', 'All')}</option>` + Object.entries(cats).sort((a, b) => b[1] - a[1]).slice(0, 14).map(([c]) => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
     $('aCountry').innerHTML = `<option value="">${T('不限', 'All')}</option>` + Object.entries(countries).sort((a, b) => b[1] - a[1]).slice(0, 40).map(([c]) => `<option value="${esc(c)}">${esc(countryName(c))}</option>`).join('');
-    syncAdv(); render();
-  }).catch((e) => { fdaP = null; RT.toast(String(e.message || e), 5000); });
+    syncAdv();
+}
+function loadFda() {
+  if (fdaP) return fdaP;
+  fdaP = TW.fda().then((d) => { fdaD = d; hay = null; licOptions(d); render(); })
+    .catch((e) => { fdaP = null; RT.toast(String(e.message || e), 5000); });
   return fdaP;
+}
+// licences of codes no longer reimbursed, and those without an NHI code
+let fdaAllP = null;
+function loadFdaAll() {
+  if (!fdaAllP) fdaAllP = TW.fdaAll().then((d) => {
+    fdaD = d; hay = null; licOnly = null; licIndex = null; licOptions(d);
+    if (open.size) { loadMore(); refreshShown(); } else render();
+  }).catch((e) => { fdaAllP = null; RT.toast(String(e.message || e), 5000); });
+  return fdaAllP;
 }
 function loadExtra() {
   if (extraP) return extraP;
@@ -1149,22 +1246,34 @@ function loadExtra() {
 let alertsD = null, alertsP = null;
 function loadAlerts() {
   if (!alertsP) alertsP = TW.alerts().then((d) => {
-    alertsD = d; if (open.size) refreshShown(); else render();
+    alertsD = d; if (open.size) refreshShown();
     $('nAlerts').textContent = Object.keys(d.short).length || '';
     if (S.view === 'alerts') renderAlerts();
-    if (A().short || A().recall) render();
     return d;
   }).catch(() => { alertsP = null; });
   return alertsP;
 }
+// which licences are short and when each was last recalled: enough for the cards and the filters
+let alertIdx = null, aidxP = null;
+function loadAlertIdx() {
+  if (!aidxP) aidxP = TW.alertIndex().then((d) => {
+    alertIdx = d;
+    if (!alertsD) $('nAlerts').textContent = d.short.size || '';
+    if (open.size && !(A().short || A().recall)) refreshShown(); else render();
+    return d;
+  }).catch(() => { aidxP = null; });
+  return aidxP;
+}
+const isShort = (f) => !!(alertIdx && f && alertIdx.short.has(f[F.licence]));
+const lastRecall = (f) => (alertIdx && f ? alertIdx.recall.get(f[F.licence]) || null : null);
 const shortOf = (f) => (alertsD && f ? alertsD.short[f[F.licence]] || null : null);
 const recallsOf = (f) => (alertsD && f ? alertsD.recalls[f[F.licence]] || [] : []);
 const yearsAgo = (n) => { const d = new Date(); d.setFullYear(d.getFullYear() - n); return d.toISOString().slice(0, 10); };
 const firstLine = (s) => { const t = String(s || '').replace(/\s+/g, ' ').trim(); return t.length > 90 ? t.slice(0, 88) + '…' : t; };
 const GRADE = (g) => (g ? T(`第${'一二三'[g - 1]}級`, `Class ${g}`) : T('未分級', 'No class given'));
 function alertTags(f) {
-  const s = shortOf(f), rc = recallsOf(f).filter((x) => x[0] >= yearsAgo(2));
-  return (s ? `<span class="tag short">${T('缺藥中', 'Short supply')}</span>` : '') + (rc.length ? `<span class="tag recall">${T('近兩年回收', 'Recalled')} ${esc(rc[0][0].slice(0, 7))}</span>` : '');
+  const rc = lastRecall(f);
+  return (isShort(f) ? `<span class="tag short">${T('缺藥中', 'Short supply')}</span>` : '') + (rc && rc[0] >= yearsAgo(2) ? `<span class="tag recall">${T('近兩年回收', 'Recalled')} ${esc(rc[0].slice(0, 7))}</span>` : '');
 }
 function alertBanners(f) {
   if (!f || !alertsD) return '';
@@ -1178,10 +1287,10 @@ function alertBanners(f) {
 // licence number → its row, and → the NHI codes that point to it
 let licIndex = null;
 function licIdx() {
-  if (licIndex && licIndex.n === nhiD.rows.length) return licIndex;
+  if (licIndex && licIndex.n === nhiD.rows.length && licIndex.f === (fdaD ? fdaD.rows.length : 0)) return licIndex;
   const byNo = new Map(fdaD ? fdaD.rows.map((f) => [f[F.licence], f]) : []), codes = new Map();
   if (fdaD) nhiD.rows.forEach((r) => { const f = licOf(r); if (f) { const a = codes.get(f[F.licence]) || []; a.push(r); codes.set(f[F.licence], a); } });
-  licIndex = { n: nhiD.rows.length, byNo, codes };
+  licIndex = { n: nhiD.rows.length, f: fdaD ? fdaD.rows.length : 0, byNo, codes };
   return licIndex;
 }
 const codeBtns = (licence) => { const rs = (licIdx().codes.get(licence) || []).slice(0, 8); return rs.length ? `<span class="codes">${rs.map((r) => `<button type="button" data-go="${esc(r[N.code])}" title="${esc(r[N.zh] || r[N.en])}">${esc(r[N.code])}${r[N.price] > 0 ? ' $' + fmtP(r[N.price]) : ''}</button>`).join('')}</span>` : ''; };
@@ -1214,6 +1323,174 @@ async function drawUsage(box, r) {
     ${ys.map((y, i) => { const [t, m] = mine[i] || [0, 0]; return `<tr><td>${y.year}${y.partial ? T(`（1–${+y.to.slice(5)} 月）`, ` (Jan–${y.to.slice(5)})`) : ''}</td><td>${t.toLocaleString()}</td><td>${t ? Math.round((m / t) * 100) + '% / ' + (100 - Math.round((m / t) * 100)) + '%' : '—'}</td>${r[N.atc] ? `<td>${atcTot[i] ? ((t / atcTot[i]) * 100).toFixed(1) + '%' : '—'}</td>` : ''}</tr>`; }).join('')}
     </tbody></table>
     <p class="note">${T(`醫令量是健保申報的數量（含包裹支付），單位依品項而定，例如錠、支、瓶。* 為當年度部分月份。「佔同 ATC」是同一個 ATC 代碼（${esc(r[N.atc])}）所有健保代號中，這個代號的醫令量比例；不同劑型、含量的單位不同，比例僅供參考。資料來源：健保署「健保藥品使用量」。`, `Claims are NHI quantities including bundled payments, in each item’s own unit (tablet, vial, bottle…). * marks a partial year. “Share of ATC” is this code’s part of all NHI codes with ATC ${esc(r[N.atc])}; units differ between forms and strengths, so read it as a rough guide. Source: NHIA drug usage data.`)}</p>`;
+  box.insertAdjacentHTML('beforeend', shareHTML(r));
+}
+
+
+/* ---------- A. the drug's life on one line ---------- */
+const TL_KIND = {
+  lic: ['許可證', 'Licence'], list: ['收載／恢復給付', 'Listed'], down: ['調降', 'Price cut'], up: ['調升', 'Price rise'],
+  rule: ['給付規定修訂', 'Rule revised'], short: ['缺藥', 'Shortage'], back: ['恢復供應', 'Back in supply'], recall: ['回收', 'Recall'], off: ['取消給付／許可證註銷', 'Delisted / licence cancelled'],
+};
+const TL_COLOR = { lic: 'var(--accent)', list: 'var(--accent)', down: 'var(--c-babe)', up: 'var(--c-orig)', rule: 'var(--c-bio)', short: 'var(--c-off)', back: 'var(--c-babe)', recall: 'var(--c-orig)', off: 'var(--muted)' };
+async function drawTimeline(box, r) {
+  if (!box) return;
+  let h = [];
+  try { [h] = await Promise.all([TW.hist(r[N.code]), loadAlerts()]); } catch (e) { h = []; }
+  if (!box.isConnected) return;
+  const f = licOf(r), ev = [], today = new Date().toISOString().slice(0, 10);
+  const add = (date, kind, label, end) => { const d = String(date || '').slice(0, 10); if (/^\d{4}-\d{2}-\d{2}$/.test(d) && d <= today) ev.push({ date: d, kind, label, end }); };
+  if (f) add(f[F.issued], 'lic', T('許可證核發', 'Licence issued') + ' · ' + f[F.licence]);
+  const pts = h.filter((x) => x.date);
+  add(r[N.firstListed], 'list', T('健保收載', 'NHI listing') + (pts[0] && pts[0].price > 0 ? ` · $${fmtP(pts[0].price)}` : ''));
+  pts.forEach((x, i) => {
+    if (!i) return;
+    const o = pts[i - 1].price, p = x.price;
+    if (!(p > 0)) add(x.date, 'off', T('取消給付', 'Delisted'));
+    else if (!(o > 0)) add(x.date, 'list', T(`恢復給付 · $${fmtP(p)}`, `Relisted · $${fmtP(p)}`));
+    else if (p !== o) add(x.date, p < o ? 'down' : 'up', `$${fmtP(o)} → $${fmtP(p)}（${p > o ? '+' : ''}${(((p - o) / o) * 100).toFixed(1)}%）`);
+  });
+  if (r[N.ruleChapters]) r[N.ruleChapters].split(',').filter(Boolean).forEach((c) => { const fl = ruleFile(r, c); if (fl) add(TW.ruleDate(fl), 'rule', T(`給付規定 ${c} 修訂`, `Rule ${c} revised`)); });
+  if (f && f[F.status]) add(f[F.cancelDate], 'off', T('許可證', 'Licence ') + f[F.status]);
+  if (f && alertsD) {
+    const sh = alertsD.short[f[F.licence]], bk = alertsD.recovered[f[F.licence]];
+    if (sh) add(sh[0], 'short', T('食藥署公告缺藥，至今未恢復', 'TFDA shortage notice, still short'), today);
+    if (bk) add(bk[0], 'back', T('恢復供應', 'Back in supply'));
+    (alertsD.recalls[f[F.licence]] || []).forEach((x) => add(x[0], 'recall', T('回收', 'Recall') + ' · ' + GRADE(x[1])));
+  }
+  if (!ev.length) { box.innerHTML = ''; return; }
+  ev.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  // drawn at the box's own width, so marks and year labels keep their size on a phone
+  const W = Math.max(280, Math.round(box.clientWidth || 640)), Hh = 84, L = 10, R = 10, AX = 42;
+  const t = (d) => new Date(d).getTime();
+  let x0 = t(ev[0].date), x1 = t(today);
+  if (x1 - x0 < 3e10) x0 = x1 - 3e10;                 // at least about a year wide
+  const X = (d) => L + ((t(d) - x0) / (x1 - x0)) * (W - L - R);
+  const tip = (e) => `<title>${esc(e.date)} ${esc(e.label)}</title>`;
+  const mark = (e) => {
+    const x = X(e.date).toFixed(1);
+    if (e.kind === 'short') return `<rect class="e-short" x="${x}" y="${AX - 4}" width="${Math.max(3, X(e.end) - X(e.date)).toFixed(1)}" height="8" rx="2">${tip(e)}</rect>`;
+    if (e.kind === 'rule') return `<path class="e-rule" d="M${x} ${AX - 22} l5 5 -5 5 -5 -5z">${tip(e)}</path>`;
+    if (e.kind === 'recall') return `<path class="e-recall" d="M${x} ${AX + 11} l5.5 9 h-11z">${tip(e)}</path>`;
+    if (e.kind === 'off') return `<path class="e-off" d="M${(+x - 4).toFixed(1)} ${AX - 4} l8 8 M${(+x + 4).toFixed(1)} ${AX - 4} l-8 8">${tip(e)}</path>`;
+    const rr = e.kind === 'lic' || e.kind === 'list' ? 5 : 3.6;
+    return `<circle class="e-${e.kind}" cx="${x}" cy="${AX}" r="${rr}">${tip(e)}</circle>`;
+  };
+  const ya = new Date(x0).getFullYear(), yb = new Date(x1).getFullYear(), step = Math.max(1, Math.ceil((yb - ya) / Math.max(3, Math.floor(W / 90))));
+  const yrs = []; for (let y = Math.ceil(ya / step) * step; y <= yb; y += step) if (t(`${y}-01-01`) > x0) yrs.push(y);
+  // bands first, then the rest, so the dots sit on top
+  const order = [...ev.filter((e) => e.kind === 'short'), ...ev.filter((e) => e.kind !== 'short')];
+  const kinds = Object.keys(TL_KIND).filter((k) => ev.some((e) => e.kind === k));
+  const latest = ev.slice().reverse();
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="${T(`這個藥的時間軸：${ev.length} 個事件，從 ${ev[0].date} 到今天`, `Timeline: ${ev.length} events from ${ev[0].date} to today`)}">
+      <line class="ax" x1="${L}" x2="${W - R}" y1="${AX}" y2="${AX}"/>
+      ${yrs.map((y) => { const x = X(`${y}-01-01`).toFixed(1); return `<line class="ax" x1="${x}" x2="${x}" y1="${AX + 3}" y2="${AX + 7}"/><text class="yr" x="${x}" y="${Hh - 4}" text-anchor="middle">${y}</text>`; }).join('')}
+      ${order.map(mark).join('')}
+    </svg>
+    <div class="legend">${kinds.map((k) => `<span><span class="dot" style="background:${TL_COLOR[k]}"></span> ${T(TL_KIND[k][0], TL_KIND[k][1])} <b>${ev.filter((e) => e.kind === k).length}</b></span>`).join('')}</div>
+    <details><summary>${T(`最近：${esc(latest[0].date)} ${esc(latest[0].label)}（全部 ${ev.length} 個事件）`, `Latest: ${esc(latest[0].date)} ${esc(latest[0].label)} (all ${ev.length} events)`)}</summary>
+      <ol>${latest.slice(0, 80).map((e) => `<li><span class="d">${esc(e.date)}</span><span><span class="dot" style="background:${TL_COLOR[e.kind]}"></span> ${esc(e.label)}</span></li>`).join('')}</ol></details>`;
+}
+
+/* ---------- B. share of the same price group (same ingredient, strength and form) ---------- */
+function shareHTML(r) {
+  if (!r[N.group] || !usageD || !usageD.years.length) return '';
+  const ys = usageD.years, me = r[N.code].slice(0, 8), prods = new Map();
+  nhiD.rows.forEach((x) => {
+    if (x[N.group] !== r[N.group]) return;
+    const q = usageD.q[x[N.code]]; if (!q) return;
+    const k = x[N.code].slice(0, 8);                 // the 00 and G0 packs of one product count together
+    const p = prods.get(k) || { k, code: x[N.code], name: x[N.zh] || x[N.en], cls: x[N.class], y: ys.map(() => 0) };
+    if (x === r) p.code = r[N.code];
+    q.forEach((v, i) => { p.y[i] += (v && v[0]) || 0; });
+    prods.set(k, p);
+  });
+  const sum = (a) => a.reduce((x, y) => x + y, 0);
+  const list = [...prods.values()].filter((p) => sum(p.y) > 0).sort((a, b) => sum(b.y) - sum(a.y));
+  if (list.length < 2) return '';
+  let top = list.slice(0, 6);
+  if (!top.some((p) => p.k === me)) { const mine = list.find((p) => p.k === me); if (mine) top = list.slice(0, 5).concat([mine]); }
+  const rest = list.filter((p) => !top.includes(p));
+  const segs = rest.length ? top.concat([{ k: '', other: true, name: T(`其他 ${rest.length} 項`, `${rest.length} others`), y: ys.map((_, i) => sum(rest.map((p) => p.y[i]))) }]) : top;
+  // products of the same class share a colour, a step lighter each time
+  const seen = {}; segs.forEach((p) => { const c = p.other ? 'none' : CLS_KEY[p.cls] || 'none'; p.key = c; p.op = p.other ? 1 : [1, 0.72, 0.5, 0.36][Math.min(3, (seen[c] = (seen[c] || 0) + 1) - 1)]; });
+  const tot = ys.map((_, i) => sum(segs.map((p) => p.y[i])));
+  const li = ys.map((y, i) => (!y.partial && tot[i] ? i : -1)).filter((i) => i >= 0).pop() ?? ys.length - 1;
+  const pct = (p, i) => (tot[i] ? (p.y[i] / tot[i]) * 100 : 0);
+  return `<h3 class="sec">${T('同分組市占', 'Share within the price group')} <small>${esc(r[N.group])}</small></h3>
+    <div class="share" role="img" aria-label="${T('同分組各品項每年醫令量占比', 'Share of claims per product and year')}">${ys.map((y, i) => `<div class="sh-row"><span>${y.year}${y.partial ? '*' : ''}</span><span class="sh-bar">${segs.map((p) => (p.y[i] ? `<i class="k-${p.key}${p.k === me ? ' me' : ''}" style="width:${pct(p, i).toFixed(2)}%;opacity:${p.op}" title="${esc(p.name)} ${pct(p, i).toFixed(1)}%"></i>` : '')).join('')}</span></div>`).join('')}</div>
+    <ul class="sh-leg">${segs.map((p) => `<li class="${p.k === me ? 'me' : ''}"><span class="dot k-${p.key}" style="opacity:${p.op}"></span>${p.other ? `<span>${esc(p.name)}</span>` : `<button type="button" data-go="${esc(p.code)}" title="${esc(p.name)}">${esc(p.name)}${p.k === me ? T('（本品）', ' (this one)') : ''}</button>`}<b>${pct(p, li).toFixed(1)}%</b></li>`).join('')}</ul>
+    <p class="note">${T(`健保「分類分組」是同成分、同含量、同劑型的一組藥，單位一致，所以占比可以直接比較。右側百分比是 ${ys[li].year} 年；同一品項的 00 與 G0 包裝合併計算，顏色依藥品分類。`, `An NHI price group is one ingredient at one strength and form, so the units match and the shares compare directly. Percentages on the right are for ${ys[li].year}; the 00 and G0 packs of a product are counted together; colours follow the drug class.`)}</p>`;
+}
+
+/* ---------- C. new shortages, recoveries or recalls per month ---------- */
+function calHTML(dates, sel, tone) {
+  const Y = new Date().getFullYear(), M = new Date().getMonth() + 1, cnt = {};
+  dates.forEach((d) => { const m = String(d || '').slice(0, 7); if (m) cnt[m] = (cnt[m] || 0) + 1; });
+  const years = [Y - 2, Y - 1, Y], key = (y, m) => `${y}-${String(m).padStart(2, '0')}`;
+  const max = Math.max(1, ...years.flatMap((y) => Array.from({ length: 12 }, (_, i) => cnt[key(y, i + 1)] || 0)));
+  const cell = (y, m) => {
+    const k = key(y, m), n = cnt[k] || 0;
+    if (y === Y && m > M) return '<span class="c" aria-hidden="true"></span>';
+    const lv = n ? 1 + Math.min(3, Math.floor((n / max) * 4)) : 0;
+    return `<button type="button" class="c${lv ? ' l' + lv : ''}" data-amonth="${k}" aria-pressed="${sel === k}" title="${k}：${n}" aria-label="${k} ${n}"></button>`;
+  };
+  return `<div class="cal ${tone}" role="group" aria-label="${T('每月件數', 'Count per month')}"><span></span>${Array.from({ length: 12 }, (_, i) => `<span class="h">${i + 1}</span>`).join('')}
+    ${years.map((y) => `<span>${y}</span>${Array.from({ length: 12 }, (_, i) => cell(y, i + 1)).join('')}`).join('')}</div>`;
+}
+
+/* ---------- D. an ATC class over the years ---------- */
+function classPrefix(rows) {
+  const norm = (p) => (p.length === 6 ? p.slice(0, 5) : p.length === 2 ? p.slice(0, 1) : p);
+  const c = chips.find((x) => x.k === 'atc'); if (c && c.v.length >= 3) return norm(c.v);
+  if (A().atc && A().atc.trim().length >= 3) return norm(A().atc.trim().toUpperCase());
+  const a = rows.map((r) => r[N.atc]).filter(Boolean);
+  if (a.length < 2 || a.length < rows.length * 0.9) return '';
+  let p = a[0];
+  for (const x of a) { while (p && !x.startsWith(p)) p = p.slice(0, -1); if (p.length < 4) return ''; }
+  return norm(p);
+}
+const ctrCache = new Map();
+async function drawClassTrend(det) {
+  const p = det.dataset.ctr, box = det.querySelector('[data-ctrbox]');
+  if (!box) return;
+  if (ctrCache.has(p)) { box.innerHTML = ctrCache.get(p); return; }
+  box.innerHTML = `<p class="hint" style="margin:0">${T('載入歷年資料…', 'Loading the history…')}</p>`;
+  let H;
+  try { [, H] = await Promise.all([loadAll(), TW.histAll(), loadUsage()]); } catch (e) { box.innerHTML = `<p class="hint" style="margin:0">${T('暫時無法取得歷年資料。', 'The history is not available right now.')}</p>`; return; }
+  const rows = nhiD.rows.filter((r) => r[N.atc].startsWith(p));
+  const Y = new Date().getFullYear(), today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const series = rows.map((r) => {
+    const hs = H.hist[r[N.code]];
+    if (hs) return hs.split(';').map((x) => { const [d, v] = x.split(':'); return [d, +v]; });
+    const since = (r[N.firstListed] || r[N.priceSince] || '').replace(/-/g, '');
+    return r[N.price] > 0 && since ? [[since, r[N.price]]] : [];
+  });
+  const at = (ser, d) => { let v = 0; for (const [t, pr] of ser) { if (t <= d) v = pr; else break; } return v; };
+  let snap = [];
+  for (let y = Y - 14; y <= Y; y++) {
+    const d = y === Y ? today : `${y}0701`;
+    const ps = series.map((ser) => at(ser, d)).filter((v) => v > 0).sort((a, b) => a - b);
+    const m = ps.length ? (ps.length % 2 ? ps[(ps.length - 1) / 2] : (ps[ps.length / 2 - 1] + ps[ps.length / 2]) / 2) : 0;
+    snap.push({ y, n: ps.length, med: m, q: null, part: false });
+  }
+  usageD.years.forEach((u, i) => { const sn = snap.find((x) => x.y === u.year); if (sn) { sn.q = rows.reduce((a, r) => { const v = (usageD.q[r[N.code]] || [])[i]; return a + ((v && v[0]) || 0); }, 0); sn.part = u.partial; } });
+  while (snap.length > 2 && !snap[0].n) snap.shift();
+  if (!snap.some((x) => x.n)) { box.innerHTML = `<p class="hint" style="margin:0">${T('這個類別沒有價格紀錄。', 'No price records for this class.')}</p>`; return; }
+  const n = snap.length, VW = 300, VH = 40, bw = VW / n;
+  const bars = (vals, cls) => { const mx = Math.max(1, ...vals.map((v) => v || 0)); return vals.map((v, i) => (v == null ? '' : `<rect class="${cls(i)}" x="${(i * bw + bw * 0.15).toFixed(2)}" y="${(VH - Math.max(1, (v / mx) * VH)).toFixed(2)}" width="${(bw * 0.7).toFixed(2)}" height="${Math.max(1, (v / mx) * VH).toFixed(2)}"><title>${snap[i].y}${snap[i].part ? '*' : ''}: ${v.toLocaleString()}</title></rect>`)).join(''); };
+  const mx = Math.max(...snap.map((x) => x.med), 0.01), mn = Math.min(...snap.filter((x) => x.med).map((x) => x.med), mx);
+  const lo = mn < mx * 0.4 ? 0 : mn * 0.9, Yp = (v) => (VH - 3 - ((v - lo) / (mx - lo || 1)) * (VH - 6)).toFixed(2);
+  const line = snap.map((x, i) => (x.med ? `${i && snap[i - 1].med ? 'L' : 'M'}${(i * bw + bw / 2).toFixed(2)} ${Yp(x.med)}` : '')).join(' ');
+  const lastQ = snap.filter((x) => x.q != null && !x.part).pop(), last = snap[n - 1];
+  const svg = (inner, label) => `<svg viewBox="0 0 ${VW} ${VH}" preserveAspectRatio="none" role="img" aria-label="${label}">${inner}</svg>`;
+  const html = `<div class="ctr-row"><span class="k">${T('給付品項數', 'Items paid')}</span>${svg(bars(snap.map((x) => x.n), () => ''), T('各年給付品項數', 'Items paid per year'))}<span class="v">${last.n.toLocaleString()}</span></div>
+    <div class="ctr-row"><span class="k">${T('支付價中位數', 'Median price')}</span>${svg(`<line class="base" x1="0" x2="${VW}" y1="${VH - 0.5}" y2="${VH - 0.5}"/><path class="ln" d="${line}"/>${snap.map((x, i) => (x.med ? `<rect x="${(i * bw).toFixed(2)}" y="0" width="${bw.toFixed(2)}" height="${VH}" class="hit"><title>${x.y}: $${fmtP(x.med)}</title></rect>` : '')).join('')}`, T('各年支付價中位數', 'Median price per year'))}<span class="v">$${fmtP(last.med)}</span></div>
+    ${snap.some((x) => x.q) ? `<div class="ctr-row"><span class="k">${T('醫令量', 'Claims')}</span>${svg(bars(snap.map((x) => x.q), (i) => (snap[i].part ? 'part' : '')), T('各年醫令量', 'Claims per year'))}<span class="v">${lastQ ? fmtN(lastQ.q) : '—'}</span></div>` : ''}
+    <div class="ctr-ax"><span></span><span><span>${snap[0].y}</span><span>${snap[n - 1].y}</span></span><span></span></div>
+    <p class="note">${T(`ATC ${esc(p)} 共 ${rows.length} 個健保代號（含已取消給付）。品項數與價格中位數取每年 7 月 1 日（今年為今天）的狀態；不同含量、劑型混在一起，只看大方向。醫令量 * 為部分月份。`, `ATC ${esc(p)}: ${rows.length} NHI codes, delisted ones included. Item counts and median prices are as of 1 July each year (today for this year); strengths and forms are mixed, so read the direction only. * marks a partial year of claims.`)}</p>`;
+  ctrCache.set(p, html);
+  if (det.isConnected) box.innerHTML = html;
 }
 
 /* ---------- views ---------- */
@@ -1240,7 +1517,7 @@ const drugBtn = (code) => `<button type="button" data-go="${esc(code)}">${esc(na
 let changesD = null;
 async function renderChanges() {
   loadingBox('vChanges');
-  try { [changesD] = await Promise.all([changesD || TW.changes(), loadAll(), loadFda(), loadAlerts()]); }
+  try { [changesD] = await Promise.all([changesD || TW.changes(), loadAll(), loadFdaAll(), loadAlerts()]); }
   catch (e) { $('vChanges').innerHTML = `<div class="empty-state">${esc(e.message || e)}</div>`; return; }
   const weeks = changesD.weeks || [];
   if (!weeks.length) {
@@ -1284,9 +1561,10 @@ $('vChanges').addEventListener('click', (e) => {
 });
 
 /* shortages and recalls */
+const calBlock = (dates, tone, title) => `<h3 class="sec">${title} <small>${T('近三年', 'last three years')}</small></h3>${calHTML(dates, S.amonth || '', tone)}<p class="cal-note">${S.amonth ? `<button type="button" class="small" data-amonth="${esc(S.amonth)}">${T(`只看 ${esc(S.amonth)}　×`, `Only ${esc(S.amonth)}  ×`)}</button>` : T('點一格只看那個月。', 'Pick a month to list only that month.')}</p>`;
 async function renderAlerts() {
   loadingBox('vAlerts');
-  try { await Promise.all([loadAlerts(), loadFda(), loadAll()]); } catch (e) { $('vAlerts').innerHTML = `<div class="empty-state">${esc(e.message || e)}</div>`; return; }
+  try { await Promise.all([loadAlerts(), loadFdaAll(), loadAll()]); } catch (e) { $('vAlerts').innerHTML = `<div class="empty-state">${esc(e.message || e)}</div>`; return; }
   if (!alertsD) { $('vAlerts').innerHTML = `<div class="empty-state">${T('缺藥與回收資料暫時無法取得。', 'Shortage and recall data are not available right now.')}</div>`; return; }
   const tab = S.atab || 'short', q = TW.fold(S.aq || '');
   const shorts = Object.entries(alertsD.short).sort((a, b) => (a[1][0] < b[1][0] ? 1 : -1));
@@ -1296,15 +1574,17 @@ async function renderAlerts() {
   const hit = (...s) => !q || TW.fold(s.join(' ')).includes(q);
   let body = '';
   if (tab === 'short' || tab === 'back') {
-    const rows = (tab === 'short' ? shorts : backs).filter(([l, s]) => hit(l, s[1], s[2]));
-    body = `<ul class="wl">${rows.slice(0, 300).map(([l, s]) => `<li><span class="t"><b>${esc(s[1])}</b><span class="sub">${esc(l)}</span>${codeBtns(l)}</span><span class="r">${esc(s[0])}</span><details${tab === 'short' ? '' : ''}><summary>${esc(firstLine(s[2]))}</summary><p>${esc(s[2])}</p></details></li>`).join('')}</ul>${rows.length > 300 ? `<p class="hint">${T('只顯示前 300 筆，請用上方搜尋縮小範圍。', 'Showing the first 300; narrow with the search above.')}</p>` : ''}${!rows.length ? `<p class="hint">${T('沒有符合的項目。', 'Nothing matches.')}</p>` : ''}`;
+    const src = tab === 'short' ? shorts : backs, am = S.amonth || '';
+    const rows = src.filter(([l, s]) => hit(l, s[1], s[2]) && (!am || s[0].startsWith(am)));
+    body = calBlock(src.map(([, s]) => s[0]), tab === 'short' ? '' : 'ok', T(tab === 'short' ? '目前缺藥，依公告月份' : '恢復供應，依公告月份', tab === 'short' ? 'Current shortages by month of notice' : 'Recoveries by month of notice')) + `<ul class="wl">${rows.slice(0, 300).map(([l, s]) => `<li><span class="t"><b>${esc(s[1])}</b><span class="sub">${esc(l)}</span>${codeBtns(l)}</span><span class="r">${esc(s[0])}</span><details${tab === 'short' ? '' : ''}><summary>${esc(firstLine(s[2]))}</summary><p>${esc(s[2])}</p></details></li>`).join('')}</ul>${rows.length > 300 ? `<p class="hint">${T('只顯示前 300 筆，請用上方搜尋縮小範圍。', 'Showing the first 300; narrow with the search above.')}</p>` : ''}${!rows.length ? `<p class="hint">${T('沒有符合的項目。', 'Nothing matches.')}</p>` : ''}`;
   } else {
     const g = S.agrade || '';
-    const rows = recalls.filter(([l, x]) => (!g || String(x[1]) === g) && hit(l, x[5], x[6], x[3], licName(l)));
+    const am = S.amonth || '';
+    const rows = recalls.filter(([l, x]) => (!g || String(x[1]) === g) && hit(l, x[5], x[6], x[3], licName(l)) && (!am || x[0].startsWith(am)));
     // recalls per year, by class
     const years = {}; recalls.forEach(([, x]) => { const y = x[0].slice(0, 4); if (!y) return; years[y] = years[y] || [0, 0, 0, 0]; years[y][x[1]]++; });
     const yk = Object.keys(years).sort(), ymax = Math.max(1, ...yk.map((y) => years[y].reduce((a, b) => a + b, 0)));
-    body = `<h3 class="sec">${T('每年回收件數', 'Recalls per year')}</h3><div class="yearbars" role="img" aria-label="${T('每年回收件數', 'Recalls per year')}">${yk.map((y) => `<div title="${y}: ${years[y].reduce((a, b) => a + b, 0)}">${[1, 2, 3, 0].map((k) => (years[y][k] ? `<i class="g${k}" style="height:${((years[y][k] / ymax) * 80).toFixed(1)}px"></i>` : '')).join('')}</div>`).join('')}</div>
+    body = calBlock(recalls.filter(([, x]) => !g || String(x[1]) === g).map(([, x]) => x[0]), 'rc', T('回收，依公告月份', 'Recalls by month of notice')) + `<h3 class="sec">${T('每年回收件數', 'Recalls per year')}</h3><div class="yearbars" role="img" aria-label="${T('每年回收件數', 'Recalls per year')}">${yk.map((y) => `<div title="${y}: ${years[y].reduce((a, b) => a + b, 0)}">${[1, 2, 3, 0].map((k) => (years[y][k] ? `<i class="g${k}" style="height:${((years[y][k] / ymax) * 80).toFixed(1)}px"></i>` : '')).join('')}</div>`).join('')}</div>
       <div class="yearax">${yk.map((y) => `<span>${y.slice(2)}</span>`).join('')}</div>
       <div class="legend" style="margin:-8px 0 14px"><span><span class="dot" style="background:var(--c-orig)"></span> ${T('第一級', 'Class 1')}</span><span><span class="dot" style="background:var(--c-off)"></span> ${T('第二級', 'Class 2')}</span><span><span class="dot" style="background:var(--c-gen)"></span> ${T('第三級／未分級', 'Class 3 / none')}</span></div>
       <div class="pills" role="group" aria-label="${T('分級', 'Class')}">${[['', '全部', 'All'], ['1', '第一級', 'Class 1'], ['2', '第二級', 'Class 2'], ['3', '第三級', 'Class 3']].map(([v, zh, en]) => `<button type="button" data-agrade="${v}" aria-pressed="${g === v}">${T(zh, en)}</button>`).join('')}</div>
@@ -1317,8 +1597,9 @@ async function renderAlerts() {
   const inp = $('aq'); inp.oninput = RT.debounce(() => { S.aq = inp.value; save(); const pos = inp.selectionStart; renderAlerts().then(() => { const n = $('aq'); n.focus(); n.setSelectionRange(pos, pos); }); }, 250);
 }
 $('vAlerts').addEventListener('click', (e) => {
-  const t = e.target.closest('[data-atab]'), g = e.target.closest('[data-agrade]');
-  if (t) { S.atab = t.dataset.atab; save(); renderAlerts(); }
+  const t = e.target.closest('[data-atab]'), g = e.target.closest('[data-agrade]'), am = e.target.closest('[data-amonth]');
+  if (am) { S.amonth = S.amonth === am.dataset.amonth ? '' : am.dataset.amonth; save(); renderAlerts(); return; }
+  if (t) { S.atab = t.dataset.atab; S.amonth = ''; save(); renderAlerts(); }
   else if (g) { S.agrade = g.dataset.agrade; save(); renderAlerts(); }
 });
 
@@ -1363,17 +1644,20 @@ $('vRules').addEventListener('toggle', (e) => {
 }, true);
 
 /* ---------- start ---------- */
+let startCode = '';
 $('srcNote').textContent = TW.sourceNote();
 $('refs').innerHTML = RT.noticeHTML([T('資料來源：健保署「健保用藥品項」與藥品給付規定；食藥署「全部藥品許可證資料集」「藥品外觀資料集」「藥品仿單外盒資料集」（政府資料開放授權條款第 1 版）。外觀照片、仿單與外盒直接連到食藥署網站。', 'Sources: NHIA “NHI drug list” and reimbursement rules; TFDA “All drug licences”, “Drug appearance” and “Leaflets and cartons” datasets (Open Government Data License, Taiwan v1.0). Photos, leaflets and cartons link straight to the TFDA site.')]);
 (() => {
   const p = new URLSearchParams(location.search);
   Q = p.get('q') || ''; $('q').value = Q;
+  startCode = (p.get('code') || '').trim().toUpperCase();
   if (p.get('group')) chips.push({ k: 'group', v: p.get('group') });
   if (p.get('atc')) chips.push({ k: 'atc', v: p.get('atc').toUpperCase() });
 })();
 [...$('scope').children].forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === S.scope)));
 $('fSort').value = S.sort;
-setView(new URLSearchParams(location.search).get('view') || S.view || 'search', true);
+// a shared link to a search or a drug opens the search, whatever view was used last
+{ const u = new URLSearchParams(location.search); setView(u.get('view') || (['q', 'code', 'atc', 'group'].some((k) => u.get(k)) ? 'search' : S.view) || 'search', true); }
 // the filter sheet never opens by itself on a phone
 showAdv(!!S.advOpen && !matchMedia('(max-width: 640px)').matches);
 $('aCls').innerHTML = `<option value="">${T('不限', 'All')}</option>` + CLS.map((c) => `<option value="${esc(c)}">${esc(clsName(c))}</option>`).join('');
@@ -1384,12 +1668,13 @@ TW.nhi().then((d) => {
   const forms = {}; d.rows.forEach((r) => { if (r[N.price] > 0 && r[N.form]) forms[r[N.form]] = (forms[r[N.form]] || 0) + 1; });
   $('aForm').innerHTML = `<option value="">${T('不限', 'All')}</option>` + Object.entries(forms).sort((a, b) => b[1] - a[1]).slice(0, 40).map(([f]) => `<option value="${esc(f)}">${esc(f)}</option>`).join('');
   syncAdv();
-  if (S.scope !== 'paid') loadAll();
+  if (S.scope !== 'paid') { loadAll(); loadFdaAll(); }
   TW.meta().then((m) => { metaD = m; $('srcNote').textContent = TW.sourceNote() + T(` 本次資料整理於 ${m.built}。`, ` This copy was built on ${m.built}.`); });
   render();
+  if (startCode) { if (S.view !== 'search') setView('search', true); goCode(startCode); }
   // licences come second: search works as soon as the NHI list is in
   loadFda();
-  loadAlerts();
+  loadAlertIdx();
   if (A().photo) loadExtra();
 }).catch((e) => { $('out').innerHTML = `<div class="empty-state">${esc(e.message || e)}</div>`; });
 </script>

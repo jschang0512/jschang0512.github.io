@@ -10,6 +10,8 @@
 //   nhi-rest.json  NHI drug codes no longer reimbursed (price 0), loaded when someone asks for them
 //   fda.json       licences that are still valid, plus cancelled ones that an NHI code still points to (short fields)
 //   fda-more.json  indication and package text per licence (loaded when a drug is opened)
+//   fda-paid.json / fda-rest.json, fda-more-paid.json / fda-more-rest.json  the same, split into the licences
+//                  that reimbursed NHI codes point to (loaded first) and all the others (on request)
 //   hist.json  price history per NHI code (loaded only when someone opens it)
 //   extra.json appearance (shape, colour, markings, photo) and leaflet / carton links per licence, from
 //              TFDA 藥品外觀資料集 (export/42) and 藥品仿單外盒資料集 (export/39); loaded when a drug is opened
@@ -56,7 +58,7 @@ const FDA_COLS = ['licence', 'status', 'cancelDate', 'cancelReason', 'validUntil
 // the long text fields go to fda-more.json, read only when a drug is opened
 const FDA_MORE = ['indication', 'package'];
 // bump when the files change shape, so the next run publishes even if the content did not change
-const FORMAT = 2;
+const FORMAT = 3;
 
 /* ---------- NHI ---------- */
 let nhi = [], hist = {};
@@ -205,6 +207,16 @@ const coreCols = FDA_COLS.filter((c) => !FDA_MORE.includes(c)), coreIdx = coreCo
 const more = {}; fda.forEach((r) => { const x = moreIdx.map((i) => r[i]); if (x.some(Boolean)) more[r[0]] = x; });
 console.log('fda.json', w('fda.json', { v, cols: coreCols, rows: fda.map((r) => coreIdx.map((i) => r[i])) }));
 console.log('fda-more.json', w('fda-more.json', { v, cols: FDA_MORE, more }));
+// licences behind the reimbursed codes come first; the full files above stay for older pages and as next week's fallback
+const iLic = NHI_COLS.indexOf('licId'), fLic = FDA_COLS.indexOf('licId');
+const paidIds = new Set(nhi.filter((r) => r[iPrice] > 0 && r[iLic]).map((r) => r[iLic]));
+const isPaidLic = (r) => r[fLic] && paidIds.has(r[fLic]);
+const pick = (keep) => { const o = {}; fda.forEach((r) => { if (keep(r) && more[r[0]]) o[r[0]] = more[r[0]]; }); return o; };
+console.log('fda-paid.json', w('fda-paid.json', { v, cols: coreCols, rows: fda.filter(isPaidLic).map((r) => coreIdx.map((i) => r[i])) }));
+console.log('fda-rest.json', w('fda-rest.json', { v, cols: coreCols, rows: fda.filter((r) => !isPaidLic(r)).map((r) => coreIdx.map((i) => r[i])) }));
+console.log('fda-more-paid.json', w('fda-more-paid.json', { v, cols: FDA_MORE, more: pick(isPaidLic) }));
+console.log('fda-more-rest.json', w('fda-more-rest.json', { v, cols: FDA_MORE, more: pick((r) => !isPaidLic(r)) }));
+meta.counts.licencesPaid = fda.filter(isPaidLic).length;
 meta.fdaCols = coreCols;
 console.log('hist.json', w('hist.json', { v, hist }));
 console.log('extra.json', w('extra.json', { v, base: MCP, lookCols: LOOK_COLS, looks, leaflets }));

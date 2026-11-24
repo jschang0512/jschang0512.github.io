@@ -138,6 +138,9 @@ meta.v = crypto.createHash('sha1').update(meta.v + h).digest('hex').slice(0, 10)
 meta.counts.recalls = Object.keys(recalls).length; meta.counts.shortages = Object.keys(short).length; meta.counts.usageYears = usage.years.length;
 meta.reused = [...(meta.reused || []), ...reused];
 console.log('alerts.json', out('alerts.json', { v: meta.v, ...alerts }));
+// a small index for the result cards and filters: which licences are short now, and each one's latest recall
+const recallIdx = {}; for (const [l, list] of Object.entries(recalls)) { const d = list.map((x) => x[0]).filter(Boolean).sort().pop() || ''; recallIdx[l] = [d, list.length]; }
+console.log('alerts-index.json', out('alerts-index.json', { v: meta.v, short: Object.keys(short), recall: recallIdx }));
 console.log('usage.json', out('usage.json', { v: meta.v, ...usage }));
 console.log('changes.json', out('changes.json', { v: meta.v, ...changes }));
 fs.writeFileSync(path.join(dir, 'meta.json'), JSON.stringify(meta));
