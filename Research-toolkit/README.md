@@ -38,4 +38,4 @@ The figure tools open figure-first: the settings column stays hidden until Setti
 
 張家菘 — questions, bug reports and suggestions: [js.chang0512@gmail.com](mailto:js.chang0512@gmail.com)
 
-Version: v3.9 (2026-11-24)
+Version: v3.9.1 (2026-11-24)

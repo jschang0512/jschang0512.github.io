@@ -366,7 +366,17 @@
   .rv .rules-txt { margin: 0 0 12px; }
   @media (max-width: 640px) { .rv summary { grid-template-columns: minmax(0, 1fr) auto; } .rv .d { grid-column: 1 / -1; } }
   /* a drug's life on one line: licence, listing, prices, rules, shortages, recalls */
-  .tl { margin: 0 0 14px; }
+  .tl { margin: 0 0 14px; position: relative; }
+  .tl .ev { cursor: pointer; outline: none; }
+  .tl .hit { fill: transparent; stroke: none; }
+  .tl .ev:focus-visible .hit, .tl .ev.on .hit { stroke: var(--accent); stroke-width: 1.5; }
+  .tl .tl-hint { color: var(--muted); font-size: 11.5px; }
+  .tl-pop { position: absolute; z-index: 20; width: min(260px, 100%); padding: 8px 44px 8px 10px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.14); font-size: 12.5px; line-height: 1.45; }
+  .tl-pop .icon { position: absolute; top: 2px; right: 2px; }
+  .tl-pop .it + .it { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--border); }
+  .tl-pop .k { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .tl-pop .d { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 11.5px; }
+  .tl-pop .k .d { margin-left: auto; }
   .tl svg { width: 100%; height: auto; display: block; overflow: visible; }
   .tl .ax { stroke: var(--border); stroke-width: 1; }
   .tl .yr { font-size: 11px; fill: var(--muted); }
@@ -518,7 +528,7 @@
   </div>
 </main>
 
-<script src="../shared/common.js?v=20261124b"></script>
+<script src="../shared/common.js?v=20261124c"></script>
 <script src="../shared/twdrugs.js?v=20261124a"></script>
 <script>
 const TW = RT.twDrugs, N = TW.N, F = TW.F, T = RT.t, esc = RT.esc;
@@ -1366,19 +1376,28 @@ async function drawTimeline(box, r) {
   let x0 = t(ev[0].date), x1 = t(today);
   if (x1 - x0 < 3e10) x0 = x1 - 3e10;                 // at least about a year wide
   const X = (d) => L + ((t(d) - x0) / (x1 - x0)) * (W - L - R);
-  const tip = (e) => `<title>${esc(e.date)} ${esc(e.label)}</title>`;
+  // each mark sits in a group with a larger invisible target, so a finger can hit it; a click opens a small note
   const mark = (e) => {
     const x = X(e.date).toFixed(1);
-    if (e.kind === 'short') return `<rect class="e-short" x="${x}" y="${AX - 4}" width="${Math.max(3, X(e.end) - X(e.date)).toFixed(1)}" height="8" rx="2">${tip(e)}</rect>`;
-    if (e.kind === 'rule') return `<path class="e-rule" d="M${x} ${AX - 22} l5 5 -5 5 -5 -5z">${tip(e)}</path>`;
-    if (e.kind === 'recall') return `<path class="e-recall" d="M${x} ${AX + 11} l5.5 9 h-11z">${tip(e)}</path>`;
-    if (e.kind === 'off') return `<path class="e-off" d="M${(+x - 4).toFixed(1)} ${AX - 4} l8 8 M${(+x + 4).toFixed(1)} ${AX - 4} l-8 8">${tip(e)}</path>`;
-    const rr = e.kind === 'lic' || e.kind === 'list' ? 5 : 3.6;
-    return `<circle class="e-${e.kind}" cx="${x}" cy="${AX}" r="${rr}">${tip(e)}</circle>`;
+    let m, hit;
+    if (e.kind === 'short') {
+      const w = Math.max(3, X(e.end) - X(e.date)).toFixed(1);
+      m = `<rect class="e-short" x="${x}" y="${AX - 4}" width="${w}" height="8" rx="2"/>`;
+      hit = `<rect class="hit" x="${x}" y="${AX - 10}" width="${Math.max(16, +w)}" height="20"/>`;
+    } else {
+      const cy = e.kind === 'rule' ? AX - 17 : e.kind === 'recall' ? AX + 16 : AX;
+      if (e.kind === 'rule') m = `<path class="e-rule" d="M${x} ${AX - 22} l5 5 -5 5 -5 -5z"/>`;
+      else if (e.kind === 'recall') m = `<path class="e-recall" d="M${x} ${AX + 11} l5.5 9 h-11z"/>`;
+      else if (e.kind === 'off') m = `<path class="e-off" d="M${(+x - 4).toFixed(1)} ${AX - 4} l8 8 M${(+x + 4).toFixed(1)} ${AX - 4} l-8 8"/>`;
+      else m = `<circle class="e-${e.kind}" cx="${x}" cy="${AX}" r="${e.kind === 'lic' || e.kind === 'list' ? 5 : 3.6}"/>`;
+      hit = `<circle class="hit" cx="${x}" cy="${cy}" r="11"/>`;
+    }
+    return `<g class="ev" data-i="${e.i}" tabindex="0" role="button" aria-label="${esc(e.date + ' ' + e.label)}">${hit}${m}</g>`;
   };
   const ya = new Date(x0).getFullYear(), yb = new Date(x1).getFullYear(), step = Math.max(1, Math.ceil((yb - ya) / Math.max(3, Math.floor(W / 90))));
   const yrs = []; for (let y = Math.ceil(ya / step) * step; y <= yb; y += step) if (t(`${y}-01-01`) > x0) yrs.push(y);
   // bands first, then the rest, so the dots sit on top
+  ev.forEach((e, i) => { e.i = i; e.x = X(e.date); });
   const order = [...ev.filter((e) => e.kind === 'short'), ...ev.filter((e) => e.kind !== 'short')];
   const kinds = Object.keys(TL_KIND).filter((k) => ev.some((e) => e.kind === k));
   const latest = ev.slice().reverse();
@@ -1387,10 +1406,50 @@ async function drawTimeline(box, r) {
       ${yrs.map((y) => { const x = X(`${y}-01-01`).toFixed(1); return `<line class="ax" x1="${x}" x2="${x}" y1="${AX + 3}" y2="${AX + 7}"/><text class="yr" x="${x}" y="${Hh - 4}" text-anchor="middle">${y}</text>`; }).join('')}
       ${order.map(mark).join('')}
     </svg>
-    <div class="legend">${kinds.map((k) => `<span><span class="dot" style="background:${TL_COLOR[k]}"></span> ${T(TL_KIND[k][0], TL_KIND[k][1])} <b>${ev.filter((e) => e.kind === k).length}</b></span>`).join('')}</div>
+    <div class="legend">${kinds.map((k) => `<span><span class="dot" style="background:${TL_COLOR[k]}"></span> ${T(TL_KIND[k][0], TL_KIND[k][1])} <b>${ev.filter((e) => e.kind === k).length}</b></span>`).join('')}<span class="tl-hint">${T('點圖示看說明', 'Tap a mark for details')}</span></div>
     <details><summary>${T(`最近：${esc(latest[0].date)} ${esc(latest[0].label)}（全部 ${ev.length} 個事件）`, `Latest: ${esc(latest[0].date)} ${esc(latest[0].label)} (all ${ev.length} events)`)}</summary>
       <ol>${latest.slice(0, 80).map((e) => `<li><span class="d">${esc(e.date)}</span><span><span class="dot" style="background:${TL_COLOR[e.kind]}"></span> ${esc(e.label)}</span></li>`).join('')}</ol></details>`;
+  box._tl = { ev, today };
+  box.onclick = (x) => { const g = x.target.closest('.ev'); if (g) { x.stopPropagation(); tlPop(box, g); } else if (x.target.closest('[data-tlx]')) tlClose(true); };
+  box.onkeydown = (x) => { const g = x.target.closest('.ev'); if (g && (x.key === 'Enter' || x.key === ' ')) { x.preventDefault(); tlPop(box, g); } };
 }
+// the small note for one mark, and any others drawn on top of it
+let tlOpen = null;
+function tlClose(refocus) {
+  if (!tlOpen) return;
+  const { pop, g } = tlOpen; tlOpen = null;
+  pop.remove(); g.classList.remove('on'); g.setAttribute('aria-expanded', 'false');
+  if (refocus && g.isConnected) g.focus();
+}
+function tlPop(box, g) {
+  const same = tlOpen && tlOpen.g === g;
+  tlClose(false);
+  if (same) return;
+  const { ev, today } = box._tl, e = ev[+g.dataset.i];
+  const near = ev.filter((o) => Math.abs(o.x - e.x) <= 7).sort((a, b) => (a.date < b.date ? -1 : 1));
+  const span = (a) => {
+    const d = Math.round((new Date(today) - new Date(a)) / 864e5);
+    if (d < 365) return T(`${d} 天`, `${d} day${d === 1 ? '' : 's'}`);
+    const y = (d / 365.25).toFixed(1);
+    return T(`約 ${y} 年`, `about ${y} years`);
+  };
+  const pop = document.createElement('div');
+  pop.className = 'tl-pop'; pop.setAttribute('role', 'dialog'); pop.setAttribute('aria-label', T('事件說明', 'Event details'));
+  pop.innerHTML = `<button type="button" class="icon" data-tlx aria-label="${T('關閉', 'Close')}">×</button>` + near.map((o) => `<div class="it">
+      <div class="k"><span class="dot" style="background:${TL_COLOR[o.kind]}"></span><b>${T(...TL_KIND[o.kind])}</b><span class="d">${esc(o.date)}</span></div>
+      <div>${esc(o.label)}</div>
+      <div class="d">${o.kind === 'short' ? T(`至今 ${span(o.date)}`, `${span(o.date)} so far`) : T(`${span(o.date)}前`, `${span(o.date)} ago`)}</div>
+    </div>`).join('');
+  box.appendChild(pop);
+  // under the mark, kept inside the box
+  const br = box.getBoundingClientRect(), mr = g.getBoundingClientRect(), pw = pop.offsetWidth;
+  pop.style.left = Math.max(0, Math.min(br.width - pw, mr.left + mr.width / 2 - br.left - pw / 2)) + 'px';
+  pop.style.top = (mr.bottom - br.top + 6) + 'px';
+  g.classList.add('on'); g.setAttribute('aria-expanded', 'true');
+  tlOpen = { pop, g };
+}
+document.addEventListener('click', (x) => { if (tlOpen && !x.target.closest('.tl-pop')) tlClose(false); });
+document.addEventListener('keydown', (x) => { if (x.key === 'Escape' && tlOpen) tlClose(true); });
 
 /* ---------- B. share of the same price group (same ingredient, strength and form) ---------- */
 function shareHTML(r) {
