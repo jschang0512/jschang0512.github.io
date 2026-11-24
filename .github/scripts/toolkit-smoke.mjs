@@ -23,8 +23,11 @@ for (const p of pages) {
   const page = await ctx.newPage();
   const errs = [];
   page.on('pageerror', (e) => errs.push('script error: ' + (e.message || e)));
-  page.on('response', (r) => { if (r.url().startsWith(BASE) && r.status() >= 400) errs.push(`HTTP ${r.status()}: ${r.url().slice(BASE.length)}`); });
-  page.on('requestfailed', (r) => { if (r.url().startsWith(BASE)) errs.push(`failed: ${r.url().slice(BASE.length)} (${r.failure()?.errorText})`); });
+  // on localhost the drug pages look for a local copy of the drug data first (gitignored) and fall back to the
+  // published data, so a missing data/tw-drugs/ file is expected
+  const ours = (u) => u.startsWith(BASE) && !u.startsWith(BASE + '/Research-toolkit/data/tw-drugs/');
+  page.on('response', (r) => { if (ours(r.url()) && r.status() >= 400) errs.push(`HTTP ${r.status()}: ${r.url().slice(BASE.length)}`); });
+  page.on('requestfailed', (r) => { if (ours(r.url())) errs.push(`failed: ${r.url().slice(BASE.length)} (${r.failure()?.errorText})`); });
   page.on('dialog', (d) => d.accept());
   let note = '';
   try {
