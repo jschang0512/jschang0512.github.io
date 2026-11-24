@@ -101,6 +101,23 @@
   .ex-row input { width: 8em; }
   pre.snip { font-family: var(--font-mono); font-size: 12px; background: var(--panel-2); border-radius: 7px; padding: 10px 12px; overflow: auto; max-height: 360px; margin: 8px 0 0; white-space: pre; }
   .copyrow { display: flex; flex-wrap: wrap; gap: 6px; }
+  /* ICD-9 ↔ ICD-10 crosswalk and ready-made definitions */
+  .xw { margin: 8px 0 4px; padding: 10px 12px; border-radius: 8px; background: var(--panel-2); border: 1px solid var(--border); }
+  .xw-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; font-size: 13px; }
+  .xw-head .spacer { flex: 1; }
+  table.xwt { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  table.xwt td { padding: 5px 6px 5px 0; border-top: 1px solid var(--border); vertical-align: top; }
+  table.xwt td.cd { font-family: var(--font-mono); white-space: nowrap; }
+  table.xwt td.to { font-family: var(--font-mono); overflow-wrap: anywhere; min-width: 0; }
+  table.xwt small { display: block; font-family: var(--font-body, inherit); color: var(--muted); font-size: 11px; }
+  table.xwt td:last-child { white-space: nowrap; text-align: right; }
+  .xtag { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 4px; white-space: nowrap; background: var(--panel); border: 1px solid var(--border); color: var(--muted); cursor: help; }
+  .xtag.approx, .xtag.combo, .xtag.back { color: var(--warn-text); background: var(--warn-bg); border-color: transparent; }
+  .xtag.none { color: var(--muted); }
+  .xw-note { font-size: 11.5px; color: var(--muted); margin: 8px 0; line-height: 1.5; }
+  .preset { margin-top: 10px; padding: 10px 12px; border-radius: 8px; background: var(--panel-2); border: 1px solid var(--border); font-size: 13px; }
+  .preset .ex-row { margin: 6px 0 8px; }
+  .preset p { margin: 0; font-size: 11.5px; color: var(--muted); line-height: 1.5; }
 </style>
 </head>
 <body>
@@ -143,6 +160,16 @@
       <div class="glist" id="groups"></div>
       <div class="copyrow" style="margin-top:10px">
         <button type="button" class="small" id="addGroup" data-en="+ Add group">＋ 新增群組</button>
+        <button type="button" class="small" id="addPreset" aria-expanded="false" aria-controls="presetBox" data-en="+ Comorbidity definitions">＋ 常用共病定義</button>
+      </div>
+      <div class="preset" id="presetBox" hidden>
+        <b data-en="Ready-made definitions">一鍵建立共病群組</b>
+        <div class="ex-row">
+          <select id="presetSet" aria-label="共病定義"><option value="charlson" data-en="Charlson (17 conditions, with weights)">Charlson（17 項，含權重）</option><option value="elixhauser" data-en="Elixhauser (31 conditions)">Elixhauser（31 項）</option></select>
+          <select id="presetVer" aria-label="代碼版本"><option value="both">ICD-9-CM + ICD-10-CM</option><option value="icd10cm" data-en="ICD-10-CM only">只要 ICD-10-CM</option><option value="icd9cm" data-en="ICD-9-CM only">只要 ICD-9-CM</option></select>
+          <button type="button" class="small" id="presetGo" data-en="Add groups">建立群組</button>
+        </div>
+        <p data-en="One group per condition, role Covariate, codes from Quan et al. (Med Care 2005). Quan’s ICD-10 list is the WHO edition; it is matched to ICD-10-CM by the start of each code, and WHO codes with no ICD-10-CM code are left out. Edit any group afterwards.">每項共病一個群組，角色為「共變項」，代碼取自 Quan 等人（Med Care 2005）。Quan 的 ICD-10 是 WHO 版，這裡以代碼開頭比對 ICD-10-CM；ICD-10-CM 裡沒有的 WHO 代碼會略過。建立後可以逐項修改。</p>
       </div>
     </div>
     <div class="msgs" id="msgs"></div>
@@ -171,7 +198,7 @@
   </section>
 </main>
 
-<script src="../shared/common.js?v=20261124a"></script>
+<script src="../shared/common.js?v=20261124b"></script>
 <script src="../shared/twdrugs.js?v=20261124a"></script>
 <script>
 const T = RT.t, esc = RT.esc, TW = RT.twDrugs, N = TW.N;
@@ -621,11 +648,12 @@ function renderGroups() {
     <div class="ghead">
       <input class="gname" value="${esc(g.name)}" data-f="name" aria-label="${T('群組名稱', 'Group name')}" placeholder="${T('群組名稱，例如：心衰竭', 'Group name, e.g. Heart failure')}">
       <select data-f="role" aria-label="${T('角色', 'Role')}">${Object.entries(ROLES).map(([k, v]) => `<option value="${k}"${g.role === k ? ' selected' : ''}>${T(v[0], v[1])}</option>`).join('')}</select>
-      <span>${g.id === S.active ? `<span class="gactive">${T('加入中', 'Adding here')}</span>` : `<button type="button" class="small" data-act="use">${T('加到這組', 'Add here')}</button>`} <button type="button" class="icon" data-act="delg" aria-label="${T('刪除群組', 'Delete group')}">×</button></span>
+      <span>${['icd10cm', 'icd9cm'].some((sy) => g.items.some((i) => i.sys === sy && !i.excl)) ? `<button type="button" class="small" data-xact="open" data-from="${g.items.some((i) => i.sys === 'icd10cm' && !i.excl) ? 'icd10cm' : 'icd9cm'}" aria-expanded="${!!(xw && xw.gid === g.id)}" title="${T('用 GEMs 對照到另一版 ICD', 'Map to the other ICD edition with the GEMs')}">ICD-9↔10</button> ` : ''}${g.id === S.active ? `<span class="gactive">${T('加入中', 'Adding here')}</span>` : `<button type="button" class="small" data-act="use">${T('加到這組', 'Add here')}</button>`} <button type="button" class="icon" data-act="delg" aria-label="${T('刪除群組', 'Delete group')}">×</button></span>
     </div>
     <div class="gbody">
       <textarea data-f="def" rows="1" aria-label="${T('操作型定義', 'Operational definition')}" placeholder="${T('操作型定義，例如：≥2 次門診或 ≥1 次住院主次診斷', 'Definition, e.g. ≥2 outpatient or ≥1 inpatient diagnoses')}">${esc(g.def)}</textarea>
       <div class="gsum">${esc(gSummary(g))}</div>
+      ${xwHTML(g)}
       ${g.items.length ? `<div class="itemwrap"><table class="items"><tbody>${g.items.map((it) => itemRow(g, it)).join('')}</tbody></table></div>` : `<div class="gempty">${T('還沒有代碼：在左邊搜尋後按「＋」或「加入分支」。', 'No codes yet: search on the left and press “＋” or “Add branch”.')}</div>`}
     </div></div>`).join('');
   $('target').innerHTML = S.groups.map((g) => `<option value="${g.id}"${g.id === S.active ? ' selected' : ''}>${esc(g.name || T('未命名群組', 'Untitled group'))}（${T(ROLES[g.role][0], ROLES[g.role][1])}）</option>`).join('');
@@ -777,7 +805,7 @@ $('btnDocx').onclick = () => withBusy(async () => {
 
 /* ---------- selection code ---------- */
 function varName(g, i) {
-  const base = String(g.name || '').normalize('NFKD').replace(/[^\w]+/g, '_').replace(/^_+|_+$/g, '').toLowerCase();
+  const base = String(g.var || g.name || '').normalize('NFKD').replace(/[^\w]+/g, '_').replace(/^_+|_+$/g, '').toLowerCase();
   return /^[a-z]/.test(base) ? base.slice(0, 28) : `${g.role}_${i + 1}`;
 }
 function rules(g) {
@@ -839,9 +867,200 @@ function warn() {
   const m = [];
   const has = (sys) => S.groups.some((g) => g.items.some((i) => i.sys === sys));
   if (has('icd10cm')) m.push(T('ICD-10-CM 代碼與說明取自美國最新版；台灣健保申報使用的版本不同，少數代碼可能不存在或意義不同，請與健保署公告的版本核對。', 'ICD-10-CM codes come from the current US edition; Taiwan’s NHI uses a different edition, so a few codes may be missing or differ: check against the NHIA edition.'));
-  if (has('icd10cm') !== has('icd9cm') && S.groups.some((g) => g.items.some((i) => i.sys === 'icd10cm' || i.sys === 'icd9cm'))) m.push(T('健保資料在 2016 年由 ICD-9-CM 改為 ICD-10-CM；研究期間跨過 2016 年時，兩種代碼都需要。', 'Taiwan NHI claims switched from ICD-9-CM to ICD-10-CM in 2016; studies spanning 2016 need both.'));
+  if (has('icd10cm') !== has('icd9cm') && S.groups.some((g) => g.items.some((i) => i.sys === 'icd10cm' || i.sys === 'icd9cm'))) m.push(T('健保資料在 2016 年由 ICD-9-CM 改為 ICD-10-CM；研究期間跨過 2016 年時，兩種代碼都需要；按群組上的「ICD-9↔10」可以自動對照。', 'Taiwan NHI claims switched from ICD-9-CM to ICD-10-CM in 2016; studies spanning 2016 need both. The ICD-9↔10 button on a group maps it to the other edition.'));
   $('msgs').innerHTML = m.map((t) => `<div class="msg">⚠ ${esc(t)}</div>`).join('');
 }
+
+/* ---------- ICD-9-CM ↔ ICD-10-CM: the 2018 diagnosis GEMs (CMS / CDC) ---------- */
+const GSYS = { icd9cm: 'd9', icd10cm: 'd10' };
+const OTHER = { icd9cm: 'icd10cm', icd10cm: 'icd9cm' };
+let gems = null, gemsP = null;
+function loadGems() {
+  if (!gemsP) gemsP = fetch('icd-gems.json?v=2018a').then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).then((j) => {
+    const one = (m) => {
+      const map = new Map();
+      for (const k in m) map.set(k, m[k] === '-' ? [] : m[k].split(' ').map((s) => { const i = s.indexOf('~'); return i < 0 ? { c: s, f: '00000' } : { c: s.slice(0, i), f: s.slice(i + 1) || '10000' }; }));
+      return { map, keys: [...map.keys()].sort() };
+    };
+    gems = { d9: one(j.d9), d10: one(j.d10) };
+    return gems;
+  }).catch((e) => { gemsP = null; throw e; });
+  return gemsP;
+}
+// every code of a system that starts with a prefix (codes without dots, from the GEM source list)
+function under(sys, p) {
+  const k = gems[GSYS[sys]].keys;
+  let lo = 0, hi = k.length;
+  while (lo < hi) { const m = (lo + hi) >> 1; if (k[m] < p) lo = m + 1; else hi = m; }
+  const out = [];
+  for (let i = lo; i < k.length && k[i].startsWith(p); i++) out.push(k[i]);
+  return out;
+}
+const itemCodes = (it) => { const nd = nodot(it.code); return it.kind === 'prefix' || !gems[GSYS[it.sys]].map.has(nd) ? under(it.sys, nd) : [nd]; };
+// the fewest branches and codes that cover a set of codes exactly
+function compress(sys, codes) {
+  const set = new Set(codes), done = new Set(), out = [];
+  for (const c of [...set].sort()) {
+    if (done.has(c)) continue;
+    let hit = null;
+    for (let L = sys === 'icd9cm' && c[0] === 'E' ? 4 : 3; L < c.length && !hit; L++) {
+      const u = under(sys, c.slice(0, L));
+      if (u.length > 1 && u.every((x) => set.has(x))) { hit = { code: c.slice(0, L), kind: 'prefix', n: u.length }; u.forEach((x) => done.add(x)); }
+    }
+    out.push(hit || { code: c, kind: 'code' }); done.add(c);
+  }
+  return out;
+}
+let xw = null; // the open crosswalk: { gid, from, rows: [{ id, src, n, tag, codes, on, none }] }
+function crosswalk(g, from) {
+  const to = OTHER[from], fwd = gems[GSYS[from]].map, rev = gems[GSYS[to]].map;
+  const ex = new Set(g.items.filter((i) => i.excl && i.sys === from).flatMap(itemCodes));
+  const sel = new Set(), rows = [], seen = new Set();
+  g.items.filter((i) => !i.excl && i.sys === from).forEach((it) => {
+    const src = itemCodes(it).filter((c) => !ex.has(c));
+    src.forEach((c) => sel.add(c));
+    const single = new Map(), combo = new Set();
+    let none = 0;
+    src.forEach((c) => {
+      const t = fwd.get(c) || [];
+      if (!t.length) none++;
+      t.forEach((x) => { if (x.f[2] === '1') combo.add(x.c); else single.set(x.c, (single.get(x.c) || '') + x.f[0]); });
+    });
+    combo.forEach((c) => { if (single.has(c)) combo.delete(c); });
+    [...single.keys(), ...combo].forEach((c) => seen.add(c));
+    const label = it.kind === 'prefix' ? it.code + '*' : it.code;
+    const exact = [...single.values()].every((f) => !f.includes('1'));
+    if (single.size) rows.push({ id: uid(), src: label, n: src.length, tag: exact ? 'exact' : 'approx', codes: [...single.keys()], on: true, none });
+    if (combo.size) rows.push({ id: uid(), src: label, n: src.length, tag: 'combo', codes: [...combo], on: false });
+    if (!single.size && !combo.size) rows.push({ id: uid(), src: label, n: src.length, tag: 'none', codes: [], on: false });
+  });
+  // codes of the other edition that map into this list although nothing here maps to them
+  const back = [];
+  rev.forEach((t, b) => { if (!seen.has(b) && t.some((x) => sel.has(x.c))) back.push(b); });
+  if (back.length) rows.push({ id: uid(), src: T('反向對照', 'Reverse map'), tag: 'back', codes: back, on: true });
+  // leave out what the group already holds in the other edition
+  const held = new Set(g.items.filter((i) => i.sys === to).flatMap(itemCodes));
+  rows.forEach((r) => { const k = r.codes.filter((c) => !held.has(c)); r.had = r.codes.length - k.length; r.codes = k; if (!k.length) r.on = false; });
+  xw = { gid: g.id, from, rows };
+}
+const XW_TAG = { exact: ['完全對應', 'Exact'], approx: ['近似', 'Approximate'], combo: ['組合碼', 'Combination'], none: ['沒有對應', 'No match'], back: ['只在反向出現', 'Reverse only'] };
+const XW_TIP = {
+  exact: ['GEMs 標為完全對應。', 'Marked as an exact match in the GEMs.'],
+  approx: ['GEMs 標為近似：兩版的定義不完全一樣。', 'Marked approximate: the two editions define it differently.'],
+  combo: ['另一版要兩個以上代碼同時出現，才等於這個代碼；預設不勾。', 'The other edition needs two or more codes together to mean this one; off by default.'],
+  none: ['另一版沒有相當的代碼。', 'No equivalent in the other edition.'],
+  back: ['另一版的這些代碼對應到你清單裡的代碼，但從你的清單正向對照不會得到它們。跨年研究通常一併納入。', 'These codes of the other edition map into your list, though your list does not map to them. Studies spanning editions usually include them.'],
+};
+const xwCount = () => new Set(xw.rows.filter((r) => r.on).flatMap((r) => r.codes)).size;
+function xwHTML(g) {
+  if (!xw || xw.gid !== g.id) return '';
+  const to = OTHER[xw.from], has = (s) => g.items.some((i) => i.sys === s && !i.excl);
+  const show = (codes) => {
+    const c = compress(to, codes), s = c.slice(0, 14).map((x) => esc(dotted(to, x.code) + (x.kind === 'prefix' ? '*' : ''))).join(', ');
+    return s + (c.length > 14 ? T(` …共 ${c.length} 項`, ` … ${c.length} in all`) : '');
+  };
+  const n = xwCount();
+  return `<div class="xw">
+    <div class="xw-head"><b>${esc(SYS[xw.from])} → ${esc(SYS[to])}</b>${has(to) ? ` <button type="button" class="small" data-xact="flip">${T(`改成 ${SYS[to]} → ${SYS[xw.from]}`, `Switch to ${SYS[to]} → ${SYS[xw.from]}`)}</button>` : ''}<span class="spacer"></span><button type="button" class="icon" data-xact="close" aria-label="${T('關閉對照', 'Close')}">×</button></div>
+    ${xw.rows.length ? `<table class="xwt"><tbody>${xw.rows.map((r) => `<tr><td class="cd">${esc(r.src)}${r.n > 1 ? `<small>${T(`${r.n} 碼`, `${r.n} codes`)}</small>` : ''}</td><td class="to">${r.codes.length ? '→ ' + show(r.codes) : r.had ? T('都已在清單裡', 'All already in the list') : '—'}${r.had && r.codes.length ? `<small>${T(`另有 ${r.had} 碼已在清單裡`, `${r.had} more already in the list`)}</small>` : ''}${r.none ?`<small>${T(`其中 ${r.none} 碼沒有對應`, `${r.none} without a match`)}</small>` : ''}</td><td><span class="xtag ${r.tag}" title="${esc(T(...XW_TIP[r.tag]))}">${T(...XW_TAG[r.tag])}</span></td><td>${r.codes.length ? `<label class="check"><input type="checkbox" data-xrow="${r.id}"${r.on ? ' checked' : ''}> ${T('加入', 'Add')}</label>` : ''}</td></tr>`).join('')}</tbody></table>` : `<div class="gempty">${T(`這組沒有 ${SYS[xw.from]} 代碼。`, `No ${SYS[xw.from]} codes in this group.`)}</div>`}
+    <div class="xw-note">${T('正向、反向都查過，「只在反向出現」的代碼另列一行；滑過標籤可看說明。來源：CMS／CDC 2018 年診斷碼 GEMs（最終版）。台灣健保使用的 ICD-10-CM 版本略有不同，請再核對。', 'Both directions are checked; codes found only in the reverse map have their own row. Hover a tag for what it means. Source: CMS / CDC 2018 diagnosis GEMs (final release). Taiwan’s NHI edition of ICD-10-CM differs slightly, so check.')}</div>
+    <div class="copyrow"><button type="button" class="small" data-xact="add"${n ? '' : ' disabled'}>${T(`加入勾選的 ${n} 碼到這組`, `Add ${n} checked codes here`)}</button><button type="button" class="small" data-xact="new"${n ? '' : ' disabled'}>${T(`另建「${g.name || '未命名'}（${SYS[to]}）」群組`, `New group “${g.name || 'Untitled'} (${SYS[to]})”`)}</button></div>
+  </div>`;
+}
+// items from codes without dots: local names first, the rest looked up in the background
+async function toItems(sys, list) {
+  await loadNames(sys);
+  return list.map((x) => {
+    const code = dotted(sys, x.code), it = { sys, code, kind: x.kind, name: headName(sys, code, []) || '' };
+    if (x.kind === 'prefix') it.n = x.n;
+    return it;
+  });
+}
+let nameQ = Promise.resolve();
+function fillNames(items) {
+  const todo = items.filter((i) => !i.name);
+  if (!todo.length) return;
+  nameQ = nameQ.then(async () => {
+    // one lookup per three-character category names every code in it
+    const cats = new Map();
+    todo.forEach((it) => { const k = it.sys + '|' + nodot(it.code).slice(0, it.sys === 'icd9cm' && it.code[0] === 'E' ? 4 : 3); if (!cats.has(k)) cats.set(k, []); cats.get(k).push(it); });
+    for (const [k, its] of cats) {
+      const [sys, cat] = k.split('|');
+      try { const m = new Map((await ctSearch(sys, normCode(sys, cat)[0], true, 500)).rows.map((r) => [nodot(r.code), r.name])); its.forEach((it) => { it.name = m.get(nodot(it.code)) || ''; }); } catch (e) { /* offline: names stay empty */ }
+      for (const it of its) if (!it.name && it.kind === 'prefix') it.name = await branchName(it.sys, it.code);
+    }
+    renderGroups(); RT.save(KEY, S);
+  });
+}
+async function xwOpen(g, from) {
+  try { await loadGems(); crosswalk(g, from); renderGroups(); }
+  catch (e) { RT.toast(T('對照表載入失敗，請稍後再試', 'Could not load the mapping; try again later'), 5000); }
+}
+async function xwApply(g, asNew) {
+  const to = OTHER[xw.from], codes = [...new Set(xw.rows.filter((r) => r.on).flatMap((r) => r.codes))];
+  const items = await toItems(to, compress(to, codes));
+  let dest = g;
+  if (asNew) { dest = { ...newGroup(`${g.name || T('未命名', 'Untitled')}（${SYS[to]}）`, g.role), def: g.def }; S.groups.splice(S.groups.indexOf(g) + 1, 0, dest); S.active = dest.id; }
+  xw = null;
+  addItems(items, dest);
+  fillNames(items);
+}
+$('groups').addEventListener('change', (e) => {
+  const b = e.target.closest('[data-xrow]'); if (!b || !xw) return;
+  e.stopPropagation();
+  const r = xw.rows.find((x) => x.id === b.dataset.xrow); if (r) r.on = b.checked;
+  renderGroups();
+}, true);
+$('groups').addEventListener('click', (e) => {
+  const a = e.target.closest('[data-xact]'); if (!a) return;
+  const g = S.groups.find((x) => x.id === a.closest('.grp').dataset.g); if (!g) return;
+  e.stopPropagation();
+  const k = a.dataset.xact;
+  if (k === 'open') { if (xw && xw.gid === g.id) { xw = null; renderGroups(); } else xwOpen(g, a.dataset.from); }
+  else if (k === 'close') { xw = null; renderGroups(); }
+  else if (k === 'flip') xwOpen(g, OTHER[xw.from]);
+  else if (k === 'add' || k === 'new') xwApply(g, k === 'new');
+}, true);
+
+/* ---------- ready-made comorbidity definitions (Quan 2005) ---------- */
+let comorbP = null;
+const loadComorb = () => comorbP || (comorbP = fetch('comorbidity.json?v=2005a').then((r) => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }).catch((e) => { comorbP = null; throw e; }));
+const PRESET = {
+  charlson: { name: 'Charlson', zh: 'Charlson 共病指數', en: 'Charlson comorbidity index', hier: { mld: 'msld', diab: 'diabwc', canc: 'metacanc' } },
+  elixhauser: { name: 'Elixhauser', zh: 'Elixhauser 共病', en: 'Elixhauser comorbidities', hier: { hypunc: 'hypc', diabunc: 'diabc', solidtum: 'metacanc' } },
+};
+async function addPreset(key, vers) {
+  const [d] = await Promise.all([loadComorb(), loadGems(), loadNames('icd9cm'), loadNames('icd10cm')]);
+  const P = PRESET[key], conds = d[key], made = [];
+  let skipped = 0;
+  for (const c of conds) {
+    const items = [];
+    [['icd9cm', c.icd9], ['icd10cm', c.icd10]].forEach(([sys, list]) => {
+      if (vers !== 'both' && vers !== sys) return;
+      list.forEach((code) => {
+        const u = under(sys, code);
+        if (!u.length) { skipped++; return; }
+        // Quan's codes match by their start, and newer editions may have split a code since 2018: every one is a branch
+        const dc = dotted(sys, code);
+        items.push({ sys, code: dc, kind: 'prefix', name: headName(sys, dc, []) || '', n: u.length });
+      });
+    });
+    const over = P.hier[c.k] && conds.find((x) => x.k === P.hier[c.k]);
+    const def = [`${P.name} (Quan 2005)`, c.w ? T(`權重 ${c.w}`, `weight ${c.w}`) : '', over ? T(`與「${over.zh}」同時出現時只計後者`, `count only “${over.en}” when both are present`) : ''].filter(Boolean).join(' · ');
+    made.push({ ...newGroup(`${P.name}: ${T(c.zh, c.en)}`, 'covariate'), var: (key === 'charlson' ? 'cci_' : 'elix_') + c.k, def, items });
+  }
+  S.groups.push(...made); S.active = made[0].id;
+  commit();
+  RT.toast(T(`已建立 ${made.length} 個「${P.zh}」群組`, `${made.length} groups added: ${P.en}`) + (skipped ? T(`；${skipped} 個代碼在現行代碼表裡沒有（WHO 版 ICD-10 專用，或 Quan 以範圍列出的空號），已略過`, `; ${skipped} codes with no match in the code sets (WHO-only ICD-10 codes, or unused codes inside Quan’s ranges) were left out`) : ''), 6000);
+  fillNames(made.flatMap((g) => g.items));
+}
+$('addPreset').onclick = () => { const b = $('presetBox'); b.hidden = !b.hidden; $('addPreset').setAttribute('aria-expanded', String(!b.hidden)); };
+$('presetGo').onclick = async () => {
+  const btn = $('presetGo'); btn.disabled = true;
+  try { await addPreset($('presetSet').value, $('presetVer').value); $('presetBox').hidden = true; $('addPreset').setAttribute('aria-expanded', 'false'); }
+  catch (e) { RT.toast(T('共病定義載入失敗，請稍後再試', 'Could not load the definitions; try again later'), 5000); }
+  finally { btn.disabled = false; }
+};
 
 /* ---------- handoff from the drug lookup ---------- */
 function takeHandoff() {
@@ -880,6 +1099,11 @@ $('refs').innerHTML = RT.refsHTML([
   'US National Library of Medicine. Clinical Table Search Service (ICD-10-CM, ICD-9-CM). clinicaltables.nlm.nih.gov',
   'National Center for Health Statistics (CDC). ICD-10-CM FY2026 code descriptions in tabular order (names of category and subcategory codes). ftp.cdc.gov/pub/Health_Statistics/NCHS/Publications/ICD10CM',
   'National Center for Health Statistics (CDC). ICD-9-CM tabular lists, FY2012 final edition (names of category and subcategory codes). ftp.cdc.gov/pub/Health_Statistics/NCHS/Publications/ICD9-CM',
+  'Centers for Medicare & Medicaid Services; National Center for Health Statistics (CDC). 2018 ICD-10-CM and ICD-9-CM diagnosis General Equivalence Mappings (GEMs). ftp.cdc.gov/pub/Health_Statistics/NCHS/Publications/ICD10CM/2018',
+  'Quan H, Sundararajan V, Halfon P, et al. Coding algorithms for defining comorbidities in ICD-9-CM and ICD-10 administrative data. Med Care 2005;43:1130–9.',
+  'Charlson ME, Pompei P, Ales KL, MacKenzie CR. A new method of classifying prognostic comorbidity in longitudinal studies: development and validation. J Chronic Dis 1987;40:373–83.',
+  'Elixhauser A, Steiner C, Harris DR, Coffey RM. Comorbidity measures for use with administrative data. Med Care 1998;36:8–27.',
+  'Gasparini A. comorbidity: an R package for computing comorbidity scores. J Open Source Softw 2018;3:648 (code lists checked against it).',
   'US National Library of Medicine. RxNav RxClass API (ATC class names). lhncbc.nlm.nih.gov/RxNav',
   'WHO Collaborating Centre for Drug Statistics Methodology. ATC/DDD Index. atcddd.fhi.no',
   'Hsieh CY, et al. Taiwan’s National Health Insurance Research Database: past and future. Clin Epidemiol 2019;11:349–58.',

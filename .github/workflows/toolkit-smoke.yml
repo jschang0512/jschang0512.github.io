@@ -1,0 +1,46 @@
+# Opens every Research Toolkit page in a headless browser after each push that touches the toolkit,
+# and fails (GitHub emails the owner) on script errors, missing files or an example that draws nothing.
+# It does not hold back the site: GitHub Pages publishes regardless.
+name: Toolkit smoke test
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Research-toolkit/**"
+      - ".github/scripts/toolkit-smoke.mjs"
+      - ".github/workflows/toolkit-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: toolkit-smoke
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Playwright with Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.49.1 http-server@14.1.1
+          npx playwright install --with-deps chromium
+
+      - name: Serve the site
+        run: |
+          npx http-server . -p 8765 -c-1 --silent &
+          for i in $(seq 1 30); do curl -sf http://localhost:8765/Research-toolkit/ > /dev/null && break; sleep 1; done
+
+      - name: Open every page
+        env:
+          BASE: http://localhost:8765
+        run: node .github/scripts/toolkit-smoke.mjs
