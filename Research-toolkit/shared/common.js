@@ -6,7 +6,7 @@
  */
 (function () {
   const RT = (window.RT = {});
-  RT.VERSION = 'v3.9.1 (2026-11-24)';
+  RT.VERSION = 'v3.10 (2026-11-24)';
   RT.DEV = { name: '張家菘', email: 'js.chang0512@gmail.com' };
 
   /* ---------- i18n ---------- */
@@ -21,6 +21,27 @@
     root.querySelectorAll('[data-en-ph]').forEach((el) => (el.placeholder = el.dataset.enPh));
     root.querySelectorAll('[data-en-title]').forEach((el) => (el.title = el.dataset.enTitle));
   };
+  // colour theme: follow the system (default), or always light / always dark; the page head applies it before paint
+  RT.theme = () => { try { const v = localStorage.getItem('rt:theme'); return v === 'light' || v === 'dark' ? v : 'auto'; } catch (e) { return 'auto'; } };
+  RT.setTheme = (t) => {
+    try { if (t === 'auto') localStorage.removeItem('rt:theme'); else localStorage.setItem('rt:theme', t); } catch (e) { /* ignore */ }
+    if (t === 'auto') delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
+    RT.syncThemeBtn();
+  };
+  const THEME_ICON = {
+    auto: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg>',
+    light: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
+    dark: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/></svg>',
+  };
+  const THEME_NAME = { auto: ['跟隨系統', 'System'], light: ['淺色', 'Light'], dark: ['深色', 'Dark'] };
+  const THEME_NEXT = { auto: 'light', light: 'dark', dark: 'auto' };
+  RT.syncThemeBtn = () => {
+    const b = document.querySelector('.theme-toggle'); if (!b) return;
+    const t = RT.theme(), n = THEME_NAME[t], nx = THEME_NAME[THEME_NEXT[t]];
+    b.innerHTML = THEME_ICON[t] + '<span>' + RT.t(n[0], n[1]) + '</span>';
+    b.title = RT.t(`配色：${n[0]}（按一下改成${nx[0]}）`, `Theme: ${n[1]} (click for ${nx[1]})`);
+    b.setAttribute('aria-label', b.title);
+  };
   RT.setLang = (l) => { try { localStorage.setItem('rt:lang', l); } catch (e) { /* ignore */ } location.reload(); };
   RT.initPage = () => {
     document.documentElement.lang = RT.lang === 'en' ? 'en' : 'zh-Hant';
@@ -34,6 +55,13 @@
       b.setAttribute('lang', RT.lang === 'en' ? 'zh-Hant' : 'en');
       b.onclick = () => RT.setLang(RT.lang === 'en' ? 'zh' : 'en');
       bar.appendChild(b);   // outside .btns, so it never scrolls out of reach on phones
+    }
+    if (bar && !bar.querySelector('.theme-toggle')) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'small theme-toggle';
+      b.onclick = () => RT.setTheme(THEME_NEXT[RT.theme()]);
+      bar.insertBefore(b, bar.querySelector('.lang-toggle'));
+      RT.syncThemeBtn();
     }
     RT.groupTopbar(bar);
     RT.initA11y();

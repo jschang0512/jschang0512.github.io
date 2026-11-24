@@ -18,11 +18,13 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../shared/style.css?v=20261121c">
+<link rel="stylesheet" href="../shared/style.css?v=20261124e">
+<script>try{var t=localStorage.getItem('rt:theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
 <style>
   /* drug classes: one hue each, readable on both themes */
   :root { --c-orig: oklch(56% 0.150 28); --c-babe: oklch(52% 0.120 160); --c-gen: oklch(58% 0.060 250); --c-bio: oklch(54% 0.140 305); --c-off: oklch(70% 0.100 75); }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --c-orig: oklch(74% 0.120 28); --c-babe: oklch(74% 0.110 160); --c-gen: oklch(74% 0.050 250); --c-bio: oklch(74% 0.110 305); --c-off: oklch(78% 0.090 75); } }
+  :root[data-theme="dark"] { --c-orig: oklch(74% 0.120 28); --c-babe: oklch(74% 0.110 160); --c-gen: oklch(74% 0.050 250); --c-bio: oklch(74% 0.110 305); --c-off: oklch(78% 0.090 75); }
   :root[data-theme="dark"] { --c-orig: oklch(74% 0.120 28); --c-babe: oklch(74% 0.110 160); --c-gen: oklch(74% 0.050 250); --c-bio: oklch(74% 0.110 305); --c-off: oklch(78% 0.090 75); }
 
   .dr { max-width: 1080px; margin: 0 auto; padding: 16px 16px 48px; }
@@ -286,6 +288,7 @@
   :root[data-theme="dark"] .tag.short { background: oklch(32% 0.06 70); color: oklch(85% 0.10 80); }
   :root[data-theme="dark"] .tag.recall { background: oklch(32% 0.07 25); color: oklch(84% 0.10 25); }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tag.short { background: oklch(32% 0.06 70); color: oklch(85% 0.10 80); } :root:not([data-theme="light"]) .tag.recall { background: oklch(32% 0.07 25); color: oklch(84% 0.10 25); } }
+  :root[data-theme="dark"] .tag.short { background: oklch(32% 0.06 70); color: oklch(85% 0.10 80); } :root[data-theme="dark"] .tag.recall { background: oklch(32% 0.07 25); color: oklch(84% 0.10 25); }
   .banners { display: flex; flex-direction: column; gap: 6px; padding: 10px 16px 0; }
   .banner { border-radius: 8px; padding: 8px 12px; font-size: 13px; border-left: 4px solid; background: var(--panel-2); }
   .banner b { margin-right: 6px; }
@@ -352,6 +355,7 @@
   .dn-t { color: oklch(45% 0.12 160); } .up-t { color: oklch(50% 0.16 25); }
   :root[data-theme="dark"] .dn-t { color: oklch(78% 0.12 160); } :root[data-theme="dark"] .up-t { color: oklch(76% 0.13 25); }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .dn-t { color: oklch(78% 0.12 160); } :root:not([data-theme="light"]) .up-t { color: oklch(76% 0.13 25); } }
+  :root[data-theme="dark"] .dn-t { color: oklch(78% 0.12 160); } :root[data-theme="dark"] .up-t { color: oklch(76% 0.13 25); }
   .codes { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
   .codes button { font-family: var(--font-mono); font-size: 11.5px; padding: 0 7px; }
   .vfilter { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
@@ -469,6 +473,11 @@
         <button type="button" data-v="delisted" data-en="Delisted">已取消給付</button>
         <button type="button" data-v="lic" data-en="Licences without NHI code">無健保代號的許可證</button>
       </span>
+      <span class="scope" role="group" aria-label="同一品項有鋁箔與一般包裝時列哪一種" id="pack" title="同一品項同時有鋁箔包裝（代號末兩碼 G0）與一般包裝（00）時，只列一種" data-en-title="When a product has both a foil pack (code ends in G0) and a standard pack (00), list one">
+        <button type="button" data-v="foil" data-en="Foil">鋁箔包裝</button>
+        <button type="button" data-v="can" data-en="Standard">一般包裝</button>
+        <button type="button" data-v="both" data-en="Both">兩種都列</button>
+      </span>
       <button type="button" id="btnAdv" aria-expanded="false" aria-controls="adv"><span data-en="Filters">進階篩選</span> ▾<span class="badge" id="advCount"></span></button>
       <span class="spacer"></span>
       <select id="fSort" aria-label="排序">
@@ -528,13 +537,13 @@
   </div>
 </main>
 
-<script src="../shared/common.js?v=20261124c"></script>
+<script src="../shared/common.js?v=20261124e"></script>
 <script src="../shared/twdrugs.js?v=20261124a"></script>
 <script>
 const TW = RT.twDrugs, N = TW.N, F = TW.F, T = RT.t, esc = RT.esc;
 const KEY = 'drugs';
 const ADV = { pmin: '', pmax: '', from: '', to: '', atc: '', cls: '', form: '', single: '', cat: '', ctrl: '', country: '', lic: '', pkg: '', who: '', rules: false, photo: false, short: false, recall: false };
-const DEF = { scope: 'paid', sort: 'rel', advOpen: false, adv: ADV, view: 'search' };
+const DEF = { scope: 'paid', pack: 'foil', sort: 'rel', advOpen: false, adv: ADV, view: 'search' };
 let S = RT.merge(DEF, RT.load(KEY, {}));
 // scopes before the four-way split: 'all' (with delisted) and 'lic' (everything) both become 'every'
 if (S.scope === 'all' || (S.scope === 'lic' && !S.scope4)) S.scope = 'every';
@@ -560,6 +569,7 @@ function licOf(r) { return fdaD && r[N.licId] ? fdaD.byLicId.get(r[N.licId]) || 
 // the same product in another pack: same first eight characters of the NHI code (…00 and …G0)
 const siblings = (r) => { const p = r[N.code].slice(0, 8); return ['00', 'G0'].map((s) => p + s).filter((c) => c !== r[N.code] && nhiD.byCode.has(c)).map((c) => nhiD.byCode.get(c)); };
 const hasFoilTwin = (r) => !TW.isFoil(r[N.code]) && nhiD.byCode.has(r[N.code].slice(0, 8) + 'G0');
+const hasCanTwin = (r) => TW.isFoil(r[N.code]) && nhiD.byCode.has(r[N.code].slice(0, 8) + '00');
 const mcp = (p) => (/^https?:/.test(p) ? p : (extraD ? extraD.base : 'https://mcp.fda.gov.tw/') + p);
 function looksOf(f) { return f && extraD ? extraD.looks[f[F.licence]] || [] : []; }
 function photoOf(r) {
@@ -657,6 +667,9 @@ function search() {
   const toks = tokens();
   const H = haystack();
   const out = [];
+  // a product sold in both a foil pack (…G0) and a standard pack (…00) is listed once, in the pack chosen above the results
+  const pack = A().pkg ? 'both' : S.pack || 'foil';
+  let packHidden = 0;
   for (let i = 0; i < nhiD.rows.length; i++) {
     const r = nhiD.rows[i];
     if (S.scope === 'lic') break;
@@ -682,6 +695,7 @@ function search() {
       score += 1;
     }
     if (!ok) continue;
+    if (pack !== 'both' && (pack === 'foil' ? hasFoilTwin(r) : hasCanTwin(r)) && !toks.includes(r[N.code].toLowerCase())) { packHidden++; continue; }
     out.push({ r, i, score: score + (r[N.price] > 0 ? 5 : 0) });
   }
   const by = {
@@ -703,7 +717,7 @@ function search() {
       if (toks.every((t) => licHay[i].includes(t))) lic.push(L[i]);
     }
   }
-  return { rows: out.map((x) => x.r), lic };
+  return { rows: out.map((x) => x.r), lic, packHidden, pack };
 }
 
 /* ---------- price scale shared by the overview and the cards ---------- */
@@ -1013,7 +1027,7 @@ function render() {
   if (keepOpen != null && $('ov')) $('ov').open = keepOpen;
   { const ct = $('ovWrap').querySelector('details.ctr[open]'); if (ct) drawClassTrend(ct); }
   const ms = Math.round(performance.now() - t0);
-  $('status').innerHTML = `<span>${T(`${total.toLocaleString()} 筆健保品項`, `${total.toLocaleString()} NHI items`)}${last.lic.length ? T(`、${last.lic.length} 張無健保代號的許可證`, `, ${last.lic.length} licences without an NHI code`) : ''}${total > shown ? T(`，顯示前 ${shown} 筆`, `; showing ${shown}`) : ''}</span><span class="hint" style="margin:0">${ms} ms</span><span class="spacer"></span>${total ? `<button type="button" class="small" id="btnCsv">${T('匯出 CSV', 'Export CSV')}</button><button type="button" class="small" id="btnAllCl">${T('全部加入代碼清單', 'Add all to code list')}</button>` : ''}`;
+  $('status').innerHTML = `<span>${T(`${total.toLocaleString()} 筆健保品項`, `${total.toLocaleString()} NHI items`)}${last.lic.length ? T(`、${last.lic.length} 張無健保代號的許可證`, `, ${last.lic.length} licences without an NHI code`) : ''}${last.packHidden ? T(`（另有 ${last.packHidden} 個${last.pack === 'foil' ? '一般包裝' : '鋁箔包裝'}代號已收起）`, ` (${last.packHidden} ${last.pack === 'foil' ? 'standard-pack' : 'foil-pack'} codes folded away)`) : ''}${total > shown ? T(`，顯示前 ${shown} 筆`, `; showing ${shown}`) : ''}</span><span class="hint" style="margin:0">${ms} ms</span><span class="spacer"></span>${total ? `<button type="button" class="small" id="btnCsv">${T('匯出 CSV', 'Export CSV')}</button><button type="button" class="small" id="btnAllCl">${T('全部加入代碼清單', 'Add all to code list')}</button>` : ''}`;
   if (!total && !last.lic.length) {
     $('out').innerHTML = `<div class="empty-state">${T('找不到符合的藥品。', 'No matching drugs.')}${S.scope !== 'every' ? ` <button type="button" class="small" data-scope="every">${T('改搜全部', 'Search everything')}</button>` : ''}${advCount() ? ` <button type="button" class="small" data-clear="1">${T('清除進階篩選', 'Clear filters')}</button>` : ''}</div>`;
     return;
@@ -1179,6 +1193,8 @@ $('chips').addEventListener('click', (e) => { const b = e.target.closest('[data-
 /* ---------- controls ---------- */
 function setScope(v, quiet) { if (v !== 'paid') loadAll(); S.scope = v; [...$('scope').children].forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === v))); if (v !== 'paid') loadFdaAll(); shown = 50; save(); if (!quiet) render(); }
 $('scope').addEventListener('click', (e) => { const b = e.target.closest('button[data-v]'); if (b) setScope(b.dataset.v); });
+function setPack(v, quiet) { S.pack = v; [...$('pack').children].forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === v))); shown = 50; save(); if (!quiet) render(); }
+$('pack').addEventListener('click', (e) => { const b = e.target.closest('button[data-v]'); if (b) setPack(b.dataset.v); });
 function save() { RT.save(KEY, S); }
 function sync() {
   const p = new URLSearchParams();
@@ -1714,6 +1730,7 @@ $('refs').innerHTML = RT.noticeHTML([T('資料來源：健保署「健保用藥�
   if (p.get('atc')) chips.push({ k: 'atc', v: p.get('atc').toUpperCase() });
 })();
 [...$('scope').children].forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === S.scope)));
+setPack(['foil', 'can', 'both'].includes(S.pack) ? S.pack : 'foil', true);
 $('fSort').value = S.sort;
 // a shared link to a search or a drug opens the search, whatever view was used last
 { const u = new URLSearchParams(location.search); setView(u.get('view') || (['q', 'code', 'atc', 'group'].some((k) => u.get(k)) ? 'search' : S.view) || 'search', true); }

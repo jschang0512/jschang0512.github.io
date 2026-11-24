@@ -21,7 +21,7 @@ Browser-based figure tools for research papers. Everything runs in the browser �
 | Code list builder: ICD-10-CM, ICD-9-CM diagnoses and procedures, ATC and Taiwan NHI drug codes in groups, ICD-9-CM ↔ ICD-10-CM mapping (GEMs), ready-made Charlson and Elixhauser groups (Quan 2005), with a Word appendix table, CSV and SAS / R / Stata / SQL / Python selection code | `codelist/` |
 | Taiwan drug lookup: NHI drug list (price, price history, reimbursement rules, ATC, price groups) joined with TFDA drug licences | `drugs/` |
 
-Interface in Traditional Chinese and English. Figures export to PNG, TIFF, JPG, PDF, SVG and editable Word.
+Interface in Traditional Chinese and English, in a light or dark theme that follows the system or is set with the button beside the language switch. Figures export to PNG, TIFF, JPG, PDF, SVG and editable Word.
 
 The figure tools open figure-first: the settings column stays hidden until Settings is pressed, quick menus above the figure hold the most-used settings, and text boxes, arrows and brackets can be added and dragged on any figure, and clicking a box, title, axis label or study name opens its fields beside the figure (shared/figedit.js). Each tool also keeps named versions of its figure, previews colour-blind and black-and-white readability, drafts a figure legend, and can send its figure to the multi-panel composer. Exports offer publisher presets (Elsevier, Springer, Nature, BMC, PLOS, JAMA Network, Wiley, BMJ). The toolkit works offline once visited and can be installed as an app. Each tool shows a few tips on first use, saves automatically (shown in the toolbar), keeps its export options folded under Advanced, and has keyboard shortcuts (press ? to list them) and a search box in its settings column.
 
@@ -38,4 +38,4 @@ The figure tools open figure-first: the settings column stays hidden until Setti
 
 張家菘 — questions, bug reports and suggestions: [js.chang0512@gmail.com](mailto:js.chang0512@gmail.com)
 
-Version: v3.9.1 (2026-11-24)
+Version: v3.10 (2026-11-24)
