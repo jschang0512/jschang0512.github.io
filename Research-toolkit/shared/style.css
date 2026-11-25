@@ -380,3 +380,10 @@ body.fe-canvas .preview-jump { display: none; }
 .ex-adv > summary .ex-sum { color: var(--text); }
 .ex-adv[open] > summary { margin-bottom: 10px; }
 @media (max-width: 700px) { .fe-bar .paper-zoom, .tl-bar .paper-zoom { display: none; } }
+
+/* moving between the toolkit's pages: a short cross-fade with the top bar held in place; none when less motion is asked for */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+  ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 180ms; }
+  .topbar { view-transition-name: rt-topbar; }
+}

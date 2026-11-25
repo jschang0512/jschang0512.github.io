@@ -308,3 +308,9 @@ html.theme-anim *, html.theme-anim *::before, html.theme-anim *::after { transit
   .reveal { opacity: 1; transform: none; }
   .progress { display: none; }
 }
+
+/* moving between the CV and its posts: a short cross-fade instead of a blank flash; none when less motion is asked for */
+@media (prefers-reduced-motion: no-preference) {
+  @view-transition { navigation: auto; }
+  ::view-transition-old(root), ::view-transition-new(root) { animation-duration: 200ms; }
+}

@@ -18,7 +18,7 @@
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<link rel="stylesheet" href="../shared/style.css?v=20261124e">
+<link rel="stylesheet" href="../shared/style.css?v=20261126a">
 <script>try{var t=localStorage.getItem('rt:theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
 <style>
   /* drug classes: one hue each, readable on both themes */
@@ -154,6 +154,11 @@
   .tabs button { border: 0; border-radius: 0; background: none; padding: 10px 10px 9px; font-size: 13px; color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap; }
   .tabs button:hover { color: var(--text); }
   .tabs button[aria-selected="true"] { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
+  /* one underline that slides to the chosen tab (it replaces the tab's own border once placed) */
+  .tabs { position: relative; }
+  .tabs.inked button[aria-selected="true"] { border-bottom-color: transparent; }
+  .tab-ink { position: absolute; left: 0; top: 0; width: 100px; height: 2px; background: var(--accent); transform-origin: 0 0; pointer-events: none; opacity: 0; }
+  .tabs.inked .tab-ink { opacity: 1; }
   .tabp { padding: 14px 16px 16px; }
   .facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); column-gap: 28px; border-top: 1px solid var(--border); }
   .fact { display: grid; grid-template-columns: 6.5em minmax(0, 1fr); gap: 12px; align-items: baseline; padding: 7px 2px; border-bottom: 1px solid var(--border); min-width: 0; }
@@ -194,6 +199,24 @@
   .chart .ln { fill: none; stroke: var(--accent); stroke-width: 2; }
   .chart .ln.gone { stroke: var(--c-off); stroke-dasharray: 4 3; }
   .chart .pt { fill: var(--accent); }
+  /* charts come in once per drug: the price line draws itself, bars grow from the axis */
+  @media (prefers-reduced-motion: no-preference) {
+    .tab-ink.go { transition: transform 240ms var(--ease-out); }
+    .tabp.in { animation: tab-in 200ms var(--ease-out) both; }
+    @keyframes tab-in { from { opacity: 0; transform: translateY(4px); } }
+    .chart.enter .ln:not(.gone) { stroke-dasharray: 1; animation: draw-ln 800ms var(--ease-out) both; }
+    .chart.enter .ln.gone, .chart.enter .pt { animation: fade-in 260ms 620ms both; }
+    @keyframes draw-ln { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+    @keyframes fade-in { from { opacity: 0; } }
+    .ubars.enter .stack { transform-origin: 50% 100%; animation: grow-y 520ms var(--ease-out) both; animation-delay: calc(var(--i, 0) * 50ms); }
+    .ubars.enter .val { animation: fade-in 240ms both; animation-delay: calc(var(--i, 0) * 50ms + 320ms); }
+    .ctr-box.enter rect:not(.hit) { transform-box: fill-box; transform-origin: 50% 100%; animation: grow-y 480ms var(--ease-out) both; }
+    .ctr-box.enter .ln { stroke-dasharray: 1; animation: draw-ln 700ms var(--ease-out) both; }
+    @keyframes grow-y { from { transform: scaleY(0); } }
+    /* phones: the row grows into the full-screen sheet and shrinks back into its place */
+    ::view-transition-group(drug-sheet) { animation-duration: 300ms; animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
+    ::view-transition-old(drug-sheet), ::view-transition-new(drug-sheet) { animation-duration: 220ms; }
+  }
   .hist-tbl { margin-top: 8px; }
   .hist-tbl summary { font-size: 12.5px; color: var(--muted); cursor: pointer; }
   .hist-tbl table { width: 100%; max-width: 360px; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; margin-top: 6px; }
@@ -257,9 +280,40 @@
 
   .more { display: flex; justify-content: center; padding: 14px 0; }
   .empty-state { padding: 28px 6px; color: var(--muted); font-size: 14px; }
+  .fix-note { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 0 0 10px; padding: 8px 12px; border-radius: 8px; background: var(--panel-2); border: 1px solid var(--border); font-size: 13px; color: var(--muted); }
+  .fix-note b { color: var(--text); }
+  .fix-note button { padding: 1px 8px; font-size: 12px; }
+  .batch { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; padding-top: 4px; }
+  .batch-l { font-size: 13px; color: var(--muted); }
+  .batch textarea { width: 100%; box-sizing: border-box; min-height: 9em; resize: vertical; font-family: var(--font-mono); font-size: 13px; line-height: 1.5; padding: 10px 12px; }
+  .batch-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .batch-sum { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 8px 0; font-size: 13px; color: var(--muted); }
+  .batch-sum b { color: var(--text); }
+  .batch-miss { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+  .batch-tbl { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+  .batch-tbl table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .batch-tbl th { position: sticky; top: 0; background: var(--panel-2); text-align: left; font-weight: 600; color: var(--muted); padding: 7px 10px; white-space: nowrap; }
+  .batch-tbl td { padding: 6px 10px; border-top: 1px solid var(--border); vertical-align: top; }
+  .batch-tbl tr.first td { border-top-color: var(--muted); }
+  .batch-tbl tbody tr:first-child td { border-top: 0; }
+  .batch-tbl td small { display: block; color: var(--muted); font-size: 11.5px; }
+  .batch-tbl .bi { min-width: 8em; max-width: 14em; overflow-wrap: anywhere; }
+  .batch-tbl .cd { font-family: var(--font-mono); white-space: nowrap; }
+  .batch-tbl .cd button { all: unset; cursor: pointer; color: var(--accent); }
+  .batch-tbl .cd button:hover { text-decoration: underline; }
+  .batch-tbl .cd button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .batch-tbl .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .batch-tbl tr.miss td { color: var(--warn-text); }
   .empty-state b { color: var(--text); }
   .loading { padding: 28px 6px; color: var(--muted); }
   .sec-h { font-size: 13px; font-weight: 700; color: var(--muted); margin: 22px 0 6px; }
+  .lic-sec { margin-top: 28px; }
+  .lic-h { padding: 12px 14px; margin-bottom: 10px; border-radius: 10px; background: var(--panel-2); }
+  .lic-h h2 { margin: 0; font-size: 14.5px; display: flex; align-items: center; gap: 8px; }
+  .lic-h .n { font-size: 11.5px; font-weight: 700; padding: 0 7px; border-radius: 999px; background: var(--panel); border: 1px solid var(--border); color: var(--muted); }
+  .lic-h p { margin: 4px 0 0; font-size: 12.5px; color: var(--muted); }
+  .nop { font-size: 12.5px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+  .row .meta .cat { color: var(--text); font-weight: 600; }
   .foot { margin-top: 26px; font-size: 12.5px; color: var(--muted); display: flex; flex-direction: column; gap: 8px; }
   .foot p { margin: 0; }
 
@@ -488,6 +542,152 @@
   .ov-body > .k.top { align-self: start; padding-top: 1px; }
   @media (max-width: 480px) { .ctr-row, .ctr-ax { grid-template-columns: 5.6em minmax(0, 1fr) 4.8em; gap: 8px; } .tier > summary { grid-template-columns: 4.6em minmax(0, 1fr) 5.4em; gap: 8px; } .tier ul { padding-left: calc(4.6em + 10px); } }
 
+
+  /* ---------- tidier search: header on one line, dropdowns, applied filters, a one-line summary ---------- */
+  .topbar .sub { flex: 1 1 14em; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .topbar .spacer { display: none; }
+  .dr-filters { flex-wrap: wrap; }
+  .dr-filters select, #btnAdv, #btnByGroup { border-radius: 999px; font-size: 12.5px; padding: 6px 12px; min-height: 32px; }
+  .dr-filters select { padding-right: 26px; background-color: var(--panel-2); }
+  #btnAdv { display: inline-flex; align-items: center; gap: 6px; }
+  #btnAdv svg { width: 15px; height: 15px; }
+  #btnByGroup[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: var(--accent-weak); }
+  .chips .chip.f { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); font-weight: 500; }
+  .chips .clear-all { border: 0; background: none; padding: 3px 6px; font-size: 12.5px; color: var(--muted); text-decoration: underline; }
+  .chips .lab { font-size: 12.5px; color: var(--muted); align-self: center; }
+  .dr-status { gap: 6px 14px; padding: 4px 0 10px; }
+  .dr-status .n b, .dr-status .md b { color: var(--text); font-size: 15px; font-variant-numeric: tabular-nums; }
+  .dr-status .hint { font-size: 12px; }
+  .mini-cls { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; }
+  .mini-cls .mb { display: inline-flex; width: 96px; height: 8px; border-radius: 4px; overflow: hidden; background: var(--panel-2); }
+  .mini-cls .mb i { display: block; height: 100%; }
+  .vmode { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .vmode button { border: 0; border-radius: 0; border-right: 1px solid var(--border); background: var(--panel-2); padding: 4px 10px; font-size: 12.5px; display: inline-flex; align-items: center; gap: 5px; }
+  .vmode button:last-child { border-right: 0; }
+  .vmode button svg { width: 14px; height: 14px; }
+  .vmode button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); font-weight: 700; }
+  details.menu { position: relative; }
+  details.menu > summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 12.5px; background: var(--panel); }
+  details.menu > summary::-webkit-details-marker { display: none; }
+  details.menu > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .menu-pop { position: absolute; right: 0; top: calc(100% + 4px); z-index: 25; display: flex; flex-direction: column; min-width: 13em; padding: 4px; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 6px 18px oklch(0% 0 0 / 0.14); }
+  .menu-pop button { border: 0; background: none; text-align: left; padding: 7px 10px; font-size: 13px; border-radius: 6px; }
+  .menu-pop button:hover { background: var(--panel-2); }
+  .ov { margin: 0 0 10px; }
+  .ov > summary { padding: 8px 14px; font-size: 12.5px; }
+
+  /* filter panel: four labelled groups */
+  .adv { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 14px 22px; }
+  .adv fieldset { border: 0; margin: 0; padding: 0; min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px 10px; align-content: start; }
+  .adv legend { grid-column: 1 / -1; padding: 0 0 2px; font-size: 12.5px; font-weight: 700; display: flex; align-items: center; gap: 6px; width: 100%; }
+  .adv legend .badge { min-width: 18px; padding: 0 5px; border-radius: 999px; background: var(--accent); color: var(--accent-ink); font-size: 11px; text-align: center; }
+  .adv legend .badge:empty { display: none; }
+  .adv fieldset .wide2, .adv fieldset .checks { grid-column: 1 / -1; }
+  .adv .checks { grid-column: auto; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+  .adv .adv-end { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
+
+  /* list rows: name and price on the first line, a dot for the class, the price group as a strip */
+  .row { grid-template-columns: 48px minmax(0, 1fr) 150px 6.4em; grid-template-areas: "th main gs pr"; }
+  .row > .thumb { grid-area: th; } .row > .main { grid-area: main; } .row > .gs { grid-area: gs; } .row > .pr { grid-area: pr; }
+  .row .nm .tags { display: inline-flex; vertical-align: 1px; margin-left: 4px; }
+  .row .meta .cls, .cls { display: inline-flex; align-items: center; gap: 4px; }
+  .cls .dot { width: 8px; height: 8px; border-radius: 50%; }
+  .thumb.noimg, .d-pic.noimg { background: var(--panel-2); border-color: transparent; color: var(--muted); }
+  .gs { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .gs-t { position: relative; height: 14px; margin: 0 6px; }
+  .gs-t::before { content: ""; position: absolute; left: 0; right: 0; top: 6px; height: 2px; border-radius: 1px; background: var(--border); }
+  .gs-t i { position: absolute; top: 4px; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--muted); opacity: .55; }
+  .gs-t i.me { top: 1px; width: 12px; height: 12px; margin-left: -6px; opacity: 1; background: var(--accent); box-shadow: 0 0 0 2px var(--bg); }
+  .gs-t i.me.lo { background: var(--ok-text); }
+  .gs-e { display: flex; justify-content: space-between; gap: 4px; font-size: 10.5px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .row .pr .gp { font-weight: 600; }
+  .gs-e:has(> span:only-child) { justify-content: center; }
+
+  /* table view */
+  .tbl-wrap { overflow-x: auto; }
+  ul.res.tbl { min-width: 760px; }
+  ul.res.tbl > li.th, ul.res.tbl .row.t { display: grid; grid-template-columns: minmax(0, 2.3fr) 7.6em 7.2em minmax(0, 1.6fr) 6.4em 5.6em minmax(70px, 1fr); grid-template-areas: none; gap: 0 12px; align-items: center; }
+  ul.res.tbl > li.th { padding: 8px 6px; font-size: 12px; color: var(--muted); background: var(--panel-2); position: sticky; top: 0; }
+  .th-b { border: 0; background: none; padding: 0; font: inherit; color: inherit; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
+  ul.res.tbl .row.t { padding: 7px 6px; font-size: 12.5px; }
+  .row.t .c-nm { min-width: 0; display: flex; flex-direction: column; }
+  .row.t .nm { font-size: 13px; }
+  .row.t .en { font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row.t .c-ing, .row.t .c-form { min-width: 0; overflow-wrap: anywhere; color: var(--muted); }
+  .row.t .c-cd { font-size: 12px; }
+  .row.t .c-pr, li.th .c-pr { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; }
+  .row.t .c-bar { height: 8px; border-radius: 2px; background: var(--panel-2); overflow: hidden; }
+  .row.t .c-bar i { display: block; height: 100%; border-radius: 2px; }
+
+  /* card view */
+  ul.res.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 172px), 1fr)); gap: 10px; border-top: 0; }
+  ul.res.cards > li { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--panel); }
+  ul.res.cards > li.open, ul.res.cards > li.grp-h { grid-column: 1 / -1; }
+  ul.res.cards > li.grp-h { border: 0; border-radius: 0; background: none; }
+  .row.c { display: flex; flex-direction: column; align-items: stretch; gap: 5px; height: 100%; padding: 8px; grid-template-areas: none; }
+  .card-ph { height: 118px; border-radius: 8px; background: var(--figure); display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center; overflow: hidden; color: oklch(55% 0.03 250); }
+  .card-ph img { width: 100%; height: 100%; object-fit: contain; }
+  .card-ph svg { width: 30px; height: 30px; }
+  .card-ph small { font-size: 11px; }
+  .card-ph.noimg { background: var(--panel-2); color: var(--muted); }
+  .card-nm { font-weight: 700; font-size: 13px; line-height: 1.35; overflow-wrap: anywhere; }
+  .card-lk { font-size: 11.5px; color: var(--muted); overflow-wrap: anywhere; }
+  .card-pr { margin-top: auto; display: flex; justify-content: space-between; align-items: baseline; gap: 6px; font-size: 12px; color: var(--muted); }
+  .card-pr b { font-size: 14px; color: var(--text); font-variant-numeric: tabular-nums; }
+
+  /* an open item: its own heading replaces the row */
+  ul.res > li.open > .row { display: none; }
+  .d-head { grid-template-columns: 72px minmax(0, 1fr) auto; padding: 12px 16px; }
+  .d-pic { width: 72px; height: 64px; }
+  .d-pic svg { width: 32px; height: 32px; }
+  .d-title .en .cd { color: var(--text); }
+  .d-title .tags { margin-top: 6px; }
+  .d-tools { display: flex; gap: 6px; align-self: start; }
+  .ib { width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; }
+  .ib svg { width: 17px; height: 17px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .kpi { display: flex; flex-direction: column; gap: 1px; min-width: 0; padding: 8px 10px; border-radius: 8px; background: var(--panel-2); }
+  .kpi[hidden] { display: none; }
+  .kpi .kk { font-size: 11.5px; color: var(--muted); }
+  .kpi .kv { font-size: 19px; font-weight: 700; line-height: 1.25; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .kpi .ks { font-size: 11.5px; color: var(--muted); }
+  .kpi .gs { margin-top: 4px; }
+  .kpi .gs-t i.me { box-shadow: 0 0 0 2px var(--panel-2); }
+  .fgrps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 14px 24px; margin-top: 4px; }
+  .fgrps h4 { margin: 0 0 6px; font-size: 12.5px; color: var(--muted); font-weight: 700; padding-bottom: 4px; border-bottom: 1px solid var(--border); }
+  .fgrps .kv { grid-template-columns: 5.6em minmax(0, 1fr); font-size: 13px; }
+  .acts .n { display: inline-block; min-width: 1.6em; margin-left: 4px; padding: 0 5px; border-radius: 999px; background: var(--panel-2); color: var(--muted); font-size: 11px; font-weight: 700; text-align: center; }
+
+  /* price and events chart */
+  .tl .pl { fill: none; stroke: var(--accent); stroke-width: 2.2; stroke-linejoin: round; }
+  .tl .lane { stroke: var(--border); stroke-dasharray: 2 3; }
+  .tl .grid { stroke: var(--border); stroke-dasharray: 2 4; }
+  .tl .guide { stroke: var(--muted); stroke-dasharray: 2 3; opacity: .35; }
+  .tl .lane-l, .tl .ylab { font-size: 10.5px; fill: var(--muted); font-variant-numeric: tabular-nums; }
+  .tl .cnt { fill: var(--text); }
+  .tl .cnt-t { font-size: 9.5px; font-weight: 700; fill: var(--bg); }
+  .tl .e-recall { fill: var(--c-orig); }
+  @media (prefers-reduced-motion: no-preference) {
+    .tl.enter .pl { stroke-dasharray: 1; animation: draw-ln 900ms var(--ease-out) both; }
+    .tl.enter .ev { animation: fade-in 260ms 600ms both; }
+  }
+
+  @media (max-width: 760px) {
+    .row { grid-template-columns: 44px minmax(0, 1fr) auto; grid-template-areas: "th main pr" "th gs gs"; }
+    .row > .gs { max-width: 280px; }
+    .row.t, .row.c { grid-template-columns: none; }
+    .d-head { grid-template-columns: 60px minmax(0, 1fr); }
+    .d-pic { width: 60px; height: 56px; }
+    .d-tools { grid-column: 1 / -1; }
+    .d-tools .x { display: none; }
+    .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 640px) {
+    .dr-filters { overflow-x: visible; margin: 0; padding: 0; }
+    .mini-cls .lg { display: none; }
+    .adv { grid-template-columns: minmax(0, 1fr); }
+    .adv .adv-end { display: none; }
+  }
   @media (prefers-reduced-motion: reduce) { .ov > summary .car, .row, .scope button { transition: none; } }
 </style>
 </head>
@@ -505,6 +705,7 @@
     <button type="button" role="tab" data-view="changes" data-en="This week">本週異動</button>
     <button type="button" role="tab" data-view="alerts"><span data-en="Shortages &amp; recalls">缺藥與回收</span><span class="n" id="nAlerts"></span></button>
     <button type="button" role="tab" data-view="rules" data-en="Rule revisions">給付規定修訂</button>
+    <button type="button" role="tab" data-view="batch" data-en="Batch lookup">批次查詢</button>
   </nav>
   <div id="vSearch">
   <section class="dr-search">
@@ -513,20 +714,20 @@
       <input type="search" id="q" autocomplete="off" spellcheck="false" aria-label="搜尋藥品" placeholder="藥名、成分、適應症、健保代號、ATC 或許可證字號（按 / 開始）" data-en-ph="Name, ingredient, indication, NHI code, ATC or licence number (press /)">
     </label>
     <div class="dr-filters">
-      <span class="scope" role="group" aria-label="範圍" id="scope">
-        <button type="button" data-v="every" data-en="All">全部</button>
-        <button type="button" data-v="paid" data-en="Reimbursed">給付中</button>
-        <button type="button" data-v="delisted" data-en="Delisted">已取消給付</button>
-        <button type="button" data-v="lic" data-en="Licences without NHI code">無健保代號的許可證</button>
-      </span>
-      <span class="scope" role="group" aria-label="同一品項有鋁箔與一般包裝時列哪一種" id="pack" title="同一品項同時有鋁箔包裝（代號末兩碼 G0）與一般包裝（00）時，只列一種" data-en-title="When a product has both a foil pack (code ends in G0) and a standard pack (00), list one">
-        <button type="button" data-v="foil" data-en="Foil">鋁箔包裝</button>
-        <button type="button" data-v="can" data-en="Standard">一般包裝</button>
-        <button type="button" data-v="both" data-en="Both">兩種都列</button>
-      </span>
-      <button type="button" id="btnAdv" aria-expanded="false" aria-controls="adv"><span data-en="Filters">進階篩選</span> ▾<span class="badge" id="advCount"></span></button>
+      <select id="scope" aria-label="給付狀態" data-en-aria="Reimbursement status">
+        <option value="paid" data-en="Reimbursed">給付中</option>
+        <option value="every" data-en="All, delisted too">全部（含已取消）</option>
+        <option value="delisted" data-en="Delisted only">只看已取消給付</option>
+        <option value="lic" data-en="Licences without NHI code">無健保代號的許可證</option>
+      </select>
+      <select id="pack" aria-label="同一品項有鋁箔與一般包裝時列哪一種" data-en-aria="When a product has both packs, list which" title="同一品項同時有鋁箔包裝（代號末兩碼 G0）與一般包裝（00）時，只列一種" data-en-title="When a product has both a foil pack (code ends in G0) and a standard pack (00), list one">
+        <option value="foil" data-en="Foil pack first">列鋁箔包裝</option>
+        <option value="can" data-en="Standard pack first">列一般包裝</option>
+        <option value="both" data-en="Both packs">兩種包裝都列</option>
+      </select>
+      <button type="button" id="btnAdv" aria-expanded="false" aria-controls="adv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span data-en="Filters">篩選</span><span class="badge" id="advCount"></span></button>
       <span class="spacer"></span>
-      <button type="button" id="btnByGroup" aria-pressed="false" title="把相同成分、含量、劑型（健保分類分組）的品項排在一起" data-en-title="List items of the same ingredient, strength and form (NHI price group) together"><span data-en="By group">依分組列</span></button>
+      <button type="button" id="btnByGroup" aria-pressed="false" title="把相同成分、含量、劑型（健保分類分組）的品項排在一起" data-en-title="List items of the same ingredient, strength and form (NHI price group) together"><span data-en="By group">依分組</span></button>
       <select id="fSort" aria-label="排序">
         <option value="rel" data-en="Best match">最相關</option>
         <option value="pa" data-en="Price, low to high">支付價 低→高</option>
@@ -536,42 +737,50 @@
       </select>
     </div>
     <div class="adv-scrim" id="advScrim" hidden></div>
-    <div class="adv" id="adv" hidden role="group" aria-label="進階篩選">
-      <div class="adv-head"><b data-en="Filters">進階篩選</b><button type="button" class="small" id="advDone" data-en="Done">完成</button></div>
-      <label class="wide2"><span data-en="Price (NT$)">支付價（元）</span><span class="pair"><input id="aPmin" inputmode="decimal" placeholder="最低" data-en-ph="min"><i>～</i><input id="aPmax" inputmode="decimal" placeholder="最高" data-en-ph="max"></span></label>
-      <label class="wide2"><span data-en="First listed">首次收載</span><span class="pair"><input id="aFrom" type="month" aria-label="從"><i>～</i><input id="aTo" type="month" aria-label="到"></span></label>
-      <label><span data-en="ATC starts with">ATC 開頭</span><input id="aAtc" placeholder="例如 C10" data-en-ph="e.g. C10" autocomplete="off"></label>
-      <label><span data-en="Class">藥品分類</span><select id="aCls"></select></label>
-      <label><span data-en="Dosage form">劑型</span><select id="aForm"></select></label>
-      <label><span data-en="Single or combination">單複方</span><select id="aSingle"><option value="" data-en="All">不限</option><option value="單方" data-en="Single ingredient">單方</option><option value="複方" data-en="Combination">複方</option></select></label>
-      <label><span data-en="Prescription category">處方類別</span><select id="aCat"></select></label>
-      <label><span data-en="Controlled drug">管制藥品</span><select id="aCtrl"><option value="" data-en="All">不限</option><option value="any" data-en="Any schedule">任一級</option><option value="1" data-en="Schedule 1">第一級</option><option value="2" data-en="Schedule 2">第二級</option><option value="3" data-en="Schedule 3">第三級</option><option value="4" data-en="Schedule 4">第四級</option><option value="none" data-en="Not controlled">非管制藥品</option></select></label>
-      <label><span data-en="Made in">製造國別</span><select id="aCountry"></select></label>
-      <label><span data-en="Licence">許可證狀態</span><select id="aLic"><option value="" data-en="All">不限</option><option value="valid" data-en="Valid">有效</option><option value="gone" data-en="Cancelled or revoked">已註銷／廢止</option></select></label>
-      <label><span data-en="Packaging">包裝</span><select id="aPkg"><option value="" data-en="All">不限</option><option value="g0" data-en="Foil packs only (G0)">只看鋁箔包裝（G0）</option><option value="not" data-en="Leave foil packs out">排除鋁箔包裝</option></select></label>
-      <label class="wide2"><span data-en="Vendor or manufacturer">藥商或製造廠</span><input id="aWho" autocomplete="off"></label>
-      <div class="checks">
-        <label class="check"><input type="checkbox" id="aRules"> <span data-en="Has NHI rules">有給付規定</span></label>
-        <label class="check"><input type="checkbox" id="aPhoto"> <span data-en="Has a photo">有外觀照片</span></label>
-        <label class="check"><input type="checkbox" id="aShort"> <span data-en="In short supply">缺藥中</span></label>
-        <label class="check"><input type="checkbox" id="aRecall"> <span data-en="Has been recalled">有回收紀錄</span></label>
-        <span class="spacer"></span>
-        <button type="button" class="small" id="advClear" data-en="Clear filters">清除篩選</button>
-      </div>
+    <div class="adv" id="adv" hidden role="group" aria-label="篩選">
+      <div class="adv-head"><b data-en="Filters">篩選</b><button type="button" class="small" id="advDone" data-en="Done">完成</button></div>
+      <fieldset data-grp="pay"><legend><span data-en="Price and NHI">價格與給付</span><span class="badge"></span></legend>
+        <label class="wide2"><span data-en="Price (NT$)">支付價（元）</span><span class="pair"><input id="aPmin" inputmode="decimal" placeholder="最低" data-en-ph="min"><i>～</i><input id="aPmax" inputmode="decimal" placeholder="最高" data-en-ph="max"></span></label>
+        <label class="wide2"><span data-en="First listed">首次收載</span><span class="pair"><input id="aFrom" type="month" aria-label="從"><i>～</i><input id="aTo" type="month" aria-label="到"></span></label>
+        <label><span data-en="Packaging">包裝</span><select id="aPkg"><option value="" data-en="All">不限</option><option value="g0" data-en="Foil packs only (G0)">只看鋁箔包裝（G0）</option><option value="not" data-en="Leave foil packs out">排除鋁箔包裝</option></select></label>
+        <div class="checks"><label class="check"><input type="checkbox" id="aRules"> <span data-en="Has NHI rules">有給付規定</span></label></div>
+      </fieldset>
+      <fieldset data-grp="drug"><legend><span data-en="The drug">藥品</span><span class="badge"></span></legend>
+        <label><span data-en="ATC starts with">ATC 開頭</span><input id="aAtc" placeholder="例如 C10" data-en-ph="e.g. C10" autocomplete="off"></label>
+        <label><span data-en="Class">藥品分類</span><select id="aCls"></select></label>
+        <label><span data-en="Dosage form">劑型</span><select id="aForm"></select></label>
+        <label><span data-en="Single or combination">單複方</span><select id="aSingle"><option value="" data-en="All">不限</option><option value="單方" data-en="Single ingredient">單方</option><option value="複方" data-en="Combination">複方</option></select></label>
+        <div class="checks"><label class="check"><input type="checkbox" id="aPhoto"> <span data-en="Has a photo">有外觀照片</span></label></div>
+      </fieldset>
+      <fieldset data-grp="lic"><legend><span data-en="Licence and makers">許可證與廠商</span><span class="badge"></span></legend>
+        <label><span data-en="Prescription category">處方類別</span><select id="aCat"></select></label>
+        <label><span data-en="Controlled drug">管制藥品</span><select id="aCtrl"><option value="" data-en="All">不限</option><option value="any" data-en="Any schedule">任一級</option><option value="1" data-en="Schedule 1">第一級</option><option value="2" data-en="Schedule 2">第二級</option><option value="3" data-en="Schedule 3">第三級</option><option value="4" data-en="Schedule 4">第四級</option><option value="none" data-en="Not controlled">非管制藥品</option></select></label>
+        <label><span data-en="Licence">許可證狀態</span><select id="aLic"><option value="" data-en="All">不限</option><option value="valid" data-en="Valid">有效</option><option value="gone" data-en="Cancelled or revoked">已註銷／廢止</option></select></label>
+        <label><span data-en="Made in">製造國別</span><select id="aCountry"></select></label>
+        <label class="wide2"><span data-en="Vendor or manufacturer">藥商或製造廠</span><input id="aWho" autocomplete="off"></label>
+      </fieldset>
+      <fieldset data-grp="alert"><legend><span data-en="Alerts">警示</span><span class="badge"></span></legend>
+        <div class="checks">
+          <label class="check"><input type="checkbox" id="aShort"> <span data-en="In short supply">缺藥中</span></label>
+          <label class="check"><input type="checkbox" id="aRecall"> <span data-en="Has been recalled">有回收紀錄</span></label>
+        </div>
+      </fieldset>
+      <div class="adv-end"><button type="button" class="small" id="advClear" data-en="Clear filters">清除篩選</button></div>
       <div class="adv-foot"><button type="button" id="advClear2" data-en="Clear">清除</button><button type="button" class="primary" id="advDone2"><span data-en="Show results">看結果</span> <span id="advN"></span></button></div>
     </div>
     <div class="chips" id="chips"></div>
     <p class="dr-tips" id="tips"></p>
   </section>
 
-  <div id="ovWrap"></div>
   <div class="dr-status" id="status" aria-live="polite"></div>
+  <div id="ovWrap"></div>
   <div id="out"><div class="loading" data-en="Loading the NHI drug list (cached after the first visit)…">正在載入健保藥品資料（第一次之後會快取）…</div></div>
 
   </div>
   <section id="vChanges" hidden></section>
   <section id="vAlerts" hidden></section>
   <section id="vRules" hidden></section>
+  <section id="vBatch" hidden></section>
 
   <dialog class="photo" id="photo" aria-label="藥品照片">
     <div class="ph-img"><img id="phImg" alt=""></div>
@@ -584,13 +793,13 @@
   </div>
 </main>
 
-<script src="../shared/common.js?v=20261125b"></script>
+<script src="../shared/common.js?v=20261126a"></script>
 <script src="../shared/twdrugs.js?v=20261124a"></script>
 <script>
 const TW = RT.twDrugs, N = TW.N, F = TW.F, T = RT.t, esc = RT.esc;
 const KEY = 'drugs';
 const ADV = { pmin: '', pmax: '', from: '', to: '', atc: '', cls: '', form: '', single: '', cat: '', ctrl: '', country: '', lic: '', pkg: '', who: '', rules: false, photo: false, short: false, recall: false };
-const DEF = { scope: 'paid', pack: 'foil', sort: 'rel', byGroup: false, advOpen: false, adv: ADV, view: 'search' };
+const DEF = { scope: 'paid', pack: 'foil', sort: 'rel', byGroup: false, advOpen: false, adv: ADV, view: 'search', rview: 'list' };
 let S = RT.merge(DEF, RT.load(KEY, {}));
 // scopes before the four-way split: 'all' (with delisted) and 'lic' (everything) both become 'every'
 if (S.scope === 'all' || (S.scope === 'lic' && !S.scope4)) S.scope = 'every';
@@ -598,7 +807,7 @@ S.scope4 = true;
 // earlier versions kept a few filters at the top level
 ['cls', 'form'].forEach((k) => { if (S[k]) { S.adv[k] = S[k]; } delete S[k]; });
 if (S.ctrl === true) S.adv.ctrl = 'any'; if (S.single === true) S.adv.single = '單方'; delete S.ctrl; delete S.single;
-let Q = '', chips = [];            // chips: [{k: 'group'|'atc', v}]
+let Q = '', Qfix = '', chips = [];            // chips: [{k: 'group'|'atc', v}]
 let nhiD = null, fdaD = null, extraD = null, rulesD = null, shown = 50, open = new Set(), openLic = new Set();
 const tabOf = new Map();           // the tab each open drug shows
 const $ = (id) => document.getElementById(id);
@@ -665,7 +874,48 @@ function licOnlyRows() {
   return licOnly;
 }
 const ATC_RE = /^[a-z]\d{2}([a-z]([a-z](\d{1,2})?)?)?$/;
-function tokens() { return TW.fold(Q).split(/\s+/).filter(Boolean); }
+function tokens() { return TW.fold(Qfix || Q).split(/\s+/).filter(Boolean); }
+/* ---------- typo-tolerant search: a misspelt English word is matched to the nearest word in the lists ---------- */
+let vocab = null;
+function vocabulary() {
+  if (vocab && vocab.n === nhiD.rows.length && vocab.f === (fdaD ? fdaD.rows.length : 0)) return vocab;
+  const m = new Map();
+  const add = (s) => String(s || '').toLowerCase().split(/[^a-z0-9]+/).forEach((w) => { if (w.length >= 4 && /[a-z]/.test(w)) m.set(w, (m.get(w) || 0) + 1); });
+  nhiD.rows.forEach((r) => { add(r[N.en]); add(r[N.ingredient]); });
+  if (fdaD) fdaD.rows.forEach((f) => { add(f[F.en]); add(f[F.ingredients]); });
+  vocab = { n: nhiD.rows.length, f: fdaD ? fdaD.rows.length : 0, words: [...m.entries()] };
+  return vocab;
+}
+// edit distance, giving up once it is sure to exceed max
+function lev(a, b, max) {
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i]; let lo = i;
+    for (let j = 1; j <= b.length; j++) { cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); if (cur[j] < lo) lo = cur[j]; }
+    if (lo > max) return max + 1;
+    prev = cur;
+  }
+  return prev[b.length];
+}
+function nearest(t) {
+  const max = t.length <= 5 ? 1 : t.length <= 9 ? 2 : 3, out = [];
+  for (const [w, n] of vocabulary().words) { if (Math.abs(w.length - t.length) > max) continue; const d = lev(t, w, max); if (d <= max) out.push({ w, d, n }); }
+  return out.sort((a, b) => a.d - b.d || b.n - a.n).slice(0, 4);
+}
+// the query with each English word that appears nowhere replaced by its nearest neighbour; null when nothing changes
+function fuzzyFix(q) {
+  const H = haystack(), toks = TW.fold(q).split(/\s+/).filter(Boolean);
+  let changed = false, pairs = [], alts = [];
+  const fixed = toks.map((t) => {
+    if (!/^[a-z][a-z0-9-]{3,}$/.test(t) || H.some((h) => h.includes(t)) || (licHay && licHay.some((h) => h.includes(t)))) return t;
+    const c = nearest(t); if (!c.length) return t;
+    changed = true; pairs.push([t, c[0].w]);
+    if (!alts.length) alts = c.slice(1).map((x) => toks.map((y) => (y === t ? x.w : y)).join(' '));
+    return c[0].w;
+  });
+  return changed ? { q: fixed.join(' '), pairs, alts } : null;
+}
+
 
 /* ---------- dosage-form pictograms (when there is no photo) ---------- */
 const ICON = {
@@ -843,23 +1093,73 @@ function ctrlTag(f) {
 }
 function thumbHTML(r) {
   const src = photoOf(r);
-  return `<span class="thumb">${src ? `<img src="${esc(src)}" alt="" loading="lazy" decoding="async">` : formIcon(r[N.form])}</span>`;
+  return `<span class="thumb${src ? '' : ' noimg'}">${src ? `<img src="${esc(src)}" alt="" loading="lazy" decoding="async">` : formIcon(r[N.form])}</span>`;
 }
+// the class as a coloured dot and a short name, in place of a tag on every row
+const clsDot = (c) => (c ? `<span class="cls"><span class="dot k-${CLS_KEY[c] || 'none'}"></span>${esc(clsName(c))}</span>` : '');
+// where this price sits among the reimbursed prices of its price group (foil packs apart): a strip of dots, this one larger
+function grpInfo(r) {
+  const ps = grpPrices(r);
+  if (!ps || ps.length < 2 || !(r[N.price] > 0)) return null;
+  const lo = ps[0], hi = ps[ps.length - 1], p = r[N.price], pc = lo ? Math.round(((p - lo) / lo) * 100) : 0;
+  const label = hi === lo ? T('同組同價', 'Same as group') : p <= lo ? T('同組最低', 'Group low') : `+${pc < 1 ? '<1' : pc}%`;
+  return { ps, lo, hi, p, n: ps.length, foil: TW.isFoil(r[N.code]), label, low: p <= lo && hi > lo };
+}
+function stripHTML(g) {
+  if (!g) return '';
+  const pos = (v) => (g.hi > g.lo ? ((v - g.lo) / (g.hi - g.lo)) * 100 : 50).toFixed(1) + '%';
+  const tip = T(`同分組${g.foil ? '的鋁箔包裝' : ''}給付中 ${g.n} 項，$${fmtP(g.lo)}${g.hi > g.lo ? ' – $' + fmtP(g.hi) : ''}`, `${g.n} reimbursed ${g.foil ? 'foil-pack ' : ''}items in the price group, $${fmtP(g.lo)}${g.hi > g.lo ? ' – $' + fmtP(g.hi) : ''}`);
+  return `<span class="gs" title="${tip}"><span class="gs-t" role="img" aria-label="${tip}">${[...new Set(g.ps)].map((v) => `<i style="left:${pos(v)}"></i>`).join('')}<i class="me${g.low ? ' lo' : ''}" style="left:${pos(g.p)}"></i></span><span class="gs-e">${g.hi > g.lo ? `<span>$${fmtP(g.lo)}</span><span>${T(`同組 ${g.n} 項`, `${g.n} in group`)}</span><span>$${fmtP(g.hi)}</span>` : `<span>${T(`同組 ${g.n} 項同價`, `all ${g.n} in group at this price`)}</span>`}</span></span>`;
+}
+const rareTags = (r, f) => [pkgTag(r), ctrlTag(f), alertTags(f), f && f[F.status] ? `<span class="tag off">${T('許可證', 'Licence ')}${esc(f[F.status])}</span>` : ''].join('');
+const isOpenRow = (id) => open.has(id);
 function rowHTML(r) {
-  const f = licOf(r);
-  const id = r[N.code];
-  const tags = [clsTag(r[N.class]), pkgTag(r), ctrlTag(f), alertTags(f), f && f[F.status] ? `<span class="tag off">${T('許可證', 'Licence ')}${esc(f[F.status])}</span>` : ''].join('');
+  if (S.rview === 'table') return rowTblHTML(r);
+  if (S.rview === 'cards') return rowCardHTML(r);
+  const f = licOf(r), id = r[N.code], g = grpInfo(r), tags = rareTags(r, f);
   const price = r[N.price] > 0
-    ? `<b>$${fmtP(r[N.price])}</b>${grpPos(r)}<small>${esc(r[N.priceSince] || '')}</small>`
+    ? `<b>$${fmtP(r[N.price])}</b>${g ? `<span class="gp${g.low ? ' lo' : ''}">${g.label}</span>` : ''}<small>${esc(r[N.priceSince] || '')}</small>`
     : `<span class="tag off">${T('已取消給付', 'Delisted')}</span>${r[N.lastPaidPrice] ? `<small>${T('最後', 'last')} $${fmtP(r[N.lastPaidPrice])}</small>` : ''}`;
-  return `<li data-code="${esc(id)}"><button type="button" class="row" aria-expanded="${open.has(id)}" aria-controls="d-${esc(id)}">
+  return `<li data-code="${esc(id)}"${isOpenRow(id) ? ' class="open"' : ''}><button type="button" class="row" aria-expanded="${isOpenRow(id)}" aria-controls="d-${esc(id)}">
     ${thumbHTML(r)}
-    <span class="main"><span class="nm">${hl(r[N.zh] || r[N.en])} <span class="en">${r[N.zh] ? hl(r[N.en]) : ''}</span></span>
-      <span class="meta"><span class="cd">${hl(id)}</span>${r[N.atc] ? `<span>ATC ${hl(r[N.atc])}</span>` : ''}<span>${hl(r[N.ingredient])}</span>${r[N.form] ? `<span>${esc(r[N.form])}</span>` : ''}</span>
-      ${indHits.has(id) ? `<span class="ind-hit"><b>${T('適應症', 'Indication')}</b> ${indSnippet(indText(f), tokens())}</span>` : ''}
-      ${tags ? `<span class="tags">${tags}</span>` : ''}</span>
+    <span class="main"><span class="nm">${hl(r[N.zh] || r[N.en])}${tags ? ` <span class="tags">${tags}</span>` : ''}</span>${r[N.zh] ? `<span class="en">${hl(r[N.en])}</span>` : ''}
+      <span class="meta">${clsDot(r[N.class])}<span class="cd">${hl(id)}</span>${r[N.atc] ? `<span>ATC ${hl(r[N.atc])}</span>` : ''}<span>${hl(r[N.ingredient])}</span>${r[N.form] ? `<span>${esc(r[N.form])}</span>` : ''}</span>
+      ${indHits.has(id) ? `<span class="ind-hit"><b>${T('適應症', 'Indication')}</b> ${indSnippet(indText(f), tokens())}</span>` : ''}</span>
+    ${stripHTML(g)}
     <span class="pr">${price}</span>
-  </button>${open.has(id) ? detailHTML(r) : ''}</li>`;
+  </button>${isOpenRow(id) ? detailHTML(r) : ''}</li>`;
+}
+// table: one line per item, a bar for the price on the results' own scale
+function rowTblHTML(r) {
+  const id = r[N.code], f = licOf(r), sc = scale, w = r[N.price] > 0 && sc ? Math.max(2, sc.pos(r[N.price]) * 100) : 0;
+  return `<li data-code="${esc(id)}"${isOpenRow(id) ? ' class="open"' : ''}><button type="button" class="row t" aria-expanded="${isOpenRow(id)}" aria-controls="d-${esc(id)}">
+    <span class="c-nm"><span class="nm">${hl(r[N.zh] || r[N.en])}</span>${r[N.zh] ? `<span class="en">${hl(r[N.en])}</span>` : ''}</span>
+    <span class="c-cd cd">${hl(id)}</span>
+    <span class="c-cls">${clsDot(r[N.class])}</span>
+    <span class="c-ing">${hl(r[N.ingredient])}</span>
+    <span class="c-form">${esc(r[N.form] || '')}${rareTags(r, f) ? ` <span class="tags">${rareTags(r, f)}</span>` : ''}</span>
+    <span class="c-pr">${r[N.price] > 0 ? '$' + fmtP(r[N.price]) : `<span class="tag off">${T('已取消', 'Delisted')}</span>`}</span>
+    <span class="c-bar" aria-hidden="true">${w ? `<i class="k-${CLS_KEY[r[N.class]] || 'none'}" style="width:${w.toFixed(1)}%"></i>` : ''}</span>
+  </button>${isOpenRow(id) ? detailHTML(r) : ''}</li>`;
+}
+function tblHeadHTML() {
+  const pr = S.sort === 'pa' ? ' ↑' : S.sort === 'pd' ? ' ↓' : '';
+  return `<li class="th"><span>${T('名稱', 'Name')}</span><span><button type="button" class="th-b" data-sorth="code">${T('健保代號', 'NHI code')}${S.sort === 'code' ? ' ↑' : ''}</button></span><span>${T('分類', 'Class')}</span><span>${T('成分', 'Ingredient')}</span><span>${T('劑型', 'Form')}</span><span class="c-pr"><button type="button" class="th-b" data-sorth="price">${T('支付價', 'Price')}${pr}</button></span><span>${scale && scale.log ? T('（對數刻度）', '(log scale)') : ''}</span></li>`;
+}
+// cards: the photo large, with what the pill looks like
+function looksLine(f) {
+  const l = looksOf(f)[0]; if (!l || !extraD) return '';
+  const C = {}; extraD.lookCols.forEach((c, i) => (C[c] = i));
+  return [l[C.colour], l[C.shape], l[C.size] ? l[C.size] + ' mm' : '', l[C.score] ? T('有刻痕', 'scored') : '', [l[C.mark1], l[C.mark2]].filter(Boolean).join(' / ')].filter(Boolean).join(' · ');
+}
+function rowCardHTML(r) {
+  const id = r[N.code], f = licOf(r), src = photoOf(r), lk = looksLine(f);
+  return `<li data-code="${esc(id)}"${isOpenRow(id) ? ' class="open"' : ''}><button type="button" class="row c" aria-expanded="${isOpenRow(id)}" aria-controls="d-${esc(id)}">
+    <span class="card-ph${src ? '' : ' noimg'}">${src ? `<img src="${esc(src)}" alt="" loading="lazy" decoding="async">` : `${formIcon(r[N.form])}<small>${T('沒有照片', 'No photo')}</small>`}</span>
+    <span class="card-nm">${hl(r[N.zh] || r[N.en])}</span>
+    <span class="card-lk">${lk ? esc(lk) : `${hl(r[N.ingredient])}${r[N.form] ? ' · ' + esc(r[N.form]) : ''}`}</span>
+    <span class="card-pr"><b>${r[N.price] > 0 ? '$' + fmtP(r[N.price]) : T('已取消給付', 'Delisted')}</b>${clsDot(r[N.class])}</span>
+  </button>${isOpenRow(id) ? detailHTML(r) : ''}</li>`;
 }
 
 /* ---------- overview of the results ---------- */
@@ -881,8 +1181,8 @@ function overviewHTML(rows) {
   }
   const clsBar = ['研發廠', 'BA/BE學名藥', '一般學名藥', '生物製劑', ''].filter((c) => byCls[c]).map((c) => ({ c, n: byCls[c], key: CLS_KEY[c] || 'none', name: c ? clsName(c) : T('未分類', 'Unclassified') }));
   const on = A().cls;
-  const open = !phone();
-  return `<details class="ov" id="ov"${open ? ' open' : ''}><summary><span><b>${rows.length.toLocaleString()}</b> ${T('筆', 'items')}</span>${sc ? `<span>${T('中位數', 'median')} <b>$${fmtP(sc.med)}</b></span><span>$${fmtP(sc.lo)} – $${fmtP(sc.hi)}</span>` : ''}<span>${T('給付中', 'reimbursed')} <b>${paid}</b></span><span class="car" aria-hidden="true">▾</span></summary>
+  const open = false;
+  return `<details class="ov" id="ov"${open ? ' open' : ''}><summary><span>${T('結果分布：支付價、分類、給付狀態、ATC 趨勢', 'Breakdown: prices, classes, status and ATC trend')}</span><span class="car" aria-hidden="true">▾</span></summary>
     <div class="ov-body">
       ${sc ? `<span class="k">${T('支付價', 'Price')}</span>${strip}` : ''}
       <span class="k">${T('藥品分類', 'Class')}</span><div><div class="bar">${clsBar.map((b) => `<button type="button" class="k-${b.key}" style="width:${pct(b.n)}" data-ovcls="${esc(b.c)}" title="${esc(b.name)} ${b.n}" aria-label="${esc(b.name)} ${b.n}"></button>`).join('')}</div>
@@ -900,26 +1200,62 @@ const kv = (rows) => `<dl class="kv">${rows.filter((x) => x && x[1]).map(([k, v]
 function ruleFile(r, c) { const files = r[N.ruleFiles] ? r[N.ruleFiles].split(',') : []; return files.find((x) => x.startsWith(c + '_')) || ''; }
 function zoomBtn(src, cap, inner) { return `<button type="button" class="zoom" data-photo="${esc(src)}" data-cap="${esc(cap)}" aria-label="${T('放大照片', 'Enlarge photo')}" title="${T('點一下放大', 'Click to enlarge')}">${inner}</button>`; }
 const TABS = [['sum', '概要', 'Overview'], ['price', '價格', 'Price'], ['use', '用量', 'Usage'], ['rules', '給付規定', 'NHI rules'], ['looks', '外觀與仿單', 'Looks & leaflet'], ['lic', '許可證', 'Licence']];
+const ICO = {
+  copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>',
+  link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>',
+  list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 6h10M4 12h10M4 18h7M18 15v6M15 18h6"/></svg>',
+  close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+};
+const iconBtn = (act, ico, zh, en, cls = '') => `<button type="button" class="ib${cls}" data-act="${act}" aria-label="${T(zh, en)}" title="${T(zh, en)}">${ICO[ico]}</button>`;
+// the four numbers worth seeing first; a cell with nothing to say is left out
+function kpiHTML(r) {
+  const k = (label, val, sub, extra = '', cls = '') => `<div class="kpi${cls}"><span class="kk">${label}</span><span class="kv">${val}</span>${sub ? `<span class="ks">${sub}</span>` : ''}${extra}</div>`;
+  const g = grpInfo(r), cells = [];
+  cells.push(r[N.price] > 0 ? k(T('支付價', 'Price'), `$${fmtP(r[N.price])}`, T(`自 ${esc(r[N.priceSince] || '—')}`, `since ${esc(r[N.priceSince] || '—')}`))
+    : k(T('支付價', 'Price'), `<span style="color:var(--warn-text)">${T('已取消給付', 'Delisted')}</span>`, r[N.lastPaidPrice] ? T(`最後 $${fmtP(r[N.lastPaidPrice])}`, `last $${fmtP(r[N.lastPaidPrice])}`) : esc(r[N.priceSince] || '')));
+  if (g) cells.push(k(T(`同組 ${g.n} 項中`, `Of ${g.n} in its group`), `<span${g.low ? ' style="color:var(--ok-text)"' : ''}>${g.label}</span>`, '', stripHTML(g), ' grp'));
+  cells.push(`<div class="kpi" data-kpi-use hidden></div>`);
+  if (r[N.ruleChapters]) {
+    const cs = r[N.ruleChapters].split(',').filter(Boolean), fl = ruleFile(r, cs[0]);
+    cells.push(k(T('給付規定', 'NHI rules'), esc(cs.join('、')), fl ? T(`修訂 ${esc(TW.ruleDate(fl))}`, `revised ${esc(TW.ruleDate(fl))}`) : ''));
+  } else if (r[N.firstListed]) {
+    const y = Math.floor((Date.now() - new Date(r[N.firstListed])) / 3.156e10);
+    cells.push(k(T('首次收載', 'First listed'), esc(r[N.firstListed].slice(0, 7)), y >= 1 ? T(`${y} 年`, `${y} year${y > 1 ? 's' : ''}`) : ''));
+  }
+  return `<div class="kpis">${cells.join('')}</div>`;
+}
+// last full year of claims and its change on the year before
+async function fillUseKpi(el, r) {
+  if (!el) return;
+  try { await loadUsage(); } catch (e) { return; }
+  const ys = usageD.years, mine = usageD.q[r[N.code]];
+  if (!el.isConnected || !ys.length || !mine) return;
+  let i = ys.length - 1; while (i > 0 && ys[i].partial) i--;
+  const v = (mine[i] || [0])[0], pv = i > 0 ? (mine[i - 1] || [0])[0] : 0;
+  if (!v && !pv) return;
+  const ch = pv ? Math.round(((v - pv) / pv) * 100) : null;
+  el.innerHTML = `<span class="kk">${T(`${ys[i].year} 醫令量`, `${ys[i].year} claims`)}</span><span class="kv">${fmtN(v)}</span>${ch != null ? `<span class="ks">${ch > 0 ? '↑' : ch < 0 ? '↓' : '→'} ${Math.abs(ch)}% ${T('較前一年', 'on the year before')}</span>` : ''}`;
+  el.hidden = false;
+}
 function detailHTML(r) {
   const f = licOf(r), id = r[N.code], tab = tabOf.get(id) || 'sum';
   const photo = photoOf(r);
   const statusTags = [
     r[N.price] > 0 ? `<span class="tag ok">${T('給付中', 'Reimbursed')}</span>` : `<span class="tag off">${T('已取消給付', 'Delisted')}</span>`,
-    clsTag(r[N.class]), ctrlTag(f), pkgTag(r),
+    clsTag(r[N.class]), ctrlTag(f), pkgTag(r), alertTags(f),
     f ? (f[F.status] ? `<span class="tag off">${T('許可證', 'Licence ')}${esc(f[F.status])}</span>` : `<span class="tag ok">${T('許可證有效', 'Licence valid')}</span>`) : '',
   ].join('');
-  const price = r[N.price] > 0 ? `<b>$${fmtP(r[N.price])}</b><small>${T('自 ', 'since ')}${esc(r[N.priceSince] || '—')}</small>`
-    : `<b style="color:var(--warn-text)">${T('取消給付', 'Delisted')}</b><small>${esc(r[N.priceSince] || '')}${r[N.lastPaidPrice] ? T(` · 最後 $${fmtP(r[N.lastPaidPrice])}`, ` · last $${fmtP(r[N.lastPaidPrice])}`) : ''}</small>`;
   const tabs = TABS.filter(([k]) => k !== 'rules' || r[N.ruleChapters]);
   return `<div class="detail" id="d-${esc(id)}" data-code="${esc(id)}">
     <div class="d-back"><button type="button" data-act="close">← ${T('返回', 'Back')}</button><span>${esc(r[N.zh] || r[N.en])}</span></div>
     <div class="d-head">
-      <div class="d-pic">${photo ? zoomBtn(photo, (r[N.zh] || r[N.en]), `<img src="${esc(photo)}" alt="${esc(T('藥品外觀照片', 'Photo of the drug'))}" decoding="async">`) : formIcon(r[N.form])}</div>
-      <div class="d-title"><h2>${esc(r[N.zh] || r[N.en])}</h2>${r[N.zh] ? `<div class="en">${esc(r[N.en])}</div>` : ''}<div class="tags">${statusTags}</div></div>
-      <div class="d-price">${price}</div>
+      <div class="d-pic${photo ? '' : ' noimg'}">${photo ? zoomBtn(photo, (r[N.zh] || r[N.en]), `<img src="${esc(photo)}" alt="${esc(T('藥品外觀照片', 'Photo of the drug'))}" decoding="async">`) : formIcon(r[N.form])}</div>
+      <div class="d-title"><h2>${esc(r[N.zh] || r[N.en])}</h2><div class="en">${r[N.zh] ? esc(r[N.en]) + ' · ' : ''}<span class="cd">${esc(id)}</span></div><div class="tags">${statusTags}</div></div>
+      <div class="d-tools">${iconBtn('copy', 'copy', '複製摘要', 'Copy summary')}${iconBtn('link', 'link', '複製連結', 'Copy link')}${iconBtn('codelist', 'list', '加入代碼清單', 'Add to code list')}${iconBtn('close', 'close', '收合', 'Close', ' x')}</div>
     </div>
+    ${kpiHTML(r)}
     ${alertBanners(f)}
-    <div class="tabs" role="tablist">${tabs.map(([k, zh, en]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${k === tab}">${T(zh, en)}</button>`).join('')}</div>
+    <div class="tabs" role="tablist">${tabs.map(([k, zh, en]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${k === tab}">${T(zh, en)}</button>`).join('')}<span class="tab-ink" aria-hidden="true"></span></div>
     <div class="tabp" role="tabpanel" data-panel="${tab}">${tabHTML(r, tab)}</div>
   </div>`;
 }
@@ -928,30 +1264,38 @@ function tabHTML(r, tab) {
   if (tab === 'sum') {
     const sibs = siblings(r);
     const pkg = TW.isFoil(r[N.code]) ? T('鋁箔包裝（代號末兩碼 G0）', 'Foil pack (code ends in G0)') : hasFoilTwin(r) ? T('一般包裝（同品項另有 G0 鋁箔包裝）', 'Standard pack (a G0 foil pack also exists)') : '';
-    return `<div class="tl" data-tl></div><div class="facts">
-      ${fact(T('成分', 'Ingredient'), esc(r[N.ingredient]), true)}
-      ${fact(T('健保代號', 'NHI code'), `<span class="cd">${esc(r[N.code])}</span>`)}
-      ${fact('ATC', r[N.atc] ? `<span class="cd">${esc(r[N.atc])}</span>` : '')}
-      ${fact(T('劑型', 'Form'), esc(r[N.form]) + (r[N.strength] ? ' · ' + esc(r[N.strength]) : ''))}
-      ${fact(T('單複方', 'Single/combo'), esc(r[N.single]))}
-      ${fact(T('首次收載', 'First listed'), esc(r[N.firstListed]))}
-      ${fact(T('藥品分類', 'Class'), r[N.class] ? `<span class="dot k-${CLS_KEY[r[N.class]] || 'none'}"></span> ${esc(clsName(r[N.class]))}` : '')}
-      ${fact(T('包裝', 'Pack'), pkg ? esc(pkg) : '')}
-      ${fact(T('同品項其他包裝', 'Same product, other pack'), sibs.length ? `<span class="sib">${sibs.map((s) => `<button type="button" data-go="${esc(s[N.code])}">${esc(s[N.code])} ${s[N.price] > 0 ? '$' + fmtP(s[N.price]) : T('已取消給付', 'delisted')}</button>`).join('')}</span>` : '')}
-      ${fact(T('給付規定', 'NHI rules'), r[N.ruleChapters] ? r[N.ruleChapters].split(',').filter(Boolean).map((c) => { const fl = ruleFile(r, c); return `<b>${esc(c)}</b>${fl ? ` <span class="hint" style="margin:0">${T('修訂', 'revised')} ${esc(TW.ruleDate(fl))}</span>` : ''}`; }).join('　') + ` <button type="button" class="small" data-tab="rules">${T('看全文', 'Full text')}</button>` : T('沒有特別給付規定', 'No specific rule'), true)}
-      ${fact(T('分類分組', 'Price group'), esc(r[N.group]), true)}
-      ${fact(T('藥商', 'Vendor'), esc(r[N.vendor]))}
-      ${fact(T('製造廠', 'Manufacturer'), esc(r[N.maker]))}
-      ${f ? fact(T('適應症', 'Indication'), TW.licText(f) ? `<span class="ind">${esc(TW.licText(f).indication)}</span>` : `<span class="hint">${T('載入中…', 'Loading…')}</span>`, true) : ''}
+    const nGroup = r[N.group] ? nhiD.rows.filter((x) => x[N.group] === r[N.group]).length : 0;
+    const nAtc = r[N.atc] ? nhiD.rows.filter((x) => x[N.atc] === r[N.atc]).length : 0;
+    const nAtc5 = r[N.atc] && r[N.atc].length > 5 ? nhiD.rows.filter((x) => x[N.atc].startsWith(r[N.atc].slice(0, 5))).length : 0;
+    const rules = r[N.ruleChapters] ? r[N.ruleChapters].split(',').filter(Boolean).map((c) => { const fl = ruleFile(r, c); return `<b>${esc(c)}</b>${fl ? ` <span class="hint" style="margin:0">${T('修訂', 'revised')} ${esc(TW.ruleDate(fl))}</span>` : ''}`; }).join('　') + ` <button type="button" class="small" data-tab="rules">${T('看全文', 'Full text')}</button>` : T('沒有特別給付規定', 'No specific rule');
+    const yrs = r[N.firstListed] ? Math.floor((Date.now() - new Date(r[N.firstListed])) / 3.156e10) : 0;
+    return `<div class="tl" data-tl></div>
+    <div class="fgrps">
+      <section><h4>${T('這是什麼藥', 'What it is')}</h4>${kv([
+        [T('成分', 'Ingredient'), esc(r[N.ingredient])],
+        [T('劑型', 'Form'), esc(r[N.form]) + (r[N.strength] ? ' · ' + esc(r[N.strength]) : '') + (r[N.single] ? ' · ' + esc(r[N.single]) : '')],
+        ['ATC', r[N.atc] ? `<span class="cd">${esc(r[N.atc])}</span>` : ''],
+        f ? [T('適應症', 'Indication'), TW.licText(f) ? `<span class="ind">${esc(TW.licText(f).indication)}</span>` : `<span class="hint">${T('載入中…', 'Loading…')}</span>`] : null,
+      ])}</section>
+      <section><h4>${T('健保', 'NHI')}</h4>${kv([
+        [T('首次收載', 'First listed'), esc(r[N.firstListed]) + (yrs >= 1 ? ` <span class="hint" style="margin:0">（${T(`${yrs} 年`, `${yrs} yr`)}）</span>` : '')],
+        [T('藥品分類', 'Class'), clsDot(r[N.class])],
+        [T('分類分組', 'Price group'), esc(r[N.group])],
+        [T('給付規定', 'NHI rules'), rules],
+        [T('包裝', 'Pack'), pkg ? esc(pkg) : ''],
+        [T('其他包裝', 'Other pack'), sibs.length ? `<span class="sib">${sibs.map((s) => `<button type="button" data-go="${esc(s[N.code])}">${esc(s[N.code])} ${s[N.price] > 0 ? '$' + fmtP(s[N.price]) : T('已取消給付', 'delisted')}</button>`).join('')}</span>` : ''],
+      ])}</section>
+      <section><h4>${T('廠商與許可證', 'Makers and licence')}</h4>${kv([
+        [T('藥商', 'Vendor'), esc(r[N.vendor])],
+        [T('製造廠', 'Manufacturer'), esc(r[N.maker])],
+        f ? [T('許可證', 'Licence'), `${esc(f[F.licence])}${f[F.status] ? ` <span class="tag off">${esc(f[F.status])}</span>` : (f[F.validUntil] ? ` <span class="hint" style="margin:0">${T(`有效至 ${esc(f[F.validUntil])}`, `valid to ${esc(f[F.validUntil])}`)}</span>` : '')} <button type="button" class="small" data-tab="lic">${T('詳細', 'Details')}</button>`] : null,
+      ])}</section>
     </div>
     ${pkg ? `<p class="note">${T('G0 與 00 的對應是依健保資料推得（G0 品項為鋁箔包裝，支付價適用較高的最低價），以健保署公告為準。', 'The G0 / 00 pairing is worked out from the NHI data (G0 items are foil packs with a higher price floor); the NHIA’s own notices take precedence.')}</p>` : ''}
     <div class="acts">
-      ${r[N.group] ? `<button type="button" data-act="group">${T('同分組比價', 'Same price group')}</button>` : ''}
-      ${r[N.atc] ? `<button type="button" data-act="atc">${T('同 ATC 藥品', 'Same ATC')} (${esc(r[N.atc])})</button>` : ''}
-      ${r[N.atc] && r[N.atc].length > 5 ? `<button type="button" data-act="atc5">${T('同藥理分類', 'Same class')} (${esc(r[N.atc].slice(0, 5))})</button>` : ''}
-      <button type="button" data-act="copy">${T('複製摘要', 'Copy summary')}</button>
-      <button type="button" data-act="link">${T('複製連結', 'Copy link')}</button>
-      <button type="button" data-act="codelist">${T('加入代碼清單', 'Add to code list')}</button>
+      ${r[N.group] ? `<button type="button" data-act="group">${T('同分組比價', 'Same price group')} <span class="n">${nGroup}</span></button>` : ''}
+      ${r[N.atc] ? `<button type="button" data-act="atc">${T('同 ATC 藥品', 'Same ATC')} ${esc(r[N.atc])} <span class="n">${nAtc}</span></button>` : ''}
+      ${nAtc5 ? `<button type="button" data-act="atc5">${T('同藥理分類', 'Same class')} ${esc(r[N.atc].slice(0, 5))} <span class="n">${nAtc5}</span></button>` : ''}
     </div>`;
   }
   if (tab === 'price') {
@@ -1024,16 +1368,50 @@ function licTab(f) {
 }
 const licPhoto = (f) => { const looks = looksOf(f), i = extraD ? extraD.lookCols.indexOf('photo') : -1, l = i >= 0 ? looks.find((x) => x[i]) : null; return l ? mcp(l[i]) : ''; };
 const licDomId = (f) => 'dl-' + String(f[F.licId] || f[F.licence]).replace(/[^\w-]/g, '_');
+// licences without an NHI code, the first 50; with "by group" on, gathered by the same ingredients and form,
+// each group saying what the NHI pays for those ingredients
+function licListHTML(L) {
+  const top = L.slice(0, 50);
+  if (!S.byGroup) return top.map(licRowHTML).join('');
+  const gs = new Map();
+  top.forEach((f) => { const k = ingKey(f[F.ingredients], ';') + '|' + (f[F.form] || ''); const g = gs.get(k); if (g) g.push(f); else gs.set(k, [f]); });
+  let h = '';
+  for (const fs of gs.values()) {
+    const f = fs[0], same = sameIngredient(f), paid = same.filter((r) => r[N.price] > 0).map((r) => r[N.price]);
+    const lo = paid.length ? Math.min(...paid) : 0, hi = paid.length ? Math.max(...paid) : 0, first = licFirstIng(f);
+    h += `<li class="grp-h"><span class="gn">${esc(String(f[F.ingredients] || '').replace(/;/g, '；'))}${f[F.form] ? ' · ' + esc(f[F.form]) : ''}</span><span class="gm">${T(`${fs.length} 張許可證`, `${fs.length} licence${fs.length > 1 ? 's' : ''}`)} · ${paid.length ? T(`健保同成分給付中 <b>${paid.length}</b> 項，<b>$${fmtP(lo)}</b>${hi > lo ? ' – $' + fmtP(hi) : ''}`, `NHI pays for <b>${paid.length}</b> with these ingredients, <b>$${fmtP(lo)}</b>${hi > lo ? ' – $' + fmtP(hi) : ''}`) : T('健保沒有同成分的給付品項', 'no NHI item with these ingredients')}</span>${paid.length && first ? `<button type="button" class="small" data-fixq="${esc(first)}">${T('看健保品項', 'See NHI items')}</button>` : ''}</li>` + fs.map(licRowHTML).join('');
+  }
+  return h;
+}
+// the licence's prescription category in a word or two
+function catShort(v) {
+  const s = String(v || '');
+  if (/成藥/.test(s)) return T('成藥', 'OTC (general sale)');
+  if (/指示藥品/.test(s)) return T('指示藥', 'Pharmacy OTC');
+  if (/原料|膠囊|調劑/.test(s)) return T('原料／調劑用', 'Raw material');
+  if (/醫師|處方|檢驗師/.test(s)) return T('處方藥', 'Prescription');
+  return s;
+}
 function licRowHTML(f) {
-  const no = f[F.licence], isOpen = openLic.has(no), src = licPhoto(f), tags = ctrlTag(f) + alertTags(f);
-  return `<li data-lic="${esc(no)}"><button type="button" class="row" aria-expanded="${isOpen}" aria-controls="${licDomId(f)}">
-    <span class="thumb">${src ? `<img src="${esc(src)}" alt="" loading="lazy" decoding="async">` : formIcon(f[F.form])}</span>
-    <span class="main"><span class="nm">${hl(f[F.zh] || f[F.en])} <span class="en">${f[F.zh] ? hl(f[F.en]) : ''}</span></span>
-      <span class="meta"><span class="cd">${hl(no)}</span><span>${hl(f[F.ingredients])}</span>${f[F.form] ? `<span>${esc(f[F.form])}</span>` : ''}</span>
-      ${indHits.has('L:' + no) ? `<span class="ind-hit"><b>${T('適應症', 'Indication')}</b> ${indSnippet(indText(f), tokens())}</span>` : ''}
-      ${tags ? `<span class="tags">${tags}</span>` : ''}</span>
-    <span class="pr"><span class="tag">${esc(f[F.category] || '—')}</span><small>${T('無健保代號', 'No NHI code')}</small></span>
-  </button>${isOpen ? licDetailHTML(f) : ''}</li>`;
+  const no = f[F.licence], isOpen = openLic.has(no), src = licPhoto(f), tags = ctrlTag(f) + alertTags(f), cat = catShort(f[F.category]);
+  const li = (cls, inner) => `<li data-lic="${esc(no)}"${isOpen ? ' class="open"' : ''}><button type="button" class="${cls}" aria-expanded="${isOpen}" aria-controls="${licDomId(f)}" title="${esc(f[F.category] || '')}">${inner}</button>${isOpen ? licDetailHTML(f) : ''}</li>`;
+  const noPrice = `<span class="nop">${T('無健保價', 'No NHI price')}</span>`;
+  if (S.rview === 'table') return li('row t', `
+    <span class="c-nm"><span class="nm">${hl(f[F.zh] || f[F.en])}</span>${f[F.zh] ? `<span class="en">${hl(f[F.en])}</span>` : ''}</span>
+    <span class="c-cd cd">${hl(no)}</span><span class="c-cls">${esc(cat)}</span><span class="c-ing">${hl(f[F.ingredients])}</span>
+    <span class="c-form">${esc(f[F.form] || '')}${tags ? ` <span class="tags">${tags}</span>` : ''}</span><span class="c-pr">${noPrice}</span><span class="c-bar" aria-hidden="true"></span>`);
+  if (S.rview === 'cards') {
+    const lk = looksLine(f);
+    return li('row c', `<span class="card-ph${src ? '' : ' noimg'}">${src ? `<img src="${esc(src)}" alt="" loading="lazy" decoding="async">` : `${formIcon(f[F.form])}<small>${T('沒有照片', 'No photo')}</small>`}</span>
+    <span class="card-nm">${hl(f[F.zh] || f[F.en])}</span><span class="card-lk">${lk ? esc(lk) : hl(f[F.ingredients])}</span>
+    <span class="card-pr">${noPrice}<span>${esc(cat)}</span></span>`);
+  }
+  return li('row', `
+    <span class="thumb${src ? '' : ' noimg'}">${src ? `<img src="${esc(src)}" alt="" loading="lazy" decoding="async">` : formIcon(f[F.form])}</span>
+    <span class="main"><span class="nm">${hl(f[F.zh] || f[F.en])}${tags ? ` <span class="tags">${tags}</span>` : ''}</span>${f[F.zh] ? `<span class="en">${hl(f[F.en])}</span>` : ''}
+      <span class="meta"><span class="cat">${esc(cat)}</span><span class="cd">${hl(no)}</span><span>${hl(f[F.ingredients])}</span>${f[F.form] ? `<span>${esc(f[F.form])}</span>` : ''}</span>
+      ${indHits.has('L:' + no) ? `<span class="ind-hit"><b>${T('適應症', 'Indication')}</b> ${indSnippet(indText(f), tokens())}</span>` : ''}</span>
+    <span class="pr">${noPrice}</span>`);
 }
 
 /* ---------- a licence without an NHI code: what TFDA has, and the NHI items with the same ingredients ---------- */
@@ -1067,12 +1445,12 @@ function licDetailHTML(f) {
   return `<div class="detail" id="${licDomId(f)}" data-lic="${esc(no)}">
     <div class="d-back"><button type="button" data-act="close">← ${T('返回', 'Back')}</button><span>${esc(name)}</span></div>
     <div class="d-head">
-      <div class="d-pic">${photo ? zoomBtn(photo, name, `<img src="${esc(photo)}" alt="${esc(T('藥品外觀照片', 'Photo of the drug'))}" decoding="async">`) : formIcon(f[F.form])}</div>
+      <div class="d-pic${photo ? '' : ' noimg'}">${photo ? zoomBtn(photo, name, `<img src="${esc(photo)}" alt="${esc(T('藥品外觀照片', 'Photo of the drug'))}" decoding="async">`) : formIcon(f[F.form])}</div>
       <div class="d-title"><h2>${esc(name)}</h2>${f[F.zh] ? `<div class="en">${esc(f[F.en])}</div>` : ''}<div class="tags">${tags}</div></div>
-      <div class="d-price"><b style="color:var(--muted)">${T('無健保價', 'No NHI price')}</b><small>${T('不在健保用藥品項', 'not on the NHI list')}</small></div>
+      <div class="d-tools">${iconBtn('copy', 'copy', '複製摘要', 'Copy summary')}${iconBtn('close', 'close', '收合', 'Close', ' x')}</div>
     </div>
     ${alertBanners(f)}
-    <div class="tabs" role="tablist">${LIC_TABS.map(([k, zh, en]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${k === tab}">${T(zh, en)}</button>`).join('')}</div>
+    <div class="tabs" role="tablist">${LIC_TABS.map(([k, zh, en]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${k === tab}">${T(zh, en)}</button>`).join('')}<span class="tab-ink" aria-hidden="true"></span></div>
     <div class="tabp" role="tabpanel" data-panel="${tab}">${licTabHTML(f, tab)}</div>
   </div>`;
 }
@@ -1114,10 +1492,42 @@ function licSummary(f) {
 }
 
 /* ---------- tabs that load something: price history, rules ---------- */
+const motionOK = () => !matchMedia('(prefers-reduced-motion: reduce)').matches;
+const played = new Set();
+// add the entrance class the first time this chart is shown for this drug, never again
+function enterOnce(el, key) { if (!el || played.has(key)) return; played.add(key); if (motionOK()) el.classList.add('enter'); }
+// the sliding tab underline
+function placeInk(tabs, animate) {
+  if (!tabs) return;
+  const ink = tabs.querySelector('.tab-ink'), b = tabs.querySelector('[aria-selected="true"]');
+  if (!ink || !b) return;
+  ink.classList.toggle('go', !!animate);
+  ink.style.transform = `translate(${b.offsetLeft}px, ${b.offsetTop + b.offsetHeight - 2}px) scaleX(${b.offsetWidth / 100})`;
+  tabs.classList.add('inked');
+}
+function switchTab(d, tab, html) {
+  d.querySelectorAll('.tabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
+  placeInk(d.querySelector('.tabs'), true);
+  const p = d.querySelector('.tabp'); p.dataset.panel = tab; p.innerHTML = html;
+  p.classList.remove('in'); void p.offsetWidth; if (motionOK()) p.classList.add('in');
+}
+addEventListener('resize', RT.debounce(() => document.querySelectorAll('#out .detail .tabs').forEach((t) => placeInk(t, false)), 150));
+// phones: the row and the sheet are drawn as one shape that grows or shrinks (View Transitions); elsewhere a plain redraw
+function morph(fromEl, update, target) {
+  if (!phone() || !motionOK() || !document.startViewTransition || !fromEl) return Promise.resolve(update());
+  let out = null;
+  fromEl.style.viewTransitionName = 'drug-sheet';
+  const vt = document.startViewTransition(() => { fromEl.style.viewTransitionName = ''; out = update(); const t = target(out); if (t) t.style.viewTransitionName = 'drug-sheet'; });
+  vt.finished.finally(() => { const t = target(out); if (t) t.style.viewTransitionName = ''; });
+  vt.ready.catch(() => {});
+  return vt.updateCallbackDone.then(() => out, () => out);
+}
 function hydrate(root) {
+  root.querySelectorAll('.detail .tabs').forEach((t) => placeInk(t, false));
   root.querySelectorAll('.detail[data-code]').forEach((d) => {
     const r = nhiD.byCode.get(d.dataset.code); if (!r) return;
     const tab = tabOf.get(r[N.code]) || 'sum';
+    fillUseKpi(d.querySelector('[data-kpi-use]'), r);
     if (tab === 'sum') drawTimeline(d.querySelector('[data-tl]'), r);
     if (tab === 'price') drawHist(d.querySelector('[data-chart]'), r);
     if (tab === 'rules') fillRules(d.querySelector('[data-rulebox]'), r);
@@ -1153,10 +1563,11 @@ async function drawHist(box, r) {
     box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${T('支付價歷程圖', 'Price history chart')}">
       ${yt.map((g) => `<line class="ax" x1="${L}" x2="${W - R}" y1="${g.y.toFixed(1)}" y2="${g.y.toFixed(1)}" stroke-dasharray="${g.v === y0 ? '' : '2 4'}"/><text class="lbl" x="${L - 8}" y="${(g.y + 4).toFixed(1)}" text-anchor="end">$${fmtP(+g.v.toFixed(2)) || '0'}</text>`).join('')}
       ${yrs.map((y) => { const xx = X(`${y}-01-01`); return xx >= L && xx <= W - R ? `<line class="ax" x1="${xx.toFixed(1)}" x2="${xx.toFixed(1)}" y1="${H - B}" y2="${H - B + 4}"/><text class="lbl" x="${xx.toFixed(1)}" y="${H - 8}" text-anchor="middle">${y}</text>` : ''; }).join('')}
-      <path class="ln" d="${d.trim()}"/>${gone ? `<path class="ln gone" d="${gone.trim()}"/>` : ''}
+      <path class="ln" pathLength="1" d="${d.trim()}"/>${gone ? `<path class="ln gone" d="${gone.trim()}"/>` : ''}
       ${pts.filter((p) => p.price > 0).map((p) => `<circle class="pt" cx="${X(p.date).toFixed(1)}" cy="${Y(p.price).toFixed(1)}" r="2.6"><title>${esc(p.date)} $${fmtP(p.price)}</title></circle>`).join('')}
     </svg>
     <details class="hist-tbl"><summary>${T(`${pts.length} 次價格變動`, `${pts.length} price changes`)}</summary><table>${pts.slice().reverse().map((p) => `<tr><td>${esc(p.date)}</td><td>${p.price ? '$' + fmtP(p.price) : T('取消給付', 'delisted')}</td></tr>`).join('')}</table></details>`;
+    enterOnce(box, 'p:' + r[N.code]);
   } catch (e) { box.innerHTML = `<p class="hint">${esc(e.message || e)}</p>`; }
 }
 // highlight the drug's own ingredients in the chapter, so the relevant paragraph is easy to find
@@ -1191,17 +1602,78 @@ async function fillRules(box, r) {
 
 /* ---------- list ---------- */
 let last = { rows: [], lic: [] };
+/* ---------- the one-line summary, view switch and export menu; the filters in use ---------- */
+const VMODES = [
+  ['list', '清單', 'List', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12M4 6h0M4 12h0M4 18h0" stroke-linecap="round" stroke-width="2.4"/></svg>'],
+  ['table', '表格', 'Table', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M3 15h18M10 10v10"/></svg>'],
+  ['cards', '圖卡', 'Cards', '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/></svg>'],
+];
+const CLS_SHORT = { '研發廠': ['研發廠', 'originator'], 'BA/BE學名藥': ['BA/BE', 'BA/BE'], '一般學名藥': ['一般', 'generic'], '生物製劑': ['生物', 'biologic'] };
+function statusHTML(total) {
+  const rows = last.rows, paid = rows.filter((r) => r[N.price] > 0).length, sc = scale;
+  const by = {}; rows.forEach((r) => { const k = CLS_KEY[r[N.class]] ? r[N.class] : ''; by[k] = (by[k] || 0) + 1; });
+  const segs = ['研發廠', 'BA/BE學名藥', '一般學名藥', '生物製劑', ''].filter((k) => by[k]);
+  const lg = segs.filter(Boolean).map((k) => `${T(...CLS_SHORT[k])} ${by[k]}`).join(' · ');
+  const mini = total ? `<span class="mini-cls" title="${esc(lg)}"><span class="mb" role="img" aria-label="${esc(T('藥品分類：', 'Classes: ') + lg)}">${segs.map((k) => `<i class="k-${CLS_KEY[k] || 'none'}" style="width:${((by[k] / total) * 100).toFixed(2)}%"></i>`).join('')}</span><span class="lg">${esc(lg)}</span></span>` : '';
+  const vm = `<span class="vmode" role="group" aria-label="${T('顯示方式', 'View')}">${VMODES.map(([k, zh, en, ic]) => `<button type="button" data-rview="${k}" aria-pressed="${S.rview === k}">${ic}${T(zh, en)}</button>`).join('')}</span>`;
+  return `<span class="n"><b>${total.toLocaleString()}</b> ${T('筆健保品項', 'NHI items')}${total && paid < total ? T(`（給付中 ${paid}）`, ` (${paid} reimbursed)`) : ''}${last.lic.length ? T(`、${last.lic.length} 張無健保代號的許可證`, `, ${last.lic.length} licences without an NHI code`) : ''}</span>`
+    + (sc ? `<span class="md">${T('中位數', 'median')} <b>$${fmtP(sc.med)}</b>（$${fmtP(sc.lo)}–$${fmtP(sc.hi)}）</span>` : '') + mini
+    + (last.packHidden ? `<span class="hint">${T(`另有 ${last.packHidden} 個${last.pack === 'foil' ? '一般包裝' : '鋁箔包裝'}代號已收起`, `${last.packHidden} ${last.pack === 'foil' ? 'standard-pack' : 'foil-pack'} codes folded away`)}</span>` : '')
+    + `<span class="spacer"></span>${total ? vm : ''}`
+    + (total ? `<details class="menu"><summary>${T('匯出', 'Export')} ▾</summary><div class="menu-pop"><button type="button" id="btnCsv">${T('匯出 CSV', 'Export CSV')}</button><button type="button" id="btnAllCl">${T('全部加入代碼清單', 'Add all to code list')}</button></div></details>` : '');
+}
+function advChips() {
+  const a = A(), out = [], add = (keys, zh, en) => out.push({ keys, label: T(zh, en) });
+  if (a.pmin || a.pmax) add(['pmin', 'pmax'], `支付價 ${a.pmin ? '$' + a.pmin : ''}～${a.pmax ? '$' + a.pmax : ''}`, `Price ${a.pmin ? '$' + a.pmin : ''}–${a.pmax ? '$' + a.pmax : ''}`);
+  if (a.from || a.to) add(['from', 'to'], `收載 ${a.from || ''}～${a.to || ''}`, `Listed ${a.from || ''}–${a.to || ''}`);
+  if (a.pkg) add(['pkg'], a.pkg === 'g0' ? '只看鋁箔包裝' : '排除鋁箔包裝', a.pkg === 'g0' ? 'Foil packs only' : 'No foil packs');
+  if (a.rules) add(['rules'], '有給付規定', 'Has NHI rules');
+  if (a.atc) add(['atc'], `ATC ${a.atc}`, `ATC ${a.atc}`);
+  if (a.cls) add(['cls'], `分類 ${clsName(a.cls)}`, `Class ${clsName(a.cls)}`);
+  if (a.form) add(['form'], `劑型 ${a.form}`, `Form ${a.form}`);
+  if (a.single) add(['single'], a.single, a.single === '單方' ? 'Single ingredient' : 'Combination');
+  if (a.photo) add(['photo'], '有照片', 'Has a photo');
+  if (a.cat) add(['cat'], `處方 ${a.cat}`, `Category ${a.cat}`);
+  if (a.ctrl) add(['ctrl'], a.ctrl === 'any' ? '管制藥品' : a.ctrl === 'none' ? '非管制藥品' : `第${'一二三四'[a.ctrl - 1]}級管制`, a.ctrl === 'any' ? 'Controlled' : a.ctrl === 'none' ? 'Not controlled' : `Schedule ${a.ctrl}`);
+  if (a.lic) add(['lic'], a.lic === 'valid' ? '許可證有效' : '許可證已註銷', a.lic === 'valid' ? 'Licence valid' : 'Licence cancelled');
+  if (a.country) add(['country'], `製造國 ${countryName(a.country)}`, `Made in ${a.country}`);
+  if (a.who) add(['who'], `廠商 ${a.who}`, `Maker ${a.who}`);
+  if (a.short) add(['short'], '缺藥中', 'Short supply');
+  if (a.recall) add(['recall'], '有回收紀錄', 'Recalled');
+  return out;
+}
+const GRP_KEYS = { pay: ['pmin', 'pmax', 'from', 'to', 'pkg', 'rules'], drug: ['atc', 'cls', 'form', 'single', 'photo'], lic: ['cat', 'ctrl', 'lic', 'country', 'who'], alert: ['short', 'recall'] };
+function renderChips() {
+  const ac = advChips();
+  const base = chips.map((x, i) => `<span class="chip">${x.k === 'group' ? T('分組：', 'Group: ') : 'ATC '}${esc(x.v)}<button type="button" data-chip="${i}" aria-label="${T('移除', 'Remove')}">×</button></span>`).join('');
+  const adv = ac.map((x) => `<span class="chip f">${esc(x.label)}<button type="button" data-advk="${x.keys.join(',')}" aria-label="${esc(T('移除 ', 'Remove ') + x.label)}">×</button></span>`).join('');
+  $('chips').innerHTML = base || adv ? `${adv ? `<span class="lab">${T('已套用：', 'Applied:')}</span>` : ''}${base}${adv}${ac.length + chips.length > 1 ? `<button type="button" class="clear-all" data-clearall>${T('全部清除', 'Clear all')}</button>` : ''}` : '';
+  document.querySelectorAll('#adv fieldset[data-grp]').forEach((fs) => { const n = GRP_KEYS[fs.dataset.grp].filter((k) => { const v = A()[k]; return v !== '' && v !== false; }).length; fs.querySelector('legend .badge').textContent = n || ''; });
+}
 function render() {
   if (!nhiD) return;
   const t0 = performance.now();
+  Qfix = '';
   last = search();
+  // nothing found: try the query with misspelt words corrected
+  let fixNote = '';
+  if (!last.rows.length && !last.lic.length && Q && !chips.length) {
+    const fx = fuzzyFix(Q);
+    if (fx) {
+      Qfix = fx.q; const alt = search();
+      if (alt.rows.length || alt.lic.length) {
+        last = alt;
+        fixNote = `<div class="fix-note">${T(`找不到「<b>${esc(Q)}</b>」，以下是「<b>${esc(fx.q)}</b>」的結果。`, `Nothing for “<b>${esc(Q)}</b>”; showing “<b>${esc(fx.q)}</b>”.`)}${fx.alts.length ? `<span>${T('或是：', 'Or:')}</span>${fx.alts.map((a) => `<button type="button" data-fixq="${esc(a)}">${esc(a)}</button>`).join('')}` : ''}</div>`;
+      } else Qfix = '';
+    }
+  }
   scale = makeScale(last.rows);
   const total = last.rows.length;
   const idle = !tokens().length && !chips.length && !advCount();
-  $('chips').innerHTML = chips.map((c, i) => `<span class="chip">${c.k === 'group' ? T('分組：', 'Group: ') : 'ATC '}${esc(c.v)}<button type="button" data-chip="${i}" aria-label="${T('移除', 'Remove')}">×</button></span>`).join('');
+  renderChips();
   $('advCount').textContent = advCount() || '';
   $('advN').textContent = idle ? '' : `(${(total + last.lic.length).toLocaleString()})`;
-  $('tips').classList.toggle('quiet', !idle && phone());
+  $('tips').hidden = !idle;
   if (idle) {
     $('ovWrap').innerHTML = ''; $('status').innerHTML = '';
     $('out').innerHTML = `<div class="empty-state">${T(`共收錄 <b>${totalCodes().toLocaleString()}</b> 個健保藥品代號（給付中 ${fmtCount()}）`, `<b>${totalCodes().toLocaleString()}</b> NHI drug codes (${fmtCount()} reimbursed)`)}${licTotal() ? T(`、<b>${licTotal().toLocaleString()}</b> 張許可證`, ` and <b>${licTotal().toLocaleString()}</b> licences`) : ''}。${T('輸入藥名、成分或代號開始查詢，或打開「進階篩選」。', ' Type a name, ingredient or code, or open Filters.')}</div>`;
@@ -1226,14 +1698,16 @@ function render() {
     }
   } else if (total) listHTML = last.rows.slice(0, shown).map(rowHTML).join('');
   const ms = Math.round(performance.now() - t0);
-  $('status').innerHTML = `<span>${T(`${total.toLocaleString()} 筆健保品項`, `${total.toLocaleString()} NHI items`)}${last.lic.length ? T(`、${last.lic.length} 張無健保代號的許可證`, `, ${last.lic.length} licences without an NHI code`) : ''}${last.packHidden ? T(`（另有 ${last.packHidden} 個${last.pack === 'foil' ? '一般包裝' : '鋁箔包裝'}代號已收起）`, ` (${last.packHidden} ${last.pack === 'foil' ? 'standard-pack' : 'foil-pack'} codes folded away)`) : ''}${total > used ? T(`，顯示前 ${used} 筆`, `; showing ${used}`) : ''}</span><span class="hint" style="margin:0">${ms} ms</span><span class="spacer"></span>${total ? `<button type="button" class="small" id="btnCsv">${T('匯出 CSV', 'Export CSV')}</button><button type="button" class="small" id="btnAllCl">${T('全部加入代碼清單', 'Add all to code list')}</button>` : ''}`;
+  $('status').innerHTML = statusHTML(total);
   if (!total && !last.lic.length) {
     $('out').innerHTML = `<div class="empty-state">${T('找不到符合的藥品。', 'No matching drugs.')}${S.scope !== 'every' ? ` <button type="button" class="small" data-scope="every">${T('改搜全部', 'Search everything')}</button>` : ''}${advCount() ? ` <button type="button" class="small" data-clear="1">${T('清除進階篩選', 'Clear filters')}</button>` : ''}</div>`;
     return;
   }
-  $('out').innerHTML = (total ? `<ul class="res${S.byGroup ? ' grouped' : ''}">${listHTML}</ul>` : '') +
+  const ulCls = 'res' + (S.byGroup ? ' grouped' : '') + (S.rview === 'table' ? ' tbl' : S.rview === 'cards' ? ' cards' : '');
+  const ul = total ? `<ul class="${ulCls}">${S.rview === 'table' ? tblHeadHTML() : ''}${listHTML}</ul>` : '';
+  $('out').innerHTML = fixNote + (S.rview === 'table' && ul ? `<div class="tbl-wrap">${ul}</div>` : ul) +
     (total > used ? `<div class="more"><button type="button" id="btnMore">${T(`再顯示 ${Math.min(100, total - used)} 筆`, `Show ${Math.min(100, total - used)} more`)}</button></div>` : '') +
-    (last.lic.length ? `<h2 class="sec-h"${S.scope === 'lic' ? ' hidden' : ''}>${T('沒有健保代號的有效許可證（例如指示藥、成藥）', 'Valid licences without an NHI code (e.g. OTC)')}</h2><ul class="res">${last.lic.slice(0, 50).map(licRowHTML).join('')}</ul>` : '');
+    (last.lic.length ? `<section class="lic-sec"${S.scope === 'lic' ? ' data-only' : ''}><div class="lic-h"${S.scope === 'lic' ? ' hidden' : ''}><h2>${T('沒有健保代號的許可證', 'Licences without an NHI code')} <span class="n">${last.lic.length}</span></h2><p>${T('健保沒有收載，所以沒有健保價。多半是自費處方藥、指示藥或成藥；點開看許可證資料與同成分的健保品項。', 'Not on the NHI list, so there is no NHI price. Mostly self-paid prescription drugs, pharmacy medicines or general-sale products; open one for its licence record and the NHI items with the same ingredients.')}</p></div>${(() => { const ul = `<ul class="res${S.rview === 'table' ? ' tbl' : S.rview === 'cards' ? ' cards' : ''}">${S.rview === 'table' ? tblHeadHTML() : ''}${licListHTML(last.lic)}</ul>`; return S.rview === 'table' ? `<div class="tbl-wrap">${ul}</div>` : ul; })()}${last.lic.length > 50 ? `<p class="hint">${T(`只列前 50 張，請加關鍵字縮小範圍`, `Showing the first 50; add words to narrow it down`)}</p>` : ''}</section>` : '');
   hydrate($('out'));
   if (total && !extraD) loadExtra();   // photos for the cards
 }
@@ -1282,12 +1756,15 @@ function openDrug(li) {
     if (!sheetState) { history.pushState({ sheet: id }, ''); sheetState = true; }
   } else open.add(id);
   loadExtra(); loadMore(); loadAlerts(); sync();
-  const n = redrawRow(document.querySelector(`#out li[data-code="${CSS.escape(id)}"]`) || li);
-  if (phone() && n) { const d = n.querySelector('.detail'); if (d) { d.scrollTop = 0; const b = d.querySelector('[data-act="close"]'); if (b) b.focus({ preventScroll: true }); } }
+  const cur = document.querySelector(`#out li[data-code="${CSS.escape(id)}"]`) || li;
+  morph(cur.querySelector('.row'), () => redrawRow(cur), (n) => n && n.querySelector('.detail')).then((n) => {
+    if (phone() && n) { const d = n.querySelector('.detail'); if (d) { d.scrollTop = 0; const b = d.querySelector('[data-act="close"]'); if (b) b.focus({ preventScroll: true }); } }
+    else if (n) { const x = n.querySelector('.d-tools .x'); if (x) x.focus({ preventScroll: true }); }
+  });
 }
 function redrawLic(li) {
   const f = fdaD && licIdx().byNo.get(li.dataset.lic); if (!f) return null;
-  const tmp = document.createElement('ul'); tmp.innerHTML = licRowHTML(f); const n = tmp.firstElementChild; li.replaceWith(n); return n;
+  const tmp = document.createElement('ul'); tmp.innerHTML = licRowHTML(f); const n = tmp.firstElementChild; li.replaceWith(n); n.querySelectorAll('.detail .tabs').forEach((t) => placeInk(t, false)); return n;
 }
 const licLi = (no) => document.querySelector(`#out li[data-lic="${CSS.escape(no)}"]`);
 function openLicRow(li) {
@@ -1299,15 +1776,19 @@ function openLicRow(li) {
     if (!sheetState) { history.pushState({ sheet: no }, ''); sheetState = true; }
   } else openLic.add(no);
   loadExtra(); loadMore(); loadAlerts();
-  const n = redrawLic(licLi(no) || li);
-  if (phone() && n) { const d = n.querySelector('.detail'); if (d) { d.scrollTop = 0; const b = d.querySelector('[data-act="close"]'); if (b) b.focus({ preventScroll: true }); } }
+  const cur = licLi(no) || li;
+  morph(cur.querySelector('.row'), () => redrawLic(cur), (n) => n && n.querySelector('.detail')).then((n) => {
+    if (phone() && n) { const d = n.querySelector('.detail'); if (d) { d.scrollTop = 0; const b = d.querySelector('[data-act="close"]'); if (b) b.focus({ preventScroll: true }); } }
+    else if (n) { const x = n.querySelector('.d-tools .x'); if (x) x.focus({ preventScroll: true }); }
+  });
 }
 function closeLic(no, fromHistory) {
   openLic.delete(no);
-  document.body.classList.remove('sheet-open');
-  const li = licLi(no), n = li ? redrawLic(li) : null;
+  const li = licLi(no);
   if (sheetState && !fromHistory) { sheetState = false; history.back(); } else sheetState = false;
-  if (n) { const row = n.querySelector('.row'); if (row) row.focus({ preventScroll: phone() }); }
+  morph(li && li.querySelector('.detail'), () => { document.body.classList.remove('sheet-open'); return li ? redrawLic(li) : null; }, (n) => n && n.querySelector('.row')).then((n) => {
+    if (n) { const row = n.querySelector('.row'); if (row) row.focus({ preventScroll: phone() }); }
+  });
 }
 async function licClick(e, li) {
   const f = fdaD && licIdx().byNo.get(li.dataset.lic); if (!f) return;
@@ -1315,9 +1796,7 @@ async function licClick(e, li) {
   const tb = e.target.closest('[data-tab]');
   if (tb) {
     tabOf.set('L:' + no, tb.dataset.tab);
-    const d = li.querySelector('.detail');
-    d.querySelectorAll('.tabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tb.dataset.tab)));
-    const p = d.querySelector('.tabp'); p.dataset.panel = tb.dataset.tab; p.innerHTML = licTabHTML(f, tb.dataset.tab);
+    switchTab(li.querySelector('.detail'), tb.dataset.tab, licTabHTML(f, tb.dataset.tab));
     return;
   }
   const act = e.target.closest('[data-act]');
@@ -1335,11 +1814,11 @@ async function licClick(e, li) {
 }
 function closeDrug(id, fromHistory) {
   open.delete(id);
-  document.body.classList.remove('sheet-open');
   const li = document.querySelector(`#out li[data-code="${CSS.escape(id)}"]`);
-  const n = li ? redrawRow(li) : null;
   if (sheetState && !fromHistory) { sheetState = false; history.back(); setTimeout(sync, 0); } else { sheetState = false; sync(); }
-  if (n) { const row = n.querySelector('.row'); if (row) row.focus({ preventScroll: phone() }); }
+  morph(li && li.querySelector('.detail'), () => { document.body.classList.remove('sheet-open'); return li ? redrawRow(li) : null; }, (n) => n && n.querySelector('.row')).then((n) => {
+    if (n) { const row = n.querySelector('.row'); if (row) row.focus({ preventScroll: phone() }); }
+  });
 }
 window.addEventListener('popstate', () => { if (sheetState) { sheetState = false; [...open].forEach((c) => closeDrug(c, true)); [...openLic].forEach((c) => closeLic(c, true)); } });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && phone() && (open.size || openLic.size) && !$('photo').open) { [...open].forEach((c) => closeDrug(c)); [...openLic].forEach((c) => closeLic(c)); } });
@@ -1390,6 +1869,8 @@ $('out').addEventListener('click', async (e) => {
   if (e.target.closest('[data-clear]')) { clearAdv(); return; }
   if (e.target.id === 'btnMore') { shown += 100; render(); return; }
   const cg = e.target.closest('[data-chipgroup]'); if (cg) { setChip('group', cg.dataset.chipgroup); return; }
+  const sh = e.target.closest('[data-sorth]'); if (sh) { S.sort = sh.dataset.sorth === 'code' ? 'code' : S.sort === 'pa' ? 'pd' : 'pa'; $('fSort').value = S.sort; save(); render(); return; }
+  const fq = e.target.closest('[data-fixq]'); if (fq) { Q = fq.dataset.fixq; $('q').value = Q; shown = 50; open.clear(); openLic.clear(); sync(); render(); return; }
   const go = e.target.closest('[data-go]'); if (go) { goCode(go.dataset.go); return; }
   const ll = e.target.closest('li[data-lic]'); if (ll) { licClick(e, ll); return; }
   const li = e.target.closest('li[data-code]'); if (!li) return;
@@ -1397,10 +1878,8 @@ $('out').addEventListener('click', async (e) => {
   const tb = e.target.closest('[data-tab]');
   if (tb) {
     tabOf.set(r[N.code], tb.dataset.tab);
-    const d = li.querySelector('.detail');
     // the button may also be a shortcut inside a panel ("Full text"): mark the tab with the same name
-    d.querySelectorAll('.tabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tb.dataset.tab)));
-    const p = d.querySelector('.tabp'); p.dataset.panel = tb.dataset.tab; p.innerHTML = tabHTML(r, tb.dataset.tab); hydrate(li);
+    switchTab(li.querySelector('.detail'), tb.dataset.tab, tabHTML(r, tb.dataset.tab)); hydrate(li);
     return;
   }
   const act = e.target.closest('[data-act]');
@@ -1429,24 +1908,32 @@ $('ovWrap').addEventListener('click', (e) => {
   else if (s) setScope(s.dataset.ovscope);
   else if (k) { A().ctrl = A().ctrl === k.dataset.ovctrl ? '' : k.dataset.ovctrl; syncAdv(); shown = 50; save(); render(); }
 });
+const CSV_HEAD = ['健保代號', '中文名稱', '英文名稱', '成分', '規格', '劑型', '藥品分類', 'ATC', '支付價', '支付價起日', '首次收載', '包裝', '分類分組', '給付規定章節', '藥商', '製造廠', '許可證字號', '許可證狀態', '處方類別', '管制藥品', '製造國別'];
+function csvRow(r) { if (!r) return CSV_HEAD.map(() => ''); const f = licOf(r); return [r[N.code], r[N.zh], r[N.en], r[N.ingredient], r[N.strength], r[N.form], r[N.class], r[N.atc], r[N.price], r[N.priceSince], r[N.firstListed], TW.isFoil(r[N.code]) ? '鋁箔包裝(G0)' : hasFoilTwin(r) ? '一般包裝' : '', r[N.group], r[N.ruleChapters], r[N.vendor], r[N.maker], f ? f[F.licence] : '', f ? f[F.status] || '有效' : '', f ? f[F.category] : '', f ? f[F.controlled] : '', f ? f[F.country] : '']; }
 $('status').addEventListener('click', (e) => {
+  const vm = e.target.closest('[data-rview]'); if (vm) { S.rview = vm.dataset.rview; save(); if (S.rview === 'cards') loadExtra(); render(); return; }
   if (e.target.id === 'btnCsv') {
-    const head = ['健保代號', '中文名稱', '英文名稱', '成分', '規格', '劑型', '藥品分類', 'ATC', '支付價', '支付價起日', '首次收載', '包裝', '分類分組', '給付規定章節', '藥商', '製造廠', '許可證字號', '許可證狀態', '處方類別', '管制藥品', '製造國別'];
-    const rows = last.rows.map((r) => { const f = licOf(r); return [r[N.code], r[N.zh], r[N.en], r[N.ingredient], r[N.strength], r[N.form], r[N.class], r[N.atc], r[N.price], r[N.priceSince], r[N.firstListed], TW.isFoil(r[N.code]) ? '鋁箔包裝(G0)' : hasFoilTwin(r) ? '一般包裝' : '', r[N.group], r[N.ruleChapters], r[N.vendor], r[N.maker], f ? f[F.licence] : '', f ? f[F.status] || '有效' : '', f ? f[F.category] : '', f ? f[F.controlled] : '', f ? f[F.country] : '']; });
-    RT.downloadCSV([head, ...rows], 'tw-drugs.csv');
+    const rows = last.rows.map(csvRow);
+    RT.downloadCSV([CSV_HEAD, ...rows], 'tw-drugs.csv');
   }
   if (e.target.id === 'btnAllCl') {
     if (last.rows.length > 3000) { RT.toast(T('結果超過 3000 筆，請先縮小範圍', 'More than 3000 results; narrow the search first'), 4000); return; }
     toCodelist(last.rows.map(nhiItem));
   }
 });
-$('chips').addEventListener('click', (e) => { const b = e.target.closest('[data-chip]'); if (!b) return; chips.splice(+b.dataset.chip, 1); shown = 50; sync(); render(); });
+$('chips').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-chip]'); if (b) { chips.splice(+b.dataset.chip, 1); shown = 50; sync(); render(); return; }
+  const k = e.target.closest('[data-advk]'); if (k) { k.dataset.advk.split(',').forEach((x) => (A()[x] = ADV[x])); syncAdv(); shown = 50; save(); render(); return; }
+  if (e.target.closest('[data-clearall]')) { chips = []; S.adv = { ...ADV }; syncAdv(); shown = 50; save(); sync(); render(); }
+});
+// an open menu closes on a click anywhere else
+document.addEventListener('click', (e) => { document.querySelectorAll('details.menu[open]').forEach((m) => { if (!m.contains(e.target) || e.target.closest('.menu-pop button')) m.open = false; }); });
 
 /* ---------- controls ---------- */
-function setScope(v, quiet) { if (v !== 'paid') loadAll(); S.scope = v; [...$('scope').children].forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === v))); if (v !== 'paid') loadFdaAll(); shown = 50; save(); if (!quiet) render(); }
-$('scope').addEventListener('click', (e) => { const b = e.target.closest('button[data-v]'); if (b) setScope(b.dataset.v); });
-function setPack(v, quiet) { S.pack = v; [...$('pack').children].forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === v))); shown = 50; save(); if (!quiet) render(); }
-$('pack').addEventListener('click', (e) => { const b = e.target.closest('button[data-v]'); if (b) setPack(b.dataset.v); });
+function setScope(v, quiet) { if (v !== 'paid') loadAll(); S.scope = v; $('scope').value = v; if (v !== 'paid') loadFdaAll(); shown = 50; save(); if (!quiet) render(); }
+$('scope').addEventListener('change', () => setScope($('scope').value));
+function setPack(v, quiet) { S.pack = v; $('pack').value = v; shown = 50; save(); if (!quiet) render(); }
+$('pack').addEventListener('change', () => setPack($('pack').value));
 function save() { RT.save(KEY, S); }
 function sync() {
   const p = new URLSearchParams();
@@ -1594,7 +2081,7 @@ async function drawUsage(box, r) {
   const max = Math.max(...mine.map((x) => (x ? x[0] : 0)), 1);
   const cols = ys.map((y, i) => {
     const [t, m] = mine[i] || [0, 0], f = Math.max(0, t - m);
-    return `<div class="ucol${y.partial ? ' part' : ''}" title="${y.year}${y.partial ? T(`（到 ${y.to}）`, ` (to ${y.to})`) : ''}"><span class="val">${t ? fmtN(t) : '0'}</span><span class="stack" style="height:${((t / max) * 100).toFixed(1)}%"><i class="f" style="flex:${f}"></i><i class="m" style="flex:${m}"></i></span></div>`;
+    return `<div class="ucol${y.partial ? ' part' : ''}" style="--i:${i}" title="${y.year}${y.partial ? T(`（到 ${y.to}）`, ` (to ${y.to})`) : ''}"><span class="val">${t ? fmtN(t) : '0'}</span><span class="stack" style="height:${((t / max) * 100).toFixed(1)}%"><i class="f" style="flex:${f}"></i><i class="m" style="flex:${m}"></i></span></div>`;
   }).join('');
   box.innerHTML = `<div class="ubars" role="img" aria-label="${T('各年醫令量', 'Claims per year')}">${cols}</div>
     <div class="uyears">${ys.map((y) => `<span>${y.year}${y.partial ? '*' : ''}</span>`).join('')}</div>
@@ -1604,6 +2091,7 @@ async function drawUsage(box, r) {
     </tbody></table>
     <p class="note">${T(`醫令量是健保申報的數量（含包裹支付），單位依品項而定，例如錠、支、瓶。* 為當年度部分月份。「佔同 ATC」是同一個 ATC 代碼（${esc(r[N.atc])}）所有健保代號中，這個代號的醫令量比例；不同劑型、含量的單位不同，比例僅供參考。資料來源：健保署「健保藥品使用量」。`, `Claims are NHI quantities including bundled payments, in each item’s own unit (tablet, vial, bottle…). * marks a partial year. “Share of ATC” is this code’s part of all NHI codes with ATC ${esc(r[N.atc])}; units differ between forms and strengths, so read it as a rough guide. Source: NHIA drug usage data.`)}</p>`;
   box.insertAdjacentHTML('beforeend', shareHTML(r));
+  enterOnce(box.querySelector('.ubars'), 'u:' + r[N.code]);
 }
 
 
@@ -1613,22 +2101,27 @@ const TL_KIND = {
   rule: ['給付規定修訂', 'Rule revised'], short: ['缺藥', 'Shortage'], back: ['恢復供應', 'Back in supply'], recall: ['回收', 'Recall'], off: ['取消給付／許可證註銷', 'Delisted / licence cancelled'],
 };
 const TL_COLOR = { lic: 'var(--accent)', list: 'var(--accent)', down: 'var(--c-babe)', up: 'var(--c-orig)', rule: 'var(--c-bio)', short: 'var(--c-off)', back: 'var(--c-babe)', recall: 'var(--c-orig)', off: 'var(--muted)' };
+// price and events in one picture: the price as a step line with its changes marked on it,
+// and a lane above for what does not move the price (licence, rules, shortages, recalls)
+const TL_LANE = new Set(['lic', 'rule', 'short', 'back', 'recall']);
 async function drawTimeline(box, r) {
   if (!box) return;
   let h = [];
   try { [h] = await Promise.all([TW.hist(r[N.code]), loadAlerts()]); } catch (e) { h = []; }
   if (!box.isConnected) return;
   const f = licOf(r), ev = [], today = new Date().toISOString().slice(0, 10);
-  const add = (date, kind, label, end) => { const d = String(date || '').slice(0, 10); if (/^\d{4}-\d{2}-\d{2}$/.test(d) && d <= today) ev.push({ date: d, kind, label, end }); };
+  const add = (date, kind, label, end, p) => { const d = String(date || '').slice(0, 10); if (/^\d{4}-\d{2}-\d{2}$/.test(d) && d <= today) ev.push({ date: d, kind, label, end, p }); };
   if (f) add(f[F.issued], 'lic', T('許可證核發', 'Licence issued') + ' · ' + f[F.licence]);
-  const pts = h.filter((x) => x.date);
-  add(r[N.firstListed], 'list', T('健保收載', 'NHI listing') + (pts[0] && pts[0].price > 0 ? ` · $${fmtP(pts[0].price)}` : ''));
+  // no recorded change: the current price since it took effect
+  let pts = h.filter((x) => x.date);
+  if (!pts.length && r[N.price] > 0) pts = [{ date: r[N.priceSince] || r[N.firstListed], price: r[N.price] }].filter((x) => x.date);
+  add(r[N.firstListed], 'list', T('健保收載', 'NHI listing') + (pts[0] && pts[0].price > 0 ? ` · $${fmtP(pts[0].price)}` : ''), null, pts[0] && pts[0].price > 0 ? pts[0].price : null);
   pts.forEach((x, i) => {
     if (!i) return;
     const o = pts[i - 1].price, p = x.price;
-    if (!(p > 0)) add(x.date, 'off', T('取消給付', 'Delisted'));
-    else if (!(o > 0)) add(x.date, 'list', T(`恢復給付 · $${fmtP(p)}`, `Relisted · $${fmtP(p)}`));
-    else if (p !== o) add(x.date, p < o ? 'down' : 'up', `$${fmtP(o)} → $${fmtP(p)}（${p > o ? '+' : ''}${(((p - o) / o) * 100).toFixed(1)}%）`);
+    if (!(p > 0)) add(x.date, 'off', T('取消給付', 'Delisted'), null, o > 0 ? o : null);
+    else if (!(o > 0)) add(x.date, 'list', T(`恢復給付 · $${fmtP(p)}`, `Relisted · $${fmtP(p)}`), null, p);
+    else if (p !== o) add(x.date, p < o ? 'down' : 'up', `$${fmtP(o)} → $${fmtP(p)}（${p > o ? '+' : ''}${(((p - o) / o) * 100).toFixed(1)}%）`, null, p);
   });
   if (r[N.ruleChapters]) r[N.ruleChapters].split(',').filter(Boolean).forEach((c) => { const fl = ruleFile(r, c); if (fl) add(TW.ruleDate(fl), 'rule', T(`給付規定 ${c} 修訂`, `Rule ${c} revised`)); });
   if (f && f[F.status]) add(f[F.cancelDate], 'off', T('許可證', 'Licence ') + f[F.status]);
@@ -1640,45 +2133,66 @@ async function drawTimeline(box, r) {
   }
   if (!ev.length) { box.innerHTML = ''; return; }
   ev.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
-  // drawn at the box's own width, so marks and year labels keep their size on a phone
-  const W = Math.max(280, Math.round(box.clientWidth || 640)), Hh = 84, L = 10, R = 10, AX = 42;
+  // drawn at the box's own width, so marks and labels keep their size on a phone
+  const W = Math.max(280, Math.round(box.clientWidth || 640)), Hh = 158, L = 52, R = 14, LANE = 14, P0 = 40, P1 = 118, AX = 128;
   const t = (d) => new Date(d).getTime();
-  let x0 = t(ev[0].date), x1 = t(today);
+  let x0 = Math.min(t(ev[0].date), pts.length ? t(pts[0].date) : Infinity), x1 = t(today);
   if (x1 - x0 < 3e10) x0 = x1 - 3e10;                 // at least about a year wide
   const X = (d) => L + ((t(d) - x0) / (x1 - x0)) * (W - L - R);
-  // each mark sits in a group with a larger invisible target, so a finger can hit it; a click opens a small note
-  const mark = (e) => {
-    const x = X(e.date).toFixed(1);
-    let m, hit;
-    if (e.kind === 'short') {
-      const w = Math.max(3, X(e.end) - X(e.date)).toFixed(1);
-      m = `<rect class="e-short" x="${x}" y="${AX - 4}" width="${w}" height="8" rx="2"/>`;
-      hit = `<rect class="hit" x="${x}" y="${AX - 10}" width="${Math.max(16, +w)}" height="20"/>`;
-    } else {
-      const cy = e.kind === 'rule' ? AX - 17 : e.kind === 'recall' ? AX + 16 : AX;
-      if (e.kind === 'rule') m = `<path class="e-rule" d="M${x} ${AX - 22} l5 5 -5 5 -5 -5z"/>`;
-      else if (e.kind === 'recall') m = `<path class="e-recall" d="M${x} ${AX + 11} l5.5 9 h-11z"/>`;
-      else if (e.kind === 'off') m = `<path class="e-off" d="M${(+x - 4).toFixed(1)} ${AX - 4} l8 8 M${(+x + 4).toFixed(1)} ${AX - 4} l-8 8"/>`;
-      else m = `<circle class="e-${e.kind}" cx="${x}" cy="${AX}" r="${e.kind === 'lic' || e.kind === 'list' ? 5 : 3.6}"/>`;
-      hit = `<circle class="hit" cx="${x}" cy="${cy}" r="11"/>`;
-    }
-    return `<g class="ev" data-i="${e.i}" tabindex="0" role="button" aria-label="${esc(e.date + ' ' + e.label)}">${hit}${m}</g>`;
+  const paid = pts.map((x) => x.price).filter((p) => p > 0);
+  const pmax = paid.length ? Math.max(...paid) : 0, pmin = paid.length ? Math.min(...paid) : 0;
+  const ylo = pmin === pmax ? pmin * 0.7 : Math.max(0, pmin - (pmax - pmin) * 0.18), yhi = pmin === pmax ? pmax * 1.3 || 1 : pmax + (pmax - pmin) * 0.12;
+  const Y = (p) => (paid.length && p > 0 ? P1 - ((p - ylo) / (yhi - ylo)) * (P1 - P0) : (P0 + P1) / 2);
+  const inLane = (e) => TL_LANE.has(e.kind) || e.p == null;
+  ev.forEach((e, i) => { e.i = i; e.x = X(e.date); e.y = inLane(e) ? LANE : Y(e.p); });
+  // the step line
+  let line = '';
+  pts.forEach((x, i) => {
+    const xx = Math.max(L, X(x.date)).toFixed(1), yy = Y(x.price).toFixed(1);
+    if (x.price > 0) line += i && pts[i - 1].price > 0 ? ` H${xx} V${yy}` : ` M${xx} ${yy}`;
+  });
+  if (pts.length && pts[pts.length - 1].price > 0) line += ` H${W - R}`;
+  // marks that would sit on top of each other are drawn once, with how many there are
+  const groups = [];
+  [...ev.filter(inLane), ...ev.filter((e) => !inLane(e))].forEach((e) => {
+    const g = e.kind === 'short' ? null : groups.find((q) => q.lane === inLane(e) && q.kind !== 'short' && Math.abs(q.x - e.x) < 9 && Math.abs(q.y - e.y) < 7);
+    if (g) { g.n++; g.e = e; } else groups.push({ x: e.x, y: e.y, lane: inLane(e), kind: e.kind, e, n: 1 });
+  });
+  const shape = (e, x, y) => {
+    const X1 = x.toFixed(1), Y1 = y.toFixed(1);
+    if (e.kind === 'short') { const w = Math.max(3, X(e.end) - x).toFixed(1); return `<rect class="e-short" x="${X1}" y="${y - 4}" width="${w}" height="8" rx="2"/>`; }
+    if (e.kind === 'rule') return `<path class="e-rule" d="M${X1} ${y - 6} l6 6 -6 6 -6 -6z"/>`;
+    if (e.kind === 'recall') return `<rect class="e-recall" x="${(x - 4.5).toFixed(1)}" y="${y - 4.5}" width="9" height="9" rx="1.5"/>`;
+    if (e.kind === 'down') return `<path class="e-down" d="M${(x - 5.5).toFixed(1)} ${y - 9} h11 l-5.5 8z"/>`;
+    if (e.kind === 'up') return `<path class="e-up" d="M${(x - 5.5).toFixed(1)} ${y + 9} h11 l-5.5 -8z"/>`;
+    if (e.kind === 'off') return `<path class="e-off" d="M${(x - 4).toFixed(1)} ${y - 4} l8 8 M${(x + 4).toFixed(1)} ${y - 4} l-8 8"/>`;
+    return `<circle class="e-${e.kind}" cx="${X1}" cy="${Y1}" r="${e.kind === 'lic' || e.kind === 'list' ? 5 : 4}"/>`;
   };
-  const ya = new Date(x0).getFullYear(), yb = new Date(x1).getFullYear(), step = Math.max(1, Math.ceil((yb - ya) / Math.max(3, Math.floor(W / 90))));
+  const mark = (g) => {
+    const e = g.e, hit = e.kind === 'short' ? `<rect class="hit" x="${g.x.toFixed(1)}" y="${g.y - 10}" width="${Math.max(16, X(e.end) - g.x).toFixed(1)}" height="20"/>` : `<circle class="hit" cx="${g.x.toFixed(1)}" cy="${(e.kind === 'down' ? g.y - 5 : e.kind === 'up' ? g.y + 5 : g.y).toFixed(1)}" r="11"/>`;
+    const cnt = g.n > 1 ? `<circle class="cnt" cx="${(g.x + 8).toFixed(1)}" cy="${(g.y - 8).toFixed(1)}" r="6.5"/><text class="cnt-t" x="${(g.x + 8).toFixed(1)}" y="${(g.y - 5).toFixed(1)}" text-anchor="middle">${g.n}</text>` : '';
+    return `<g class="ev" data-i="${e.i}" tabindex="0" role="button" aria-label="${esc(e.date + ' ' + e.label)}${g.n > 1 ? T(`，附近另有 ${g.n - 1} 件`, `, and ${g.n - 1} more nearby`) : ''}">${hit}${shape(e, g.x, g.y)}${cnt}</g>`;
+  };
+  const ya = new Date(x0).getFullYear(), yb = new Date(x1).getFullYear(), step = Math.max(1, Math.ceil((yb - ya) / Math.max(3, Math.floor((W - L) / 90))));
   const yrs = []; for (let y = Math.ceil(ya / step) * step; y <= yb; y += step) if (t(`${y}-01-01`) > x0) yrs.push(y);
-  // bands first, then the rest, so the dots sit on top
-  ev.forEach((e, i) => { e.i = i; e.x = X(e.date); });
-  const order = [...ev.filter((e) => e.kind === 'short'), ...ev.filter((e) => e.kind !== 'short')];
+  const guides = groups.filter((g) => g.lane).map((g) => `<line class="guide" x1="${g.x.toFixed(1)}" x2="${g.x.toFixed(1)}" y1="${LANE + 7}" y2="${AX}"/>`).join('');
   const kinds = Object.keys(TL_KIND).filter((k) => ev.some((e) => e.kind === k));
   const latest = ev.slice().reverse();
-  box.innerHTML = `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="${T(`這個藥的時間軸：${ev.length} 個事件，從 ${ev[0].date} 到今天`, `Timeline: ${ev.length} events from ${ev[0].date} to today`)}">
+  const yl = paid.length ? (pmin === pmax ? [pmax] : [pmax, pmin]) : [];
+  box.innerHTML = `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="${T(`價格與事件：${ev.length} 個事件，從 ${ev[0].date} 到今天${paid.length ? `，支付價 $${fmtP(pmin)}–$${fmtP(pmax)}` : ''}`, `Price and events: ${ev.length} events from ${ev[0].date} to today${paid.length ? `, price $${fmtP(pmin)}–$${fmtP(pmax)}` : ''}`)}">
+      <text class="lane-l" x="${L - 8}" y="${LANE + 4}" text-anchor="end">${T('事件', 'Events')}</text>
+      <line class="lane" x1="${L}" x2="${W - R}" y1="${LANE}" y2="${LANE}"/>
+      ${yl.map((p) => `<line class="grid" x1="${L}" x2="${W - R}" y1="${Y(p).toFixed(1)}" y2="${Y(p).toFixed(1)}"/><text class="ylab" x="${L - 8}" y="${(Y(p) + 4).toFixed(1)}" text-anchor="end">$${fmtP(p)}</text>`).join('')}
       <line class="ax" x1="${L}" x2="${W - R}" y1="${AX}" y2="${AX}"/>
-      ${yrs.map((y) => { const x = X(`${y}-01-01`).toFixed(1); return `<line class="ax" x1="${x}" x2="${x}" y1="${AX + 3}" y2="${AX + 7}"/><text class="yr" x="${x}" y="${Hh - 4}" text-anchor="middle">${y}</text>`; }).join('')}
-      ${order.map(mark).join('')}
+      ${yrs.map((y) => { const x = X(`${y}-01-01`).toFixed(1); return `<line class="ax" x1="${x}" x2="${x}" y1="${AX}" y2="${AX + 4}"/><text class="yr" x="${x}" y="${Hh - 6}" text-anchor="middle">${y}</text>`; }).join('')}
+      ${guides}
+      ${line ? `<path class="pl" pathLength="1" d="${line.trim()}"/>` : ''}
+      ${groups.map(mark).join('')}
     </svg>
     <div class="legend">${kinds.map((k) => `<span><span class="dot" style="background:${TL_COLOR[k]}"></span> ${T(TL_KIND[k][0], TL_KIND[k][1])} <b>${ev.filter((e) => e.kind === k).length}</b></span>`).join('')}<span class="tl-hint">${T('點圖示看說明', 'Tap a mark for details')}</span></div>
     <details><summary>${T(`最近：${esc(latest[0].date)} ${esc(latest[0].label)}（全部 ${ev.length} 個事件）`, `Latest: ${esc(latest[0].date)} ${esc(latest[0].label)} (all ${ev.length} events)`)}</summary>
       <ol>${latest.slice(0, 80).map((e) => `<li><span class="d">${esc(e.date)}</span><span><span class="dot" style="background:${TL_COLOR[e.kind]}"></span> ${esc(e.label)}</span></li>`).join('')}</ol></details>`;
+  enterOnce(box, 't:' + r[N.code]);
   box._tl = { ev, today };
   box.onclick = (x) => { const g = x.target.closest('.ev'); if (g) { x.stopPropagation(); tlPop(box, g); } else if (x.target.closest('[data-tlx]')) tlClose(true); };
   box.onkeydown = (x) => { const g = x.target.closest('.ev'); if (g && (x.key === 'Enter' || x.key === ' ')) { x.preventDefault(); tlPop(box, g); } };
@@ -1696,7 +2210,7 @@ function tlPop(box, g) {
   tlClose(false);
   if (same) return;
   const { ev, today } = box._tl, e = ev[+g.dataset.i];
-  const near = ev.filter((o) => Math.abs(o.x - e.x) <= 7).sort((a, b) => (a.date < b.date ? -1 : 1));
+  const near = ev.filter((o) => Math.abs(o.x - e.x) < 9 && Math.abs(o.y - e.y) < 7).sort((a, b) => (a.date < b.date ? -1 : 1));
   const span = (a) => {
     const d = Math.round((new Date(today) - new Date(a)) / 864e5);
     if (d < 365) return T(`${d} 天`, `${d} day${d === 1 ? '' : 's'}`);
@@ -1814,33 +2328,129 @@ async function drawClassTrend(det) {
   const lastQ = snap.filter((x) => x.q != null && !x.part).pop(), last = snap[n - 1];
   const svg = (inner, label) => `<svg viewBox="0 0 ${VW} ${VH}" preserveAspectRatio="none" role="img" aria-label="${label}">${inner}</svg>`;
   const html = `<div class="ctr-row"><span class="k">${T('給付品項數', 'Items paid')}</span>${svg(bars(snap.map((x) => x.n), () => ''), T('各年給付品項數', 'Items paid per year'))}<span class="v">${last.n.toLocaleString()}</span></div>
-    <div class="ctr-row"><span class="k">${T('支付價中位數', 'Median price')}</span>${svg(`<line class="base" x1="0" x2="${VW}" y1="${VH - 0.5}" y2="${VH - 0.5}"/><path class="ln" d="${line}"/>${snap.map((x, i) => (x.med ? `<rect x="${(i * bw).toFixed(2)}" y="0" width="${bw.toFixed(2)}" height="${VH}" class="hit"><title>${x.y}: $${fmtP(x.med)}</title></rect>` : '')).join('')}`, T('各年支付價中位數', 'Median price per year'))}<span class="v">$${fmtP(last.med)}</span></div>
+    <div class="ctr-row"><span class="k">${T('支付價中位數', 'Median price')}</span>${svg(`<line class="base" x1="0" x2="${VW}" y1="${VH - 0.5}" y2="${VH - 0.5}"/><path class="ln" pathLength="1" d="${line}"/>${snap.map((x, i) => (x.med ? `<rect x="${(i * bw).toFixed(2)}" y="0" width="${bw.toFixed(2)}" height="${VH}" class="hit"><title>${x.y}: $${fmtP(x.med)}</title></rect>` : '')).join('')}`, T('各年支付價中位數', 'Median price per year'))}<span class="v">$${fmtP(last.med)}</span></div>
     ${snap.some((x) => x.q) ? `<div class="ctr-row"><span class="k">${T('醫令量', 'Claims')}</span>${svg(bars(snap.map((x) => x.q), (i) => (snap[i].part ? 'part' : '')), T('各年醫令量', 'Claims per year'))}<span class="v">${lastQ ? fmtN(lastQ.q) : '—'}</span></div>` : ''}
     <div class="ctr-ax"><span></span><span class="yrs">${snap.map((x, i) => { const step = Math.ceil(n / 6); return `<span${(n - 1 - i) % step ? ' class="off"' : ''}>${x.y}</span>`; }).join('')}</span><span></span></div>
     <p class="note">${T(`ATC ${esc(p)} 共 ${rows.length} 個健保代號（含已取消給付）。品項數與價格中位數取每年 7 月 1 日（今年為今天）的狀態；不同含量、劑型混在一起，只看大方向。醫令量 * 為部分月份。`, `ATC ${esc(p)}: ${rows.length} NHI codes, delisted ones included. Item counts and median prices are as of 1 July each year (today for this year); strengths and forms are mixed, so read the direction only. * marks a partial year of claims.`)}</p>`;
   ctrCache.set(p, html);
-  if (det.isConnected) box.innerHTML = html;
+  if (det.isConnected) { box.innerHTML = html; enterOnce(box, 'c:' + p); }
 }
 
 /* ---------- views ---------- */
-const VIEWS = ['search', 'changes', 'alerts', 'rules'];
+const VIEWS = ['search', 'changes', 'alerts', 'rules', 'batch'];
 function setView(v, quiet) {
   if (!VIEWS.includes(v)) v = 'search';
   S.view = v; save();
   $('views').querySelectorAll('[data-view]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.view === v)));
-  $('vSearch').hidden = v !== 'search'; $('vChanges').hidden = v !== 'changes'; $('vAlerts').hidden = v !== 'alerts'; $('vRules').hidden = v !== 'rules';
-  if (v === 'changes') renderChanges(); else if (v === 'alerts') renderAlerts(); else if (v === 'rules') renderRulesView();
+  $('vSearch').hidden = v !== 'search'; $('vChanges').hidden = v !== 'changes'; $('vAlerts').hidden = v !== 'alerts'; $('vRules').hidden = v !== 'rules'; $('vBatch').hidden = v !== 'batch';
+  if (v === 'changes') renderChanges(); else if (v === 'alerts') renderAlerts(); else if (v === 'rules') renderRulesView(); else if (v === 'batch') renderBatch();
   if (!quiet) sync();
 }
 $('views').addEventListener('click', (e) => { const b = e.target.closest('[data-view]'); if (b) { leaveSheet(); setView(b.dataset.view); window.scrollTo({ top: 0 }); } });
 // a drug named in any view opens in the search view
-['vChanges', 'vAlerts', 'vRules'].forEach((id) => $(id).addEventListener('click', (e) => {
+['vChanges', 'vAlerts', 'vRules', 'vBatch'].forEach((id) => $(id).addEventListener('click', (e) => {
   const g = e.target.closest('[data-go]'); if (!g) return;
   setView('search', true); goCode(g.dataset.go);
 }));
 const loadingBox = (id) => { $(id).innerHTML = `<div class="loading">${T('載入中…', 'Loading…')}</div>`; };
 const nameOf = (code) => { const r = nhiD.byCode.get(code); return r ? (r[N.zh] || r[N.en]) : code; };
 const drugBtn = (code) => `<button type="button" data-go="${esc(code)}">${esc(nameOf(code))}</button>`;
+
+
+/* batch lookup: a pasted list of codes, licence numbers, ATC codes or names, one result table */
+const BATCH_MAX = 2000;
+function batchItems(text) {
+  const seen = new Set(), out = [];
+  String(text || '').split(/[\n\r\t,;，；、]+/).map((s) => s.trim()).filter(Boolean).forEach((s) => { const k = TW.fold(s); if (!seen.has(k)) { seen.add(k); out.push(s); } });
+  return out.slice(0, BATCH_MAX);
+}
+// one input → { kind, rows (NHI), lic (licence-only) }
+function batchMatch(s) {
+  const k = TW.fold(s).trim(), up = s.trim().toUpperCase();
+  if (nhiD.byCode.has(up)) return { kind: 'code', rows: [nhiD.byCode.get(up)], lic: [] };
+  if (/字第/.test(s)) {
+    const f = licIdx().byNo.get(s.trim());
+    if (f) { const rs = licIdx().codes.get(f[F.licence]) || []; return { kind: 'licence', rows: rs, lic: rs.length ? [] : [f] }; }
+    return { kind: 'licence', rows: [], lic: [] };
+  }
+  if (ATC_RE.test(k)) { const rs = nhiD.rows.filter((r) => r[N.atc].toLowerCase().startsWith(k)); if (rs.length) return { kind: 'atc', rows: rs, lic: [] }; }
+  // a name: the exact Chinese or English name first, else every item that has all its words
+  const H = haystack();
+  let rs = nhiD.rows.filter((r, i) => zF[i] === k || eF[i] === k);
+  if (!rs.length) { const ts = k.split(/\s+/).filter(Boolean); rs = nhiD.rows.filter((r, i) => ts.every((t) => H[i].includes(t))); }
+  let lic = [];
+  if (!rs.length) { const L = licOnlyRows(), ts = k.split(/\s+/).filter(Boolean); lic = L.filter((f, i) => ts.every((t) => licHay[i].includes(t))); }
+  return { kind: 'name', rows: rs, lic };
+}
+let batchRes = null;
+const batchPaidFirst = (a, b) => (b[N.price] > 0) - (a[N.price] > 0) || (a[N.zh] || '').localeCompare(b[N.zh] || '', 'zh-Hant');
+async function renderBatch() {
+  const box = $('vBatch');
+  if (!box.querySelector('#bq')) {
+    box.innerHTML = `<div class="batch">
+      <label for="bq" class="batch-l">${T('每行一個（也可以用逗號分開）：健保代號、許可證字號、ATC 碼或藥名、成分', 'One per line (or comma-separated): NHI codes, licence numbers, ATC codes, names or ingredients')}</label>
+      <textarea id="bq" rows="7" spellcheck="false" placeholder="A009186100&#10;BC23743100&#10;C10AA05&#10;metformin"></textarea>
+      <div class="batch-acts"><button type="button" class="primary" id="bGo">${T('查詢', 'Look up')}</button><button type="button" id="bClear">${T('清除', 'Clear')}</button><span class="hint" id="bCount" style="margin:0"></span></div>
+      <div id="bOut"></div></div>`;
+    const ta = $('bq'); ta.value = S.bq || '';
+    const cnt = () => { const n = batchItems(ta.value).length; $('bCount').textContent = n ? T(`${n} 項${n >= BATCH_MAX ? `（上限 ${BATCH_MAX}）` : ''}`, `${n} items${n >= BATCH_MAX ? ` (limit ${BATCH_MAX})` : ''}`) : ''; };
+    ta.oninput = RT.debounce(() => { S.bq = ta.value.length < 60000 ? ta.value : ''; save(); cnt(); }, 300);
+    ta.onkeydown = (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); runBatch(); } };
+    $('bGo').onclick = runBatch;
+    $('bClear').onclick = () => { ta.value = ''; S.bq = ''; save(); batchRes = null; $('bOut').innerHTML = ''; cnt(); ta.focus(); };
+    cnt();
+  }
+  if (batchRes) drawBatch();
+}
+async function runBatch() {
+  const items = batchItems($('bq').value);
+  if (!items.length) { $('bOut').innerHTML = ''; return; }
+  $('bOut').innerHTML = `<div class="loading">${T('載入完整資料中…', 'Loading the full lists…')}</div>`;
+  try { await Promise.all([loadAll(), loadFdaAll()]); } catch (e) { $('bOut').innerHTML = `<div class="empty-state">${esc(e.message || e)}</div>`; return; }
+  batchRes = items.map((s) => ({ s, ...batchMatch(s) }));
+  drawBatch();
+}
+let batchOnlyMiss = false;
+function drawBatch() {
+  const res = batchRes, PER = 30;
+  const one = res.filter((x) => x.rows.length + x.lic.length === 1).length, none = res.filter((x) => !x.rows.length && !x.lic.length).length, many = res.length - one - none;
+  const shown = batchOnlyMiss ? res.filter((x) => x.rows.length + x.lic.length !== 1) : res;
+  const kindName = { code: T('代號', 'code'), licence: T('許可證', 'licence'), atc: 'ATC', name: T('名稱', 'name') };
+  const rowTr = (x, r, first, n) => `<tr${first ? ' class="first"' : ''}>${first ? `<td rowspan="${n}" class="bi"><b>${esc(x.s)}</b><small>${kindName[x.kind]}</small></td>` : ''}
+    <td class="cd"><button type="button" data-go="${esc(r[N.code])}">${esc(r[N.code])}</button></td><td>${esc(r[N.zh] || r[N.en])}<small>${r[N.zh] ? esc(r[N.en]) : ''}</small></td>
+    <td>${esc(r[N.ingredient])}</td><td class="cd">${esc(r[N.atc])}</td><td class="num">${r[N.price] > 0 ? '$' + fmtP(r[N.price]) : `<span class="tag off">${T('已取消給付', 'Delisted')}</span>`}</td></tr>`;
+  const licTr = (x, f, first, n) => `<tr${first ? ' class="first"' : ''}>${first ? `<td rowspan="${n}" class="bi"><b>${esc(x.s)}</b><small>${kindName[x.kind]}</small></td>` : ''}
+    <td class="cd">—</td><td>${esc(f[F.zh] || f[F.en])}<small>${esc(f[F.licence])}</small></td><td>${esc(f[F.ingredients])}</td><td class="cd"></td><td class="num"><span class="tag off">${T('無健保代號', 'No NHI code')}</span></td></tr>`;
+  const body = shown.map((x) => {
+    const rs = x.rows.slice().sort(batchPaidFirst), tot = rs.length + x.lic.length;
+    if (!tot) return `<tr class="first miss"><td class="bi"><b>${esc(x.s)}</b><small>${kindName[x.kind]}</small></td><td colspan="5">${T('找不到', 'Not found')}</td></tr>`;
+    const list = [...rs.slice(0, PER).map((r) => ['r', r]), ...x.lic.slice(0, Math.max(0, PER - rs.length)).map((f) => ['l', f])];
+    const more = tot - list.length, n = list.length + (more > 0 ? 1 : 0);
+    return list.map(([t, v], i) => (t === 'r' ? rowTr(x, v, i === 0, n) : licTr(x, v, i === 0, n))).join('')
+      + (more > 0 ? `<tr><td colspan="5" class="hint">${T(`另有 ${more} 筆（匯出 CSV 會全部列出）`, `${more} more (all of them go into the CSV)`)}</td></tr>` : '');
+  }).join('');
+  $('bOut').innerHTML = `<div class="batch-sum"><span>${T(`共 ${res.length} 項：<b>${one}</b> 項對到一筆、<b>${many}</b> 項對到多筆、<b>${none}</b> 項找不到`, `${res.length} items: <b>${one}</b> one match, <b>${many}</b> several, <b>${none}</b> not found`)}</span>
+      <label class="batch-miss"><input type="checkbox" id="bMiss"${batchOnlyMiss ? ' checked' : ''}> ${T('只看多筆或找不到的', 'Only several or not found')}</label>
+      <span class="spacer"></span><button type="button" class="small" id="bCsv">${T('匯出 CSV', 'Export CSV')}</button><button type="button" class="small" id="bCl">${T('健保代號加入代碼清單', 'Add NHI codes to code list')}</button></div>
+    <div class="batch-tbl"><table><thead><tr><th>${T('輸入', 'Input')}</th><th>${T('健保代號', 'NHI code')}</th><th>${T('名稱', 'Name')}</th><th>${T('成分', 'Ingredient')}</th><th>ATC</th><th class="num">${T('支付價', 'Price')}</th></tr></thead><tbody>${body}</tbody></table></div>`;
+  $('bMiss').onchange = (e) => { batchOnlyMiss = e.target.checked; drawBatch(); };
+  $('bCsv').onclick = () => {
+    const rows = [];
+    res.forEach((x) => {
+      if (!x.rows.length && !x.lic.length) rows.push([x.s, '找不到', ...csvRow(null)]);
+      x.rows.slice().sort(batchPaidFirst).forEach((r) => rows.push([x.s, x.rows.length + x.lic.length > 1 ? '多筆' : '符合', ...csvRow(r)]));
+      x.lic.forEach((f) => rows.push([x.s, '無健保代號', '', f[F.zh], f[F.en], f[F.ingredients], '', f[F.form], '', '', '', '', '', '', '', '', f[F.applicant], f[F.maker], f[F.licence], f[F.status] || '有效', f[F.category], f[F.controlled], f[F.country]]));
+    });
+    RT.downloadCSV([['輸入', '比對結果', ...CSV_HEAD], ...rows], 'tw-drugs-batch.csv');
+  };
+  $('bCl').onclick = () => {
+    const seen = new Set(), items = [];
+    res.forEach((x) => x.rows.forEach((r) => { if (!seen.has(r[N.code])) { seen.add(r[N.code]); items.push(nhiItem(r)); } }));
+    if (!items.length) { RT.toast(T('沒有健保代號可以加入', 'No NHI codes to add'), 3000); return; }
+    if (items.length > 3000) { RT.toast(T('超過 3000 個代號，請分批', 'More than 3000 codes; split the list'), 4000); return; }
+    toCodelist(items);
+  };
+}
 
 /* this week */
 let changesD = null;
@@ -1983,7 +2593,7 @@ $('refs').innerHTML = RT.noticeHTML([T('資料來源：健保署「健保用藥�
   if (p.get('group')) chips.push({ k: 'group', v: p.get('group') });
   if (p.get('atc')) chips.push({ k: 'atc', v: p.get('atc').toUpperCase() });
 })();
-[...$('scope').children].forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === S.scope)));
+$('scope').value = S.scope;
 setPack(['foil', 'can', 'both'].includes(S.pack) ? S.pack : 'foil', true);
 $('fSort').value = S.sort;
 setByGroup(S.byGroup, true);

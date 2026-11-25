@@ -19,7 +19,7 @@ Browser-based figure tools for research papers. Everything runs in the browser �
 | RoB 2 risk-of-bias plots and tables | `rob2/` |
 | ROBINS-I V2 risk-of-bias plots and tables | `robinsi/` |
 | Code list builder: ICD-10-CM, ICD-9-CM diagnoses and procedures, ATC and Taiwan NHI drug codes in groups, ICD-9-CM ↔ ICD-10-CM mapping (GEMs), ready-made Charlson and Elixhauser groups (Quan 2005), with a Word appendix table, CSV and SAS / R / Stata / SQL / Python selection code | `codelist/` |
-| Taiwan drug lookup: NHI drug list (price, price history, reimbursement rules, ATC, price groups) joined with TFDA drug licences, searchable by name, ingredient, indication or code; results can be listed by price group, each item shows where its price sits in its group, and licences without an NHI code open to their TFDA record and the NHI items with the same ingredients | `drugs/` |
+| Taiwan drug lookup: NHI drug list (price, price history, reimbursement rules, ATC, price groups) joined with TFDA drug licences, searchable by name, ingredient, indication or code (a misspelt English name is corrected), with a batch lookup for a pasted list of codes, licences, ATC codes or names; results show as a list with each price placed in its price group, a table or photo cards, and each drug opens with its key numbers and one chart of price and events; results can be listed by price group, each item shows where its price sits in its group, and licences without an NHI code open to their TFDA record and the NHI items with the same ingredients | `drugs/` |
 
 Interface in Traditional Chinese and English, in a light or dark theme that follows the system or is set with the button beside the language switch. Figures export to PNG, TIFF, JPG, PDF, SVG, editable Word and PowerPoint (a 16:9 slide of native, editable shapes plus a slide with the figure as a picture).
 
@@ -38,4 +38,4 @@ The figure tools open figure-first: the settings column stays hidden until Setti
 
 張家菘 — questions, bug reports and suggestions: [js.chang0512@gmail.com](mailto:js.chang0512@gmail.com)
 
-Version: v3.14 (2026-11-25)
+Version: v3.15 (2026-11-26)
