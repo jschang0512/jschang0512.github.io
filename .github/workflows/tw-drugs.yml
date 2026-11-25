@@ -39,7 +39,7 @@ jobs:
         run: |
           mkdir -p /tmp/prev
           git fetch origin tw-drugs-data --depth 1 || true
-          for f in meta nhi nhi-paid nhi-rest hist fda fda-more extra rules alerts usage changes; do
+          for f in meta nhi nhi-paid nhi-rest hist fda fda-more extra rules alerts usage changes safety; do
             git show origin/tw-drugs-data:$f.json > /tmp/prev/$f.json 2>/dev/null || rm -f /tmp/prev/$f.json
           done
           ls -l /tmp/prev
@@ -73,6 +73,9 @@ jobs:
               mkdir -p /tmp/src/fda$id && { unzip -o -q /tmp/src/fda$id.dl -d /tmp/src/fda$id 2>/dev/null || cp /tmp/src/fda$id.dl /tmp/src/fda$id/fda$id.csv; }
             fi
           done
+          # TFDA safety communications (53) and the risk-management-plan list (54): plain JSON
+          get /tmp/src/fda53.json "https://data.fda.gov.tw/data/opendata/export/53/json" || true
+          get /tmp/src/fda54.json "https://data.fda.gov.tw/data/opendata/export/54/json" || true
           # NHI usage: one file per year from ROC 111 (2022) on; the first id that answers 400 ends the list
           mkdir -p /tmp/src/usage
           for n in $(seq -w 1 40); do
@@ -96,6 +99,7 @@ jobs:
           [ -n "$(csv1 fda106)" ] && args="$args --recovered $(csv1 fda106)"
           ls /tmp/src/usage/*.csv >/dev/null 2>&1 && args="$args --usage /tmp/src/usage"
           node .github/scripts/tw-drug-watch.mjs /tmp/out /tmp/prev $args
+          node .github/scripts/tw-drug-safety.mjs /tmp/out /tmp/prev --comms /tmp/src/fda53.json --rmp /tmp/src/fda54.json
           node .github/scripts/tw-drug-rules.mjs /tmp/out /tmp/prev/rules.json
           node -e "const m=require('/tmp/out/meta.json'); console.log('reused:', m.reused.join(', ') || 'none')" | tee -a "$GITHUB_STEP_SUMMARY"
 

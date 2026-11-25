@@ -19,7 +19,7 @@ echo "== $(date '+%F %T') Taiwan drug data, built locally"
 # last published data: the fallback for any source that cannot be downloaded, and the rule texts already converted
 mkdir -p "$WORK/prev" "$WORK/src"
 git fetch -q origin tw-drugs-data 2>/dev/null || true
-for f in meta nhi nhi-paid nhi-rest hist fda fda-more extra rules alerts usage changes; do
+for f in meta nhi nhi-paid nhi-rest hist fda fda-more extra rules alerts usage changes safety; do
   git show "origin/tw-drugs-data:$f.json" > "$WORK/prev/$f.json" 2>/dev/null || rm -f "$WORK/prev/$f.json"
 done
 # before the branch has rule texts, reuse the ones converted on this computer
@@ -50,6 +50,9 @@ for id in 34 104 106; do
     mkdir -p "$WORK/src/fda$id" && { unzip -o -q "$WORK/src/fda$id.dl" -d "$WORK/src/fda$id" 2>/dev/null || cp "$WORK/src/fda$id.dl" "$WORK/src/fda$id/fda$id.csv"; }
   fi
 done
+# TFDA safety communications (53) and the risk-management-plan list (54): plain JSON
+get "$WORK/src/fda53.json" "https://data.fda.gov.tw/data/opendata/export/53/json" || true
+get "$WORK/src/fda54.json" "https://data.fda.gov.tw/data/opendata/export/54/json" || true
 # NHI usage: one file per year from ROC 111 (2022) on; the first id that answers 400 ends the list
 mkdir -p "$WORK/src"/usage
 for n in $(seq -w 1 40); do
@@ -68,6 +71,7 @@ for pair in "34:--recall" "104:--short" "106:--recovered"; do
 done
 ls "$WORK/src/usage"/*.csv >/dev/null 2>&1 && args+=(--usage "$WORK/src/usage")
 node .github/scripts/tw-drug-watch.mjs "$WORK/out" "$WORK/prev" "${args[@]}" || exit 1
+node .github/scripts/tw-drug-safety.mjs "$WORK/out" "$WORK/prev" --comms "$WORK/src/fda53.json" --rmp "$WORK/src/fda54.json" || exit 1
 node .github/scripts/tw-drug-rules.mjs "$WORK/out" "$WORK/prev/rules.json" 2>&1 | grep -v '^Syntax Error' || true
 [ -f "$WORK/out/rules.json" ] || { echo "ERROR: rules.json was not written"; exit 1; }
 

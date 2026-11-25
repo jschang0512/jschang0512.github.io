@@ -19,7 +19,9 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="stylesheet" href="../shared/style.css?v=20261126a">
-<script>try{var t=localStorage.getItem('rt:theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
+<script>try{var t=localStorage.getItem('rt:theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}
+// a page change interrupted mid-fade rejects its transition's promises; that is expected, not an error
+addEventListener('pagereveal',function(e){var v=e.viewTransition;if(v){v.ready.catch(function(){});v.updateCallbackDone.catch(function(){});}});</script>
 <style>
   /* drug classes: one hue each, readable on both themes */
   :root { --c-orig: oklch(56% 0.150 28); --c-babe: oklch(52% 0.120 160); --c-gen: oklch(58% 0.060 250); --c-bio: oklch(54% 0.140 305); --c-off: oklch(70% 0.100 75); }
@@ -397,6 +399,34 @@
   .banner.short { border-left-color: var(--c-off); }
   .banner.recall { border-left-color: var(--c-orig); }
   .banner.ok { border-left-color: var(--c-babe); }
+  .banner.safe { border-left-color: var(--warn-text); }
+  .banner .sf + .sf { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+  .banner .sfk { display: inline-block; margin-right: 6px; font-size: 11.5px; font-weight: 700; color: var(--text); }
+  .tl .e-safety { fill: var(--warn-text); }
+  .ext { display: inline-flex; flex-wrap: wrap; gap: 4px 10px; }
+  .ext a { font-size: 12.5px; white-space: nowrap; }
+  .ddd { margin: -8px 0 18px; padding: 10px 14px; border-radius: 10px; background: var(--panel-2); }
+  .ddd .cost-in a { font-size: 12.5px; }
+  .ddd select { width: auto; padding: 5px 8px; }
+  dialog.ing-dlg { border: 0; padding: 0; border-radius: 12px; background: var(--panel); color: var(--text); width: min(96vw, 900px); max-height: 92vh; box-shadow: 0 12px 40px oklch(0% 0 0 / 0.35); }
+  dialog.ing-dlg::backdrop { background: oklch(15% 0.01 255 / 0.6); }
+  #ingBody { overflow-y: auto; max-height: calc(92vh - 56px); padding: 4px 18px 18px; }
+  .ing-h { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; margin: 6px 0 10px; }
+  .ing-h h2 { font-size: 20px; margin: 0; }
+  #ingBody .kpis { padding: 0; border: 0; margin-bottom: 6px; }
+  .ing-t { overflow-x: auto; }
+  .ing-t table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 520px; }
+  .ing-t th { text-align: left; font-weight: 600; font-size: 12px; color: var(--muted); padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  .ing-t td { padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .ing-t .n { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .lnk { all: unset; cursor: pointer; color: var(--accent); overflow-wrap: anywhere; }
+  .lnk:hover { text-decoration: underline; }
+  .lnk:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .ing-l { list-style: none; margin: 0; padding: 0; font-size: 13px; }
+  .ing-l li { padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .ing-l .d { color: var(--muted); font-variant-numeric: tabular-nums; margin-right: 6px; }
+  .ing-l p { margin: 4px 0 0; white-space: pre-line; color: var(--muted); }
+  .ubars.ing .stack { flex-direction: column-reverse; }
 
   /* usage chart */
   .ubars { display: flex; align-items: flex-end; gap: 10px; height: 170px; padding: 18px 4px 0; border-bottom: 1px solid var(--border); max-width: 620px; }
@@ -544,8 +574,9 @@
 
 
   /* ---------- tidier search: header on one line, dropdowns, applied filters, a one-line summary ---------- */
-  .topbar .sub { flex: 1 1 14em; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .topbar .spacer { display: none; }
+  /* the title centred in the bar, the way back on the left and the switches on the right */
+  @media (min-width: 641px) { .topbar h1 { position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; } }
+  @media (max-width: 640px) { .topbar h1 { order: 3; flex-basis: 100%; text-align: center; } }
   .dr-filters { flex-wrap: wrap; }
   .dr-filters select, #btnAdv, #btnByGroup { border-radius: 999px; font-size: 12.5px; padding: 6px 12px; min-height: 32px; }
   .dr-filters select { padding-right: 26px; background-color: var(--panel-2); }
@@ -688,6 +719,107 @@
     .adv { grid-template-columns: minmax(0, 1fr); }
     .adv .adv-end { display: none; }
   }
+
+  /* pill finder */
+  .pill-f { display: grid; gap: 10px; padding: 4px 0 14px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+  .pill-lead { margin: 0; font-size: 13px; color: var(--muted); max-width: 70ch; }
+  .pf-row { display: grid; grid-template-columns: 6.5em minmax(0, 1fr); gap: 10px; align-items: start; }
+  .pf-k { font-size: 13px; font-weight: 700; padding-top: 6px; display: flex; flex-direction: column; }
+  .pf-k small { font-weight: 400; font-size: 11px; color: var(--muted); }
+  .pf-v { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .pf-v .sw, .pf-v .pc { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: 999px; font-size: 12.5px; }
+  .pf-v .sw i { width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 1px oklch(0% 0 0 / 0.25); }
+  .pf-v .sw i.clear { background: repeating-linear-gradient(45deg, transparent 0 3px, var(--border) 3px 5px); }
+  .pf-v [aria-pressed="true"] { border-color: var(--accent); background: var(--accent-weak); color: var(--accent); font-weight: 700; }
+  #pMark { width: min(100%, 16em); font-family: var(--font-mono); text-transform: uppercase; }
+  .pf-size { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+  .pf-size input { width: 5em; }
+  .pill-n { font-size: 13px; color: var(--muted); margin: 0 0 8px; }
+  .pill-n b { color: var(--text); }
+  #vPill ul.res.cards .card-pr .cd { font-size: 11px; }
+  @media (max-width: 640px) { .pf-row { grid-template-columns: minmax(0, 1fr); gap: 4px; } .pf-k { flex-direction: row; gap: 6px; align-items: baseline; padding-top: 0; } }
+
+  /* compare tray and table */
+  .cmp-tray { position: fixed; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 35; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; width: min(calc(100% - 24px), 860px); padding: 8px 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel); box-shadow: 0 8px 28px oklch(0% 0 0 / 0.22); font-size: 13px; }
+  .cmp-tray[hidden] { display: none; }
+  body:has(.cmp-tray:not([hidden])) .dr { padding-bottom: 96px; }
+  .cmp-tray .ct-l { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
+  .cmp-tray .spacer { flex: 1; }
+  body.sheet-open .cmp-tray { display: none; }
+  .ib[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); background: var(--accent-weak); }
+  dialog.cmp-dlg { border: 0; padding: 0; border-radius: 12px; background: var(--panel); color: var(--text); width: min(96vw, 1000px); max-height: 92vh; box-shadow: 0 12px 40px oklch(0% 0 0 / 0.35); }
+  dialog.cmp-dlg::backdrop { background: oklch(15% 0.01 255 / 0.6); }
+  .cmp-head { display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--panel); z-index: 1; }
+  .cmp-head h2 { font-size: 16px; margin: 0; flex: 1; }
+  #cmpBody { overflow: auto; max-height: calc(92vh - 60px); }
+  .cmp-t { border-collapse: collapse; width: 100%; font-size: 13px; }
+  .cmp-t th { position: sticky; left: 0; background: var(--panel-2); text-align: left; font-weight: 600; color: var(--muted); font-size: 12px; white-space: nowrap; padding: 8px 12px; vertical-align: top; }
+  .cmp-t td { padding: 8px 12px; border-left: 1px solid var(--border); vertical-align: top; min-width: 160px; overflow-wrap: anywhere; }
+  .cmp-t tr + tr > * { border-top: 1px solid var(--border); }
+  .cmp-t small { display: block; color: var(--muted); font-size: 11.5px; }
+  .cmp-t .cmp-p { font-size: 17px; font-variant-numeric: tabular-nums; }
+  .cmp-t .cmp-ph { width: 100%; max-width: 150px; height: 84px; object-fit: contain; background: var(--figure); border-radius: 6px; }
+  .cmp-t .gs { margin-top: 4px; max-width: 180px; }
+  .cmp-nm { all: unset; cursor: pointer; font-weight: 700; color: var(--accent); }
+  .cmp-nm:hover { text-decoration: underline; }
+  .cmp-nm:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* cost per month */
+  .cost { margin-bottom: 18px; padding: 12px 14px; border-radius: 10px; background: var(--panel-2); }
+  .cost .sec { margin-top: 0; }
+  .cost-in { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 13px; }
+  .cost-in input { width: 5.5em; padding: 5px 8px; }
+  .cost-sum { margin: 10px 0 6px; font-size: 14px; }
+  .cost-sum b { font-variant-numeric: tabular-nums; }
+  .cost-l { list-style: none; margin: 0; padding: 0; max-width: 620px; font-size: 12.5px; }
+  .cost-l li { display: grid; grid-template-columns: minmax(0, 1fr) 5em 6em 6em; gap: 8px; padding: 5px 2px; border-top: 1px solid var(--border); align-items: baseline; font-variant-numeric: tabular-nums; }
+  .cost-l li.h { color: var(--muted); font-size: 11.5px; border-top: 0; }
+  .cost-l li.me { font-weight: 700; }
+  .cost-l .cu, .cost-l .cm, .cost-l .cd2 { text-align: right; }
+  .cost-l .cd2 { color: var(--warn-text); } .cost-l .cd2.less { color: var(--ok-text); } .cost-l .cd2.eq { color: var(--muted); }
+  .cost-l .cn { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cost-l button { all: unset; cursor: pointer; color: var(--text); }
+  .cost-l button:hover { color: var(--accent); text-decoration: underline; }
+  .cost-l button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (max-width: 480px) { .cost-l li { grid-template-columns: minmax(0, 1fr) 4.2em 5em 5em; gap: 6px; } }
+  ul.res > li > .row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+  /* news: three views under one tab */
+  .subv { display: flex; gap: 6px; margin: -4px 0 12px; flex-wrap: wrap; }
+  .subv[hidden] { display: none; }
+  .subv button { border-radius: 999px; padding: 5px 12px; font-size: 12.5px; }
+  .subv button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
+  .views .help-b { margin-left: auto; width: 30px; height: 30px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 50%; align-self: center; font-weight: 700; color: var(--muted); }
+  .views .help-b:hover { color: var(--accent); border-color: var(--accent); }
+  /* start page */
+  .home { padding: 8px 0 24px; display: grid; gap: 16px; }
+  .home-stat { margin: 0; font-size: 13px; color: var(--muted); }
+  .home-stat b { color: var(--text); }
+  .tasks { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)); gap: 10px; }
+  @media (max-width: 640px) { .views button { padding: 9px 8px 8px; } .views .help-b { flex: none; } .task { padding: 10px 12px; } .task svg { width: 20px; height: 20px; } }
+  .task { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 10px; align-items: center; text-align: left; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--panel); white-space: normal; }
+  .task:hover { border-color: var(--accent); }
+  .task svg { grid-row: 1 / span 2; width: 24px; height: 24px; color: var(--accent); }
+  .task b { font-size: 14px; }
+  .task span { font-size: 12px; color: var(--muted); }
+  .recent { border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; background: var(--panel); }
+  .recent .rh { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; font-size: 13px; }
+  .recent .rc { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 12px; width: 100%; text-align: left; border: 0; border-top: 1px solid var(--border); border-radius: 0; background: none; padding: 8px 2px; font-size: 13px; white-space: normal; }
+  .recent .rc:hover { color: var(--accent); }
+  .recent .rc .cd { color: var(--muted); font-size: 12px; }
+  .recent .rq { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-top: 8px; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--muted); }
+  .recent .rq button { border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px; font-size: 12.5px; background: var(--panel-2); }
+  .qtype { font-size: 11.5px; font-weight: 700; padding: 1px 8px; border-radius: 999px; background: var(--accent-weak); color: var(--accent); }
+  /* help */
+  dialog.help { border: 0; padding: 0; border-radius: 12px; background: var(--panel); color: var(--text); width: min(94vw, 560px); max-height: 88vh; box-shadow: 0 12px 40px oklch(0% 0 0 / 0.35); }
+  dialog.help::backdrop { background: oklch(15% 0.01 255 / 0.6); }
+  .help-in { padding: 16px 18px 18px; overflow-y: auto; max-height: 88vh; font-size: 13.5px; }
+  .help-in h2 { font-size: 16px; margin: 0 0 10px; display: flex; justify-content: space-between; align-items: center; }
+  .help-in h3 { font-size: 13px; margin: 14px 0 6px; color: var(--muted); }
+  .help-in dl { display: grid; grid-template-columns: 7.5em minmax(0, 1fr); gap: 6px 12px; margin: 0; }
+  .help-in dt { font-weight: 700; }
+  .help-in dd { margin: 0; color: var(--muted); }
+  .help-in kbd { font-family: var(--font-mono); font-size: 12px; padding: 1px 6px; border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 4px; background: var(--panel-2); }
   @media (prefers-reduced-motion: reduce) { .ov > summary .car, .row, .scope button { transition: none; } }
 </style>
 </head>
@@ -695,18 +827,22 @@
 <header class="topbar">
   <a class="back" href="../index.html" data-en="← Home">← 工具首頁</a>
   <h1 data-en="Taiwan Drug Lookup">台灣藥品速查</h1>
-  <span class="sub" data-en="NHI prices and rules, ATC, photos and TFDA licences in one search">健保支付價與給付規定、ATC、藥品外觀與食藥署許可證，一個搜尋框查完</span>
   <span class="spacer"></span>
 </header>
 
 <main class="dr">
   <nav class="views" id="views" role="tablist" aria-label="檢視">
     <button type="button" role="tab" data-view="search" data-en="Search">搜尋</button>
-    <button type="button" role="tab" data-view="changes" data-en="This week">本週異動</button>
-    <button type="button" role="tab" data-view="alerts"><span data-en="Shortages &amp; recalls">缺藥與回收</span><span class="n" id="nAlerts"></span></button>
-    <button type="button" role="tab" data-view="rules" data-en="Rule revisions">給付規定修訂</button>
+    <button type="button" role="tab" data-view="pill" data-en="Pill finder">認藥丸</button>
     <button type="button" role="tab" data-view="batch" data-en="Batch lookup">批次查詢</button>
+    <button type="button" role="tab" data-view="news" title="本週異動、缺藥與回收、給付規定修訂" data-en-title="This week, shortages and recalls, rule revisions"><span data-en="What's new">最新動態</span><span class="n" id="nAlerts" title="缺藥中" data-en-title="In short supply"></span></button>
+    <button type="button" class="help-b" id="btnHelp" aria-haspopup="dialog" aria-label="使用說明與快捷鍵" title="使用說明與快捷鍵（按 ?）">?</button>
   </nav>
+  <div class="subv" id="newsBar" role="tablist" aria-label="最新動態" hidden>
+    <button type="button" role="tab" data-view="changes" data-en="This week">本週異動</button>
+    <button type="button" role="tab" data-view="alerts" data-en="Shortages and recalls">缺藥與回收</button>
+    <button type="button" role="tab" data-view="rules" data-en="Rule revisions">給付規定修訂</button>
+  </div>
   <div id="vSearch">
   <section class="dr-search">
     <label class="dr-q">
@@ -720,20 +856,15 @@
         <option value="delisted" data-en="Delisted only">只看已取消給付</option>
         <option value="lic" data-en="Licences without NHI code">無健保代號的許可證</option>
       </select>
-      <select id="pack" aria-label="同一品項有鋁箔與一般包裝時列哪一種" data-en-aria="When a product has both packs, list which" title="同一品項同時有鋁箔包裝（代號末兩碼 G0）與一般包裝（00）時，只列一種" data-en-title="When a product has both a foil pack (code ends in G0) and a standard pack (00), list one">
-        <option value="foil" data-en="Foil pack first">列鋁箔包裝</option>
-        <option value="can" data-en="Standard pack first">列一般包裝</option>
-        <option value="both" data-en="Both packs">兩種包裝都列</option>
-      </select>
       <button type="button" id="btnAdv" aria-expanded="false" aria-controls="adv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span data-en="Filters">篩選</span><span class="badge" id="advCount"></span></button>
       <span class="spacer"></span>
-      <button type="button" id="btnByGroup" aria-pressed="false" title="把相同成分、含量、劑型（健保分類分組）的品項排在一起" data-en-title="List items of the same ingredient, strength and form (NHI price group) together"><span data-en="By group">依分組</span></button>
       <select id="fSort" aria-label="排序">
         <option value="rel" data-en="Best match">最相關</option>
         <option value="pa" data-en="Price, low to high">支付價 低→高</option>
         <option value="pd" data-en="Price, high to low">支付價 高→低</option>
         <option value="code" data-en="NHI code">健保代號</option>
         <option value="new" data-en="Newest listed">最新收載</option>
+        <option value="grp" data-en="By price group">依分組排列</option>
       </select>
     </div>
     <div class="adv-scrim" id="advScrim" hidden></div>
@@ -742,6 +873,11 @@
       <fieldset data-grp="pay"><legend><span data-en="Price and NHI">價格與給付</span><span class="badge"></span></legend>
         <label class="wide2"><span data-en="Price (NT$)">支付價（元）</span><span class="pair"><input id="aPmin" inputmode="decimal" placeholder="最低" data-en-ph="min"><i>～</i><input id="aPmax" inputmode="decimal" placeholder="最高" data-en-ph="max"></span></label>
         <label class="wide2"><span data-en="First listed">首次收載</span><span class="pair"><input id="aFrom" type="month" aria-label="從"><i>～</i><input id="aTo" type="month" aria-label="到"></span></label>
+        <label class="wide2"><span data-en="When a product has both packs, list">同品項有兩種包裝時列</span><select id="pack" aria-label="同一品項有鋁箔與一般包裝時列哪一種" data-en-aria="When a product has both packs, list which" title="同一品項同時有鋁箔包裝（代號末兩碼 G0）與一般包裝（00）時，只列一種" data-en-title="When a product has both a foil pack (code ends in G0) and a standard pack (00), list one">
+        <option value="foil" data-en="Foil pack first">列鋁箔包裝</option>
+        <option value="can" data-en="Standard pack first">列一般包裝</option>
+        <option value="both" data-en="Both packs">兩種包裝都列</option>
+      </select></label>
         <label><span data-en="Packaging">包裝</span><select id="aPkg"><option value="" data-en="All">不限</option><option value="g0" data-en="Foil packs only (G0)">只看鋁箔包裝（G0）</option><option value="not" data-en="Leave foil packs out">排除鋁箔包裝</option></select></label>
         <div class="checks"><label class="check"><input type="checkbox" id="aRules"> <span data-en="Has NHI rules">有給付規定</span></label></div>
       </fieldset>
@@ -781,6 +917,39 @@
   <section id="vAlerts" hidden></section>
   <section id="vRules" hidden></section>
   <section id="vBatch" hidden></section>
+  <section id="vPill" hidden></section>
+  <dialog class="help" id="helpDlg" aria-labelledby="helpT"><div class="help-in">
+    <h2><span id="helpT" data-en="How to use">使用說明</span><button type="button" class="small" id="helpClose" data-en="Close">關閉</button></h2>
+    <h3 data-en="What each part does">每個功能一句話</h3>
+    <dl>
+      <dt data-en="Search">搜尋</dt><dd data-en="Type a name, ingredient, indication, NHI code, ATC or licence number; a full code opens the drug at once.">打藥名、成分、適應症、健保代號、ATC 或許可證字號；完整代號會直接打開那個藥。</dd>
+      <dt data-en="Filters">篩選</dt><dd data-en="Narrow by price, form, class, licence or alerts; what is in use shows under the search box.">依價格、劑型、分類、許可證或警示縮小範圍，套用中的條件會列在搜尋框下方。</dd>
+      <dt data-en="Views">清單／表格／圖卡</dt><dd data-en="The list places each price in its price group; the table compares many at once; cards show the pills.">清單看每個價格在同組的位置；表格一次比較很多筆；圖卡看藥丸外觀。</dd>
+      <dt data-en="A drug">打開一個藥</dt><dd data-en="Key numbers, price and events in one chart, cost per month, NHI rules, licence and looks.">重點數字、價格與事件圖、每月費用試算、給付規定、許可證與外觀。</dd>
+      <dt data-en="Ingredient">成分全貌</dt><dd data-en="Every strength and form of one ingredient: prices, makers, claims over the years, alerts and outside references.">一個成分的所有含量與劑型：價格、廠商、歷年醫令量、警示與國外資料連結。</dd>
+      <dt data-en="Compare">比較</dt><dd data-en="The two-column button on an open drug adds it; up to four, side by side.">打開一個藥後按右上角的雙欄按鈕加入，最多 4 個並排比較。</dd>
+      <dt data-en="Pill finder">認藥丸</dt><dd data-en="Colour, shape, score line and the letters on the pill.">依顏色、形狀、刻痕和藥上的字找藥。</dd>
+      <dt data-en="Batch lookup">批次查詢</dt><dd data-en="Paste a list of codes or names, get one table to export.">貼上一串代號或藥名，得到一張可以匯出的表。</dd>
+      <dt data-en="What's new">最新動態</dt><dd data-en="This week's changes, shortages and recalls, and NHI rule revisions.">本週異動、缺藥與回收、給付規定修訂。</dd>
+    </dl>
+    <h3 data-en="Keys">快捷鍵</h3>
+    <dl>
+      <dt><kbd>/</kbd></dt><dd data-en="Go to the search box">跳到搜尋框</dd>
+      <dt><kbd>↓</kbd> <kbd>↑</kbd></dt><dd data-en="Move through the results (← → among cards)">在結果之間移動（圖卡也可以用 ← →）</dd>
+      <dt><kbd>Enter</kbd></dt><dd data-en="Open the drug">打開這個藥</dd>
+      <dt><kbd>Esc</kbd></dt><dd data-en="Close or clear">關閉或清除</dd>
+      <dt><kbd>?</kbd></dt><dd data-en="This help">這份說明</dd>
+    </dl>
+  </div></dialog>
+  <div class="cmp-tray" id="cmpTray" hidden></div>
+  <dialog class="cmp-dlg" id="cmpDlg" aria-label="比較">
+    <div class="cmp-head"><h2 data-en="Compare">比較</h2><button type="button" class="small" id="cmpCopy" data-en="Copy table">複製表格</button><button type="button" class="small" id="cmpClose" data-en="Close">關閉</button></div>
+    <div id="cmpBody"></div>
+  </dialog>
+  <dialog class="ing-dlg" id="ingDlg" aria-label="成分全貌">
+    <div class="cmp-head"><h2 data-en="Ingredient overview">成分全貌</h2><button type="button" class="small" id="ingClose" data-en="Close">關閉</button></div>
+    <div id="ingBody"></div>
+  </dialog>
 
   <dialog class="photo" id="photo" aria-label="藥品照片">
     <div class="ph-img"><img id="phImg" alt=""></div>
@@ -793,8 +962,8 @@
   </div>
 </main>
 
-<script src="../shared/common.js?v=20261126a"></script>
-<script src="../shared/twdrugs.js?v=20261124a"></script>
+<script src="../shared/common.js?v=20261126b"></script>
+<script src="../shared/twdrugs.js?v=20261126a"></script>
 <script>
 const TW = RT.twDrugs, N = TW.N, F = TW.F, T = RT.t, esc = RT.esc;
 const KEY = 'drugs';
@@ -1199,11 +1368,12 @@ const fact = (k, v, wide) => (v ? `<div class="fact${wide ? ' wide' : ''}"><span
 const kv = (rows) => `<dl class="kv">${rows.filter((x) => x && x[1]).map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`;
 function ruleFile(r, c) { const files = r[N.ruleFiles] ? r[N.ruleFiles].split(',') : []; return files.find((x) => x.startsWith(c + '_')) || ''; }
 function zoomBtn(src, cap, inner) { return `<button type="button" class="zoom" data-photo="${esc(src)}" data-cap="${esc(cap)}" aria-label="${T('放大照片', 'Enlarge photo')}" title="${T('點一下放大', 'Click to enlarge')}">${inner}</button>`; }
-const TABS = [['sum', '概要', 'Overview'], ['price', '價格', 'Price'], ['use', '用量', 'Usage'], ['rules', '給付規定', 'NHI rules'], ['looks', '外觀與仿單', 'Looks & leaflet'], ['lic', '許可證', 'Licence']];
+const TABS = [['sum', '概要', 'Overview'], ['price', '價格與費用', 'Price and cost'], ['use', '用量', 'Usage'], ['rules', '給付規定', 'NHI rules'], ['lic', '許可證與外觀', 'Licence and looks']];
 const ICO = {
   copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>',
   link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>',
   list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 6h10M4 12h10M4 18h7M18 15v6M15 18h6"/></svg>',
+  cmp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="7" height="14" rx="1.5"/><rect x="14" y="5" width="7" height="14" rx="1.5"/></svg>',
   close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
 };
 const iconBtn = (act, ico, zh, en, cls = '') => `<button type="button" class="ib${cls}" data-act="${act}" aria-label="${T(zh, en)}" title="${T(zh, en)}">${ICO[ico]}</button>`;
@@ -1238,11 +1408,11 @@ async function fillUseKpi(el, r) {
   el.hidden = false;
 }
 function detailHTML(r) {
-  const f = licOf(r), id = r[N.code], tab = tabOf.get(id) || 'sum';
+  const f = licOf(r), id = r[N.code], tab = tabOf.get(id) === 'looks' ? 'lic' : tabOf.get(id) || 'sum';
   const photo = photoOf(r);
   const statusTags = [
     r[N.price] > 0 ? `<span class="tag ok">${T('給付中', 'Reimbursed')}</span>` : `<span class="tag off">${T('已取消給付', 'Delisted')}</span>`,
-    clsTag(r[N.class]), ctrlTag(f), pkgTag(r), alertTags(f),
+    clsTag(r[N.class]), ctrlTag(f), pkgTag(r), alertTags(f), rmpTag(f),
     f ? (f[F.status] ? `<span class="tag off">${T('許可證', 'Licence ')}${esc(f[F.status])}</span>` : `<span class="tag ok">${T('許可證有效', 'Licence valid')}</span>`) : '',
   ].join('');
   const tabs = TABS.filter(([k]) => k !== 'rules' || r[N.ruleChapters]);
@@ -1251,10 +1421,10 @@ function detailHTML(r) {
     <div class="d-head">
       <div class="d-pic${photo ? '' : ' noimg'}">${photo ? zoomBtn(photo, (r[N.zh] || r[N.en]), `<img src="${esc(photo)}" alt="${esc(T('藥品外觀照片', 'Photo of the drug'))}" decoding="async">`) : formIcon(r[N.form])}</div>
       <div class="d-title"><h2>${esc(r[N.zh] || r[N.en])}</h2><div class="en">${r[N.zh] ? esc(r[N.en]) + ' · ' : ''}<span class="cd">${esc(id)}</span></div><div class="tags">${statusTags}</div></div>
-      <div class="d-tools">${iconBtn('copy', 'copy', '複製摘要', 'Copy summary')}${iconBtn('link', 'link', '複製連結', 'Copy link')}${iconBtn('codelist', 'list', '加入代碼清單', 'Add to code list')}${iconBtn('close', 'close', '收合', 'Close', ' x')}</div>
+      <div class="d-tools">${iconBtn('copy', 'copy', '複製摘要', 'Copy summary')}${iconBtn('link', 'link', '複製連結', 'Copy link')}${iconBtn('codelist', 'list', '加入代碼清單', 'Add to code list')}<button type="button" class="ib" data-act="cmp" aria-pressed="${(S.cmp || []).includes(id)}" aria-label="${T('加入比較', 'Add to compare')}" title="${T('加入比較（最多 4 個）', 'Add to compare (up to 4)')}">${ICO.cmp}</button>${iconBtn('close', 'close', '收合', 'Close', ' x')}</div>
     </div>
     ${kpiHTML(r)}
-    ${alertBanners(f)}
+    ${alertBanners(f)}${safetyBanner(r[N.ingredient], r[N.atc])}
     <div class="tabs" role="tablist">${tabs.map(([k, zh, en]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${k === tab}">${T(zh, en)}</button>`).join('')}<span class="tab-ink" aria-hidden="true"></span></div>
     <div class="tabp" role="tabpanel" data-panel="${tab}">${tabHTML(r, tab)}</div>
   </div>`;
@@ -1275,6 +1445,7 @@ function tabHTML(r, tab) {
         [T('成分', 'Ingredient'), esc(r[N.ingredient])],
         [T('劑型', 'Form'), esc(r[N.form]) + (r[N.strength] ? ' · ' + esc(r[N.strength]) : '') + (r[N.single] ? ' · ' + esc(r[N.single]) : '')],
         ['ATC', r[N.atc] ? `<span class="cd">${esc(r[N.atc])}</span>` : ''],
+        [T('外部資料', 'Elsewhere'), extLinks(r[N.ingredient], r[N.atc])],
         f ? [T('適應症', 'Indication'), TW.licText(f) ? `<span class="ind">${esc(TW.licText(f).indication)}</span>` : `<span class="hint">${T('載入中…', 'Loading…')}</span>`] : null,
       ])}</section>
       <section><h4>${T('健保', 'NHI')}</h4>${kv([
@@ -1295,11 +1466,12 @@ function tabHTML(r, tab) {
     <div class="acts">
       ${r[N.group] ? `<button type="button" data-act="group">${T('同分組比價', 'Same price group')} <span class="n">${nGroup}</span></button>` : ''}
       ${r[N.atc] ? `<button type="button" data-act="atc">${T('同 ATC 藥品', 'Same ATC')} ${esc(r[N.atc])} <span class="n">${nAtc}</span></button>` : ''}
+      <button type="button" data-act="ing">${T('成分全貌', 'Ingredient overview')}</button>
       ${nAtc5 ? `<button type="button" data-act="atc5">${T('同藥理分類', 'Same class')} ${esc(r[N.atc].slice(0, 5))} <span class="n">${nAtc5}</span></button>` : ''}
     </div>`;
   }
   if (tab === 'price') {
-    return `<h3 class="sec">${T('價格歷程', 'Price history')}</h3><div class="chart" data-chart><p class="hint">${T('載入中…', 'Loading…')}</p></div>
+    return `${costHTML(r)}${dddHTML(r)}<h3 class="sec">${T('價格歷程', 'Price history')}</h3><div class="chart" data-chart><p class="hint">${T('載入中…', 'Loading…')}</p></div>
       ${r[N.group] ? `<h3 class="sec">${T('同分組比價', 'Same price group')} <small>${esc(r[N.group])}</small></h3>${groupBars(r)}` : ''}`;
   }
   if (tab === 'rules') {
@@ -1308,8 +1480,7 @@ function tabHTML(r, tab) {
       <div class="links">${chapters.map((c) => { const fl = ruleFile(r, c); return fl ? `<a href="${TW.ruleUrl(fl)}" target="_blank" rel="noopener">${T('給付規定', 'Rules')} ${esc(c)} PDF ↗</a>` : ''; }).join('')}</div>`;
   }
   if (tab === 'use') return `<h3 class="sec">${T('健保醫令量', 'NHI claims')}</h3><div data-usage><p class="hint">${T('載入中…', 'Loading…')}</p></div>`;
-  if (tab === 'looks') return looksTab(r, f);
-  if (tab === 'lic') return licTab(f);
+  if (tab === 'lic' || tab === 'looks') return licLooksHTML(r, f);
   return '';
 }
 // every reimbursed item in the same NHI price group, gathered by price: one row per price, this item's price marked
@@ -1437,10 +1608,11 @@ function sameIngredient(f) {
     .sort((a, b) => (b[N.price] > 0) - (a[N.price] > 0) || sameForm(b) - sameForm(a) || a[N.price] - b[N.price]);
 }
 const licFirstIng = (f) => ingName(String(f[F.ingredients] || '').split(';')[0]);
-const LIC_TABS = [['sum', '概要', 'Overview'], ['looks', '外觀與仿單', 'Looks & leaflet'], ['lic', '許可證', 'Licence']];
+const LIC_TABS = [['sum', '概要', 'Overview'], ['lic', '許可證與外觀', 'Licence and looks']];
+const licLooksHTML = (r, f) => `<h3 class="sec">${T('外觀與仿單', 'Looks and leaflet')}</h3>${looksTab(r, f)}<h3 class="sec">${T('許可證', 'Licence')}</h3>${licTab(f)}`;
 function licDetailHTML(f) {
-  const no = f[F.licence], tab = tabOf.get('L:' + no) || 'sum', photo = licPhoto(f), name = f[F.zh] || f[F.en];
-  const tags = [`<span class="tag off">${T('無健保代號', 'No NHI code')}</span>`, f[F.category] ? `<span class="tag">${esc(f[F.category])}</span>` : '', ctrlTag(f),
+  const no = f[F.licence], tab = tabOf.get('L:' + no) === 'looks' ? 'lic' : tabOf.get('L:' + no) || 'sum', photo = licPhoto(f), name = f[F.zh] || f[F.en];
+  const tags = [`<span class="tag off">${T('無健保代號', 'No NHI code')}</span>`, f[F.category] ? `<span class="tag">${esc(f[F.category])}</span>` : '', ctrlTag(f), rmpTag(f),
     f[F.status] ? `<span class="tag off">${T('許可證', 'Licence ')}${esc(f[F.status])}</span>` : `<span class="tag ok">${T('許可證有效', 'Licence valid')}</span>`].join('');
   return `<div class="detail" id="${licDomId(f)}" data-lic="${esc(no)}">
     <div class="d-back"><button type="button" data-act="close">← ${T('返回', 'Back')}</button><span>${esc(name)}</span></div>
@@ -1449,14 +1621,13 @@ function licDetailHTML(f) {
       <div class="d-title"><h2>${esc(name)}</h2>${f[F.zh] ? `<div class="en">${esc(f[F.en])}</div>` : ''}<div class="tags">${tags}</div></div>
       <div class="d-tools">${iconBtn('copy', 'copy', '複製摘要', 'Copy summary')}${iconBtn('close', 'close', '收合', 'Close', ' x')}</div>
     </div>
-    ${alertBanners(f)}
+    ${alertBanners(f)}${safetyBanner(f[F.ingredients], '')}
     <div class="tabs" role="tablist">${LIC_TABS.map(([k, zh, en]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${k === tab}">${T(zh, en)}</button>`).join('')}<span class="tab-ink" aria-hidden="true"></span></div>
     <div class="tabp" role="tabpanel" data-panel="${tab}">${licTabHTML(f, tab)}</div>
   </div>`;
 }
 function licTabHTML(f, tab) {
-  if (tab === 'looks') return looksTab(null, f);
-  if (tab === 'lic') return licTab(f);
+  if (tab === 'lic' || tab === 'looks') return licLooksHTML(null, f);
   const same = sameIngredient(f), paid = same.filter((r) => r[N.price] > 0).length, first = licFirstIng(f);
   const sameList = same.length ? `<ul class="same">${same.slice(0, 12).map((r) => `<li><button type="button" data-go="${esc(r[N.code])}">
       <span class="sn">${esc(r[N.zh] || r[N.en])}</span>
@@ -1482,6 +1653,7 @@ function licTabHTML(f, tab) {
     <p class="note">${T('依成分名稱比對（去掉括號、含量與結晶水，鹽類寫法統一），成分組合要完全相同；劑型與含量可能不同，請點進去確認。', 'Matched on ingredient names (brackets, strengths and water of crystallisation removed, salt names unified); the set must be identical. Form and strength may differ, so open an item to check.')}</p>
     <div class="acts">
       ${first ? `<button type="button" data-act="licq">${T(`搜尋含 ${esc(first)} 的藥品`, `Search drugs with ${esc(first)}`)}</button>` : ''}
+      <button type="button" data-act="ing">${T('成分全貌', 'Ingredient overview')}</button>
       <button type="button" data-act="copy">${T('複製摘要', 'Copy summary')}</button>
       ${f[F.licId] ? `<a class="btn" href="${TW.licUrl(f[F.licId])}" target="_blank" rel="noopener">${T('食藥署查詢 ↗', 'TFDA record ↗')}</a>` : ''}
     </div>`;
@@ -1616,9 +1788,11 @@ function statusHTML(total) {
   const lg = segs.filter(Boolean).map((k) => `${T(...CLS_SHORT[k])} ${by[k]}`).join(' · ');
   const mini = total ? `<span class="mini-cls" title="${esc(lg)}"><span class="mb" role="img" aria-label="${esc(T('藥品分類：', 'Classes: ') + lg)}">${segs.map((k) => `<i class="k-${CLS_KEY[k] || 'none'}" style="width:${((by[k] / total) * 100).toFixed(2)}%"></i>`).join('')}</span><span class="lg">${esc(lg)}</span></span>` : '';
   const vm = `<span class="vmode" role="group" aria-label="${T('顯示方式', 'View')}">${VMODES.map(([k, zh, en, ic]) => `<button type="button" data-rview="${k}" aria-pressed="${S.rview === k}">${ic}${T(zh, en)}</button>`).join('')}</span>`;
-  return `<span class="n"><b>${total.toLocaleString()}</b> ${T('筆健保品項', 'NHI items')}${total && paid < total ? T(`（給付中 ${paid}）`, ` (${paid} reimbursed)`) : ''}${last.lic.length ? T(`、${last.lic.length} 張無健保代號的許可證`, `, ${last.lic.length} licences without an NHI code`) : ''}</span>`
+  const qt = qType();
+  return (qt ? `<span class="qtype">${T(...QTYPE[qt])}</span>` : '') + `<span class="n"><b>${total.toLocaleString()}</b> ${T('筆健保品項', 'NHI items')}${total && paid < total ? T(`（給付中 ${paid}）`, ` (${paid} reimbursed)`) : ''}${last.lic.length ? T(`、${last.lic.length} 張無健保代號的許可證`, `, ${last.lic.length} licences without an NHI code`) : ''}</span>`
     + (sc ? `<span class="md">${T('中位數', 'median')} <b>$${fmtP(sc.med)}</b>（$${fmtP(sc.lo)}–$${fmtP(sc.hi)}）</span>` : '') + mini
     + (last.packHidden ? `<span class="hint">${T(`另有 ${last.packHidden} 個${last.pack === 'foil' ? '一般包裝' : '鋁箔包裝'}代號已收起`, `${last.packHidden} ${last.pack === 'foil' ? 'standard-pack' : 'foil-pack'} codes folded away`)}</span>` : '')
+    + (metaD ? `<span class="hint" title="${T('健保署與食藥署資料每週更新', 'NHIA and TFDA data, refreshed weekly')}">${T(`資料更新 ${esc(metaD.built)}`, `Data of ${esc(metaD.built)}`)}</span>` : '')
     + `<span class="spacer"></span>${total ? vm : ''}`
     + (total ? `<details class="menu"><summary>${T('匯出', 'Export')} ▾</summary><div class="menu-pop"><button type="button" id="btnCsv">${T('匯出 CSV', 'Export CSV')}</button><button type="button" id="btnAllCl">${T('全部加入代碼清單', 'Add all to code list')}</button></div></details>` : '');
 }
@@ -1640,6 +1814,7 @@ function advChips() {
   if (a.who) add(['who'], `廠商 ${a.who}`, `Maker ${a.who}`);
   if (a.short) add(['short'], '缺藥中', 'Short supply');
   if (a.recall) add(['recall'], '有回收紀錄', 'Recalled');
+  if (S.pack && S.pack !== 'foil') add(['__pack'], S.pack === 'can' ? '列一般包裝' : '兩種包裝都列', S.pack === 'can' ? 'Standard packs' : 'Both packs');
   return out;
 }
 const GRP_KEYS = { pay: ['pmin', 'pmax', 'from', 'to', 'pkg', 'rules'], drug: ['atc', 'cls', 'form', 'single', 'photo'], lic: ['cat', 'ctrl', 'lic', 'country', 'who'], alert: ['short', 'recall'] };
@@ -1648,8 +1823,37 @@ function renderChips() {
   const base = chips.map((x, i) => `<span class="chip">${x.k === 'group' ? T('分組：', 'Group: ') : 'ATC '}${esc(x.v)}<button type="button" data-chip="${i}" aria-label="${T('移除', 'Remove')}">×</button></span>`).join('');
   const adv = ac.map((x) => `<span class="chip f">${esc(x.label)}<button type="button" data-advk="${x.keys.join(',')}" aria-label="${esc(T('移除 ', 'Remove ') + x.label)}">×</button></span>`).join('');
   $('chips').innerHTML = base || adv ? `${adv ? `<span class="lab">${T('已套用：', 'Applied:')}</span>` : ''}${base}${adv}${ac.length + chips.length > 1 ? `<button type="button" class="clear-all" data-clearall>${T('全部清除', 'Clear all')}</button>` : ''}` : '';
-  document.querySelectorAll('#adv fieldset[data-grp]').forEach((fs) => { const n = GRP_KEYS[fs.dataset.grp].filter((k) => { const v = A()[k]; return v !== '' && v !== false; }).length; fs.querySelector('legend .badge').textContent = n || ''; });
+  document.querySelectorAll('#adv fieldset[data-grp]').forEach((fs) => { const n = GRP_KEYS[fs.dataset.grp].filter((k) => { const v = A()[k]; return v !== '' && v !== false; }).length; const m = n + (fs.dataset.grp === 'pay' && S.pack && S.pack !== 'foil' ? 1 : 0); fs.querySelector('legend .badge').textContent = m || ''; });
 }
+const HOME_IC = {
+  pill: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="2.5" y="8" width="19" height="8" rx="4" transform="rotate(-35 12 12)"/><path d="m9.3 7.6 5.4 8.8"/></svg>',
+  batch: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 6h10M4 11h10M4 16h6"/><circle cx="17" cy="16" r="3"/><path d="m19.2 18.2 2 2"/></svg>',
+  alerts: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 4 2.8 19.5h18.4z"/><path d="M12 10v4.5M12 17v.5"/></svg>',
+  changes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
+};
+// before anything is typed: the four jobs people come for, and what they looked at last
+function homeHTML() {
+  const rec = (S.recent || []).map((x) => nhiD.byCode.get(x)).filter(Boolean).slice(0, 6), rq = (S.recentQ || []).slice(0, 6);
+  const nShort = $('nAlerts').textContent;
+  const task = (v, zh, en, szh, sen) => `<button type="button" class="task" data-home="${v}">${HOME_IC[v]}<b>${T(zh, en)}</b><span>${T(szh, sen)}</span></button>`;
+  return `<div class="home">
+    <p class="home-stat">${T(`收錄 <b>${totalCodes().toLocaleString()}</b> 個健保藥品代號（給付中 ${fmtCount()}）`, `<b>${totalCodes().toLocaleString()}</b> NHI drug codes (${fmtCount()} reimbursed)`)}${licTotal() ? T(`、<b>${licTotal().toLocaleString()}</b> 張許可證`, ` and <b>${licTotal().toLocaleString()}</b> licences`) : ''}${metaD ? T(`，資料更新於 ${esc(metaD.built)}`, `; data of ${esc(metaD.built)}`) : ''}。${T('在上面打字開始查，或從這裡開始：', ' Type above to search, or start here:')}</p>
+    <div class="tasks">${task('pill', '認一顆藥丸', 'Identify a pill', '依顏色、形狀、藥上的字', 'by colour, shape and imprint')}${task('batch', '一次查一串代號', 'Look up a list', '貼上清單，匯出一張表', 'paste a list, export one table')}${task('alerts', '缺藥與回收', 'Shortages and recalls', nShort ? `${nShort} 項缺藥中` : '食藥署公告', nShort ? `${nShort} in short supply` : 'TFDA notices')}${task('changes', '本週異動', "This week's changes", '價格、收載、給付規定', 'prices, listings, rules')}</div>
+    ${rec.length || rq.length ? `<div class="recent"><div class="rh"><b>${T('最近查過', 'Recently viewed')}</b><button type="button" class="small" data-homeclr>${T('清除', 'Clear')}</button></div>
+      ${rec.map((r) => `<button type="button" class="rc" data-go="${esc(r[N.code])}"><span>${esc(r[N.zh] || r[N.en])}</span><span class="cd">${esc(r[N.code])}</span><b>${r[N.price] > 0 ? '$' + fmtP(r[N.price]) : T('已取消給付', 'Delisted')}</b></button>`).join('')}
+      ${rq.length ? `<div class="rq">${T('搜尋過：', 'Searched:')}${rq.map((q) => `<button type="button" data-homeq="${esc(q)}">${esc(q)}</button>`).join('')}</div>` : ''}</div>` : ''}
+  </div>`;
+}
+// what kind of thing was typed, when it is clearly one kind
+function qType() {
+  const t = Q.trim();
+  if (/字第/.test(t)) return 'lic';
+  if (/^[a-z]{1,2}\d[0-9a-z]{7,8}$/i.test(t) && nhiD && nhiD.byCode.has(t.toUpperCase())) return 'code';
+  if (!/\s/.test(t) && ATC_RE.test(TW.fold(t))) return 'atc';
+  return '';
+}
+const QTYPE = { code: ['以健保代號查詢', 'NHI code'], lic: ['以許可證字號查詢', 'Licence number'], atc: ['以 ATC 碼查詢', 'ATC code'] };
+let autoQ = null;
 function render() {
   if (!nhiD) return;
   const t0 = performance.now();
@@ -1671,12 +1875,12 @@ function render() {
   const total = last.rows.length;
   const idle = !tokens().length && !chips.length && !advCount();
   renderChips();
-  $('advCount').textContent = advCount() || '';
+  $('advCount').textContent = (advCount() + (S.pack && S.pack !== 'foil' ? 1 : 0)) || '';
   $('advN').textContent = idle ? '' : `(${(total + last.lic.length).toLocaleString()})`;
   $('tips').hidden = !idle;
   if (idle) {
     $('ovWrap').innerHTML = ''; $('status').innerHTML = '';
-    $('out').innerHTML = `<div class="empty-state">${T(`共收錄 <b>${totalCodes().toLocaleString()}</b> 個健保藥品代號（給付中 ${fmtCount()}）`, `<b>${totalCodes().toLocaleString()}</b> NHI drug codes (${fmtCount()} reimbursed)`)}${licTotal() ? T(`、<b>${licTotal().toLocaleString()}</b> 張許可證`, ` and <b>${licTotal().toLocaleString()}</b> licences`) : ''}。${T('輸入藥名、成分或代號開始查詢，或打開「進階篩選」。', ' Type a name, ingredient or code, or open Filters.')}</div>`;
+    $('out').innerHTML = homeHTML();
     return;
   }
   const keepOpen = $('ov') ? $('ov').open : null;
@@ -1710,6 +1914,12 @@ function render() {
     (last.lic.length ? `<section class="lic-sec"${S.scope === 'lic' ? ' data-only' : ''}><div class="lic-h"${S.scope === 'lic' ? ' hidden' : ''}><h2>${T('沒有健保代號的許可證', 'Licences without an NHI code')} <span class="n">${last.lic.length}</span></h2><p>${T('健保沒有收載，所以沒有健保價。多半是自費處方藥、指示藥或成藥；點開看許可證資料與同成分的健保品項。', 'Not on the NHI list, so there is no NHI price. Mostly self-paid prescription drugs, pharmacy medicines or general-sale products; open one for its licence record and the NHI items with the same ingredients.')}</p></div>${(() => { const ul = `<ul class="res${S.rview === 'table' ? ' tbl' : S.rview === 'cards' ? ' cards' : ''}">${S.rview === 'table' ? tblHeadHTML() : ''}${licListHTML(last.lic)}</ul>`; return S.rview === 'table' ? `<div class="tbl-wrap">${ul}</div>` : ul; })()}${last.lic.length > 50 ? `<p class="hint">${T(`只列前 50 張，請加關鍵字縮小範圍`, `Showing the first 50; add words to narrow it down`)}</p>` : ''}</section>` : '');
   hydrate($('out'));
   if (total && !extraD) loadExtra();   // photos for the cards
+  if (Q !== autoQ) {
+    autoQ = Q;
+    const t = qType();
+    if (t === 'code' && !open.size) { const li = document.querySelector(`#out li[data-code="${CSS.escape(Q.trim().toUpperCase())}"]`); if (li) openDrug(li); }
+    else if (t === 'lic' && total + last.lic.length === 1 && !open.size && !openLic.size) { const li = document.querySelector('#out li[data-code], #out li[data-lic]'); if (li) { if (li.dataset.code) openDrug(li); else openLicRow(li); } }
+  }
 }
 let paidCount = null;
 function fmtCount() { if (paidCount == null) paidCount = nhiD.rows.filter((r) => r[N.price] > 0).length; return paidCount.toLocaleString(); }
@@ -1734,7 +1944,11 @@ function loadMore() {
 }
 function redrawRow(li) {
   const r = nhiD.byCode.get(li.dataset.code); if (!r) return null;
-  const tmp = document.createElement('ul'); tmp.innerHTML = rowHTML(r); const n = tmp.firstElementChild; li.replaceWith(n); hydrate(n); return n;
+  // the element that had focus, named by what it does, so the same one gets it back after the redraw
+  const a = document.activeElement, had = a && li.contains(a) ? (a.dataset.act ? `[data-act="${a.dataset.act}"]` : a.dataset.tab ? `[data-tab="${a.dataset.tab}"]` : a.classList.contains('row') ? '.row' : null) : null;
+  const tmp = document.createElement('ul'); tmp.innerHTML = rowHTML(r); const n = tmp.firstElementChild; li.replaceWith(n); hydrate(n);
+  if (had) { const t = n.querySelector(had); if (t && t.offsetParent) t.focus({ preventScroll: true }); }
+  return n;
 }
 // after the licence, appearance or rule files arrive: refresh what is on screen
 function refreshShown() {
@@ -1750,12 +1964,15 @@ function refreshShown() {
 let sheetState = false;
 function openDrug(li) {
   const id = li.dataset.code;
+  S.recent = [id, ...(S.recent || []).filter((x) => x !== id)].slice(0, 8);
+  if (Q && Q.trim().toUpperCase() !== id) S.recentQ = [Q.trim(), ...(S.recentQ || []).filter((x) => x !== Q.trim())].slice(0, 6);
+  save();
   if (phone()) {
     [...open].forEach((c) => { open.delete(c); const o = document.querySelector(`#out li[data-code="${CSS.escape(c)}"]`); if (o) redrawRow(o); });
     open.add(id); document.body.classList.add('sheet-open');
     if (!sheetState) { history.pushState({ sheet: id }, ''); sheetState = true; }
   } else open.add(id);
-  loadExtra(); loadMore(); loadAlerts(); sync();
+  loadExtra(); loadMore(); loadAlerts(); loadSafety(); sync();
   const cur = document.querySelector(`#out li[data-code="${CSS.escape(id)}"]`) || li;
   morph(cur.querySelector('.row'), () => redrawRow(cur), (n) => n && n.querySelector('.detail')).then((n) => {
     if (phone() && n) { const d = n.querySelector('.detail'); if (d) { d.scrollTop = 0; const b = d.querySelector('[data-act="close"]'); if (b) b.focus({ preventScroll: true }); } }
@@ -1775,7 +1992,7 @@ function openLicRow(li) {
     openLic.add(no); document.body.classList.add('sheet-open');
     if (!sheetState) { history.pushState({ sheet: no }, ''); sheetState = true; }
   } else openLic.add(no);
-  loadExtra(); loadMore(); loadAlerts();
+  loadExtra(); loadMore(); loadAlerts(); loadSafety();
   const cur = licLi(no) || li;
   morph(cur.querySelector('.row'), () => redrawLic(cur), (n) => n && n.querySelector('.detail')).then((n) => {
     if (phone() && n) { const d = n.querySelector('.detail'); if (d) { d.scrollTop = 0; const b = d.querySelector('[data-act="close"]'); if (b) b.focus({ preventScroll: true }); } }
@@ -1807,7 +2024,8 @@ async function licClick(e, li) {
       leaveSheet(); chips = []; Q = licFirstIng(f); $('q').value = Q; shown = 50; open.clear(); openLic.clear();
       if (S.scope === 'lic') setScope('every', true);
       sync(); render(); window.scrollTo({ top: 0 });
-    } else if (a === 'copy') { try { await navigator.clipboard.writeText(licSummary(f)); RT.toast(T('已複製', 'Copied')); } catch (x) { RT.toast(T('無法複製到剪貼簿', 'Could not copy'), 3000); } }
+    } else if (a === 'ing') openIng(f[F.ingredients]);
+    else if (a === 'copy') { try { await navigator.clipboard.writeText(licSummary(f)); RT.toast(T('已複製', 'Copied')); } catch (x) { RT.toast(T('無法複製到剪貼簿', 'Could not copy'), 3000); } }
     return;
   }
   if (e.target.closest('.row') && !e.target.closest('a')) { if (openLic.has(no)) closeLic(no); else openLicRow(li); }
@@ -1869,7 +2087,10 @@ $('out').addEventListener('click', async (e) => {
   if (e.target.closest('[data-clear]')) { clearAdv(); return; }
   if (e.target.id === 'btnMore') { shown += 100; render(); return; }
   const cg = e.target.closest('[data-chipgroup]'); if (cg) { setChip('group', cg.dataset.chipgroup); return; }
-  const sh = e.target.closest('[data-sorth]'); if (sh) { S.sort = sh.dataset.sorth === 'code' ? 'code' : S.sort === 'pa' ? 'pd' : 'pa'; $('fSort').value = S.sort; save(); render(); return; }
+  const sh = e.target.closest('[data-sorth]'); if (sh) { S.sort = sh.dataset.sorth === 'code' ? 'code' : S.sort === 'pa' ? 'pd' : 'pa'; S.byGroup = false; $('fSort').value = S.sort; save(); render(); return; }
+  const hm = e.target.closest('[data-home]'); if (hm) { setView(hm.dataset.home); window.scrollTo({ top: 0 }); return; }
+  const hq = e.target.closest('[data-homeq]'); if (hq) { Q = hq.dataset.homeq; $('q').value = Q; shown = 50; sync(); render(); return; }
+  if (e.target.closest('[data-homeclr]')) { S.recent = []; S.recentQ = []; save(); render(); return; }
   const fq = e.target.closest('[data-fixq]'); if (fq) { Q = fq.dataset.fixq; $('q').value = Q; shown = 50; open.clear(); openLic.clear(); sync(); render(); return; }
   const go = e.target.closest('[data-go]'); if (go) { goCode(go.dataset.go); return; }
   const ll = e.target.closest('li[data-lic]'); if (ll) { licClick(e, ll); return; }
@@ -1891,6 +2112,8 @@ $('out').addEventListener('click', async (e) => {
     else if (a === 'atc5') setChip('atc', r[N.atc].slice(0, 5));
     else if (a === 'copy') { try { await navigator.clipboard.writeText(summary(r)); RT.toast(T('已複製', 'Copied')); } catch (x) { RT.toast(T('無法複製到剪貼簿', 'Could not copy'), 3000); } }
     else if (a === 'codelist') toCodelist([nhiItem(r)]);
+    else if (a === 'cmp') toggleCmp(r[N.code]);
+    else if (a === 'ing') openIng(r[N.ingredient]);
     else if (a === 'link') { const u = location.origin + location.pathname + '?code=' + encodeURIComponent(r[N.code]); try { await navigator.clipboard.writeText(u); RT.toast(T('已複製這個藥的連結', 'Link copied')); } catch (x) { RT.toast(u, 6000); } }
     return;
   }
@@ -1923,11 +2146,265 @@ $('status').addEventListener('click', (e) => {
 });
 $('chips').addEventListener('click', (e) => {
   const b = e.target.closest('[data-chip]'); if (b) { chips.splice(+b.dataset.chip, 1); shown = 50; sync(); render(); return; }
-  const k = e.target.closest('[data-advk]'); if (k) { k.dataset.advk.split(',').forEach((x) => (A()[x] = ADV[x])); syncAdv(); shown = 50; save(); render(); return; }
-  if (e.target.closest('[data-clearall]')) { chips = []; S.adv = { ...ADV }; syncAdv(); shown = 50; save(); sync(); render(); }
+  const k = e.target.closest('[data-advk]'); if (k) { k.dataset.advk.split(',').forEach((x) => { if (x === '__pack') setPack('foil', true); else A()[x] = ADV[x]; }); syncAdv(); shown = 50; save(); render(); return; }
+  if (e.target.closest('[data-clearall]')) { chips = []; S.adv = { ...ADV }; setPack('foil', true); syncAdv(); shown = 50; save(); sync(); render(); }
 });
 // an open menu closes on a click anywhere else
 document.addEventListener('click', (e) => { document.querySelectorAll('details.menu[open]').forEach((m) => { if (!m.contains(e.target) || e.target.closest('.menu-pop button')) m.open = false; }); });
+
+
+/* ---------- compare up to four drugs side by side ---------- */
+const CMP_MAX = 4;
+const cmpList = () => (S.cmp = (S.cmp || []).filter((c) => !nhiD || nhiD.byCode.has(c)));
+function toggleCmp(code) {
+  const l = cmpList();
+  if (l.includes(code)) S.cmp = l.filter((c) => c !== code);
+  else if (l.length >= CMP_MAX) { RT.toast(T(`最多比較 ${CMP_MAX} 個，請先移除一個`, `Up to ${CMP_MAX}; remove one first`), 3000); return; }
+  else S.cmp = [...l, code];
+  save(); drawTray();
+  document.querySelectorAll(`#out [data-act="cmp"]`).forEach((b) => b.setAttribute('aria-pressed', String(S.cmp.includes(b.closest('.detail').dataset.code))));
+}
+function drawTray() {
+  const l = cmpList(), tray = $('cmpTray');
+  tray.hidden = !l.length;
+  if (!l.length) return;
+  tray.innerHTML = `<span class="ct-k">${T('比較', 'Compare')} <b>${l.length}</b>/${CMP_MAX}</span><span class="ct-l">${l.map((c) => { const r = nhiD.byCode.get(c); return `<span class="chip f">${esc(r[N.zh] || r[N.en])}<button type="button" data-cmprm="${esc(c)}" aria-label="${T('移除', 'Remove')}">×</button></span>`; }).join('')}</span><span class="spacer"></span><button type="button" class="primary small" id="cmpGo"${l.length < 2 ? ' disabled title="' + T('至少選 2 個', 'Pick at least 2') + '"' : ''}>${T('看比較', 'Compare')}</button><button type="button" class="small" id="cmpClr">${T('清除', 'Clear')}</button>`;
+}
+const CMP_ROWS = [
+  [['名稱', 'Name'], (r) => `<button type="button" class="cmp-nm" data-cmpgo="${esc(r[N.code])}">${esc(r[N.zh] || r[N.en])}</button><small>${r[N.zh] ? esc(r[N.en]) : ''}</small>`, (r) => r[N.zh] || r[N.en]],
+  [['外觀', 'Looks'], (r) => { const s = photoOf(r); return s ? `<img class="cmp-ph" src="${esc(s)}" alt="" loading="lazy">` : '—'; }, () => ''],
+  [['健保代號', 'NHI code'], (r) => `<span class="cd">${esc(r[N.code])}</span>`, (r) => r[N.code]],
+  [['成分', 'Ingredient'], (r) => esc(r[N.ingredient]), (r) => r[N.ingredient]],
+  [['劑型', 'Form'], (r) => esc([r[N.form], r[N.strength]].filter(Boolean).join(' · ')), (r) => [r[N.form], r[N.strength]].filter(Boolean).join(' ')],
+  ['ATC', (r) => `<span class="cd">${esc(r[N.atc])}</span>`, (r) => r[N.atc]],
+  [['藥品分類', 'Class'], (r) => clsDot(r[N.class]) || '—', (r) => r[N.class]],
+  [['支付價', 'Price'], (r) => (r[N.price] > 0 ? `<b class="cmp-p">$${fmtP(r[N.price])}</b><small>${T('自 ', 'since ')}${esc(r[N.priceSince] || '')}</small>` : `<span class="tag off">${T('已取消給付', 'Delisted')}</span>`), (r) => (r[N.price] > 0 ? r[N.price] : '已取消給付')],
+  [['同組位置', 'In its group'], (r) => { const g = grpInfo(r); return g ? `<b>${g.label}</b>${stripHTML(g)}` : '—'; }, (r) => { const g = grpInfo(r); return g ? g.label.replace(/<[^>]+>/g, '') : ''; }],
+  [['每 DDD', 'Per DDD'], (r) => { const p = perDDD(r); return p ? `$${fmtP(+p.cost.toFixed(2))}` : '—'; }, (r) => { const p = perDDD(r); return p ? +p.cost.toFixed(2) : ''; }],
+  [['醫令量', 'Claims'], (r) => `<span data-cmpuse="${esc(r[N.code])}">…</span>`, (r) => { const u = cmpUse(r); return u ? u.v : ''; }],
+  [['給付規定', 'NHI rules'], (r) => esc(r[N.ruleChapters] ? r[N.ruleChapters].split(',').filter(Boolean).join('、') : T('無', 'none')), (r) => r[N.ruleChapters] || ''],
+  [['首次收載', 'First listed'], (r) => esc(r[N.firstListed] || ''), (r) => r[N.firstListed] || ''],
+  [['藥商', 'Vendor'], (r) => esc(r[N.vendor] || ''), (r) => r[N.vendor] || ''],
+  [['許可證', 'Licence'], (r) => { const f = licOf(r); return f ? `${esc(f[F.licence])}${f[F.status] ? ` <span class="tag off">${esc(f[F.status])}</span>` : ''}` : '—'; }, (r) => { const f = licOf(r); return f ? f[F.licence] : ''; }],
+];
+function cmpUse(r) {
+  if (!usageD) return null;
+  const ys = usageD.years, mine = usageD.q[r[N.code]]; if (!ys.length || !mine) return null;
+  let i = ys.length - 1; while (i > 0 && ys[i].partial) i--;
+  const v = (mine[i] || [0])[0]; return { y: ys[i].year, v };
+}
+function openCmp() {
+  const rs = cmpList().map((c) => nhiD.byCode.get(c));
+  if (rs.length < 2) return;
+  const lab = (x) => (Array.isArray(x) ? T(...x) : x);
+  $('cmpBody').innerHTML = `<table class="cmp-t"><tbody>${CMP_ROWS.map(([k, h]) => `<tr><th scope="row">${lab(k)}</th>${rs.map((r) => `<td>${h(r)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  $('cmpDlg').showModal();
+  loadExtra(); loadAlerts();
+  loadUsage().then(() => { $('cmpBody').querySelectorAll('[data-cmpuse]').forEach((el) => { const u = cmpUse(nhiD.byCode.get(el.dataset.cmpuse)); el.innerHTML = u && u.v ? `<b>${fmtN(u.v)}</b><small>${u.y}</small>` : '—'; }); }).catch(() => {});
+}
+$('cmpTray').addEventListener('click', (e) => {
+  const rm = e.target.closest('[data-cmprm]'); if (rm) { toggleCmp(rm.dataset.cmprm); return; }
+  if (e.target.id === 'cmpGo') openCmp();
+  if (e.target.id === 'cmpClr') { S.cmp = []; save(); drawTray(); document.querySelectorAll('#out [data-act="cmp"]').forEach((b) => b.setAttribute('aria-pressed', 'false')); }
+});
+$('cmpDlg').addEventListener('click', async (e) => {
+  if (e.target === $('cmpDlg') || e.target.id === 'cmpClose') { $('cmpDlg').close(); return; }
+  const g = e.target.closest('[data-cmpgo]'); if (g) { $('cmpDlg').close(); setView('search', true); goCode(g.dataset.cmpgo); return; }
+  if (e.target.id === 'cmpCopy') {
+    const rs = cmpList().map((c) => nhiD.byCode.get(c)), lab = (x) => (Array.isArray(x) ? T(...x) : x);
+    const tsv = CMP_ROWS.filter(([k]) => !(Array.isArray(k) && k[0] === '外觀')).map(([k, , t]) => [lab(k), ...rs.map((r) => String(t(r) ?? '').replace(/\s+/g, ' '))].join('\t')).join('\n');
+    try { await navigator.clipboard.writeText(tsv); RT.toast(T('已複製表格，可直接貼到 Excel 或 Word', 'Table copied; paste it into Excel or Word')); } catch (x) { RT.toast(T('無法複製到剪貼簿', 'Could not copy'), 3000); }
+  }
+});
+
+/* ---------- what a month costs at the NHI price, and in the same price group ---------- */
+function costHTML(r) {
+  if (!(r[N.price] > 0)) return '';
+  return `<div class="cost" data-cost="${esc(r[N.code])}"><h3 class="sec">${T('每月費用試算', 'Cost per month')}</h3>
+    <div class="cost-in"><label>${T('一天用', 'Per day')} <input type="number" data-cq min="0.25" max="99" step="0.25" inputmode="decimal" value="${esc(S.costQty || 1)}"> ${T('單位', 'units')}</label><span>×</span><label><input type="number" data-cd min="1" max="365" step="1" inputmode="numeric" value="${esc(S.costDays || 30)}"> ${T('天', 'days')}</label></div>
+    <div data-cost-out>${costOut(r)}</div></div>`;
+}
+function costOut(r) {
+  const q = Math.max(0, parseFloat(S.costQty) || 1), d = Math.max(1, Math.round(parseFloat(S.costDays) || 30)), me = r[N.price] * q * d;
+  const k = grpKey(r), peers = r[N.group] ? nhiD.rows.filter((x) => x !== r && x[N.price] > 0 && grpKey(x) === k).sort((a, b) => a[N.price] - b[N.price]).slice(0, 6) : [];
+  const money = (v) => '$' + Math.round(v).toLocaleString();
+  const row = (x, mine) => { const v = x[N.price] * q * d, dv = v - me; return `<li${mine ? ' class="me"' : ''}><span class="cn">${mine ? `<b>${T('這個藥', 'This drug')}</b>` : `<button type="button" data-go="${esc(x[N.code])}">${esc(x[N.zh] || x[N.en])}</button>`}</span><span class="cu">$${fmtP(x[N.price])}</span><span class="cm">${money(v)}</span><span class="cd2${Math.round(dv) === 0 ? ' eq' : dv < 0 ? ' less' : ''}">${mine ? '' : Math.round(dv) === 0 ? T('同價', 'same') : (dv < 0 ? '−' : '+') + money(Math.abs(dv))}</span></li>`; };
+  const lo = peers[0];
+  return `<p class="cost-sum">${T(`${d} 天約 <b>${money(me)}</b>`, `<b>${money(me)}</b> for ${d} days`)}${lo && lo[N.price] < r[N.price] ? T(`；換成同組最低價每 ${d} 天約省 <b>${money(me - lo[N.price] * q * d)}</b>`, `; the group's lowest price saves about <b>${money(me - lo[N.price] * q * d)}</b> per ${d} days`) : ''}</p>
+    ${peers.length ? `<ul class="cost-l"><li class="h"><span>${T('同分組', 'Same group')}</span><span>${T('單價', 'Unit')}</span><span>${T(`${d} 天`, `${d} days`)}</span><span>${T('差額', 'Difference')}</span></li>${[...peers, r].sort((a, b) => a[N.price] - b[N.price]).map((x) => row(x, x === r)).join('')}</ul>` : ''}
+    <p class="note">${T('以健保支付價的計價單位計算（錠、顆、支、瓶…依品項而定），不含藥事服務費、診察費與部分負擔，只供比較參考。', 'Worked out per pricing unit of the NHI price (tablet, capsule, vial… depending on the item), without dispensing fees, consultation fees or co-payment; for comparison only.')}</p>`;
+}
+$('out').addEventListener('input', (e) => {
+  const box = e.target.closest('.cost'); if (!box) return;
+  if (e.target.matches('[data-cq]')) S.costQty = e.target.value;
+  if (e.target.matches('[data-cd]')) S.costDays = e.target.value;
+  save();
+  const r = nhiD.byCode.get(box.dataset.cost); if (r) box.querySelector('[data-cost-out]').innerHTML = costOut(r);
+});
+
+/* ---------- keyboard: ↑ ↓ (and ← → among cards) move between results; ↓ from the search box enters the list ---------- */
+const rowsInOut = () => [...document.querySelectorAll('#out ul.res > li:not(.th):not(.grp-h) > .row')].filter((b) => b.offsetParent);
+$('out').addEventListener('keydown', (e) => {
+  if (!['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight'].includes(e.key) || !e.target.matches('ul.res > li > .row')) return;
+  const cards = !!e.target.closest('ul.cards');
+  if (!cards && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) return;
+  const all = rowsInOut(), i = all.indexOf(e.target); if (i < 0) return;
+  let j = i;
+  if (cards && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+    const x = e.target.getBoundingClientRect().left, y = e.target.getBoundingClientRect().top;
+    const cand = all.filter((b) => (e.key === 'ArrowDown' ? b.getBoundingClientRect().top > y + 4 : b.getBoundingClientRect().top < y - 4));
+    if (cand.length) { const ty = e.key === 'ArrowDown' ? Math.min(...cand.map((b) => b.getBoundingClientRect().top)) : Math.max(...cand.map((b) => b.getBoundingClientRect().top)); const rowB = cand.filter((b) => Math.abs(b.getBoundingClientRect().top - ty) < 4); j = all.indexOf(rowB.reduce((a, b) => (Math.abs(b.getBoundingClientRect().left - x) < Math.abs(a.getBoundingClientRect().left - x) ? b : a))); }
+  } else j = i + (e.key === 'ArrowDown' || e.key === 'ArrowRight' ? 1 : -1);
+  if (j >= 0 && j < all.length && j !== i) { e.preventDefault(); all[j].focus(); all[j].scrollIntoView({ block: 'nearest' }); }
+  else if (j < 0 && (e.key === 'ArrowUp')) { e.preventDefault(); $('q').focus(); }
+});
+$('q').addEventListener('keydown', (e) => { if (e.key === 'ArrowDown') { const f = rowsInOut()[0]; if (f) { e.preventDefault(); f.focus(); } } });
+
+
+/* ---------- TFDA safety communications and risk management plans ---------- */
+let safetyD = null, safetyP = null;
+// class names in the notices, read as ATC prefixes
+const SAFE_CLASS = [
+  [/SSRI|選擇性血清素/i, ['N06AB']], [/SNRI|正腎上腺素回收/i, ['N06AX16', 'N06AX21', 'N06AX17']], [/vortioxetine/i, ['N06AX26']],
+  [/fluoroquinolone/i, ['J01MA']], [/非類固醇消炎|NSAID/i, ['M01A']], [/JAK/i, ['L04AF', 'L04AA29', 'L04AA37', 'L04AA44', 'L01EJ']],
+  [/DOAC|直接作用型口服抗凝血/i, ['B01AF', 'B01AE07']], [/aminoglycoside/i, ['J01G']], [/碘顯影|iodinated contrast/i, ['V08AB']],
+  [/刺激型瀉劑/, ['A06AB']], [/血管內皮生長因子|VEGF/i, ['L01FG', 'L01EK', 'S01LA']], [/巨環類|macrolide/i, ['J01FA']], [/^insulin|胰島素/i, ['A10A']],
+];
+const SAFE_STOP = new Set(['selective', 'serotonin', 'reuptake', 'inhibitors', 'inhibitor', 'noradrenaline', 'contrast', 'media', 'iodinated', 'sodium', 'hydrochloride', 'vitamin', 'acetate', 'phosphate', 'sulfate', 'potassium', 'calcium', 'direct-acting', 'anticoagulants', 'acting', 'merck', 'varicella-zoster', 'virus', 'olumiant', 'tablets', 'injection', 'class']);
+function loadSafety() {
+  if (!safetyP) safetyP = TW.safety().then((d) => {
+    safetyD = { comms: d.comms || [], rmp: new Set(d.rmp || []) };
+    safetyD.idx = safetyD.comms.map((c) => ({ atc: SAFE_CLASS.filter(([re]) => re.test(c[1])).flatMap(([, a]) => a), tok: [...new Set((c[1].toLowerCase().match(/[a-z][a-z0-9-]{4,}/g) || []).filter((w) => !SAFE_STOP.has(w)))] }));
+    if (open.size || openLic.size) refreshShown();
+    return safetyD;
+  }).catch(() => { safetyP = null; });
+  return safetyP;
+}
+// the notices about this ingredient (by name) or its class (by ATC)
+function safetyOf(ingredients, atc) {
+  if (!safetyD) return [];
+  const ing = ' ' + TW.fold(ingredients).replace(/[^a-z0-9-]+/g, ' ') + ' ', a = String(atc || '').toUpperCase();
+  return safetyD.comms.filter((c, i) => { const x = safetyD.idx[i]; return (a && x.atc.some((p) => a.startsWith(p))) || x.tok.some((w) => ing.includes(' ' + w + ' ')); });
+}
+const rmpTag = (f) => (safetyD && f && safetyD.rmp.has(f[F.licence]) ? `<span class="tag ctrl" title="${T('食藥署要求這張許可證執行藥品風險管理計畫（RMP），使用前後有特別的衛教或監測要求', 'TFDA requires a risk management plan for this licence: specific education or monitoring around its use')}">${T('風險管理計畫', 'Risk plan')}</span>` : '');
+function safetyBanner(ingredients, atc) {
+  const cs = safetyOf(ingredients, atc);
+  if (!cs.length) return '';
+  return `<div class="banners"><div class="banner safe"><b>${T(`食藥署安全資訊 ${cs.length} 則`, `${cs.length} TFDA safety notice${cs.length > 1 ? 's' : ''}`)}</b><span>${T('最近 ', 'latest ')}${esc(cs[0][0])} · ${esc(firstLine(cs[0][1]))}</span>
+    <details><summary>${T('看內容', 'Read them')}</summary>${cs.map((c) => `<div class="sf"><p><b>${esc(c[0])} · ${esc(c[1])}</b></p>${c[3] ? `<p><span class="sfk">${T('緣由', 'Why')}</span>${esc(c[3])}</p>` : ''}${c[5] ? `<p><span class="sfk">${T('食藥署說明', 'TFDA advice')}</span>${esc(c[5])}</p>` : ''}</div>`).join('')}
+    <p class="note">${T('資料來源：食藥署「藥品安全資訊風險溝通資料」開放資料集，目前最新一則發布於 ', 'From the TFDA open dataset of drug safety communications; its newest notice is from ')}${esc(safetyD.comms[0] ? safetyD.comms[0][0] : '—')}${T('；比對依成分名稱與藥理分類，請以食藥署公告原文為準。', '; matched by ingredient name and drug class, so check the TFDA notice itself.')}</p></details></div></div>`;
+}
+
+/* ---------- DDD: the user's own WHO value per ATC code (the WHO list is not ours to publish) ---------- */
+const UNIT = { mg: ['mg', 1], g: ['mg', 1000], mcg: ['mg', 0.001], ug: ['mg', 0.001], 'μg': ['mg', 0.001], u: ['u', 1], iu: ['u', 1], mu: ['u', 1e6] };
+// the strength of one unit, when the item has one ingredient and a plain per-unit amount (not per mL)
+function unitStrength(r) {
+  const s = String(r[N.ingredient] || '');
+  if (/\+/.test(s)) return null;
+  const m = s.match(/([\d.]+)\s*(MG|G|MCG|UG|ΜG|IU|U|MU)\b(?!\s*\/)/i); if (!m) return null;
+  const u = UNIT[m[2].toLowerCase().replace('μ', 'μ')] || UNIT[m[2].toLowerCase()]; if (!u) return null;
+  return { v: parseFloat(m[1]) * u[1], base: u[0], text: m[0] };
+}
+const dddOf = (atc) => (S.ddd || {})[atc] || null;
+function perDDD(r) {
+  const d = dddOf(r[N.atc]), s = unitStrength(r); if (!d || !s || !(r[N.price] > 0)) return null;
+  const u = UNIT[d.u]; if (!u || u[0] !== s.base) return null;
+  const units = (d.v * u[1]) / s.v;           // units of this item in one DDD
+  return { units, cost: r[N.price] * units };
+}
+function dddHTML(r) {
+  if (!r[N.atc] || r[N.atc].length < 7) return '';
+  const d = dddOf(r[N.atc]) || { v: '', u: 'g' }, s = unitStrength(r), p = perDDD(r);
+  return `<div class="ddd" data-ddd="${esc(r[N.code])}"><div class="cost-in"><label>DDD <input type="number" data-dv min="0" step="any" inputmode="decimal" value="${esc(d.v)}" aria-label="${T('WHO 每日定義劑量', 'WHO defined daily dose')}"></label><select data-du aria-label="${T('單位', 'Unit')}">${['g', 'mg', 'mcg', 'U', 'MU'].map((u) => `<option value="${u.toLowerCase()}"${d.u === u.toLowerCase() ? ' selected' : ''}>${u}</option>`).join('')}</select>
+    <a href="https://atcddd.fhi.no/atc_ddd_index/?code=${encodeURIComponent(r[N.atc])}" target="_blank" rel="noopener">${T(`查 ${esc(r[N.atc])} 的 DDD ↗`, `Look up ${esc(r[N.atc])} ↗`)}</a></div>
+    <p class="cost-sum" data-dddout>${p ? T(`每 DDD 約 <b>$${fmtP(+p.cost.toFixed(2))}</b>（1 DDD = ${+p.units.toFixed(2)} 單位，每單位 ${esc(s.text)}）`, `About <b>$${fmtP(+p.cost.toFixed(2))}</b> per DDD (1 DDD = ${+p.units.toFixed(2)} units of ${esc(s.text)})`) : !s ? T('這個品項的含量不是單一成分的每單位劑量（例如每 mL），無法換算 DDD。', 'This item’s strength is not one ingredient per unit (it may be per mL), so it cannot be turned into DDDs.') : d.v ? T('DDD 的單位和含量的單位對不上（例如一個是 mg、一個是 U）。', 'The DDD unit does not match the strength unit (e.g. mg against U).') : T('輸入 WHO 公布的 DDD，就能算每 DDD 費用。', 'Enter the WHO DDD to get the cost per DDD.')}</p>
+    <p class="note">${T('WHO 的 ATC/DDD 表有著作權，網站不提供；請到 WHOCC 查詢後輸入，數值只存在這台裝置，同一個 ATC 碼的品項共用。', 'The WHO ATC/DDD index is copyrighted and not bundled; look the value up at the WHOCC and enter it. It stays on this device and is shared by every item with this ATC code.')}</p></div>`;
+}
+$('out').addEventListener('input', (e) => {
+  const box = e.target.closest('.ddd'); if (!box) return;
+  const r = nhiD.byCode.get(box.dataset.ddd); if (!r) return;
+  const v = parseFloat(box.querySelector('[data-dv]').value), u = box.querySelector('[data-du]').value;
+  S.ddd = { ...(S.ddd || {}) };
+  if (v > 0) S.ddd[r[N.atc]] = { v, u }; else delete S.ddd[r[N.atc]];
+  save();
+  const t = document.createElement('div'); t.innerHTML = dddHTML(r);
+  box.querySelector('[data-dddout]').innerHTML = t.querySelector('[data-dddout]').innerHTML;
+});
+$('out').addEventListener('change', (e) => { if (e.target.matches('.ddd [data-du]')) e.target.closest('.ddd').querySelector('[data-dv]').dispatchEvent(new Event('input', { bubbles: true })); });
+
+/* ---------- outside references for an ingredient ---------- */
+const SALT = /\b(HCL|HBR|HYDROCHLORIDE|HYDROBROMIDE|SODIUM|POTASSIUM|CALCIUM|MAGNESIUM|MALEATE|BESYLATE|BESILATE|MESYLATE|MESILATE|TARTRATE|BITARTRATE|SUCCINATE|FUMARATE|CITRATE|ACETATE|SULFATE|SULPHATE|PHOSPHATE|NITRATE|BROMIDE|CHLORIDE|DIHYDRATE|MONOHYDRATE|TRIHYDRATE|HEMIHYDRATE|ANHYDROUS|MEDOXOMIL|CILEXETIL|DIPROPIONATE|PROPIONATE|VALERATE|FUROATE)\b/g;
+const baseName = (ing) => ingName(String(ing || '').split(/[+;]/)[0]).replace(SALT, '').replace(/\s+/g, ' ').trim().toLowerCase();
+function extLinks(ing, atc) {
+  const n = baseName(ing); if (!n) return '';
+  const q = encodeURIComponent(n);
+  const L = [
+    [`https://dailymed.nlm.nih.gov/dailymed/search.cfm?labeltype=all&query=${q}`, 'DailyMed', T('美國仿單', 'US labels')],
+    [`https://www.ncbi.nlm.nih.gov/books/NBK501922/?term=${q}`, 'LactMed', T('哺乳用藥', 'breastfeeding')],
+    [`https://pubchem.ncbi.nlm.nih.gov/#query=${q}`, 'PubChem', T('化學結構與別名', 'structure and synonyms')],
+    [`https://pubmed.ncbi.nlm.nih.gov/?term=${q}`, 'PubMed', T('文獻', 'literature')],
+  ];
+  if (atc) L.push([`https://atcddd.fhi.no/atc_ddd_index/?code=${encodeURIComponent(atc)}`, 'WHOCC', 'ATC/DDD']);
+  return `<span class="ext">${L.map(([u, k, d]) => `<a href="${u}" target="_blank" rel="noopener" title="${esc(d)}">${k} ↗</a>`).join('')}</span>`;
+}
+
+/* ---------- one ingredient (or combination), all of it in one view ---------- */
+async function openIng(ingText) {
+  const key = ingKey(ingText, /\+/.test(ingText) ? '+' : ';');
+  if (!key) return;
+  $('ingBody').innerHTML = `<div class="loading">${T('整理中…', 'Gathering…')}</div>`;
+  $('ingDlg').showModal();
+  try { await Promise.all([loadAll(), loadFdaAll(), loadUsage(), loadSafety(), loadAlertIdx()]); } catch (e) { /* draw what there is */ }
+  $('ingBody').innerHTML = ingHTML(key);
+  $('ingDlg').dataset.key = key;
+}
+function ingHTML(key) {
+  const rows = nhiD.rows.filter((r) => ingKey(r[N.ingredient], '+') === key);
+  if (!rows.length) return `<div class="empty-state">${T('找不到這個成分的健保品項。', 'No NHI items with these ingredients.')}</div>`;
+  const paid = rows.filter((r) => r[N.price] > 0), name = key.split('+').join(' + ');
+  const by = {}; paid.forEach((r) => { const k = CLS_KEY[r[N.class]] ? r[N.class] : ''; by[k] = (by[k] || 0) + 1; });
+  const vendors = new Set(paid.map((r) => r[N.vendor]).filter(Boolean)).size;
+  const lic = fdaD && fdaD.complete ? licOnlyRows().filter((f) => ingKey(f[F.ingredients], ';') === key).length : 0;
+  const k = (l, v, s) => `<div class="kpi"><span class="kk">${l}</span><span class="kv">${v}</span>${s ? `<span class="ks">${s}</span>` : ''}</div>`;
+  // strengths and forms: one line per price group
+  const gs = new Map();
+  rows.forEach((r) => { const g = r[N.group] || (r[N.ingredient] + ' · ' + r[N.form]); const a = gs.get(g) || []; a.push(r); gs.set(g, a); });
+  const grows = [...gs.entries()].map(([g, rs]) => { const p = rs.filter((r) => r[N.price] > 0), ps = p.map((r) => r[N.price]); const orig = p.filter((r) => r[N.class] === '研發廠').map((r) => r[N.price]); const dd = p.map(perDDD).filter(Boolean).map((x) => x.cost); return { g, n: rs.length, np: p.length, lo: ps.length ? Math.min(...ps) : 0, hi: ps.length ? Math.max(...ps) : 0, orig: orig.length ? Math.min(...orig) : 0, ddd: dd.length ? Math.min(...dd) : 0, r: (p[0] || rs[0]) }; })
+    .sort((a, b) => b.np - a.np || a.lo - b.lo);
+  // claims per year, split by class
+  let use = '';
+  if (usageD && usageD.years.length) {
+    const ys = usageD.years, keys = ['研發廠', 'BA/BE學名藥', '一般學名藥', '生物製劑', ''];
+    const tot = ys.map((_, i) => { const o = {}; rows.forEach((r) => { const q = usageD.q[r[N.code]]; if (!q || !q[i]) return; const c = CLS_KEY[r[N.class]] ? r[N.class] : ''; o[c] = (o[c] || 0) + q[i][0]; }); return o; });
+    const sums = tot.map((o) => Object.values(o).reduce((s, v) => s + v, 0)), mx = Math.max(1, ...sums);
+    if (sums.some(Boolean)) use = `<h3 class="sec">${T('歷年醫令量', 'Claims by year')} <small>${T('依藥品分類堆疊', 'stacked by class')}</small></h3>
+      <div class="ubars ing">${ys.map((y, i) => `<div class="ucol${y.partial ? ' part' : ''}" style="--i:${i}" title="${y.year}：${sums[i].toLocaleString()}"><span class="val">${sums[i] ? fmtN(sums[i]) : '0'}</span><span class="stack" style="height:${((sums[i] / mx) * 100).toFixed(1)}%">${keys.filter((c) => tot[i][c]).map((c) => `<i class="k-${CLS_KEY[c] || 'none'}" style="flex:${tot[i][c]}"></i>`).join('')}</span></div>`).join('')}</div>
+      <div class="uyears">${ys.map((y) => `<span>${y.year}${y.partial ? '*' : ''}</span>`).join('')}</div>
+      <div class="legend">${keys.filter((k2) => tot.some((o) => o[k2])).map((k2) => `<span><span class="dot k-${CLS_KEY[k2] || 'none'}"></span> ${k2 ? esc(clsName(k2)) : T('未分類', 'Unclassified')}</span>`).join('')}${ys.some((y) => y.partial) ? `<span>${T('* 部分月份', '* part of the year')}</span>` : ''}</div>`;
+  }
+  const byLic = new Map();
+  rows.forEach((r) => { const f = licOf(r); if (!f || byLic.has(f[F.licence]) || !(isShort(f) || lastRecall(f))) return; byLic.set(f[F.licence], { r, f, sh: isShort(f), rc: lastRecall(f) }); });
+  const alerts = [...byLic.values()].sort((a, b) => b.sh - a.sh || String(b.rc ? b.rc[0] : '').localeCompare(String(a.rc ? a.rc[0] : '')));
+  const cs = safetyOf(key.replace(/\+/g, ' '), rows[0][N.atc]);
+  return `<div class="ing-h"><h2>${esc(name)}</h2>${extLinks(rows[0][N.ingredient], rows[0][N.atc])}</div>
+    <div class="kpis">${k(T('健保品項', 'NHI items'), rows.length, T(`給付中 ${paid.length}`, `${paid.length} reimbursed`))}${k(T('藥商', 'Vendors'), vendors, T('給付中品項', 'of reimbursed items'))}${k(T('原廠／學名藥', 'Originator / generic'), `${by['研發廠'] || 0} / ${(by['BA/BE學名藥'] || 0) + (by['一般學名藥'] || 0)}`, `BA/BE ${by['BA/BE學名藥'] || 0} · ${T('一般', 'generic')} ${by['一般學名藥'] || 0}${by['生物製劑'] ? ` · ${T('生物', 'bio')} ${by['生物製劑']}` : ''}`)}${k(T('無健保代號的許可證', 'Licences without NHI code'), lic, T('自費或指示藥', 'self-paid or OTC'))}</div>
+    <h3 class="sec">${T('含量與劑型', 'Strengths and forms')} <small>${T(`${grows.length} 組`, `${grows.length} groups`)}</small></h3>
+    <div class="ing-t"><table><thead><tr><th>${T('分類分組', 'Price group')}</th><th class="n">${T('給付中', 'Paid')}</th><th class="n">${T('支付價', 'Price')}</th><th class="n">${T('原廠', 'Originator')}</th><th class="n">${T('每 DDD', 'Per DDD')}</th></tr></thead><tbody>
+      ${grows.map((x) => `<tr><td><button type="button" class="lnk" data-inggrp="${esc(x.r[N.group] || '')}" data-ingq="${esc(x.r[N.code])}">${esc(x.g)}</button></td><td class="n">${x.np}/${x.n}</td><td class="n">${x.np ? `$${fmtP(x.lo)}${x.hi > x.lo ? '–$' + fmtP(x.hi) : ''}` : '—'}</td><td class="n">${x.orig ? '$' + fmtP(x.orig) : '—'}</td><td class="n">${x.ddd ? '$' + fmtP(+x.ddd.toFixed(2)) : '—'}</td></tr>`).join('')}</tbody></table></div>
+    ${grows.some((x) => x.ddd) ? '' : `<p class="note">${T('「每 DDD」需要先在任一品項的「價格與費用」分頁輸入這個 ATC 碼的 DDD。', '“Per DDD” needs the DDD for this ATC code, entered once under Price and cost on any item.')}</p>`}
+    ${use}
+    ${alerts.length ? `<h3 class="sec">${T('缺藥與回收', 'Shortages and recalls')} <small>${T(`${alerts.length} 張許可證`, `${alerts.length} licences`)}</small></h3><ul class="ing-l">${alerts.slice(0, 15).map(({ r, sh, rc }) => `<li><button type="button" class="lnk" data-ingq="${esc(r[N.code])}">${esc(r[N.zh] || r[N.en])}</button> ${sh ? `<span class="tag short">${T('缺藥中', 'Short')}</span>` : ''}${rc ? `<span class="tag recall">${T('最近回收', 'Last recall')} ${esc(rc[0])}</span>` : ''}</li>`).join('')}</ul>${alerts.length > 15 ? `<p class="note">${T(`另有 ${alerts.length - 15} 張許可證有回收紀錄`, `${alerts.length - 15} more licences with a recall`)}</p>` : ''}` : ''}
+    ${cs.length ? `<h3 class="sec">${T('食藥署安全資訊', 'TFDA safety notices')} <small>${cs.length}</small></h3><ul class="ing-l">${cs.map((c) => `<li><span class="d">${esc(c[0])}</span> ${esc(c[1])}${c[5] ? `<details><summary>${T('食藥署說明', 'TFDA advice')}</summary><p>${esc(c[5])}</p></details>` : ''}</li>`).join('')}</ul>` : ''}
+    <div class="acts"><button type="button" data-ingall>${T('列出全部品項', 'List every item')}</button><button type="button" data-ingcl>${T(`全部 ${rows.length} 個代碼加入代碼清單`, `Add all ${rows.length} codes to the code list`)}</button></div>`;
+}
+$('ingDlg').addEventListener('click', (e) => {
+  if (e.target === $('ingDlg') || e.target.id === 'ingClose') { $('ingDlg').close(); return; }
+  const key = $('ingDlg').dataset.key, rows = () => nhiD.rows.filter((r) => ingKey(r[N.ingredient], '+') === key);
+  const g = e.target.closest('[data-ingq]');
+  if (g) { $('ingDlg').close(); setView('search', true); if (g.dataset.inggrp) setChip('group', g.dataset.inggrp); else goCode(g.dataset.ingq); return; }
+  if (e.target.closest('[data-ingall]')) { $('ingDlg').close(); setView('search', true); leaveSheet(); chips = []; Q = key.split('+')[0].toLowerCase(); $('q').value = Q; if (S.scope === 'lic') setScope('every', true); shown = 50; open.clear(); sync(); render(); window.scrollTo({ top: 0 }); return; }
+  if (e.target.closest('[data-ingcl]')) toCodelist(rows().map(nhiItem));
+});
 
 /* ---------- controls ---------- */
 function setScope(v, quiet) { if (v !== 'paid') loadAll(); S.scope = v; $('scope').value = v; if (v !== 'paid') loadFdaAll(); shown = 50; save(); if (!quiet) render(); }
@@ -1947,9 +2424,8 @@ const onQ = RT.debounce(() => { Q = $('q').value.trim(); shown = 50; leaveSheet(
 $('q').addEventListener('input', onQ);
 $('q').addEventListener('keydown', (e) => { if (e.key === 'Escape') { $('q').value = ''; onQ(); } });
 document.addEventListener('keydown', (e) => { if (e.key === '/' && document.activeElement !== $('q') && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); $('q').focus(); } });
-$('fSort').onchange = () => { S.sort = $('fSort').value; save(); render(); };
-function setByGroup(on, quiet) { S.byGroup = !!on; $('btnByGroup').setAttribute('aria-pressed', String(S.byGroup)); shown = 50; save(); if (!quiet) render(); }
-$('btnByGroup').onclick = () => setByGroup(!S.byGroup);
+$('fSort').onchange = () => { const v = $('fSort').value; if (v === 'grp') setByGroup(true); else { S.sort = v; setByGroup(false); } };
+function setByGroup(on, quiet) { S.byGroup = !!on; $('fSort').value = S.byGroup ? 'grp' : S.sort; shown = 50; save(); if (!quiet) render(); }
 // the filter panel (a sheet on phones)
 function showAdv(on) {
   $('adv').hidden = !on; $('btnAdv').setAttribute('aria-expanded', String(on));
@@ -2098,16 +2574,16 @@ async function drawUsage(box, r) {
 /* ---------- A. the drug's life on one line ---------- */
 const TL_KIND = {
   lic: ['許可證', 'Licence'], list: ['收載／恢復給付', 'Listed'], down: ['調降', 'Price cut'], up: ['調升', 'Price rise'],
-  rule: ['給付規定修訂', 'Rule revised'], short: ['缺藥', 'Shortage'], back: ['恢復供應', 'Back in supply'], recall: ['回收', 'Recall'], off: ['取消給付／許可證註銷', 'Delisted / licence cancelled'],
+  rule: ['給付規定修訂', 'Rule revised'], short: ['缺藥', 'Shortage'], back: ['恢復供應', 'Back in supply'], recall: ['回收', 'Recall'], safety: ['安全資訊', 'Safety notice'], off: ['取消給付／許可證註銷', 'Delisted / licence cancelled'],
 };
-const TL_COLOR = { lic: 'var(--accent)', list: 'var(--accent)', down: 'var(--c-babe)', up: 'var(--c-orig)', rule: 'var(--c-bio)', short: 'var(--c-off)', back: 'var(--c-babe)', recall: 'var(--c-orig)', off: 'var(--muted)' };
+const TL_COLOR = { lic: 'var(--accent)', list: 'var(--accent)', down: 'var(--c-babe)', up: 'var(--c-orig)', rule: 'var(--c-bio)', short: 'var(--c-off)', back: 'var(--c-babe)', recall: 'var(--c-orig)', safety: 'var(--warn-text)', off: 'var(--muted)' };
 // price and events in one picture: the price as a step line with its changes marked on it,
 // and a lane above for what does not move the price (licence, rules, shortages, recalls)
-const TL_LANE = new Set(['lic', 'rule', 'short', 'back', 'recall']);
+const TL_LANE = new Set(['lic', 'rule', 'short', 'back', 'recall', 'safety']);
 async function drawTimeline(box, r) {
   if (!box) return;
   let h = [];
-  try { [h] = await Promise.all([TW.hist(r[N.code]), loadAlerts()]); } catch (e) { h = []; }
+  try { [h] = await Promise.all([TW.hist(r[N.code]), loadAlerts(), loadSafety()]); } catch (e) { h = []; }
   if (!box.isConnected) return;
   const f = licOf(r), ev = [], today = new Date().toISOString().slice(0, 10);
   const add = (date, kind, label, end, p) => { const d = String(date || '').slice(0, 10); if (/^\d{4}-\d{2}-\d{2}$/.test(d) && d <= today) ev.push({ date: d, kind, label, end, p }); };
@@ -2131,6 +2607,7 @@ async function drawTimeline(box, r) {
     if (bk) add(bk[0], 'back', T('恢復供應', 'Back in supply'));
     (alertsD.recalls[f[F.licence]] || []).forEach((x) => add(x[0], 'recall', T('回收', 'Recall') + ' · ' + GRADE(x[1])));
   }
+  safetyOf(r[N.ingredient], r[N.atc]).forEach((c) => add(c[0], 'safety', T('食藥署安全資訊', 'TFDA safety notice') + ' · ' + firstLine(c[1])));
   if (!ev.length) { box.innerHTML = ''; return; }
   ev.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   // drawn at the box's own width, so marks and labels keep their size on a phone
@@ -2337,16 +2814,27 @@ async function drawClassTrend(det) {
 }
 
 /* ---------- views ---------- */
-const VIEWS = ['search', 'changes', 'alerts', 'rules', 'batch'];
+const VIEWS = ['search', 'changes', 'alerts', 'rules', 'pill', 'batch'];
+const NEWS = ['changes', 'alerts', 'rules'];
 function setView(v, quiet) {
+  if (v === 'news') v = NEWS.includes(S.newsSub) ? S.newsSub : 'changes';
   if (!VIEWS.includes(v)) v = 'search';
-  S.view = v; save();
-  $('views').querySelectorAll('[data-view]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.view === v)));
-  $('vSearch').hidden = v !== 'search'; $('vChanges').hidden = v !== 'changes'; $('vAlerts').hidden = v !== 'alerts'; $('vRules').hidden = v !== 'rules'; $('vBatch').hidden = v !== 'batch';
-  if (v === 'changes') renderChanges(); else if (v === 'alerts') renderAlerts(); else if (v === 'rules') renderRulesView(); else if (v === 'batch') renderBatch();
+  S.view = v; if (NEWS.includes(v)) S.newsSub = v; save();
+  const top = NEWS.includes(v) ? 'news' : v;
+  $('views').querySelectorAll('[data-view]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.view === top)));
+  $('newsBar').hidden = !NEWS.includes(v);
+  $('newsBar').querySelectorAll('[data-view]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.view === v)));
+  $('vSearch').hidden = v !== 'search'; $('vChanges').hidden = v !== 'changes'; $('vAlerts').hidden = v !== 'alerts'; $('vRules').hidden = v !== 'rules'; $('vBatch').hidden = v !== 'batch'; $('vPill').hidden = v !== 'pill';
+  if (v === 'changes') renderChanges(); else if (v === 'alerts') renderAlerts(); else if (v === 'rules') renderRulesView(); else if (v === 'batch') renderBatch(); else if (v === 'pill') renderPill();
   if (!quiet) sync();
 }
 $('views').addEventListener('click', (e) => { const b = e.target.closest('[data-view]'); if (b) { leaveSheet(); setView(b.dataset.view); window.scrollTo({ top: 0 }); } });
+$('newsBar').addEventListener('click', (e) => { const b = e.target.closest('[data-view]'); if (b) setView(b.dataset.view); });
+// help: the ? button or the ? key
+$('btnHelp').onclick = () => $('helpDlg').showModal();
+$('helpClose').onclick = () => $('helpDlg').close();
+$('helpDlg').addEventListener('click', (e) => { if (e.target === $('helpDlg')) $('helpDlg').close(); });
+document.addEventListener('keydown', (e) => { if (e.key === '?' && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName) && !document.querySelector('dialog[open]')) { e.preventDefault(); $('helpDlg').showModal(); } });
 // a drug named in any view opens in the search view
 ['vChanges', 'vAlerts', 'vRules', 'vBatch'].forEach((id) => $(id).addEventListener('click', (e) => {
   const g = e.target.closest('[data-go]'); if (!g) return;
@@ -2450,6 +2938,107 @@ function drawBatch() {
     if (items.length > 3000) { RT.toast(T('超過 3000 個代號，請分批', 'More than 3000 codes; split the list'), 4000); return; }
     toCodelist(items);
   };
+}
+
+
+/* pill finder: colour, shape, score line, imprint and size, from the TFDA appearance data */
+const PILL_COL = [['白', 'White', '#f5f4f0'], ['黃', 'Yellow', '#f0d24a'], ['粉', 'Pink', '#f1a9c0'], ['橘', 'Orange', '#f09a4c'], ['紅', 'Red', '#d6463c'], ['藍', 'Blue', '#4b7fd6'], ['綠', 'Green', '#53ad6b'], ['棕', 'Brown', '#8b5a3c'], ['紫', 'Purple', '#8f6bcf'], ['灰', 'Grey', '#9b9b9b'], ['黑', 'Black', '#2a2a2a'], ['透明', 'Clear', '']];
+const PILL_SHAPE = [['圓形', 'Round'], ['橢圓形', 'Oval'], ['膠囊', 'Capsule'], ['四邊形', 'Four-sided'], ['三角形', 'Triangle'], ['多邊形', 'Polygon'], ['水滴形', 'Teardrop'], ['雙圓形', 'Double round'], ['其他', 'Other']];
+const PILL_SCORE = [['無', 'None'], ['直線', 'Line'], ['十字', 'Cross']];
+const PILL_DEF = { col: [], shape: '', score: '', mark: '', size: '' };
+const pillS = () => (S.pill = { ...PILL_DEF, ...(S.pill || {}) });
+const normMark = (s) => String(s || '').toUpperCase().replace(/[\s/|;,.\-]+/g, '');
+let pillIdx = null;
+function pillIndex() {
+  if (pillIdx && pillIdx.f === fdaD.rows.length && pillIdx.n === nhiD.rows.length) return pillIdx;
+  const C = {}; extraD.lookCols.forEach((c, i) => (C[c] = i));
+  const items = [], parts = (v) => String(v || '').split(';;;').map((x) => x.trim()).filter(Boolean);
+  Object.entries(extraD.looks).forEach(([no, ls]) => {
+    const f = licIdx().byNo.get(no); if (!f) return;
+    const rs = (licIdx().codes.get(no) || []).slice().sort((a, b) => (b[N.price] > 0) - (a[N.price] > 0) || a[N.price] - b[N.price]);
+    ls.forEach((l) => items.push({ no, f, rs, l, col: parts(l[C.colour]), shape: parts(l[C.shape]), score: parts(l[C.score]), mark: normMark([l[C.mark1], l[C.mark2]].join(' ')), size: parseFloat(l[C.size]) || null, C }));
+  });
+  pillIdx = { f: fdaD.rows.length, n: nhiD.rows.length, items };
+  return pillIdx;
+}
+const shapeHit = (want, have) => have.some((h) => (want === '多邊形' ? /[五六八]邊形/.test(h) : want === '其他' ? /其他/.test(h) : h === want));
+function pillSearch() {
+  const p = pillS(), q = normMark(p.mark), sz = parseFloat(p.size);
+  if (!p.col.length && !p.shape && !p.score && !q && !(sz > 0)) return null;
+  return pillIndex().items.filter((it) => (!p.col.length || p.col.every((c) => it.col.includes(c)))
+      && (!p.shape || shapeHit(p.shape, it.shape))
+      && (!p.score || it.score.includes(p.score))
+      && (!q || it.mark.includes(q))
+      && (!(sz > 0) || (it.size && Math.abs(it.size - sz) <= 1)))
+    .sort((a, b) => (q ? (b.mark.startsWith(q) - a.mark.startsWith(q)) || a.mark.length - b.mark.length : 0)
+      || (b.rs.some((r) => r[N.price] > 0) - a.rs.some((r) => r[N.price] > 0))
+      || String(a.f[F.zh] || a.f[F.en]).localeCompare(String(b.f[F.zh] || b.f[F.en]), 'zh-Hant'));
+}
+let pillShown = 60;
+async function renderPill() {
+  const box = $('vPill');
+  if (!box.querySelector('.pill-f')) {
+    const p = pillS();
+    box.innerHTML = `<div class="pill-f">
+      <p class="pill-lead">${T('手上有一顆不知道是什麼的藥？依外觀找：顏色、形狀、刻痕和藥上的字，條件越多越準。資料來自食藥署藥品外觀資料集，只涵蓋有登錄外觀的許可證。', 'Holding a pill you cannot name? Find it by how it looks: colour, shape, score line and the imprint. The more you give, the fewer matches. From the TFDA appearance dataset, so only licences with a recorded appearance are covered.')}</p>
+      <div class="pf-row"><span class="pf-k">${T('顏色', 'Colour')}<small>${T('膠囊可選兩色', 'two for a capsule')}</small></span><div class="pf-v">${PILL_COL.map(([zh, en, hex]) => `<button type="button" class="sw" data-pcol="${zh}" aria-pressed="${p.col.includes(zh)}"><i style="${hex ? `background:${hex}` : ''}"${hex ? '' : ' class="clear"'}></i>${T(zh, en)}</button>`).join('')}</div></div>
+      <div class="pf-row"><span class="pf-k">${T('形狀', 'Shape')}</span><div class="pf-v">${PILL_SHAPE.map(([zh, en]) => `<button type="button" class="pc" data-pshape="${zh}" aria-pressed="${p.shape === zh}">${T(zh, en)}</button>`).join('')}</div></div>
+      <div class="pf-row"><span class="pf-k">${T('刻痕', 'Score line')}</span><div class="pf-v">${PILL_SCORE.map(([zh, en]) => `<button type="button" class="pc" data-pscore="${zh}" aria-pressed="${p.score === zh}">${T(zh, en)}</button>`).join('')}</div></div>
+      <div class="pf-row"><span class="pf-k">${T('藥上的字', 'Imprint')}</span><div class="pf-v"><input id="pMark" autocomplete="off" spellcheck="false" placeholder="${T('例如 MF 1、SC B06', 'e.g. MF 1, SC B06')}" value="${esc(p.mark)}"><label class="pf-size">${T('大小約', 'About')} <input id="pSize" type="number" min="1" max="40" step="0.5" inputmode="decimal" value="${esc(p.size)}"> mm</label><button type="button" class="small" id="pClear">${T('清除', 'Clear')}</button></div></div>
+    </div><div id="pOut"></div>`;
+    box.addEventListener('click', (e) => {
+      const p = pillS(), c = e.target.closest('[data-pcol]'), s = e.target.closest('[data-pshape]'), k = e.target.closest('[data-pscore]');
+      if (c) { const v = c.dataset.pcol; p.col = p.col.includes(v) ? p.col.filter((x) => x !== v) : [...p.col, v].slice(-2); }
+      else if (s) p.shape = p.shape === s.dataset.pshape ? '' : s.dataset.pshape;
+      else if (k) p.score = p.score === k.dataset.pscore ? '' : k.dataset.pscore;
+      else if (e.target.id === 'pClear') { S.pill = { ...PILL_DEF }; $('pMark').value = ''; $('pSize').value = ''; }
+      else if (e.target.id === 'pMore') { pillShown += 60; drawPill(); return; }
+      else {
+        const g = e.target.closest('[data-pgo]'), l = e.target.closest('[data-plic]');
+        if (g) { setView('search', true); goCode(g.dataset.pgo); } else if (l) goLic(l.dataset.plic);
+        return;
+      }
+      box.querySelectorAll('[data-pcol]').forEach((b) => b.setAttribute('aria-pressed', String(pillS().col.includes(b.dataset.pcol))));
+      box.querySelectorAll('[data-pshape]').forEach((b) => b.setAttribute('aria-pressed', String(pillS().shape === b.dataset.pshape)));
+      box.querySelectorAll('[data-pscore]').forEach((b) => b.setAttribute('aria-pressed', String(pillS().score === b.dataset.pscore)));
+      pillShown = 60; save(); drawPill();
+    });
+    const typed = RT.debounce(() => { pillS().mark = $('pMark').value; pillS().size = $('pSize').value; pillShown = 60; save(); drawPill(); }, 200);
+    $('pMark').addEventListener('input', typed); $('pSize').addEventListener('input', typed);
+  }
+  $('pOut').innerHTML = `<div class="loading">${T('載入外觀資料中…', 'Loading the appearance data…')}</div>`;
+  try { await Promise.all([loadAll(), loadFdaAll(), loadExtra()]); } catch (e) { $('pOut').innerHTML = `<div class="empty-state">${esc(e.message || e)}</div>`; return; }
+  drawPill();
+}
+function drawPill() {
+  if (!extraD || !fdaD || !fdaD.complete) return;
+  const res = pillSearch();
+  if (!res) { $('pOut').innerHTML = `<div class="empty-state">${T(`選一個顏色、形狀，或輸入藥上的字開始找（共 ${pillIndex().items.length.toLocaleString()} 種外觀）。`, `Pick a colour or shape, or type the imprint (${pillIndex().items.length.toLocaleString()} appearances).`)}</div>`; return; }
+  if (!res.length) { $('pOut').innerHTML = `<div class="empty-state">${T('沒有符合的外觀。試著少選一個條件，或只輸入藥上字的一部分。', 'Nothing matches. Drop a condition, or type only part of the imprint.')}</div>`; return; }
+  const card = (it) => {
+    const l = it.l, C = it.C, ph = l[C.photo], r = it.rs[0];
+    const lk = [l[C.colour], l[C.shape], l[C.size] ? l[C.size] + ' mm' : '', l[C.score] && !/^無/.test(l[C.score]) ? T('刻痕 ', 'score ') + l[C.score] : '', [l[C.mark1], l[C.mark2]].filter(Boolean).join(' / ')].filter(Boolean).join(' · ').replace(/;;;/g, '/');
+    const go = r ? `data-pgo="${esc(r[N.code])}"` : `data-plic="${esc(it.no)}"`;
+    return `<li><button type="button" class="row c" ${go}>
+      <span class="card-ph${ph ? '' : ' noimg'}">${ph ? `<img src="${esc(mcp(ph))}" alt="" loading="lazy" decoding="async">` : `${formIcon(it.f[F.form])}<small>${T('沒有照片', 'No photo')}</small>`}</span>
+      <span class="card-nm">${esc(it.f[F.zh] || it.f[F.en])}</span>
+      <span class="card-lk">${esc(lk)}</span>
+      <span class="card-lk">${esc(it.f[F.ingredients])}</span>
+      <span class="card-pr">${r ? `<b>${r[N.price] > 0 ? '$' + fmtP(r[N.price]) : T('已取消給付', 'Delisted')}</b><span class="cd">${esc(r[N.code])}</span>` : `<span class="nop">${T('無健保價', 'No NHI price')}</span><span>${esc(catShort(it.f[F.category]))}</span>`}</span>
+    </button></li>`;
+  };
+  $('pOut').innerHTML = `<p class="pill-n">${T(`符合 <b>${res.length.toLocaleString()}</b> 種外觀`, `<b>${res.length.toLocaleString()}</b> matching appearances`)}${res.length > pillShown ? T(`，先列 ${pillShown} 種`, `; the first ${pillShown} shown`) : ''}</p>
+    <ul class="res cards">${res.slice(0, pillShown).map(card).join('')}</ul>${res.length > pillShown ? `<div class="more"><button type="button" id="pMore">${T('再顯示 60 種', 'Show 60 more')}</button></div>` : ''}
+    <p class="note">${T('外觀相同的藥很多，請一定再核對藥名、劑量與藥袋，必要時詢問藥師。', 'Many drugs look alike: always check the name, strength and label, and ask a pharmacist when unsure.')}</p>`;
+}
+// open a licence that has no NHI code, from another view
+async function goLic(no) {
+  await Promise.all([loadAll(), loadFdaAll()]);
+  setView('search', true); leaveSheet();
+  chips = []; Q = no; $('q').value = no; shown = 50; open.clear(); openLic.clear();
+  if (S.scope !== 'every' && S.scope !== 'lic') setScope('every', true);
+  sync(); render(); window.scrollTo({ top: 0 });
+  const li = licLi(no); if (li) openLicRow(li);
 }
 
 /* this week */
@@ -2606,6 +3195,7 @@ $('aCat').innerHTML = $('aCountry').innerHTML = `<option value="">${T('不限', 
 syncAdv();
 TW.nhi().then((d) => {
   nhiD = d;
+  drawTray();
   const forms = {}; d.rows.forEach((r) => { if (r[N.price] > 0 && r[N.form]) forms[r[N.form]] = (forms[r[N.form]] || 0) + 1; });
   $('aForm').innerHTML = `<option value="">${T('不限', 'All')}</option>` + Object.entries(forms).sort((a, b) => b[1] - a[1]).slice(0, 40).map(([f]) => `<option value="${esc(f)}">${esc(f)}</option>`).join('');
   syncAdv();

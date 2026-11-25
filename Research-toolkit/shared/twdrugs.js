@@ -189,6 +189,8 @@
     memo.aidx.catch(() => { memo.aidx = null; });
     return memo.aidx;
   }
+  // TFDA safety communications and risk-management-plan licences (built by tw-drug-safety.mjs)
+  async function safety() { return ((await meta()).counts || {}).safety != null ? file('safety') : { comms: [], rmp: [] }; }
   async function alerts() { return ((await meta()).counts || {}).recalls != null ? file('alerts') : { recallCols: [], supplyCols: [], recalls: {}, short: {}, recovered: {} }; }
   // NHI usage per code and year: {years:[{year, from, to, partial}], q:{code:[[total, male], …]}}
   async function usage() { return ((await meta()).counts || {}).usageYears ? file('usage') : { years: [], q: {} }; }
@@ -200,7 +202,7 @@
   const fold = (s) => String(s || '').replace(/[！-～]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0)).replace(/　/g, ' ').toLowerCase();
 
   RT.twDrugs = {
-    BASE, N, F, meta, nhi, nhiAll, fda, fdaAll, fdaMore, licText, hist, histAll: () => file('hist'), extra, rules, alertIndex, alerts, usage, changes, ruleDate, fold,
+    BASE, N, F, meta, nhi, nhiAll, fda, fdaAll, fdaMore, licText, hist, histAll: () => file('hist'), extra, rules, alertIndex, alerts, safety, usage, changes, ruleDate, fold,
     /** 第一級…第四級管制藥品 (not 取消管制藥品註記, which marks a schedule that was lifted) */
     ctrlLevel: (v) => { const m = String(v || '').match(/^第(.)級管制藥品$/); return m ? '一二三四'.indexOf(m[1]) + 1 : 0; },
     /** NHI codes ending in G0 are the foil-packed (PTP) version of the same product; worked out from the data, not an NHIA definition */
