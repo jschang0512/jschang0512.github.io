@@ -2,7 +2,8 @@
 // Runs after tw-drugs.mjs, before tw-drug-rules.mjs. Every input is optional: a source that could not be
 // downloaded keeps last week's part from the previous data folder.
 // Usage: node .github/scripts/tw-drug-watch.mjs <dataDir> <prevDir> [--recall fda34.csv] [--short fda104.csv]
-//        [--recovered fda106.csv] [--usage dirWithE41005-*.csv]
+//        [--short2 fda105.csv] [--recovered fda106.csv] [--usage dirWithE41005-*.csv]
+//   --short is TFDA 經評估有替代藥品品項 (short, an alternative exists), --short2 經評估無替代藥品品項 (short, none)
 // Writes into <dataDir>:
 //   alerts.json   recalls (TFDA 回收藥品資料集), current shortages (藥品供應資訊: 短缺中) and recoveries (已恢復供應)
 //   usage.json    NHI 藥品使用量 per NHI code and year (with bundled payments), plus the reporting months per year
@@ -61,9 +62,15 @@ function supply(file, prev, label) {
   return out;
 }
 short = supply(opt.short, prevAlerts.short, 'shortages');
+// shortages with no alternative join the same list, marked; each shortage ends with 1 (an alternative exists) or 0 (none)
+let noAlt = null;
+if (has(opt.short2)) noAlt = supply(opt.short2, null, 'shortages without an alternative');
+else { reused.push('shortages without an alternative'); noAlt = Object.fromEntries((prevAlerts.noAlt || []).map((l) => [l, (prevAlerts.short || {})[l]]).filter(([, v]) => v)); }
+Object.values(short).forEach((v) => { v.length = 3; v.push(1); });
+Object.entries(noAlt).forEach(([l, v]) => { short[l] = [...v.slice(0, 3), 0]; });
 recovered = supply(opt.recovered, prevAlerts.recovered, 'recoveries');
 const RECALL_COLS = ['date', 'grade', 'batch', 'reason', 'notice', 'product', 'holder'];
-const SUPPLY_COLS = ['date', 'name', 'status'];
+const SUPPLY_COLS = ['date', 'name', 'status', 'alt'];
 
 /* ---------- NHI usage, one file per year (E41005-001 = ROC year 111, …) ---------- */
 let usage = prevJson('usage.json');
@@ -131,7 +138,7 @@ if (now && before && prevMeta && prevMeta.built !== meta.built) {
 
 /* ---------- write ---------- */
 const out = (f, o) => { const s = JSON.stringify(o); fs.writeFileSync(path.join(dir, f), s); return (s.length / 1e6).toFixed(2) + ' MB'; };
-const alerts = { recallCols: RECALL_COLS, supplyCols: SUPPLY_COLS, recalls, short, recovered };
+const alerts = { recallCols: RECALL_COLS, supplyCols: SUPPLY_COLS, recalls, short, recovered, noAlt: Object.keys(noAlt) };
 const changes = { weeks };
 const h = crypto.createHash('sha1').update(JSON.stringify([alerts, usage, changes])).digest('hex').slice(0, 10);
 meta.v = crypto.createHash('sha1').update(meta.v + h).digest('hex').slice(0, 10);
@@ -140,7 +147,7 @@ meta.reused = [...(meta.reused || []), ...reused];
 console.log('alerts.json', out('alerts.json', { v: meta.v, ...alerts }));
 // a small index for the result cards and filters: which licences are short now, and each one's latest recall
 const recallIdx = {}; for (const [l, list] of Object.entries(recalls)) { const d = list.map((x) => x[0]).filter(Boolean).sort().pop() || ''; recallIdx[l] = [d, list.length]; }
-console.log('alerts-index.json', out('alerts-index.json', { v: meta.v, short: Object.keys(short), recall: recallIdx }));
+console.log('alerts-index.json', out('alerts-index.json', { v: meta.v, short: Object.keys(short), noAlt: Object.keys(noAlt), recall: recallIdx }));
 console.log('usage.json', out('usage.json', { v: meta.v, ...usage }));
 console.log('changes.json', out('changes.json', { v: meta.v, ...changes }));
 fs.writeFileSync(path.join(dir, 'meta.json'), JSON.stringify(meta));

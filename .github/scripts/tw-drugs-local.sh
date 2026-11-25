@@ -19,7 +19,7 @@ echo "== $(date '+%F %T') Taiwan drug data, built locally"
 # last published data: the fallback for any source that cannot be downloaded, and the rule texts already converted
 mkdir -p "$WORK/prev" "$WORK/src"
 git fetch -q origin tw-drugs-data 2>/dev/null || true
-for f in meta nhi nhi-paid nhi-rest hist fda fda-more extra rules alerts usage changes safety; do
+for f in meta nhi nhi-paid nhi-rest hist fda fda-more extra rules alerts usage changes safety fda-atc; do
   git show "origin/tw-drugs-data:$f.json" > "$WORK/prev/$f.json" 2>/dev/null || rm -f "$WORK/prev/$f.json"
 done
 # before the branch has rule texts, reuse the ones converted on this computer
@@ -43,13 +43,15 @@ for pair in "36:LIC:fda.json:10000000" "42:LOOKS:extra.json:100000" "39:LEAF:ext
   fi
   if [ -n "$csv" ]; then PICK[$var]="$csv"; else echo "TFDA dataset $id could not be downloaded; keeping last week's"; PICK[$var]="$WORK/prev/$prev"; fi
 done
-# shortages (104 now short, 106 back in supply) and recalls (34); a failed one keeps last week's
-for id in 34 104 106; do
+# shortages (104 short with an alternative, 105 short without one, 106 back in supply) and recalls (34)
+for id in 34 104 105 106; do
   # these exports come as plain CSV (the larger ones are zipped): take either
   if get "$WORK/src/fda$id.dl" "https://data.fda.gov.tw/data/opendata/export/$id/csv"; then
     mkdir -p "$WORK/src/fda$id" && { unzip -o -q "$WORK/src/fda$id.dl" -d "$WORK/src/fda$id" 2>/dev/null || cp "$WORK/src/fda$id.dl" "$WORK/src/fda$id/fda$id.csv"; }
   fi
 done
+# TFDA ATC codes per licence (41, zipped JSON)
+if get "$WORK/src/fda41.zip" "https://data.fda.gov.tw/data/opendata/export/41/json"; then mkdir -p "$WORK/src/fda41" && unzip -o -q "$WORK/src/fda41.zip" -d "$WORK/src/fda41" || true; fi
 # TFDA safety communications (53) and the risk-management-plan list (54): plain JSON
 get "$WORK/src/fda53.json" "https://data.fda.gov.tw/data/opendata/export/53/json" || true
 get "$WORK/src/fda54.json" "https://data.fda.gov.tw/data/opendata/export/54/json" || true
@@ -65,13 +67,14 @@ for f in "$NHI" "${PICK[LIC]}"; do [ -f "$f" ] || { echo "ERROR: $f missing and 
 
 node .github/scripts/tw-drugs.mjs "$NHI" "${PICK[LIC]}" "$WORK/out" "${PICK[LOOKS]}" "${PICK[LEAF]}" || exit 1
 args=()
-for pair in "34:--recall" "104:--short" "106:--recovered"; do
+for pair in "34:--recall" "104:--short" "105:--short2" "106:--recovered"; do
   id=${pair%%:*}; flag=${pair#*:}
   c=$(ls "$WORK/src/fda$id"/*.csv 2>/dev/null | head -1); [ -n "$c" ] && args+=("$flag" "$c")
 done
 ls "$WORK/src/usage"/*.csv >/dev/null 2>&1 && args+=(--usage "$WORK/src/usage")
 node .github/scripts/tw-drug-watch.mjs "$WORK/out" "$WORK/prev" "${args[@]}" || exit 1
 node .github/scripts/tw-drug-safety.mjs "$WORK/out" "$WORK/prev" --comms "$WORK/src/fda53.json" --rmp "$WORK/src/fda54.json" || exit 1
+node .github/scripts/tw-drug-atc.mjs "$WORK/out" "$WORK/prev" --atc "$(ls "$WORK/src/fda41"/*.json 2>/dev/null | head -1)" || exit 1
 node .github/scripts/tw-drug-rules.mjs "$WORK/out" "$WORK/prev/rules.json" 2>&1 | grep -v '^Syntax Error' || true
 [ -f "$WORK/out/rules.json" ] || { echo "ERROR: rules.json was not written"; exit 1; }
 

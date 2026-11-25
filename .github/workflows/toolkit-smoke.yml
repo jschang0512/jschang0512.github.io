@@ -10,6 +10,8 @@ on:
       - "Research-toolkit/**"
       - ".github/scripts/toolkit-smoke.mjs"
       - ".github/workflows/toolkit-smoke.yml"
+      - ".github/scripts/drugs-test.mjs"
+      - ".github/fixtures/tw-drugs/**"
   workflow_dispatch:
 
 permissions:
@@ -44,3 +46,9 @@ jobs:
         env:
           BASE: http://localhost:8765
         run: node .github/scripts/toolkit-smoke.mjs
+
+      - name: Drug lookup features
+        if: always()
+        env:
+          BASE: http://localhost:8765
+        run: node .github/scripts/drugs-test.mjs
