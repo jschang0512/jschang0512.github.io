@@ -110,6 +110,8 @@
   .row .main { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
   .row .nm { font-weight: 700; font-size: 14.5px; line-height: 1.35; overflow-wrap: anywhere; }
   .row .en { color: var(--muted); font-size: 12.5px; font-weight: 400; overflow-wrap: anywhere; }
+  .row .ind-hit { display: block; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+  .row .ind-hit b { font-weight: 600; color: var(--text); }
   .row .meta { display: flex; flex-wrap: wrap; gap: 3px 10px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
   .row .meta .cd { font-family: var(--font-mono); color: var(--text); }
   .row .tags { display: flex; flex-wrap: wrap; gap: 4px; }
@@ -508,7 +510,7 @@
   <section class="dr-search">
     <label class="dr-q">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-      <input type="search" id="q" autocomplete="off" spellcheck="false" aria-label="搜尋藥品" placeholder="藥名、成分、健保代號、ATC 或許可證字號（按 / 開始）" data-en-ph="Name, ingredient, NHI code, ATC or licence number (press /)">
+      <input type="search" id="q" autocomplete="off" spellcheck="false" aria-label="搜尋藥品" placeholder="藥名、成分、適應症、健保代號、ATC 或許可證字號（按 / 開始）" data-en-ph="Name, ingredient, indication, NHI code, ATC or licence number (press /)">
     </label>
     <div class="dr-filters">
       <span class="scope" role="group" aria-label="範圍" id="scope">
@@ -582,7 +584,7 @@
   </div>
 </main>
 
-<script src="../shared/common.js?v=20261125a"></script>
+<script src="../shared/common.js?v=20261125b"></script>
 <script src="../shared/twdrugs.js?v=20261124a"></script>
 <script>
 const TW = RT.twDrugs, N = TW.N, F = TW.F, T = RT.t, esc = RT.esc;
@@ -621,7 +623,7 @@ function photoOf(r) {
   const looks = looksOf(licOf(r)); if (!looks.length) return '';
   const i = extraD.lookCols.indexOf('photo'); const l = looks.find((x) => x[i]); return l ? mcp(l[i]) : '';
 }
-let hay = null, zF = null, eF = null, iF = null, rank = null;
+let hay = null, zF = null, eF = null, iF = null, rank = null, indHits = new Set();
 function haystack() {
   if (hay) return hay;
   const rows = nhiD.rows, n = rows.length;
@@ -637,6 +639,22 @@ function haystack() {
     rank = new Int32Array(n); order.forEach((ix, k) => (rank[ix] = k));
   }
   return hay;
+}
+// indication text (TFDA), folded, per NHI row and per licence-only row; null until the text has arrived
+let indH = null, licInd = null;
+const indText = (f) => { const t = f ? TW.licText(f) : null; return t ? t.indication || '' : ''; };
+function indHay() {
+  if (!moreReady()) return null;
+  if (!indH || indH.length !== nhiD.rows.length) indH = nhiD.rows.map((r) => TW.fold(indText(licOf(r))));
+  return indH;
+}
+const moreReady = () => !!(moreP.paid && moreP.paid.done) || !!(moreP.all && moreP.all.done);
+// a short piece of the indication around the first word that matched only there
+function indSnippet(text, toks) {
+  const s = String(text || ''), f = TW.fold(s);
+  const t = toks.find((x) => f.includes(x)); if (!t) return '';
+  const p = f.indexOf(t), a = Math.max(0, p - 14), b = Math.min(s.length, p + t.length + 26);
+  return (a > 0 ? '…' : '') + hl(s.slice(a, b).replace(/\s+/g, ' ')) + (b < s.length ? '…' : '');
 }
 let licOnly = null, licHay = null;
 function licOnlyRows() {
@@ -711,7 +729,10 @@ function passes(r) {
 function search() {
   const toks = tokens();
   const H = haystack();
+  if (toks.length) loadMore();          // indication text, so the query also looks there
+  const I = toks.length ? indHay() : null;
   const out = [];
+  indHits = new Set();
   // a product sold in both a foil pack (…G0) and a standard pack (…00) is listed once, in the pack chosen above the results
   const pack = A().pkg ? 'both' : S.pack || 'foil';
   let packHidden = 0;
@@ -728,9 +749,13 @@ function search() {
     }
     if (!ok) continue;
     const h = H[i];
-    let score = 0;
+    let score = 0, viaInd = false;
     for (const t of toks) {
-      if (!h.includes(t)) { ok = false; break; }
+      if (!h.includes(t)) {
+        // only in the indication: it counts, but below any match in the name, ingredient or codes
+        if (I && I[i].includes(t)) { viaInd = true; continue; }
+        ok = false; break;
+      }
       const code = r[N.code].toLowerCase(), atc = r[N.atc].toLowerCase();
       if (code === t) score += 100;
       else if (code.startsWith(t)) score += 60;
@@ -741,6 +766,7 @@ function search() {
     }
     if (!ok) continue;
     if (pack !== 'both' && (pack === 'foil' ? hasFoilTwin(r) : hasCanTwin(r)) && !toks.includes(r[N.code].toLowerCase())) { packHidden++; continue; }
+    if (viaInd) indHits.add(r[N.code]);
     out.push({ r, i, score: score + (r[N.price] > 0 ? 5 : 0) });
   }
   const by = {
@@ -759,7 +785,11 @@ function search() {
     for (let i = 0; i < L.length; i++) {
       if (!licPasses(L[i])) continue;
       if (A().photo && !looksOf(L[i]).length) continue;
-      if (toks.every((t) => licHay[i].includes(t))) lic.push(L[i]);
+      if (toks.every((t) => licHay[i].includes(t))) { lic.push(L[i]); continue; }
+      if (moreReady() && toks.length) {
+        if (!licInd || licInd.length !== L.length) licInd = L.map((f) => TW.fold(indText(f)));
+        if (toks.every((t) => licHay[i].includes(t) || licInd[i].includes(t))) { lic.push(L[i]); indHits.add('L:' + L[i][F.licence]); }
+      }
     }
   }
   return { rows: out.map((x) => x.r), lic, packHidden, pack };
@@ -826,6 +856,7 @@ function rowHTML(r) {
     ${thumbHTML(r)}
     <span class="main"><span class="nm">${hl(r[N.zh] || r[N.en])} <span class="en">${r[N.zh] ? hl(r[N.en]) : ''}</span></span>
       <span class="meta"><span class="cd">${hl(id)}</span>${r[N.atc] ? `<span>ATC ${hl(r[N.atc])}</span>` : ''}<span>${hl(r[N.ingredient])}</span>${r[N.form] ? `<span>${esc(r[N.form])}</span>` : ''}</span>
+      ${indHits.has(id) ? `<span class="ind-hit"><b>${T('適應症', 'Indication')}</b> ${indSnippet(indText(f), tokens())}</span>` : ''}
       ${tags ? `<span class="tags">${tags}</span>` : ''}</span>
     <span class="pr">${price}</span>
   </button>${open.has(id) ? detailHTML(r) : ''}</li>`;
@@ -999,6 +1030,7 @@ function licRowHTML(f) {
     <span class="thumb">${src ? `<img src="${esc(src)}" alt="" loading="lazy" decoding="async">` : formIcon(f[F.form])}</span>
     <span class="main"><span class="nm">${hl(f[F.zh] || f[F.en])} <span class="en">${f[F.zh] ? hl(f[F.en]) : ''}</span></span>
       <span class="meta"><span class="cd">${hl(no)}</span><span>${hl(f[F.ingredients])}</span>${f[F.form] ? `<span>${esc(f[F.form])}</span>` : ''}</span>
+      ${indHits.has('L:' + no) ? `<span class="ind-hit"><b>${T('適應症', 'Indication')}</b> ${indSnippet(indText(f), tokens())}</span>` : ''}
       ${tags ? `<span class="tags">${tags}</span>` : ''}</span>
     <span class="pr"><span class="tag">${esc(f[F.category] || '—')}</span><small>${T('無健保代號', 'No NHI code')}</small></span>
   </button>${isOpen ? licDetailHTML(f) : ''}</li>`;
@@ -1214,13 +1246,16 @@ const totalCodes = () => (metaD && metaD.counts ? metaD.counts.nhiCodes : nhiD.r
 let allP = null;
 function loadAll() {
   if (nhiD && nhiD.complete) return Promise.resolve(nhiD);
-  if (!allP) allP = TW.nhiAll().then((d) => { nhiD = d; hay = null; licOnly = null; render(); return d; }).catch((e) => { allP = null; RT.toast(String(e.message || e), 5000); });
+  if (!allP) allP = TW.nhiAll().then((d) => { nhiD = d; hay = null; licOnly = null; indH = null; licInd = null; render(); return d; }).catch((e) => { allP = null; RT.toast(String(e.message || e), 5000); });
   return allP;
 }
 const moreP = {};
 function loadMore() {
   const all = !!(fdaD && fdaD.complete), k = all ? 'all' : 'paid';
-  if (!moreP[k]) moreP[k] = TW.fdaMore(all).then(() => refreshShown()).catch(() => { moreP[k] = null; });
+  if (!moreP[k]) {
+    const p = TW.fdaMore(all).then(() => { p.done = true; indH = null; licInd = null; if (Q && S.view === 'search') render(); else refreshShown(); }).catch(() => { moreP[k] = null; });
+    moreP[k] = p;
+  }
   return moreP[k];
 }
 function redrawRow(li) {
@@ -1467,7 +1502,7 @@ function licOptions(d) {
 }
 function loadFda() {
   if (fdaP) return fdaP;
-  fdaP = TW.fda().then((d) => { fdaD = d; hay = null; licOptions(d); render(); })
+  fdaP = TW.fda().then((d) => { fdaD = d; hay = null; indH = null; licOptions(d); render(); })
     .catch((e) => { fdaP = null; RT.toast(String(e.message || e), 5000); });
   return fdaP;
 }
@@ -1475,7 +1510,7 @@ function loadFda() {
 let fdaAllP = null;
 function loadFdaAll() {
   if (!fdaAllP) fdaAllP = TW.fdaAll().then((d) => {
-    fdaD = d; hay = null; licOnly = null; licIndex = null; licOptions(d);
+    fdaD = d; hay = null; licOnly = null; indH = null; licInd = null; licIndex = null; licOptions(d);
     if (open.size) { loadMore(); refreshShown(); } else render();
   }).catch((e) => { fdaAllP = null; RT.toast(String(e.message || e), 5000); });
   return fdaAllP;
