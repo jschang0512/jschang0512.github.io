@@ -162,6 +162,18 @@
   .sib { display: flex; flex-wrap: wrap; gap: 4px 6px; }
   .sib button { font-family: var(--font-mono); font-size: 12px; padding: 1px 8px; }
   .note { font-size: 11.5px; color: var(--muted); margin: 8px 0 0; }
+  .lic-why { font-size: 12.5px; color: var(--muted); margin: 0 0 12px; padding: 8px 12px; border-left: 3px solid var(--border); background: var(--panel-2); border-radius: 0 6px 6px 0; }
+  .same { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  .same li { border-bottom: 1px solid var(--border); }
+  .same li:last-child { border-bottom: 0; }
+  .same button { all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; width: 100%; padding: 7px 2px; }
+  .same button:hover .sn { color: var(--accent); text-decoration: underline; }
+  .same button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; border-radius: 4px; }
+  .same .sn { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .same .sm { grid-column: 1; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .same .sp { grid-row: 1 / span 2; grid-column: 2; align-self: center; text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .same .sp small { font-weight: 400; font-size: 11px; color: var(--muted); }
+  .same-more { font-size: 12.5px; color: var(--muted); margin: 6px 0 0; }
   .acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
   .acts button { font-size: 12.5px; padding: 6px 11px; }
   .sec { font-size: 13px; font-weight: 700; margin: 0 0 8px; }
@@ -570,7 +582,7 @@
   </div>
 </main>
 
-<script src="../shared/common.js?v=20261124g"></script>
+<script src="../shared/common.js?v=20261125a"></script>
 <script src="../shared/twdrugs.js?v=20261124a"></script>
 <script>
 const TW = RT.twDrugs, N = TW.N, F = TW.F, T = RT.t, esc = RT.esc;
@@ -585,7 +597,7 @@ S.scope4 = true;
 ['cls', 'form'].forEach((k) => { if (S[k]) { S.adv[k] = S[k]; } delete S[k]; });
 if (S.ctrl === true) S.adv.ctrl = 'any'; if (S.single === true) S.adv.single = '單方'; delete S.ctrl; delete S.single;
 let Q = '', chips = [];            // chips: [{k: 'group'|'atc', v}]
-let nhiD = null, fdaD = null, extraD = null, rulesD = null, shown = 50, open = new Set();
+let nhiD = null, fdaD = null, extraD = null, rulesD = null, shown = 50, open = new Set(), openLic = new Set();
 const tabOf = new Map();           // the tab each open drug shows
 const $ = (id) => document.getElementById(id);
 const phone = () => matchMedia('(max-width: 760px)').matches;
@@ -979,15 +991,94 @@ function licTab(f) {
     f[F.licId] ? [T('食藥署查詢', 'TFDA record'), `<a href="${TW.licUrl(f[F.licId])}" target="_blank" rel="noopener">${T('藥品許可證查詢 ↗', 'Licence lookup ↗')}</a>`] : null,
   ]);
 }
+const licPhoto = (f) => { const looks = looksOf(f), i = extraD ? extraD.lookCols.indexOf('photo') : -1, l = i >= 0 ? looks.find((x) => x[i]) : null; return l ? mcp(l[i]) : ''; };
+const licDomId = (f) => 'dl-' + String(f[F.licId] || f[F.licence]).replace(/[^\w-]/g, '_');
 function licRowHTML(f) {
-  const looks = looksOf(f), i = extraD ? extraD.lookCols.indexOf('photo') : -1, l = i >= 0 ? looks.find((x) => x[i]) : null;
-  return `<li><div class="row" style="cursor:default">
-    <span class="thumb">${l ? `<img src="${esc(mcp(l[i]))}" alt="" loading="lazy" decoding="async">` : formIcon(f[F.form])}</span>
+  const no = f[F.licence], isOpen = openLic.has(no), src = licPhoto(f), tags = ctrlTag(f) + alertTags(f);
+  return `<li data-lic="${esc(no)}"><button type="button" class="row" aria-expanded="${isOpen}" aria-controls="${licDomId(f)}">
+    <span class="thumb">${src ? `<img src="${esc(src)}" alt="" loading="lazy" decoding="async">` : formIcon(f[F.form])}</span>
     <span class="main"><span class="nm">${hl(f[F.zh] || f[F.en])} <span class="en">${f[F.zh] ? hl(f[F.en]) : ''}</span></span>
-      <span class="meta"><span class="cd">${hl(f[F.licence])}</span><span>${hl(f[F.ingredients])}</span>${f[F.form] ? `<span>${esc(f[F.form])}</span>` : ''}${f[F.licId] ? `<a href="${TW.licUrl(f[F.licId])}" target="_blank" rel="noopener">${T('食藥署 ↗', 'TFDA ↗')}</a>` : ''}</span>
-      ${ctrlTag(f) ? `<span class="tags">${ctrlTag(f)}</span>` : ''}</span>
-    <span class="pr"><span class="tag">${esc(f[F.category] || '—')}</span></span>
-  </div></li>`;
+      <span class="meta"><span class="cd">${hl(no)}</span><span>${hl(f[F.ingredients])}</span>${f[F.form] ? `<span>${esc(f[F.form])}</span>` : ''}</span>
+      ${tags ? `<span class="tags">${tags}</span>` : ''}</span>
+    <span class="pr"><span class="tag">${esc(f[F.category] || '—')}</span><small>${T('無健保代號', 'No NHI code')}</small></span>
+  </button>${isOpen ? licDetailHTML(f) : ''}</li>`;
+}
+
+/* ---------- a licence without an NHI code: what TFDA has, and the NHI items with the same ingredients ---------- */
+// ingredient names written the same way in both lists: no brackets, strengths or water of crystallisation, the usual salt short forms
+const ING_SYN = [[/HYDROCHLORIDE/g, 'HCL'], [/HYDROBROMIDE/g, 'HBR'], [/\b(ANHYDROUS|MONOHYDRATE|DIHYDRATE|TRIHYDRATE|HEMIHYDRATE|SESQUIHYDRATE)\b/g, ''], [/PARACETAMOL/g, 'ACETAMINOPHEN']];
+function ingName(s) {
+  let t = String(s || '').toUpperCase(), p;
+  do { p = t; t = t.replace(/\([^()]*\)/g, ' '); } while (t !== p);
+  t = ING_SYN.reduce((x, [a, b]) => x.replace(a, b), t);
+  return t.replace(/\s+[\d.]+\s*(MG|G|MCG|ΜG|UG|ML|IU|U|%|MEQ|MMOL|UNITS?|KIU|MIU)\b.*$/, '').replace(/[^A-Z0-9 ,.\-']/g, ' ').replace(/\s+/g, ' ').trim();
+}
+const ingKey = (list, sep) => [...new Set(String(list || '').split(sep).map(ingName).filter(Boolean))].sort().join('+');
+let ingIndex = null;
+function sameIngredient(f) {
+  if (!ingIndex || ingIndex.n !== nhiD.rows.length) {
+    const m = new Map();
+    nhiD.rows.forEach((r) => { const k = ingKey(r[N.ingredient], '+'); if (!k) return; const a = m.get(k) || []; a.push(r); m.set(k, a); });
+    ingIndex = { n: nhiD.rows.length, m };
+  }
+  const form = String(f[F.form] || '').slice(0, 2), sameForm = (r) => (form && String(r[N.form] || '').startsWith(form) ? 1 : 0);
+  // reimbursed first, the same form next, then by price
+  return (ingIndex.m.get(ingKey(f[F.ingredients], ';')) || []).slice()
+    .sort((a, b) => (b[N.price] > 0) - (a[N.price] > 0) || sameForm(b) - sameForm(a) || a[N.price] - b[N.price]);
+}
+const licFirstIng = (f) => ingName(String(f[F.ingredients] || '').split(';')[0]);
+const LIC_TABS = [['sum', '概要', 'Overview'], ['looks', '外觀與仿單', 'Looks & leaflet'], ['lic', '許可證', 'Licence']];
+function licDetailHTML(f) {
+  const no = f[F.licence], tab = tabOf.get('L:' + no) || 'sum', photo = licPhoto(f), name = f[F.zh] || f[F.en];
+  const tags = [`<span class="tag off">${T('無健保代號', 'No NHI code')}</span>`, f[F.category] ? `<span class="tag">${esc(f[F.category])}</span>` : '', ctrlTag(f),
+    f[F.status] ? `<span class="tag off">${T('許可證', 'Licence ')}${esc(f[F.status])}</span>` : `<span class="tag ok">${T('許可證有效', 'Licence valid')}</span>`].join('');
+  return `<div class="detail" id="${licDomId(f)}" data-lic="${esc(no)}">
+    <div class="d-back"><button type="button" data-act="close">← ${T('返回', 'Back')}</button><span>${esc(name)}</span></div>
+    <div class="d-head">
+      <div class="d-pic">${photo ? zoomBtn(photo, name, `<img src="${esc(photo)}" alt="${esc(T('藥品外觀照片', 'Photo of the drug'))}" decoding="async">`) : formIcon(f[F.form])}</div>
+      <div class="d-title"><h2>${esc(name)}</h2>${f[F.zh] ? `<div class="en">${esc(f[F.en])}</div>` : ''}<div class="tags">${tags}</div></div>
+      <div class="d-price"><b style="color:var(--muted)">${T('無健保價', 'No NHI price')}</b><small>${T('不在健保用藥品項', 'not on the NHI list')}</small></div>
+    </div>
+    ${alertBanners(f)}
+    <div class="tabs" role="tablist">${LIC_TABS.map(([k, zh, en]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${k === tab}">${T(zh, en)}</button>`).join('')}</div>
+    <div class="tabp" role="tabpanel" data-panel="${tab}">${licTabHTML(f, tab)}</div>
+  </div>`;
+}
+function licTabHTML(f, tab) {
+  if (tab === 'looks') return looksTab(null, f);
+  if (tab === 'lic') return licTab(f);
+  const same = sameIngredient(f), paid = same.filter((r) => r[N.price] > 0).length, first = licFirstIng(f);
+  const sameList = same.length ? `<ul class="same">${same.slice(0, 12).map((r) => `<li><button type="button" data-go="${esc(r[N.code])}">
+      <span class="sn">${esc(r[N.zh] || r[N.en])}</span>
+      <span class="sm">${esc(r[N.code])}${r[N.form] ? ' · ' + esc(r[N.form]) : ''}${r[N.strength] ? ' · ' + esc(r[N.strength]) : ''}${r[N.class] ? ' · ' + esc(clsName(r[N.class])) : ''}</span>
+      <span class="sp">${r[N.price] > 0 ? '$' + fmtP(r[N.price]) : `<small>${T('已取消給付', 'delisted')}</small>`}</span></button></li>`).join('')}</ul>
+      ${same.length > 12 ? `<p class="same-more">${T(`另有 ${same.length - 12} 筆，用下面的「搜尋」看全部`, `${same.length - 12} more; use Search below to see them all`)}</p>` : ''}`
+    : `<p class="hint" style="margin:0">${T('健保用藥品項裡沒有成分組合完全相同的品項。', 'No NHI item has exactly the same ingredients.')}</p>`;
+  return `<p class="lic-why">${T('這張許可證沒有對應的健保代號（常見於指示藥、成藥、自費藥或疫苗），健保署就沒有它的支付價、價格歷程、醫令量與給付規定。下面是食藥署許可證資料。', 'This licence has no NHI code (common for OTC, self-paid drugs and vaccines), so the NHIA has no price, price history, claims or rules for it. Below is what the TFDA licence record holds.')}</p>
+    <div class="facts">
+      ${fact(T('成分', 'Ingredients'), esc(String(f[F.ingredients] || '').replace(/;/g, '；')), true)}
+      ${fact(T('許可證字號', 'Licence'), `<span class="cd">${esc(f[F.licence])}</span>`)}
+      ${fact(T('劑型', 'Form'), esc(f[F.form]))}
+      ${fact(T('類別', 'Category'), esc(f[F.category]))}
+      ${fact(T('管制藥品', 'Controlled'), esc(f[F.controlled]))}
+      ${fact(T('有效期限', 'Valid until'), f[F.status] ? `${esc(f[F.status])} ${esc(f[F.cancelDate])}` : esc(f[F.validUntil]))}
+      ${fact(T('發證日期', 'Issued'), esc(f[F.issued]))}
+      ${fact(T('申請商', 'Applicant'), esc(f[F.applicant]))}
+      ${fact(T('製造廠', 'Manufacturer'), esc(f[F.maker]) + (f[F.country] ? ` (${esc(countryName(f[F.country]))})` : ''))}
+      ${fact(T('適應症', 'Indication'), TW.licText(f) ? `<span class="ind">${esc(TW.licText(f).indication)}</span>` : `<span class="hint">${T('載入中…', 'Loading…')}</span>`, true)}
+    </div>
+    <h3 class="sec">${T('同成分的健保品項', 'NHI items with the same ingredients')} <small>${same.length ? T(`${same.length} 筆，給付中 ${paid}`, `${same.length}, ${paid} reimbursed`) : ''}</small></h3>
+    ${sameList}
+    <p class="note">${T('依成分名稱比對（去掉括號、含量與結晶水，鹽類寫法統一），成分組合要完全相同；劑型與含量可能不同，請點進去確認。', 'Matched on ingredient names (brackets, strengths and water of crystallisation removed, salt names unified); the set must be identical. Form and strength may differ, so open an item to check.')}</p>
+    <div class="acts">
+      ${first ? `<button type="button" data-act="licq">${T(`搜尋含 ${esc(first)} 的藥品`, `Search drugs with ${esc(first)}`)}</button>` : ''}
+      <button type="button" data-act="copy">${T('複製摘要', 'Copy summary')}</button>
+      ${f[F.licId] ? `<a class="btn" href="${TW.licUrl(f[F.licId])}" target="_blank" rel="noopener">${T('食藥署查詢 ↗', 'TFDA record ↗')}</a>` : ''}
+    </div>`;
+}
+function licSummary(f) {
+  return [`${f[F.zh] || ''} ${f[F.en] || ''}`.trim(), `${f[F.licence]}${f[F.status] ? '（' + f[F.status] + '）' : ''} · ${T('無健保代號', 'no NHI code')}`,
+    `${T('成分', 'Ingredients')} ${f[F.ingredients]}`, [f[F.form], f[F.category], f[F.controlled]].filter(Boolean).join(' · '), f[F.applicant] ? `${T('申請商', 'Applicant')} ${f[F.applicant]}` : ''].filter(Boolean).join('\n');
 }
 
 /* ---------- tabs that load something: price history, rules ---------- */
@@ -1138,6 +1229,7 @@ function redrawRow(li) {
 }
 // after the licence, appearance or rule files arrive: refresh what is on screen
 function refreshShown() {
+  document.querySelectorAll('#out li[data-lic]').forEach((li) => { if (openLic.has(li.dataset.lic)) redrawLic(li); });
   document.querySelectorAll('#out li[data-code]').forEach((li) => {
     const thumb = li.querySelector(':scope > .row .thumb'), r = nhiD.byCode.get(li.dataset.code);
     if (open.has(li.dataset.code)) { redrawRow(li); return; }
@@ -1158,6 +1250,54 @@ function openDrug(li) {
   const n = redrawRow(document.querySelector(`#out li[data-code="${CSS.escape(id)}"]`) || li);
   if (phone() && n) { const d = n.querySelector('.detail'); if (d) { d.scrollTop = 0; const b = d.querySelector('[data-act="close"]'); if (b) b.focus({ preventScroll: true }); } }
 }
+function redrawLic(li) {
+  const f = fdaD && licIdx().byNo.get(li.dataset.lic); if (!f) return null;
+  const tmp = document.createElement('ul'); tmp.innerHTML = licRowHTML(f); const n = tmp.firstElementChild; li.replaceWith(n); return n;
+}
+const licLi = (no) => document.querySelector(`#out li[data-lic="${CSS.escape(no)}"]`);
+function openLicRow(li) {
+  const no = li.dataset.lic;
+  if (phone()) {
+    [...open].forEach((c) => { open.delete(c); const o = document.querySelector(`#out li[data-code="${CSS.escape(c)}"]`); if (o) redrawRow(o); });
+    [...openLic].forEach((c) => { openLic.delete(c); const o = licLi(c); if (o) redrawLic(o); });
+    openLic.add(no); document.body.classList.add('sheet-open');
+    if (!sheetState) { history.pushState({ sheet: no }, ''); sheetState = true; }
+  } else openLic.add(no);
+  loadExtra(); loadMore(); loadAlerts();
+  const n = redrawLic(licLi(no) || li);
+  if (phone() && n) { const d = n.querySelector('.detail'); if (d) { d.scrollTop = 0; const b = d.querySelector('[data-act="close"]'); if (b) b.focus({ preventScroll: true }); } }
+}
+function closeLic(no, fromHistory) {
+  openLic.delete(no);
+  document.body.classList.remove('sheet-open');
+  const li = licLi(no), n = li ? redrawLic(li) : null;
+  if (sheetState && !fromHistory) { sheetState = false; history.back(); } else sheetState = false;
+  if (n) { const row = n.querySelector('.row'); if (row) row.focus({ preventScroll: phone() }); }
+}
+async function licClick(e, li) {
+  const f = fdaD && licIdx().byNo.get(li.dataset.lic); if (!f) return;
+  const no = f[F.licence];
+  const tb = e.target.closest('[data-tab]');
+  if (tb) {
+    tabOf.set('L:' + no, tb.dataset.tab);
+    const d = li.querySelector('.detail');
+    d.querySelectorAll('.tabs [data-tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tb.dataset.tab)));
+    const p = d.querySelector('.tabp'); p.dataset.panel = tb.dataset.tab; p.innerHTML = licTabHTML(f, tb.dataset.tab);
+    return;
+  }
+  const act = e.target.closest('[data-act]');
+  if (act) {
+    const a = act.dataset.act;
+    if (a === 'close') closeLic(no);
+    else if (a === 'licq') {
+      leaveSheet(); chips = []; Q = licFirstIng(f); $('q').value = Q; shown = 50; open.clear(); openLic.clear();
+      if (S.scope === 'lic') setScope('every', true);
+      sync(); render(); window.scrollTo({ top: 0 });
+    } else if (a === 'copy') { try { await navigator.clipboard.writeText(licSummary(f)); RT.toast(T('已複製', 'Copied')); } catch (x) { RT.toast(T('無法複製到剪貼簿', 'Could not copy'), 3000); } }
+    return;
+  }
+  if (e.target.closest('.row') && !e.target.closest('a')) { if (openLic.has(no)) closeLic(no); else openLicRow(li); }
+}
 function closeDrug(id, fromHistory) {
   open.delete(id);
   document.body.classList.remove('sheet-open');
@@ -1166,8 +1306,8 @@ function closeDrug(id, fromHistory) {
   if (sheetState && !fromHistory) { sheetState = false; history.back(); setTimeout(sync, 0); } else { sheetState = false; sync(); }
   if (n) { const row = n.querySelector('.row'); if (row) row.focus({ preventScroll: phone() }); }
 }
-window.addEventListener('popstate', () => { if (sheetState) { sheetState = false; [...open].forEach((c) => closeDrug(c, true)); } });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && phone() && open.size && !$('photo').open) [...open].forEach((c) => closeDrug(c)); });
+window.addEventListener('popstate', () => { if (sheetState) { sheetState = false; [...open].forEach((c) => closeDrug(c, true)); [...openLic].forEach((c) => closeLic(c, true)); } });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && phone() && (open.size || openLic.size) && !$('photo').open) { [...open].forEach((c) => closeDrug(c)); [...openLic].forEach((c) => closeLic(c)); } });
 
 /* ---------- photo viewer ---------- */
 function openPhoto(btn) {
@@ -1196,7 +1336,7 @@ function toCodelist(items) {
   RT.toast(T(`已送出 ${items.length} 個代碼，到「代碼清單產生器」就會出現`, `${items.length} codes sent; they appear in the Code List Builder`), 4000);
 }
 const nhiItem = (r) => ({ sys: 'nhi', code: r[N.code], name: [r[N.zh], r[N.en]].filter(Boolean).join(' / '), atc: r[N.atc] });
-function leaveSheet() { if (open.size && phone()) { open.clear(); document.body.classList.remove('sheet-open'); if (sheetState) { sheetState = false; history.back(); } } }
+function leaveSheet() { if ((open.size || openLic.size) && phone()) { open.clear(); openLic.clear(); document.body.classList.remove('sheet-open'); if (sheetState) { sheetState = false; history.back(); } } }
 function setChip(k, v) { leaveSheet(); chips = chips.filter((c) => c.k !== k); chips.push({ k, v }); Q = ''; $('q').value = ''; shown = 50; open.clear(); sync(); render(); window.scrollTo({ top: 0 }); }
 async function goCode(code) {
   if (!nhiD.byCode.has(code)) await loadAll();
@@ -1216,6 +1356,7 @@ $('out').addEventListener('click', async (e) => {
   if (e.target.id === 'btnMore') { shown += 100; render(); return; }
   const cg = e.target.closest('[data-chipgroup]'); if (cg) { setChip('group', cg.dataset.chipgroup); return; }
   const go = e.target.closest('[data-go]'); if (go) { goCode(go.dataset.go); return; }
+  const ll = e.target.closest('li[data-lic]'); if (ll) { licClick(e, ll); return; }
   const li = e.target.closest('li[data-code]'); if (!li) return;
   const r = nhiD.byCode.get(li.dataset.code); if (!r) return;
   const tb = e.target.closest('[data-tab]');
@@ -1350,7 +1491,7 @@ function loadExtra() {
 let alertsD = null, alertsP = null;
 function loadAlerts() {
   if (!alertsP) alertsP = TW.alerts().then((d) => {
-    alertsD = d; if (open.size) refreshShown();
+    alertsD = d; if (open.size || openLic.size) refreshShown();
     $('nAlerts').textContent = Object.keys(d.short).length || '';
     if (S.view === 'alerts') renderAlerts();
     return d;
