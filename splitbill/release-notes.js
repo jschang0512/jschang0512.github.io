@@ -8,6 +8,19 @@
 // ============================================================
 window.SB_RELEASE_NOTES = [
   {
+    version: "997",
+    date: "2026-11-27",
+    "zh-Hant": [
+      "加到主畫面的 App 圖示右上角會顯示未讀通知數；不會跳通知，只更新圖示上的數字，看完就消失（Android 的 Chrome 和電腦版支援）"
+    ],
+    "ja": [
+      "ホーム画面に追加したアプリのアイコンに、未読通知の数が表示されます。通知は出さず、アイコンの数字だけが変わり、読むと消えます（Android の Chrome とパソコンで対応）"
+    ],
+    "en": [
+      "The app icon on your home screen now shows how many notifications you have not read. Nothing pops up; only the number on the icon changes, and it clears once you read them (Chrome on Android and desktop)"
+    ]
+  },
+  {
     version: "996",
     date: "2026-11-15",
     "zh-Hant": [

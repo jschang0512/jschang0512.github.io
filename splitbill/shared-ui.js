@@ -687,6 +687,12 @@ async function initNotificationBell(sb, myMember){
       badge.textContent = n > 99 ? "99+" : String(n);
       badge.classList.toggle("hidden", n === 0);
     }
+    // 🔢 加到主畫面的 App 圖示右上角也顯示未讀數（Badging API）。不會跳通知，
+    // 只更新圖示上的數字；不支援的瀏覽器（iPhone 舊版、Capacitor 的 WebView）就什麼都不做。
+    try {
+      if(n && navigator.setAppBadge) navigator.setAppBadge(n).catch(()=>{});
+      else if(!n && navigator.clearAppBadge) navigator.clearAppBadge().catch(()=>{});
+    } catch(e){}
     renderUnreadAlert(n, data && data[0]);
   }
 
@@ -2680,4 +2686,17 @@ window.sbNagPeekHTML = sbNagPeekHTML;
     sync();
   }
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", setup); else setup();
+})();
+
+// 🔢 登出時一併清掉 App 圖示上的未讀數字（Badging API），免得下一個登入的人看到上一個人的數字。
+(function(){
+  function hook(){
+    try {
+      if(hook.done || !window.sb || !window.sb.auth || !navigator.clearAppBadge) return;
+      hook.done = true;
+      window.sb.auth.onAuthStateChange((ev)=>{ if(ev === "SIGNED_OUT") navigator.clearAppBadge().catch(()=>{}); });
+    } catch(e){}
+  }
+  hook();
+  if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", hook); else setTimeout(hook, 0);
 })();
