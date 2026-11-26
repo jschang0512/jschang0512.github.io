@@ -22,7 +22,7 @@
 <script>try{var t=localStorage.getItem('rt:theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}
 // a page change interrupted mid-fade rejects its transition's promises; that is expected, not an error
 addEventListener('pagereveal',function(e){var v=e.viewTransition;if(v){v.ready.catch(function(){});v.updateCallbackDone.catch(function(){});}});</script>
-<link rel="stylesheet" href="drugs.css?v=ffbde1c7">
+<link rel="stylesheet" href="drugs.css?v=29f29510">
 </head>
 <body>
 <header class="topbar">
@@ -130,7 +130,7 @@ addEventListener('pagereveal',function(e){var v=e.viewTransition;if(v){v.ready.c
       <dt data-en="Ingredient">成分全貌</dt><dd data-en="Every strength and form of one ingredient: prices, makers, claims over the years, alerts and outside references.">一個成分的所有含量與劑型：價格、廠商、歷年醫令量、警示與國外資料連結。</dd>
       <dt data-en="Compare">比較</dt><dd data-en="The two-column button on an open drug adds it; up to four, side by side.">打開一個藥後按右上角的雙欄按鈕加入，最多 4 個並排比較。</dd>
       <dt data-en="Pill finder">認藥丸</dt><dd data-en="Colour, shape, score line and the letters on the pill.">依顏色、形狀、刻痕和藥上的字找藥。</dd>
-      <dt data-en="Batch lookup">批次查詢</dt><dd data-en="Paste a list of codes or names, get one table to export.">貼上一串代號或藥名，得到一張可以匯出的表。</dd>
+      <dt data-en="Batch lookup">批次查詢</dt><dd data-en="Paste a list of codes or names, get one table to export; or query all of the data with SQL, in your browser.">貼上一串代號或藥名，得到一張可以匯出的表；也可以用 SQL 直接查全部資料，在你的瀏覽器裡執行。</dd>
       <dt data-en="What's new">最新動態</dt><dd data-en="This week's changes, shortages and recalls, and NHI rule revisions.">本週異動、缺藥與回收、給付規定修訂。</dd>
     </dl>
     <h3 data-en="Keys">快捷鍵</h3>
@@ -163,8 +163,8 @@ addEventListener('pagereveal',function(e){var v=e.viewTransition;if(v){v.ready.c
   </div>
 </main>
 
-<script src="../shared/common.js?v=20261126c"></script>
+<script src="../shared/common.js?v=20261127b"></script>
 <script src="../shared/twdrugs.js?v=20261126b"></script>
-<script src="drugs.js?v=defc6ec4"></script>
+<script src="drugs.js?v=ea1b9be4"></script>
 </body>
 </html>

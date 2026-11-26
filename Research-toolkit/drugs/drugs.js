@@ -1926,11 +1926,11 @@ const batchPaidFirst = (a, b) => (b[N.price] > 0) - (a[N.price] > 0) || (a[N.zh]
 async function renderBatch() {
   const box = $('vBatch');
   if (!box.querySelector('#bq')) {
-    box.innerHTML = `<div class="batch">
+    box.innerHTML = `<div class="subv" id="batchBar" role="tablist" aria-label="${T('查詢方式', 'How to look up')}"><button type="button" role="tab" data-bmode="list">${T('貼清單查詢', 'Paste a list')}</button><button type="button" role="tab" data-bmode="sql">${T('SQL 查詢', 'SQL')}</button></div><div id="bList"><div class="batch">
       <label for="bq" class="batch-l">${T('每行一個（也可以用逗號分開）：健保代號、許可證字號、ATC 碼或藥名、成分', 'One per line (or comma-separated): NHI codes, licence numbers, ATC codes, names or ingredients')}</label>
       <textarea id="bq" rows="7" spellcheck="false" placeholder="A009186100&#10;BC23743100&#10;C10AA05&#10;metformin"></textarea>
       <div class="batch-acts"><button type="button" class="primary" id="bGo">${T('查詢', 'Look up')}</button><button type="button" id="bClear">${T('清除', 'Clear')}</button><span class="hint" id="bCount" style="margin:0"></span></div>
-      <div id="bOut"></div></div>`;
+      <div id="bOut"></div></div></div><div id="bSql" hidden></div>`;
     const ta = $('bq'); ta.value = S.bq || '';
     const cnt = () => { const n = batchItems(ta.value).length; $('bCount').textContent = n ? T(`${n} 項${n >= BATCH_MAX ? `（上限 ${BATCH_MAX}）` : ''}`, `${n} items${n >= BATCH_MAX ? ` (limit ${BATCH_MAX})` : ''}`) : ''; };
     ta.oninput = RT.debounce(() => { S.bq = ta.value.length < 60000 ? ta.value : ''; save(); cnt(); }, 300);
@@ -1938,9 +1938,128 @@ async function renderBatch() {
     $('bGo').onclick = runBatch;
     $('bClear').onclick = () => { ta.value = ''; S.bq = ''; save(); batchRes = null; $('bOut').innerHTML = ''; cnt(); ta.focus(); };
     cnt();
+    // two ways in: a pasted list, or SQL over all of it
+    const setMode = (m) => {
+      S.bmode = m; save();
+      box.querySelectorAll('[data-bmode]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.bmode === m)));
+      $('bList').hidden = m !== 'list'; $('bSql').hidden = m !== 'sql';
+      if (m === 'sql') renderSql($('bSql'));
+    };
+    box.querySelector('#batchBar').addEventListener('click', (e) => { const b = e.target.closest('[data-bmode]'); if (b) setMode(b.dataset.bmode); });
+    setMode(S.bmode === 'sql' ? 'sql' : 'list');
   }
   if (batchRes) drawBatch();
 }
+
+/* ---------- SQL over the drug data, in the browser (DuckDB-WASM, loaded only when this mode opens) ---------- */
+const DUCK = 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.32.0/+esm';
+const SQL_TABLES = [
+  ['nhi', '健保用藥品項（含已取消給付）', 'NHI drug list, delisted items too', 'code, zh, en, ingredient, strength, form, class, atc, price, price_since, first_listed, last_paid_price, price_group, vendor, maker, rule_chapters, licence, single, paid'],
+  ['lic', '食藥署許可證', 'TFDA licences', 'licence, status, zh, en, form, category, controlled, ingredients, applicant, maker, country, issued, valid_until, has_nhi, atc'],
+  ['usage', '健保醫令量（每年）', 'NHI claims per year', 'code, year, partial, claims, male'],
+  ['price_hist', '支付價歷程', 'Price history', 'code, date, price'],
+  ['shortage', '目前缺藥', 'Current shortages', 'licence, date, name, alternative, status'],
+  ['recall', '回收紀錄', 'Recalls', 'licence, date, grade, reason, batch'],
+  ['safety', '食藥署安全資訊', 'TFDA safety notices', 'date, ingredient, reason, advice'],
+];
+const SQL_EX = [
+  ['各 ATC 第一層：給付品項數與支付價中位數', 'Items and median price by ATC main group', "SELECT substr(atc, 1, 1) AS atc1, count(*) AS items, round(median(price), 2) AS median_price\nFROM nhi\nWHERE paid AND atc <> ''\nGROUP BY atc1\nORDER BY items DESC;"],
+  ['最近一年醫令量前 20 名', 'Top 20 by claims in the latest full year', "SELECT n.code, n.zh, n.ingredient, u.year, u.claims\nFROM usage u JOIN nhi n USING (code)\nWHERE u.year = (SELECT max(year) FROM usage WHERE NOT partial)\nORDER BY u.claims DESC\nLIMIT 20;"],
+  ['廠商最多的成分', 'Ingredients with the most makers', "SELECT ingredient, count(DISTINCT vendor) AS vendors, count(*) AS items,\n       min(price) AS lowest, max(price) AS highest\nFROM nhi\nWHERE paid\nGROUP BY ingredient\nORDER BY vendors DESC\nLIMIT 20;"],
+  ['缺藥中的品項與健保代號', 'Short drugs and their NHI codes', "SELECT s.date, s.name, s.alternative, n.code, n.price\nFROM shortage s LEFT JOIN nhi n ON n.licence = s.licence\nORDER BY s.date DESC;"],
+  ['近一年降價幅度最大', 'Largest price cuts in the past year', "WITH h AS (\n  SELECT code, date, price, lag(price) OVER (PARTITION BY code ORDER BY date) AS before\n  FROM price_hist\n)\nSELECT n.zh, h.code, h.date, h.before, h.price,\n       round((h.price - h.before) / h.before * 100, 1) AS change_pct\nFROM h JOIN nhi n USING (code)\nWHERE h.before > 0 AND h.price > 0 AND h.date >= current_date - INTERVAL 1 YEAR\nORDER BY change_pct\nLIMIT 20;"],
+  ['原廠與學名藥的價差（同分組）', 'Originator against generics in a price group', "SELECT price_group,\n       min(price) FILTER (WHERE class = '研發廠') AS originator,\n       min(price) FILTER (WHERE class <> '研發廠') AS cheapest_generic,\n       count(*) AS items\nFROM nhi\nWHERE paid AND price_group <> ''\nGROUP BY price_group\nHAVING originator IS NOT NULL AND cheapest_generic IS NOT NULL\nORDER BY originator / cheapest_generic DESC\nLIMIT 20;"],
+];
+let duck = null, duckP = null;
+const csvCell = (v) => (v == null || v === '' ? '' : typeof v === 'number' || typeof v === 'boolean' ? String(v) : '"' + String(v).replace(/"/g, '""') + '"');
+const toCsv = (head, rows) => head.join(',') + '\n' + rows.map((r) => r.map(csvCell).join(',')).join('\n');
+// the engine, then every table; each step says what it is doing
+function sqlEngine(status) {
+  if (duckP) return duckP;
+  duckP = (async () => {
+    status(T('下載查詢引擎（第一次約需數 MB，之後會快取）…', 'Downloading the query engine (a few MB the first time, cached after)…'));
+    const duckdb = await import(DUCK);
+    const bundle = await duckdb.selectBundle(duckdb.getJsDelivrBundles());
+    const wurl = URL.createObjectURL(new Blob([`importScripts("${bundle.mainWorker}");`], { type: 'text/javascript' }));
+    const db = new duckdb.AsyncDuckDB(new duckdb.ConsoleLogger(duckdb.LogLevel.ERROR), new Worker(wurl));
+    await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
+    URL.revokeObjectURL(wurl);
+    status(T('載入健保與食藥署資料…', 'Loading the NHI and TFDA data…'));
+    const [, , , , , , hd] = await Promise.all([loadAll(), loadFdaAll(), loadUsage().catch(() => null), loadAlerts(), loadSafety(), loadFdaAtc(), TW.histAll().catch(() => ({ hist: {} }))]);
+    status(T('建立資料表…', 'Building the tables…'));
+    const conn = await db.connect();
+    const put = async (name, head, rows) => { await db.registerFileText(name + '.csv', toCsv(head, rows)); await conn.query(`CREATE OR REPLACE TABLE ${name} AS SELECT * FROM read_csv('${name}.csv', header = true, auto_detect = true, sample_size = -1)`); };
+    const nhiRows = nhiD.rows.map((r) => { const f = licOf(r); return [r[N.code], r[N.zh], r[N.en], r[N.ingredient], r[N.strength], r[N.form], r[N.class], r[N.atc], r[N.price] || null, r[N.priceSince] || null, r[N.firstListed] || null, r[N.lastPaidPrice] || null, r[N.group], r[N.vendor], r[N.maker], r[N.ruleChapters], f ? f[F.licence] : '', r[N.single], r[N.price] > 0]; });
+    await put('nhi', ['code', 'zh', 'en', 'ingredient', 'strength', 'form', 'class', 'atc', 'price', 'price_since', 'first_listed', 'last_paid_price', 'price_group', 'vendor', 'maker', 'rule_chapters', 'licence', 'single', 'paid'], nhiRows);
+    const used = new Set(nhiD.rows.map((r) => r[N.licId]).filter(Boolean));
+    await put('lic', ['licence', 'status', 'zh', 'en', 'form', 'category', 'controlled', 'ingredients', 'applicant', 'maker', 'country', 'issued', 'valid_until', 'has_nhi', 'atc'],
+      fdaD.rows.map((f) => [f[F.licence], f[F.status] || '有效', f[F.zh], f[F.en], f[F.form], f[F.category], f[F.controlled], f[F.ingredients], f[F.applicant], f[F.maker], f[F.country], f[F.issued] || null, f[F.validUntil] || null, !!(f[F.licId] && used.has(f[F.licId])), licAtc(f)]));
+    const ur = []; if (usageD) Object.entries(usageD.q).forEach(([code, a]) => a.forEach((x, i) => { if (x && usageD.years[i]) ur.push([code, usageD.years[i].year, !!usageD.years[i].partial, x[0], x[1]]); }));
+    await put('usage', ['code', 'year', 'partial', 'claims', 'male'], ur);
+    const hr = []; Object.entries((hd && hd.hist) || {}).forEach(([code, s]) => String(s).split(';').forEach((x) => { const [t, p] = x.split(':'); if (t) hr.push([code, `${t.slice(0, 4)}-${t.slice(4, 6)}-${t.slice(6, 8)}`, +p]); }));
+    await put('price_hist', ['code', 'date', 'price'], hr);
+    await put('shortage', ['licence', 'date', 'name', 'alternative', 'status'], Object.entries((alertsD && alertsD.short) || {}).map(([l, s]) => [l, s[0] || null, s[1], s[3] === 0 ? false : true, s[2]]));
+    const rc = []; Object.entries((alertsD && alertsD.recalls) || {}).forEach(([l, a]) => a.forEach((x) => rc.push([l, x[0] || null, x[1], x[3], x[2]])));
+    await put('recall', ['licence', 'date', 'grade', 'reason', 'batch'], rc);
+    await put('safety', ['date', 'ingredient', 'reason', 'advice'], ((safetyD && safetyD.comms) || []).map((c) => [c[0] || null, c[1], c[3], c[5]]));
+    duck = { db, conn };
+    return duck;
+  })().catch((e) => { duckP = null; throw e; });
+  return duckP;
+}
+// an Arrow value to something a table cell and a CSV can show
+function sqlVal(v, type) {
+  if (v == null) return '';
+  const t = String(type);
+  if (typeof v === 'bigint') return Number(v);
+  if (/^Date/.test(t) && typeof v === 'number') return new Date(v).toISOString().slice(0, 10);
+  if (/^Timestamp/.test(t) && typeof v === 'number') return new Date(v).toISOString().replace('T', ' ').slice(0, 19);
+  if (/^Decimal/.test(t) && v && v.length) { let b = 0n; for (let i = v.length - 1; i >= 0; i--) b = (b << 32n) + BigInt(v[i] >>> 0); const sc = (type.scale || 0); return Number(b) / 10 ** sc; }
+  if (typeof v === 'object') return JSON.stringify(v);
+  return v;
+}
+let sqlLast = null;
+function renderSql(box) {
+  if (box.querySelector('#sqlQ')) return;
+  box.innerHTML = `<div class="sql">
+    <p class="sql-lead">${T('用 SQL 直接查健保與食藥署資料，例如跨表統計、排名、價差。查詢全部在你的瀏覽器裡執行，不會上傳任何東西。', 'Query the NHI and TFDA data with SQL: counts across tables, rankings, price gaps. It all runs in your browser; nothing is uploaded.')}</p>
+    <div class="sql-ex"><span class="hint" style="margin:0">${T('範例：', 'Examples:')}</span>${SQL_EX.map(([zh, en], i) => `<button type="button" class="small" data-sqlex="${i}">${T(zh, en)}</button>`).join('')}</div>
+    <textarea id="sqlQ" rows="7" spellcheck="false" aria-label="SQL">${esc(S.sqlQ || SQL_EX[0][2])}</textarea>
+    <div class="batch-acts"><button type="button" class="primary" id="sqlGo">${T('執行', 'Run')}</button><span class="hint" style="margin:0">Ctrl + Enter</span><span class="hint" id="sqlSt" style="margin:0" aria-live="polite"></span></div>
+    <details class="sql-schema"><summary>${T('資料表與欄位', 'Tables and columns')}</summary><dl>${SQL_TABLES.map(([n, zh, en, cols]) => `<dt><code>${n}</code> ${T(zh, en)}</dt><dd>${cols.split(', ').map((c) => `<button type="button" class="col" data-sqlcol="${c}">${c}</button>`).join(' ')}</dd>`).join('')}</dl>
+      <p class="note">${T('文字欄位用中文原文（例如 class = \'研發廠\'）；日期是 DATE，可用 current_date - INTERVAL 1 YEAR 這類寫法。語法是 DuckDB（接近 PostgreSQL）。', 'Text columns keep the Chinese values (e.g. class = \'研發廠\'); dates are DATE, so current_date - INTERVAL 1 YEAR works. The dialect is DuckDB, close to PostgreSQL.')}</p></details>
+    <div id="sqlOut"></div></div>`;
+  const ta = box.querySelector('#sqlQ'), st = (m) => { box.querySelector('#sqlSt').textContent = m; };
+  ta.addEventListener('input', RT.debounce(() => { S.sqlQ = ta.value.length < 20000 ? ta.value : ''; save(); }, 300));
+  ta.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); run(); } });
+  box.addEventListener('click', (e) => {
+    const x = e.target.closest('[data-sqlex]'); if (x) { ta.value = SQL_EX[+x.dataset.sqlex][2]; S.sqlQ = ta.value; save(); run(); return; }
+    const c = e.target.closest('[data-sqlcol]'); if (c) { const p = ta.selectionStart; ta.setRangeText(c.dataset.sqlcol, p, ta.selectionEnd, 'end'); ta.focus(); return; }
+    if (e.target.id === 'sqlGo') run();
+    if (e.target.id === 'sqlCsv' && sqlLast) RT.downloadCSV([sqlLast.head, ...sqlLast.rows], 'tw-drugs-sql.csv');
+  });
+  async function run() {
+    const q = ta.value.trim(); if (!q) return;
+    const out = box.querySelector('#sqlOut'), go = box.querySelector('#sqlGo');
+    go.disabled = true;
+    try {
+      const { conn } = await sqlEngine(st);
+      st(T('查詢中…', 'Running…'));
+      const t0 = performance.now(), res = await conn.query(q), ms = Math.round(performance.now() - t0);
+      const fields = res.schema.fields, head = fields.map((f) => f.name);
+      const rows = res.toArray().map((row) => fields.map((f) => sqlVal(row[f.name], f.type)));
+      sqlLast = { head, rows };
+      const codeCol = head.indexOf('code'), shownRows = rows.slice(0, 1000);
+      out.innerHTML = `<div class="batch-sum"><span>${T(`${rows.length.toLocaleString()} 列`, `${rows.length.toLocaleString()} rows`)}${rows.length > 1000 ? T('，顯示前 1,000 列', '; the first 1,000 shown') : ''} · ${ms} ms</span><span class="spacer"></span><button type="button" class="small" id="sqlCsv">${T('匯出 CSV', 'Export CSV')}</button></div>
+        <div class="batch-tbl"><table><thead><tr>${head.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${shownRows.map((r) => `<tr>${r.map((v, i) => `<td${typeof v === 'number' ? ' class="num"' : ''}>${i === codeCol && nhiD.byCode.has(String(v)) ? `<button type="button" class="lnk" data-go="${esc(v)}">${esc(v)}</button>` : esc(typeof v === 'number' ? (Number.isInteger(v) ? (Math.abs(v) >= 10000 ? v.toLocaleString() : String(v)) : +v.toFixed(4)) : v)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+      st('');
+    } catch (e) {
+      out.innerHTML = `<div class="sql-err"><b>${T('查詢失敗', 'The query failed')}</b><pre>${esc(String(e.message || e))}</pre></div>`;
+      st('');
+    } finally { go.disabled = false; }
+  }
+}
+
 async function runBatch() {
   const items = batchItems($('bq').value);
   if (!items.length) { $('bOut').innerHTML = ''; return; }

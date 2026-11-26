@@ -6,7 +6,7 @@
  */
 (function () {
   const RT = (window.RT = {});
-  RT.VERSION = 'v3.17 (2026-11-26)';
+  RT.VERSION = 'v3.18 (2026-11-27)';
   RT.DEV = { name: '張家菘', email: 'js.chang0512@gmail.com' };
 
   /* ---------- i18n ---------- */
@@ -72,6 +72,7 @@
       if (!document.querySelector('link[rel="manifest"]')) { const l = document.createElement('link'); l.rel = 'manifest'; l.href = '/Research-toolkit/manifest.webmanifest'; document.head.appendChild(l); }
       navigator.serviceWorker.register('/Research-toolkit/sw.js', { scope: '/Research-toolkit/' }).catch(() => {});
     }
+    RT.initSpeculation();
     if (!document.querySelector('.site-foot')) {
       const f = document.createElement('footer');
       f.className = 'site-foot';
@@ -151,6 +152,24 @@
     b.onclick = () => { paper.classList.toggle('zoom-actual'); label(); };
     label();
     paper.before(b);
+  };
+
+  // Speculation Rules: a toolkit page linked from here is prepared in the background when the pointer rests on its
+  // link (or a finger presses it), so it opens at once. The drug pages are only fetched ahead, not run, since running
+  // them downloads megabytes of data; the data folder and the submission tracker are left alone.
+  RT.initSpeculation = () => {
+    try {
+      if (!(HTMLScriptElement.supports && HTMLScriptElement.supports('speculationrules')) || document.querySelector('script[type="speculationrules"]')) return;
+      const heavy = [{ href_matches: '/Research-toolkit/drugs/*' }, { href_matches: '/Research-toolkit/codelist/*' }];
+      const off = [{ href_matches: '/Research-toolkit/data/*' }, { href_matches: '/Research-toolkit/submissions/*' }];
+      const s = document.createElement('script');
+      s.type = 'speculationrules';
+      s.textContent = JSON.stringify({
+        prerender: [{ source: 'document', where: { and: [{ href_matches: '/Research-toolkit/*' }, ...[...heavy, ...off].map((m) => ({ not: m }))] }, eagerness: 'moderate' }],
+        prefetch: [{ source: 'document', where: { and: [{ or: heavy }, ...off.map((m) => ({ not: m }))] }, eagerness: 'moderate' }],
+      });
+      document.head.appendChild(s);
+    } catch (e) { /* an older browser simply opens pages the usual way */ }
   };
 
   // Phones: the preview sits below every input, so offer a floating button that jumps to it

@@ -197,6 +197,20 @@ await test('licences without an NHI code carry the TFDA ATC code and follow the 
   return p;
 });
 
+await test('SQL over the data in the browser', async () => {
+  const p = await open('?view=batch');
+  await p.waitForSelector('[data-bmode="sql"]', { timeout: 10000 });
+  await p.click('[data-bmode="sql"]');
+  await p.fill('#sqlQ', 'SELECT count(*) AS n FROM nhi');
+  await p.click('#sqlGo');
+  await p.waitForSelector('#sqlOut table, #sqlOut .sql-err', { timeout: 90000 });
+  ok(!(await p.locator('#sqlOut .sql-err').count()), await p.locator('#sqlOut').innerText());
+  const n = Number((await p.locator('#sqlOut tbody td').first().innerText()).replace(/,/g, ''));
+  const want = JSON.parse(readFileSync(join(FIX, 'nhi-paid.json'))).rows.length + JSON.parse(readFileSync(join(FIX, 'nhi-rest.json'))).rows.length;
+  ok(n === want, `count(*) gave ${n}, expected ${want}`);
+  return p;
+});
+
 await browser.close();
 const bad = results.filter(([, v]) => !v);
 if (bad.length) { console.log(`\n${bad.length} of ${results.length} drug-lookup tests failed.`); process.exit(1); }
