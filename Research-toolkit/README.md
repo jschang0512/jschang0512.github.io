@@ -15,6 +15,7 @@ Browser-based figure tools for research papers. Everything runs in the browser �
 | Causal diagram (DAG) with back-door path check | `dag/` |
 | Treatment pathway Sankey diagram | `sankey/` |
 | Exposure definition diagram | `exposure/` |
+| Graphical abstract: study question, population, comparison, main results with a small forest plot and the conclusion, at 5:2, 1:1 or 16:9, with over 50 medical icons | `graphical/` |
 | Multi-panel figure composer | `panels/` |
 | RoB 2 risk-of-bias plots and tables | `rob2/` |
 | ROBINS-I V2 risk-of-bias plots and tables | `robinsi/` |
@@ -38,4 +39,4 @@ The figure tools open figure-first: the settings column stays hidden until Setti
 
 張家菘 — questions, bug reports and suggestions: [js.chang0512@gmail.com](mailto:js.chang0512@gmail.com)
 
-Version: v3.18 (2026-11-27)
+Version: v3.19 (2026-11-27)

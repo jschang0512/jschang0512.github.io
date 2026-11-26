@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="/Research-toolkit/icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/Research-toolkit/icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="/Research-toolkit/icons/apple-touch-icon.png">
+<title data-en="Graphical Abstract · Research Toolkit">圖文摘要 · Research Toolkit</title>
+<meta name="description" content="圖文摘要產生器：填入研究問題、族群、比較組與主要結果，排成期刊要求的橫式、正方形或 16:9 圖文摘要，附小型森林圖與 50 多個醫藥圖示，可匯出 PNG、TIFF、SVG、PDF 與可編輯的 PowerPoint。">
+<link rel="canonical" href="https://jschang0512.github.io/Research-toolkit/graphical/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Research Toolkit">
+<meta property="og:title" content="圖文摘要 · Research Toolkit">
+<meta property="og:description" content="填入研究問題、族群、比較組與主要結果，排成期刊要求的圖文摘要，可匯出 PNG、TIFF、SVG、PDF 與可編輯的 PowerPoint。">
+<meta property="og:url" content="https://jschang0512.github.io/Research-toolkit/graphical/">
+<meta property="og:image" content="https://jschang0512.github.io/assets/og/research-toolkit.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../shared/style.css?v=20261126a">
+<script>try{var t=localStorage.getItem('rt:theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>
+  .rrow { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .rrow .nums { display: grid; grid-template-columns: 5.5rem repeat(3, minmax(0, 1fr)); gap: 6px; align-items: end; }
+  @media (max-width: 640px) { .rrow .nums { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+  .pick-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .ic-pick { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 8px; min-height: 36px; }
+  .ic-pick svg { width: 26px; height: 26px; flex: none; }
+  .ic-pick span { font-size: 12.5px; }
+  .ic-pick.none { color: var(--muted); }
+  dialog.icons { border: 0; padding: 0; border-radius: 12px; background: var(--panel); color: var(--text); width: min(94vw, 640px); max-height: 86vh; box-shadow: 0 12px 40px oklch(0% 0 0 / 0.35); }
+  dialog.icons::backdrop { background: oklch(15% 0.01 255 / 0.55); }
+  .ic-head { display: flex; gap: 8px; align-items: center; padding: 12px 14px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--panel); }
+  .ic-head input { flex: 1; }
+  .ic-body { padding: 8px 14px 16px; overflow-y: auto; max-height: calc(86vh - 60px); }
+  .ic-body h3 { font-size: 12.5px; color: var(--muted); margin: 12px 0 6px; }
+  .ic-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 6px; }
+  .ic-grid button { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 8px; font-size: 11.5px; border-radius: 8px; white-space: normal; text-align: center; }
+  .ic-grid button svg { width: 32px; height: 32px; }
+  .ic-grid button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-weak); color: var(--accent); }
+  .theme-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .theme-row button { width: 30px; height: 30px; border-radius: 50%; padding: 0; border: 2px solid transparent; }
+  .theme-row button[aria-pressed="true"] { border-color: var(--text); }
+  .theme-row button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="back" href="../index.html" data-en="← Home">← 工具首頁</a>
+  <h1 data-en="Graphical Abstract">圖文摘要</h1>
+  <span class="sub" data-en="Study question, population, comparison and results on one image">研究問題、族群、比較組與結果，排成一張圖</span>
+  <span class="spacer"></span>
+  <div class="btns">
+    <button class="small" id="btnUndo" title="復原 (Ctrl+Z)" data-en-title="Undo (Ctrl+Z)">↶</button>
+    <button class="small" id="btnRedo" title="重做 (Ctrl+Y)" data-en-title="Redo (Ctrl+Y)">↷</button>
+    <button class="small" id="btnSaveJson" title="下載 .json，之後可再開啟或傳給共同作者" data-en-title="Download a .json file to reopen later or share with co-authors" data-en="Save project">儲存專案</button>
+    <button class="small" id="btnLoadJson" title="匯入先前儲存的 .json 專案檔，還原所有輸入" data-en-title="Import a previously saved .json project file" data-en="Import project">匯入專案</button>
+    <button class="small" id="btnExample" data-en="Example">範例</button>
+    <button class="small" id="btnReset" data-en="Clear">清空</button>
+  </div>
+</header>
+
+<main class="tool">
+  <section id="form">
+    <div class="card">
+      <p class="hint" style="margin:0" data-en="Fill in the parts below; the abstract lays itself out and shrinks the text when it gets crowded. Click any text on the preview to jump to its field. The headings and wording on the image are in English, as journals ask.">填入下面各欄，圖會自動排版，字太多時自動縮小。點預覽上的任何文字可以跳到對應欄位。圖上的標題和文字照期刊慣例用英文。</p>
+    </div>
+    <div class="card">
+      <h2><span class="step-no">1</span> <span data-en="Layout and colour">版型與顏色</span></h2>
+      <label class="field"><span data-en="Layout">版型</span><select data-k="layout">
+        <option value="wide" data-en="Landscape, three panels (5:2, e.g. Elsevier, 1328 × 531)">橫式三欄（5:2，Elsevier 等，1328 × 531）</option>
+        <option value="square" data-en="Square (1:1, Cell Press and social posts, 1080 × 1080)">正方形（1:1，Cell Press、社群，1080 × 1080）</option>
+        <option value="slide" data-en="16:9 visual abstract (slides, X, LinkedIn, 1600 × 900)">16:9 視覺摘要（簡報、X、LinkedIn，1600 × 900）</option></select></label>
+      <div class="field"><span data-en="Colour">主題色</span><div class="theme-row" id="themes"></div></div>
+      <label class="field" data-show="theme=custom"><span data-en="Your colour">自訂顏色</span><input type="color" data-k="custom" style="width:100%"></label>
+      <label class="check"><input type="checkbox" data-k="grow"> <span data-en="Enlarge the text to fill spare room">有空間時自動放大字</span></label>
+      <details><summary data-en="Font and size">字型與字級</summary><div id="styleFields"></div></details>
+    </div>
+    <div class="card">
+      <h2><span class="step-no">2</span> <span data-en="The study">研究</span></h2>
+      <label class="field"><span data-en="Study question (the title)">研究問題（當標題）</span><textarea data-k="title" rows="2" placeholder="e.g. SGLT2 inhibitors vs DPP-4 inhibitors and kidney outcomes"></textarea></label>
+      <label class="field"><span data-en="Design and data source (under the title)">研究設計與資料來源（標題下方）</span><input data-k="design" placeholder="e.g. Retrospective cohort · Taiwan NHI database 2016–2022"></label>
+    </div>
+    <div class="card">
+      <h2><span class="step-no">3</span> <span data-en="Population">族群</span></h2>
+      <div class="grid2">
+        <label class="field"><span data-en="Number of people">人數</span><input data-k="pop.n" placeholder="48,210"></label>
+        <div class="field"><span data-en="Icon">圖示</span><button type="button" class="ic-pick" data-ik="pop.icon"></button></div>
+      </div>
+      <label class="field"><span data-en="Who they are">族群描述</span><input data-k="pop.label" placeholder="e.g. Adults with type 2 diabetes"></label>
+      <label class="field"><span data-en="More detail (optional)">補充（選填）</span><input data-k="pop.note" placeholder="e.g. eGFR ≥ 30, new users"></label>
+    </div>
+    <div class="card">
+      <h2><span class="step-no">4</span> <span data-en="Comparison">比較組</span></h2>
+      <div class="grid2">
+        <label class="field"><span data-en="Group A">A 組</span><input data-k="armA.label" placeholder="SGLT2i"></label>
+        <label class="field"><span data-en="Group A, number">A 組人數</span><input data-k="armA.n" placeholder="21,034"></label>
+        <label class="field"><span data-en="Group B">B 組</span><input data-k="armB.label" placeholder="DPP-4i"></label>
+        <label class="field"><span data-en="Group B, number">B 組人數</span><input data-k="armB.n" placeholder="27,176"></label>
+        <div class="field"><span data-en="Group A icon">A 組圖示</span><button type="button" class="ic-pick" data-ik="armA.icon"></button></div>
+        <div class="field"><span data-en="Group B icon">B 組圖示</span><button type="button" class="ic-pick" data-ik="armB.icon"></button></div>
+      </div>
+      <label class="field"><span data-en="Analysis (optional)">分析方法（選填）</span><input data-k="method" placeholder="e.g. Propensity-score weighted"></label>
+      <label class="field"><span data-en="Follow-up (optional)">追蹤（選填）</span><input data-k="follow" placeholder="e.g. Median follow-up 3.1 years"></label>
+    </div>
+    <div class="card">
+      <h2><span class="step-no">5</span> <span data-en="Results (up to 3)">結果（最多 3 項）</span></h2>
+      <div id="res"></div>
+      <button class="small" id="addRes" data-en="+ Add result">＋ 新增結果</button>
+      <div class="grid2" style="margin-top:8px">
+        <label class="field"><span data-en="Left of the line says">線左側寫</span><input data-k="favA" placeholder="Favours SGLT2i"></label>
+        <label class="field"><span data-en="Right of the line says">線右側寫</span><input data-k="favB" placeholder="Favours DPP-4i"></label>
+      </div>
+    </div>
+    <div class="card">
+      <h2><span class="step-no">6</span> <span data-en="Conclusion and source">結論與出處</span></h2>
+      <label class="field"><span data-en="Conclusion">結論</span><textarea data-k="concl" rows="2" placeholder="e.g. SGLT2 inhibitors were associated with better kidney outcomes than DPP-4 inhibitors."></textarea></label>
+      <label class="field"><span data-en="Citation (optional)">出處（選填）</span><input data-k="cite" placeholder="e.g. Author et al. J Example 2026 · doi:10.xxxx"></label>
+      <details><summary data-en="Panel headings">各區標題</summary>
+        <div class="grid2">
+          <label class="field"><span data-en="Population">族群</span><input data-k="hPop"></label>
+          <label class="field"><span data-en="Comparison">比較組</span><input data-k="hComp"></label>
+          <label class="field"><span data-en="Results">結果</span><input data-k="hRes"></label>
+          <label class="field"><span data-en="Conclusion">結論</span><input data-k="hConcl"></label>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section class="preview-col">
+    <div class="paper" id="preview"></div>
+    <div class="msgs" id="msgs"></div>
+    <div class="card" id="export"></div>
+  </section>
+</main>
+
+<dialog class="icons" id="iconDlg" aria-label="選擇圖示">
+  <div class="ic-head"><input type="search" id="icQ" placeholder="搜尋圖示，例如 腎、pill" data-en-ph="Search, e.g. kidney, pill" aria-label="搜尋圖示"><button type="button" class="small" id="icNone" data-en="No icon">不要圖示</button><button type="button" class="small" id="icClose" data-en="Close">關閉</button></div>
+  <div class="ic-body" id="icBody"></div>
+</dialog>
+
+<script src="../shared/common.js?v=20261127c"></script>
+<script src="icons.js?v=1"></script>
+<script>
+const T = RT.t;
+const KEY = 'gabstract1';
+const res = (o = {}) => ({ label: '', measure: 'HR', est: '', lo: '', hi: '', icon: '', ...o });
+const DEF = {
+  layout: 'wide', theme: 'teal', custom: '#2D6A9F', grow: true,
+  title: '', design: '',
+  pop: { n: '', label: '', note: '', icon: 'people' },
+  armA: { label: '', n: '', icon: 'capsule' }, armB: { label: '', n: '', icon: 'tablet' },
+  method: '', follow: '',
+  res: [res()], favA: '', favB: '',
+  concl: '', cite: '',
+  hPop: 'Population', hComp: 'Comparison', hRes: 'Results', hConcl: 'Conclusion',
+  st: { ...RT.STYLE_DEF, fontSize: 20 },
+};
+let S = RT.load(KEY, DEF);
+
+/* ---------------- colours and sizes ---------------- */
+const THEMES = {
+  teal: ['#0F6E56', '#E1F5EE', '#04342C'], blue: ['#185FA5', '#E6F1FB', '#042C53'], purple: ['#534AB7', '#EEEDFE', '#26215C'],
+  coral: ['#993C1D', '#FAECE7', '#4A1B0C'], green: ['#3B6D11', '#EAF3DE', '#173404'], slate: ['#444441', '#F1EFE8', '#2C2C2A'],
+};
+const mix = (a, b, t) => { const p = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)); const x = p(a), y = p(b); return '#' + x.map((v, i) => Math.round(v + (y[i] - v) * t).toString(16).padStart(2, '0')).join(''); };
+const palette = () => { if (S.theme === 'custom' && /^#[\da-f]{6}$/i.test(S.custom)) return [S.custom, mix(S.custom, '#ffffff', 0.88), mix(S.custom, '#000000', 0.55)]; return THEMES[S.theme] || THEMES.teal; };
+const SIZE = { wide: [1328, 531, 1], square: [1080, 1080, 1.05], slide: [1600, 900, 1.2] };
+const GREY = '#7B7A75', MUTED = '#5F5E5A', LINE = '#B4B2A9';
+const RATIO = ['HR', 'OR', 'RR', 'IRR', 'sHR'], DIFF = ['RD', 'MD'];
+
+/* ---------------- drawing ---------------- */
+const textBox = (text, w, size, o = {}) => RT.box([{ text, bold: !!o.bold, color: o.color }], w, { size, pad: 0, padX: 0, lh: o.lh || 1.25, align: o.align || 'left', fill: 'none', stroke: 'none', color: o.color || '#000' });
+const num = (v) => { const n = parseFloat(String(v).replace(/,/g, '')); return Number.isFinite(n) ? n : null; };
+const fmt = (v) => (v === null ? '' : Math.abs(v) >= 100 ? v.toFixed(0) : v.toFixed(2));
+function resultsOk() { return S.res.filter((r) => num(r.est) !== null); }
+
+// one attempt at a given text scale; returns the SVG body and whether anything spilled out of its panel
+// off: how far down each panel's content starts, so it can sit in the middle of its panel; need: how tall it came out
+function compose(k, off = {}) {
+  const need = {}, room = {};
+  RT.beginScene();
+  const [W, H, lf] = SIZE[S.layout] || SIZE.wide, [dark, light, ink] = palette();
+  const fs = (Number(S.st.fontSize) || 20) * lf * k, M = 24 * lf, G = 16 * lf, PAD = 14 * lf;
+  let body = '', spill = false;
+  const ph = (v, p) => (v && String(v).trim() ? { t: v, ph: false } : { t: p, ph: true });     // placeholder text when a field is empty
+  // header: title and design line on the theme colour
+  const tt = ph(S.title, 'Study question'), dd = S.design ? { t: S.design } : null;
+  const tb = textBox(tt.t, W - 2 * M - 2 * PAD, fs * 1.45, { bold: true, color: tt.ph ? mix(light, dark, 0.35) : '#FFFFFF' });
+  const db = dd ? textBox(dd.t, W - 2 * M - 2 * PAD, fs * 0.92, { color: light }) : null;
+  const hh = PAD * 1.6 + tb.h + (db ? fs * 0.3 + db.h : 0);
+  body += RT.rect(0, 0, W, hh, { fill: dark });
+  body += RT.drawBox(tb, M + PAD, PAD * 0.8); RT.addHit(M + PAD, PAD * 0.8, tb.w, tb.h, RT.hitKey('title'));
+  if (db) { body += RT.drawBox(db, M + PAD, PAD * 0.8 + tb.h + fs * 0.3); RT.addHit(M + PAD, PAD * 0.8 + tb.h + fs * 0.3, db.w, db.h, RT.hitKey('design')); }
+  // footer: conclusion band, citation under it
+  const cc = ph(S.concl, 'Conclusion of the study in one sentence.');
+  const head = (S.hConcl || 'Conclusion') + ': ';
+  const cw = W - 2 * M - 2 * PAD;
+  const cb = RT.box([{ text: head + cc.t, bold: false, color: cc.ph ? mix(light, dark, 0.35) : '#FFFFFF' }], cw, { size: fs * 1.02, pad: 0, padX: 0, lh: 1.3, align: 'left', fill: 'none', stroke: 'none' });
+  const citeH = S.cite ? fs * 0.75 * 1.4 + 4 * lf : 0;
+  const fh = cb.h + PAD * 1.4, fy = H - M - citeH - fh;
+  body += RT.rect(M, fy, W - 2 * M, fh, { fill: dark, radius: 10 * lf });
+  body += RT.drawBox(cb, M + PAD, fy + PAD * 0.7); RT.addHit(M + PAD, fy + PAD * 0.7, cb.w, cb.h, RT.hitKey('concl'));
+  if (S.cite) { body += RT.rich([{ runs: [{ t: S.cite, size: fs * 0.75, color: GREY }] }], W - M, fy + fh + 4 * lf, { lh: fs * 0.75 * 1.4, anchor: 'end' }); RT.addHit(W - M - RT.textWidth(S.cite, fs * 0.75) - 6, fy + fh + 4 * lf, RT.textWidth(S.cite, fs * 0.75) + 6, fs * 1.05, RT.hitKey('cite')); }
+  // the middle: three panels side by side, or two over one when square
+  const top = hh + G, bot = fy - G, ah = bot - top, aw = W - 2 * M;
+  let P;
+  if (S.layout === 'square') { const h1 = (ah - G) * 0.44; P = { pop: [M, top, (aw - G) / 2, h1], comp: [M + (aw + G) / 2, top, (aw - G) / 2, h1], res: [M, top + h1 + G, aw, ah - h1 - G] }; }
+  else { const w3 = (aw - 2 * G) / 3; P = { pop: [M, top, w3, ah], comp: [M + w3 + G, top, w3, ah], res: [M + 2 * (w3 + G), top, w3, ah] }; }
+  const panel = (x, y, w, h, title, fill, stroke) => {
+    body += RT.rect(x, y, w, h, { fill, stroke: stroke || 'none', sw: 1, radius: 10 * lf });
+    const t = textBox(title.toUpperCase(), w - 2 * PAD, fs * 0.78, { bold: true, color: ink });
+    body += RT.drawBox(t, x + PAD, y + PAD); return y + PAD + t.h + fs * 0.5;
+  };
+  // population
+  {
+    const [x, y, w, h] = P.pop; let cy = panel(x, y, w, h, S.hPop || 'Population', light); const c0 = cy; room.pop = y + h - PAD - cy; cy += off.pop || 0;
+    const iz = Math.min(fs * 3, w * 0.28);
+    if (S.pop.icon) body += RT.medIcon(S.pop.icon, x + PAD, cy, iz, dark);
+    const nn = ph(S.pop.n, 'n = ?');
+    const nb = textBox(nn.t, w - 2 * PAD - (S.pop.icon ? iz + fs * 0.6 : 0), fs * 1.9, { bold: true, color: nn.ph ? GREY : ink });
+    const nx = x + PAD + (S.pop.icon ? iz + fs * 0.6 : 0);
+    body += RT.drawBox(nb, nx, cy + Math.max(0, (iz - nb.h) / 2)); RT.addHit(nx, cy, nb.w, Math.max(iz, nb.h), RT.hitKey('pop.n'));
+    cy += Math.max(iz, nb.h) + fs * 0.5;
+    const lb = ph(S.pop.label, 'Who the people are');
+    const b1 = textBox(lb.t, w - 2 * PAD, fs, { color: lb.ph ? GREY : ink }); body += RT.drawBox(b1, x + PAD, cy); RT.addHit(x + PAD, cy, b1.w, b1.h, RT.hitKey('pop.label')); cy += b1.h + fs * 0.35;
+    if (S.pop.note) { const b2 = textBox(S.pop.note, w - 2 * PAD, fs * 0.85, { color: MUTED }); body += RT.drawBox(b2, x + PAD, cy); RT.addHit(x + PAD, cy, b2.w, b2.h, RT.hitKey('pop.note')); cy += b2.h; }
+    need.pop = cy - c0 - (off.pop || 0);
+    if (cy > y + h - PAD * 0.5) spill = true;
+  }
+  // comparison
+  {
+    const [x, y, w, h] = P.comp; let cy = panel(x, y, w, h, S.hComp || 'Comparison', '#F1EFE8'); const c0 = cy; room.comp = y + h - PAD - cy; cy += off.comp || 0;
+    const vs = fs * 1.6, bw = (w - 2 * PAD - vs) / 2, iz = fs * 1.9;
+    const arm = (a, bx, fill, key) => {
+      const lb = ph(a.label, key === 'armA' ? 'Group A' : 'Group B');
+      const t1 = textBox(lb.t, bw - PAD, fs * 1.02, { bold: true, color: '#FFFFFF', align: 'center' });
+      const t2 = a.n ? textBox(a.n, bw - PAD, fs * 0.88, { color: mix(fill, '#ffffff', 0.85), align: 'center' }) : null;
+      const bh = PAD * 0.8 + (a.icon ? iz + fs * 0.3 : 0) + t1.h + (t2 ? fs * 0.15 + t2.h : 0) + PAD * 0.8;
+      return { bh, draw: (by, hh2) => {
+        let s = RT.rect(bx, by, bw, hh2, { fill, radius: 8 * lf }), yy = by + (hh2 - bh) / 2 + PAD * 0.8;
+        if (a.icon) { s += RT.medIcon(a.icon, bx + (bw - iz) / 2, yy, iz, '#FFFFFF'); yy += iz + fs * 0.3; }
+        s += RT.drawBox(t1, bx + PAD / 2, yy); RT.addHit(bx, yy, bw, t1.h, RT.hitKey(key + '.label')); yy += t1.h + fs * 0.15;
+        if (t2) { s += RT.drawBox(t2, bx + PAD / 2, yy); RT.addHit(bx, yy, bw, t2.h, RT.hitKey(key + '.n')); }
+        return s;
+      } };
+    };
+    const A = arm(S.armA, x + PAD, dark, 'armA'), B = arm(S.armB, x + PAD + bw + vs, GREY, 'armB'), bh = Math.max(A.bh, B.bh);
+    body += A.draw(cy, bh) + B.draw(cy, bh);
+    body += RT.rich([{ runs: [{ t: 'vs', size: fs * 0.95, bold: true, color: MUTED }] }], x + PAD + bw + vs / 2, cy + bh / 2 - fs * 0.65, { lh: fs * 1.3, anchor: 'middle' });
+    cy += bh + fs * 0.6;
+    for (const k2 of ['method', 'follow']) if (S[k2]) { const b = textBox(S[k2], w - 2 * PAD, fs * 0.88, { color: MUTED }); body += RT.drawBox(b, x + PAD, cy); RT.addHit(x + PAD, cy, b.w, b.h, RT.hitKey(k2)); cy += b.h + fs * 0.25; }
+    need.comp = cy - c0 - (off.comp || 0);
+    if (cy > y + h - PAD * 0.5) spill = true;
+  }
+  // results: one row per outcome, each with a small forest plot
+  {
+    const [x, y, w, h] = P.res;
+    const rs = resultsOk(), m = (rs[0] || S.res[0] || {}).measure || 'HR', ratio = !DIFF.includes(m);
+    let cy = panel(x, y, w, h, `${S.hRes || 'Results'} (${m}, 95% CI)`, '#FFFFFF', LINE); const c0 = cy; room.res = y + h - PAD - cy; cy += off.res || 0;
+    if (!rs.length) {
+      const b = textBox('Results appear here once an estimate is entered.', w - 2 * PAD, fs * 0.9, { color: GREY }); body += RT.drawBox(b, x + PAD, cy); cy += b.h;
+    } else {
+      const vals = rs.flatMap((r) => [num(r.est), num(r.lo), num(r.hi)]).filter((v) => v !== null && (!ratio || v > 0));
+      const nullV = ratio ? 1 : 0, tr = (v) => (ratio ? Math.log(v) : v);
+      let lo = Math.min(tr(nullV), ...vals.map(tr)), hi = Math.max(tr(nullV), ...vals.map(tr)); const pad = (hi - lo) * 0.12 || 0.2; lo -= pad; hi += pad;
+      const iconW = rs.some((r) => r.icon) ? fs * 1.5 + fs * 0.4 : 0;
+      const labelW = (w - 2 * PAD) * (S.layout === 'square' ? 0.34 : 0.36) - iconW, fx = x + PAD + iconW + labelW + fs * 0.6, fw = (w - 2 * PAD) * 0.3, vx = fx + fw + fs * 0.6;
+      const X = (v) => fx + ((tr(v) - lo) / (hi - lo)) * fw;
+      const rows = rs.map((r) => { const lb = textBox(r.label || 'Outcome', labelW, fs * 0.92, { color: r.label ? ink : GREY }); return { r, lb, h: Math.max(lb.h, fs * 1.5) }; });
+      const y0 = cy;
+      rows.forEach(({ r, lb, h: rh }, i) => {
+        const my = cy + rh / 2, idx = S.res.indexOf(r);
+        if (r.icon) body += RT.medIcon(r.icon, x + PAD, my - fs * 0.75, fs * 1.5, dark);
+        body += RT.drawBox(lb, x + PAD + iconW, my - lb.h / 2);
+        RT.addHit(x + PAD + iconW, my - lb.h / 2, lb.w, lb.h, () => document.querySelector(`#res [data-i="${idx}"] [data-f="label"]`));
+        const e = num(r.est), l = num(r.lo), u = num(r.hi);
+        if (l !== null && u !== null) body += RT.line([[X(l), my], [X(u), my]], { color: dark, sw: Math.max(1.5, fs * 0.13) });
+        const sz = fs * 0.55; body += RT.rect(X(e) - sz / 2, my - sz / 2, sz, sz, { fill: dark });
+        const vt = `${fmt(e)}${l !== null && u !== null ? ` (${fmt(l)}–${fmt(u)})` : ''}`;
+        body += RT.rich([{ runs: [{ t: vt, size: fs * 0.88, color: ink, bold: true }] }], vx, my - fs * 0.6, { lh: fs * 1.2 });
+        RT.addHit(vx, my - fs * 0.6, RT.textWidth(vt, fs * 0.88, true) + 4, fs * 1.2, () => document.querySelector(`#res [data-i="${idx}"] [data-f="est"]`));
+        cy += rh + fs * 0.45;
+      });
+      // the line of no effect and the axis
+      body += RT.line([[X(nullV), y0 - fs * 0.2], [X(nullV), cy - fs * 0.2]], { color: GREY, sw: 1, dash: '4 3' });
+      body += RT.line([[fx, cy - fs * 0.2], [fx + fw, cy - fs * 0.2]], { color: LINE, sw: 1 });
+      body += RT.rich([{ runs: [{ t: String(nullV), size: fs * 0.72, color: MUTED }] }], X(nullV), cy - fs * 0.1, { lh: fs * 1.1, anchor: 'middle' });
+      cy += fs * 1.0;
+      const fa = S.favA || (S.armA.label ? `Favours ${S.armA.label}` : ''), fb = S.favB || (S.armB.label ? `Favours ${S.armB.label}` : '');
+      if (fa) { body += RT.rich([{ runs: [{ t: '← ' + fa, size: fs * 0.72, color: MUTED }] }], X(nullV) - fs * 0.3, cy, { lh: fs * 1.1, anchor: 'end' }); RT.addHit(X(nullV) - RT.textWidth('← ' + fa, fs * 0.72) - fs * 0.3, cy, RT.textWidth('← ' + fa, fs * 0.72), fs * 1.1, RT.hitKey('favA')); }
+      if (fb) { body += RT.rich([{ runs: [{ t: fb + ' →', size: fs * 0.72, color: MUTED }] }], X(nullV) + fs * 0.3, cy, { lh: fs * 1.1 }); RT.addHit(X(nullV) + fs * 0.3, cy, RT.textWidth(fb + ' →', fs * 0.72), fs * 1.1, RT.hitKey('favB')); }
+      cy += fs * 1.1;
+      if (X(nullV) - fs * 0.3 - RT.textWidth('← ' + fa, fs * 0.72) < x + PAD * 0.5 || X(nullV) + fs * 0.3 + RT.textWidth(fb + ' →', fs * 0.72) > x + w - PAD * 0.5) spill = true;
+    }
+    need.res = cy - c0 - (off.res || 0);
+    if (cy > y + h - PAD * 0.5) spill = true;
+  }
+  return { W, H, body, spill, need, room };
+}
+function build() {
+  RT.applyStyle(S.st);
+  let r = null, used = 1;
+  // the largest text that still fits: it grows into spare room when that is switched on, and shrinks when crowded
+  const steps = [...(S.grow ? [1.6, 1.45, 1.3, 1.18, 1.08] : []), 1, 0.93, 0.86, 0.8, 0.74, 0.68];
+  for (const k of steps) { used = k; r = compose(k); if (!r.spill) break; }
+  // second pass: each panel's content in the middle of the room it has (a little above centre reads better)
+  if (!r.spill) { const off = {}; for (const p of ['pop', 'comp', 'res']) off[p] = Math.max(0, (r.room[p] - r.need[p]) * 0.42); r = compose(used, off); }
+  const f = RT.figure(r.W, r.H, r.body, '#FFFFFF');
+  f.shrunk = used < 1; f.spill = r.spill; f.scaleUsed = used;
+  return f;
+}
+
+/* ---------------- icon picker ---------------- */
+const iconSvg = (id, size = 26) => (id && RT.medIcons[id] ? `<svg viewBox="0 0 24 24" width="${size}" height="${size}" aria-hidden="true">${RT.medIcon(id, 0, 0, 24, 'currentColor', { sw: 1.7 })}</svg>` : '');
+const iconName = (id) => (id && RT.medIcons[id] ? T(RT.medIcons[id].zh, RT.medIcons[id].en) : T('不要圖示', 'No icon'));
+let pickKey = null;
+function syncPickers() {
+  document.querySelectorAll('.ic-pick').forEach((b) => {
+    const k = b.dataset.ik, id = k.startsWith('res.') ? (S.res[+k.split('.')[1]] || {}).icon : RT.getPath(S, k);
+    b.classList.toggle('none', !id);
+    b.innerHTML = `${iconSvg(id)}<span>${RT.esc(iconName(id))}</span>`;
+    b.setAttribute('aria-label', T('選擇圖示：', 'Choose icon: ') + iconName(id));
+  });
+}
+function drawIconGrid() {
+  const q = TW_fold($('icQ').value), cur = pickKey && (pickKey.startsWith('res.') ? (S.res[+pickKey.split('.')[1]] || {}).icon : RT.getPath(S, pickKey));
+  $('icBody').innerHTML = RT.medIconGroups.map(([g, zh, en]) => {
+    const ids = Object.keys(RT.medIcons).filter((id) => RT.medIcons[id].g === g && (!q || TW_fold(id + ' ' + RT.medIcons[id].zh + ' ' + RT.medIcons[id].en).includes(q)));
+    return ids.length ? `<h3>${T(zh, en)}</h3><div class="ic-grid">${ids.map((id) => `<button type="button" data-icon="${id}" aria-pressed="${id === cur}">${iconSvg(id, 32)}${RT.esc(iconName(id))}</button>`).join('')}</div>` : '';
+  }).join('') || `<p class="hint">${T('找不到這個圖示', 'No icon matches')}</p>`;
+}
+const $ = (id) => document.getElementById(id);
+const TW_fold = (s) => String(s || '').toLowerCase();
+function setIcon(id) {
+  if (pickKey.startsWith('res.')) S.res[+pickKey.split('.')[1]].icon = id; else RT.setPath(S, pickKey, id);
+  $('iconDlg').close(); syncPickers(); update();
+}
+document.addEventListener('click', (e) => {
+  const b = e.target.closest('.ic-pick'); if (!b) return;
+  pickKey = b.dataset.ik; $('icQ').value = ''; drawIconGrid(); $('iconDlg').showModal(); $('icQ').focus();
+});
+$('icBody').addEventListener('click', (e) => { const b = e.target.closest('[data-icon]'); if (b) setIcon(b.dataset.icon); });
+$('icNone').onclick = () => setIcon('');
+$('icClose').onclick = () => $('iconDlg').close();
+$('icQ').oninput = drawIconGrid;
+$('iconDlg').addEventListener('click', (e) => { if (e.target === $('iconDlg')) $('iconDlg').close(); });
+
+/* ---------------- form ---------------- */
+const form = $('form');
+$('styleFields').innerHTML = RT.styleFieldsHTML(['font', 'fontSize']);
+$('themes').innerHTML = [...Object.entries(THEMES).map(([k, c]) => [k, c[0]]), ['custom', 'conic-gradient(#d6463c, #f0d24a, #53ad6b, #4b7fd6, #8f6bcf, #d6463c)']].map(([k, c]) => `<button type="button" data-theme="${k}" style="background:${c}" aria-label="${k === 'custom' ? T('自訂顏色', 'Your own colour') : k}" title="${k === 'custom' ? T('自訂顏色', 'Your own colour') : k}"></button>`).join('');
+$('themes').onclick = (e) => { const b = e.target.closest('[data-theme]'); if (!b) return; S.theme = b.dataset.theme; syncThemes(); RT.syncVisibility(form, S); update(); };
+const syncThemes = () => $('themes').querySelectorAll('[data-theme]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.theme === S.theme)));
+function syncInputs() { renderRes(); RT.syncForm(form, S); syncThemes(); syncPickers(); }
+RT.bindForm(form, () => S, () => update());
+const MEASURES = ['HR', 'OR', 'RR', 'IRR', 'sHR', 'RD', 'MD'];
+function renderRes() {
+  const host = $('res');
+  host.innerHTML = '';
+  S.res.forEach((r, i) => {
+    const blk = RT.h(`<div class="block rrow" data-i="${i}">
+      <div class="block-head"><b>${i + 1}.</b><input data-f="label" placeholder="${T('結果名稱，例如：Kidney decline', 'Outcome, e.g. Kidney decline')}">
+        <button class="icon" data-a="del" aria-label="${T('刪除', 'Delete')}">✕</button></div>
+      <div class="nums">
+        <label><span class="lbl">${T('效果量', 'Measure')}</span><select data-f="measure">${MEASURES.map((m) => `<option value="${m}">${m}</option>`).join('')}</select></label>
+        <label><span class="lbl">${T('估計值', 'Estimate')}</span><input data-f="est" inputmode="decimal"></label>
+        <label><span class="lbl">${T('95% CI 下限', 'Lower 95% CI')}</span><input data-f="lo" inputmode="decimal"></label>
+        <label><span class="lbl">${T('95% CI 上限', 'Upper 95% CI')}</span><input data-f="hi" inputmode="decimal"></label>
+      </div>
+      <div class="pick-row"><span class="hint" style="margin:0">${T('圖示（選填）', 'Icon (optional)')}</span><button type="button" class="ic-pick" data-ik="res.${i}"></button></div></div>`);
+    blk.querySelectorAll('[data-f]').forEach((el) => { el.value = r[el.dataset.f] ?? ''; el.oninput = () => { r[el.dataset.f] = el.value; update(); }; });
+    blk.querySelector('[data-a="del"]').onclick = () => { if (S.res.length > 1) S.res.splice(i, 1); else S.res[0] = res(); syncInputs(); update(); };
+    host.appendChild(blk);
+  });
+  $('addRes').hidden = S.res.length >= 3;
+  syncPickers();
+}
+$('addRes').onclick = () => { if (S.res.length < 3) { S.res.push(res({ measure: S.res[S.res.length - 1]?.measure || 'HR' })); syncInputs(); update(); } };
+
+/* ---------------- render ---------------- */
+let fig;
+const preview = $('preview');
+const exporter = RT.exportPanel($('export'), () => fig, 'graphical_abstract', {
+  fontSize: { get: () => S.st.fontSize, set: (v) => { S.st.fontSize = v; syncInputs(); update(); } },
+});
+const hist = RT.history(() => S, (s) => { S = s; syncInputs(); render(); });
+function render() {
+  try { fig = build(); preview.innerHTML = fig.svg; }
+  catch (e) { console.error(e); preview.innerHTML = `<div class="msg">⚠ ${RT.esc(e.message)}</div>`; }
+  const msgs = [];
+  const empty = [[S.title, T('研究問題', 'study question')], [S.pop.n || S.pop.label, T('族群', 'population')], [S.armA.label && S.armB.label, T('比較組', 'comparison groups')], [resultsOk().length, T('結果', 'results')], [S.concl, T('結論', 'conclusion')]].filter(([v]) => !v).map(([, n]) => n);
+  if (empty.length) msgs.push(T(`還沒填：${empty.join('、')}（圖上暫時顯示灰色提示字，匯出前請補上）`, `Not filled in yet: ${empty.join(', ')} (grey placeholders show on the image until then)`));
+  if (fig && fig.spill) msgs.push(T('內容太多，字已縮到最小仍塞不下：請縮短文字，或改用較大的版型', 'Too much text even at the smallest size: shorten it or pick a larger layout'));
+  else if (fig && fig.shrunk) msgs.push(T(`字較多，已自動縮小到 ${Math.round(fig.scaleUsed * 100)}%`, `Text shrunk to ${Math.round(fig.scaleUsed * 100)}% to fit`));
+  const kinds = new Set(resultsOk().map((r) => (DIFF.includes(r.measure) ? 'diff' : 'ratio')));
+  if (kinds.size > 1) msgs.push(T('結果混用比值（HR、OR…）與差值（RD、MD），圖上的座標以第一項為準，請分開呈現', 'Ratios (HR, OR…) and differences (RD, MD) are mixed; the axis follows the first result, so keep them apart'));
+  S.res.forEach((r, i) => { const e = num(r.est), l = num(r.lo), u = num(r.hi); if (e !== null && l !== null && u !== null && !(l <= e && e <= u)) msgs.push(T(`結果 ${i + 1} 的估計值不在信賴區間內`, `Result ${i + 1}: the estimate is not between its limits`)); if (!DIFF.includes(r.measure) && [e, l, u].some((v) => v !== null && v <= 0)) msgs.push(T(`結果 ${i + 1}：比值必須大於 0`, `Result ${i + 1}: ratios must be greater than 0`)); });
+  $('msgs').innerHTML = msgs.map((m) => `<div class="msg">⚠ ${RT.esc(m)}</div>`).join('');
+  exporter.setIssues(msgs.filter((m) => !/縮小到|shrunk/.test(m)).length);
+  exporter.refresh();
+  RT.save(KEY, S);
+}
+const update = RT.debounce(() => { render(); hist.push(); }, 80);
+RT.refresh = update; RT.renderNow = render;
+
+$('btnUndo').onclick = hist.undo;
+$('btnRedo').onclick = hist.redo;
+$('btnExample').onclick = () => {
+  S = RT.merge(DEF, {
+    layout: S.layout, theme: S.theme, custom: S.custom, st: S.st,
+    title: 'SGLT2 inhibitors vs DPP-4 inhibitors and kidney outcomes in type 2 diabetes',
+    design: 'Retrospective cohort · nationwide claims database, 2016–2022',
+    pop: { n: '48,210', label: 'Adults with type 2 diabetes starting a second-line drug', note: 'New users, eGFR ≥ 30', icon: 'people' },
+    armA: { label: 'SGLT2i', n: 'n = 21,034', icon: 'capsule' }, armB: { label: 'DPP-4i', n: 'n = 27,176', icon: 'tablet' },
+    method: 'Propensity-score weighted', follow: 'Median follow-up 3.1 years',
+    res: [res({ label: 'Kidney function decline', est: '0.71', lo: '0.62', hi: '0.81', icon: 'kidney' }), res({ label: 'Hospitalisation for heart failure', est: '0.78', lo: '0.66', hi: '0.92', icon: 'heart' }), res({ label: 'All-cause hospitalisation', est: '0.95', lo: '0.89', hi: '1.02', icon: 'hospital' })],
+    concl: 'SGLT2 inhibitors were associated with better kidney and heart failure outcomes than DPP-4 inhibitors.',
+    cite: 'Fictional example for illustration only',
+  });
+  syncInputs(); update();
+  RT.toast(T('已載入範例（虛構研究，數字僅供示範；按 ↶ 可復原）', 'Example loaded (a fictional study, numbers for illustration only; ↶ to undo)'));
+};
+$('btnReset').onclick = () => { S = RT.merge(DEF, { layout: S.layout, theme: S.theme, custom: S.custom, st: S.st }); syncInputs(); update(); RT.toast(T('已清空內容（按 ↶ 可復原）', 'Content cleared (↶ to undo)')); };
+RT.currentState = () => S;
+RT.applyState = (o) => { S = RT.merge(DEF, o); syncInputs(); update(); };
+
+syncInputs();
+render();
+hist.push();
+</script>
+<script src="../shared/figedit.js?v=20261121f"></script>
+<script>
+RT.figEdit({ key: 'graphical', caption: () => '',
+  menus: [
+  { id: 'layout', label: RT.t('版型', 'Layout'), items: ['layout', 'title', 'design', 'concl', 'cite'] },
+  { id: 'style', label: RT.t('風格', 'Style'), items: ['st.font', 'st.fontSize'] },
+] });
+</script>
+</body>
+</html>

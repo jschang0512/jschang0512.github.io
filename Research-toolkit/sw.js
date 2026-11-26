@@ -1,9 +1,9 @@
 // Research Toolkit service worker: every tool keeps opening without a connection.
 // Pages: network first, the cached copy when offline. Shared files, icons and CDN libraries: cache first
 // (they carry a version in their URL). The submission tracker has its own worker and is left alone.
-const CACHE = 'rt-2';
+const CACHE = 'rt-3';
 const BASE = new URL(self.registration.scope).pathname;          // /Research-toolkit/
-const TOOLS = ['', 'prismaflow/', 'cohortflow/', 'timeline/', 'forestplot/', 'evalue/', 'effectsize/', 'dag/', 'sankey/', 'exposure/', 'panels/', 'rob2/', 'robinsi/', 'figureconvert/', 'drugs/', 'codelist/'];
+const TOOLS = ['', 'prismaflow/', 'cohortflow/', 'timeline/', 'forestplot/', 'evalue/', 'effectsize/', 'dag/', 'sankey/', 'exposure/', 'panels/', 'graphical/', 'rob2/', 'robinsi/', 'figureconvert/', 'drugs/', 'codelist/'];
 // Taiwan drug data (drugs/, codelist/): meta.json is asked for fresh, the data files carry ?v=<content hash>
 const DATA = 'raw.githubusercontent.com';
 const CDN = ['cdn.jsdelivr.net', 'cdnjs.cloudflare.com', 'unpkg.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
