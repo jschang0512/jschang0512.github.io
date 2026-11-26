@@ -40,6 +40,8 @@
   .ic-grid button svg { width: 32px; height: 32px; }
   .ic-grid button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-weak); color: var(--accent); }
   .theme-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .sub-h { font-size: 12.5px; font-weight: 700; color: var(--muted); margin: 12px 0 4px; }
+  .brow2 { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 6px; margin-bottom: 6px; }
   .theme-row button { width: 30px; height: 30px; border-radius: 50%; padding: 0; border: 2px solid transparent; }
   .theme-row button[aria-pressed="true"] { border-color: var(--text); }
   .theme-row button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -90,6 +92,19 @@
       </div>
       <label class="field"><span data-en="Who they are">族群描述</span><input data-k="pop.label" placeholder="e.g. Adults with type 2 diabetes"></label>
       <label class="field"><span data-en="More detail (optional)">補充（選填）</span><input data-k="pop.note" placeholder="e.g. eGFR ≥ 30, new users"></label>
+      <h3 class="sub-h" data-en="Selection (optional)">篩選流程（選填）</h3>
+      <div class="grid2">
+        <label class="field"><span data-en="Screened">篩選人數</span><input data-k="pop.screened" placeholder="92,400" inputmode="numeric"></label>
+        <label class="field"><span data-en="Excluded (blank = worked out)">排除人數（留空＝自動算）</span><input data-k="pop.excluded" placeholder="44,190" inputmode="numeric"></label>
+      </div>
+      <p class="hint" style="margin:0" data-en="Included is the number of people above.">納入人數就是上面的「人數」。</p>
+      <h3 class="sub-h" data-en="Baseline facts (up to 4, optional)">基線特徵（最多 4 項，選填）</h3>
+      <div id="baseRows"></div>
+      <h3 class="sub-h" data-en="Pictograph of 100 people (optional)">100 人比例圖（選填）</h3>
+      <div class="grid2">
+        <label class="field"><span data-en="What it shows">呈現什麼</span><input data-k="pop.pictoLabel" placeholder="Women"></label>
+        <label class="field"><span data-en="Per cent (0–100)">百分比（0–100）</span><input data-k="pop.pictoPct" placeholder="44" inputmode="decimal"></label>
+      </div>
     </div>
     <div class="card">
       <h2><span class="step-no">4</span> <span data-en="Comparison">比較組</span></h2>
@@ -98,11 +113,18 @@
         <label class="field"><span data-en="Group A, number">A 組人數</span><input data-k="armA.n" placeholder="21,034"></label>
         <label class="field"><span data-en="Group B">B 組</span><input data-k="armB.label" placeholder="DPP-4i"></label>
         <label class="field"><span data-en="Group B, number">B 組人數</span><input data-k="armB.n" placeholder="27,176"></label>
+        <label class="field"><span data-en="Group A, what it is (optional)">A 組說明（選填）</span><input data-k="armA.detail" placeholder="empagliflozin, dapagliflozin"></label>
+        <label class="field"><span data-en="Group B, what it is (optional)">B 組說明（選填）</span><input data-k="armB.detail" placeholder="sitagliptin, linagliptin"></label>
         <div class="field"><span data-en="Group A icon">A 組圖示</span><button type="button" class="ic-pick" data-ik="armA.icon"></button></div>
         <div class="field"><span data-en="Group B icon">B 組圖示</span><button type="button" class="ic-pick" data-ik="armB.icon"></button></div>
       </div>
-      <label class="field"><span data-en="Analysis (optional)">分析方法（選填）</span><input data-k="method" placeholder="e.g. Propensity-score weighted"></label>
-      <label class="field"><span data-en="Follow-up (optional)">追蹤（選填）</span><input data-k="follow" placeholder="e.g. Median follow-up 3.1 years"></label>
+      <p class="hint" style="margin:0" data-en="With both numbers filled in, a bar shows how the people split between the groups.">兩組人數都填了，會畫出兩組人數比例條。</p>
+      <label class="field"><span data-en="Primary outcome (optional)">主要結果定義（選填）</span><input data-k="outcome" placeholder="≥ 40% eGFR decline, kidney failure or renal death"></label>
+      <h3 class="sub-h" data-en="Design and analysis labels (up to 4, optional)">設計與分析標籤（最多 4 個，選填）</h3>
+      <div class="grid2" id="tagRows">
+        <input data-i="0" data-k="tags.0" placeholder="PS weighted (IPTW)" aria-label="1"><input data-i="1" data-k="tags.1" placeholder="Median 3.1 years" aria-label="2">
+        <input data-i="2" data-k="tags.2" placeholder="Balanced: SMD < 0.1" aria-label="3"><input data-i="3" data-k="tags.3" placeholder="New-user design" aria-label="4">
+      </div>
     </div>
     <div class="card">
       <h2><span class="step-no">5</span> <span data-en="Results (up to 3)">結果（最多 3 項）</span></h2>
@@ -149,15 +171,18 @@ const res = (o = {}) => ({ label: '', measure: 'HR', est: '', lo: '', hi: '', ic
 const DEF = {
   layout: 'wide', theme: 'teal', custom: '#2D6A9F', grow: true,
   title: '', design: '',
-  pop: { n: '', label: '', note: '', icon: 'people' },
-  armA: { label: '', n: '', icon: 'capsule' }, armB: { label: '', n: '', icon: 'tablet' },
-  method: '', follow: '',
+  pop: { n: '', label: '', note: '', icon: 'people', screened: '', excluded: '', base: [{ k: '', v: '' }, { k: '', v: '' }, { k: '', v: '' }, { k: '', v: '' }], pictoLabel: '', pictoPct: '' },
+  armA: { label: '', n: '', icon: 'capsule', detail: '' }, armB: { label: '', n: '', icon: 'tablet', detail: '' },
+  outcome: '', tags: ['', '', '', ''],
   res: [res()], favA: '', favB: '',
   concl: '', cite: '',
   hPop: 'Population', hComp: 'Comparison', hRes: 'Results', hConcl: 'Conclusion',
   st: { ...RT.STYLE_DEF, fontSize: 20 },
 };
 let S = RT.load(KEY, DEF);
+// earlier versions had one field for the analysis and one for follow-up: they become the first two labels
+const upgrade = (s) => { if ((s.method || s.follow) && !(s.tags || []).some(Boolean)) s.tags = [s.method || '', s.follow || '', '', ''].filter((t, i) => t || i > 1).concat(['', '', '', '']).slice(0, 4); delete s.method; delete s.follow; return s; };
+S = upgrade(S);
 
 /* ---------------- colours and sizes ---------------- */
 const THEMES = {
@@ -178,7 +203,7 @@ function resultsOk() { return S.res.filter((r) => num(r.est) !== null); }
 
 // one attempt at a given text scale; returns the SVG body and whether anything spilled out of its panel
 // off: how far down each panel's content starts, so it can sit in the middle of its panel; need: how tall it came out
-function compose(k, off = {}) {
+function compose(k, off = {}, o = {}) {
   const need = {}, room = {};
   RT.beginScene();
   const [W, H, lf] = SIZE[S.layout] || SIZE.wide, [dark, light, ink] = palette();
@@ -206,93 +231,178 @@ function compose(k, off = {}) {
   // the middle: three panels side by side, or two over one when square
   const top = hh + G, bot = fy - G, ah = bot - top, aw = W - 2 * M;
   let P;
-  if (S.layout === 'square') { const h1 = (ah - G) * 0.44; P = { pop: [M, top, (aw - G) / 2, h1], comp: [M + (aw + G) / 2, top, (aw - G) / 2, h1], res: [M, top + h1 + G, aw, ah - h1 - G] }; }
+  if (S.layout === 'square') { const h1 = (ah - G) * 0.56; P = { pop: [M, top, (aw - G) / 2, h1], comp: [M + (aw + G) / 2, top, (aw - G) / 2, h1], res: [M, top + h1 + G, aw, ah - h1 - G] }; }
   else { const w3 = (aw - 2 * G) / 3; P = { pop: [M, top, w3, ah], comp: [M + w3 + G, top, w3, ah], res: [M + 2 * (w3 + G), top, w3, ah] }; }
   const panel = (x, y, w, h, title, fill, stroke) => {
     body += RT.rect(x, y, w, h, { fill, stroke: stroke || 'none', sw: 1, radius: 10 * lf });
     const t = textBox(title.toUpperCase(), w - 2 * PAD, fs * 0.78, { bold: true, color: ink });
     body += RT.drawBox(t, x + PAD, y + PAD); return y + PAD + t.h + fs * 0.5;
   };
-  // population
+  // population: the number, who they are, how they were selected, a few baseline facts, a pictograph
   {
     const [x, y, w, h] = P.pop; let cy = panel(x, y, w, h, S.hPop || 'Population', light); const c0 = cy; room.pop = y + h - PAD - cy; cy += off.pop || 0;
-    const iz = Math.min(fs * 3, w * 0.28);
+    const iw = w - 2 * PAD;
+    const iz = Math.min(fs * 2.6, w * 0.24);
     if (S.pop.icon) body += RT.medIcon(S.pop.icon, x + PAD, cy, iz, dark);
     const nn = ph(S.pop.n, 'n = ?');
-    const nb = textBox(nn.t, w - 2 * PAD - (S.pop.icon ? iz + fs * 0.6 : 0), fs * 1.9, { bold: true, color: nn.ph ? GREY : ink });
     const nx = x + PAD + (S.pop.icon ? iz + fs * 0.6 : 0);
+    const nb = textBox(nn.t, x + w - PAD - nx, fs * 1.8, { bold: true, color: nn.ph ? GREY : ink });
     body += RT.drawBox(nb, nx, cy + Math.max(0, (iz - nb.h) / 2)); RT.addHit(nx, cy, nb.w, Math.max(iz, nb.h), RT.hitKey('pop.n'));
-    cy += Math.max(iz, nb.h) + fs * 0.5;
+    cy += Math.max(iz, nb.h) + fs * 0.4;
     const lb = ph(S.pop.label, 'Who the people are');
-    const b1 = textBox(lb.t, w - 2 * PAD, fs, { color: lb.ph ? GREY : ink }); body += RT.drawBox(b1, x + PAD, cy); RT.addHit(x + PAD, cy, b1.w, b1.h, RT.hitKey('pop.label')); cy += b1.h + fs * 0.35;
-    if (S.pop.note) { const b2 = textBox(S.pop.note, w - 2 * PAD, fs * 0.85, { color: MUTED }); body += RT.drawBox(b2, x + PAD, cy); RT.addHit(x + PAD, cy, b2.w, b2.h, RT.hitKey('pop.note')); cy += b2.h; }
+    const b1 = textBox(lb.t, iw, fs * 0.95, { color: lb.ph ? GREY : ink }); body += RT.drawBox(b1, x + PAD, cy); RT.addHit(x + PAD, cy, b1.w, b1.h, RT.hitKey('pop.label')); cy += b1.h + fs * 0.25;
+    if (S.pop.note) { const b2 = textBox(S.pop.note, iw, fs * 0.8, { color: MUTED }); body += RT.drawBox(b2, x + PAD, cy); RT.addHit(x + PAD, cy, b2.w, b2.h, RT.hitKey('pop.note')); cy += b2.h + fs * 0.25; }
+    const sub = (t) => { const b = textBox(t, iw, fs * 0.72, { bold: true, color: dark }); cy += fs * 0.35; body += RT.drawBox(b, x + PAD, cy); cy += b.h + fs * 0.2; };
+    // selection: screened → excluded → included, as one bar
+    const sc = num(S.pop.screened), inc = num(S.pop.n), ex = num(S.pop.excluded) ?? (sc !== null && inc !== null ? sc - inc : null);
+    if (sc && inc !== null && inc <= sc) {
+      sub('Selection');
+      const bh2 = fs * 0.5;
+      body += RT.rect(x + PAD, cy, iw, bh2, { fill: mix(light, dark, 0.3), radius: bh2 / 2 });
+      body += RT.rect(x + PAD, cy, Math.max(bh2, (iw * inc) / sc), bh2, { fill: dark, radius: bh2 / 2 });
+      cy += bh2 + fs * 0.25;
+      const f0 = (v) => Math.round(v).toLocaleString('en-US');
+      const st = textBox(`Screened ${f0(sc)}${ex !== null ? ` → excluded ${f0(ex)}` : ''} → included ${f0(inc)}`, iw, fs * 0.74, { color: ink });
+      body += RT.drawBox(st, x + PAD, cy); RT.addHit(x + PAD, cy - bh2, iw, st.h + bh2, RT.hitKey('pop.screened')); cy += st.h;
+    }
+    // baseline facts: name on the left, value on the right
+    const base = (S.pop.base || []).filter((b) => b && (b.k || b.v));
+    if (base.length) {
+      sub('Baseline');
+      base.forEach((b, i) => {
+        const vw = Math.min(iw * 0.42, RT.textWidth(b.v || '', fs * 0.85, true) + 4);
+        const kb = textBox(b.k || '', iw - vw - fs * 0.5, fs * 0.82, { color: ink });
+        const vb = textBox(b.v || '', vw, fs * 0.85, { bold: true, color: ink, align: 'right' });
+        const rh = Math.max(kb.h, vb.h);
+        body += RT.drawBox(kb, x + PAD, cy) + RT.drawBox(vb, x + w - PAD - vw, cy);
+        RT.addHit(x + PAD, cy, iw, rh, () => document.querySelector(`#baseRows [data-i="${i}"] [data-f="k"]`));
+        cy += rh + fs * 0.18;
+      });
+    }
+    // pictograph: so many in 100
+    const pp = num(S.pop.pictoPct);
+    if (!o.noPicto && pp !== null && pp >= 0 && pp <= 100) {
+      sub(S.pop.pictoLabel ? `${S.pop.pictoLabel}: ${Math.round(pp)} in 100` : `${Math.round(pp)} in 100`);
+      // 10 × 10, or 20 × 5 in the low landscape layout
+      const cols = S.layout === 'wide' ? 20 : 10, rowsN = 100 / cols;
+      const cell = Math.min(iw / cols, fs * (cols === 20 ? 0.85 : 0.95)), r0 = cell * 0.2, on = Math.round(pp);
+      for (let i = 0; i < 100; i++) {
+        const cx = x + PAD + (i % cols) * cell + cell / 2, ty = cy + Math.floor(i / cols) * cell + cell * 0.12, col = i < on ? dark : mix(light, dark, 0.3);
+        body += RT.circle(cx, ty + r0, r0, { fill: col }) + RT.rect(cx - cell * 0.22, ty + r0 * 2 + cell * 0.04, cell * 0.44, cell * 0.36, { fill: col, radius: cell * 0.12 });
+      }
+      RT.addHit(x + PAD, cy, cell * cols, cell * rowsN, RT.hitKey('pop.pictoPct'));
+      cy += cell * rowsN;
+    }
     need.pop = cy - c0 - (off.pop || 0);
     if (cy > y + h - PAD * 0.5) spill = true;
   }
-  // comparison
+  // comparison: the two groups, how they split, the outcome, how it was analysed
   {
     const [x, y, w, h] = P.comp; let cy = panel(x, y, w, h, S.hComp || 'Comparison', '#F1EFE8'); const c0 = cy; room.comp = y + h - PAD - cy; cy += off.comp || 0;
-    const vs = fs * 1.6, bw = (w - 2 * PAD - vs) / 2, iz = fs * 1.9;
+    const iw = w - 2 * PAD, vs = fs * 1.6, bw = (iw - vs) / 2, iz = fs * 1.7;
+    const nA = num(S.armA.n), nB = num(S.armB.n), split = nA !== null && nB !== null && nA + nB > 0;
     const arm = (a, bx, fill, key) => {
       const lb = ph(a.label, key === 'armA' ? 'Group A' : 'Group B');
-      const t1 = textBox(lb.t, bw - PAD, fs * 1.02, { bold: true, color: '#FFFFFF', align: 'center' });
-      const t2 = a.n ? textBox(a.n, bw - PAD, fs * 0.88, { color: mix(fill, '#ffffff', 0.85), align: 'center' }) : null;
-      const bh = PAD * 0.8 + (a.icon ? iz + fs * 0.3 : 0) + t1.h + (t2 ? fs * 0.15 + t2.h : 0) + PAD * 0.8;
+      const t1 = textBox(lb.t, bw - PAD, fs * 1.0, { bold: true, color: '#FFFFFF', align: 'center' });
+      const t3 = a.detail ? textBox(a.detail, bw - PAD, fs * 0.72, { color: mix(fill, '#ffffff', 0.85), align: 'center' }) : null;
+      const t2 = !split && a.n ? textBox(a.n, bw - PAD, fs * 0.82, { color: mix(fill, '#ffffff', 0.85), align: 'center' }) : null;
+      const bh = PAD * 0.7 + (a.icon ? iz + fs * 0.25 : 0) + t1.h + (t3 ? fs * 0.1 + t3.h : 0) + (t2 ? fs * 0.1 + t2.h : 0) + PAD * 0.7;
       return { bh, draw: (by, hh2) => {
-        let s = RT.rect(bx, by, bw, hh2, { fill, radius: 8 * lf }), yy = by + (hh2 - bh) / 2 + PAD * 0.8;
-        if (a.icon) { s += RT.medIcon(a.icon, bx + (bw - iz) / 2, yy, iz, '#FFFFFF'); yy += iz + fs * 0.3; }
-        s += RT.drawBox(t1, bx + PAD / 2, yy); RT.addHit(bx, yy, bw, t1.h, RT.hitKey(key + '.label')); yy += t1.h + fs * 0.15;
+        let s = RT.rect(bx, by, bw, hh2, { fill, radius: 8 * lf }), yy = by + (hh2 - bh) / 2 + PAD * 0.7;
+        if (a.icon) { s += RT.medIcon(a.icon, bx + (bw - iz) / 2, yy, iz, '#FFFFFF'); yy += iz + fs * 0.25; }
+        s += RT.drawBox(t1, bx + PAD / 2, yy); RT.addHit(bx, yy, bw, t1.h, RT.hitKey(key + '.label')); yy += t1.h + fs * 0.1;
+        if (t3) { s += RT.drawBox(t3, bx + PAD / 2, yy); RT.addHit(bx, yy, bw, t3.h, RT.hitKey(key + '.detail')); yy += t3.h + fs * 0.1; }
         if (t2) { s += RT.drawBox(t2, bx + PAD / 2, yy); RT.addHit(bx, yy, bw, t2.h, RT.hitKey(key + '.n')); }
         return s;
       } };
     };
     const A = arm(S.armA, x + PAD, dark, 'armA'), B = arm(S.armB, x + PAD + bw + vs, GREY, 'armB'), bh = Math.max(A.bh, B.bh);
     body += A.draw(cy, bh) + B.draw(cy, bh);
-    body += RT.rich([{ runs: [{ t: 'vs', size: fs * 0.95, bold: true, color: MUTED }] }], x + PAD + bw + vs / 2, cy + bh / 2 - fs * 0.65, { lh: fs * 1.3, anchor: 'middle' });
-    cy += bh + fs * 0.6;
-    for (const k2 of ['method', 'follow']) if (S[k2]) { const b = textBox(S[k2], w - 2 * PAD, fs * 0.88, { color: MUTED }); body += RT.drawBox(b, x + PAD, cy); RT.addHit(x + PAD, cy, b.w, b.h, RT.hitKey(k2)); cy += b.h + fs * 0.25; }
+    body += RT.rich([{ runs: [{ t: 'vs', size: fs * 0.9, bold: true, color: MUTED }] }], x + PAD + bw + vs / 2, cy + bh / 2 - fs * 0.6, { lh: fs * 1.2, anchor: 'middle' });
+    cy += bh + fs * 0.5;
+    // how the people split between the groups
+    if (split) {
+      const bh2 = fs * 0.5, wa = Math.max(bh2, (iw * nA) / (nA + nB));
+      body += RT.rect(x + PAD, cy, wa, bh2, { fill: dark, radius: bh2 / 2 }) + RT.rect(x + PAD + wa, cy, iw - wa, bh2, { fill: GREY, radius: bh2 / 2 });
+      cy += bh2 + fs * 0.2;
+      const pa = Math.round((nA / (nA + nB)) * 100), f0 = (v) => Math.round(v).toLocaleString('en-US');
+      const la = `${f0(nA)} (${pa}%)`, lb2 = `${f0(nB)} (${100 - pa}%)`;
+      body += RT.rich([{ runs: [{ t: la, size: fs * 0.76, color: ink }] }], x + PAD, cy, { lh: fs * 1.15 }) + RT.rich([{ runs: [{ t: lb2, size: fs * 0.76, color: ink }] }], x + w - PAD, cy, { lh: fs * 1.15, anchor: 'end' });
+      RT.addHit(x + PAD, cy - bh2, iw / 2, fs * 1.15 + bh2, RT.hitKey('armA.n')); RT.addHit(x + PAD + iw / 2, cy - bh2, iw / 2, fs * 1.15 + bh2, RT.hitKey('armB.n'));
+      cy += fs * 1.15 + fs * 0.2;
+    }
+    // the primary outcome
+    if (S.outcome) {
+      const hb = textBox('Primary outcome', iw, fs * 0.72, { bold: true, color: MUTED }); cy += fs * 0.15; body += RT.drawBox(hb, x + PAD, cy); cy += hb.h + fs * 0.1;
+      const ob = textBox(S.outcome, iw, fs * 0.85, { color: ink }); body += RT.drawBox(ob, x + PAD, cy); RT.addHit(x + PAD, cy, ob.w, ob.h, RT.hitKey('outcome')); cy += ob.h + fs * 0.3;
+    }
+    // design and analysis as small labels that wrap onto new lines
+    const tags = (S.tags || []).filter(Boolean);
+    if (tags.length) {
+      const ts = fs * 0.74, tp = ts * 0.7, th = ts * 1.7, gap = fs * 0.3;
+      let tx = x + PAD; cy += fs * 0.1;
+      tags.forEach((t, i) => {
+        let tw = RT.textWidth(t, ts) + 2 * tp;
+        if (tw > iw) tw = iw;
+        if (tx + tw > x + w - PAD + 0.5) { tx = x + PAD; cy += th + gap; }
+        const b = RT.box([{ text: t, color: ink }], tw, { size: ts, pad: 0, padX: tp, lh: 1.25, align: 'center', fill: '#FFFFFF', stroke: LINE, sw: 0.8, radius: th / 2, minH: th });
+        body += RT.drawBox(b, tx, cy, Math.max(th, b.h));
+        RT.addHit(tx, cy, tw, th, () => document.querySelector(`#tagRows [data-i="${i}"]`));
+        tx += tw + gap;
+      });
+      cy += th;
+    }
     need.comp = cy - c0 - (off.comp || 0);
     if (cy > y + h - PAD * 0.5) spill = true;
   }
-  // results: one row per outcome, each with a small forest plot
+  // results: one row per outcome, each with a small forest plot; every part is measured so nothing leaves the panel
   {
     const [x, y, w, h] = P.res;
     const rs = resultsOk(), m = (rs[0] || S.res[0] || {}).measure || 'HR', ratio = !DIFF.includes(m);
     let cy = panel(x, y, w, h, `${S.hRes || 'Results'} (${m}, 95% CI)`, '#FFFFFF', LINE); const c0 = cy; room.res = y + h - PAD - cy; cy += off.res || 0;
+    const iw = w - 2 * PAD, right = x + w - PAD;
     if (!rs.length) {
-      const b = textBox('Results appear here once an estimate is entered.', w - 2 * PAD, fs * 0.9, { color: GREY }); body += RT.drawBox(b, x + PAD, cy); cy += b.h;
+      const b = textBox('Results appear here once an estimate is entered.', iw, fs * 0.9, { color: GREY }); body += RT.drawBox(b, x + PAD, cy); cy += b.h;
     } else {
       const vals = rs.flatMap((r) => [num(r.est), num(r.lo), num(r.hi)]).filter((v) => v !== null && (!ratio || v > 0));
       const nullV = ratio ? 1 : 0, tr = (v) => (ratio ? Math.log(v) : v);
       let lo = Math.min(tr(nullV), ...vals.map(tr)), hi = Math.max(tr(nullV), ...vals.map(tr)); const pad = (hi - lo) * 0.12 || 0.2; lo -= pad; hi += pad;
-      const iconW = rs.some((r) => r.icon) ? fs * 1.5 + fs * 0.4 : 0;
-      const labelW = (w - 2 * PAD) * (S.layout === 'square' ? 0.34 : 0.36) - iconW, fx = x + PAD + iconW + labelW + fs * 0.6, fw = (w - 2 * PAD) * 0.3, vx = fx + fw + fs * 0.6;
+      const vs2 = fs * 0.84, txt = (r) => { const e = num(r.est), l = num(r.lo), u = num(r.hi); return `${fmt(e)}${l !== null && u !== null ? ` (${fmt(l)}–${fmt(u)})` : ''}`; };
+      // columns: icon | label | forest | value; the value column is as wide as its longest text, the rest shares what is left
+      const valW = Math.max(...rs.map((r) => RT.textWidth(txt(r), vs2, true))) + 2;
+      const iconW = rs.some((r) => r.icon) ? fs * 1.3 + fs * 0.35 : 0, gap = fs * 0.45;
+      const restW = iw - iconW - valW - 2 * gap;
+      if (restW < fs * 6) spill = true;
+      const labelW = Math.max(fs * 3, restW * 0.5), fw = Math.max(fs * 3, restW - labelW);
+      const fx = x + PAD + iconW + labelW + gap, vx = right - valW;
       const X = (v) => fx + ((tr(v) - lo) / (hi - lo)) * fw;
-      const rows = rs.map((r) => { const lb = textBox(r.label || 'Outcome', labelW, fs * 0.92, { color: r.label ? ink : GREY }); return { r, lb, h: Math.max(lb.h, fs * 1.5) }; });
+      const rows = rs.map((r) => { const lb = textBox(r.label || 'Outcome', labelW, fs * 0.86, { color: r.label ? ink : GREY }); return { r, lb, h: Math.max(lb.h, fs * 1.45) }; });
       const y0 = cy;
-      rows.forEach(({ r, lb, h: rh }, i) => {
+      rows.forEach(({ r, lb, h: rh }) => {
         const my = cy + rh / 2, idx = S.res.indexOf(r);
-        if (r.icon) body += RT.medIcon(r.icon, x + PAD, my - fs * 0.75, fs * 1.5, dark);
+        if (r.icon) body += RT.medIcon(r.icon, x + PAD, my - fs * 0.65, fs * 1.3, dark);
         body += RT.drawBox(lb, x + PAD + iconW, my - lb.h / 2);
         RT.addHit(x + PAD + iconW, my - lb.h / 2, lb.w, lb.h, () => document.querySelector(`#res [data-i="${idx}"] [data-f="label"]`));
         const e = num(r.est), l = num(r.lo), u = num(r.hi);
-        if (l !== null && u !== null) body += RT.line([[X(l), my], [X(u), my]], { color: dark, sw: Math.max(1.5, fs * 0.13) });
-        const sz = fs * 0.55; body += RT.rect(X(e) - sz / 2, my - sz / 2, sz, sz, { fill: dark });
-        const vt = `${fmt(e)}${l !== null && u !== null ? ` (${fmt(l)}–${fmt(u)})` : ''}`;
-        body += RT.rich([{ runs: [{ t: vt, size: fs * 0.88, color: ink, bold: true }] }], vx, my - fs * 0.6, { lh: fs * 1.2 });
-        RT.addHit(vx, my - fs * 0.6, RT.textWidth(vt, fs * 0.88, true) + 4, fs * 1.2, () => document.querySelector(`#res [data-i="${idx}"] [data-f="est"]`));
-        cy += rh + fs * 0.45;
+        const cl = (v) => Math.max(fx, Math.min(fx + fw, X(v)));       // a limit beyond the axis stops at its end
+        if (l !== null && u !== null) body += RT.line([[cl(l), my], [cl(u), my]], { color: dark, sw: Math.max(1.5, fs * 0.12) });
+        const sz = fs * 0.5; body += RT.rect(cl(e) - sz / 2, my - sz / 2, sz, sz, { fill: dark });
+        body += RT.rich([{ runs: [{ t: txt(r), size: vs2, color: ink, bold: true }] }], vx, my - vs2 * 0.65, { lh: vs2 * 1.25 });
+        RT.addHit(vx, my - vs2 * 0.65, valW, vs2 * 1.25, () => document.querySelector(`#res [data-i="${idx}"] [data-f="est"]`));
+        cy += rh + fs * 0.35;
       });
       // the line of no effect and the axis
       body += RT.line([[X(nullV), y0 - fs * 0.2], [X(nullV), cy - fs * 0.2]], { color: GREY, sw: 1, dash: '4 3' });
       body += RT.line([[fx, cy - fs * 0.2], [fx + fw, cy - fs * 0.2]], { color: LINE, sw: 1 });
-      body += RT.rich([{ runs: [{ t: String(nullV), size: fs * 0.72, color: MUTED }] }], X(nullV), cy - fs * 0.1, { lh: fs * 1.1, anchor: 'middle' });
+      body += RT.rich([{ runs: [{ t: String(nullV), size: fs * 0.7, color: MUTED }] }], X(nullV), cy - fs * 0.1, { lh: fs * 1.05, anchor: 'middle' });
       cy += fs * 1.0;
+      // "favours" under the axis, each kept on its own side of the line and wrapped inside the panel
       const fa = S.favA || (S.armA.label ? `Favours ${S.armA.label}` : ''), fb = S.favB || (S.armB.label ? `Favours ${S.armB.label}` : '');
-      if (fa) { body += RT.rich([{ runs: [{ t: '← ' + fa, size: fs * 0.72, color: MUTED }] }], X(nullV) - fs * 0.3, cy, { lh: fs * 1.1, anchor: 'end' }); RT.addHit(X(nullV) - RT.textWidth('← ' + fa, fs * 0.72) - fs * 0.3, cy, RT.textWidth('← ' + fa, fs * 0.72), fs * 1.1, RT.hitKey('favA')); }
-      if (fb) { body += RT.rich([{ runs: [{ t: fb + ' →', size: fs * 0.72, color: MUTED }] }], X(nullV) + fs * 0.3, cy, { lh: fs * 1.1 }); RT.addHit(X(nullV) + fs * 0.3, cy, RT.textWidth(fb + ' →', fs * 0.72), fs * 1.1, RT.hitKey('favB')); }
-      cy += fs * 1.1;
-      if (X(nullV) - fs * 0.3 - RT.textWidth('← ' + fa, fs * 0.72) < x + PAD * 0.5 || X(nullV) + fs * 0.3 + RT.textWidth(fb + ' →', fs * 0.72) > x + w - PAD * 0.5) spill = true;
+      const fz = fs * 0.7, aw2 = X(nullV) - fs * 0.25 - (x + PAD), bw2 = right - (X(nullV) + fs * 0.25);
+      let fh = 0;
+      if (fa) { const b = textBox('← ' + fa, Math.max(fs * 2, aw2), fz, { color: MUTED, align: 'right' }); body += RT.drawBox(b, X(nullV) - fs * 0.25 - b.w, cy); RT.addHit(X(nullV) - fs * 0.25 - b.w, cy, b.w, b.h, RT.hitKey('favA')); fh = Math.max(fh, b.h); if (aw2 < fs * 2) spill = true; }
+      if (fb) { const b = textBox(fb + ' →', Math.max(fs * 2, bw2), fz, { color: MUTED, align: 'left' }); body += RT.drawBox(b, X(nullV) + fs * 0.25, cy); RT.addHit(X(nullV) + fs * 0.25, cy, b.w, b.h, RT.hitKey('favB')); fh = Math.max(fh, b.h); if (bw2 < fs * 2) spill = true; }
+      cy += fh;
     }
     need.res = cy - c0 - (off.res || 0);
     if (cy > y + h - PAD * 0.5) spill = true;
@@ -304,11 +414,13 @@ function build() {
   let r = null, used = 1;
   // the largest text that still fits: it grows into spare room when that is switched on, and shrinks when crowded
   const steps = [...(S.grow ? [1.6, 1.45, 1.3, 1.18, 1.08] : []), 1, 0.93, 0.86, 0.8, 0.74, 0.68];
-  for (const k of steps) { used = k; r = compose(k); if (!r.spill) break; }
+  let o = {}, dropped = false;
+  for (const k of steps) { used = k; r = compose(k, {}, o); if (!r.spill) break; }
+  if (r.spill && num(S.pop.pictoPct) !== null) { o = { noPicto: true }; dropped = true; for (const k of steps) { used = k; r = compose(k, {}, o); if (!r.spill) break; } }
   // second pass: each panel's content in the middle of the room it has (a little above centre reads better)
-  if (!r.spill) { const off = {}; for (const p of ['pop', 'comp', 'res']) off[p] = Math.max(0, (r.room[p] - r.need[p]) * 0.42); r = compose(used, off); }
+  if (!r.spill) { const off = {}; for (const p of ['pop', 'comp', 'res']) off[p] = Math.max(0, (r.room[p] - r.need[p]) * 0.42); r = compose(used, off, o); }
   const f = RT.figure(r.W, r.H, r.body, '#FFFFFF');
-  f.shrunk = used < 1; f.spill = r.spill; f.scaleUsed = used;
+  f.shrunk = used < 1; f.spill = r.spill; f.scaleUsed = used; f.dropped = dropped;
   return f;
 }
 
@@ -353,7 +465,13 @@ $('styleFields').innerHTML = RT.styleFieldsHTML(['font', 'fontSize']);
 $('themes').innerHTML = [...Object.entries(THEMES).map(([k, c]) => [k, c[0]]), ['custom', 'conic-gradient(#d6463c, #f0d24a, #53ad6b, #4b7fd6, #8f6bcf, #d6463c)']].map(([k, c]) => `<button type="button" data-theme="${k}" style="background:${c}" aria-label="${k === 'custom' ? T('自訂顏色', 'Your own colour') : k}" title="${k === 'custom' ? T('自訂顏色', 'Your own colour') : k}"></button>`).join('');
 $('themes').onclick = (e) => { const b = e.target.closest('[data-theme]'); if (!b) return; S.theme = b.dataset.theme; syncThemes(); RT.syncVisibility(form, S); update(); };
 const syncThemes = () => $('themes').querySelectorAll('[data-theme]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.theme === S.theme)));
-function syncInputs() { renderRes(); RT.syncForm(form, S); syncThemes(); syncPickers(); }
+function renderBase() {
+  const host = $('baseRows');
+  while ((S.pop.base || []).length < 4) S.pop.base.push({ k: '', v: '' });
+  host.innerHTML = S.pop.base.slice(0, 4).map((b, i) => `<div class="brow2" data-i="${i}"><input data-f="k" placeholder="${['Mean age', 'Women', 'Chronic kidney disease', 'Prior heart failure'][i]}" aria-label="${T('特徵', 'Fact')} ${i + 1}"><input data-f="v" placeholder="${['62 years', '44%', '18%', '9%'][i]}" aria-label="${T('數值', 'Value')} ${i + 1}"></div>`).join('');
+  host.querySelectorAll('.brow2').forEach((row) => row.querySelectorAll('[data-f]').forEach((el) => { const b = S.pop.base[+row.dataset.i]; el.value = b[el.dataset.f] || ''; el.oninput = () => { b[el.dataset.f] = el.value; update(); }; }));
+}
+function syncInputs() { renderRes(); renderBase(); RT.syncForm(form, S); syncThemes(); syncPickers(); }
 RT.bindForm(form, () => S, () => update());
 const MEASURES = ['HR', 'OR', 'RR', 'IRR', 'sHR', 'RD', 'MD'];
 function renderRes() {
@@ -393,12 +511,13 @@ function render() {
   const empty = [[S.title, T('研究問題', 'study question')], [S.pop.n || S.pop.label, T('族群', 'population')], [S.armA.label && S.armB.label, T('比較組', 'comparison groups')], [resultsOk().length, T('結果', 'results')], [S.concl, T('結論', 'conclusion')]].filter(([v]) => !v).map(([, n]) => n);
   if (empty.length) msgs.push(T(`還沒填：${empty.join('、')}（圖上暫時顯示灰色提示字，匯出前請補上）`, `Not filled in yet: ${empty.join(', ')} (grey placeholders show on the image until then)`));
   if (fig && fig.spill) msgs.push(T('內容太多，字已縮到最小仍塞不下：請縮短文字，或改用較大的版型', 'Too much text even at the smallest size: shorten it or pick a larger layout'));
-  else if (fig && fig.shrunk) msgs.push(T(`字較多，已自動縮小到 ${Math.round(fig.scaleUsed * 100)}%`, `Text shrunk to ${Math.round(fig.scaleUsed * 100)}% to fit`));
+  if (fig && fig.dropped) msgs.push(T('版面放不下比例小人圖，已先省略：可改用正方形或 16:9 版型，或減少其他內容', 'No room for the pictograph, so it is left out: try the square or 16:9 layout, or shorten other parts'));
+  if (fig && fig.spill) {} else if (fig && fig.shrunk) msgs.push(T(`字較多，已自動縮小到 ${Math.round(fig.scaleUsed * 100)}%`, `Text shrunk to ${Math.round(fig.scaleUsed * 100)}% to fit`));
   const kinds = new Set(resultsOk().map((r) => (DIFF.includes(r.measure) ? 'diff' : 'ratio')));
   if (kinds.size > 1) msgs.push(T('結果混用比值（HR、OR…）與差值（RD、MD），圖上的座標以第一項為準，請分開呈現', 'Ratios (HR, OR…) and differences (RD, MD) are mixed; the axis follows the first result, so keep them apart'));
   S.res.forEach((r, i) => { const e = num(r.est), l = num(r.lo), u = num(r.hi); if (e !== null && l !== null && u !== null && !(l <= e && e <= u)) msgs.push(T(`結果 ${i + 1} 的估計值不在信賴區間內`, `Result ${i + 1}: the estimate is not between its limits`)); if (!DIFF.includes(r.measure) && [e, l, u].some((v) => v !== null && v <= 0)) msgs.push(T(`結果 ${i + 1}：比值必須大於 0`, `Result ${i + 1}: ratios must be greater than 0`)); });
   $('msgs').innerHTML = msgs.map((m) => `<div class="msg">⚠ ${RT.esc(m)}</div>`).join('');
-  exporter.setIssues(msgs.filter((m) => !/縮小到|shrunk/.test(m)).length);
+  exporter.setIssues(msgs.filter((m) => !/縮小到|shrunk|小人圖|pictograph/.test(m)).length);
   exporter.refresh();
   RT.save(KEY, S);
 }
@@ -412,9 +531,10 @@ $('btnExample').onclick = () => {
     layout: S.layout, theme: S.theme, custom: S.custom, st: S.st,
     title: 'SGLT2 inhibitors vs DPP-4 inhibitors and kidney outcomes in type 2 diabetes',
     design: 'Retrospective cohort · nationwide claims database, 2016–2022',
-    pop: { n: '48,210', label: 'Adults with type 2 diabetes starting a second-line drug', note: 'New users, eGFR ≥ 30', icon: 'people' },
-    armA: { label: 'SGLT2i', n: 'n = 21,034', icon: 'capsule' }, armB: { label: 'DPP-4i', n: 'n = 27,176', icon: 'tablet' },
-    method: 'Propensity-score weighted', follow: 'Median follow-up 3.1 years',
+    pop: { n: '48,210', label: 'Adults with type 2 diabetes starting a second-line drug', note: 'New users, eGFR ≥ 30', icon: 'people', screened: '92,400', excluded: '', base: [{ k: 'Mean age', v: '62 years' }, { k: 'Women', v: '44%' }, { k: 'Chronic kidney disease', v: '18%' }, { k: 'Prior heart failure', v: '9%' }], pictoLabel: 'Women', pictoPct: '44' },
+    armA: { label: 'SGLT2i', n: '21,034', icon: 'capsule', detail: 'empagliflozin, dapagliflozin' }, armB: { label: 'DPP-4i', n: '27,176', icon: 'tablet', detail: 'sitagliptin, linagliptin' },
+    outcome: '≥ 40% eGFR decline, kidney failure or renal death',
+    tags: ['PS weighted (IPTW)', 'Median 3.1 years', 'Balanced: SMD < 0.1', 'New-user design'],
     res: [res({ label: 'Kidney function decline', est: '0.71', lo: '0.62', hi: '0.81', icon: 'kidney' }), res({ label: 'Hospitalisation for heart failure', est: '0.78', lo: '0.66', hi: '0.92', icon: 'heart' }), res({ label: 'All-cause hospitalisation', est: '0.95', lo: '0.89', hi: '1.02', icon: 'hospital' })],
     concl: 'SGLT2 inhibitors were associated with better kidney and heart failure outcomes than DPP-4 inhibitors.',
     cite: 'Fictional example for illustration only',
@@ -424,7 +544,7 @@ $('btnExample').onclick = () => {
 };
 $('btnReset').onclick = () => { S = RT.merge(DEF, { layout: S.layout, theme: S.theme, custom: S.custom, st: S.st }); syncInputs(); update(); RT.toast(T('已清空內容（按 ↶ 可復原）', 'Content cleared (↶ to undo)')); };
 RT.currentState = () => S;
-RT.applyState = (o) => { S = RT.merge(DEF, o); syncInputs(); update(); };
+RT.applyState = (o) => { S = upgrade(RT.merge(DEF, o)); syncInputs(); update(); };
 
 syncInputs();
 render();
